@@ -1,0 +1,1346 @@
+{
+ "LayerNorm|1|0|noskip": {
+  "P": 984,
+  "rank": 738,
+  "gap": 360938472.70805347,
+  "constructed": 246,
+  "worst": 7.67673696401017e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    16
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    56
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    40
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one rotation of the stream per hidden state, O(d-1)",
+    63
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 2.2
+ },
+ "LayerNorm|1|0|skip": {
+  "P": 984,
+  "rank": 780,
+  "gap": 985545056.0889268,
+  "constructed": 204,
+  "worst": 7.540598904842798e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    16
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    56
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    40
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one global rotation of the stream, O(d-1)",
+    21
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 1.8
+ },
+ "LayerNorm|1|1|noskip": {
+  "P": 984,
+  "rank": 738,
+  "gap": 484106311.79804814,
+  "constructed": 246,
+  "worst": 9.379307198905902e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    16
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    56
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    40
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one rotation of the stream per hidden state, O(d-1)",
+    63
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 2.0
+ },
+ "LayerNorm|1|1|skip": {
+  "P": 984,
+  "rank": 780,
+  "gap": 1255665011.3897765,
+  "constructed": 204,
+  "worst": 9.86577702106203e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    16
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    56
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    40
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one global rotation of the stream, O(d-1)",
+    21
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 2.3
+ },
+ "LayerNorm|1|2|noskip": {
+  "P": 984,
+  "rank": 738,
+  "gap": 238340214.889704,
+  "constructed": 246,
+  "worst": 9.338206719734098e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    16
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    56
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    40
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one rotation of the stream per hidden state, O(d-1)",
+    63
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 2.2
+ },
+ "LayerNorm|1|2|skip": {
+  "P": 984,
+  "rank": 780,
+  "gap": 1249881579.4477434,
+  "constructed": 204,
+  "worst": 1.1663539337794793e-16,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    16
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    56
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    40
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one global rotation of the stream, O(d-1)",
+    21
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 1.9
+ },
+ "LayerNorm|1|3|noskip": {
+  "P": 984,
+  "rank": 738,
+  "gap": 772957127.4885515,
+  "constructed": 246,
+  "worst": 1.4475392913336835e-16,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    16
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    56
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    40
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one rotation of the stream per hidden state, O(d-1)",
+    63
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 1.9
+ },
+ "LayerNorm|1|3|skip": {
+  "P": 984,
+  "rank": 780,
+  "gap": 1407366628.9376347,
+  "constructed": 204,
+  "worst": 9.569722340386453e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    16
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    56
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    40
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one global rotation of the stream, O(d-1)",
+    21
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 2.2
+ },
+ "LayerNorm|2|0|noskip": {
+  "P": 1768,
+  "rank": 1336,
+  "gap": 74066138.37859237,
+  "constructed": 432,
+  "worst": 1.1131017650847752e-16,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    32
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    112
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    80
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one rotation of the stream per hidden state, O(d-1)",
+    105
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 14.1
+ },
+ "LayerNorm|2|0|skip": {
+  "P": 1768,
+  "rank": 1420,
+  "gap": 363756793.7743136,
+  "constructed": 348,
+  "worst": 9.65974761807487e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    32
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    112
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    80
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one global rotation of the stream, O(d-1)",
+    21
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 14.5
+ },
+ "LayerNorm|2|1|noskip": {
+  "P": 1768,
+  "rank": 1336,
+  "gap": 90275546.9262341,
+  "constructed": 432,
+  "worst": 1.6196825433051477e-16,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    32
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    112
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    80
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one rotation of the stream per hidden state, O(d-1)",
+    105
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 14.5
+ },
+ "LayerNorm|2|1|skip": {
+  "P": 1768,
+  "rank": 1420,
+  "gap": 654469300.5896456,
+  "constructed": 348,
+  "worst": 1.204239455426987e-16,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    32
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    112
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    80
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one global rotation of the stream, O(d-1)",
+    21
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 15.2
+ },
+ "LayerNorm|2|2|noskip": {
+  "P": 1768,
+  "rank": 1336,
+  "gap": 19625021.73606442,
+  "constructed": 432,
+  "worst": 9.997462104753474e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    32
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    112
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    80
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one rotation of the stream per hidden state, O(d-1)",
+    105
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 14.6
+ },
+ "LayerNorm|2|2|skip": {
+  "P": 1768,
+  "rank": 1420,
+  "gap": 544925990.8835312,
+  "constructed": 348,
+  "worst": 1.0440384572766289e-16,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    32
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    112
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    80
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one global rotation of the stream, O(d-1)",
+    21
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 15.3
+ },
+ "LayerNorm|2|3|noskip": {
+  "P": 1768,
+  "rank": 1336,
+  "gap": 74698167.89521706,
+  "constructed": 432,
+  "worst": 1.6966221663134734e-16,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    32
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    112
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    80
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one rotation of the stream per hidden state, O(d-1)",
+    105
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 14.5
+ },
+ "LayerNorm|2|3|skip": {
+  "P": 1768,
+  "rank": 1420,
+  "gap": 1009746087.6499274,
+  "constructed": 348,
+  "worst": 9.134052365554844e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "LayerNorm: gain (and bias) absorbed",
+    32
+   ],
+   [
+    "LayerNorm: zero mean seen by the next matrix",
+    112
+   ],
+   [
+    "LayerNorm: mean of what each block writes",
+    80
+   ],
+   [
+    "embeddings: mean of token and position rows",
+    16
+   ],
+   [
+    "final LayerNorm with lm_head",
+    16
+   ],
+   [
+    "one global rotation of the stream, O(d-1)",
+    21
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    7
+   ]
+  ],
+  "seconds": 15.9
+ },
+ "LayerNorm|3|0|noskip": {
+  "P": 2552,
+  "rank": 1934,
+  "gap": 8609348.714579824,
+  "seconds": 40.8
+ },
+ "LayerNorm|3|0|skip": {
+  "P": 2552,
+  "rank": 2060,
+  "gap": 156688936.53033325,
+  "seconds": 41.7
+ },
+ "LayerNorm|3|1|noskip": {
+  "P": 2552,
+  "rank": 1934,
+  "gap": 8553083.210192917,
+  "seconds": 44.0
+ },
+ "LayerNorm|3|1|skip": {
+  "P": 2552,
+  "rank": 2060,
+  "gap": 450439827.8025358,
+  "seconds": 41.7
+ },
+ "LayerNorm|3|2|noskip": {
+  "P": 2552,
+  "rank": 1934,
+  "gap": 2187498.280140471,
+  "seconds": 41.3
+ },
+ "LayerNorm|3|2|skip": {
+  "P": 2552,
+  "rank": 2060,
+  "gap": 393731904.0336123,
+  "seconds": 41.4
+ },
+ "LayerNorm|3|3|noskip": {
+  "P": 2552,
+  "rank": 1934,
+  "gap": 3149220.5303610144,
+  "seconds": 39.1
+ },
+ "LayerNorm|3|3|skip": {
+  "P": 2552,
+  "rank": 2060,
+  "gap": 1031341303.3864689,
+  "seconds": 37.3
+ },
+ "LayerNorm|4|0|noskip": {
+  "P": 3336,
+  "rank": 2532,
+  "gap": 338079.1558086539,
+  "seconds": 94.9
+ },
+ "LayerNorm|4|0|skip": {
+  "P": 3336,
+  "rank": 2700,
+  "gap": 134322239.9249033,
+  "seconds": 90.5
+ },
+ "LayerNorm|4|1|noskip": {
+  "P": 3336,
+  "rank": 2532,
+  "gap": 869925.1384291698,
+  "seconds": 96.2
+ },
+ "LayerNorm|4|1|skip": {
+  "P": 3336,
+  "rank": 2700,
+  "gap": 252160719.06664824,
+  "seconds": 94.1
+ },
+ "LayerNorm|4|2|noskip": {
+  "P": 3336,
+  "rank": 2532,
+  "gap": 258257.35607616237,
+  "seconds": 90.2
+ },
+ "LayerNorm|4|2|skip": {
+  "P": 3336,
+  "rank": 2700,
+  "gap": 427808802.04735184,
+  "seconds": 93.3
+ },
+ "LayerNorm|4|3|noskip": {
+  "P": 3336,
+  "rank": 2532,
+  "gap": 170403.37243214712,
+  "seconds": 94.4
+ },
+ "LayerNorm|4|3|skip": {
+  "P": 3336,
+  "rank": 2700,
+  "gap": 1012686509.9696691,
+  "seconds": 98.2
+ },
+ "no normalization|1|0|noskip": {
+  "P": 960,
+  "rank": 728,
+  "gap": 119800035191.52724,
+  "constructed": 232,
+  "worst": 7.506527665211426e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "one basis change of the stream per hidden state, GL(d)",
+    192
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 2.0
+ },
+ "no normalization|1|0|skip": {
+  "P": 960,
+  "rank": 856,
+  "gap": 331290603981.3253,
+  "constructed": 104,
+  "worst": 7.70801236549216e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "one global basis change of the stream, GL(d)",
+    64
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 2.0
+ },
+ "no normalization|1|1|noskip": {
+  "P": 960,
+  "rank": 728,
+  "gap": 5429689073697.069,
+  "constructed": 232,
+  "worst": 7.079659688980757e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "one basis change of the stream per hidden state, GL(d)",
+    192
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 2.0
+ },
+ "no normalization|1|1|skip": {
+  "P": 960,
+  "rank": 856,
+  "gap": 4190931970956.4517,
+  "constructed": 104,
+  "worst": 1.7578336110414049e-16,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "one global basis change of the stream, GL(d)",
+    64
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 1.9
+ },
+ "no normalization|1|2|noskip": {
+  "P": 960,
+  "rank": 728,
+  "gap": 3076612154230.1074,
+  "constructed": 232,
+  "worst": 6.918406093608363e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "one basis change of the stream per hidden state, GL(d)",
+    192
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 1.9
+ },
+ "no normalization|1|2|skip": {
+  "P": 960,
+  "rank": 856,
+  "gap": 7105836737856.39,
+  "constructed": 104,
+  "worst": 8.220020677965988e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "one global basis change of the stream, GL(d)",
+    64
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 1.7
+ },
+ "no normalization|1|3|noskip": {
+  "P": 960,
+  "rank": 728,
+  "gap": 562012456630.6924,
+  "constructed": 232,
+  "worst": 6.835094799461196e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "one basis change of the stream per hidden state, GL(d)",
+    192
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 1.9
+ },
+ "no normalization|1|3|skip": {
+  "P": 960,
+  "rank": 856,
+  "gap": 875502297752.5331,
+  "constructed": 104,
+  "worst": 7.99807483760755e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    16
+   ],
+   [
+    "attention: value/output basis per head",
+    16
+   ],
+   [
+    "one global basis change of the stream, GL(d)",
+    64
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 1.9
+ },
+ "no normalization|2|0|noskip": {
+  "P": 1728,
+  "rank": 1336,
+  "gap": 28304527955.176704,
+  "constructed": 392,
+  "worst": 6.047898728516676e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "one basis change of the stream per hidden state, GL(d)",
+    320
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 13.0
+ },
+ "no normalization|2|0|skip": {
+  "P": 1728,
+  "rank": 1592,
+  "gap": 2988314256473.769,
+  "constructed": 136,
+  "worst": 1.1845719706979541e-16,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "one global basis change of the stream, GL(d)",
+    64
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 14.8
+ },
+ "no normalization|2|1|noskip": {
+  "P": 1728,
+  "rank": 1336,
+  "gap": 150898488769.1742,
+  "constructed": 392,
+  "worst": 6.213748920023787e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "one basis change of the stream per hidden state, GL(d)",
+    320
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 12.6
+ },
+ "no normalization|2|1|skip": {
+  "P": 1728,
+  "rank": 1592,
+  "gap": 1432318824118.0215,
+  "constructed": 136,
+  "worst": 1.6164504561361822e-16,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "one global basis change of the stream, GL(d)",
+    64
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 13.6
+ },
+ "no normalization|2|2|noskip": {
+  "P": 1728,
+  "rank": 1336,
+  "gap": 22516870608.007027,
+  "constructed": 392,
+  "worst": 9.432680154960881e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "one basis change of the stream per hidden state, GL(d)",
+    320
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 12.0
+ },
+ "no normalization|2|2|skip": {
+  "P": 1728,
+  "rank": 1592,
+  "gap": 1353728951215.5896,
+  "constructed": 136,
+  "worst": 1.2314981632352575e-16,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "one global basis change of the stream, GL(d)",
+    64
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 14.1
+ },
+ "no normalization|2|3|noskip": {
+  "P": 1728,
+  "rank": 1336,
+  "gap": 35792083347.2852,
+  "constructed": 392,
+  "worst": 5.982020694371101e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "one basis change of the stream per hidden state, GL(d)",
+    320
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 12.7
+ },
+ "no normalization|2|3|skip": {
+  "P": 1728,
+  "rank": 1592,
+  "gap": 459759860400.10266,
+  "constructed": 136,
+  "worst": 9.293389175524024e-17,
+  "groups": [
+   [
+    "attention: query/key basis per head",
+    32
+   ],
+   [
+    "attention: value/output basis per head",
+    32
+   ],
+   [
+    "one global basis change of the stream, GL(d)",
+    64
+   ],
+   [
+    "embeddings: vector moved between token and position rows",
+    8
+   ]
+  ],
+  "seconds": 14.2
+ },
+ "no normalization|3|0|noskip": {
+  "P": 2496,
+  "rank": 1944,
+  "gap": 1562540553.821767,
+  "seconds": 39.7
+ },
+ "no normalization|3|0|skip": {
+  "P": 2496,
+  "rank": 2328,
+  "gap": 242643748490.1495,
+  "seconds": 39.9
+ },
+ "no normalization|3|1|noskip": {
+  "P": 2496,
+  "rank": 1944,
+  "gap": 1006150129.9370278,
+  "seconds": 35.9
+ },
+ "no normalization|3|1|skip": {
+  "P": 2496,
+  "rank": 2328,
+  "gap": 844108927842.51,
+  "seconds": 36.8
+ },
+ "no normalization|3|2|noskip": {
+  "P": 2496,
+  "rank": 1944,
+  "gap": 956909698.6708293,
+  "seconds": 35.7
+ },
+ "no normalization|3|2|skip": {
+  "P": 2496,
+  "rank": 2328,
+  "gap": 748625738949.5441,
+  "seconds": 33.9
+ },
+ "no normalization|3|3|noskip": {
+  "P": 2496,
+  "rank": 1944,
+  "gap": 287940680.1579783,
+  "seconds": 41.1
+ },
+ "no normalization|3|3|skip": {
+  "P": 2496,
+  "rank": 2328,
+  "gap": 248396863218.4223,
+  "seconds": 39.8
+ },
+ "no normalization|4|0|noskip": {
+  "P": 3264,
+  "rank": 2552,
+  "gap": 3791086.9829564886,
+  "seconds": 81.9
+ },
+ "no normalization|4|0|skip": {
+  "P": 3264,
+  "rank": 3064,
+  "gap": 121390833159.98674,
+  "seconds": 85.1
+ },
+ "no normalization|4|1|noskip": {
+  "P": 3264,
+  "rank": 2552,
+  "gap": 1822711.759311527,
+  "seconds": 78.2
+ },
+ "no normalization|4|1|skip": {
+  "P": 3264,
+  "rank": 3064,
+  "gap": 80639274053.68993,
+  "seconds": 85.3
+ },
+ "no normalization|4|2|noskip": {
+  "P": 3264,
+  "rank": 2552,
+  "gap": 18282325.229931112,
+  "seconds": 83.2
+ },
+ "no normalization|4|2|skip": {
+  "P": 3264,
+  "rank": 3064,
+  "gap": 200357278272.29526,
+  "seconds": 83.3
+ },
+ "no normalization|4|3|noskip": {
+  "P": 3264,
+  "rank": 2552,
+  "gap": 2134541.252150378,
+  "seconds": 80.5
+ },
+ "no normalization|4|3|skip": {
+  "P": 3264,
+  "rank": 3064,
+  "gap": 29756237692.341465,
+  "seconds": 86.5
+ }
+}

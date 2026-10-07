@@ -1,0 +1,27 @@
+[project]
+name = "skip-connections-gauge-fixes-experiments"
+version = "1.0.0"
+description = "Experiments and figures of 'A Note on Residual Networks: Skip Connections are Gauge Fixes'"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "numpy==2.4.4",
+    "scipy==1.17.1",
+    "matplotlib==3.10.9",
+    "torch==2.14.0",
+    "ipykernel",
+    "nbconvert",
+    "jupyterlab",
+]
+
+[tool.uv]
+package = false
+
+# CPU-only PyTorch on Linux and Windows; macOS wheels from PyPI are CPU-only already.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform != 'darwin'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

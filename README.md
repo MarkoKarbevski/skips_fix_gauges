@@ -1,6 +1,6 @@
-# Skip Connections are Gauge Fixes repo
+# Skip Connections are Gauge Fixes: experiments
 
-Code and data for the note **A Note on Residual Networks: Skip Connections are Gauge Fixes** or its earlier version **A Note on Residual Networks: Skip Connections Collapse O(Ld^2) Gauge Degrees of Freedom**
+Code and data for the note **A Note on Residual Networks: Skip Connections are Gauge Fixes**, by Marko Karbevski.
 
 The note shows that a skip connection is a gauge fix. Give each block of a network `d_model` identity units, read and written by trainable matrices. Spending the changes of basis at the linear junctions between blocks turns them into identity skips. A residual network keeps a single change of basis for all its hidden states, while the skipless network with the same parameters keeps one per hidden state. The skips of `L` blocks therefore remove `L d_model²` dimensions of symmetry, and `L d_model (d_model − 1) / 2` under RMSNorm.
 
