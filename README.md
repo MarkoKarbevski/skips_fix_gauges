@@ -1,4 +1,4 @@
-# Skip Connections are Gauge Fixes: experiments
+# Skip Connections are Gauge Fixes repo
 
 Code and data for the note **A Note on Residual Networks: Skip Connections are Gauge Fixes** or its earlier version **A Note on Residual Networks: Skip Connections Collapse O(Ld^2) Gauge Degrees of Freedom**
 
