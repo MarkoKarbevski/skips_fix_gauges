@@ -37,16 +37,16 @@ With pip:
     pip install -r requirements.txt
     jupyter lab experiments.ipynb
 
-From the saved data, the whole notebook runs in about 7 minutes on two CPU cores. Rerunning the two long experiments as well takes about 70 minutes.
+From the saved data, the whole notebook runs in about 7 minutes on two CPU cores. Rerunning the two long experiments as well takes about 75 minutes.
 
 ## Saved data
 
 The two long experiments save what their figure and table need in `data/`:
 
-- `spectra.npz`, for Figure 2: for every activation, with and without skips and without skips with hidden units added, without normalization and under pre-RMSNorm, the base-10 logarithms of the median, smallest and largest singular value at every index over 20 draws, in single precision, and the rank and gap of every draw.
+- `spectra.npz`, for Figure 2: for every activation, with and without skips and without skips with hidden units added, without normalization and under pre-RMSNorm with ε = 10⁻⁵ (the figure of the note) and ε = 10⁻², the base-10 logarithms of the median, smallest and largest singular value at every index over 20 draws, in single precision, and the rank and gap of every draw; and the ranks and gaps of the further checks of Section 10, such as the ReGLU networks with ε = 10⁻¹².
 - `nanogpt.json`, for Table 6: for every nanoGPT network (normalization, number of layers, draw, with or without skips), the number of parameters, the rank of the Jacobian and the gap at which it is read, and, for one and two layers, the rank of the constructed symmetry directions and their largest residual.
 
-With `RECOMPUTE = False`, the default in the setup cell, Sections 10 and 13 draw Figure 2 and Table 6 from these files in seconds, computing only what a file lacks. With `RECOMPUTE = True`, or when a file is missing, they rerun the experiments and save the files again. Figure 2 is written to `figs/spectra.pdf`.
+With `RECOMPUTE = False`, the default in the setup cell, Sections 10 and 13 draw Figure 2 and Table 6 from these files in seconds, computing only what a file lacks. With `RECOMPUTE = True`, or when a file is missing, they rerun the experiments and save the files again. Figure 2 is written to `figs/spectra.pdf`, and the same figure with ε = 10⁻² to `figs/spectra_eps1e-2.pdf`.
 
 ## Notebook sections
 
@@ -61,7 +61,7 @@ With `RECOMPUTE = False`, the default in the setup cell, Sections 10 and 13 draw
 | 7. The symmetry group of a transformer is not a product | Section 5.2, Appendix C, Table 3 | under 1 s |
 | 8. Counts at model scale | Table 4, Section 5.1, Appendix D | under 1 s |
 | 9. One block | Section 6.1, Theorem 13, Appendix B | 44 s |
-| 10. Figure 2 | Section 6.2, Figure 2 | 25 min, or under 1 s from `data/` |
+| 10. Figure 2 | Section 6.2, Figure 2, Appendix E | 28 min, or a few seconds from `data/` |
 | 11. Exact Jacobians | Table 5, Appendix E | 4 min |
 | 12. Certificates modulo a prime | Table 5 | 19 s |
 | 13. nanoGPT | Section 6.2, Table 6, Appendix E | 38 min, or under 1 s from `data/` |
