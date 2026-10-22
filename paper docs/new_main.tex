@@ -99,7 +99,7 @@
 Skip connections are a building block of almost every deep network trained today \citep{he2016resnet}. The rationale behind the choice in deployed models is stated to be optimization and signal propagation: they make deep networks easier to train \citep{he2016resnet,balduzzi2017shattered,orhan2018skip,macdonald2023skip}.
 
 
-On the representational side \cite{lin2018resnet} show that deep single-neuron residual networks are $L^1$ universal approximators. The result is however limited to the narrow regime with respect to the hidden layers.
+On the representational side \cite{lin2018resnet} show that deep single-neuron residual networks are $L^1$ universal approximators. The result is however limited to the narrow regime with respect to the hidden layers and requires biases, which are excluded in many modern LLMs \citep{-cite other llms that ignore biases as well, preferably 2025, 2026 and without MLE-, karpathy2023nanogpt} (see \ref{app:math-details - to be filled in as a concise appendix (sub)section} for more details).
 
 
 \subsection{Related work}
