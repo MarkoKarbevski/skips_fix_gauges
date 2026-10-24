@@ -98,6 +98,34 @@
 
 Skip connections are a building block of almost every deep network trained today \citep{he2016resnet}. The rationale behind the choice in deployed models is stated to be optimization and signal propagation: they make deep networks easier to train \citep{he2016resnet,balduzzi2017shattered,orhan2018skip,macdonald2023skip}.
 
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{figs/spectra_gelu.pdf}
+\caption{Singular values of the Jacobian of the parameter-to-output map, with and without skips at the same weights ($L = 3$ GELU blocks, $\dm = 4$; median and range over $20$ draws). The skips add $L\dm^2$ to its rank, the functional dimension, and $L\dm(\dm-1)/2$ under RMSNorm. Details in \cref{fig:spectra}.}
+\label{fig:gelu}
+\end{figure}
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+& & & \multicolumn{2}{c|}{$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$} \\
+\cline{4-5}
+\textbf{Block} & $\mathcal S \subseteq \overline{\mathcal R}$ & $\mathcal S \cap \mathcal R$ & one block & $L$ blocks \\
+\hline
+Attention & \checkmark & $\emptyset$ & $\dm^2$ & $L\dm^2$ in nanoGPT \\
+ReLU, GELU & \checkmark & measure zero & $\dm^2$ & $L\dm^2$ for GELU \\
+ReLU$^2$, ReGLU, $\tanh$ & \checkmark & $\emptyset$ & $\dm^2$ & $L\dm^2$ \\
+SwiGLU, GeGLU & \checkmark & $\emptyset$ & -- & $L\dm^2$ \\
+\hline
+\textbf{Section} & \ref{sec:limits} & \ref{sec:oneblock} & \ref{sec:onelayer} & \ref{sec:measured} \\
+\hline
+\end{tabular}
+\caption{Without skips ($\mathcal S$) and with them ($\mathcal R$), without biases or normalization. $\mathcal S \cap \mathcal R$ compares single blocks: $\emptyset$ at any width, measure zero at equal width. One block: proved; $L$ blocks: measured; -- = open.}
+\label{tab:overview}
+\end{table}
+
 Recent skipless models challenge their practical necessity. \citet{ji2026cutting} remove every skip from a ViT-B, a vision transformer \citep{dosovitskiy2021an}, and train it from scratch on ImageNet-1k \citep{russakovsky2015imagenet}, outperforming the original model in terms of top-1 accuracy. In language modeling, \citet{he2023shortcuts, he2024simplifying} manage to train transformer variants without skips and/or normalization.
 
 % remove the skips of the attention blocks of a transformer, keep those of its MLP blocks, and fix the value and output-projection matrices of its attention blocks to the identity, which makes the loss fall faster per training step; once the attention skips are restored, the same change makes it fall slightly slower, for which they have no satisfying explanation. \citet{graef2024tricks} merges the query and output-projection matrices of every layer of a transformer with neither skips nor normalization into the neighboring weight matrices, which leaves its function unchanged and would remove $15$ percent of the weights of a skipless version of Mistral-7B. These merges are exact only without normalization, and \citet{he2024simplifying} fix the matrices before training; neither work says how much can be removed exactly when the network normalizes its hidden states.
@@ -324,7 +352,45 @@ Let $M \neq 0$ be a $\dm \times \dm$ matrix and $B$ a vanilla or GLU MLP block w
 \end{restatable}
 \proofin{app:absorb}
 
-Here $\Wread[{:},S]$ and $\Wwrite[S,{:}]$ keep the columns and the rows of the units in $S$. Parts (a), (b) and (d) compare how the two sides scale along rays from the origin. In part (c) the even part of the activation matches the hidden units of the two blocks up to sign and scale, and its odd part, $z/2$, turns a sign flip into a linear term, as \citet[Section~3]{petzka2020symmetries} show for two-layer ReLU networks with one output. So a residual block is not a block of the same kind and width without a skip, and the identity units of a mixed block are determined by its function: if two mixed blocks of the same kind and width compute the same function, the difference $M$ of their merged matrices satisfies $xM + B(x) = B'(x)$, so $M = 0$ in cases (a) and (b), and one of finitely many matrices in case (c). The merge of \cref{prop:junction}(a) is thus the only continuous symmetry that the identity units add, and the gauge fix of \cref{thm:gauge} is well defined. In part (e), two units with opposite reads add a rank-one linear term, and the matching of part (c) shows that every extra unit adds at most one.
+Here $\Wread[{:},S]$ and $\Wwrite[S,{:}]$ keep the columns and the rows of the units in $S$. Parts (a), (b) and (d) compare how the two sides scale along rays from the origin. In part (c) the even part of the activation matches the hidden units of the two blocks up to sign and scale, and its odd part, $z/2$, turns a sign flip into a linear term, as \citet[Section~3]{petzka2020symmetries} show for two-layer ReLU networks with one output. So a residual block is not a block of the same kind and width without a skip, and the identity units of a mixed block are determined by its function: if two mixed blocks of the same kind and width compute the same function, the difference $M$ of their merged matrices satisfies $xM + B(x) = B'(x)$, so $M = 0$ in cases (a) and (b), and one of finitely many matrices in case (c). The merge of \cref{prop:junction}(a) is thus the only continuous symmetry that the identity units add, and the gauge fix of \cref{thm:gauge} is well defined. In part (e), two units with opposite reads add a rank-one linear term, and the matching of part (c) shows that every extra unit adds at most one. With a bounded activation, such as $\tanh$, no block of any width absorbs a skip: both blocks are bounded, and $xM$ is not.
+
+\para{Attention.} Attention mixes tokens; a skip keeps each token where it is. Two inputs make this precise. If all tokens are equal, mixing changes nothing, so the heads must reproduce the skip. If one token is zero, its query is zero, so attention gives it an equal mix of all tokens. The skip gives it zero.
+
+An \emph{attention block} with $H$ heads maps $h \in \R^{T\times\dm}$, whose rows are the $T \ge 2$ tokens, to
+\begin{equation}\label{eq:attn}
+B(h) = \sum_{i=1}^{H} P_i(h)\, h\, W_{V,i} W_{O,i}, \qquad P_i(h) = \mathrm{softmax}\big(h\, W_{Q,i} W_{K,i}^\top h^\top/\sqrt{d_h}\big),
+\end{equation}
+with $W_{Q,i}, W_{K,i}, W_{V,i} \in \R^{\dm\times d_h}$ and $W_{O,i} \in \R^{d_h\times\dm}$, and no biases. The softmax acts on each row of the $T\times T$ matrix of scores, with or without a causal mask, so each row of $P_i(h)$ is a probability vector.
+
+\begin{restatable}[No absorption in attention]{proposition}{propAttention}\label{prop:attention}
+Let $T \ge 2$, let $B$ be an attention block as in \cref{eq:attn}, and $B'$ a second one with $H'$ heads of any width $d_h'$,
+\[
+B'(h) = \sum_{j=1}^{H'} P_j'(h)\, h\, W_{V,j}' W_{O,j}', \qquad P_j'(h) = \mathrm{softmax}\big(h\, W_{Q,j}' W_{K,j}'^\top h^\top/\sqrt{d_h'}\big).
+\]
+Let $M \neq 0$ be a $\dm\times\dm$ matrix, and set $F(h) = hM + B(h) - B'(h)$.\\
+\textup{(a)} $F(h) \neq 0$ for almost every $h \in \R^{T\times\dm}$.\\
+\textup{(b)} Some $h$ whose rows have norm at most $1$ has a row of $F(h)$ of norm at least $\norm{M}/3$, where $\norm{M}$ is the spectral norm. For the identity skip, $M = I$, this is $1/3$.
+\end{restatable}
+\proofin{app:attention}
+
+The proof uses only that each row of attention weights sums to $1$ and is uniform for a zero query, so it also holds with rotary position embeddings. Adding heads does not help, whereas $\dm$ more ReLU or GELU units absorb the skip of an MLP block (\cref{thm:noabsorb}(e)).
+
+\para{The softmaxes must match.} With three or more tokens there is a sharper reason why a skip cannot be absorbed: the heads of $B$ and $B'$ must cancel each other exactly, and then nothing is left to produce $hM$. What tells heads apart is where their softmaxes have poles in the complex plane.
+
+\begin{restatable}[Attention heads are identifiable]{lemma}{lemHeads}\label{lem:heads}
+Let $T \ge 3$. Let $\Gamma_1, \dots, \Gamma_m \in \R^{\dm\times\dm}$ be distinct, let $C_1, \dots, C_m, M \in \R^{\dm\times\dm}$, and write $P_\Gamma(h) = \mathrm{softmax}(h\Gamma h^\top)$, with the softmax taken row by row. If
+\[
+hM + \sum_{k=1}^{m} P_{\Gamma_k}(h)\, h\, C_k = 0
+\]
+for all $h$ in a nonempty open subset of $\R^{T\times\dm}$, then $M = 0$ and $C_1 = \dots = C_m = 0$.
+\end{restatable}
+
+\begin{restatable}[The softmaxes must match]{corollary}{corMatch}\label{cor:match}
+Let $T \ge 3$, let $B$ and $B'$ be attention blocks as in \cref{prop:attention}, and suppose that $hM + B(h) = B'(h)$ for all $h$ in a nonempty open set. Then $M = 0$. Moreover, for every score matrix $\Gamma$, the heads of $B$ with $W_{Q,i}W_{K,i}^\top/\sqrt{d_h} = \Gamma$ and the heads of $B'$ with $W_{Q,j}'W_{K,j}'^\top/\sqrt{d_h'} = \Gamma$ have the same sum of value--output products.
+\end{restatable}
+\proofin{app:attention}
+
+With two tokens the lemma fails. The softmax of two scores is the logistic function $1/(1 + e^{-z})$ of their difference $z$, and $1/(1 + e^{-z}) + 1/(1 + e^{z}) = 1$ gives $P_\Gamma(h)h + P_{-\Gamma}(h)h = 2P_0(h)h$: two heads with opposite score matrices add up to a uniform head. A skip still cannot be absorbed when $T = 2$ (\cref{prop:attention}). With a causal mask, the same proof runs on the last row, which attends to all tokens.
 
 % ===== sections/norm.tex =====
 \section{Under normalization: triangular skips}\label{sec:norm}
@@ -741,6 +807,64 @@ Let $\sigma$ be ReLU or GELU, $\dm \ge 2$ and $M \in \R^{\dm\times\dm}$ invertib
 Every class of a column $w_i$ contains some $w'_j$, since $P_u \neq 0$, and every mixed class contains at least two, so $m' \ge m$ plus the number of mixed classes. If $m' < m + \dm$, the right side has rank less than $\dm$, so the left side is singular, which the weights exclude.
 \end{proof}
 
+\subsection{No absorption in attention\texorpdfstring{ (Proposition~\ref*{prop:attention}, Lemma~\ref*{lem:heads}, Corollary~\ref*{cor:match})}{}}\label{app:attention}
+
+We recall \cref{prop:attention} from \cref{sec:oneblock}.
+\propAttention*
+
+\para{Overview.} Two kinds of input suffice. If all tokens are equal, attention returns them unchanged, so the value--output products of all heads must add up to $M$. If one token is zero, all its scores are zero, so every head gives it the average of the tokens, while the skip gives it zero; this asks the same sum to vanish. Part (b) makes the conflict quantitative, and analyticity turns it into part (a).
+
+\begin{proof}[Proof of Proposition~\ref{prop:attention}]
+The difference $B'(h) - B(h)$ is one attention block with $H + H'$ heads,
+\[
+B'(h) - B(h) = \sum_{k=1}^{H+H'} R_k(h)\, h\, C_k,
+\]
+where the $R_k(h)$ are the $P_j'(h)$ and the $P_i(h)$, and the $C_k$ are the $W_{V,j}'W_{O,j}'$ and the $-W_{V,i}W_{O,i}$. Let $C = \sum_k C_k$.
+
+\emph{Step 1: equal tokens.} Let every row of $h$ be $x$. Each row of $R_k(h)$ sums to $1$, so every row of $R_k(h)h$ is $x$. Hence every row of $F(h)$ is $x(M - C)$.
+
+\emph{Step 2: one zero token.} Let the last row of $h$ be $0$ and the other rows $y$. Every score in the last row of $R_k(h)$ is a product with the last row of $h$, which is $0$. So that row of $R_k(h)$ is $(1/T, \dots, 1/T)$, also with a causal mask, since the last token sees all $T$ tokens. Hence the last row of $F(h)$ is $-\frac{T-1}{T}\,yC$.
+
+\emph{Proof of (b).} Over $\norm{x}, \norm{y} \le 1$, Step 1 gives rows of norm up to $\norm{M - C}$, and Step 2 up to $\frac{T-1}{T}\norm{C} \ge \frac12\norm{C}$. If $\norm{M - C} < \norm{M}/3$, then $\norm{C} > \frac23\norm{M}$, so Step 2 reaches more than $\norm{M}/3$.
+
+\emph{Proof of (a).} $F$ is real-analytic, because the softmax is, and by (b) some entry of $F$ is not identically zero. The zeros of a real-analytic function that is not identically zero form a set of measure zero: in one variable they are isolated, and the general case follows by induction on the dimension with Fubini's theorem.
+\end{proof}
+
+We recall \cref{lem:heads} and \cref{cor:match} from \cref{sec:oneblock}.
+\lemHeads*
+
+\para{Overview.} Move one token along a complex line. Each head becomes a meromorphic function of one complex variable, whose poles lie on a vertical line that its score matrix determines, so heads with distinct score matrices have disjoint poles. At a pole of one head the other terms are regular, so its residue must vanish, and the residues force its value--output product to vanish. What is left is the skip and a uniform head, which two simple inputs separate.
+
+\begin{proof}[Proof of Lemma~\ref{lem:heads}]
+\emph{One moving token.} Fix $h$ in the open set, with rows $x_1, \dots, x_T$, and fix $v \in \R^{1\times\dm}$. Replace the second row by $x_2 + tv$ with $t \in \mathbb{C}$, and look at the first row. For a head with score matrix $\Gamma$, the first row has scores $z_r = x_1\Gamma x_r^\top$ for $r \neq 2$, and $a + bt$ for $r = 2$, where $a = x_1\Gamma x_2^\top$ and $b = x_1\Gamma v^\top$. Its output is
+\[
+g_\Gamma(t) = \frac{e^{a+bt}\,(x_2 + tv) + Z\bar x}{e^{a+bt} + Z}, \qquad Z = \sum_{r\neq 2} e^{z_r}, \qquad \bar x = \frac1Z\sum_{r\neq 2} e^{z_r}x_r,
+\]
+where $\bar x$ is the average of the other tokens under the weights of the head. The first row of $hM$ is $x_1M$, which does not depend on $t$.
+
+\emph{Poles.} If $b \neq 0$, then $g_\Gamma$ is meromorphic on $\mathbb{C}$, with simple poles at
+\[
+t_n = c + \frac{(2n+1)\pi i}{b}, \quad n \in \mathbb{Z}, \qquad\text{where } c = \frac{\log Z - a}{b},
+\]
+so all its poles lie on the vertical line $\operatorname{Re} t = c$. The residue at $t_n$ is $(x_2 + t_nv - \bar x)/b$. If $\Gamma = 0$, then $g_\Gamma$ is affine in $t$ and has no poles.
+
+\emph{The poles tell the heads apart.} For $h$ and $v$ outside a closed set with empty interior, $b \neq 0$ for every $\Gamma_k \neq 0$, and distinct $\Gamma_k \neq 0$ give distinct lines $\operatorname{Re} t = c$. The first condition fails only on the zero sets of nonzero polynomials. For the second, suppose that two heads $\Gamma \neq \Gamma'$ have $c = c'$ for all $h$ and $v$ near some point. Clearing denominators and comparing the terms bilinear in $(x_2, v)$ gives $x_1\Gamma' = \lambda\, x_1\Gamma$ for some number $\lambda \neq 0$. Comparing the terms linear in $v$ then gives $\log Z' = \lambda \log Z$, that is,
+\[
+\log \sum_{r\neq 2} e^{\lambda z_r} \;=\; \lambda \log \sum_{r\neq 2} e^{z_r}.
+\]
+Because $T \ge 3$, the sum has at least two terms, $r = 1$ and $r = 3$, and $z_3$ varies with $x_3$. Differentiating in $z_3$ gives $\mathrm{softmax}(\lambda z)_3 = \mathrm{softmax}(z)_3$ on an interval of $z_3$, which forces $\lambda = 1$. So $x_1\Gamma' = x_1\Gamma$ for all $x_1$ near a point, and $\Gamma' = \Gamma$, a contradiction. With two tokens the sum has the single term $r = 1$, and this step fails (\cref{sec:oneblock}).
+
+\emph{Residues.} The identity holds for real $t$ near $0$, so by analytic continuation it holds on all of $\mathbb{C}$ away from the poles. At a pole $t_n$ of a head $\Gamma_k \neq 0$, no other term is singular, so the residue times $C_k$ vanishes: $(x_2 + t_nv - \bar x)\, C_k = 0$ for every $n \in \mathbb{Z}$. Subtracting two consecutive ones gives $vC_k = 0$. This holds for all $v$ in an open set, so $C_k = 0$.
+
+\emph{The skip.} What remains is $hM + P_0(h)\,h\,C_0 = 0$, where $C_0$ is the coefficient of $\Gamma = 0$ (or $0$ if no $\Gamma_k$ vanishes). This is linear in $h$, so it holds for all $h$. Take the first row of $h$ equal to $x$ and the other rows $0$: the first two rows give $x(M + C_0/T) = 0$ and $xC_0/T = 0$. So $C_0 = 0$ and $M = 0$.
+\end{proof}
+
+\corMatch*
+
+\begin{proof}[Proof of Corollary~\ref{cor:match}]
+Group the heads of $B' - B$ by score matrix, add their value--output products ($W_{V,j}'W_{O,j}'$ for $B'$, $-W_{V,i}W_{O,i}$ for $B$), and apply \cref{lem:heads}.
+\end{proof}
+
 \subsection{One free block per hidden state\texorpdfstring{ (Proposition~\ref*{prop:normalform})}{}}\label{app:prf-normalform}
 
 We recall \cref{prop:normalform} from \cref{sec:skipless}.
@@ -1117,7 +1241,7 @@ Section of the notebook & What it reproduces & Time \\
 7. The symmetry group of a transformer is not a product & \cref{tab:product} & under 1 s \\
 8. Counts at model scale & \cref{tab:scale} & under 1 s \\
 9. One block & \cref{thm:onelayer}, for MLP and attention blocks & 44 s \\
-10. \Cref{fig:spectra} & \cref{fig:spectra} and the checks of its networks & 28 min \\
+10. \Cref{fig:spectra} & \cref{fig:spectra,fig:gelu} and the checks of their networks & 28 min \\
 11. Exact Jacobians & the rows at $\dm = 16$, the transformers and the embedding table of \cref{tab:checks} & 4 min \\
 12. Certificates modulo a prime & the certificates of \cref{tab:checks} & 19 s \\
 13. nanoGPT & \cref{tab:nanogpt} and the constructed symmetries & 38 min \\
