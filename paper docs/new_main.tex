@@ -110,23 +110,44 @@ Skip connections are a building block of almost every deep network trained today
 \renewcommand{\arraystretch}{1.15}
 \setlength{\tabcolsep}{3.5pt}
 \newcommand{\cell}[1]{\begin{tabular}[c]{@{}c@{}}#1\end{tabular}}
-\makebox[\linewidth][c]{\begin{tabular}{|c|l|c|c|c|c|c|}
+\makebox[\linewidth][c]{\begin{tabular}{|l|c|c|c|c|c|c|}
 \hline
-\textbf{Type} & \textbf{Result} & \textbf{Section} & \textbf{Attention} & \textbf{ReLU, GELU} & \cell{\textbf{ReLU$^2$, ReGLU,}\\ $\boldsymbol{\tanh}$} & \cell{\textbf{SwiGLU,}\\ \textbf{GeGLU}} \\
+\textbf{Proved} & \textbf{Depth} & \textbf{Section} & \textbf{Attention} & \textbf{ReLU, GELU} & \cell{\textbf{ReLU$^2$, ReGLU,}\\ $\boldsymbol{\tanh}$} & \cell{\textbf{SwiGLU,}\\ \textbf{GeGLU}} \\
 \hline
-& $\mathcal S \subseteq \overline{\mathcal R}$ & \ref{sec:limits} & \checkmark & \checkmark & \checkmark & \checkmark \\
-\cline{2-7}
-& $\mathcal S \cap \mathcal R$ & \ref{sec:oneblock} & $\emptyset$ & measure zero & $\emptyset$ & $\emptyset$ \\
-\cline{2-7}
-\raisebox{0.6\normalbaselineskip}[0pt][0pt]{Proved} & symmetries removed by the skips & \ref{sec:count} & $L\dm^2$ & $L\dm^2$ & $L\dm^2$ & $L\dm^2$ \\
-\cline{2-7}
-& $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$, one block & \ref{sec:onelayer} & $\dm^2$ & $\dm^2$ & $\dm^2$ & -- \\
+$\mathcal S \subseteq \overline{\mathcal R}$ & any & \ref{sec:limits} & \checkmark & \checkmark & \checkmark & \checkmark \\
 \hline
-Measured & $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$, $L$ blocks & \ref{sec:measured} & \cell{$L\dm^2$\\ in nanoGPT} & \cell{$L\dm^2$\\ for GELU} & $L\dm^2$ & $L\dm^2$ \\
+$\mathcal S \cap \mathcal R$ & one block & \ref{sec:oneblock} & $\emptyset$ & measure zero & $\emptyset$ & $\emptyset$ \\
+\hline
+symmetries removed by the skips & any & \ref{sec:count} & $L\dm^2$ & $L\dm^2$ & $L\dm^2$ & $L\dm^2$ \\
+\hline
+$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & one block & \ref{sec:onelayer} & $\dm^2$ & $\dm^2$ & $\dm^2$ & -- \\
 \hline
 \end{tabular}}
-\caption{Without skips ($\mathcal S$) and with them ($\mathcal R$), without biases or normalization; $L$ blocks of width $\dm$. $\mathcal S \cap \mathcal R$ compares single blocks: $\emptyset$ at any width, measure zero at equal width. -- = open.}
+\caption{Proved, for networks without skips ($\mathcal S$) and with them ($\mathcal R$), of $L$ blocks of width $\dm$, without biases or normalization. $\mathcal S \cap \mathcal R$: $\emptyset$ at any width, measure zero at equal width. -- = open. Deeper networks: \cref{tab:measured}.}
 \label{tab:overview}
+\end{table}
+
+\begin{table}[t]
+\centering\small
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{3.5pt}
+\makebox[\linewidth][c]{\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+\textbf{Measured} & \textbf{Depth $\boldsymbol{L}$} & \textbf{Section} & \textbf{Normalization} & \textbf{Exact} & $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ \\
+\hline
+$\tanh$, GELU, GLU variants & 3 & \ref{sec:measured} & none, RMSNorm & $\times$ & $L\dim\G$ \\
+\hline
+$\tanh$, $\dm = 16$ & 6 & \ref{sec:measured} & none, RMSNorm & $\times$ & $L\dim\G$ \\
+\hline
+nanoGPT: attention, GELU & 2--8 & \ref{sec:measured} & none, LayerNorm & $\times$ & $L\dim\G$ \\
+\hline
+ReLU$^2$, ReGLU & 3 & \ref{app:checks} & none & \checkmark & $L\dm^2$ \\
+\hline
+ReLU & 3 & \ref{app:checks} & none & $\times$ & $\ge L\dm^2$ \\
+\hline
+\end{tabular}}
+\caption{Measured at random parameters, without biases; RMSNorm with $\varepsilon = 10^{-2}$. $\dim\G$ is $\dm^2$ without normalization, $\dm(\dm-1)/2$ with RMSNorm and $(\dm-1)(\dm-2)/2$ with LayerNorm. Exact: rank certified modulo a prime.}
+\label{tab:measured}
 \end{table}
 
 Recent skipless models challenge their practical necessity. \citet{ji2026cutting} remove every skip from a ViT-B, a vision transformer \citep{dosovitskiy2021an}, and train it from scratch on ImageNet-1k \citep{russakovsky2015imagenet}, outperforming the original model in terms of top-1 accuracy. In language modeling, \citet{he2023shortcuts, he2024simplifying} manage to train transformer variants without skips and/or normalization.
@@ -1161,7 +1182,7 @@ All computations are in double precision, in a notebook that will be released in
 
 \begin{table}[ht]
 \centering\footnotesize\setlength{\tabcolsep}{2pt}
-\caption{Functional-dimension checks. \emph{Func.\ dim} is the rank of the Jacobian on the batch; where the redundancy, $P$ minus it, equals the prediction, the rank meets the upper bound of \cref{cor:count}(a) and is the functional dimension. Every network has an embedding and a separate readout, and no biases unless marked; normalization is pre-norm. A \emph{mixed} skip is a pair of trainable identity units $U$, $V$ per block. The MLP networks have $\dm = 4$, width $8$, $L = 3$ and input and output dimension $6$, except the rows marked \emph{large}, which have $\dm = 16$, $L = 6$, width $16$ and input and output dimension $20$. The transformers have $\dm = 8$, two heads of width four, MLP width $16$, a vocabulary of $16$ tokens and two layers; each attention block has $2Hd_h^2$ symmetries inside. $^\dagger$In floating point the rank sits at the double-precision floor; the exact rank modulo a prime certifies the value at two parameter points. $^\ddagger$The symmetry count is $268$; an embedding table read through RMSNorm adds $\dm(\dm+1)/2 = 36$, because $N$ maps $\R^{\dm}$ onto an open ball, so the rows of the table can absorb any invertible map near the identity, and with continuous inputs the measured value is $268$.}
+\caption{Functional-dimension checks. \emph{Func.\ dim} is the rank of the Jacobian on the batch; where the redundancy, $P$ minus it, equals the prediction, the rank meets the upper bound of \cref{cor:count}(a) and is the functional dimension. Every network has an embedding and a separate readout, and no biases unless marked; normalization is pre-norm. A \emph{mixed} skip is a pair of trainable identity units $U$, $V$ per block. The MLP networks have $\dm = 4$, width $8$, $L = 3$ and input and output dimension $6$, except the rows marked \emph{large}, which have $\dm = 16$, $L = 6$, width $16$ and input and output dimension $20$. The transformers have $\dm = 8$, two heads of width four, MLP width $16$, a vocabulary of $16$ tokens and two layers; each attention block has $2Hd_h^2$ symmetries inside. $^\dagger$The exact rank modulo a prime certifies the value at two parameter points; without skips, the rank in floating point sits at the double-precision floor. $^\ddagger$The symmetry count is $268$; an embedding table read through RMSNorm adds $\dm(\dm+1)/2 = 36$, because $N$ maps $\R^{\dm}$ onto an open ball, so the rows of the table can absorb any invertible map near the identity, and with continuous inputs the measured value is $268$.}
 \label{tab:checks}
 \begin{tabular}{@{}lllrrrl@{}}
 \toprule
@@ -1182,9 +1203,9 @@ $\tanh$ & identity & RMSNorm, $\varepsilon = 10^{-2}$ & 240 & 234 & 6 & $\dim\Or
 $\tanh$ & learned & RMSNorm, $\varepsilon = 10^{-2}$ & 288 & 264 & 24 & $(L{+}1)\dim\Ort(4) = 24$ \\
 \addlinespace
 ReLU$^2$ & none & none & 240 & 152 & 88$^\dagger$ & $(L{+}1)\dm^2 + Lm = 88$ \\
-ReLU$^2$ & identity & none & 240 & 200 & 40 & $\dm^2 + Lm = 40$ \\
+ReLU$^2$ & identity & none & 240 & 200 & 40$^\dagger$ & $\dm^2 + Lm = 40$ \\
 ReGLU & none & none & 336 & 224 & 112$^\dagger$ & $(L{+}1)\dm^2 + 2Lm = 112$ \\
-ReGLU & identity & none & 336 & 272 & 64 & $\dm^2 + 2Lm = 64$ \\
+ReGLU & identity & none & 336 & 272 & 64$^\dagger$ & $\dm^2 + 2Lm = 64$ \\
 \addlinespace
 $\tanh$, large & none & none & 3712 & 1920 & 1792 & $(L{+}1)\dm^2 = 1792$ \\
 $\tanh$, large & identity & none & 3712 & 3456 & 256 & $\dm^2 = 256$ \\
