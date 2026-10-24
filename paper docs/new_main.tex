@@ -108,21 +108,24 @@ Skip connections are a building block of almost every deep network trained today
 \begin{table}[t]
 \centering\small
 \renewcommand{\arraystretch}{1.15}
-\begin{tabular}{|l|c|c|c|c|}
+\setlength{\tabcolsep}{3.5pt}
+\newcommand{\cell}[1]{\begin{tabular}[c]{@{}c@{}}#1\end{tabular}}
+\makebox[\linewidth][c]{\begin{tabular}{|c|l|c|c|c|c|c|}
 \hline
-& & & \multicolumn{2}{c|}{$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$} \\
-\cline{4-5}
-\textbf{Block} & $\mathcal S \subseteq \overline{\mathcal R}$ & $\mathcal S \cap \mathcal R$ & one block & $L$ blocks \\
+\textbf{Type} & \textbf{Result} & \textbf{Section} & \textbf{Attention} & \textbf{ReLU, GELU} & \cell{\textbf{ReLU$^2$, ReGLU,}\\ $\boldsymbol{\tanh}$} & \cell{\textbf{SwiGLU,}\\ \textbf{GeGLU}} \\
 \hline
-Attention & \checkmark & $\emptyset$ & $\dm^2$ & $L\dm^2$ in nanoGPT \\
-ReLU, GELU & \checkmark & measure zero & $\dm^2$ & $L\dm^2$ for GELU \\
-ReLU$^2$, ReGLU, $\tanh$ & \checkmark & $\emptyset$ & $\dm^2$ & $L\dm^2$ \\
-SwiGLU, GeGLU & \checkmark & $\emptyset$ & -- & $L\dm^2$ \\
+& $\mathcal S \subseteq \overline{\mathcal R}$ & \ref{sec:limits} & \checkmark & \checkmark & \checkmark & \checkmark \\
+\cline{2-7}
+& $\mathcal S \cap \mathcal R$ & \ref{sec:oneblock} & $\emptyset$ & measure zero & $\emptyset$ & $\emptyset$ \\
+\cline{2-7}
+\raisebox{0.6\normalbaselineskip}[0pt][0pt]{Proved} & symmetries removed by the skips & \ref{sec:count} & $L\dm^2$ & $L\dm^2$ & $L\dm^2$ & $L\dm^2$ \\
+\cline{2-7}
+& $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$, one block & \ref{sec:onelayer} & $\dm^2$ & $\dm^2$ & $\dm^2$ & -- \\
 \hline
-\textbf{Section} & \ref{sec:limits} & \ref{sec:oneblock} & \ref{sec:onelayer} & \ref{sec:measured} \\
+Measured & $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$, $L$ blocks & \ref{sec:measured} & \cell{$L\dm^2$\\ in nanoGPT} & \cell{$L\dm^2$\\ for GELU} & $L\dm^2$ & $L\dm^2$ \\
 \hline
-\end{tabular}
-\caption{Without skips ($\mathcal S$) and with them ($\mathcal R$), without biases or normalization. $\mathcal S \cap \mathcal R$ compares single blocks: $\emptyset$ at any width, measure zero at equal width. One block: proved; $L$ blocks: measured; -- = open.}
+\end{tabular}}
+\caption{Without skips ($\mathcal S$) and with them ($\mathcal R$), without biases or normalization; $L$ blocks of width $\dm$. $\mathcal S \cap \mathcal R$ compares single blocks: $\emptyset$ at any width, measure zero at equal width. -- = open.}
 \label{tab:overview}
 \end{table}
 
