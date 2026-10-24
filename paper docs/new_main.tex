@@ -131,22 +131,22 @@ $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & one block & \ref{sec:o
 \centering\small
 \renewcommand{\arraystretch}{1.15}
 \setlength{\tabcolsep}{3.5pt}
-\makebox[\linewidth][c]{\begin{tabular}{|l|c|c|c|c|c|}
+\makebox[\linewidth][c]{\begin{tabular}{|l|c|c|c|c|}
 \hline
-\textbf{Measured} & \textbf{Depth $\boldsymbol{L}$} & \textbf{Section} & \textbf{Normalization} & \textbf{Exact} & $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ \\
+\textbf{Measured} & \textbf{Depth $\boldsymbol{L}$} & \textbf{Section} & \textbf{Normalization} & $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ \\
 \hline
-$\tanh$, GELU, GLU variants & 3 & \ref{sec:measured} & none, RMSNorm & $\times$ & $L\dim\G$ \\
+$\tanh$, GELU, GLU variants & 3 & \ref{sec:measured} & none, RMSNorm & $L\dim\G$ \\
 \hline
-$\tanh$, $\dm = 16$ & 6 & \ref{sec:measured} & none, RMSNorm & $\times$ & $L\dim\G$ \\
+$\tanh$, $\dm = 16$ & 6 & \ref{sec:measured} & none, RMSNorm & $L\dim\G$ \\
 \hline
-nanoGPT: attention, GELU & 2--8 & \ref{sec:measured} & none, LayerNorm & $\times$ & $L\dim\G$ \\
+nanoGPT: attention, GELU & 2--8 & \ref{sec:measured} & none, LayerNorm & $L\dim\G$ \\
 \hline
-ReLU$^2$, ReGLU & 3 & \ref{app:checks} & none & \checkmark & $L\dm^2$ \\
+ReLU$^2$ & 3 & \ref{app:checks} & none & $L\dm^2$ \\
 \hline
-ReLU & 3 & \ref{app:checks} & none & $\times$ & $\ge L\dm^2$ \\
+ReLU & 3 & \ref{app:checks} & none & $\ge L\dm^2$ \\
 \hline
 \end{tabular}}
-\caption{Measured at random parameters, without biases; RMSNorm with $\varepsilon = 10^{-2}$. $\dim\G$ is $\dm^2$ without normalization, $\dm(\dm-1)/2$ with RMSNorm and $(\dm-1)(\dm-2)/2$ with LayerNorm. Exact: rank certified modulo a prime.}
+\caption{Measured at random parameters, without biases; RMSNorm with $\varepsilon = 10^{-2}$. $\dim\G$ is $\dm^2$ without normalization, $\dm(\dm-1)/2$ with RMSNorm and $(\dm-1)(\dm-2)/2$ with LayerNorm.}
 \label{tab:measured}
 \end{table}
 
