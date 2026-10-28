@@ -1,25 +1,28 @@
-% The evidence of each cell with the new runs: 8 blocks of width 16, 64 blocks of width 4, transformers of 8 blocks
-% (eps = 1e-5), and the check at eps = 1e-12 of three blocks (check_eps0_learned.py). Not yet in Appendix F.
-\def\fdReLUa{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated ${\ge}$, $L \le 64$}}
-\def\fdReLUb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L = 1$}}
-\def\fdReLUc{sm/{simulated, $L = 3$}}
-\def\fdReLUsqa{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L = 3$}}
-\def\fdReLUsqb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L = 1$}}
-\def\fdReLUsqc{sm/{simulated, $L = 3$}}
-\def\fdReGLUa{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L = 3$}}
-\def\fdReGLUb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L = 3$}}
-\def\fdReGLUc{sm/{simulated, $L = 3$}}
-\def\fdAttna{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L \le 8$}}
-\def\fdAttnb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L \le 8$}}
-\def\fdTanha{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L \le 8$}}
-\def\fdTanhb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L \le 8$}}
-\def\fdTanhc{sm/{simulated, $L = 3$}}
-\def\fdGELUa{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L \le 64$}}
-\def\fdGELUb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L \le 8$}}
-\def\fdSwiGLUa{sm/{simulated, $L = 3$}}
-\def\fdSwiGLUb{sm/{simulated, $L \le 8$}}
-\def\fdGeGLUa{sm/{simulated, $L = 3$}}
-\def\fdGeGLUb{sm/{simulated, $L \le 8$}}
-\def\fdLearna{pr/{\fdprf{thm:gauge}{proven, any $L$}}}
-\def\fdLearnb{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L \le 8$}}
-\def\fdLearnc{pr/{\fdprf{thm:onelayer}{proven, $L = 1$, homogeneous}},pr/{\fdprf{thm:onelayer}{proven ${\le}$, $L = 1$}},sm/{simulated, $L = 3$}}
+% Figure 2 with the new runs, not yet in Appendix F: 8 blocks of width 16, 64 blocks of width 4, transformers of
+% 8 blocks (eps = 1e-5), and the check at eps = 1e-12 of three blocks. Lists of style/text: pr = proven,
+% sm = simulated; \fdPrA and \fdPrB cover a whole band.
+\def\fdPrA{pr/{\fdprf{thm:onelayer}{$L = 1$, proven}}}
+\def\fdPrB{pr/{\fdprf{thm:onelayer}{$L = 1$, proven as lower bound}}}
+\def\fdReLUa{sm/{$L > 1$, simulated as lower bound}}
+\def\fdReLUb{sm/{$L = 1$, simulated}}
+\def\fdReLUsqa{sm/{$L > 1$, simulated}}
+\def\fdReLUsqb{sm/{$L = 1$, simulated}}
+\def\fdReGLUa{sm/{$L > 1$, simulated}}
+\def\fdReGLUb{sm/{$L > 1$, simulated}}
+\def\fdReGLUc{sm/{$L > 1$, simulated}}
+\def\fdReLUc{sm/{$L > 1$, simulated}}
+\def\fdReLUsqc{sm/{$L > 1$, simulated}}
+\def\fdAttna{sm/{$L > 1$, simulated}}
+\def\fdAttnb{sm/{$L > 1$, simulated}}
+\def\fdTanha{sm/{$L > 1$, simulated}}
+\def\fdTanhb{sm/{$L > 1$, simulated}}
+\def\fdTanhc{sm/{$L > 1$, simulated}}
+\def\fdGELUa{sm/{$L > 1$, simulated}}
+\def\fdGELUb{sm/{$L > 1$, simulated}}
+\def\fdSwiGLUa{sm/{$L > 1$, simulated}}
+\def\fdSwiGLUb{sm/{$L > 1$, simulated}}
+\def\fdGeGLUa{sm/{$L > 1$, simulated}}
+\def\fdGeGLUb{sm/{$L > 1$, simulated}}
+\def\fdLearna{pr/{\fdprf{thm:gauge}{any $L$, proven}}}
+\def\fdLearnb{pr/{\fdprf{thm:onelayer}{$L = 1$, proven}},sm/{$L > 1$, simulated}}
+\def\fdLearnc{pr/{\fdprf{thm:onelayer}{homogeneous, $L = 1$, proven}},pr/{\fdprf{thm:onelayer}{$L = 1$, proven as upper bound}},sm/{$L > 1$, simulated}}

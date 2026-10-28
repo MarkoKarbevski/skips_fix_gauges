@@ -7,13 +7,13 @@
 \node[cond] (e1) at (69,-27) {$\varepsilon > 0$};
 \node[cond] (e0) at (122,-27) {$\varepsilon \to 0$};
 \node[lres] (r1) at (17,-50) {$+0$};
-\node[lres] (r4) at (69,-50) {$+L\,d(d+1)/2$\\[-1pt]\sub{$= L\cdot\dim$ triangular $d{\times}d$}};
+\node[lres] (r4) at (69,-50) {$+L\,d(d+1)/2$\\[-1pt]\sub{$= L\cdot\dim$ of triangular $d{\times}d$ matrices}};
 \node[lres] (r3) at (122,-50) {$+L\,\big(d(d+1)/2 - 1\big)$};
 \draw[edge] (root) -- (n0);
 \draw[edge] (root) -- (n1);
 \draw[edge] (n1) -- (e1);
 \draw[edge] (n1) -- (e0);
-\draw[edge] (n0) -- (r1) node[pos=0.45, pr] {proven, any $L$};
-\draw[edge] (e1) -- (r4) node[pos=0.3, pr] {proven, $L = 1$} node[pos=0.65, sm] {simulated, $L = 3$, $\tanh$};
-\draw[edge] (e0) -- (r3) node[pos=0.22, pr] {proven, $L = 1$, homogeneous} node[pos=0.48, pr] {proven ${\le}$, $L = 1$} node[pos=0.74, sm] {simulated, $L = 3$, $\tanh$};
+\draw[edge] (n0) -- (r1) node[pos=0.45, pr] {any $L$, proven};
+\draw[edge] (e1) -- (r4) node[pos=0.3, pr] {$L = 1$, proven} node[pos=0.65, sm] {$\tanh$, $L > 1$, simulated};
+\draw[edge] (e0) -- (r3) node[pos=0.22, pr] {homogeneous, $L = 1$, proven} node[pos=0.48, pr] {$L = 1$, proven as upper bound} node[pos=0.74, sm] {$\tanh$, $L > 1$, simulated};
 \end{tikzpicture}
