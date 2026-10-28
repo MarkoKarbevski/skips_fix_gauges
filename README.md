@@ -19,7 +19,7 @@ The note itself is `skip-connections-gauge-fixes-.pdf`, and its LaTeX source is 
 
 ## Running it
 
-Everything runs on a CPU, in double precision, with Python 3.11 and the versions pinned in `uv.lock`: NumPy 2.4.4, SciPy 1.17.1, Matplotlib 3.10.9 and PyTorch 2.14.0 (CPU build on Linux and Windows; the standard build on macOS 14 or later with Apple silicon).
+Everything runs on a CPU, in double precision, with Python 3.11 and the versions pinned in `uv.lock`: NumPy 2.4.4, SciPy 1.17.1, Matplotlib 3.10.9, python-flint 0.9.0 and PyTorch 2.14.0 (CPU build on Linux and Windows; the standard build on macOS 14 or later with Apple silicon).
 
 With [uv](https://docs.astral.sh/uv/):
 
@@ -37,7 +37,7 @@ With pip:
     pip install -r requirements.txt
     jupyter lab experiments.ipynb
 
-From the saved data, the whole notebook runs in about 7 minutes on two CPU cores. Rerunning the two long experiments as well takes about 75 minutes.
+From the saved data, the whole notebook runs in about 11 minutes on two CPU cores. Rerunning the two long experiments as well takes about 80 minutes.
 
 ## Saved data
 
@@ -66,6 +66,8 @@ With `RECOMPUTE = False`, the default in the setup cell, Sections 10 and 13 draw
 | 12. Certificates modulo a prime | Table 5 | 19 s |
 | 13. nanoGPT | Section 6.2, Table 6, Appendix E | 38 min, or under 1 s from `data/` |
 | 14. Skipless networks as limits of residual networks | Section 6.3, Proposition 7 | under 1 s |
+| 15. ReLU draws above the count | the ReLU draws above the count, in the numerical checks | 3 min |
+| 16. Certificates at depth | the certificates at L = 8 in the table of checks | 1 min |
 
 Wall-clock times are for two CPU cores, with the experiments rerun in Sections 10 and 13.
 

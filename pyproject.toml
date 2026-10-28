@@ -12,6 +12,7 @@ dependencies = [
     "ipykernel",
     "nbconvert",
     "jupyterlab",
+    "python-flint==0.9.0",
 ]
 
 [tool.uv]
