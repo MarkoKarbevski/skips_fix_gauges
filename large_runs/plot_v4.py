@@ -63,10 +63,11 @@ def main():
     ap.add_argument("--act", default="gelu")
     ap.add_argument("--eps", type=float, default=1e-5)
     ap.add_argument("--gauss", action="store_true")
+    ap.add_argument("--families", default="deep,tf,L8", help="rows, in order, comma-separated")
     a = ap.parse_args()
     z = np.load(a.npz)
     meta = json.loads(z["meta_json"].item())
-    fams = [f for f in FAMILIES if any(m["family"] == f and m["act"] == a.act for m in meta.values())]
+    fams = [f for f in a.families.split(",") if any(m["family"] == f and m["act"] == a.act for m in meta.values())]
     # looks-linear starts make each block the identity; the odd pairs of degree-2 blocks make it about c|h|h instead
     near_label = NEAR[2] if a.act in ("gelu", "relu", "tanh") else "without skips"
     series = [NEAR[:2] + (near_label,) + NEAR[3:], GAUSS] + SKIPS

@@ -1,17 +1,25 @@
 # Functional dimension of larger networks
 
-The figures are in `paper docs/figs/large/`: `spectra_v3_<activation>.pdf` (64 blocks of width 4, 8 blocks of width 16,
-and transformers of 8 blocks, without normalization and with pre-RMSNorm) and `spectra_eps.pdf` (skipless ReLU
-networks under RMSNorm as eps goes to 0).
+The figures are in `paper docs/figs/large/`: `spectra_depth_<activation>.pdf` (2, 4 and 8 MLP blocks of width 16 and
+transformers of 8 blocks, without normalization and with pre-RMSNorm), `spectra_deep_<activation>.pdf` (64 blocks of
+width 4), `spectra_eps.pdf` (skipless ReLU networks under RMSNorm as eps goes to 0) and `almost_sym.pdf` (Lemma A.2:
+the directions that are symmetries only at eps = 0, against eps).
 
 ## Contents
 
 - `fdim_large.py`, `svd_inplace.py`: the rank of the exact Jacobian of one network (below).
-- `make_queue3.py`, `queue3.json`, `queue_eps.json`: the networks that were run; `progress.py` reports a run directory.
-- `results_v3.jsonl`, `results_eps.jsonl`: one line per network and draw (rank, predicted rank, gap, timings).
-- `aggregate.py`, `plot_v3.py`, `plot_eps.py`: spectra to one `.npz`, and the figures from it. The spectra themselves
-  (21 MB) and the aggregated files (`spectra_v3.npz`, 34 MB; `spectra_eps.npz`, 31 MB) are not in the repository;
-  `python3 fdim_large.py --config @queue3.json --out runs/v3` recomputes them (resumable).
+- `make_queue3.py`, `queue3.json`, `make_queue4.py`, `queue4.json`, `queue_eps.json`, `make_queue_eps2.py`,
+  `queue_eps2.json`: the networks that were run (`queue4`: depths 2 and 4; `queue_eps2`: the eps sweep of ReLU^2, ReGLU
+  and GELU at 8 blocks); `progress.py` reports a run directory.
+- `results_v3.jsonl`, `results_v4.jsonl`, `results_eps.jsonl`: one line per network and draw (rank, predicted rank,
+  gap, timings).
+- `aggregate.py`, `plot_v4.py`, `plot_eps.py`: spectra to one `.npz`, and the figures from it; `plot_v4.py --families
+  L2,L4,L8,tf` draws the depth figures and `--families deep` the 64-block ones. The spectra themselves and the
+  aggregated files (`spectra_v4.npz` of `runs/v3` and `runs/v4`, 50 MB; `spectra_eps.npz`, 31 MB) are not in the
+  repository; `python3 fdim_large.py --config @queue4.json --out runs/v4` recomputes them (resumable).
+- `almost_sym.py`, `formula_curves.py`, `plot_almost_sym.py`, with `almost_sym.jsonl` and `formula_curves.json`: for
+  8 skipless blocks under pre-RMSNorm, the largest singular value of the Jacobian on the directions e^{tS} (S symmetric)
+  at every hidden state, computed in double precision and from the formula of Lemma A.2, for eps from 1e-1 to 1e-12.
 - `check_*.py`: the one-block checks of Theorem C.1 parts (b)-(d) at d_model = 4, width 8: learned skips over identity
   skips at eps = 1e-2 and 1e-12 (`check_oneblock_learned.py`, `check_part_c.py`), SwiGLU and GeGLU without
   normalization (`check_glu_parta.py`), identity skips at eps = 1e-12 (`check_eps0_identity.py`), and three blocks at
@@ -19,9 +27,10 @@ networks under RMSNorm as eps goes to 0).
 
 `fdim_large.py` computes, at random parameters, the rank of the exact float64 Jacobian of the parameter-to-output
 map of a network on a batch of random inputs, reads it at the largest gap of the singular values, and compares it
-with the symmetry count of the note. `aggregate.py` collects the spectra into one `.npz`; `plot_v3.py` draws a figure
-from that file alone, so the style can change without rerunning anything. The queue is `queue3.json`
-(`make_queue3.py 64 4`), run by `run_v3.sh` into `runs/v3/` (resumable: finished networks are skipped).
+with the symmetry count of the note. `aggregate.py` collects the spectra into one `.npz`; `plot_v4.py` draws a figure
+from that file alone, so the style can change without rerunning anything. The queues are `queue3.json`
+(`make_queue3.py 64 4`) and `queue4.json`, run into `runs/v3/` and `runs/v4/` (resumable: finished networks are
+skipped).
 
 ## Networks
 
@@ -38,7 +47,7 @@ read `W_up` has `2m` columns (gates and values).
 | family | blocks L | d_model | m (gated) | activations |
 |---|---|---|---|---|
 | `deep` | 64 MLP blocks | 4 | 16 (10) | all seven |
-| `L8` | 8 MLP blocks | 16 | 64 (42) | all seven |
+| `L2`, `L4`, `L8` | 2, 4 and 8 MLP blocks | 16 | 64 (42) | all seven |
 | `tf` | 4 layers = 8 blocks, 4 heads, 8 tokens | 16 | 64 (42) | GELU (nanoGPT), SwiGLU (Llama) |
 
 Three draws of each network (seeds 0, 1, 2).
@@ -85,7 +94,7 @@ non-finite entries of the Jacobian (`n_nonfinite`) and of the outputs (`n_nonfin
 (`max_abs_J`, `max_abs_out`), and `finite`; a run whose Jacobian is not finite gets rank -1 and no spectrum, and
 `aggregate.py` reports it as NON-FINITE in k/n draws.
 
-## The file `spectra_v3.npz`
+## The file `spectra_v4.npz`
 
 For every network `<net>` (`fdim_large.net_name`):
 - `<net>_median`, `<net>_min`, `<net>_max`: log10 of `s_i / s_1` at every index, median and range over the draws
