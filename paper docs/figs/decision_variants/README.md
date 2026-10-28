@@ -5,4 +5,4 @@ Standalone TikZ; build any of them with `pdflatex <name>.tex`. Figure 2 is `grid
 - `grid_paper`: Figure 2 as in the paper.
 - `grid_new`: the same, with the runs of 8 and 64 blocks and the check at eps = 1e-12.
 - `tree_A_tree`, `tree_B_dag`: identity skips as a tree and as a graph with one shared end.
-- `tree_C_learned`: learned skips.
+- `tree_C_learned`: learned skips over identity skips.

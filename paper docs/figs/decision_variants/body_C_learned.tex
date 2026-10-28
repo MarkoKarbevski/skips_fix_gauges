@@ -1,27 +1,20 @@
-% Companion: what learned skips add, against the same blocks without skips. They add d^2 per block, all their
-% entries, except for homogeneous blocks at eps -> 0, whose skipless network has GL(d) at h_0, ..., h_{L-1}.
+% Companion: what learned skips add over identity skips. The same for every block, homogeneous or not, since a
+% learned skip reads the raw stream: only O(d), or CO(d) as eps -> 0, passes at each hidden state.
 \begin{tikzpicture}[x=1mm,y=1mm]
-\node[title] at (0,10) {Functional dimension added by learned skips $A_\ell$, full or triangular};
+\node[title] at (0,10) {Functional dimension added by learned skips $A_\ell$ over identity skips};
 \node[root] (root) at (56,0) {attention or MLP blocks\\[-1.5pt]\sub{$d = \dm$}};
 \node[cond] (n0) at (17,-12) {no normalization};
 \node[cond] (n1) at (95.5,-12) {pre-RMSNorm};
 \node[cond] (e0) at (69,-25) {$\varepsilon \to 0$};
 \node[cond] (e1) at (122,-25) {$\varepsilon > 0$};
-\node[cond] (h1) at (50,-38) {ReLU, ReLU$^2$, ReGLU\\[-1pt]\sub{$B(\lambda h) = \lambda^k B(h)$}};
-\node[cond] (h0) at (88,-38) {attention, $\tanh$, GELU,\\SwiGLU, GeGLU};
-\node[lres] (r1) at (17,-63) {$+d^2$\\[-1pt]\sub{per block}};
-\node[lres] (r2) at (50,-63) {$+d^2 + d(d+1)/2 - 1$\\[-1pt]\sub{per block}};
-\node[lres] (r3) at (88,-63) {$+d^2$\\[-1pt]\sub{per block}};
-\node[lres] (r4) at (122,-63) {$+d^2$\\[-1pt]\sub{per block}};
+\node[lres] (r1) at (17,-48) {$+0$};
+\node[lres] (r3) at (69,-48) {$+d(d+1)/2 - 1$\\[-1pt]\sub{per block}};
+\node[lres] (r4) at (122,-48) {$+d(d+1)/2$\\[-1pt]\sub{per block}};
 \draw[edge] (root) -- (n0);
 \draw[edge] (root) -- (n1);
 \draw[edge] (n1) -- (e0);
 \draw[edge] (n1) -- (e1);
-\draw[edge] (e0) -- (h1);
-\draw[edge] (e0) -- (h0);
-\draw[edge] (n0) -- (r1) node[pos=0.2, pr, align=center] {same as identity skips,\\any depth, \fdref{thm:gauge}} node[pos=0.47, pr, align=center] {proven for 1 block$^*$\\\fdref{thm:onelayer}} node[pos=0.72, sm] {simulated, up to 64 blocks};
-\draw[edge] (h1) -- (r2) node[pos=0.5, sm] {simulated, 3 blocks};
-\draw[edge] (h0) -- (r3) node[pos=0.5, sm] {simulated, 3 $\tanh$ blocks};
+\draw[edge] (n0) -- (r1) node[pos=0.45, pr, align=center] {proven for any depth\\\fdref{thm:gauge}};
+\draw[edge] (e0) -- (r3) node[pos=0.5, sm] {simulated, 3 blocks};
 \draw[edge] (e1) -- (r4) node[pos=0.5, sm] {simulated, up to 8 blocks};
-\node[anchor=west, font=\footnotesize, text=black!60] at (0,-74) {$^*$not for SwiGLU or GeGLU\qquad full skips have $d^2$ entries per block, triangular ones $d(d+1)/2$};
 \end{tikzpicture}

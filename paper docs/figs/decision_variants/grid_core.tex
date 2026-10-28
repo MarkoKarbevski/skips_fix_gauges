@@ -52,19 +52,18 @@
 \node[pr] at (\fdB,-55.0) {proven for $L = 1$: gain ${\ge}$ value\\[-1.5pt]\fdref{thm:onelayer}};
 \node[note] at (\fdA,-60.5) {not for SwiGLU, GeGLU};
 \node[note] at (\fdB,-60.5) {not for SwiGLU, GeGLU};
-% learned skips, all blocks; at eps -> 0 the homogeneous blocks add more
-\fdband{\fdA}{16.75}{$+L\,d^2$}{-93.0}{-111.4}{fdlrn}
-\fdband{\fdB}{23}{$+L\,d^2$}{-93.0}{-111.4}{fdlrn}
-\fdband{\fdC}{16.0}{$+L\,d^2$}{-93.0}{-111.4}{fdlrn}
-\node[pr] at (\fdA,-101.2) {same as identity skips,\\[-1.5pt]proven for any $L$, \fdref{thm:gauge}};
+% learned skips over identity skips: the same for every block, homogeneous or not
+\fdband{\fdA}{16.75}{$+0$}{-93.0}{-106.6}{fdlrn}
+\fdband{\fdB}{23}{$+L\,d(d+1)/2$}{-93.0}{-106.6}{fdlrn}
+\fdband{\fdC}{16.0}{$+L\,\big(d(d+1)/2 - 1\big)$}{-93.0}{-106.6}{fdlrn}
+\node[pr] at (\fdA,-100.6) {proven for any $L$\\[-1.5pt]\fdref{thm:gauge}};
 \fdtags{\fdB}{-100.2}{\fdLearnb}
 \fdtags{\fdC}{-100.2}{\fdLearnc}
-\node[note] at (\fdC,-106.0) {\fdHomNote\\[-1pt]$+L\,\big(d^2 + d(d+1)/2 - 1\big)$};
 % labels
 \node[anchor=east, align=right, font=\footnotesize, text=idskip!85!black] at (21,-12.4) {identity skips\\[-2pt]add};
 \node[anchor=east, align=right, font=\small] at (21,-19.6) {homogeneous\\[-2.5pt]{\footnotesize\color{black!55}$B(\lambda h) = \lambda^k B(h)$}};
 \node[anchor=east, font=\small] at (21,-49.5) {other blocks};
-\node[anchor=east, align=right, font=\small, text=lrskip!80!black] at (21,-101.0) {learned\\[-1.5pt]skips $A_\ell$\\[-1.5pt]add};
+\node[anchor=east, align=right, font=\small, text=lrskip!80!black] at (21,-99.6) {learned $A_\ell$\\[-1.5pt]over identity\\[-1.5pt]{\footnotesize\color{black!55}all blocks}};
 \foreach \y/\lab in {-31.4/ReLU$^{\dagger}$, -36.7/ReLU$^2$, -42.0/ReGLU,
   -66.0/attention, -71.3/$\tanh$, -76.6/GELU, -81.9/SwiGLU, -87.2/GeGLU} {\fdrow{\y}{\lab}}
 % simulations, one tag per block: no normalization, eps > 0, eps -> 0
