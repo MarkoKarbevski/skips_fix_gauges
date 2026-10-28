@@ -2,7 +2,7 @@
 
 The figures are in `paper docs/figs/large/`: `spectra_depth_<activation>.pdf` (2, 4 and 8 MLP blocks of width 16 and
 transformers of 8 blocks, without normalization and with pre-RMSNorm), `spectra_deep_<activation>.pdf` (64 blocks of
-width 4), `spectra_eps.pdf` (skipless ReLU networks under RMSNorm as eps goes to 0) and `almost_sym.pdf` (Lemma A.2:
+width 4), `spectra_eps.pdf` (skipless ReLU networks under RMSNorm as eps goes to 0), `spectra_eps8.pdf` (the same at 8 blocks for ReLU, ReLU^2, ReGLU and, as a control, GELU) and `almost_sym.pdf` (Lemma A.2:
 the directions that are symmetries only at eps = 0, against eps).
 
 ## Contents
@@ -11,9 +11,9 @@ the directions that are symmetries only at eps = 0, against eps).
 - `make_queue3.py`, `queue3.json`, `make_queue4.py`, `queue4.json`, `queue_eps.json`, `make_queue_eps2.py`,
   `queue_eps2.json`: the networks that were run (`queue4`: depths 2 and 4; `queue_eps2`: the eps sweep of ReLU^2, ReGLU
   and GELU at 8 blocks); `progress.py` reports a run directory.
-- `results_v3.jsonl`, `results_v4.jsonl`, `results_eps.jsonl`: one line per network and draw (rank, predicted rank,
+- `results_v3.jsonl`, `results_v4.jsonl`, `results_eps.jsonl`, `results_eps2.jsonl`: one line per network and draw (rank, predicted rank,
   gap, timings).
-- `aggregate.py`, `plot_v4.py`, `plot_eps.py`: spectra to one `.npz`, and the figures from it; `plot_v4.py --families
+- `aggregate.py`, `plot_v4.py`, `plot_eps.py`, `plot_eps2.py`: spectra to one `.npz`, and the figures from it; `plot_v4.py --families
   L2,L4,L8,tf` draws the depth figures and `--families deep` the 64-block ones. The spectra themselves and the
   aggregated files (`spectra_v4.npz` of `runs/v3` and `runs/v4`, 50 MB; `spectra_eps.npz`, 31 MB) are not in the
   repository; `python3 fdim_large.py --config @queue4.json --out runs/v4` recomputes them (resumable).
