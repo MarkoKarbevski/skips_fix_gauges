@@ -32,7 +32,7 @@
   \renewcommand\thmt@autorefsetup{\@xa\def\csname\thmt@envname autorefname\@xa\endcsname\@xa{\thmt@thmname}}%
 }
 \makeatother
-\newtheorem{theorem}{Theorem}
+\newtheorem{theorem}{Theorem}[section]
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{corollary}[theorem]{Corollary}
 \newtheorem{lemma}[theorem]{Lemma}
@@ -187,12 +187,12 @@ ReLU & 3 & \ref{app:checks} & none & $\ge L\dm^2$ \\
     rounded corners=1.2pt, inner xsep=1.5pt, inner ysep=0.85pt},
   note/.style={font=\scriptsize, text=black!60, align=center, inner sep=0.5pt},
   val/.style={font=\small, inner sep=0.8pt}]
-% column centers; half widths 16.75, 23, 16.0
-\def\fdA{39}\def\fdB{79.6}\def\fdC{119.4}
+% column centers; half widths 16.75, 21.4, 17.5
+\def\fdA{39}\def\fdB{78.0}\def\fdC{117.9}
 % the columns: a small tree of the normalization
 \node[root] (root) at (70,9) {$L$ attention or MLP blocks\\[-1.5pt]{\footnotesize\color{black!55}$d = \dm$}};
 \node[cond] (n0) at (\fdA,-11.5) {no normalization};
-\node[cond] (n1) at (99.8,-2) {pre-RMSNorm};
+\node[cond] (n1) at (97.95,-2) {pre-RMSNorm};
 \node[cond] (e1) at (\fdB,-11.5) {$\varepsilon > 0$};
 \node[cond] (e0) at (\fdC,-11.5) {$\varepsilon \to 0$};
 \draw[edge] (root) -- (n0);
@@ -212,30 +212,32 @@ ReLU & 3 & \ref{app:checks} & none & $\ge L\dm^2$ \\
 \colorlet{fdfull}{idskip!24}\colorlet{fdless}{idskip!8}\colorlet{fdlrn}{lrskip!14}
 % identity skips, positively homogeneous blocks
 \fdband{\fdA}{16.75}{$+L\,d^2$}{-16}{-45.0}{fdfull}
-\fdband{\fdB}{23}{$+L\,d(d-1)/2$}{-16}{-45.0}{fdless}
-\fdband{\fdC}{16.0}{$+L\,d^2$}{-16}{-45.0}{fdfull}
+\fdband{\fdB}{21.4}{$+L\,d(d-1)/2$}{-16}{-45.0}{fdless}
+\fdband{\fdC}{17.5}{$+L\,d^2$}{-16}{-45.0}{fdfull}
 \node[pr] at (\fdA,-24.4) {proven for $L = 1$\\[-1.5pt]\fdref{thm:onelayer}};
 \node[pr] at (\fdB,-24.4) {proven for $L = 1$: gain ${\ge}$ value\\[-1.5pt]\fdref{thm:onelayer}};
 % identity skips, the other blocks
 \fdband{\fdA}{16.75}{$+L\,d^2$}{-46.6}{-90.2}{fdfull}
-\fdband{\fdB}{23}{$+L\,d(d-1)/2$}{-46.6}{-90.2}{fdless}
-\fdband{\fdC}{16.0}{$+L\,\big(d(d-1)/2 + 1\big)$}{-46.6}{-90.2}{fdless}
+\fdband{\fdB}{21.4}{$+L\,d(d-1)/2$}{-46.6}{-90.2}{fdless}
+\fdband{\fdC}{17.5}{$+L\,\big(d(d-1)/2 + 1\big)$}{-46.6}{-90.2}{fdless}
 \node[pr] at (\fdA,-55.0) {proven for $L = 1$\\[-1.5pt]\fdref{thm:onelayer}};
 \node[pr] at (\fdB,-55.0) {proven for $L = 1$: gain ${\ge}$ value\\[-1.5pt]\fdref{thm:onelayer}};
 \node[note] at (\fdA,-60.5) {not for SwiGLU, GeGLU};
 \node[note] at (\fdB,-60.5) {not for SwiGLU, GeGLU};
 % learned skips over identity skips: the same for every block, homogeneous or not
-\fdband{\fdA}{16.75}{$+0$}{-93.0}{-106.6}{fdlrn}
-\fdband{\fdB}{23}{$+L\,d(d+1)/2$}{-93.0}{-106.6}{fdlrn}
-\fdband{\fdC}{16.0}{$+L\,\big(d(d+1)/2 - 1\big)$}{-93.0}{-106.6}{fdlrn}
-\node[pr] at (\fdA,-100.6) {proven for any $L$\\[-1.5pt]\fdref{thm:gauge}};
-\fdtags{\fdB}{-100.2}{\fdLearnb}
-\fdtags{\fdC}{-100.2}{\fdLearnc}
+\fdband{\fdA}{16.75}{$+0$}{-93.0}{-110.0}{fdlrn}
+\fdband{\fdB}{21.4}{$+L\,d(d+1)/2$}{-93.0}{-110.0}{fdlrn}
+\fdband{\fdC}{17.5}{$+L\,\big(d(d+1)/2 - 1\big)$}{-93.0}{-110.0}{fdlrn}
+\node[note] at (\fdB,-99.6) {$= L\cdot\dim$ triangular $d{\times}d$};
+\node[note] at (\fdC,-99.6) {$= L\cdot(\dim$ triangular $d{\times}d - 1)$};
+\node[pr] at (\fdA,-101.5) {proven for any $L$\\[-1.5pt]\fdref{thm:gauge}};
+\fdtags{\fdB}{-104.4}{\fdLearnb}
+\fdtags{\fdC}{-104.4}{\fdLearnc}
 % labels
 \node[anchor=east, align=right, font=\footnotesize, text=idskip!85!black] at (21,-12.4) {identity skips\\[-2pt]add};
 \node[anchor=east, align=right, font=\small] at (21,-19.6) {homogeneous\\[-2.5pt]{\footnotesize\color{black!55}$B(\lambda h) = \lambda^k B(h)$}};
 \node[anchor=east, font=\small] at (21,-49.5) {other blocks};
-\node[anchor=east, align=right, font=\small, text=lrskip!80!black] at (21,-99.6) {learned $A_\ell$\\[-1.5pt]over identity\\[-1.5pt]{\footnotesize\color{black!55}all blocks}};
+\node[anchor=east, align=right, font=\small, text=lrskip!80!black] at (21,-101.5) {learned $A_\ell$\\[-1.5pt]over identity\\[-1.5pt]{\footnotesize\color{black!55}all blocks}};
 \foreach \y/\lab in {-31.4/ReLU$^{\dagger}$, -36.7/ReLU$^2$, -42.0/ReGLU,
   -66.0/attention, -71.3/$\tanh$, -76.6/GELU, -81.9/SwiGLU, -87.2/GeGLU} {\fdrow{\y}{\lab}}
 % simulations, one tag per block: no normalization, eps > 0, eps -> 0
