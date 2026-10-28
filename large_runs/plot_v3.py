@@ -67,7 +67,9 @@ def main():
     z = np.load(a.npz)
     meta = json.loads(z["meta_json"].item())
     fams = [f for f in FAMILIES if any(m["family"] == f and m["act"] == a.act for m in meta.values())]
-    series = SERIES
+    # looks-linear starts make each block the identity; the odd pairs of degree-2 blocks make it about c|h|h instead
+    near_label = NEAR[2] if a.act in ("gelu", "relu", "tanh") else "without skips"
+    series = [NEAR[:2] + (near_label,) + NEAR[3:], GAUSS] + SKIPS
     used = set()                                             # the series that appear somewhere, for the legend
     fig, axes = plt.subplots(len(fams), 2, figsize=(5.5, 2.35 * len(fams) + 0.45), squeeze=False)
     for i, fam in enumerate(fams):
@@ -87,10 +89,11 @@ def main():
                 n = len(z[net + "_ranks"])
                 xmax = max(xmax, P)
                 second = skip == "none" and start == "gauss" and near_here   # a comparison next to the solid line
-                # degree-two blocks without normalization can drive the outputs far beyond the range in which a
-                # double-precision Jacobian keeps its rank: such a network gets a note and no curve
-                huge = m.get("max_abs_out", 0.0) > 1e12
-                if net + "_median" in z.files and not huge:
+                # degree-two blocks without normalization drive the outputs like |x|^(2^L), far beyond the range in
+                # which a double-precision Jacobian keeps its rank: such a network gets a note, no curve, no count line
+                bad = m.get("overflowed", 0)
+                lost = bad == n or m.get("max_abs_out", 0.0) > 1e12
+                if net + "_median" in z.files and not lost:
                     med, lo, hi = z[net + "_median"], z[net + "_min"], z[net + "_max"]
                     idx = np.arange(1, len(med) + 1)
                     floor = -19.5
@@ -101,13 +104,20 @@ def main():
                                 solid_capstyle="round", rasterized=True)
                 # the dotted line marks the count; the curves and bands show whether and how sharply the draws
                 # drop there, so the note gives only P and the count
-                if not second:
+                if not second and not lost:
                     ax.axvline(pred + 0.5, color=c, lw=0.8, ls=(0, (1.5, 2)))
-                bad = m.get("overflowed", 0)
-                text = f"count ${pred}$" + (", overflow" if bad == n else f", overflow in {bad} of {n}" if bad else "")
-                if huge and not bad:
-                    text += f", outputs reach $10^{{{int(np.log10(m['max_abs_out']))}}}$"
-                notes.append((c, ls, "Gaussian start, same count" if second else f"$P = {P}$, {text}"))
+                sub = None                                   # a second, gray line with the reason
+                if lost:
+                    text = f"count ${pred}$: not computable"
+                    if m.get("arch", "mlp") == "mlp":
+                        sub = "outputs overflow" if bad == n else f"outputs grow like $|x|^{{{2 ** m['L']}}}$"
+                else:
+                    text = f"count ${pred}$" + (f", overflow in {bad} of {n}" if bad else "")
+                    ranks = [r for r in m.get("ranks", []) if r > 0]
+                    if m.get("matches", 0) == 0:
+                        below = (m.get("min_gap") or 0) >= 10 and ranks and all(pred / 2 < r < pred for r in ranks)
+                        text += ": drops below it" if below else ": no clear drop"
+                notes.append((c, ls, "Gaussian start, same count" if second else f"$P = {P}$, {text}", sub))
             if not notes:                                    # nothing computed for this panel yet
                 ax.text(0.5, 0.5, "running", transform=ax.transAxes, ha="center", va="center", color=muted,
                         fontsize=8)
@@ -119,11 +129,16 @@ def main():
                 if i == len(fams) - 1:
                     ax.set_xlabel("singular value index (largest first)")
                 continue
-            top = 0.36 + 0.095 * max(0, len(notes) - 4)
-            for k, (c, ls, text) in enumerate(notes):
-                y = top - 0.095 * k
+            lines = sum(1 + (sub is not None) for *_, sub in notes)
+            y = 0.36 + 0.095 * max(0, lines - 4)
+            for c, ls, text, sub in notes:
                 ax.plot([0.03, 0.10], [y, y], transform=ax.transAxes, color=c, lw=1.1, ls=ls, solid_capstyle="round")
                 ax.text(0.115, y, text, transform=ax.transAxes, ha="left", va="center", color=ink, fontsize=6.6)
+                y -= 0.095
+                if sub is not None:
+                    ax.text(0.115, y + 0.012, sub, transform=ax.transAxes, ha="left", va="center", color=muted,
+                            fontsize=6.2)
+                    y -= 0.085
             ax.set_xlim(1, max(xmax, 2) * 1.01)
             ax.xaxis.set_major_locator(MaxNLocator(4, integer=True))
             ax.set_ylim(10 ** -19.5, 3)
@@ -139,7 +154,7 @@ def main():
         if row_meta is not None:
             axes[i, 0].text(0.0, 1.06, title(row_meta), transform=axes[i, 0].transAxes, ha="left", va="bottom",
                             fontsize=8, color=ink, fontweight="bold")
-    legend = [x for x in SERIES if x[2] in used]
+    legend = [x for x in series if x[2] in used]
     H = fig.get_figheight()
     two_rows = len(legend) > 4 or sum(len(x[2]) for x in legend) > 90   # one row would not fit the width
     extra = 0.2 if two_rows else 0.0
