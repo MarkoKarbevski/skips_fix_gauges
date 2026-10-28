@@ -1,24 +1,25 @@
-% with the new runs: 8 blocks of width 16, 64 blocks of width 4, transformers of 8 blocks, and the check at
-% eps = 1e-12 of three blocks (check_eps0_learned.py)
-\def\fdReLUa{sm/{simulated, $L \le 64$}}
-\def\fdReLUb{sm/{simulated, $L = 1$}}
+% The evidence of each cell with the new runs: 8 blocks of width 16, 64 blocks of width 4, transformers of 8 blocks
+% (eps = 1e-5), and the check at eps = 1e-12 of three blocks (check_eps0_learned.py). Not yet in Appendix F.
+\def\fdReLUa{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated ${\ge}$, $L \le 64$}}
+\def\fdReLUb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L = 1$}}
 \def\fdReLUc{sm/{simulated, $L = 3$}}
-\def\fdReLUsqa{sm/{simulated, $L = 3$}}
-\def\fdReLUsqb{sm/{simulated, $L = 1$}}
+\def\fdReLUsqa{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L = 3$}}
+\def\fdReLUsqb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L = 1$}}
 \def\fdReLUsqc{sm/{simulated, $L = 3$}}
-\def\fdReGLUa{sm/{simulated, $L = 3$}}
-\def\fdReGLUb{sm/{simulated, $L = 3$}}
+\def\fdReGLUa{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L = 3$}}
+\def\fdReGLUb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L = 3$}}
 \def\fdReGLUc{sm/{simulated, $L = 3$}}
-\def\fdAttna{sm/{simulated, $L \le 8$}}
-\def\fdAttnb{sm/{simulated, $L \le 8$}}
-\def\fdTanha{sm/{simulated, $L \le 8$}}
-\def\fdTanhb{sm/{simulated, $L \le 8$}}
+\def\fdAttna{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L \le 8$}}
+\def\fdAttnb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L \le 8$}}
+\def\fdTanha{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L \le 8$}}
+\def\fdTanhb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L \le 8$}}
 \def\fdTanhc{sm/{simulated, $L = 3$}}
-\def\fdGELUa{sm/{simulated, $L \le 64$}}
-\def\fdGELUb{sm/{simulated, $L \le 8$}}
+\def\fdGELUa{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L \le 64$}}
+\def\fdGELUb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L \le 8$}}
 \def\fdSwiGLUa{sm/{simulated, $L = 3$}}
 \def\fdSwiGLUb{sm/{simulated, $L \le 8$}}
 \def\fdGeGLUa{sm/{simulated, $L = 3$}}
 \def\fdGeGLUb{sm/{simulated, $L \le 8$}}
-\def\fdLearnb{sm/{simulated, $L \le 8$}}
-\def\fdLearnc{sm/{simulated, $L = 3$}}
+\def\fdLearna{pr/{\fdprf{thm:gauge}{proven, any $L$}}}
+\def\fdLearnb{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L \le 8$}}
+\def\fdLearnc{pr/{\fdprf{thm:onelayer}{proven, $L = 1$, homogeneous}},pr/{\fdprf{thm:onelayer}{proven ${\le}$, $L = 1$}},sm/{simulated, $L = 3$}}

@@ -152,106 +152,97 @@ ReLU & 3 & \ref{app:checks} & none & $\ge L\dm^2$ \\
 
 \begin{figure}[t]
 \centering
-% What the skips add, by normalization and block. Proofs are tagged once per group, simulations once per block.
-{\def\fdref#1{{\hypersetup{linkcolor=white}\cref{#1}}}%
-\def\fdReLUa{sm/{simulated, $L = 3$}}
-\def\fdReLUb{sm/{simulated, $L = 1$}}
-\def\fdReLUsqa{sm/{simulated, $L = 3$}}
-\def\fdReLUsqb{sm/{simulated, $L = 1$}}
-\def\fdReGLUa{sm/{simulated, $L = 3$}}
-\def\fdReGLUb{sm/{simulated, $L = 3$}}
+% What skip connections add, by normalization and block. Each cell lists its own evidence: proven or simulated.
+% Sources: fdim/tree/grid_core.tex and tags_paper.tex in the scratch tree; variants in figs/decision_variants.
+{\def\fdprf#1#2{{\hypersetup{linkcolor=white}\hyperref[#1]{#2}}}%
+\def\fdReLUa{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated ${\ge}$, $L = 3$}}
+\def\fdReLUb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L = 1$}}
+\def\fdReLUsqa{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L = 3$}}
+\def\fdReLUsqb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L = 1$}}
+\def\fdReGLUa{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L = 3$}}
+\def\fdReGLUb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L = 3$}}
 \def\fdReGLUc{sm/{simulated, $L = 3$}}
-\def\fdAttna{sm/{simulated, $L \le 8$}}
-\def\fdAttnb{sm/{simulated, $L \le 8$}}
-\def\fdTanha{sm/{simulated, $L \le 6$}}
-\def\fdTanhb{sm/{simulated, $L \le 6$}}
+\def\fdAttna{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L \le 8$}}
+\def\fdAttnb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L \le 8$}}
+\def\fdTanha{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L \le 6$}}
+\def\fdTanhb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L \le 6$}}
 \def\fdTanhc{sm/{simulated, $L = 3$}}
-\def\fdGELUa{sm/{simulated, $L = 3$}}
-\def\fdGELUb{sm/{simulated, $L = 3$}}
+\def\fdGELUa{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L = 3$}}
+\def\fdGELUb{pr/{\fdprf{thm:onelayer}{proven ${\ge}$, $L = 1$}},sm/{simulated, $L = 3$}}
 \def\fdSwiGLUa{sm/{simulated, $L = 3$}}
 \def\fdSwiGLUb{sm/{simulated, $L = 3$}}
 \def\fdGeGLUa{sm/{simulated, $L = 3$}}
 \def\fdGeGLUb{sm/{simulated, $L = 3$}}
-\def\fdLearnb{sm/{simulated, $L = 3$ ($\tanh$)}}
-\def\fdLearnc{sm/{simulated, $L = 3$ ($\tanh$)}}
+\def\fdLearna{pr/{\fdprf{thm:gauge}{proven, any $L$}}}
+\def\fdLearnb{pr/{\fdprf{thm:onelayer}{proven, $L = 1$}},sm/{simulated, $L = 3$, $\tanh$}}
+\def\fdLearnc{pr/{\fdprf{thm:onelayer}{proven, $L = 1$, homogeneous}},pr/{\fdprf{thm:onelayer}{proven ${\le}$, $L = 1$}},sm/{simulated, $L = 3$, $\tanh$}}
 \definecolor{idskip}{HTML}{2A78D6}%
 \definecolor{lrskip}{HTML}{1BAF7A}%
 \begin{tikzpicture}[x=1mm,y=1mm,
   cond/.style={draw=black!40, line width=0.4pt, rounded corners=2pt, fill=white, align=center,
     font=\small, inner xsep=3.2pt, inner ysep=2.4pt},
-  root/.style={cond, draw=black!70, line width=0.6pt},
+  root/.style={cond, draw=black!75, line width=0.6pt, font=\normalsize, inner xsep=5pt, inner ysep=3.2pt},
   edge/.style={-{Stealth[length=1.8mm,width=1.3mm]}, black!45, line width=0.5pt},
   pr/.style={fill=black!80, text=white, font=\scriptsize, rounded corners=1.2pt, inner xsep=1.7pt,
-    inner ysep=1.0pt, align=center},
+    inner ysep=1.0pt},
   sm/.style={draw=black!80, line width=0.35pt, fill=white, text=black, font=\scriptsize,
     rounded corners=1.2pt, inner xsep=1.5pt, inner ysep=0.85pt},
   note/.style={font=\scriptsize, text=black!60, align=center, inner sep=0.5pt},
-  val/.style={font=\small, inner sep=0.8pt}]
-% column centers; half widths 16.75, 21.4, 17.5
-\def\fdA{39}\def\fdB{78.0}\def\fdC{117.9}
-% the columns: a small tree of the normalization
-\node[root] (root) at (70,9) {$L$ attention or MLP blocks\\[-1.5pt]{\footnotesize\color{black!55}$d = \dm$}};
-\node[cond] (n0) at (\fdA,-11.5) {no normalization};
-\node[cond] (n1) at (97.95,-2) {pre-RMSNorm};
-\node[cond] (e1) at (\fdB,-11.5) {$\varepsilon > 0$};
-\node[cond] (e0) at (\fdC,-11.5) {$\varepsilon \to 0$};
-\draw[edge] (root) -- (n0);
-\draw[edge] (root) -- (n1);
-\draw[edge] (n1) -- (e1);
-\draw[edge] (n1) -- (e0);
-% a band: center, half width, value, top, bottom, fill
+  val/.style={font=\small, inner sep=0.8pt},
+  lab/.style={anchor=east, align=right, font=\small, inner sep=0.5pt},
+  sublab/.style={anchor=east, align=right, font=\scriptsize, text=black!55, inner sep=0.5pt}]
+\def\fdA{43.45}\def\fdB{86.5}\def\fdC{123.9}\def\fdwA{21.15}\def\fdwB{21.1}\def\fdwC{15.5}
+\node[root] (root) at (80.85,20) {How much functional dimension do skip connections add\\to a network of $L$ attention or MLP blocks?\\[-0.5pt]{\footnotesize\color{black!55}$d = \dm$}};
+\node[cond] (n0) at (\fdA,-6) {no normalization};
+\node[cond] (n1) at (105.2,3.6) {pre-RMSNorm\\[-1pt]{\footnotesize\color{black!55}$N(h) = h/\sqrt{\norm{h}^2/d + \varepsilon}$}};
+\node[cond] (e1) at (\fdB,-6) {$\varepsilon > 0$};
+\node[cond] (e0) at (\fdC,-6) {$\varepsilon \to 0$};
+\draw[edge] (root.south -| n0) -- (n0);
+\draw[edge] (root.south -| n1) -- (n1);
+\draw[edge] (n1.west) -| (e1);
+\draw[edge] (n1.east) -| (e0);
 \def\fdband#1#2#3#4#5#6{\fill[#6, rounded corners=1.5pt] (#1-#2,#4) rectangle (#1+#2,#5);
   \node[val] at (#1,#4-2.9) {#3};}
-% a row label with a rule above it
-\def\fdrow#1#2{\node[anchor=east, font=\small] at (20.6,#1) {#2};
-  \draw[black!10, line width=0.3pt] (22.4,#1+2.7) -- (135.4,#1+2.7);}
-% the tags of a cell, centered: a list of style/text
-\def\fdtags#1#2#3{\node[anchor=center] at (#1,#2) {\begin{tikzpicture}[baseline]\foreach \s/\t [count=\k] in #3 {
+\def\fdrow#1#2{\node[lab] at (21.3,#1) {#2};
+  \draw[black!10, line width=0.3pt] (22.3,#1+2.65) -- (139.4,#1+2.65);}
+\def\fdtags#1#2#3{\node[anchor=center, inner sep=0pt] at (#1,#2) {\begin{tikzpicture}[baseline]\foreach \s/\t [count=\k] in #3 {
     \ifnum\k=1 \node[\s, anchor=west] (q\k) at (0,0) {\t}; \else
     \node[\s, anchor=west] (q\k) at ([xshift=0.9mm]q\the\numexpr\k-1\relax.east) {\t}; \fi}\end{tikzpicture}};}
+\def\fdvtags#1#2#3{\foreach \s/\t [count=\k] in #3 {\node[\s] at (#1,#2-4.1*\k+4.1) {\t};}}
 \colorlet{fdfull}{idskip!24}\colorlet{fdless}{idskip!8}\colorlet{fdlrn}{lrskip!14}
-% identity skips, positively homogeneous blocks
-\fdband{\fdA}{16.75}{$+L\,d^2$}{-16}{-45.0}{fdfull}
-\fdband{\fdB}{21.4}{$+L\,d(d-1)/2$}{-16}{-45.0}{fdless}
-\fdband{\fdC}{17.5}{$+L\,d^2$}{-16}{-45.0}{fdfull}
-\node[pr] at (\fdA,-24.4) {proven for $L = 1$\\[-1.5pt]\fdref{thm:onelayer}};
-\node[pr] at (\fdB,-24.4) {proven for $L = 1$: gain ${\ge}$ value\\[-1.5pt]\fdref{thm:onelayer}};
-% identity skips, the other blocks
-\fdband{\fdA}{16.75}{$+L\,d^2$}{-46.6}{-90.2}{fdfull}
-\fdband{\fdB}{21.4}{$+L\,d(d-1)/2$}{-46.6}{-90.2}{fdless}
-\fdband{\fdC}{17.5}{$+L\,\big(d(d-1)/2 + 1\big)$}{-46.6}{-90.2}{fdless}
-\node[pr] at (\fdA,-55.0) {proven for $L = 1$\\[-1.5pt]\fdref{thm:onelayer}};
-\node[pr] at (\fdB,-55.0) {proven for $L = 1$: gain ${\ge}$ value\\[-1.5pt]\fdref{thm:onelayer}};
-\node[note] at (\fdA,-60.5) {not for SwiGLU, GeGLU};
-\node[note] at (\fdB,-60.5) {not for SwiGLU, GeGLU};
-% learned skips over identity skips: the same for every block, homogeneous or not
-\fdband{\fdA}{16.75}{$+0$}{-93.0}{-110.0}{fdlrn}
-\fdband{\fdB}{21.4}{$+L\,d(d+1)/2$}{-93.0}{-110.0}{fdlrn}
-\fdband{\fdC}{17.5}{$+L\,\big(d(d+1)/2 - 1\big)$}{-93.0}{-110.0}{fdlrn}
-\node[note] at (\fdB,-99.6) {$= L\cdot\dim$ triangular $d{\times}d$};
-\node[note] at (\fdC,-99.6) {$= L\cdot(\dim$ triangular $d{\times}d - 1)$};
-\node[pr] at (\fdA,-101.5) {proven for any $L$\\[-1.5pt]\fdref{thm:gauge}};
-\fdtags{\fdB}{-104.4}{\fdLearnb}
-\fdtags{\fdC}{-104.4}{\fdLearnc}
-% labels
-\node[anchor=east, align=right, font=\footnotesize, text=idskip!85!black] at (21,-12.4) {identity skips\\[-2pt]add};
-\node[anchor=east, align=right, font=\small] at (21,-19.6) {homogeneous\\[-2.5pt]{\footnotesize\color{black!55}$B(\lambda h) = \lambda^k B(h)$}};
-\node[anchor=east, font=\small] at (21,-49.5) {other blocks};
-\node[anchor=east, align=right, font=\small, text=lrskip!80!black] at (21,-101.5) {learned $A_\ell$\\[-1.5pt]over identity\\[-1.5pt]{\footnotesize\color{black!55}all blocks}};
-\foreach \y/\lab in {-31.4/ReLU$^{\dagger}$, -36.7/ReLU$^2$, -42.0/ReGLU,
-  -66.0/attention, -71.3/$\tanh$, -76.6/GELU, -81.9/SwiGLU, -87.2/GeGLU} {\fdrow{\y}{\lab}}
-% simulations, one tag per block: no normalization, eps > 0, eps -> 0
-\fdtags{\fdA}{-31.4}{\fdReLUa}   \fdtags{\fdB}{-31.4}{\fdReLUb}   \ifdefined\fdReLUc\fdtags{\fdC}{-31.4}{\fdReLUc}\fi
-\fdtags{\fdA}{-36.7}{\fdReLUsqa} \fdtags{\fdB}{-36.7}{\fdReLUsqb} \ifdefined\fdReLUsqc\fdtags{\fdC}{-36.7}{\fdReLUsqc}\fi
-\fdtags{\fdA}{-42.0}{\fdReGLUa}  \fdtags{\fdB}{-42.0}{\fdReGLUb}  \fdtags{\fdC}{-42.0}{\fdReGLUc}
-\fdtags{\fdA}{-66.0}{\fdAttna}   \fdtags{\fdB}{-66.0}{\fdAttnb}
-\fdtags{\fdA}{-71.3}{\fdTanha}   \fdtags{\fdB}{-71.3}{\fdTanhb}   \fdtags{\fdC}{-71.3}{\fdTanhc}
-\fdtags{\fdA}{-76.6}{\fdGELUa}   \fdtags{\fdB}{-76.6}{\fdGELUb}
-\fdtags{\fdA}{-81.9}{\fdSwiGLUa} \fdtags{\fdB}{-81.9}{\fdSwiGLUb}
-\fdtags{\fdA}{-87.2}{\fdGeGLUa}  \fdtags{\fdB}{-87.2}{\fdGeGLUb}
+\fdband{\fdA}{\fdwA}{$+L\,d^2$}{-11}{-35.0}{fdfull}
+\fdband{\fdB}{\fdwB}{$+L\,d(d-1)/2$}{-11}{-35.0}{fdless}
+\fdband{\fdC}{\fdwC}{$+L\,d^2$}{-11}{-35.0}{fdfull}
+\fdband{\fdA}{\fdwA}{$+L\,d^2$}{-36.6}{-69.0}{fdfull}
+\fdband{\fdB}{\fdwB}{$+L\,d(d-1)/2$}{-36.6}{-69.0}{fdless}
+\fdband{\fdC}{\fdwC}{$+L\,\big(d(d-1)/2 + 1\big)$}{-36.6}{-69.0}{fdless}
+\fdband{\fdA}{\fdwA}{$+0$}{-72.0}{-91.0}{fdlrn}
+\fdband{\fdB}{\fdwB}{$+L\,d(d+1)/2$}{-72.0}{-91.0}{fdlrn}
+\fdband{\fdC}{\fdwC}{$+L\,\big(d(d+1)/2 - 1\big)$}{-72.0}{-91.0}{fdlrn}
+\node[note] at (\fdB,-78.4) {$= L\cdot\dim$ triangular $d{\times}d$};
+\node[lab, font=\footnotesize, text=idskip!85!black] at (21.3,-5.2) {identity skips};
+\node[sublab] at (21.3,-8.3) {vs no skips};
+\node[lab] at (21.3,-13.9) {homogeneous};
+\node[sublab] at (21.3,-17.3) {$B(\lambda h) = \lambda^k B(h)$};
+\node[lab] at (21.3,-39.5) {other blocks};
+\node[lab, font=\footnotesize, text=lrskip!80!black] at (21.3,-77.6) {learned\\[-1.5pt]linear skips};
+\node[sublab] at (21.3,-84.0) {vs identity skips\\[-1pt]all blocks};
+\foreach \y/\lab in {-21.6/ReLU, -26.9/ReLU$^2$, -32.2/ReGLU,
+  -45.0/attention, -50.3/$\tanh$, -55.6/GELU, -60.9/SwiGLU, -66.2/GeGLU} {\fdrow{\y}{\lab}}
+\fdtags{\fdA}{-21.6}{\fdReLUa}   \fdtags{\fdB}{-21.6}{\fdReLUb}   \ifdefined\fdReLUc\fdtags{\fdC}{-21.6}{\fdReLUc}\fi
+\fdtags{\fdA}{-26.9}{\fdReLUsqa} \fdtags{\fdB}{-26.9}{\fdReLUsqb} \ifdefined\fdReLUsqc\fdtags{\fdC}{-26.9}{\fdReLUsqc}\fi
+\fdtags{\fdA}{-32.2}{\fdReGLUa}  \fdtags{\fdB}{-32.2}{\fdReGLUb}  \ifdefined\fdReGLUc\fdtags{\fdC}{-32.2}{\fdReGLUc}\fi
+\fdtags{\fdA}{-45.0}{\fdAttna}   \fdtags{\fdB}{-45.0}{\fdAttnb}   \ifdefined\fdAttnc\fdtags{\fdC}{-45.0}{\fdAttnc}\fi
+\fdtags{\fdA}{-50.3}{\fdTanha}   \fdtags{\fdB}{-50.3}{\fdTanhb}   \ifdefined\fdTanhc\fdtags{\fdC}{-50.3}{\fdTanhc}\fi
+\fdtags{\fdA}{-55.6}{\fdGELUa}   \fdtags{\fdB}{-55.6}{\fdGELUb}   \ifdefined\fdGELUc\fdtags{\fdC}{-55.6}{\fdGELUc}\fi
+\fdtags{\fdA}{-60.9}{\fdSwiGLUa} \fdtags{\fdB}{-60.9}{\fdSwiGLUb} \ifdefined\fdSwiGLUc\fdtags{\fdC}{-60.9}{\fdSwiGLUc}\fi
+\fdtags{\fdA}{-66.2}{\fdGeGLUa}  \fdtags{\fdB}{-66.2}{\fdGeGLUb}  \ifdefined\fdGeGLUc\fdtags{\fdC}{-66.2}{\fdGeGLUc}\fi
+\fdvtags{\fdA}{-80.5}{\fdLearna}
+\fdvtags{\fdB}{-82.6}{\fdLearnb}
+\fdvtags{\fdC}{-80.4}{\fdLearnc}
 \end{tikzpicture}
 }
-\caption{Functional dimension added by identity skips, against no skips (blue), and by learned skips, over identity skips (green). Learned skips help only under RMSNorm. Untagged: symmetry counts (\cref{cor:count,thm:rms}); simulations: \cref{app:checks}. $^\dagger$Some skipless ReLU draws are more redundant.}
+\caption{Values from the symmetry counts (\cref{cor:count,thm:rms}); proofs in \cref{thm:gauge,thm:onelayer}; simulations in \cref{app:checks}.}
 \label{fig:decision}
 \end{figure}
 
@@ -381,7 +372,7 @@ Reduction without skips & \cref{prop:normalform} & One $\dm\times\dm$ block per 
 \addlinespace[1pt]
 One global change of basis & \cref{sec:global} & A symmetry outside the product of the groups of the blocks; with an untied readout it also removes one block, for example $0.03$ to $0.10$ percent of Llama-3.1. & Proof, checked, count \\
 \addlinespace[1pt]
-Gain, one block & \cref{thm:onelayer} & The skip adds exactly $\dm^2$ to the functional dimension ($\tanh$, GELU, ReLU, ReLU$^2$, ReGLU, attention), and under RMSNorm at least $\dm(\dm-1)/2$. & Proof, measured \\
+Gain, one block & \cref{thm:onelayer} & The skip adds exactly $\dm^2$ to the functional dimension ($\tanh$, GELU, ReLU, ReLU$^2$, ReGLU, attention), and under RMSNorm at least $\dm(\dm-1)/2$; a learned skip adds exactly $\dm(\dm+1)/2$ more. & Proof, measured \\
 \addlinespace[1pt]
 Gain, deeper networks & \cref{fig:spectra}, \cref{sec:measured} & The gain equals the removed symmetry in $\tanh$, GELU and gated MLPs, with and without RMSNorm, and in nanoGPT, in every draw, except for skipless ReGLU networks under RMSNorm with $\varepsilon = 10^{-5}$, where some directions fall below double precision. & Measured \\
 \addlinespace[1pt]
@@ -598,7 +589,7 @@ The gain of \cref{cor:count}(b) needs the equality condition, for the residual a
 
 \subsection{One block}\label{sec:onelayer}
 
-For networks with one block the equality condition is a theorem, except for the skipless network under RMSNorm, for which we prove only the bound of \cref{cor:count}(a) (\cref{thm:onelayer} in \cref{app:onelayer}). Let $\dm \ge 2$, and let the block have width at least $\dm$, with inputs and outputs of dimension at least $\dm$: a $\tanh$, GELU, ReLU, ReLU$^2$ or ReGLU block, or an attention block with heads of width at most $\dm$, causal or not, on sequences of at least two tokens. Without normalization, with or without biases, at generic parameters, the skipless and the residual network both satisfy the equality condition, so the skip raises the functional dimension by exactly $\dm^2$; for attention without biases this extends to a learned absolute position embedding. Under pre-RMSNorm with $\varepsilon > 0$, without biases, the residual network satisfies it too, and the skip adds at least $\dm(\dm-1)/2$.
+For networks with one block the equality condition is a theorem, except for the skipless network under RMSNorm, for which we prove only the bound of \cref{cor:count}(a) (\cref{thm:onelayer} in \cref{app:onelayer}). Let $\dm \ge 2$, and let the block have width at least $\dm$, with inputs and outputs of dimension at least $\dm$: a $\tanh$, GELU, ReLU, ReLU$^2$ or ReGLU block, or an attention block with heads of width at most $\dm$, causal or not, on sequences of at least two tokens. Without normalization, with or without biases, at generic parameters, the skipless and the residual network both satisfy the equality condition, so the skip raises the functional dimension by exactly $\dm^2$; for attention without biases this extends to a learned absolute position embedding. Under pre-RMSNorm with $\varepsilon > 0$, without biases, the residual network satisfies it too, and the skip adds at least $\dm(\dm-1)/2$. A learned skip, full or triangular, adds exactly $\dm(\dm+1)/2$ more, the dimension of the triangular $\dm\times\dm$ matrices.
 
 The proof uses only linear algebra and limits in one variable. The parameters enter through $M = ED$, $A = \Wwrite D$ and $C = E\Wread$, as $x \mapsto f(xC)A$ without the skip and $x \mapsto xM + f(xC)A$ with it. A factorization of a rank-$\dm$ matrix into two factors of rank $\dm$ is unique up to an invertible $\dm \times \dm$ matrix between them, so the skipless network carries two changes of basis, and $M = ED$ ties them into one. It remains to show that a direction that leaves the function unchanged to first order moves $M$, $A$ and $C$ only along the symmetries of the hidden units, which are isolated by their kinks for the ReLU-type activations, and along rays by how fast they approach their limits for $\tanh$ and GELU. On inputs with two distinct tokens, the output of an attention block at the second token is a $\tanh$ network with one unit per head, since a softmax over two distinct scores is a logistic function of their difference.
 
@@ -1073,10 +1064,11 @@ This appendix states and proves the result of \cref{sec:onelayer}.
 \begin{theorem}[One block]\label{thm:onelayer}
 Let $\dm \ge 2$, let the input and output dimensions be at least $\dm$, and consider networks with one block: a $\tanh$, GELU, ReLU, ReLU$^2$ or ReGLU block, or an attention block of $H$ heads of width $d_h \le \dm$, causal or not, on sequences of at least two tokens.\\
 \textup{(a)} Let the network have no normalization, with or without biases, and let the block have width at least $\dm$, where the width of an attention block is $Hd_h$. For generic parameters the skipless network $x \mapsto f(xE\Wread)\Wwrite D$ has functional dimension $P - 2\dm^2 - s$ and the residual network $x \mapsto \big(xE + f(xE\Wread)\Wwrite\big)D$ has $P - \dm^2 - s$; with biases on the embedding, the block and the readout, counted in $P$, both values are $2\dm$ lower, and $2\dm + 2Hd_h$ lower for attention. Both networks satisfy the equality condition, and the skip raises the functional dimension by exactly $\dm^2$.\\
-\textup{(b)} Let the network be pre-RMSNorm with $\varepsilon > 0$, without biases. For generic parameters the residual network $x \mapsto N\big(xE + f(N(xE)\Wread)\Wwrite\big)D$ has functional dimension $P - \dm(\dm-1)/2 - s$, which is the equality condition. If the block has width at least $\dm$, the skip raises the functional dimension by at least $\dm(\dm-1)/2$.
+\textup{(b)} Let the network be pre-RMSNorm with $\varepsilon > 0$, without biases. For generic parameters the residual network $x \mapsto N\big(xE + f(N(xE)\Wread)\Wwrite\big)D$ has functional dimension $P - \dm(\dm-1)/2 - s$, which is the equality condition. If the block has width at least $\dm$, the skip raises the functional dimension by at least $\dm(\dm-1)/2$.\\
+\textup{(c)} Let the network be pre-RMSNorm without biases, with a learned skip $A \in \R^{\dm\times\dm}$, full or upper triangular: $x \mapsto N\big(xEA + f(N(xE)\Wread)\Wwrite\big)D$. For generic parameters and $\varepsilon > 0$, its functional dimension exceeds that of the residual network of part (b) by exactly $\dm(\dm+1)/2$, and it satisfies the equality condition. For $\varepsilon = 0$ it exceeds that of the residual network with $\varepsilon = 0$ by at most $\dm(\dm+1)/2 - 1$, with equality for ReLU, ReLU$^2$ and ReGLU blocks. Both differences hold for SwiGLU and GeGLU blocks as well.
 \end{theorem}
 
-In part (b), for the skipless network we prove only the bound $P - \dm(\dm-1) - s$ of \cref{cor:count}(a), which our checks attain (\cref{app:checks}). Part (a) extends to a learned absolute position embedding, $h_0 = xE + E_{\mathrm{pos}}$, for an attention block without biases, with $P$ counting $E_{\mathrm{pos}}$ (\emph{Position embeddings} below). Rotary encodings act inside the heads, where they reduce the change of basis between queries and keys; we leave them to future work.
+In part (b), for the skipless network we prove only the bound $P - \dm(\dm-1) - s$ of \cref{cor:count}(a), which our checks attain (\cref{app:checks}). With parts (b) and (c), a learned skip under RMSNorm with $\varepsilon > 0$ adds at least $\dm^2$ over no skip if the block has width at least $\dm$, as an identity skip does without normalization. Part (a) extends to a learned absolute position embedding, $h_0 = xE + E_{\mathrm{pos}}$, for an attention block without biases, with $P$ counting $E_{\mathrm{pos}}$ (\emph{Position embeddings} below). Rotary encodings act inside the heads, where they reduce the change of basis between queries and keys; we leave them to future work.
 
 \para{What we use.} The proof needs linear algebra and limits of functions of one real variable. We write $F(\theta, x)$ for the output of the network at the parameters $\theta \in \R^P$ and the input $x$, and $\Der_\theta F(\theta, x)$ for the Fr\'echet derivative of $F(\cdot, x)$ at $\theta$, a linear map on $\R^P$. The derivative is written with an upright $\Der$ so that it is not confused with the readout matrix $D$ of the network. For a direction $\eta \in \R^P$, $\Der_\theta F(\theta, x)\,\eta$ is the derivative of $\tau \mapsto F(\theta + \tau\eta, x)$ at $\tau = 0$. We write $\eta_E$, $\eta_D$, $\eta_{\mathrm{read}}$, $\eta_{\mathrm{write}}, \dots$ for the entries of $\eta$ at the positions of $E$, $D$, $\Wread$, $\Wwrite, \dots$, and $\Der_\theta Q\,\eta$ for the derivative along $\eta$ of a matrix $Q$ that depends on the parameters; for instance $\Der_\theta M\,\eta = \eta_ED + E\eta_D$ for $M = ED$, by the product rule. Call $\eta$ \emph{flat} if $\Der_\theta F(\theta, x)\,\eta = 0$ for every input $x$, and let $\mathcal K(\theta)$ be the space of flat directions. For the ReLU-type activations, $F(\theta, x)$ is differentiable in $\theta$ at the inputs $x$ at which no hidden unit sits at its kink, which form an open set of full measure, and ``every input'' means every such input. For a batch of inputs $x_1, \dots, x_n$, the Jacobian of $\theta \mapsto (F(\theta, x_1), \dots, F(\theta, x_n))$ is the matrix of the linear map $\eta \mapsto (\Der_\theta F(\theta, x_1)\,\eta, \dots, \Der_\theta F(\theta, x_n)\,\eta)$; it has $P$ columns, and its kernel consists of the directions with $\Der_\theta F(\theta, x_k)\,\eta = 0$ for the inputs of the batch. Adding inputs can only shrink this kernel, and a decreasing chain of subspaces of $\R^P$ stops, so some finite batch has kernel exactly $\mathcal K(\theta)$. By rank--nullity, the functional dimension at $\theta$ is therefore
 \[
@@ -1084,7 +1076,7 @@ P - \dim\mathcal K(\theta).
 \]
 The theorem thus amounts to finding the flat directions. A statement holds for \emph{generic} parameters if it fails only where some nonzero polynomial in the parameters vanishes, a set of measure zero.
 
-\para{Overview.} For an MLP block, the parameters enter the function only through $M = ED$, $A = \Wwrite D$ and $C = E\Wread$. Step~1 finds the directions that keep these matrices fixed: they are the directions in which the changes of basis move the parameters, two of them without the skip and one with it. Step~2 shows that a flat direction changes $M$, $A$ and $C$ only along the symmetries of the hidden units: each unit is isolated, by its kink for the ReLU-type activations, and for $\tanh$ and GELU by how fast it approaches its limit on rays $x = tn$ with $t \to \infty$. Step~3 counts. For an attention block the same steps run with one factorization per head, and inputs of two tokens turn Step~2 into the case of $\tanh$. For part (b), large inputs first remove the final normalization and then separate the skip from the block.
+\para{Overview.} For an MLP block, the parameters enter the function only through $M = ED$, $A = \Wwrite D$ and $C = E\Wread$. Step~1 finds the directions that keep these matrices fixed: they are the directions in which the changes of basis move the parameters, two of them without the skip and one with it. Step~2 shows that a flat direction changes $M$, $A$ and $C$ only along the symmetries of the hidden units: each unit is isolated, by its kink for the ReLU-type activations, and for $\tanh$ and GELU by how fast it approaches its limit on rays $x = tn$ with $t \to \infty$. Step~3 counts. For an attention block the same steps run with one factorization per head, and inputs of two tokens turn Step~2 into the case of $\tanh$. For part (b), large inputs first remove the final normalization and then separate the skip from the block. Part (c) runs the same steps with a learned skip, which leaves a symmetric change of basis at $h_0$ in the input of the block; homogeneity or rays remove it.
 
 \subsection*{Part (a) for MLP blocks}
 
@@ -1210,6 +1202,29 @@ as one checks by substituting $k = h_1Y + \mu h_1$ and solving for the number $\
 \emph{Step 4: the block.} With $\eta'_E = 0$, the condition $\Der_\theta h_1\,\eta' = 0$ says that the derivative of $n \mapsto f(n\Wread)\Wwrite$ along the entries of $\eta'$ at the weights of the block vanishes for every $n$ in the image of $x \mapsto N(xE)$, which is the open ball of radius $\sqrt{\dm}$, since $E$ has rank $\dm$ and $N$ maps $\R^{\dm}$ onto that ball for $\varepsilon > 0$. For $\tanh$, GELU and attention this derivative is, along every line through the ball, a function of one variable given by a convergent power series around every point; it vanishes on an interval, hence on the whole line, so it vanishes for all inputs. For the ReLU-type activations without biases the kinks lie on hyperplanes through the center of the ball, and the arguments of \cref{lem:unitid} are local. So \cref{lem:unitid}, with $E$ and $D$ replaced by the identity and $M = 0$, makes the entries of $\eta'$ at each hidden unit a rescaling. For attention, each token $N(x_tE)$ ranges over the ball, and Step~2 for attention blocks, with $E$ and $D$ replaced by the identity and $M = 0$, keeps every $W_{Q,i}W_{K,i}^\top$ and $W_{V,i}W_{O,i}$ fixed to first order; by Step~1 there, $\eta'$ is a direction of the changes of basis inside the heads.
 
 \emph{Step 5: counting.} The flat directions are thus those of the orthogonal change of basis and of the symmetries inside the block. An antisymmetric $Y$ with $EY = 0$ vanishes, since $E$ has rank $\dm$, and the symmetries inside the block move generic weights in independent directions, so $\dim\mathcal K(\theta) = \dm(\dm-1)/2 + s$. If the block has width at least $\dm$, the skipless network with the same shapes has functional dimension at most $P - \dm(\dm-1) - s$ by \cref{cor:count}(a), \cref{lem:free} and, for attention, \cref{rem:attnfree}, so the skip adds at least $\dm(\dm-1)/2$.
+
+\subsection*{Part (c)}
+
+Write $B(n) = f(n\Wread)\Wwrite$ for the block as a function of its input $n$ and of its weights, applied to every token for attention, so that $h_1 = xEA + g(x)$ with $g(x) = B(N(xE))$, and $y = N(h_1)D$. For a direction $\psi$ of the weights of the block, $\Der_\psi B(n)$ is the derivative of $B(n)$ along $\psi$ at fixed $n$, and $\Der B(n)\,k$ is the derivative of $B$ at $n$ along $k$ at fixed weights. Let $\eta$ be flat.
+
+\emph{Steps 1 and 2} of part (b) run with $EA$ in place of $E$, which has rank $\dm$ since $A$ is invertible for generic parameters: $\eta_D = -YD$ with $Y$ antisymmetric, and $\Der_\theta h_1\,\eta = h_1Y$ at every input.
+
+\emph{Step 3: the skip.} At the inputs $tw$ of Step~2, $\Der_\theta h_1\,\eta = t\,w(\eta_EA + E\eta_A) + O(1)$ and $h_1Y = t\,wEAY + O(1)$, so $\eta_EA + E\eta_A = EAY$. Multiplying on the left by $I - EE^+$ gives $(I - EE^+)\,\eta_E = 0$, as $A$ is invertible, so $\eta_E = EX$ with $X = E^+\eta_E$, and then $\eta_A = AY - XA$. At every input $\Der_\theta h_1\,\eta = xEAY + \Der_\theta g\,\eta$ and $h_1Y = xEAY + g(x)Y$, so $\Der_\theta g\,\eta = g(x)Y$. By the formula for $\Der N$ in Step~1 of part (b), which gives the same for $\varepsilon = 0$, the input $n = N(xE)$ of the block has the derivative
+\[
+\Der N(xE)\,(xEX) = nX - q(n)\,n, \qquad q(n) = nX_sn^\top/\dm, \quad X_s = \tfrac12(X + X^\top).
+\]
+
+\emph{Step 4: the symmetric part of $X$.} Write $X = X_a + X_s$ with $X_a$ antisymmetric. The rotations of $h_0$ and $h_1$ with the derivatives $X_a$ and $Y$ are symmetries. They define a flat direction $\eta^{\mathrm{rot}}$ with the entries $EX_a$ at $E$, $AY - X_aA$ at $A$, $-X_a\Wread$ at $\Wread$, $\Wwrite Y$ at $\Wwrite$ and $-YD$ at $D$. The flat direction $\eta' = \eta - \eta^{\mathrm{rot}}$ has the entries $EX_s$, $-X_sA$ and $0$ at $E$, $A$ and $D$, so Step~3 applies to it with $X_s$ in place of $X$ and $0$ in place of $Y$, and $\Der_\theta g\,\eta' = 0$. The change $nX_s$ of the input moves the block as the entries $X_s\Wread$ at $\Wread$ do; for attention, $X_s$ moves the queries, keys and values in the same way. So, with $\psi$ the entries of $\eta'$ at the weights of the block plus these,
+\begin{equation}\label{eq:partc}
+\Der_\psi B(n) = q(n)\,\Der B(n)\,n
+\end{equation}
+for every $n$ in the image of $N$, the open ball of radius $\sqrt{\dm}$. For attention, $q(n)\,n$ stands for the matrix with the rows $q(n_t)\,n_t$, one per token.
+
+We show that $q = 0$, hence $X_s = 0$. For ReLU, ReLU$^2$ and ReGLU, $B(\lambda n) = \lambda^kB(n)$ for $\lambda > 0$, with $k = 1$ or $2$, so the right side of \cref{eq:partc} is $k\,q(n)B(n)$. Replacing $n$ by $\lambda n$ with $0 < \lambda \le 1$ multiplies the left side by $\lambda^k$ and the right side by $\lambda^{k+2}$, so both vanish, and $q = 0$ wherever $B \neq 0$. For the other blocks both sides are analytic in $n$, so \cref{eq:partc} holds for all $n$, and we take $n = tm$ with $t \to \infty$, as in the proof of \cref{lem:unitid}. For GELU the right side is $t^3q(m)\max(m\Wread, 0)\Wwrite$ up to terms that decay faster than any power of $t$, and the left side is a polynomial of degree at most one in $t$ up to such terms, so $q(m)\max(m\Wread, 0)\Wwrite = 0$. SwiGLU and GeGLU units $\sigma(nc_i)\,(ne_i)\,a_i$ give $2t^4q(m)\sum_{i:\,mc_i > 0}(mc_i)(me_i)\,a_i$ against a polynomial of degree two. For $\tanh$ the right side is $4t^3q(m)\sum_i (mc_i)\,e^{-2\lvert mc_i\rvert t}a_i$ up to terms $O(t^3e^{-4\lvert mc_i\rvert t})$; for the unit $j$ with the smallest $\lvert mc_j\rvert$, the left side contributes a polynomial of degree one times $e^{-2\lvert mc_j\rvert t}$ (proof of \cref{lem:unitid}), so $q(m)(mc_j)\,a_j = 0$. For attention, on the two-token inputs of Step~2 for attention blocks with $u = tm$ and $v$ fixed, the right side is $t^3q(m)\,mS + O(t^2)$ and the left side is $O(t)$. In every case $q$ vanishes on an open set for generic weights, so $X_s = 0$.
+
+\emph{Step 5: counting.} With $X_s = 0$, the direction $\eta'$ moves only the weights of the block, and by \cref{eq:partc} $B(n)$ has derivative zero along it on the whole ball. So $\eta'$ lies in the space $\mathcal K_B$ of such directions, which is the space found in Step~4 of part (b), and every direction of $\mathcal K_B$ is flat. Hence $\mathcal K(\theta)$ is spanned by the directions $\eta^{\mathrm{rot}}$ and $\mathcal K_B$, as for the residual network with its single rotation, and for generic weights of the block $\mathcal K_B$ has the same dimension in both networks. The directions $\eta^{\mathrm{rot}}$ are independent of $\mathcal K_B$ and of each other, since $\eta_E = EX_a$ and $\eta_D = -YD$ determine $X_a$ and $Y$. For a full $A$ they have dimension $\dm(\dm-1)$. For an upper triangular $A$, $AY - X_aA$ must be upper triangular, which determines $Y$ from $X_a$: for generic $A$ the map from antisymmetric $Y$ to the entries of $AY$ below the diagonal is invertible, as it is for $A = I$. They then have dimension $\dm(\dm-1)/2$. So $\mathcal K(\theta)$ is larger than for the residual network by $\dm(\dm-1)/2$, respectively $0$, while the network has $\dm^2$, respectively $\dm(\dm+1)/2$, more parameters. In both cases the functional dimension is larger by $\dm(\dm+1)/2$. For the blocks of the theorem, $\mathcal K_B$ consists of the symmetries inside the block (Step~4 of part (b)), so the equality condition holds.
+
+\emph{The case $\varepsilon = 0$.} Now $N$ maps onto the sphere of radius $\sqrt{\dm}$, and the scalings of $h_0$ and $h_1$ are symmetries too, since $N(ch) = N(h)$ for $c > 0$. In Step~1, $\Der N(h)$ vanishes along $h$, so $\Der_\theta h_1\,\eta = h_1Y + \mu\,h_1$ with a number $\mu$ at each input. $Y$ is again antisymmetric, since $N(h_1)Y$ must be orthogonal to $h_1$, which is $t\,wEA + O(1)$ at the inputs $tw$. At these inputs $g$ and its derivative along $\eta$ do not depend on $t$, since $N(twE) = N(wE)$. The terms of order $t$ give $w\Lambda = \mu_w\,wEA$ with $\Lambda = \eta_EA + E\eta_A - EAY$ and a number $\mu_w$, for all $w$ in an open set. Adding to $w$ a vector $w_0$ with $w_0E = 0$ leaves $wEA$ unchanged, so $w_0\Lambda$ is a multiple of $wEA$ for every such $w$, hence $w_0\Lambda = 0$, and $\Lambda = E\Lambda'$ with $\Lambda' = E^+\Lambda$. Every vector $v = wE$ of an open set is then a left eigenvector of $\Lambda'A^{-1}$, which is therefore $cI$ for a number $c$, as in the proof of \cref{lem:rms}: $\eta_EA + E\eta_A = EA(Y + cI)$. The constant terms then give $\mu = c$ wherever $wEA$ and $g(w)$ are linearly independent. Steps~3 and~4 run with $Y + cI$ in place of $Y$ and with $X_s = c_0I + X_0$, where $X_0$ has trace zero; the scalings, with the derivatives $c_0$ at $h_0$ and $c$ at $h_1$, join the rotations in $\eta^{\mathrm{rot}}$; and \cref{eq:partc} holds with $X_0$ in place of $X_s$ on the sphere. For the residual network the same steps give $\eta_E = E(Y + cI)$, so $X_s = cI$ and $X_0 = 0$. Its flat directions are the rotation and the scaling of all hidden states, and the space $\mathcal K_B$ of directions of the block along which $B$ has derivative zero on the sphere. For the learned skip, $\eta^{\mathrm{rot}}$ and $\mathcal K_B$ are flat, which gives at least $\dm(\dm-1) + 2$, respectively $\dm(\dm-1)/2 + 2$, dimensions besides $\mathcal K_B$, against $\dm(\dm-1)/2 + 1$ for the residual network. So the difference is at most $\dm(\dm+1)/2 - 1$. For ReLU, ReLU$^2$ and ReGLU, both sides of \cref{eq:partc} are positively homogeneous, of degrees $k$ and $k + 2$, so $\norm{n}^2\,\Der_\psi B(n) = k\dm\,q(n)B(n)$ for all $n \neq 0$. On each region where no $nc_k$ changes sign, both sides are polynomials in $n$. Across the hyperplane $nc_i = 0$, at a point of no other such hyperplane, only the terms of unit $i$ change, so they satisfy the identity on their own: $\norm{n}^2$ times a polynomial equals $k\dm\,q(n)$ times $(nc_i)\,a_i$, $(nc_i)^2a_i$ or $(nc_i)(ne_i)\,a_i$. Since $\norm{n}^2$ has no real linear factor, it divides $q(n)$, so $X_0$ is a multiple of $I$, and $X_0 = 0$ because its trace vanishes. Then Step~5 gives equality.
 
 % ===== appendix/c_product.tex =====
 \FloatBarrier

@@ -1,80 +1,80 @@
-% The decision grid, self-contained: it needs TikZ (arrows.meta), the macros \dm and \fdref (a reference to a result
-% of the paper), and the tag lists \fd... defined before it is input. Columns: the normalization; rows: the block.
-% Every value is what the skips add to the functional dimension against the same blocks without skips; a band holds
-% one value, darker where it is L d^2. The proofs are tagged once per group, the simulations once per block.
+% The decision grid, self-contained. It needs TikZ (arrows.meta), the macros \dm, \norm and \fdprf{label}{text}
+% (a link to a result of the paper, or just the text), and the tag lists \fd... defined before it is input.
+% Root: the question. Columns: the normalization. Rows: the block, grouped by value. Every cell lists its own
+% evidence, so a block without a proof has no proof chip. Bottom band: learned linear skips over identity skips.
 \definecolor{idskip}{HTML}{2A78D6}%
 \definecolor{lrskip}{HTML}{1BAF7A}%
 \begin{tikzpicture}[x=1mm,y=1mm,
   cond/.style={draw=black!40, line width=0.4pt, rounded corners=2pt, fill=white, align=center,
     font=\small, inner xsep=3.2pt, inner ysep=2.4pt},
-  root/.style={cond, draw=black!70, line width=0.6pt},
+  root/.style={cond, draw=black!75, line width=0.6pt, font=\normalsize, inner xsep=5pt, inner ysep=3.2pt},
   edge/.style={-{Stealth[length=1.8mm,width=1.3mm]}, black!45, line width=0.5pt},
   pr/.style={fill=black!80, text=white, font=\scriptsize, rounded corners=1.2pt, inner xsep=1.7pt,
-    inner ysep=1.0pt, align=center},
+    inner ysep=1.0pt},
   sm/.style={draw=black!80, line width=0.35pt, fill=white, text=black, font=\scriptsize,
     rounded corners=1.2pt, inner xsep=1.5pt, inner ysep=0.85pt},
   note/.style={font=\scriptsize, text=black!60, align=center, inner sep=0.5pt},
-  val/.style={font=\small, inner sep=0.8pt}]
-% column centers; half widths 16.75, 21.4, 17.5
-\def\fdA{39}\def\fdB{78.0}\def\fdC{117.9}
-% the columns: a small tree of the normalization
-\node[root] (root) at (70,9) {$L$ attention or MLP blocks\\[-1.5pt]{\footnotesize\color{black!55}$d = \dm$}};
-\node[cond] (n0) at (\fdA,-11.5) {no normalization};
-\node[cond] (n1) at (97.95,-2) {pre-RMSNorm};
-\node[cond] (e1) at (\fdB,-11.5) {$\varepsilon > 0$};
-\node[cond] (e0) at (\fdC,-11.5) {$\varepsilon \to 0$};
-\draw[edge] (root) -- (n0);
-\draw[edge] (root) -- (n1);
-\draw[edge] (n1) -- (e1);
-\draw[edge] (n1) -- (e0);
+  val/.style={font=\small, inner sep=0.8pt},
+  lab/.style={anchor=east, align=right, font=\small, inner sep=0.5pt},
+  sublab/.style={anchor=east, align=right, font=\scriptsize, text=black!55, inner sep=0.5pt}]
+% column centers and half widths
+\def\fdA{43.45}\def\fdB{86.5}\def\fdC{123.9}\def\fdwA{21.15}\def\fdwB{21.1}\def\fdwC{15.5}
+% the question, and a small tree of the normalization above the columns
+\node[root] (root) at (80.85,20) {How much functional dimension do skip connections add\\to a network of $L$ attention or MLP blocks?\\[-0.5pt]{\footnotesize\color{black!55}$d = \dm$}};
+\node[cond] (n0) at (\fdA,-6) {no normalization};
+\node[cond] (n1) at (105.2,3.6) {pre-RMSNorm\\[-1pt]{\footnotesize\color{black!55}$N(h) = h/\sqrt{\norm{h}^2/d + \varepsilon}$}};
+\node[cond] (e1) at (\fdB,-6) {$\varepsilon > 0$};
+\node[cond] (e0) at (\fdC,-6) {$\varepsilon \to 0$};
+\draw[edge] (root.south -| n0) -- (n0);
+\draw[edge] (root.south -| n1) -- (n1);
+\draw[edge] (n1.west) -| (e1);
+\draw[edge] (n1.east) -| (e0);
 % a band: center, half width, value, top, bottom, fill
 \def\fdband#1#2#3#4#5#6{\fill[#6, rounded corners=1.5pt] (#1-#2,#4) rectangle (#1+#2,#5);
   \node[val] at (#1,#4-2.9) {#3};}
-% a row label with a rule above it
-\def\fdrow#1#2{\node[anchor=east, font=\small] at (20.6,#1) {#2};
-  \draw[black!10, line width=0.3pt] (22.4,#1+2.7) -- (135.4,#1+2.7);}
-% the tags of a cell, centered: a list of style/text
-\def\fdtags#1#2#3{\node[anchor=center] at (#1,#2) {\begin{tikzpicture}[baseline]\foreach \s/\t [count=\k] in #3 {
+% a row: label and a rule above it
+\def\fdrow#1#2{\node[lab] at (21.3,#1) {#2};
+  \draw[black!10, line width=0.3pt] (22.3,#1+2.65) -- (139.4,#1+2.65);}
+% the chips of a cell, side by side and centered: a list of style/text
+\def\fdtags#1#2#3{\node[anchor=center, inner sep=0pt] at (#1,#2) {\begin{tikzpicture}[baseline]\foreach \s/\t [count=\k] in #3 {
     \ifnum\k=1 \node[\s, anchor=west] (q\k) at (0,0) {\t}; \else
     \node[\s, anchor=west] (q\k) at ([xshift=0.9mm]q\the\numexpr\k-1\relax.east) {\t}; \fi}\end{tikzpicture}};}
+% the chips of a cell, one below the other
+\def\fdvtags#1#2#3{\foreach \s/\t [count=\k] in #3 {\node[\s] at (#1,#2-4.1*\k+4.1) {\t};}}
 \colorlet{fdfull}{idskip!24}\colorlet{fdless}{idskip!8}\colorlet{fdlrn}{lrskip!14}
-% identity skips, positively homogeneous blocks
-\fdband{\fdA}{16.75}{$+L\,d^2$}{-16}{-45.0}{fdfull}
-\fdband{\fdB}{21.4}{$+L\,d(d-1)/2$}{-16}{-45.0}{fdless}
-\fdband{\fdC}{17.5}{$+L\,d^2$}{-16}{-45.0}{fdfull}
-\node[pr] at (\fdA,-24.4) {proven for $L = 1$\\[-1.5pt]\fdref{thm:onelayer}};
-\node[pr] at (\fdB,-24.4) {proven for $L = 1$: gain ${\ge}$ value\\[-1.5pt]\fdref{thm:onelayer}};
-% identity skips, the other blocks
-\fdband{\fdA}{16.75}{$+L\,d^2$}{-46.6}{-90.2}{fdfull}
-\fdband{\fdB}{21.4}{$+L\,d(d-1)/2$}{-46.6}{-90.2}{fdless}
-\fdband{\fdC}{17.5}{$+L\,\big(d(d-1)/2 + 1\big)$}{-46.6}{-90.2}{fdless}
-\node[pr] at (\fdA,-55.0) {proven for $L = 1$\\[-1.5pt]\fdref{thm:onelayer}};
-\node[pr] at (\fdB,-55.0) {proven for $L = 1$: gain ${\ge}$ value\\[-1.5pt]\fdref{thm:onelayer}};
-\node[note] at (\fdA,-60.5) {not for SwiGLU, GeGLU};
-\node[note] at (\fdB,-60.5) {not for SwiGLU, GeGLU};
-% learned skips over identity skips: the same for every block, homogeneous or not
-\fdband{\fdA}{16.75}{$+0$}{-93.0}{-110.0}{fdlrn}
-\fdband{\fdB}{21.4}{$+L\,d(d+1)/2$}{-93.0}{-110.0}{fdlrn}
-\fdband{\fdC}{17.5}{$+L\,\big(d(d+1)/2 - 1\big)$}{-93.0}{-110.0}{fdlrn}
-\node[note] at (\fdB,-99.6) {$= L\cdot\dim$ triangular $d{\times}d$};
-\node[note] at (\fdC,-99.6) {$= L\cdot(\dim$ triangular $d{\times}d - 1)$};
-\node[pr] at (\fdA,-101.5) {proven for any $L$\\[-1.5pt]\fdref{thm:gauge}};
-\fdtags{\fdB}{-104.4}{\fdLearnb}
-\fdtags{\fdC}{-104.4}{\fdLearnc}
+% identity skips against no skips: homogeneous blocks
+\fdband{\fdA}{\fdwA}{$+L\,d^2$}{-11}{-35.0}{fdfull}
+\fdband{\fdB}{\fdwB}{$+L\,d(d-1)/2$}{-11}{-35.0}{fdless}
+\fdband{\fdC}{\fdwC}{$+L\,d^2$}{-11}{-35.0}{fdfull}
+% identity skips against no skips: the other blocks
+\fdband{\fdA}{\fdwA}{$+L\,d^2$}{-36.6}{-69.0}{fdfull}
+\fdband{\fdB}{\fdwB}{$+L\,d(d-1)/2$}{-36.6}{-69.0}{fdless}
+\fdband{\fdC}{\fdwC}{$+L\,\big(d(d-1)/2 + 1\big)$}{-36.6}{-69.0}{fdless}
+% learned linear skips against identity skips: the same for every block
+\fdband{\fdA}{\fdwA}{$+0$}{-72.0}{-91.0}{fdlrn}
+\fdband{\fdB}{\fdwB}{$+L\,d(d+1)/2$}{-72.0}{-91.0}{fdlrn}
+\fdband{\fdC}{\fdwC}{$+L\,\big(d(d+1)/2 - 1\big)$}{-72.0}{-91.0}{fdlrn}
+\node[note] at (\fdB,-78.4) {$= L\cdot\dim$ triangular $d{\times}d$};
 % labels
-\node[anchor=east, align=right, font=\footnotesize, text=idskip!85!black] at (21,-12.4) {identity skips\\[-2pt]add};
-\node[anchor=east, align=right, font=\small] at (21,-19.6) {homogeneous\\[-2.5pt]{\footnotesize\color{black!55}$B(\lambda h) = \lambda^k B(h)$}};
-\node[anchor=east, font=\small] at (21,-49.5) {other blocks};
-\node[anchor=east, align=right, font=\small, text=lrskip!80!black] at (21,-101.5) {learned $A_\ell$\\[-1.5pt]over identity\\[-1.5pt]{\footnotesize\color{black!55}all blocks}};
-\foreach \y/\lab in {-31.4/ReLU$^{\dagger}$, -36.7/ReLU$^2$, -42.0/ReGLU,
-  -66.0/attention, -71.3/$\tanh$, -76.6/GELU, -81.9/SwiGLU, -87.2/GeGLU} {\fdrow{\y}{\lab}}
-% simulations, one tag per block: no normalization, eps > 0, eps -> 0
-\fdtags{\fdA}{-31.4}{\fdReLUa}   \fdtags{\fdB}{-31.4}{\fdReLUb}   \ifdefined\fdReLUc\fdtags{\fdC}{-31.4}{\fdReLUc}\fi
-\fdtags{\fdA}{-36.7}{\fdReLUsqa} \fdtags{\fdB}{-36.7}{\fdReLUsqb} \ifdefined\fdReLUsqc\fdtags{\fdC}{-36.7}{\fdReLUsqc}\fi
-\fdtags{\fdA}{-42.0}{\fdReGLUa}  \fdtags{\fdB}{-42.0}{\fdReGLUb}  \fdtags{\fdC}{-42.0}{\fdReGLUc}
-\fdtags{\fdA}{-66.0}{\fdAttna}   \fdtags{\fdB}{-66.0}{\fdAttnb}
-\fdtags{\fdA}{-71.3}{\fdTanha}   \fdtags{\fdB}{-71.3}{\fdTanhb}   \fdtags{\fdC}{-71.3}{\fdTanhc}
-\fdtags{\fdA}{-76.6}{\fdGELUa}   \fdtags{\fdB}{-76.6}{\fdGELUb}
-\fdtags{\fdA}{-81.9}{\fdSwiGLUa} \fdtags{\fdB}{-81.9}{\fdSwiGLUb}
-\fdtags{\fdA}{-87.2}{\fdGeGLUa}  \fdtags{\fdB}{-87.2}{\fdGeGLUb}
+\node[lab, font=\footnotesize, text=idskip!85!black] at (21.3,-5.2) {identity skips};
+\node[sublab] at (21.3,-8.3) {vs no skips};
+\node[lab] at (21.3,-13.9) {homogeneous};
+\node[sublab] at (21.3,-17.3) {$B(\lambda h) = \lambda^k B(h)$};
+\node[lab] at (21.3,-39.5) {other blocks};
+\node[lab, font=\footnotesize, text=lrskip!80!black] at (21.3,-77.6) {learned\\[-1.5pt]linear skips};
+\node[sublab] at (21.3,-84.0) {vs identity skips\\[-1pt]all blocks};
+\foreach \y/\lab in {-21.6/ReLU, -26.9/ReLU$^2$, -32.2/ReGLU,
+  -45.0/attention, -50.3/$\tanh$, -55.6/GELU, -60.9/SwiGLU, -66.2/GeGLU} {\fdrow{\y}{\lab}}
+% the evidence of each cell: no normalization, eps > 0, eps -> 0
+\fdtags{\fdA}{-21.6}{\fdReLUa}   \fdtags{\fdB}{-21.6}{\fdReLUb}   \ifdefined\fdReLUc\fdtags{\fdC}{-21.6}{\fdReLUc}\fi
+\fdtags{\fdA}{-26.9}{\fdReLUsqa} \fdtags{\fdB}{-26.9}{\fdReLUsqb} \ifdefined\fdReLUsqc\fdtags{\fdC}{-26.9}{\fdReLUsqc}\fi
+\fdtags{\fdA}{-32.2}{\fdReGLUa}  \fdtags{\fdB}{-32.2}{\fdReGLUb}  \ifdefined\fdReGLUc\fdtags{\fdC}{-32.2}{\fdReGLUc}\fi
+\fdtags{\fdA}{-45.0}{\fdAttna}   \fdtags{\fdB}{-45.0}{\fdAttnb}   \ifdefined\fdAttnc\fdtags{\fdC}{-45.0}{\fdAttnc}\fi
+\fdtags{\fdA}{-50.3}{\fdTanha}   \fdtags{\fdB}{-50.3}{\fdTanhb}   \ifdefined\fdTanhc\fdtags{\fdC}{-50.3}{\fdTanhc}\fi
+\fdtags{\fdA}{-55.6}{\fdGELUa}   \fdtags{\fdB}{-55.6}{\fdGELUb}   \ifdefined\fdGELUc\fdtags{\fdC}{-55.6}{\fdGELUc}\fi
+\fdtags{\fdA}{-60.9}{\fdSwiGLUa} \fdtags{\fdB}{-60.9}{\fdSwiGLUb} \ifdefined\fdSwiGLUc\fdtags{\fdC}{-60.9}{\fdSwiGLUc}\fi
+\fdtags{\fdA}{-66.2}{\fdGeGLUa}  \fdtags{\fdB}{-66.2}{\fdGeGLUb}  \ifdefined\fdGeGLUc\fdtags{\fdC}{-66.2}{\fdGeGLUc}\fi
+\fdvtags{\fdA}{-80.5}{\fdLearna}
+\fdvtags{\fdB}{-82.6}{\fdLearnb}
+\fdvtags{\fdC}{-80.4}{\fdLearnc}
 \end{tikzpicture}

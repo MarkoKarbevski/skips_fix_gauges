@@ -1,20 +1,19 @@
-% Companion: what learned skips add over identity skips. The same for every block, homogeneous or not, since a
-% learned skip reads the raw stream: only O(d), or CO(d) as eps -> 0, passes at each hidden state.
+% Variant C: what learned linear skips add over identity skips. The same for every block, homogeneous or not,
+% since a learned skip reads the raw stream: only O(d), or CO(d) as eps -> 0, passes at each hidden state.
 \begin{tikzpicture}[x=1mm,y=1mm]
-\node[title] at (0,10) {Functional dimension added by learned skips $A_\ell$ over identity skips};
-\node[root] (root) at (56,0) {attention or MLP blocks\\[-1.5pt]\sub{$d = \dm$}};
-\node[cond] (n0) at (17,-12) {no normalization};
-\node[cond] (n1) at (95.5,-12) {pre-RMSNorm};
-\node[cond] (e0) at (69,-25) {$\varepsilon \to 0$};
-\node[cond] (e1) at (122,-25) {$\varepsilon > 0$};
-\node[lres] (r1) at (17,-48) {$+0$};
-\node[lres] (r3) at (69,-48) {$+d(d+1)/2 - 1$\\[-1pt]\sub{per block}};
-\node[lres] (r4) at (122,-48) {$+d(d+1)/2$\\[-1pt]\sub{per block}};
+\node[root] (root) at (64,2) {How much functional dimension do learned linear skips\\add over identity skips, in $L$ attention or MLP blocks?\\[-1pt]\sub{$d = \dm$}};
+\node[cond] (n0) at (17,-14) {no normalization};
+\node[cond] (n1) at (95.5,-14) {pre-RMSNorm};
+\node[cond] (e1) at (69,-27) {$\varepsilon > 0$};
+\node[cond] (e0) at (122,-27) {$\varepsilon \to 0$};
+\node[lres] (r1) at (17,-50) {$+0$};
+\node[lres] (r4) at (69,-50) {$+L\,d(d+1)/2$\\[-1pt]\sub{$= L\cdot\dim$ triangular $d{\times}d$}};
+\node[lres] (r3) at (122,-50) {$+L\,\big(d(d+1)/2 - 1\big)$};
 \draw[edge] (root) -- (n0);
 \draw[edge] (root) -- (n1);
-\draw[edge] (n1) -- (e0);
 \draw[edge] (n1) -- (e1);
-\draw[edge] (n0) -- (r1) node[pos=0.45, pr, align=center] {proven for any depth\\\fdref{thm:gauge}};
-\draw[edge] (e0) -- (r3) node[pos=0.5, sm] {simulated, 3 blocks};
-\draw[edge] (e1) -- (r4) node[pos=0.5, sm] {simulated, up to 8 blocks};
+\draw[edge] (n1) -- (e0);
+\draw[edge] (n0) -- (r1) node[pos=0.45, pr] {proven, any $L$};
+\draw[edge] (e1) -- (r4) node[pos=0.3, pr] {proven, $L = 1$} node[pos=0.65, sm] {simulated, $L = 3$, $\tanh$};
+\draw[edge] (e0) -- (r3) node[pos=0.22, pr] {proven, $L = 1$, homogeneous} node[pos=0.48, pr] {proven ${\le}$, $L = 1$} node[pos=0.74, sm] {simulated, $L = 3$, $\tanh$};
 \end{tikzpicture}

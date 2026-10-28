@@ -5,7 +5,8 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta}
 \newcommand{\dm}{d_{\mathrm{model}}}
-\newcommand{\fdref}[1]{\ifnum\pdfstrcmp{#1}{thm:gauge}=0 Theorem~3.2\else Theorem~C.1\fi}
+\newcommand{\norm}[1]{\lVert #1\rVert}
+\newcommand{\fdprf}[2]{#2}
 \begin{document}
 \input{tags_paper.tex}
 \noindent\input{grid_core.tex}
