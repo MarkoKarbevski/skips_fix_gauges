@@ -157,7 +157,7 @@ ReLU & 3 & \ref{app:checks} & none & $\ge L\dm^2$ \\
 {\def\fdprf#1#2{{\hypersetup{linkcolor=white}\hyperref[#1]{#2}}}%
 \def\fdPrA{pr/{\fdprf{thm:onelayer}{$L = 1$, proven}}}
 \def\fdPrB{pr/{\fdprf{thm:onelayer}{$L = 1$, proven as lower bound}}}
-\def\fdReLUa{sm/{$L > 1$, simulated as lower bound}}
+\def\fdReLUa{sm/{$L > 1$, simulated, sometimes more}}
 \def\fdReLUb{sm/{$L = 1$, simulated}}
 \def\fdReLUsqa{sm/{$L > 1$, simulated}}
 \def\fdReLUsqb{sm/{$L = 1$, simulated}}
@@ -193,10 +193,10 @@ ReLU & 3 & \ref{app:checks} & none & $\ge L\dm^2$ \\
   val/.style={font=\small, inner sep=0.8pt},
   lab/.style={anchor=east, align=right, font=\small, inner sep=0.5pt},
   sublab/.style={anchor=east, align=right, font=\scriptsize, text=black!55, inner sep=0.5pt}]
-\def\fdA{43.2}\def\fdB{81.1}\def\fdC{120.4}\def\fdwA{17.6}\def\fdwB{19.5}\def\fdwC{19.0}
+\def\fdA{44.2}\def\fdB{83.1}\def\fdC{121.4}\def\fdwA{18.6}\def\fdwB{19.5}\def\fdwC{18.0}
 \node[root] (root) at (82.5,20) {How much functional dimension do skip connections add\\to a network of $L$ attention or MLP blocks?\\[-0.5pt]{\footnotesize\color{black!55}$d = \dm$}};
 \node[cond] (n0) at (\fdA,-6) {no normalization};
-\node[cond] (n1) at (100.75,3.6) {pre-RMSNorm\\[-1pt]{\footnotesize\color{black!55}$N(h) = h/\sqrt{\norm{h}^2/d + \varepsilon}$}};
+\node[cond] (n1) at (102.25,3.6) {pre-RMSNorm\\[-1pt]{\footnotesize\color{black!55}$N(h) = h/\sqrt{\norm{h}^2/d + \varepsilon}$}};
 \node[cond] (e1) at (\fdB,-6) {$\varepsilon > 0$};
 \node[cond] (e0) at (\fdC,-6) {$\varepsilon \to 0$};
 \draw[edge] (root.south -| n0) -- (n0);
