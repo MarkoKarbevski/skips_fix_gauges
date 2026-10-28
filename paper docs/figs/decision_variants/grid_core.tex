@@ -55,18 +55,19 @@
 \fdtags{\fdA}{-44.6}{\fdPrA}
 \fdtags{\fdB}{-44.6}{\fdPrB}
 % learned linear skips over identity skips: the same for every block
-\fdband{\fdA}{\fdwA}{$+0$}{-77.0}{-96.4}{fdlrn}
-\fdband{\fdB}{\fdwB}{$+L\,d(d+1)/2$}{-77.0}{-96.4}{fdlrn}
-\fdband{\fdC}{\fdwC}{$+L\,\big(d(d+1)/2 - 1\big)$}{-77.0}{-96.4}{fdlrn}
-\node[note] at (\fdB,-84.1) {$= L\cdot\dim$ of triangular\\[-1pt]$d{\times}d$ matrices};
+\fdband{\fdA}{\fdwA}{$+0$}{-77.0}{-100.8}{fdlrn}
+\fdband{\fdB}{\fdwB}{$+L\,d(d+1)/2$}{-77.0}{-100.8}{fdlrn}
+\fdband{\fdC}{\fdwC}{$+L\,\big(d(d+1)/2 - 1\big)$}{-77.0}{-100.8}{fdlrn}
+\node[note] at (\fdC,-85.1) {$= L\cdot(\dim$ of triangular\\[-1pt]$d{\times}d$ matrices $- 1)$};
+\node[note] at (\fdB,-85.1) {$= L\cdot\dim$ of triangular\\[-1pt]$d{\times}d$ matrices};
 % labels
 \node[lab, font=\footnotesize, text=idskip!85!black] at (24.6,-5.2) {identity skips};
 \node[sublab] at (24.6,-8.6) {overhead over\\[-1pt]no skips};
 \node[lab] at (24.6,-13.9) {homogeneous};
 \node[sublab] at (24.6,-17.4) {$B(\lvert\lambda\rvert h) = \lvert\lambda\rvert^k B(h)$};
-\node[lab] at (24.6,-42.6) {smooth MLPs\\[-1.5pt]and attention};
-\node[lab, font=\footnotesize, text=lrskip!80!black] at (24.6,-81.6) {learned\\[-1.5pt]linear skips};
-\node[sublab] at (24.6,-89.6) {overhead over\\[-1pt]identity skips\\[-1pt]all blocks};
+\node[lab] at (24.6,-42.6) {attention \& other\\[-1.5pt]common MLPs};
+\node[lab, font=\footnotesize, text=lrskip!80!black] at (24.6,-83.0) {learned\\[-1.5pt]linear skips};
+\node[sublab] at (24.6,-91.4) {overhead over\\[-1pt]identity skips\\[-1pt]all blocks};
 \foreach \y/\lab in {-23.0/ReLU, -28.3/ReLU$^2$, -33.6/ReGLU,
   -50.0/attention, -55.3/$\tanh$, -60.6/GELU, -65.9/SwiGLU, -71.2/GeGLU} {\fdrow{\y}{\lab}}
 % simulations, per block: no normalization, eps > 0, eps -> 0
@@ -79,6 +80,6 @@
 \fdtags{\fdA}{-65.9}{\fdSwiGLUa} \fdtags{\fdB}{-65.9}{\fdSwiGLUb} \ifdefined\fdSwiGLUc\fdtags{\fdC}{-65.9}{\fdSwiGLUc}\fi
 \fdtags{\fdA}{-71.2}{\fdGeGLUa}  \fdtags{\fdB}{-71.2}{\fdGeGLUb}  \ifdefined\fdGeGLUc\fdtags{\fdC}{-71.2}{\fdGeGLUc}\fi
 \fdvtags{\fdA}{-84.6}{\fdLearna}
-\fdvtags{\fdB}{-89.0}{\fdLearnb}
-\fdvtags{\fdC}{-84.6}{\fdLearnc}
+\fdvtags{\fdB}{-90.2}{\fdLearnb}
+\fdvtags{\fdC}{-90.2}{\fdLearnc}
 \end{tikzpicture}
