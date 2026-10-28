@@ -37,7 +37,7 @@ With pip:
     pip install -r requirements.txt
     jupyter lab experiments.ipynb
 
-From the saved data, the whole notebook runs in about 11 minutes on two CPU cores. Rerunning the two long experiments as well takes about 80 minutes.
+From the saved data, the whole notebook runs in about 14 minutes on two CPU cores. Rerunning the two long experiments as well takes about 80 minutes.
 
 ## Saved data
 
@@ -66,9 +66,9 @@ With `RECOMPUTE = False`, the default in the setup cell, Sections 10 and 13 draw
 | 12. Certificates modulo a prime | Table 5 | 19 s |
 | 13. nanoGPT | Section 6.2, Table 6, Appendix E | 38 min, or under 1 s from `data/` |
 | 14. Skipless networks as limits of residual networks | Section 6.3, Proposition 7 | under 1 s |
-| 15. ReLU draws above the count | the ReLU draws above the count, in the numerical checks | 3 min |
-| 16. Certificates at depth | the certificates at L = 8 in the table of checks | 1 min |
-| 17. Homogeneous blocks under RMSNorm | the checks of the lemma on homogeneous blocks under RMSNorm | 4 s |
+| 15. ReLU draws above the count | the ReLU draws above the count, in the numerical checks | 2 min |
+| 16. Certificates at depth | the certificates at L = 8 in the table of checks | 5 min |
+| 17. Homogeneous blocks under RMSNorm | the checks of the lemma on homogeneous blocks under RMSNorm | 2 s |
 
 Wall-clock times are for two CPU cores, with the experiments rerun in Sections 10 and 13.
 
