@@ -1,0 +1,31 @@
+\usepackage[T1]{fontenc}
+\usepackage{times}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,calc}
+% the macros of the paper
+\newcommand{\dm}{d_{\mathrm{model}}}
+% identity skips and learned skips in the colors of the spectra figures
+\definecolor{idskip}{HTML}{2A78D6}
+\definecolor{lrskip}{HTML}{1BAF7A}
+\tikzset{
+  % a condition on the way down
+  cond/.style={draw=black!40, line width=0.4pt, rounded corners=2pt, fill=white, align=center,
+    font=\small, inner xsep=3.2pt, inner ysep=2.4pt},
+  root/.style={cond, draw=black!70, line width=0.6pt},
+  % a result: what the skips add; strong where it is the full d_model^2
+  res/.style={draw=idskip!80!black, line width=0.6pt, rounded corners=2.5pt, align=center,
+    font=\normalsize, inner xsep=4pt, inner ysep=2.6pt, minimum width=27mm},
+  full/.style={res, fill=idskip!22},
+  less/.style={res, fill=idskip!7},
+  lres/.style={res, draw=lrskip!75!black, fill=lrskip!10},
+  % the evidence: solid for proven, outlined for simulated
+  pr/.style={fill=black!80, text=white, font=\footnotesize, rounded corners=1.5pt, inner xsep=2pt,
+    inner ysep=1.2pt},
+  sm/.style={draw=black!80, line width=0.4pt, fill=white, text=black, font=\footnotesize,
+    rounded corners=1.5pt, inner xsep=1.8pt, inner ysep=1.0pt},
+  edge/.style={-{Stealth[length=1.8mm,width=1.3mm]}, black!45, line width=0.5pt},
+  title/.style={font=\small\bfseries, anchor=west},
+}
+\newcommand{\sub}[1]{{\footnotesize\color{black!55}#1}}
+\newcommand{\fdref}[1]{\ifnum\pdfstrcmp{#1}{thm:gauge}=0 Theorem~2\else Theorem~27\fi}

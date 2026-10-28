@@ -150,6 +150,111 @@ ReLU & 3 & \ref{app:checks} & none & $\ge L\dm^2$ \\
 \label{tab:measured}
 \end{table}
 
+\begin{figure}[t]
+\centering
+% What the skips add, by normalization and block. Proofs are tagged once per group, simulations once per block.
+{\def\fdref#1{{\hypersetup{linkcolor=white}\cref{#1}}}%
+\def\fdReLUa{sm/{simulated, $L = 3$}}
+\def\fdReLUb{sm/{simulated, $L = 1$}}
+\def\fdReLUsqa{sm/{simulated, $L = 3$}}
+\def\fdReLUsqb{sm/{simulated, $L = 1$}}
+\def\fdReGLUa{sm/{simulated, $L = 3$}}
+\def\fdReGLUb{sm/{simulated, $L = 3$}}
+\def\fdReGLUc{sm/{simulated, $L = 3$}}
+\def\fdAttna{sm/{simulated, $L \le 8$}}
+\def\fdAttnb{sm/{simulated, $L \le 8$}}
+\def\fdTanha{sm/{simulated, $L \le 6$}}
+\def\fdTanhb{sm/{simulated, $L \le 6$}}
+\def\fdTanhc{sm/{simulated, $L = 3$}}
+\def\fdGELUa{sm/{simulated, $L = 3$}}
+\def\fdGELUb{sm/{simulated, $L = 3$}}
+\def\fdSwiGLUa{sm/{simulated, $L = 3$}}
+\def\fdSwiGLUb{sm/{simulated, $L = 3$}}
+\def\fdGeGLUa{sm/{simulated, $L = 3$}}
+\def\fdGeGLUb{sm/{simulated, $L = 3$}}
+\def\fdLearnb{sm/{simulated, $L = 3$ ($\tanh$)}}
+\def\fdLearnc{sm/{simulated, $L = 3$ ($\tanh$)}}
+\def\fdHomNote{homogeneous blocks:}
+\definecolor{idskip}{HTML}{2A78D6}%
+\definecolor{lrskip}{HTML}{1BAF7A}%
+\begin{tikzpicture}[x=1mm,y=1mm,
+  cond/.style={draw=black!40, line width=0.4pt, rounded corners=2pt, fill=white, align=center,
+    font=\small, inner xsep=3.2pt, inner ysep=2.4pt},
+  root/.style={cond, draw=black!70, line width=0.6pt},
+  edge/.style={-{Stealth[length=1.8mm,width=1.3mm]}, black!45, line width=0.5pt},
+  pr/.style={fill=black!80, text=white, font=\scriptsize, rounded corners=1.2pt, inner xsep=1.7pt,
+    inner ysep=1.0pt, align=center},
+  sm/.style={draw=black!80, line width=0.35pt, fill=white, text=black, font=\scriptsize,
+    rounded corners=1.2pt, inner xsep=1.5pt, inner ysep=0.85pt},
+  note/.style={font=\scriptsize, text=black!60, align=center, inner sep=0.5pt},
+  val/.style={font=\small, inner sep=0.8pt}]
+% column centers; half widths 16.75, 23, 16.0
+\def\fdA{39}\def\fdB{79.6}\def\fdC{119.4}
+% the columns: a small tree of the normalization
+\node[root] (root) at (70,9) {$L$ attention or MLP blocks\\[-1.5pt]{\footnotesize\color{black!55}$d = \dm$}};
+\node[cond] (n0) at (\fdA,-11.5) {no normalization};
+\node[cond] (n1) at (99.8,-2) {pre-RMSNorm};
+\node[cond] (e1) at (\fdB,-11.5) {$\varepsilon > 0$};
+\node[cond] (e0) at (\fdC,-11.5) {$\varepsilon \to 0$};
+\draw[edge] (root) -- (n0);
+\draw[edge] (root) -- (n1);
+\draw[edge] (n1) -- (e1);
+\draw[edge] (n1) -- (e0);
+% a band: center, half width, value, top, bottom, fill
+\def\fdband#1#2#3#4#5#6{\fill[#6, rounded corners=1.5pt] (#1-#2,#4) rectangle (#1+#2,#5);
+  \node[val] at (#1,#4-2.9) {#3};}
+% a row label with a rule above it
+\def\fdrow#1#2{\node[anchor=east, font=\small] at (20.6,#1) {#2};
+  \draw[black!10, line width=0.3pt] (22.4,#1+2.7) -- (135.4,#1+2.7);}
+% the tags of a cell, centered: a list of style/text
+\def\fdtags#1#2#3{\node[anchor=center] at (#1,#2) {\begin{tikzpicture}[baseline]\foreach \s/\t [count=\k] in #3 {
+    \ifnum\k=1 \node[\s, anchor=west] (q\k) at (0,0) {\t}; \else
+    \node[\s, anchor=west] (q\k) at ([xshift=0.9mm]q\the\numexpr\k-1\relax.east) {\t}; \fi}\end{tikzpicture}};}
+\colorlet{fdfull}{idskip!24}\colorlet{fdless}{idskip!8}\colorlet{fdlrn}{lrskip!14}
+% identity skips, positively homogeneous blocks
+\fdband{\fdA}{16.75}{$+L\,d^2$}{-16}{-45.0}{fdfull}
+\fdband{\fdB}{23}{$+L\,d(d-1)/2$}{-16}{-45.0}{fdless}
+\fdband{\fdC}{16.0}{$+L\,d^2$}{-16}{-45.0}{fdfull}
+\node[pr] at (\fdA,-24.4) {proven for $L = 1$\\[-1.5pt]\fdref{thm:onelayer}};
+\node[pr] at (\fdB,-24.4) {proven for $L = 1$: gain ${\ge}$ value\\[-1.5pt]\fdref{thm:onelayer}};
+% identity skips, the other blocks
+\fdband{\fdA}{16.75}{$+L\,d^2$}{-46.6}{-90.2}{fdfull}
+\fdband{\fdB}{23}{$+L\,d(d-1)/2$}{-46.6}{-90.2}{fdless}
+\fdband{\fdC}{16.0}{$+L\,\big(d(d-1)/2 + 1\big)$}{-46.6}{-90.2}{fdless}
+\node[pr] at (\fdA,-55.0) {proven for $L = 1$\\[-1.5pt]\fdref{thm:onelayer}};
+\node[pr] at (\fdB,-55.0) {proven for $L = 1$: gain ${\ge}$ value\\[-1.5pt]\fdref{thm:onelayer}};
+\node[note] at (\fdA,-60.5) {not for SwiGLU, GeGLU};
+\node[note] at (\fdB,-60.5) {not for SwiGLU, GeGLU};
+% learned skips, all blocks; at eps -> 0 the homogeneous blocks add more
+\fdband{\fdA}{16.75}{$+L\,d^2$}{-93.0}{-111.4}{fdlrn}
+\fdband{\fdB}{23}{$+L\,d^2$}{-93.0}{-111.4}{fdlrn}
+\fdband{\fdC}{16.0}{$+L\,d^2$}{-93.0}{-111.4}{fdlrn}
+\node[pr] at (\fdA,-101.2) {same as identity skips,\\[-1.5pt]proven for any $L$, \fdref{thm:gauge}};
+\fdtags{\fdB}{-100.2}{\fdLearnb}
+\fdtags{\fdC}{-100.2}{\fdLearnc}
+\node[note] at (\fdC,-106.0) {\fdHomNote\\[-1pt]$+L\,\big(d^2 + d(d+1)/2 - 1\big)$};
+% labels
+\node[anchor=east, align=right, font=\footnotesize, text=idskip!85!black] at (21,-12.4) {identity skips\\[-2pt]add};
+\node[anchor=east, align=right, font=\small] at (21,-19.6) {homogeneous\\[-2.5pt]{\footnotesize\color{black!55}$B(\lambda h) = \lambda^k B(h)$}};
+\node[anchor=east, font=\small] at (21,-49.5) {other blocks};
+\node[anchor=east, align=right, font=\small, text=lrskip!80!black] at (21,-101.0) {learned\\[-1.5pt]skips $A_\ell$\\[-1.5pt]add};
+\foreach \y/\lab in {-31.4/ReLU$^{\dagger}$, -36.7/ReLU$^2$, -42.0/ReGLU,
+  -66.0/attention, -71.3/$\tanh$, -76.6/GELU, -81.9/SwiGLU, -87.2/GeGLU} {\fdrow{\y}{\lab}}
+% simulations, one tag per block: no normalization, eps > 0, eps -> 0
+\fdtags{\fdA}{-31.4}{\fdReLUa}   \fdtags{\fdB}{-31.4}{\fdReLUb}   \ifdefined\fdReLUc\fdtags{\fdC}{-31.4}{\fdReLUc}\fi
+\fdtags{\fdA}{-36.7}{\fdReLUsqa} \fdtags{\fdB}{-36.7}{\fdReLUsqb} \ifdefined\fdReLUsqc\fdtags{\fdC}{-36.7}{\fdReLUsqc}\fi
+\fdtags{\fdA}{-42.0}{\fdReGLUa}  \fdtags{\fdB}{-42.0}{\fdReGLUb}  \fdtags{\fdC}{-42.0}{\fdReGLUc}
+\fdtags{\fdA}{-66.0}{\fdAttna}   \fdtags{\fdB}{-66.0}{\fdAttnb}
+\fdtags{\fdA}{-71.3}{\fdTanha}   \fdtags{\fdB}{-71.3}{\fdTanhb}   \fdtags{\fdC}{-71.3}{\fdTanhc}
+\fdtags{\fdA}{-76.6}{\fdGELUa}   \fdtags{\fdB}{-76.6}{\fdGELUb}
+\fdtags{\fdA}{-81.9}{\fdSwiGLUa} \fdtags{\fdB}{-81.9}{\fdSwiGLUb}
+\fdtags{\fdA}{-87.2}{\fdGeGLUa}  \fdtags{\fdB}{-87.2}{\fdGeGLUb}
+\end{tikzpicture}
+}
+\caption{Functional dimension that skips add to $L$ blocks, against no skips. Under RMSNorm, identity skips add the full $d^2$ per block only for homogeneous blocks as $\varepsilon \to 0$; learned skips always do. Untagged values are symmetry counts (\cref{cor:count,thm:rms}); simulations: \cref{app:checks}. $^\dagger$Some skipless ReLU draws are more redundant.}
+\label{fig:decision}
+\end{figure}
+
 Recent skipless models challenge their practical necessity. \citet{ji2026cutting} remove every skip from a ViT-B, a vision transformer \citep{dosovitskiy2021an}, and train it from scratch on ImageNet-1k \citep{russakovsky2015imagenet}, outperforming the original model in terms of top-1 accuracy. In language modeling, \citet{he2023shortcuts, he2024simplifying} manage to train transformer variants without skips and/or normalization.
 
 % remove the skips of the attention blocks of a transformer, keep those of its MLP blocks, and fix the value and output-projection matrices of its attention blocks to the identity, which makes the loss fall faster per training step; once the attention skips are restored, the same change makes it fall slightly slower, for which they have no satisfying explanation. \citet{graef2024tricks} merges the query and output-projection matrices of every layer of a transformer with neither skips nor normalization into the neighboring weight matrices, which leaves its function unchanged and would remove $15$ percent of the weights of a skipless version of Mistral-7B. These merges are exact only without normalization, and \citet{he2024simplifying} fix the matrices before training; neither work says how much can be removed exactly when the network normalizes its hidden states.

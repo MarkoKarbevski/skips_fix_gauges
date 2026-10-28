@@ -1,0 +1,12 @@
+\documentclass[border=4pt,varwidth=150mm]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{times}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+\newcommand{\dm}{d_{\mathrm{model}}}
+\newcommand{\fdref}[1]{\ifnum\pdfstrcmp{#1}{thm:gauge}=0 Theorem~2\else Theorem~27\fi}
+\begin{document}
+\input{tags_new.tex}
+\noindent\input{grid_core.tex}
+\end{document}
