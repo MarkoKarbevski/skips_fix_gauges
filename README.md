@@ -68,6 +68,7 @@ With `RECOMPUTE = False`, the default in the setup cell, Sections 10 and 13 draw
 | 14. Skipless networks as limits of residual networks | Section 6.3, Proposition 7 | under 1 s |
 | 15. ReLU draws above the count | the ReLU draws above the count, in the numerical checks | 3 min |
 | 16. Certificates at depth | the certificates at L = 8 in the table of checks | 1 min |
+| 17. Homogeneous blocks under RMSNorm | the checks of the lemma on homogeneous blocks under RMSNorm | 4 s |
 
 Wall-clock times are for two CPU cores, with the experiments rerun in Sections 10 and 13.
 
