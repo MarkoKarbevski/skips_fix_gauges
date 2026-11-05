@@ -3,7 +3,8 @@
 The figures are in `paper docs/figs/large/`: `spectra_depth_<activation>.pdf` (2, 4 and 8 MLP blocks of width 16 and
 transformers of 8 blocks, without normalization and with pre-RMSNorm), `spectra_deep_<activation>.pdf` (64 blocks of
 width 4), `spectra_eps.pdf` (skipless ReLU networks under RMSNorm as eps goes to 0), `spectra_eps8.pdf` (the same at 8 blocks for ReLU, ReLU^2, ReGLU and, as a control, GELU) and `almost_sym.pdf` (Lemma A.2:
-the directions that are symmetries only at eps = 0, against eps).
+the directions that are symmetries only at eps = 0, against eps). `all_large_figures.pdf` holds all of them in one file,
+with a bookmark per figure; `python3 large_runs/combine_figs.py`, from the repository root, rebuilds it.
 
 ## Contents
 
