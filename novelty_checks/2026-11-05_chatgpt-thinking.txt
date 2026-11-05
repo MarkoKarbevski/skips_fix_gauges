@@ -1,0 +1,3055 @@
+
+Why do skip connections improve neural networks? Give me all the reasons.
+
+Provide a long elaborate answer. No online searching.
+Why skip connections improve neural networks
+Skip connections improve neural networks for several related, but importantly distinct, reasons. Their benefits are not reducible to the familiar statement that they help gradients flow. That is probably the best-known explanation, but it leaves out much of what makes residual architectures effective.
+
+A skip connection changes at least four things simultaneously:
+
+The optimization problem: how easily the network can be trained.
+
+The propagation of information and gradients: how signals travel through depth.
+
+The representation of functions: what transformations the architecture can express efficiently, and how it parameterizes them.
+
+The structure of the computation: how layers cooperate, reuse features, and refine representations.
+
+There are also secondary effects involving initialization, conditioning, regularization, robustness, transfer learning, and the interpretation of deep networks as dynamical systems.
+
+I will treat the standard additive residual connection as the central case:
+
+x
+l
++
+1
+=
+x
+l
++
+F
+l
+(
+x
+l
+;
+θ
+l
+)
+x 
+l+1
+​
+ =x 
+l
+​
+ +F 
+l
+​
+ (x 
+l
+​
+ ;θ 
+l
+​
+ )
+​
+ 
+Here, 
+x
+l
+x 
+l
+​
+  is the input to residual block 
+l
+l, and 
+F
+l
+F 
+l
+​
+  is its learned transformation, perhaps consisting of several linear layers, nonlinearities, convolutions, or attention operations.
+
+Without the skip connection, the corresponding layer would simply be
+
+x
+l
++
+1
+=
+F
+l
+(
+x
+l
+;
+θ
+l
+)
+.
+x 
+l+1
+​
+ =F 
+l
+​
+ (x 
+l
+​
+ ;θ 
+l
+​
+ ).
+That apparently small difference has substantial consequences.
+
+1. Gradient propagation and optimization
+This is the classical explanation, and it remains one of the most important.
+
+1.1 The identity gradient pathway
+Consider a single residual block:
+
+y
+=
+x
++
+F
+(
+x
+)
+.
+y=x+F(x).
+Its Jacobian is
+
+∂
+y
+∂
+x
+=
+I
++
+∂
+F
+(
+x
+)
+∂
+x
+.
+∂x
+∂y
+​
+ =I+ 
+∂x
+∂F(x)
+​
+ .
+For a conventional layer without a skip connection, the Jacobian is just
+
+∂
+y
+∂
+x
+=
+∂
+F
+(
+x
+)
+∂
+x
+.
+∂x
+∂y
+​
+ = 
+∂x
+∂F(x)
+​
+ .
+The distinction becomes particularly important when gradients propagate through many layers.
+
+For a network containing 
+L
+L residual blocks,
+
+x
+l
++
+1
+=
+x
+l
++
+F
+l
+(
+x
+l
+)
+,
+x 
+l+1
+​
+ =x 
+l
+​
+ +F 
+l
+​
+ (x 
+l
+​
+ ),
+the Jacobian of the entire network is
+
+∂
+x
+L
+∂
+x
+0
+=
+∏
+l
+=
+0
+L
+−
+1
+(
+I
++
+J
+l
+)
+,
+∂x 
+0
+​
+ 
+∂x 
+L
+​
+ 
+​
+ = 
+l=0
+∏
+L−1
+​
+ (I+J 
+l
+​
+ ),
+where
+
+J
+l
+=
+∂
+F
+l
+(
+x
+l
+)
+∂
+x
+l
+.
+J 
+l
+​
+ = 
+∂x 
+l
+​
+ 
+∂F 
+l
+​
+ (x 
+l
+​
+ )
+​
+ .
+Compare this with an ordinary feedforward network:
+
+∂
+x
+L
+∂
+x
+0
+=
+J
+L
+−
+1
+J
+L
+−
+2
+⋯
+J
+0
+.
+∂x 
+0
+​
+ 
+∂x 
+L
+​
+ 
+​
+ =J 
+L−1
+​
+ J 
+L−2
+​
+ ⋯J 
+0
+​
+ .
+In the ordinary network, every gradient must pass through every layer's Jacobian. If the relevant singular values are consistently smaller than one, gradients can vanish exponentially. If they are consistently larger than one, they can explode.
+
+Residual connections modify this structure by adding an identity component to every block's Jacobian.
+
+The identity component provides a direct route through the block that does not require differentiation through its learned transformation.
+
+This is the fundamental mathematical mechanism behind much of the optimization benefit.
+
+What does that mean intuitively?
+Suppose the gradient arriving at a residual block is 
+g
+g.
+
+The gradient with respect to its input is
+
+∂
+L
+∂
+x
+=
+(
+I
++
+J
+F
+⊤
+)
+g
+=
+g
++
+J
+F
+⊤
+g
+.
+∂x
+∂L
+​
+ =(I+J 
+F
+⊤
+​
+ )g=g+J 
+F
+⊤
+​
+ g.
+There are two contributions:
+
+g
+g, which passes directly through the identity pathway;
+
+J
+F
+⊤
+g
+J 
+F
+⊤
+​
+ g, which travels through the learned transformation.
+
+The first contribution exists regardless of how complicated, poorly conditioned, or initially unhelpful the learned branch is.
+
+This is valuable because the network does not need every individual transformation to be perfectly conditioned for gradients to reach earlier layers.
+
+However, it is important not to overstate this result: the identity contribution does not guarantee that the total gradient is well-conditioned. The learned contribution can still interfere destructively or constructively with it.
+
+1.2 Mitigation of the vanishing-gradient problem
+Consider a simple conventional network where each layer has a Jacobian whose typical magnitude is approximately 
+c
+c.
+
+The gradient magnitude can scale roughly as
+
+∥
+g
+0
+∥
+∼
+c
+L
+∥
+g
+L
+∥
+.
+∥g 
+0
+​
+ ∥∼c 
+L
+ ∥g 
+L
+​
+ ∥.
+If 
+c
+<
+1
+c<1, this decays exponentially with depth.
+
+If 
+c
+>
+1
+c>1, it grows exponentially.
+
+With residual connections, a simplified scalar analogue is
+
+g
+0
+∼
+[
+∏
+l
+=
+0
+L
+−
+1
+(
+1
++
+c
+l
+)
+]
+g
+L
+.
+g 
+0
+​
+ ∼[ 
+l=0
+∏
+L−1
+​
+ (1+c 
+l
+​
+ )]g 
+L
+​
+ .
+When the residual transformations are initially small, each factor is near one rather than near zero.
+
+For example, if a residual branch initially behaves approximately like
+
+F
+l
+(
+x
+)
+≈
+ϵ
+l
+G
+l
+(
+x
+)
+,
+F 
+l
+​
+ (x)≈ϵ 
+l
+​
+ G 
+l
+​
+ (x),
+then
+
+J
+l
+≈
+ϵ
+l
+J
+G
+l
+,
+J 
+l
+​
+ ≈ϵ 
+l
+​
+ J 
+G 
+l
+​
+ 
+​
+ ,
+and hence
+
+I
++
+J
+l
+I+J 
+l
+​
+ 
+is close to the identity when 
+ϵ
+l
+ϵ 
+l
+​
+  is small.
+
+This makes it much easier to construct very deep networks whose gradients remain usable.
+
+There is an important subtlety here: residual connections do not magically solve the vanishing-gradient problem under arbitrary initialization or arbitrary depth. If the residual Jacobians are large or badly conditioned, the product of 
+I
++
+J
+l
+I+J 
+l
+​
+  can still behave poorly.
+
+What they provide is a much more favorable starting structure and a direct gradient pathway.
+
+1.3 Reduced dependence on every layer being well-behaved
+In an ordinary feedforward network, an early layer's gradient depends on the product of all subsequent transformations.
+
+A single badly conditioned layer can damage the gradient signal reaching every earlier layer.
+
+A residual network is less dependent on the learned branches being individually well-behaved because the identity pathway bypasses them.
+
+This is particularly relevant during early training.
+
+At initialization:
+
+individual transformations may not yet be useful;
+
+the representations may be poorly calibrated;
+
+the network may not have learned a sensible hierarchy;
+
+gradients through the learned transformations may be noisy or poorly conditioned.
+
+The identity pathway gives the network an alternative route for both information and gradients.
+
+This is one reason residual architectures can support substantially greater depth than comparable plain architectures.
+
+2. Easier learning through identity initialization
+This is arguably as important as gradient propagation.
+
+2.1 The network can start by doing nothing
+Consider again
+
+y
+=
+x
++
+F
+(
+x
+;
+θ
+)
+.
+y=x+F(x;θ).
+If the residual branch is zero,
+
+F
+(
+x
+;
+θ
+)
+=
+0
+,
+F(x;θ)=0,
+then
+
+y
+=
+x
+.
+y=x.
+The block implements the identity transformation exactly.
+
+This has a remarkably useful consequence:
+
+A residual block does not have to learn a useful transformation from scratch. It can begin as an identity mapping and learn a deviation from it.
+
+For a conventional block,
+
+y
+=
+F
+(
+x
+;
+θ
+)
+,
+y=F(x;θ),
+the network must learn the desired transformation directly. Even if the desired transformation is close to identity, the architecture does not explicitly provide it.
+
+For a residual block, the desired transformation can be decomposed as
+
+T
+(
+x
+)
+=
+x
++
+R
+(
+x
+)
+,
+T(x)=x+R(x),
+where
+
+R
+(
+x
+)
+=
+T
+(
+x
+)
+−
+x
+.
+R(x)=T(x)−x.
+The network only needs to learn the correction 
+R
+(
+x
+)
+R(x).
+
+That can be much easier than learning 
+T
+(
+x
+)
+T(x) itself.
+
+2.2 Learning corrections instead of complete transformations
+Suppose the ideal transformation is
+
+T
+(
+x
+)
+=
+x
++
+δ
+(
+x
+)
+,
+T(x)=x+δ(x),
+where 
+δ
+(
+x
+)
+δ(x) is relatively small.
+
+A conventional network must approximate
+
+F
+(
+x
+)
+≈
+x
++
+δ
+(
+x
+)
+.
+F(x)≈x+δ(x).
+A residual network only needs to approximate
+
+F
+(
+x
+)
+≈
+δ
+(
+x
+)
+.
+F(x)≈δ(x).
+The identity component is already provided.
+
+This is a useful change in the learning problem: instead of reconstructing the entire representation at every layer, each layer learns what needs to change.
+
+It is closely related to the general principle of using a good baseline and predicting a correction relative to that baseline.
+
+The same idea appears in many other areas of machine learning and numerical optimization.
+
+2.3 The identity solution is always available
+The identity mapping is not merely one possible output. It is a particularly simple solution within the residual block's parameterization.
+
+This matters when a network is made deeper.
+
+Imagine taking a trained network and inserting additional residual blocks. If their residual branches are zero, the network's input-output function remains unchanged.
+
+In principle, the additional blocks can subsequently learn useful transformations.
+
+Without residual connections, inserting additional layers generally requires those layers to learn transformations that preserve the network's existing behavior. This can be considerably more difficult.
+
+This gives residual architectures a form of depth extensibility: additional layers can be introduced without necessarily disrupting the existing computation.
+
+3. Improved conditioning of the optimization problem
+Gradient propagation and conditioning are closely connected, but they are not identical.
+
+3.1 The Jacobian is shifted by the identity
+For a residual block,
+
+J
+b
+l
+o
+c
+k
+=
+I
++
+J
+F
+.
+J 
+block
+​
+ =I+J 
+F
+​
+ .
+This means that when the residual transformation has a small Jacobian, the block's Jacobian is close to identity.
+
+The singular values of a matrix sufficiently close to identity are close to one.
+
+Consequently, the block tends to preserve perturbation magnitudes and gradient magnitudes more effectively than a transformation whose Jacobian is initially far from identity.
+
+For example, suppose
+
+∥
+J
+F
+∥
+2
+≤
+ϵ
+<
+1.
+∥J 
+F
+​
+ ∥ 
+2
+​
+ ≤ϵ<1.
+Then, by the standard singular-value bounds,
+
+1
+−
+ϵ
+≤
+σ
+min
+⁡
+(
+I
++
+J
+F
+)
+≤
+σ
+max
+⁡
+(
+I
++
+J
+F
+)
+≤
+1
++
+ϵ
+.
+1−ϵ≤σ 
+min
+​
+ (I+J 
+F
+​
+ )≤σ 
+max
+​
+ (I+J 
+F
+​
+ )≤1+ϵ.
+Thus, the residual block's local linearization cannot arbitrarily contract or expand directions when its residual Jacobian is sufficiently small.
+
+This is a concrete mathematical reason that small residual transformations can be easier to optimize.
+
+It is not a universal guarantee: if 
+J
+F
+J 
+F
+​
+  becomes large, or develops an eigenstructure that causes cancellation, the favorable bounds no longer apply.
+
+3.2 Better-behaved deep Jacobian products
+A deep network's conditioning depends on the product of its layer Jacobians.
+
+In plain networks, one would ideally like every layer Jacobian to have singular values close to one.
+
+Achieving this throughout a deep nonlinear network can be difficult.
+
+Residual networks instead provide the parameterization
+
+J
+l
+=
+I
++
+J
+F
+l
+.
+J 
+l
+​
+ =I+J 
+F 
+l
+​
+ 
+​
+ .
+This allows the network to achieve approximately identity-like behavior by making the residual branches sufficiently small.
+
+The network therefore has a comparatively natural route toward a well-conditioned configuration.
+
+An ordinary architecture may also achieve well-conditioned transformations, but the identity-like solution is not generally as directly accessible.
+
+3.3 Less destructive composition
+A conventional deep network composes transformations:
+
+x
+L
+=
+F
+L
+−
+1
+∘
+⋯
+∘
+F
+1
+∘
+F
+0
+(
+x
+0
+)
+.
+x 
+L
+​
+ =F 
+L−1
+​
+ ∘⋯∘F 
+1
+​
+ ∘F 
+0
+​
+ (x 
+0
+​
+ ).
+Each transformation replaces the representation produced by the preceding transformation.
+
+A residual network instead composes updates:
+
+x
+l
++
+1
+=
+x
+l
++
+F
+l
+(
+x
+l
+)
+.
+x 
+l+1
+​
+ =x 
+l
+​
+ +F 
+l
+​
+ (x 
+l
+​
+ ).
+Each transformation modifies the current representation while preserving a direct component of it.
+
+This provides a more controlled way to build complex transformations from many relatively modest steps.
+
+4. Better forward signal propagation
+It is tempting to discuss skip connections only in terms of backpropagation, but they also change the forward computation.
+
+4.1 Information can pass through without being transformed
+The equation
+
+x
+l
++
+1
+=
+x
+l
++
+F
+l
+(
+x
+l
+)
+x 
+l+1
+​
+ =x 
+l
+​
+ +F 
+l
+​
+ (x 
+l
+​
+ )
+means that the incoming representation is not entirely replaced by the block's output.
+
+There is always a direct contribution from 
+x
+l
+x 
+l
+​
+ .
+
+This can help preserve:
+
+low-level information;
+
+useful features identified by earlier layers;
+
+positional or structural information;
+
+semantic information;
+
+features that a particular block does not need to modify.
+
+In a plain network, every layer must transmit useful information through its learned transformation.
+
+In a residual network, a block can preserve information by leaving its residual branch inactive or by learning a transformation that does not interfere substantially with the existing representation.
+
+This is particularly useful in deep networks, where not every layer needs to perform a major representational change.
+
+4.2 Prevention of unnecessary representational destruction
+Suppose an earlier layer has already learned a useful feature.
+
+A subsequent layer may need to extract additional information from it, but it does not necessarily need to eliminate the original feature.
+
+A plain architecture can accidentally overwrite or distort useful information as representations are transformed layer after layer.
+
+A residual architecture offers a mechanism for adding new information while retaining a direct contribution from the existing representation.
+
+This is not perfect preservation, because addition can still cause interference. But it reduces the need for every layer to reconstruct information that earlier layers already provided.
+
+4.3 Better preservation of weak features
+Imagine a representation containing:
+
+x
+=
+[
+x
+s
+t
+r
+o
+n
+g
+x
+w
+e
+a
+k
+]
+.
+x=[ 
+x 
+strong
+​
+ 
+x 
+weak
+​
+ 
+​
+ ].
+A learned transformation may focus heavily on the dominant features and neglect the weaker ones.
+
+In a plain network, the weaker features may become progressively attenuated.
+
+In a residual network, a block that does not find the weaker features useful can at least avoid actively destroying their direct contribution.
+
+This can help maintain information that becomes useful only at later stages.
+
+Again, this is an architectural opportunity, not an unconditional guarantee: the residual branch may still interfere with the representation.
+
+5. Feature reuse across depth
+This is a major representational benefit.
+
+5.1 Features do not need to be rediscovered at every layer
+Deep networks are hierarchical.
+
+Early layers may identify low-level structures, while later layers build more complex representations from those structures.
+
+Skip connections allow information generated earlier to remain accessible at greater depths.
+
+That matters because a later layer can combine existing features with newly computed ones.
+
+For a residual network,
+
+x
+l
++
+1
+=
+x
+l
++
+F
+l
+(
+x
+l
+)
+,
+x 
+l+1
+​
+ =x 
+l
+​
+ +F 
+l
+​
+ (x 
+l
+​
+ ),
+the output contains both the previous representation and the update computed from it.
+
+A later block therefore receives information that has been accumulated through the network, rather than only the output of the immediately preceding transformation.
+
+5.2 Avoiding repeated reconstruction
+Without skip connections, if a useful feature is lost or distorted, a later layer may need to reconstruct it from whatever information remains.
+
+Residual connections reduce this burden by providing a direct route for the existing representation.
+
+The distinction is analogous to editing an existing document rather than repeatedly reconstructing the entire document from scratch.
+
+Each block can add, suppress, or modify aspects of the representation without necessarily replacing the entire representation.
+
+5.3 Combining early and late information
+This is especially important in convolutional networks.
+
+Early layers often encode local structures, edges, textures, and spatial details. Later layers often encode larger-scale semantic information.
+
+Architectures such as U-Nets use long skip connections to combine fine spatial information from earlier stages with semantically rich information from later stages.
+
+ResNet-50 for Image Classification | MindSpore 2.0.0-alpha Tutorials | MindSpore
+AI for Identifying Land Ownership via Satellite | AI Tutorial | Next Electronics
+Prof. Ryutarou Ohbuchi's page
+The U-Net example is slightly different from the standard additive residual block: its skip connections commonly concatenate feature maps rather than add them.
+
+That distinction matters.
+
+Additive skips preserve a direct contribution while maintaining the same dimensionality.
+
+Concatenative skips retain separate feature channels, giving later layers access to both representations explicitly.
+
+Both promote feature reuse, but concatenation can preserve more information because it does not immediately superimpose the two feature sets.
+
+6. More efficient learning of deep transformations
+Residual connections make it easier to distribute a complex transformation across many layers.
+
+6.1 Decomposing a transformation into incremental updates
+Suppose the desired overall transformation is 
+T
+T.
+
+A deep network attempts to express it as a composition of many simpler transformations.
+
+In a residual network, each transformation has the form
+
+T
+l
+(
+x
+)
+=
+x
++
+F
+l
+(
+x
+)
+.
+T 
+l
+​
+ (x)=x+F 
+l
+​
+ (x).
+The overall transformation is
+
+T
+=
+T
+L
+−
+1
+∘
+⋯
+∘
+T
+0
+.
+T=T 
+L−1
+​
+ ∘⋯∘T 
+0
+​
+ .
+The network can therefore approximate a complex transformation by applying a sequence of incremental changes.
+
+This has an intuitive benefit: a large transformation can be built from many smaller corrections.
+
+It is not necessarily true that every residual block learns a small correction, particularly after training. But the architecture makes that solution available.
+
+6.2 Refinement rather than repeated reconstruction
+Consider a representation that becomes increasingly useful through depth.
+
+A sequence of residual blocks might implement:
+
+x
+1
+=
+x
+0
++
+Δ
+0
+,
+x 
+1
+​
+ =x 
+0
+​
+ +Δ 
+0
+​
+ ,
+x
+2
+=
+x
+1
++
+Δ
+1
+,
+x 
+2
+​
+ =x 
+1
+​
+ +Δ 
+1
+​
+ ,
+x
+3
+=
+x
+2
++
+Δ
+2
+.
+x 
+3
+​
+ =x 
+2
+​
+ +Δ 
+2
+​
+ .
+Expanding,
+
+x
+3
+=
+x
+0
++
+Δ
+0
++
+Δ
+1
++
+Δ
+2
+.
+x 
+3
+​
+ =x 
+0
+​
+ +Δ 
+0
+​
+ +Δ 
+1
+​
+ +Δ 
+2
+​
+ .
+Each block contributes an update to the running representation.
+
+This is a natural parameterization for iterative refinement.
+
+It permits the network to construct a representation cumulatively rather than having each layer produce an entirely new representation.
+
+6.3 Complex functions can emerge from simple updates
+A small nonlinear correction may appear relatively simple in isolation.
+
+But repeatedly applying different nonlinear corrections can produce a highly complex overall transformation.
+
+Residual networks exploit precisely this possibility:
+
+x
+L
+=
+(
+I
++
+F
+L
+−
+1
+)
+∘
+⋯
+∘
+(
+I
++
+F
+0
+)
+(
+x
+0
+)
+.
+x 
+L
+​
+ =(I+F 
+L−1
+​
+ )∘⋯∘(I+F 
+0
+​
+ )(x 
+0
+​
+ ).
+The overall function can be highly nonlinear even when individual residual branches are relatively modest.
+
+This is one reason residual connections are compatible with substantial representational depth.
+
+7. The path-ensemble interpretation
+One of the more interesting ways to understand residual networks is through their implied computational paths.
+
+Consider a simplified linear residual network:
+
+x
+l
++
+1
+=
+(
+I
++
+A
+l
+)
+x
+l
+.
+x 
+l+1
+​
+ =(I+A 
+l
+​
+ )x 
+l
+​
+ .
+For two layers,
+
+x
+2
+=
+(
+I
++
+A
+1
+)
+(
+I
++
+A
+0
+)
+x
+0
+.
+x 
+2
+​
+ =(I+A 
+1
+​
+ )(I+A 
+0
+​
+ )x 
+0
+​
+ .
+Expanding,
+
+x
+2
+=
+(
+I
++
+A
+0
++
+A
+1
++
+A
+1
+A
+0
+)
+x
+0
+.
+x 
+2
+​
+ =(I+A 
+0
+​
+ +A 
+1
+​
+ +A 
+1
+​
+ A 
+0
+​
+ )x 
+0
+​
+ .
+There are four terms:
+
+I
+I: the path that skips both transformations;
+
+A
+0
+A 
+0
+​
+ : the path that uses only the first transformation;
+
+A
+1
+A 
+1
+​
+ : the path that uses only the second transformation;
+
+A
+1
+A
+0
+A 
+1
+​
+ A 
+0
+​
+ : the path that uses both transformations.
+
+For three layers, the expansion has eight terms.
+
+More generally,
+
+∏
+l
+=
+0
+L
+−
+1
+(
+I
++
+A
+l
+)
+l=0
+∏
+L−1
+​
+ (I+A 
+l
+​
+ )
+expands into a sum over subsets of the layers.
+
+Each term corresponds to a path that uses some subset of the residual transformations.
+
+7.1 Why is this useful?
+A plain sequential network has a single computational route through all layers.
+
+A residual network implicitly contains many routes of different effective lengths.
+
+Some routes traverse almost all blocks. Others bypass many of them.
+
+This can provide:
+
+short routes for gradient propagation;
+
+multiple effective depths;
+
+alternative ways of combining transformations;
+
+an ensemble-like structure;
+
+reduced dependence on every single block being useful.
+
+This is sometimes described as an implicit ensemble of subnetworks.
+
+That interpretation is useful, but it should not be taken too literally.
+
+The paths share parameters, are strongly correlated, and do not generally behave like independently trained ensemble members.
+
+The important point is that residual architecture creates a richer system of computational routes than a strictly sequential architecture.
+
+7.2 Effective depth is not necessarily nominal depth
+A residual network with 100 blocks does not force every signal to be transformed by all 100 residual branches.
+
+Some computational contributions can bypass many of them.
+
+Consequently, the network has a spectrum of effective path lengths.
+
+This is one way of understanding why optimization can remain feasible even when the nominal depth becomes very large.
+
+8. Increased representational flexibility
+This is an important reason that is sometimes overlooked when skip connections are described exclusively as an optimization technique.
+
+The architecture changes the set of functions that can be represented efficiently.
+
+8.1 Residual and non-residual blocks are different function classes
+Consider a residual block:
+
+T
+(
+x
+)
+=
+x
++
+F
+(
+x
+)
+.
+T(x)=x+F(x).
+A non-residual block has the form:
+
+T
+(
+x
+)
+=
+G
+(
+x
+)
+.
+T(x)=G(x).
+Although both contain a learned neural network transformation, they are not equivalent parameterizations.
+
+The residual block explicitly contains a fixed identity component.
+
+It therefore has the structural form
+
+identity
++
+learned nonlinear transformation
+.
+identity+learned nonlinear transformation.
+The non-residual block has to represent the entire resulting function using its own learned transformation.
+
+Whether one function class contains another depends on the precise activation, width, depth, biases, and other architectural restrictions. There is no universal statement that every residual network is more expressive than every non-residual network of equal total size.
+
+But at a fixed block architecture and width, the residual structure can make certain transformations available that a plain block cannot represent without additional resources.
+
+8.2 Residual blocks can represent identity plus complicated nonlinear corrections
+The residual form directly represents
+
+T
+(
+x
+)
+=
+x
++
+F
+(
+x
+)
+.
+T(x)=x+F(x).
+This is a structured way of combining a linear identity component with a nonlinear function.
+
+The architecture does not have to spend its learned hidden units reconstructing the identity component.
+
+This can be especially important for narrow networks.
+
+For example, a one-hidden-layer ReLU MLP may need additional units to represent the identity function itself. The familiar identity
+
+x
+=
+ReLU
+⁡
+(
+x
+)
+−
+ReLU
+⁡
+(
+−
+x
+)
+x=ReLU(x)−ReLU(−x)
+illustrates how even a simple linear transformation can consume nonlinear hidden units.
+
+A residual block receives the identity component without having to construct it through the hidden layer.
+
+Therefore, at the same hidden width, the residual block can devote its learned capacity to the nonlinear correction.
+
+8.3 A different parameterization can be easier even when the function is representable either way
+Suppose a plain network can represent a particular transformation.
+
+That does not mean it can learn it as easily as a residual network.
+
+Representational existence and optimization accessibility are different questions.
+
+A function may be representable by both architectures, while the residual architecture provides:
+
+a simpler initialization;
+
+a shorter optimization route;
+
+a more natural decomposition;
+
+a better-conditioned parameterization;
+
+a more convenient way to combine identity and nonlinear components.
+
+This distinction is essential.
+
+The practical success of residual networks is not merely that they represent functions that other networks cannot. It is also that they make useful functions easier to reach during training.
+
+8.4 Residual connections change the geometry of the function class
+The set of functions representable by an architecture is shaped not only by its number of parameters but also by how its computations are composed.
+
+A residual block uses addition to combine a fixed identity transformation with a learned nonlinear one.
+
+This changes the geometry of the parameter-to-function mapping.
+
+In particular, the network can move away from the identity function by changing the residual branch, without needing to reconstruct the identity through the learned parameters.
+
+Consequently, the residual parameterization can have a very different structure from the corresponding plain MLP parameterization.
+
+This is a representational and geometric advantage, not simply a gradient-flow advantage.
+
+One qualification is important: a residual connection adds no trainable parameters by itself, but that does not mean it adds no functional capacity. A fixed architectural operation can substantially change the function class without introducing additional learned parameters.
+
+9. Improved optimization landscape and parameterization
+A residual network also changes the relationship between parameters and the function being optimized.
+
+9.1 A useful solution may be close to initialization
+When residual branches are initialized close to zero, the complete network initially approximates an identity mapping through its residual stack.
+
+The optimization process starts near a relatively simple transformation.
+
+The network then learns departures from that transformation.
+
+This can be helpful because the optimization process does not need to simultaneously discover an appropriate representation and preserve the information necessary to propagate through the network.
+
+9.2 Less pressure on early layers to immediately produce perfect features
+In a plain deep network, an early layer's output must be processed successfully by every subsequent layer.
+
+If an early representation is imperfect, later transformations may amplify or obscure its shortcomings.
+
+Residual networks allow later blocks to make incremental corrections while preserving the incoming representation.
+
+This can make the training process less brittle.
+
+9.3 A better parameterization can matter independently of expressivity
+Two architectures can represent exactly the same set of functions but still have different optimization behavior.
+
+For example, consider two parameterizations of the same mathematical function:
+
+f
+θ
+(
+x
+)
+and
+g
+ϕ
+(
+x
+)
+.
+f 
+θ
+​
+ (x)andg 
+ϕ
+​
+ (x).
+Even if both cover the same set of functions, gradient descent in 
+θ
+θ-space need not correspond to gradient descent in 
+ϕ
+ϕ-space.
+
+The optimization trajectories can differ because the coordinate systems, local curvature, and parameter-to-function mappings differ.
+
+Residual connections introduce a particular parameterization of transformations as identity plus correction.
+
+This can improve training without requiring a strict increase in the underlying representable function class.
+
+9.4 But they do not make the loss landscape convex
+It would be incorrect to conclude that residual connections eliminate difficult local minima, saddle points, or poor conditioning.
+
+Residual networks are still highly nonconvex.
+
+Their optimization benefits are more specific:
+
+favorable identity-like initialization;
+
+direct gradient pathways;
+
+a more controlled way to compose transformations;
+
+useful parameterization of near-identity functions;
+
+alternative computational paths.
+
+These properties improve practical optimization without guaranteeing an easy optimization landscape in the formal sense.
+
+10. A dynamical-systems interpretation
+Residual networks have a particularly interesting connection to numerical integration and dynamical systems.
+
+Consider the residual update:
+
+x
+l
++
+1
+=
+x
+l
++
+F
+l
+(
+x
+l
+)
+.
+x 
+l+1
+​
+ =x 
+l
+​
+ +F 
+l
+​
+ (x 
+l
+​
+ ).
+This resembles an Euler discretization of a differential equation:
+
+d
+x
+(
+t
+)
+d
+t
+=
+f
+(
+x
+(
+t
+)
+,
+t
+)
+.
+dt
+dx(t)
+​
+ =f(x(t),t).
+For a step size 
+h
+h, an explicit Euler step is
+
+x
+(
+t
++
+h
+)
+=
+x
+(
+t
+)
++
+h
+f
+(
+x
+(
+t
+)
+,
+t
+)
+.
+x(t+h)=x(t)+hf(x(t),t).
+A residual network can therefore be viewed as a discretized dynamical system in which each layer applies an incremental update to the current state.
+
+More explicitly, if
+
+F
+l
+(
+x
+)
+=
+h
+f
+l
+(
+x
+)
+,
+F 
+l
+​
+ (x)=hf 
+l
+​
+ (x),
+then
+
+x
+l
++
+1
+=
+x
+l
++
+h
+f
+l
+(
+x
+l
+)
+.
+x 
+l+1
+​
+ =x 
+l
+​
+ +hf 
+l
+​
+ (x 
+l
+​
+ ).
+This is the basic structural connection between ResNets and neural ordinary differential equations.
+
+10.1 Depth becomes a discretization axis
+In a conventional feedforward network, depth is simply the number of successive transformations.
+
+In a residual network, depth can also be interpreted as the number of integration steps through a learned dynamical system.
+
+The network state evolves as
+
+x
+0
+→
+x
+1
+→
+⋯
+→
+x
+L
+.
+x 
+0
+​
+ →x 
+1
+​
+ →⋯→x 
+L
+​
+ .
+Each block controls the evolution of the state.
+
+This gives a natural interpretation of residual transformations as vector-field-like updates.
+
+10.2 Small steps can improve stability
+In numerical integration, large steps can cause unstable or inaccurate trajectories.
+
+Similarly, residual networks with appropriately scaled updates can have more controlled forward dynamics.
+
+If the residual updates are small enough, each block changes the representation gradually.
+
+This can make the network easier to train and can reduce abrupt changes in the representation.
+
+However, an ordinary ResNet is not automatically a stable numerical integrator. Its blocks may learn large updates, and the network need not correspond to a well-behaved continuous-time system.
+
+The ODE interpretation is particularly useful when the residual branch is scaled by a small step size or when the architecture is explicitly designed with dynamical-systems considerations in mind.
+
+10.3 The representation becomes a trajectory
+A useful consequence of this interpretation is that the hidden representations are not merely arbitrary intermediate tensors.
+
+They form a trajectory through representation space.
+
+Each residual block makes a local update to the current state.
+
+That suggests useful ways of studying deep networks:
+
+how far representations move from their initial states;
+
+whether the dynamics are stable;
+
+whether updates are smooth or discontinuous;
+
+whether different blocks make complementary changes;
+
+whether the trajectory converges toward a useful representation.
+
+This is a conceptual benefit, but it also creates concrete tools for analysis.
+
+11. Better interactions with normalization and initialization
+Skip connections are particularly important in architectures that use normalization layers.
+
+11.1 Separation between the feature stream and the transformation branch
+Consider a pre-normalization residual block:
+
+x
+l
++
+1
+=
+x
+l
++
+F
+(
+Norm
+⁡
+(
+x
+l
+)
+)
+.
+x 
+l+1
+​
+ =x 
+l
+​
+ +F(Norm(x 
+l
+​
+ )).
+The normalization is applied inside the residual branch, while the identity pathway carries the original representation forward.
+
+This distinction is important.
+
+The transformation branch receives a normalized input, which can make its optimization more stable.
+
+At the same time, the representation itself has a direct path that is not repeatedly transformed by the normalization operation.
+
+This creates a separation between:
+
+the state being propagated;
+
+the normalized state used to compute the update.
+
+It is one reason pre-normalization Transformer architectures can support deep stacks effectively.
+
+11.2 The residual stream accumulates information
+In a pre-LayerNorm Transformer, the computation is typically structured as
+
+x
+′
+=
+x
++
+Attention
+⁡
+(
+LN
+⁡
+(
+x
+)
+)
+,
+x 
+′
+ =x+Attention(LN(x)),
+followed by
+
+y
+=
+x
+′
++
+MLP
+⁡
+(
+LN
+⁡
+(
+x
+′
+)
+)
+.
+y=x 
+′
+ +MLP(LN(x 
+′
+ )).
+The residual stream is the persistent representation.
+
+Attention and MLP modules compute updates to it.
+
+This allows the architecture to separate the relatively stable information-carrying stream from the transformations that modify it.
+
+Tutorial #17: Transformers III Training - Research Blog | RBC Borealis
+How ChatGPT and LLMs Actually Work- Tokenization, Transformers, Training | by Tejas Doypare | Medium
+Attention Residuals: Teaching transformers to choose which layers matter
+11.3 Zero initialization of residual branches
+Some architectures initialize the final normalization scale, projection, or other component of a residual branch so that the branch initially contributes little or nothing.
+
+Then
+
+x
+l
++
+1
+≈
+x
+l
+.
+x 
+l+1
+​
+ ≈x 
+l
+​
+ .
+This makes the complete network initially behave close to a sequence of identity transformations.
+
+The network can gradually learn nontrivial updates.
+
+The exact choice of initialization matters. Zero-initializing a final branch component can also affect the initial gradients received by parameters earlier in that branch. It is therefore not universally optimal to initialize every residual branch exactly at zero.
+
+The broader principle is that residual architectures allow identity-like initialization in a way plain architectures do not naturally provide.
+
+12. Greater tolerance to additional depth
+This deserves its own discussion because it is one of the practical motivations for ResNets.
+
+12.1 The degradation problem
+A classic observation in deep learning is that adding more layers to a sufficiently deep network can increase training error, even though the deeper network should theoretically be able to reproduce the shallower network's solution.
+
+Why?
+
+In a plain network, the additional layers must learn transformations that preserve the existing computation.
+
+For example, if the original network computes
+
+T
+(
+x
+)
+,
+T(x),
+then adding a layer requires the deeper network to implement something like
+
+G
+(
+F
+(
+x
+)
+)
+≈
+T
+(
+x
+)
+,
+G(F(x))≈T(x),
+where the additional transformation must effectively avoid harming the computation.
+
+This is not necessarily easy to achieve with ordinary nonlinear layers.
+
+It can be especially difficult when the architecture, initialization, and optimization procedure do not make identity-like transformations readily available.
+
+12.2 Residual networks provide an explicit solution
+A residual block can implement
+
+x
+↦
+x
++
+0
+=
+x
+.
+x↦x+0=x.
+Consequently, an additional block can preserve the existing network's computation exactly when its residual branch is zero.
+
+This addresses an important aspect of the degradation problem.
+
+It does not mean that adding depth will always improve performance or that every deeper residual network is easier to train. It means that the deeper architecture has an easy way to reproduce the shallower architecture's behavior.
+
+That is a substantial structural advantage.
+
+13. Better support for multi-branch computations
+Skip connections are especially useful when a network contains several computational branches.
+
+Consider a general block:
+
+y
+=
+x
++
+F
+1
+(
+x
+)
++
+F
+2
+(
+x
+)
+.
+y=x+F 
+1
+​
+ (x)+F 
+2
+​
+ (x).
+The branches may perform different operations:
+
+attention;
+
+MLP transformations;
+
+convolutions with different kernel sizes;
+
+gating;
+
+positional transformations;
+
+other learned computations.
+
+The skip connection allows each branch to contribute an update to an existing representation.
+
+This gives a convenient architecture for combining multiple forms of processing while maintaining a persistent representation stream.
+
+13.1 Modularity
+A residual block can be thought of as a module that proposes an update.
+
+Different modules can specialize in different aspects of the representation.
+
+The network combines their outputs with the existing state.
+
+This is a useful architectural abstraction: each block does not have to own the entire transformation of the representation.
+
+13.2 Attention and MLP complementarity
+In a Transformer, attention and MLP sublayers perform rather different operations.
+
+Attention mixes information across tokens. The MLP applies transformations to individual token representations.
+
+The residual stream provides a common representation space in which both types of updates can be accumulated.
+
+Without residual connections, the attention output would replace the current representation before the MLP receives it, and the MLP output would replace the attention output.
+
+With residual connections, both modules modify a persistent stream:
+
+x
+1
+=
+x
+0
++
+Attention
+⁡
+(
+x
+0
+)
+,
+x 
+1
+​
+ =x 
+0
+​
+ +Attention(x 
+0
+​
+ ),
+x
+2
+=
+x
+1
++
+MLP
+⁡
+(
+x
+1
+)
+.
+x 
+2
+​
+ =x 
+1
+​
+ +MLP(x 
+1
+​
+ ).
+The model can therefore incorporate contextual information while maintaining a direct contribution from the previous representation.
+
+This is particularly natural for architectures that combine heterogeneous transformations.
+
+14. Implicit regularization and inductive bias
+Skip connections also introduce an inductive bias.
+
+The architecture implicitly favors expressing transformations as
+
+T
+(
+x
+)
+=
+x
++
+F
+(
+x
+)
+.
+T(x)=x+F(x).
+This is not a guarantee that the learned 
+F
+F will be small, but it provides a natural parameterization in which small deviations from identity are easily represented.
+
+14.1 A preference for preserving existing information
+The identity pathway establishes a baseline: the existing representation is retained unless the learned branch changes it.
+
+This can encourage a decomposition in which each block modifies only aspects of the representation that need modification.
+
+In practice, the learned residual function need not be sparse, small, or localized. But the architecture permits those solutions naturally.
+
+14.2 A structured prior over transformations
+A residual architecture encodes the prior that useful deep transformations can often be constructed as a sequence of corrections to an existing representation.
+
+This is a meaningful architectural assumption.
+
+For many problems, it is sensible: later computations often refine or supplement information rather than completely replacing it.
+
+The architecture gives the optimizer a parameterization aligned with that assumption.
+
+14.3 Is this necessarily better generalization?
+Not necessarily.
+
+It is possible for residual connections to improve generalization, but the existence of a skip connection alone does not imply a generalization guarantee.
+
+The effect on generalization depends on:
+
+architecture;
+
+width and depth;
+
+training data;
+
+regularization;
+
+optimization;
+
+initialization;
+
+normalization;
+
+residual scaling;
+
+the task itself.
+
+Residual connections create a particular inductive bias. Whether that bias improves generalization is an empirical question.
+
+15. Better behavior under perturbations and noise
+Residual connections can sometimes make networks less sensitive to individual transformations.
+
+Consider
+
+x
+l
++
+1
+=
+x
+l
++
+F
+l
+(
+x
+l
+)
+.
+x 
+l+1
+​
+ =x 
+l
+​
+ +F 
+l
+​
+ (x 
+l
+​
+ ).
+If 
+F
+l
+F 
+l
+​
+  is relatively small, then the block cannot completely replace the input representation with an unrelated output.
+
+The identity contribution provides a stabilizing component.
+
+This may help preserve information when the learned branch is noisy or imperfect.
+
+It may also make the network less dependent on the precise behavior of any single block, since other paths can transmit information around it.
+
+There are, however, two qualifications.
+
+First, additive updates can accumulate. A sequence of small perturbations may still become large.
+
+Second, the residual branch can learn a transformation that amplifies noise or produces undesirable feature interference.
+
+So skip connections do not guarantee robustness to input perturbations, distribution shifts, adversarial attacks, or internal noise.
+
+Their contribution is more indirect: they offer alternative signal pathways and permit conservative updates.
+
+16. Improved transfer learning and fine-tuning
+Residual architectures can be especially useful when starting from pretrained weights.
+
+Suppose a pretrained model computes a useful transformation 
+T
+(
+x
+)
+T(x).
+
+During fine-tuning, one would often like to preserve most of that behavior while making targeted modifications.
+
+Residual parameterizations naturally support this idea.
+
+A new transformation can be written as
+
+T
+n
+e
+w
+(
+x
+)
+=
+T
+o
+l
+d
+(
+x
+)
++
+Δ
+(
+x
+)
+.
+T 
+new
+​
+ (x)=T 
+old
+​
+ (x)+Δ(x).
+Rather than learning the complete transformation again, a new branch can learn a correction.
+
+This is conceptually related to several techniques:
+
+adapters;
+
+residual bottleneck modules;
+
+low-rank adaptation;
+
+residual-style task-specific updates;
+
+parameter-efficient fine-tuning.
+
+Not all of these are identical to ordinary residual connections, but they exploit a similar principle: preserve an existing computation and learn a relatively restricted modification to it.
+
+This is useful when the pretrained representation already contains substantial information relevant to the new task.
+
+17. The importance of parameter efficiency
+A skip connection itself usually has no trainable parameters when it is an identity mapping.
+
+Yet it changes the computation performed by the layer.
+
+That is a rather remarkable architectural property.
+
+Compare:
+
+T
+p
+l
+a
+i
+n
+(
+x
+)
+=
+F
+(
+x
+;
+θ
+)
+T 
+plain
+​
+ (x)=F(x;θ)
+with
+
+T
+r
+e
+s
+(
+x
+)
+=
+x
++
+F
+(
+x
+;
+θ
+)
+.
+T 
+res
+​
+ (x)=x+F(x;θ).
+The residual version uses the same learned parameters for 
+F
+F, but has a different input-output function.
+
+The identity component is supplied by the architecture rather than learned through a separate parameterized transformation.
+
+This can allow the learned part of the network to allocate its capacity to nonlinear updates instead of reconstructing a baseline mapping.
+
+The benefit is not simply that fewer parameters are needed in every possible comparison. Rather, the architecture provides a fixed structural component that can be extremely useful without consuming ordinary learned capacity.
+
+This also highlights an important distinction:
+
+Parameter count and functional capacity are not the same thing.
+
+An architectural operation can change the function class even when it introduces no additional trainable parameters.
+
+18. Residual connections can improve the usefulness of very wide networks
+Although skip connections are most famously associated with very deep networks, their value is not confined to depth.
+
+Wide networks also benefit from residual structure.
+
+A wide layer can learn many features, but a plain architecture still requires each successive layer to transform the entire representation.
+
+A residual architecture allows the network to preserve the existing representation while adding or modifying features.
+
+This can make it easier to use width for parallel feature construction without requiring every layer to completely reorganize the representation.
+
+In modern architectures, residual connections therefore work together with width, normalization, attention, and other architectural choices.
+
+They are not an alternative to width; they affect how width is used.
+
+19. Different types of skip connections provide different benefits
+It is worth distinguishing several architectures that are often grouped under the same label.
+
+Resnet 18-layer pytorch 코드 리뷰
+Identity / additive residual connections
+
+y
+=
+x
++
+F
+(
+x
+)
+y=x+F(x)
+These provide a direct identity pathway, enable incremental updates, and are central to the gradient and conditioning benefits discussed above.
+
+Weighted Skip Connections are Not Harmful for Deep Nets
+Gated skip connections
+
+y
+=
+T
+(
+x
+)
+⊙
+H
+(
+x
+)
++
+C
+(
+x
+)
+⊙
+x
+y=T(x)⊙H(x)+C(x)⊙x
+A learned gate controls how much of the transformed representation and the skip representation are passed forward. This provides adaptive information preservation, although the gate itself must be learned and can introduce optimization complications.
+
+Paper review: DenseNet -Densely Connected Convolutional Networks | by Mukul Khanna | TDS Archive | Medium
+Dense / concatenative skip connections
+
+y
+=
+[
+x
+0
+,
+x
+1
+,
+…
+,
+x
+l
+]
+y=[x 
+0
+​
+ ,x 
+1
+​
+ ,…,x 
+l
+​
+ ]
+Earlier features are explicitly exposed to later layers. This strongly encourages feature reuse and reduces the need to reconstruct previous features, at the cost of increased activation storage and potentially increased computation.
+
+U-Net Architecture Explained: A Simple Guide with PyTorch Code | by Abhishek | Medium
+Long-range / encoder-decoder skips
+
+These connect representations from distant stages, often at corresponding spatial resolutions. They preserve fine-grained information that might otherwise be lost during downsampling and allow decoder stages to combine it with deeper semantic features.
+
+These designs share the broad idea of bypassing intermediate transformations, but their mathematical properties and primary benefits are not identical.
+
+For example, concatenative skips preserve separate representations more explicitly than additive skips, while gated skips introduce an adaptive routing mechanism that ordinary identity skips do not have.
+
+20. Why skip connections are particularly effective in Transformers
+Transformers provide an especially clear example of why these connections are useful.
+
+A standard Transformer block typically has two residual sublayers:
+
+x
+′
+=
+x
++
+Attention
+⁡
+(
+Norm
+⁡
+(
+x
+)
+)
+,
+x 
+′
+ =x+Attention(Norm(x)),
+y
+=
+x
+′
++
+MLP
+⁡
+(
+Norm
+⁡
+(
+x
+′
+)
+)
+.
+y=x 
+′
+ +MLP(Norm(x 
+′
+ )).
+The residual stream is the representation carried through depth.
+
+The attention and MLP components provide updates.
+
+This arrangement has several consequences.
+
+First, attention does not need to reconstruct everything it wants to preserve. It can add contextual information to the existing token representations.
+
+Second, the MLP can modify the result of attention without having to reproduce the complete contextualized representation. It only needs to provide an update.
+
+Third, the residual stream provides a direct path for information and gradients across many Transformer blocks.
+
+Fourth, different sublayers can specialize. Attention handles token-to-token information mixing, while the MLP performs transformations within token representations. The residual stream provides a common state to which both contribute.
+
+Fifth, the model has a natural persistent representation space. Information does not have to be completely rewritten after every sublayer.
+
+This is one reason it is useful to think about the Transformer as a stack of modules operating on a shared residual stream, rather than as a simple sequence of unrelated attention and MLP transformations.
+
+21. What skip connections do not guarantee
+The benefits above are substantial, but it is important to separate genuine architectural properties from claims that are too strong.
+
+Claim
+
+Correct interpretation
+
+Skip connections prevent vanishing gradients.
+
+They provide an identity gradient pathway, but gradients can still vanish or explode through the complete Jacobian product.
+
+Skip connections always improve conditioning.
+
+They make identity-like, well-conditioned behavior easier to achieve, but the learned branches can still produce poor conditioning.
+
+Skip connections always improve generalization.
+
+They introduce a useful inductive bias, but generalization depends on the complete training setup.
+
+Skip connections preserve all information.
+
+They provide a direct contribution from the input, but addition can cause interference and information loss.
+
+Skip connections make deeper networks strictly more expressive.
+
+They change the function class and parameterization; the expressivity comparison depends on width, depth, activation, and parameter budget.
+
+Skip connections make optimization easy.
+
+They improve important aspects of optimization, but do not remove nonconvexity or guarantee convergence.
+
+Residual branches always learn small corrections.
+
+The architecture permits this behavior; trained residual branches can learn large transformations.
+
+Every layer needs to be useful.
+
+Residual architectures make it possible for some blocks to learn near-identity mappings or contribute relatively little.
+
+The distinction between what the architecture permits and what training actually produces is particularly important.
+
+22. A unified mathematical picture
+The various benefits can be understood by considering the residual network's composition:
+
+x
+l
++
+1
+=
+x
+l
++
+F
+l
+(
+x
+l
+)
+.
+x 
+l+1
+​
+ =x 
+l
+​
+ +F 
+l
+​
+ (x 
+l
+​
+ ).
+There are several important consequences of this single equation.
+
+A. The Jacobian contains an identity component
+J
+l
+=
+I
++
+∂
+F
+l
+∂
+x
+l
+.
+J 
+l
+​
+ =I+ 
+∂x 
+l
+​
+ 
+∂F 
+l
+​
+ 
+​
+ .
+This creates direct gradient and signal pathways and makes near-identity, well-conditioned transformations accessible.
+
+B. The block explicitly represents identity plus correction
+T
+l
+(
+x
+)
+=
+x
++
+F
+l
+(
+x
+)
+.
+T 
+l
+​
+ (x)=x+F 
+l
+​
+ (x).
+This makes it easier to learn deviations from an existing representation than to reconstruct the entire transformation from scratch.
+
+C. The network accumulates updates
+x
+L
+=
+x
+0
++
+∑
+l
+=
+0
+L
+−
+1
+F
+l
+(
+x
+l
+)
+.
+x 
+L
+​
+ =x 
+0
+​
+ + 
+l=0
+∑
+L−1
+​
+ F 
+l
+​
+ (x 
+l
+​
+ ).
+This promotes iterative refinement, although the updates depend on the evolving state and are therefore not independent additive terms.
+
+D. The network has multiple effective computational paths
+Expanding the composition of residual transformations produces terms corresponding to different subsets of residual branches.
+
+This gives the network a spectrum of path lengths and routes.
+
+E. The architecture changes the representable function family
+The identity transformation is supplied structurally, freeing the learned branch to model nonlinear corrections.
+
+This can change both the functional capacity and the optimization geometry at a fixed hidden width.
+
+F. The network resembles a learned dynamical system
+Each layer performs a state update:
+
+x
+l
++
+1
+=
+x
+l
++
+F
+l
+(
+x
+l
+)
+.
+x 
+l+1
+​
+ =x 
+l
+​
+ +F 
+l
+​
+ (x 
+l
+​
+ ).
+This provides a natural interpretation in terms of discrete-time dynamics and numerical integration.
+
+These are not six unrelated tricks. They are different consequences of the same architectural construction.
+
+23. Which benefits matter most?
+I would group the reasons into three major categories.
+
+Category
+
+Main benefits
+
+Fundamental mechanism
+
+Optimization and trainability
+
+Better gradient propagation, reduced vanishing-gradient problems, more favorable Jacobian products, easier identity initialization, improved tolerance to depth
+
+The block Jacobian has the form 
+I
++
+J
+F
+I+J 
+F
+​
+ 
+
+Representation and information
+
+Feature reuse, preservation of earlier information, incremental refinement, identity-plus-correction parameterization, changed functional capacity
+
+The block computes 
+x
++
+F
+(
+x
+)
+x+F(x), rather than replacing 
+x
+x with 
+F
+(
+x
+)
+F(x)
+
+Computational structure and inductive bias
+
+Multiple effective paths, modular branch interactions, dynamical-system interpretation, structured prior toward incremental transformations
+
+Deep compositions of identity-plus-update operations
+
+If I had to identify the most fundamental advantages, I would rank them as follows:
+
+Identity parameterization: A block can preserve its input and learn a correction, rather than learning an entire transformation from scratch.
+
+Gradient propagation: The identity pathway provides a direct route for gradients through depth.
+
+Representational flexibility: The architecture supplies the identity component without consuming ordinary learned hidden capacity, changing which transformations are efficiently representable at a given width.
+
+Feature preservation and reuse: Useful information can remain accessible rather than being completely rewritten by every layer.
+
+Multiple computational paths: The network is not forced to rely exclusively on one path traversing every learned transformation.
+
+Dynamical-system structure: The network can be understood as a sequence of learned updates to a persistent state.
+
+The first and third points deserve particular emphasis because they are often underrepresented in conventional explanations.
+
+24. The deeper conceptual point: a skip connection changes what a layer is expected to learn
+Consider two ways of constructing a deep network.
+
+A plain network asks every layer to produce the next representation:
+
+x
+l
++
+1
+=
+F
+l
+(
+x
+l
+)
+.
+x 
+l+1
+​
+ =F 
+l
+​
+ (x 
+l
+​
+ ).
+A residual network asks each layer to propose a modification to the existing representation:
+
+x
+l
++
+1
+=
+x
+l
++
+F
+l
+(
+x
+l
+)
+.
+x 
+l+1
+​
+ =x 
+l
+​
+ +F 
+l
+​
+ (x 
+l
+​
+ ).
+These are fundamentally different computational philosophies.
+
+In the plain network, the learned transformation is responsible for the entire output.
+
+In the residual network, the learned transformation is responsible only for the update, while the architecture supplies the persistent identity component.
+
+That distinction has several implications:
+
+The layer can preserve information without learning to reconstruct it.
+
+The layer can learn a correction rather than a complete representation.
+
+The layer can be initialized to do nothing.
+
+Gradients can travel through a path that bypasses the learned transformation.
+
+The model can distribute a complicated computation across incremental updates.
+
+The identity component changes the function class and its parameterization without necessarily adding trainable parameters.
+
+This is why I would regard skip connections as more than an optimization trick.
+
+They are an architectural mechanism that changes the relationship between a layer, its input, and the function it is expected to compute.
+
+The central idea is that a deep network does not necessarily need every layer to replace the representation produced by the previous one. It can instead maintain a persistent representation and learn successive modifications to it.
+
+That is the unifying principle behind most of the benefits of residual connections.
+
+
+Improve accuracy for technical work
+Upgrade to Plus and use increased reasoning to debug code, work through systems, and solve math or science problems.
+
+
+

@@ -16,6 +16,7 @@ The note itself is `skip-connections-gauge-fixes-.pdf`, and its LaTeX source is 
     .python-version     Python 3.11
     requirements.txt    the same pinned versions, for pip
     data/               saved results from which the notebook draws Figure 2 and Table 6
+    novelty_checks/     four AI models asked on 2026-11-05 for all the reasons skip connections help, dated and hashed
 
 ## Running it
 
