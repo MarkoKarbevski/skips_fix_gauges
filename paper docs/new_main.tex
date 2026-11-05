@@ -262,7 +262,7 @@ On the representational side, \citet{lin2018resnet} show that deep single-neuron
 
 In this work we investigate what differences the skip connections induce to wide-hidden-layer MLP and attention layers.
 
-Fix $d_{model} >1$ and $N > d $ be the number of hidden layer. Let $\mathcal S$ (skipless) and $\mathcal R$ (residual) represent an MLP or attention block with and without a skip connection 
+Fix $d_{model} >1$ and $N > d $ be the number of hidden layer. Let $\mathcal S$ (skipless) and $\mathcal R$ (residual) represent an MLP or attention block with and without a skip connection
 
 \begin{equation}\label{eq:classes}
 \begin{array}{@{}ll@{}}
@@ -294,11 +294,12 @@ Skips also change what an MLP can compute (\cref{thm:noabsorb}). Deep residual n
 \begin{equation}\label{eq:classes}
 \begin{array}{@{}ll@{}}
 \text{networks, any blocks:} & \mathcal S \subseteq \overline{\mathcal R}\\[3pt]
+\text{GELU, almost every residual network $F$:} & F \in \mathcal R \setminus \mathcal S\\[3pt]
 \text{ReLU, GELU, almost every $B$:} & \mathrm{Id} + B \in \mathcal S_{N+\dm} \setminus \mathcal S_{N+\dm-1}\\[3pt]
 \text{ReLU$^2$, ReGLU, SwiGLU, GeGLU, every $B$:} & \mathrm{Id} + B \notin \mathcal S_{N'} \text{ for every } N'.
 \end{array}
 \end{equation}
-Here $\overline{\mathcal R}$ is the closure of $\mathcal R$ for the metric $\rho(F, G) = \sum_{r \ge 1} 2^{-r}\min\{1, \sup_{\norm{x} \le r}\norm{F(x) - G(x)}\}$, in which a sequence converges if and only if it converges uniformly on every bounded set of inputs, and almost every $B$ means every $B$ outside a set of reads and writes of Lebesgue measure zero. The first relation holds because scaling the write of each block up, and the read of the next block down by as much, makes every block outweigh its skip by a factor $t$ while each map $f_\ell$ keeps its arguments in the skipless network, up to an error of order $1/t$ (\cref{prop:limits}). The others say that a skip is worth exactly $\dm$ hidden ReLU or GELU units, and more than any number of the other units (\cref{thm:noabsorb}). \Cref{tab:results} lists the results.
+Here $\overline{\mathcal R}$ is the closure of $\mathcal R$ for the metric $\rho(F, G) = \sum_{r \ge 1} 2^{-r}\min\{1, \sup_{\norm{x} \le r}\norm{F(x) - G(x)}\}$, in which a sequence converges if and only if it converges uniformly on every bounded set of inputs, and almost every $B$, or network, means every one outside a set of parameters of Lebesgue measure zero. The first relation holds because scaling the write of each block up, and the read of the next block down by as much, makes every block outweigh its skip by a factor $t$ while each map $f_\ell$ keeps its arguments in the skipless network, up to an error of order $1/t$ (\cref{prop:limits}). The second holds for $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm \ge 2$: a skipless network keeps a change of basis at every hidden state, so its functional dimension stays below that of the residual networks (\cref{thm:noabsorb}(f)). The last two say that a skip is worth exactly $\dm$ hidden ReLU or GELU units, and more than any number of the other units (\cref{thm:noabsorb}). \Cref{tab:results} lists the results.
 
 \begin{figure}[t]
 \centering
@@ -372,7 +373,7 @@ Skips are gauge fixes & \cref{prop:junction}, \cref{thm:gauge} & Without normali
 \addlinespace[1pt]
 Symmetry removed & \cref{cor:count}, \cref{sec:norm} & Against the skipless network with the same parameters, the skips remove $L\dim\G$ dimensions of symmetry: $L\dm^2$ without normalization; with $\varepsilon > 0$, $L\dm(\dm-1)/2$ under RMSNorm, $L(\dm-1)(\dm-2)/2$ under LayerNorm. & Proof \\
 \addlinespace[1pt]
-Identity units are new & \cref{thm:noabsorb} & Without biases, a block never absorbs its identity units for ReLU$^2$, ReGLU, SwiGLU and GeGLU, whatever its width; for ReLU and GELU, $\dm$ more units do, and fewer only on a set of weights of measure zero. & Proof \\
+Identity units are new & \cref{thm:noabsorb} & Without biases, a block never absorbs its identity units for ReLU$^2$, ReGLU, SwiGLU and GeGLU, whatever its width; for ReLU and GELU, $\dm$ more units do, and fewer only on a set of weights of measure zero. At any depth, a residual GELU network with $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm$ equals a skipless one of the same widths only on a set of weights of measure zero. & Proof \\
 \addlinespace[1pt]
 Learned skips under RMSNorm & \cref{thm:rms} & Learned skips reduce to triangular or symmetric matrices; the identity skip fixes $\dm(\dm-1)/2$ dimensions of gauge and, under the equality condition, imposes $\dm(\dm+1)/2$ constraints. & Proof, checked, measured \\
 \addlinespace[1pt]
@@ -476,11 +477,14 @@ Let $M \neq 0$ be a $\dm \times \dm$ matrix and $B$ a vanilla or GLU MLP block w
 \textup{(b)} If the blocks are gated with a gate that is differentiable at $0$ and vanishes there, as SwiGLU and GeGLU blocks are, there is none, of any width.\\
 \textup{(c)} If $\sigma$ is ReLU or GELU, $\dm \ge 2$ and $B$ is nondegenerate, a $B'$ of the same width exists if and only if $\Wread[{:},S]\,\Wwrite[S,{:}] = -M$ for some set $S$ of hidden units; for generic weights there is none.\\
 \textup{(d)} For blocks without biases as in (a) with $k > 1$ or as in (b), no composition of one or more blocks without skips equals a composition of residual blocks, whatever their numbers and widths.\\
-\textup{(e)} If $\sigma$ is ReLU or GELU, $\dm \ge 2$ and $M$ is invertible, a $B'$ with $\dm$ more hidden units than $B$ exists when $\Wread$ has rank $\dm$, and for generic weights none with fewer exists.
+\textup{(e)} If $\sigma$ is ReLU or GELU, $\dm \ge 2$ and $M$ is invertible, a $B'$ with $\dm$ more hidden units than $B$ exists when $\Wread$ has rank $\dm$, and for generic weights none with fewer exists.\\
+\textup{(f)} If $\sigma$ is GELU and $\dm \ge 2$, then for almost every choice of weights, a composition of $L \ge 2$ residual blocks equals no composition of $L$ blocks without skips of the same widths. With an embedding and a readout without biases and $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm$, the same holds for networks of any depth $L \ge 1$.
 \end{restatable}
 \proofin{app:absorb}
 
 Here $\Wread[{:},S]$ and $\Wwrite[S,{:}]$ keep the columns and the rows of the units in $S$. Parts (a), (b) and (d) compare how the two sides scale along rays from the origin. In part (c) the even part of the activation matches the hidden units of the two blocks up to sign and scale, and its odd part, $z/2$, turns a sign flip into a linear term, as \citet[Section~3]{petzka2020symmetries} show for two-layer ReLU networks with one output. So a residual block is not a block of the same kind and width without a skip, and the identity units of a mixed block are determined by its function: if two mixed blocks of the same kind and width compute the same function, the difference $M$ of their merged matrices satisfies $xM + B(x) = B'(x)$, so $M = 0$ in cases (a) and (b), and one of finitely many matrices in case (c). The merge of \cref{prop:junction}(a) is thus the only continuous symmetry that the identity units add, and the gauge fix of \cref{thm:gauge} is well defined. In part (e), two units with opposite reads add a rank-one linear term, and the matching of part (c) shows that every extra unit adds at most one. With a bounded activation, such as $\tanh$, no block of any width absorbs a skip: both blocks are bounded, and $xM$ is not.
+
+Part (f) compares dimensions. A change of basis at each hidden state leaves a skipless network unchanged. Its functional dimension is therefore at most $P - 2\dm^2$, from the changes of basis at $h_0$ and $h_L$ alone, and at most $P - (L+1)\dm^2$ when every block has width at least $\dm$ (\cref{cor:count}). With small writes, a residual network is, to first order, the linear map $xED$ plus one wide block that holds all its hidden units, and its functional dimension there is $P - \dm^2$. The larger dimension keeps almost every residual network outside the skipless ones (\cref{lem:rankcrit}).
 
 \para{Attention.} Attention mixes tokens; a skip keeps each token where it is. Two inputs make this precise. If all tokens are equal, mixing changes nothing, so the heads must reproduce the skip. If one token is zero, its query is zero, so attention gives it an equal mix of all tokens. The skip gives it zero.
 
@@ -814,7 +818,7 @@ The lemma extends to transformers. Attention blocks also carry the per-head symm
 We recall \cref{thm:noabsorb} from \cref{sec:oneblock}.
 \thmNoAbsorb*
 
-\para{Overview.} Parts (a), (b) and (d) compare orders. Along rays from the origin a linear skip scales like $\lambda$ and a block that is homogeneous of degree $k \neq 1$ like $\lambda^k$, and near the origin a gated block is of second order, so the two sides of the absorption equation cannot agree (\cref{prop:f2,prop:gated}); comparing Jacobians at the origin extends this to any depth (\cref{cor:depth}). Part (c) is the substantial case. The absorption equation splits into its odd and even parts in $x$. The even part determines the hidden units of the absorbing block up to sign, and for ReLU up to a positive rescaling, through the kinks for ReLU (\cref{thm:f3}) and through linear independence of ridge functions for GELU (\cref{lem:ridge,thm:f4}). The odd part of ReLU and GELU is exactly $z/2$, so the odd part of the equation is linear and reads off the set $S$ of units whose signs flip; conversely, flipping the signs of the units in $S$ absorbs the skip whenever the condition holds. The generic clause holds because the condition is a finite union of algebraic sets of positive codimension (\cref{cor:f5}), and \cref{rem:singular} covers singular $M$. Part (e) counts the extra units that the matching requires (\cref{prop:widthd}).
+\para{Overview.} Parts (a), (b) and (d) compare orders. Along rays from the origin a linear skip scales like $\lambda$ and a block that is homogeneous of degree $k \neq 1$ like $\lambda^k$, and near the origin a gated block is of second order, so the two sides of the absorption equation cannot agree (\cref{prop:f2,prop:gated}); comparing Jacobians at the origin extends this to any depth (\cref{cor:depth}). Part (c) is the substantial case. The absorption equation splits into its odd and even parts in $x$. The even part determines the hidden units of the absorbing block up to sign, and for ReLU up to a positive rescaling, through the kinks for ReLU (\cref{thm:f3}) and through linear independence of ridge functions for GELU (\cref{lem:ridge,thm:f4}). The odd part of ReLU and GELU is exactly $z/2$, so the odd part of the equation is linear and reads off the set $S$ of units whose signs flip; conversely, flipping the signs of the units in $S$ absorbs the skip whenever the condition holds. The generic clause holds because the condition is a finite union of algebraic sets of positive codimension (\cref{cor:f5}), and \cref{rem:singular} covers singular $M$. Part (e) counts the extra units that the matching requires (\cref{prop:widthd}). Part (f) compares dimensions: a skipless network has a change of basis at every hidden state as a symmetry, and with small writes a residual network is, to first order, one wide block plus a linear map, whose units the even part of GELU determines (\cref{lem:rankcrit,lem:wideblock}).
 
 The arguments show that the function of a block determines its parameters, in the manner used for $\tanh$ networks by \citet{sussmann1992} and \citet{fefferman1994} and for ReLU networks by \citet{buithimai2020functional}, \citet{petzka2020symmetries} and \citet{rolnick2020reverse}: kink alignment for ReLU, ridge-function independence for GELU. For two-layer ReLU networks with a single output, \citet[Section~3]{petzka2020symmetries} already give the corresponding sign flips, show that irreducible networks computing the same function differ only by these flips, permutations and positive rescalings (their Theorem~1), and state the matching criterion for removing a linear term. \Cref{lem:f1} reduces any invertible skip to the identity skip.
 
@@ -958,6 +962,40 @@ Let $\sigma$ be ReLU or GELU, $\dm \ge 2$ and $M \in \R^{\dm\times\dm}$ invertib
 2\big(M + \Wread[{:},S]\Wwrite[S,{:}]\big) = \sum_{u\ \mathrm{mixed}} u\,(Q_u - P_u) .
 \]
 Every class of a column $w_i$ contains some $w'_j$, since $P_u \neq 0$, and every mixed class contains at least two, so $m' \ge m$ plus the number of mixed classes. If $m' < m + \dm$, the right side has rank less than $\dm$, so the left side is singular, which the weights exclude.
+\end{proof}
+
+\para{Depth for GELU.} Part (f) rests on two lemmas. The first turns a gap in functional dimension into disjointness, and the second gives one wide block its full functional dimension.
+
+\begin{lemma}[A rank criterion]\label{lem:rankcrit}
+Let $\theta \mapsto F_\theta$, $\theta \in \R^P$, and $\eta \mapsto G_\eta$, $\eta \in \R^{P'}$, be two families of networks with the same inputs and outputs, whose outputs are real-analytic in the parameters. Let a Lie group act smoothly on $\R^{P'}$ without changing $G_\eta$, with orbits of dimension at least $k$ at generic $\eta$. If at some $\theta_0$ the Jacobian of $\theta \mapsto (F_\theta(x))_{x \in X}$ has rank greater than $P' - k$ on some finite batch $X$, then for almost every $\theta$ no $\eta$ satisfies $F_\theta = G_\eta$.
+\end{lemma}
+
+\begin{proof}
+Write $F_X(\theta), G_X(\eta) \in \R^n$ for the outputs on $X$. At generic $\eta$ the map $G_X$ is constant along an orbit of dimension at least $k$, so its Jacobian has rank at most $r_0 = P' - k$; the rank is lower semicontinuous, so the bound holds at every $\eta$. The Jacobian of $F_X$ reaches its largest rank $r^*$, which exceeds $r_0$ by hypothesis, outside the zero set of the sum of the squares of its minors of size $r^*$. This function is analytic and not identically zero, so its zero set has measure zero. Take $\theta$ outside it. By the constant rank theorem, $F_X$ maps a neighborhood $U$ of $\theta$ onto an embedded manifold $Y$ of dimension $r^*$, and after shrinking $U$ a linear projection $\pi : \R^n \to \R^{r^*}$ maps $Y$ diffeomorphically onto an open set. The map $\pi \circ G_X$ has rank at most $r_0 < r^*$, so all its values are critical, and by Sard's theorem its image has measure zero. So $G_X(\R^{P'}) \cap Y$ has measure zero in $Y$, and so does its preimage under $F_X$ in $U$, which contains every $\theta'$ in $U$ with $F_{\theta'} = G_\eta$ for some $\eta$. Countably many such $U$ cover the complement of the zero set.
+\end{proof}
+
+\begin{lemma}[One wide block]\label{lem:wideblock}
+Let $\sigma = \mathrm{GELU}$ with even part $\Psi$, let $\dm \ge 2$, and let $E \in \R^{d_{\mathrm{in}}\times\dm}$ and $D \in \R^{\dm\times d_{\mathrm{out}}}$ have rank $\dm$. For generic $W \in \R^{\dm\times K}$ and $V \in \R^{K\times\dm}$, the derivative of the map $(W, V) \mapsto \Psi(xEW)\,VD$, from parameters to functions of $x \in \R^{1\times d_{\mathrm{in}}}$, is injective on some finite batch.
+\end{lemma}
+
+\begin{proof}
+The map has finite fibers at such points. Let $\Psi(xEW')V'D = \Psi(xEW)VD$ for all $x$. The block with read $EW$ and write $VD$ is nondegenerate, since the columns of $W$ are nonzero and pairwise non-collinear, the rows of $V$ are nonzero, and $E$ and $D$ have rank $\dm$. Steps~1 and~2 of the proof of \cref{thm:f4} use only this even identity, and they hold as well for blocks from $\R^{1\times d_{\mathrm{in}}}$ to $\R^{1\times d_{\mathrm{out}}}$, since \cref{lem:ridge} holds in any dimension; after a permutation of the units they give $EW' = EWC$, with $C$ diagonal with entries $\pm 1$, and $V'D = VD$. The ranks of $E$ and $D$ then give $W' = WC$ and $V' = V$, so a fiber has at most $2^K K!$ points.
+
+Finite fibers force an injective derivative. Let $r$ be the largest rank of the derivative over all points and finite batches. It is reached on some batch $X_0$ on an open dense set of points, which contains a point $p$ of the generic set above. Near $p$ the rank is $r$ on every batch $X \supseteq X_0$, and the kernels on these batches coincide, being nested and of the same dimension. By the constant rank theorem the map on $X_0$ is constant along manifolds of dimension $2K\dm - r$ near $p$, so the map on every larger batch is constant along them too, and so is the map to functions. Finite fibers give $r = 2K\dm$, and the points where the derivative on $X_0$ has this rank form an open dense set whose complement, an analytic set, has measure zero.
+\end{proof}
+
+\begin{proof}[Proof of part (f)]
+Take a residual network without biases, with an embedding $E$ and a readout $D$ of rank $\dm$, reads $\Wread^{\ell}$ and writes $\Wwrite^{\ell} = \varepsilon V_\ell$. Its output is
+\[
+y = xED + \varepsilon\sum_{\ell=1}^{L}\sigma\big(xE\Wread^{\ell}\big)V_\ell D + O(\varepsilon^2).
+\]
+Divide the columns of its Jacobian that belong to the reads by $\varepsilon$, which keeps the rank. As $\varepsilon \to 0$ the Jacobian tends to the map $J_0$ that sends directions $\delta E$, $\delta D$, $\delta V$ and $\delta W$ of the embedding, the readout, the writes and the reads to
+\[
+x \;\mapsto\; x\,\delta E\,D + xE\,\delta D + \sigma(xEW)\,\delta V D + \big(\sigma'(xEW) \odot xE\,\delta W\big)\,V D ,
+\]
+where $W = [\,\Wread^{1} \mid \dots \mid \Wread^{L}\,]$ and $V$ stacks $V_1, \dots, V_L$, so that $\sigma(xEW)VD$ is one block that holds all $K = m_1 + \dots + m_L$ units of the network. With $\sigma = \Psi + z/2$ and $\sigma' = \Psi' + \tfrac12$, the part of this function that is even in $x$ is the derivative of $(W, V) \mapsto \Psi(xEW)VD$ in the direction $(\delta W, \delta V)$. So if $J_0$ vanishes, $\delta W = 0$ and $\delta V = 0$ for generic reads and writes by \cref{lem:wideblock}, and the odd part leaves $x(\delta E\,D + E\,\delta D) = 0$. As $E$ and $D$ have rank $\dm$, this gives $\delta E = ES$ and $\delta D = -SD$ for some $S \in \R^{\dm\times\dm}$, the limit of the global changes of basis of \cref{thm:gauge}(c). Kernels shrink as the batch grows and become stationary, so on some finite batch the kernel of $J_0$ is this space of dimension $\dm^2$, and $J_0$ has rank $P - \dm^2$ there. By lower semicontinuity the Jacobian of the residual network has rank at least $P - \dm^2$ for small $\varepsilon \neq 0$, hence exactly $P - \dm^2$, the most that the global change of basis allows. In a skipless network of the same widths, with embedding $E'$ and readout $D'$, the changes of basis at $h_0$ and $h_L$ alone have orbits of dimension $2\dm^2$ at generic parameters, where $E'$ and $D'$ have rank $\dm$. As $P - \dm^2 > P - 2\dm^2$, \cref{lem:rankcrit} gives the claim.
+
+Without an embedding and a readout the terms with $\delta E$ and $\delta D$ are absent and $J_0$ is injective, and for $L \ge 2$ the changes of basis at $h_1$ have orbits of positive dimension, since every block has at least one unit, so \cref{lem:rankcrit} applies again.
 \end{proof}
 
 \subsection{No absorption in attention\texorpdfstring{ (Proposition~\ref*{prop:attention}, Lemma~\ref*{lem:heads}, Corollary~\ref*{cor:match})}{}}\label{app:attention}
