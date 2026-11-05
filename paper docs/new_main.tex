@@ -118,16 +118,16 @@ $\mathcal S \subseteq \overline{\mathcal R}$ & any & \ref{sec:limits} & \checkma
 \hline
 $\mathcal S \cap \mathcal R$ & one block & \ref{sec:oneblock} & $\emptyset$ & measure zero & $\emptyset$ & measure zero & $\emptyset$ \\
 \hline
-$\mathcal S \cap \mathcal R$ & any & \ref{sec:oneblock} & & & $\emptyset$ & measure zero & $\emptyset$ \\
+$\mathcal S \cap \mathcal R$ & any & \ref{sec:oneblock} & unknown & unknown & $\emptyset$ & measure zero & $\emptyset$ \\
 \hline
 symmetries removed by the skips & any & \ref{sec:count} & \multicolumn{5}{c|}{$L\dm^2$ (resp.\ $L\dm(\dm-1)/2$)} \\
 \hline
 $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & one block & \ref{sec:onelayer} & \multicolumn{5}{c|}{$\dm^2$ (resp.\ $\ge \dm(\dm-1)/2$)} \\
 \hline
-$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & any & \ref{sec:measured} & & & & \multicolumn{2}{c|}{$\ge L\dm^2$ (resp.\ $\ge L\dm(\dm-1)/2$)} \\
+$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & any & \ref{sec:measured} & unknown & unknown & unknown & \multicolumn{2}{c|}{$\ge L\dm^2$ (resp.\ $\ge L\dm(\dm-1)/2$)} \\
 \hline
 \end{tabular}}
-\caption{Proved for skipless ($\mathcal S$) and residual ($\mathcal R$) networks of $L$ blocks with $\dm$-dimensional hidden states and $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm$, without biases or normalization (resp.\ with pre-RMSNorm, $\varepsilon > 0$). $\mathcal S \cap \mathcal R$: $\emptyset$ if $ED \neq 0$, at any widths; measure zero at equal widths. $\mathrm{fdim}$ rows: blocks of width at least $\dm$. Blank: not proved. Measured: \cref{tab:measured}.}
+\caption{Proved for skipless ($\mathcal S$) and residual ($\mathcal R$) networks of $L$ blocks with $\dm$-dimensional hidden states and $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm$, without biases or normalization (resp.\ with pre-RMSNorm, $\varepsilon > 0$). $\mathcal S \cap \mathcal R$: $\emptyset$ if $ED \neq 0$, at any widths; measure zero at equal widths. $\mathrm{fdim}$ rows: blocks of width at least $\dm$. Unknown: not proved. Measured: \cref{tab:measured}.}
 \label{tab:overview}
 \end{table}
 
@@ -179,6 +179,13 @@ ReLU & 3 & \ref{app:checks} & none & $\ge L\dm^2$ \\
 \def\fdSwiGLUb{pr/{\fdprf{cor:resdepth}{$L > 1$, proven as lower bound}}}
 \def\fdGeGLUa{pr/{\fdprf{cor:resdepth}{$L > 1$, proven as lower bound}}}
 \def\fdGeGLUb{pr/{\fdprf{cor:resdepth}{$L > 1$, proven as lower bound}}}
+\def\fdUnkA{uk/{$L = 1$, unknown}}
+\def\fdReLUc{uk/{$L > 1$, unknown}}
+\def\fdReLUsqc{uk/{$L > 1$, unknown}}
+\def\fdAttnc{uk/{$L > 1$, unknown}}
+\def\fdGELUc{uk/{$L > 1$, unknown}}
+\def\fdSwiGLUc{uk/{$L > 1$, unknown}}
+\def\fdGeGLUc{uk/{$L > 1$, unknown}}
 \def\fdLearna{pr/{\fdprf{thm:gauge}{any $L$, proven}}}
 \def\fdLearnb{pr/{\fdprf{thm:onelayer}{$L = 1$, proven}},sm/{$\tanh$, $L > 1$, simulated}}
 \def\fdLearnc{pr/{\fdprf{thm:onelayer}{homogeneous, $L = 1$, proven}},pr/{\fdprf{thm:onelayer}{$L = 1$, proven as upper bound}},sm/{$\tanh$, $L > 1$, simulated}}
@@ -192,6 +199,8 @@ ReLU & 3 & \ref{app:checks} & none & $\ge L\dm^2$ \\
   pr/.style={fill=black!80, text=white, font=\scriptsize, rounded corners=1.2pt, inner xsep=1.7pt,
     inner ysep=1.0pt},
   sm/.style={draw=black!80, line width=0.35pt, fill=white, text=black, font=\scriptsize,
+    rounded corners=1.2pt, inner xsep=1.5pt, inner ysep=0.85pt},
+  uk/.style={draw=black!45, densely dashed, line width=0.35pt, fill=white, text=black!60, font=\scriptsize,
     rounded corners=1.2pt, inner xsep=1.5pt, inner ysep=0.85pt},
   note/.style={font=\scriptsize, text=black!60, align=center, inner sep=0.5pt},
   val/.style={font=\small, inner sep=0.8pt},
@@ -227,6 +236,7 @@ ReLU & 3 & \ref{app:checks} & none & $\ge L\dm^2$ \\
 \fdband{\fdC}{\fdwC}{$+L\,\big(d(d-1)/2 + 1\big)$}{-38.0}{-74.0}{fdless}
 \fdtags{\fdA}{-44.6}{\fdPrA}
 \fdtags{\fdB}{-44.6}{\fdPrB}
+\fdtags{\fdC}{-44.6}{\fdUnkA}
 \fdband{\fdA}{\fdwA}{$+0$}{-77.0}{-100.8}{fdlrn}
 \fdband{\fdB}{\fdwB}{$+L\,d(d+1)/2$}{-77.0}{-100.8}{fdlrn}
 \fdband{\fdC}{\fdwC}{$+L\,\big(d(d+1)/2 - 1\big)$}{-77.0}{-100.8}{fdlrn}
