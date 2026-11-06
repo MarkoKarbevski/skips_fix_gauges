@@ -117,7 +117,7 @@ Skip connections are a building block of almost every deep network trained today
 \thickhline
 $\mathcal S \subseteq \overline{\mathcal R}$ & any & \ref{sec:limits} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
 \hline
-\quad with pre-RMSNorm & any & \ref{sec:limits} & \multicolumn{6}{c|}{unknown} \\
+\quad with pre-RMSNorm & any & \ref{sec:limits} & \multicolumn{6}{c|}{unknown; \checkmark\ if $\varepsilon = 0$} \\
 \thickhline
 $\mathcal S \cap \mathcal R$ & one block & \ref{sec:oneblock} & $\emptyset$ & measure zero & $\emptyset$ & $\emptyset$ & measure zero & $\emptyset$ \\
 \hline
@@ -385,7 +385,7 @@ Gain, any depth & \cref{cor:resdepth,cor:exactgain} & For smooth blocks the resi
 \addlinespace[1pt]
 Gain, deeper networks & \cref{fig:spectra}, \cref{sec:measured} & The gain equals the removed symmetry in $\tanh$, GELU and gated MLPs, with and without RMSNorm, and in nanoGPT, in every draw, except for skipless ReGLU networks under RMSNorm with $\varepsilon = 10^{-5}$, where some directions fall below double precision. & Measured \\
 \addlinespace[1pt]
-Skipless networks as limits & \cref{prop:limits} & Without biases or normalization, every skipless network is a limit of residual networks of the same widths, with an error of order $1/t$ when each write is scaled up by a power of $t$ and the next read down by as much. & Proof, checked \\
+Skipless networks as limits & \cref{prop:limits} & Without biases or normalization, every skipless network is a limit of residual networks of the same widths, with an error of order $1/t$ when each write is scaled up by a power of $t$ and the next read down by as much. Under pre-RMSNorm with $\varepsilon = 0$, so is every skipless network whose hidden states never vanish, with only the writes scaled. & Proof, checked \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -659,10 +659,11 @@ Without normalization, let the blocks be $\tanh$ blocks, or GELU blocks of width
 
 \subsection{Skipless networks as limits of residual networks}\label{sec:limits}
 
-Every skipless network is a limit of residual networks with the same widths, so the gain in functional dimension does not come at the price of functions. In this subsection the networks have no biases and no normalization.
+Every skipless network is a limit of residual networks with the same widths, so the gain in functional dimension does not come at the price of functions. In this subsection the networks have no biases, and no normalization unless said otherwise.
 
 \begin{restatable}[Skipless networks as limits of residual networks]{proposition}{propLimits}\label{prop:limits}
 Let $S$ be a network without skips, biases or normalization, with embedding $E$, blocks $B_\ell(h) = f_\ell(h\Wread^{\ell})\Wwrite^{\ell}$ for $\ell = 1, \dots, L$ whose maps $f_\ell$ are locally Lipschitz, and readout $D$. For $t \ge 1$, let $F_t$ be the residual network with the embedding $E$, the reads $t^{1-\ell}\Wread^{\ell}$, the writes $t^{\ell}\Wwrite^{\ell}$ and the readout $t^{-L}D$. For every bounded set $X$ of inputs there is $C$ such that $\norm{F_t(x) - S(x)} \le C/t$ for all $x \in X$ and $t \ge 1$.
+If instead $S$ and $F_t$ have pre-RMSNorm with $\varepsilon = 0$, $F_t$ keeps the embedding, the reads and the readout of $S$ and has the writes $t^{\ell}\Wwrite^{\ell}$, and no row of a hidden state of $S$ vanishes, then for every bounded set $X$ of inputs $x$ whose rows of $xE$ are nonzero there are $C$ and $t_0$ such that $\norm{F_t(x) - S(x)} \le C/t$ for all $x \in X$ and $t \ge t_0$.
 \end{restatable}
 \proofin{app:prf-limits}
 
@@ -673,6 +674,8 @@ r_\ell \;=\; B_\ell(s_{\ell-1} + r_{\ell-1}) - B_\ell(s_{\ell-1}) \;+\; t^{-1}\,
 The difference is at most a local Lipschitz constant of $B_\ell$ times $\norm{r_{\ell-1}}$, and the last term is $O(1/t)$, so $r_L = O(1/t)$ and $F_t(x) = t^{-L}\,t^{L}(s_L + r_L)D = S(x) + O(1/t)$.
 
 \para{No activation sees a large argument.} The large constants sit in the writes, and each read divides by the size $t^{\ell-1}$ that the stream has reached, so block $\ell$ of $F_t$ evaluates $f_\ell$ at $(s_{\ell-1} + r_{\ell-1})\Wread^{\ell}$, the pre-activations of $S$ up to $O(1/t)$. A GELU, for instance, is evaluated where the GELU of $S$ is, away from the large arguments at which it would act like a ReLU. Only the stream grows, to order $t^L$ before the readout, which divides by $t^L$. The construction keeps the widths and uses nothing about the blocks but local Lipschitz continuity, so it applies alike to $\tanh$, GELU, ReLU, ReLU$^2$, gated and attention blocks. Its weights diverge as $t \to \infty$: the proposition says which functions residual networks reach in the limit, and leaves open how to parametrize them for training. In our checks, at $\dm = 4$ and $L = 3$, the error of $F_t$ relative to the largest output of $S$ is below $10^{-2}$ at $t = 1000$ for $\tanh$, GELU, ReLU, SiLU, ReLU$^2$, GLU, ReGLU, SwiGLU, GeGLU and attention blocks, with $t$ times the error nearly constant (\cref{app:checks}).
+
+\para{Under RMSNorm.} RMSNorm with $\varepsilon = 0$ ignores the size of the stream, so in the second part of \cref{prop:limits} the reads and the readout keep their scale and only the writes grow. With $\varepsilon > 0$ the same construction fails: on a stream of size $t^{\ell}$, RMSNorm acts as RMSNorm with $\varepsilon/t^{2\ell}$, so $F_t$ tends to the skipless network that has $\varepsilon = 0$ in every normalization after the first. Whether skipless networks with $\varepsilon > 0$ are limits of residual ones is open.
 
 \para{Weight decay.} In training, the gains of RMSNorm are usually exempt from weight decay; nanoGPT, for instance, decays only its matrices \citep{karpathy2023nanogpt}. It penalizes the diverging writes of $F_t$, and in a pre-RMSNorm network without biases the gains are then the only parameters that can grow without penalty. A gain $c$ multiplies the input of a read, so it puts a large constant before the activation. For positively homogeneous blocks, such as ReLU, ReLU$^2$ and ReGLU blocks, this only scales the output of the block, which can then outweigh its skip as in $F_t$. So can gated blocks with any gate, SwiGLU and GeGLU included: if the read splits into gates and values, $\Wread = [\,W_{\mathrm g} \mid W_{\mathrm v}\,]$, the read $[\,W_{\mathrm g}/c \mid W_{\mathrm v}\,]$ gives the gate its old argument on the input $cx$ and passes $c$ to the values, so the block returns $c\,B(x)$ with a smaller gate read. A vanilla GELU block has no such linear path. Its activation sees large arguments, where $\mathrm{GELU}(cz)/c \to \max(z, 0)$ as $c \to \infty$, so it can outweigh its skip through its gains only by acting as a ReLU block, or with a large write, which weight decay penalizes. This is where GELU breaks, and so does SiLU.
 
@@ -1211,6 +1214,14 @@ Let $X$ be bounded and $\sigma_\ell = \sup_{x \in X}\norm{s_\ell}$, which is fin
 \norm{r_\ell} \;\le\; \Lambda_\ell\norm{r_{\ell-1}} + t^{-1}\big(\sigma_{\ell-1} + \norm{r_{\ell-1}}\big) \;\le\; C_\ell/t, \qquad C_\ell = \Lambda_\ell C_{\ell-1} + \sigma_{\ell-1} + C_{\ell-1}.
 \]
 Finally $F_t(x) = t^{-L}h_LD = S(x) + r_LD$, so $\norm{F_t(x) - S(x)} \le C_L\norm{D}/t$.
+\end{proof}
+
+\begin{proof}[Proof of the case $\varepsilon = 0$]
+Here $N$ divides each row of $h$ by its norm and multiplies it by $\sqrt{\dm}$, so $N(ch) = N(h)$ for $c > 0$, and $\norm{N(y') - N(y)} \le 2\sqrt{\dm}\,\norm{y' - y}/\norm{y}$ for nonzero rows $y, y'$. The hidden states of $S$ are $s_0 = xE$ and $s_\ell = B_\ell(N(s_{\ell-1}))$, and $S(x) = N(s_L)D$. For $\ell \ge 1$, $s_\ell$ depends on $x$ only through $N(xE)$, whose rows lie on the sphere of radius $\sqrt{\dm}$; as no row of $s_\ell$ vanishes, continuity and compactness give $c > 0$ below the norm of every row of every $s_\ell$, $\ell \ge 1$. Since $N$ removes the factor $t^{\ell-1}$, the hidden states of $F_t$ are again $h_0 = s_0$ and $h_\ell = t^\ell(s_\ell + r_\ell)$, now with $r_0 = 0$ and
+\[
+r_\ell \;=\; B_\ell\big(N(s_{\ell-1} + r_{\ell-1})\big) - B_\ell\big(N(s_{\ell-1})\big) \;+\; t^{-1}\,(s_{\ell-1} + r_{\ell-1}),
+\]
+as long as no row of $s_{\ell-1} + r_{\ell-1}$ vanishes. The maps $B_\ell$ are Lipschitz on the bounded image of $N$, with some constants $\Lambda_\ell$, and $\sigma_\ell = \sup_{x \in X}\norm{s_\ell}$ is finite. If every row of $r_{\ell-1}$ is shorter than $c$, then $\norm{r_\ell} \le 2\sqrt{\dm}\,\Lambda_\ell\norm{r_{\ell-1}}/c + t^{-1}(\sigma_{\ell-1} + \norm{r_{\ell-1}})$, so by induction $\norm{r_\ell} \le C_\ell/t$ on $X$, and every row of $r_\ell$ is shorter than $c$ once $t \ge t_0 = \max_\ell 2C_\ell/c$. Finally $\norm{F_t(x) - S(x)} = \norm{(N(s_L + r_L) - N(s_L))D} \le 2\sqrt{\dm}\,\norm{D}\,C_L/(ct)$.
 \end{proof}
 
 % ===== appendix/b_onelayer.tex =====
