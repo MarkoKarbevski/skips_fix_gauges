@@ -116,9 +116,13 @@ Skip connections are a building block of almost every deep network trained today
 \hline
 $\mathcal S \subseteq \overline{\mathcal R}$ & any & \ref{sec:limits} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
 \hline
+\quad with pre-RMSNorm & any & \ref{sec:limits} & \multicolumn{6}{c|}{unknown} \\
+\hline
 $\mathcal S \cap \mathcal R$ & one block & \ref{sec:oneblock} & $\emptyset$ & measure zero & $\emptyset$ & $\emptyset$ & measure zero & $\emptyset$ \\
 \hline
 $\mathcal S \cap \mathcal R$ & any & \ref{sec:oneblock} & measure zero & measure zero & $\emptyset$ & $\emptyset$ & \cell{measure zero\\ if $m_1 < 2\dm$;\\ open problem\\ otherwise} & $\emptyset$ \\
+\hline
+\quad with pre-RMSNorm & any & \ref{sec:oneblock} & \multicolumn{4}{c|}{measure zero} & unknown & unknown \\
 \hline
 symmetries removed by the skips & any & \ref{sec:count} & \multicolumn{6}{c|}{$L\dm^2$ (resp.\ $L\dm(\dm-1)/2$)} \\
 \hline
@@ -366,7 +370,7 @@ Skips are gauge fixes & \cref{prop:junction}, \cref{thm:gauge} & Without normali
 \addlinespace[1pt]
 Symmetry removed & \cref{cor:count}, \cref{sec:norm} & Against the skipless network with the same parameters, the skips remove $L\dim\G$ dimensions of symmetry: $L\dm^2$ without normalization; with $\varepsilon > 0$, $L\dm(\dm-1)/2$ under RMSNorm, $L(\dm-1)(\dm-2)/2$ under LayerNorm. & Proof \\
 \addlinespace[1pt]
-Identity units are new & \cref{thm:noabsorb} & Without biases, a block never absorbs its identity units for ReLU$^2$, ReGLU, SwiGLU and GeGLU, whatever its width; for ReLU and GELU, $\dm$ more units do, and fewer only on a set of weights of measure zero. At any depth, a residual network of smooth blocks equals a skipless one of the same widths only on a set of weights of measure zero, and for GELU blocks also with fewer than $L\dm/2$ more hidden units in all. A residual ReLU network equals a skipless one whose first block has fewer than $2\dm$ units only on a set of weights of measure zero. & Proof \\
+Identity units are new & \cref{thm:noabsorb} & Without biases, a block never absorbs its identity units for ReLU$^2$, ReGLU, SwiGLU and GeGLU, whatever its width; for ReLU and GELU, $\dm$ more units do, and fewer only on a set of weights of measure zero. At any depth, with or without pre-RMSNorm, a residual network of smooth blocks equals a skipless one of the same widths only on a set of weights of measure zero, and, without normalization, for GELU blocks also with fewer than $L\dm/2$ more hidden units in all. A residual ReLU network equals a skipless one whose first block has fewer than $2\dm$ units only on a set of weights of measure zero. & Proof \\
 \addlinespace[1pt]
 Learned skips under RMSNorm & \cref{thm:rms} & Learned skips reduce to triangular or symmetric matrices; the identity skip fixes $\dm(\dm-1)/2$ dimensions of gauge and, under the equality condition, imposes $\dm(\dm+1)/2$ constraints. & Proof, checked, measured \\
 \addlinespace[1pt]
@@ -475,7 +479,7 @@ Let $M \neq 0$ be a $\dm \times \dm$ matrix and $B$ a vanilla or GLU MLP block w
 \textup{(c)} If $\sigma$ is ReLU or GELU, $\dm \ge 2$ and $B$ is nondegenerate, a $B'$ of the same width exists if and only if $\Wread[{:},S]\,\Wwrite[S,{:}] = -M$ for some set $S$ of hidden units; for generic weights there is none.\\
 \textup{(d)} For blocks without biases as in (a) with $k > 1$ or as in (b), no composition of one or more blocks without skips equals a composition of residual blocks, whatever their numbers and widths.\\
 \textup{(e)} If $\sigma$ is ReLU or GELU, $\dm \ge 2$ and $M$ is invertible, a $B'$ with $\dm$ more hidden units than $B$ exists when $\Wread$ has rank $\dm$, and for generic weights none with fewer exists.\\
-\textup{(f)} If $\sigma$ is GELU and $\dm \ge 2$, then for almost every choice of weights, a composition of $L \ge 2$ residual blocks equals no composition of $L$ blocks without skips of the same widths. With an embedding and a readout, the same holds for networks of smooth blocks of any depth $L \ge 1$.\\
+\textup{(f)} If $\sigma$ is GELU and $\dm \ge 2$, then for almost every choice of weights, a composition of $L \ge 2$ residual blocks equals no composition of $L$ blocks without skips of the same widths. With an embedding and a readout, the same holds for networks of smooth blocks of any depth $L \ge 1$, also under pre-RMSNorm with $\varepsilon > 0$.\\
 \textup{(g)} If $\sigma$ is GELU and $\dm \ge 2$, with an embedding and a readout as in (f), then for almost every choice of weights, a residual network of $L$ blocks equals no skipless network of $L$ blocks that each have at least $\dm$ hidden units and that have fewer than $L\dm/2$ more hidden units in all. With $\dm$ more hidden units in every block, some skipless network equals it whenever every read has rank $\dm$.\\
 \textup{(h)} If $\sigma$ is ReLU and $\dm \ge 2$, with an embedding and a readout as in (f), then for almost every choice of weights, a residual network equals no skipless network whose first block has fewer than $2\dm$ hidden units, whatever its depth and its other widths.
 \end{restatable}
@@ -1046,7 +1050,7 @@ In each case the kernel of $J_0$ shrinks as the batch grows and becomes stationa
 \end{proof}
 
 \begin{proof}[Proof of part (f)]
-By \cref{lem:smallwrites}, a residual network without biases has functional dimension $P - \dm^2 - s$ at some parameters, where $s$ counts the changes of basis inside the heads and the rescalings of the values of gated units, and a network of GELU blocks without an embedding and a readout has functional dimension $P$. In a skipless network of the same widths, with embedding $E'$ and readout $D'$, the changes of basis at $h_0$ and $h_L$, those inside the heads and the rescalings have orbits of dimension $2\dm^2 + s$ at generic parameters, where $E'$ and $D'$ have rank $\dm$ and the queries and values of every head have full column rank. As $P - \dm^2 - s > P - 2\dm^2 - s$, \cref{lem:rankcrit} gives the claim. Without an embedding, a readout and attention blocks, for $L \ge 2$ the changes of basis at $h_1$ have orbits of positive dimension, since every block has at least one unit, so \cref{lem:rankcrit} applies again.
+By \cref{lem:smallwrites}, a residual network without biases has functional dimension $P - \dm^2 - s$ at some parameters, where $s$ counts the changes of basis inside the heads and the rescalings of the values of gated units, and a network of GELU blocks without an embedding and a readout has functional dimension $P$. In a skipless network of the same widths, with embedding $E'$ and readout $D'$, the changes of basis at $h_0$ and $h_L$, those inside the heads and the rescalings have orbits of dimension $2\dm^2 + s$ at generic parameters, where $E'$ and $D'$ have rank $\dm$ and the queries and values of every head have full column rank. As $P - \dm^2 - s > P - 2\dm^2 - s$, \cref{lem:rankcrit} gives the claim. Without an embedding, a readout and attention blocks, for $L \ge 2$ the changes of basis at $h_1$ have orbits of positive dimension, since every block has at least one unit, so \cref{lem:rankcrit} applies again. Under pre-RMSNorm with $\varepsilon > 0$ the networks stay analytic, \cref{lem:smallwrites} gives the residual network functional dimension $P - \dm(\dm-1)/2 - s$, and the orthogonal changes of basis at $h_0$ and $h_L$, which commute with the normalization, have orbits of dimension $\dm(\dm-1) + s$ in the skipless network; as $\dm \ge 2$, \cref{lem:rankcrit} applies once more.
 \end{proof}
 
 \begin{proof}[Proof of part (g)]
