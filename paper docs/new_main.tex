@@ -110,22 +110,23 @@ Skip connections are a building block of almost every deep network trained today
 \renewcommand{\arraystretch}{1.15}
 \setlength{\tabcolsep}{3.5pt}
 \newcommand{\cell}[1]{\begin{tabular}[c]{@{}c@{}}#1\end{tabular}}
+\newcommand{\thickhline}{\noalign{\global\arrayrulewidth=1.2pt}\hline\noalign{\global\arrayrulewidth=0.4pt}}
 \makebox[\linewidth][c]{\begin{tabular}{|l|c|c|c|c|c|c|c|c|}
 \hline
 \textbf{Proved} & \textbf{Depth} & \textbf{Section} & \textbf{Attention} & \textbf{GELU} & $\boldsymbol{\tanh}$ & \cell{\textbf{SwiGLU,}\\ \textbf{GeGLU}} & \textbf{ReLU} & \cell{\textbf{ReLU$^2$,}\\ \textbf{ReGLU}} \\
-\hline
+\thickhline
 $\mathcal S \subseteq \overline{\mathcal R}$ & any & \ref{sec:limits} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
 \hline
 \quad with pre-RMSNorm & any & \ref{sec:limits} & \multicolumn{6}{c|}{unknown} \\
-\hline
+\thickhline
 $\mathcal S \cap \mathcal R$ & one block & \ref{sec:oneblock} & $\emptyset$ & measure zero & $\emptyset$ & $\emptyset$ & measure zero & $\emptyset$ \\
 \hline
 $\mathcal S \cap \mathcal R$ & any & \ref{sec:oneblock} & measure zero & measure zero & $\emptyset$ & $\emptyset$ & \cell{measure zero\\ if $m_1 < 2\dm$;\\ open problem\\ otherwise} & $\emptyset$ \\
 \hline
 \quad with pre-RMSNorm & any & \ref{sec:oneblock} & \multicolumn{4}{c|}{measure zero} & unknown & unknown \\
-\hline
+\thickhline
 symmetries removed by the skips & any & \ref{sec:count} & \multicolumn{6}{c|}{$L\dm^2$ (resp.\ $L\dm(\dm-1)/2$)} \\
-\hline
+\thickhline
 $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & one block & \ref{sec:onelayer} & \multicolumn{6}{c|}{$\dm^2$ (resp.\ $\ge \dm(\dm-1)/2$)} \\
 \hline
 $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & any & \ref{sec:measured} & $\ge L\dm^2$ & \cell{$\ge L\dm^2$;\\ $= L\dm^2$ if wide} & $= L\dm^2$ & $\ge L\dm^2$ & unknown & unknown \\
@@ -291,12 +292,12 @@ Skips also change what an MLP can compute (\cref{thm:noabsorb}). Deep residual n
 \begin{equation}\label{eq:classes}
 \begin{array}{@{}ll@{}}
 \text{networks, any blocks:} & \mathcal S \subseteq \overline{\mathcal R}\\[3pt]
-\text{smooth blocks, almost every residual network $F$:} & F \in \mathcal R \setminus \mathcal S\\[3pt]
+\text{smooth blocks, any depth:} & \mathcal S \cap \mathcal R \text{ has measure zero in } \mathcal R\\[3pt]
 \text{ReLU, GELU, almost every $B$:} & \mathrm{Id} + B \in \mathcal S_{N+\dm} \setminus \mathcal S_{N+\dm-1}\\[3pt]
 \text{ReLU$^2$, ReGLU, SwiGLU, GeGLU, every $B$:} & \mathrm{Id} + B \notin \mathcal S_{N'} \text{ for every } N'.
 \end{array}
 \end{equation}
-Here $\overline{\mathcal R}$ is the closure of $\mathcal R$ for the metric $\rho(F, G) = \sum_{r \ge 1} 2^{-r}\min\{1, \sup_{\norm{x} \le r}\norm{F(x) - G(x)}\}$, in which a sequence converges if and only if it converges uniformly on every bounded set of inputs, and almost every $B$, or network, means every one outside a set of parameters of Lebesgue measure zero. The first relation holds because scaling the write of each block up, and the read of the next block down by as much, makes every block outweigh its skip by a factor $t$ while each map $f_\ell$ keeps its arguments in the skipless network, up to an error of order $1/t$ (\cref{prop:limits}). The second holds for $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm \ge 2$: a skipless network keeps a change of basis at every hidden state, so its functional dimension stays below that of the residual networks (\cref{thm:noabsorb}(f)). The last two say that a skip is worth exactly $\dm$ hidden ReLU or GELU units, and more than any number of the other units (\cref{thm:noabsorb}). \Cref{tab:results} lists the results.
+Here $\overline{\mathcal R}$ is the closure of $\mathcal R$ for the metric $\rho(F, G) = \sum_{r \ge 1} 2^{-r}\min\{1, \sup_{\norm{x} \le r}\norm{F(x) - G(x)}\}$, in which a sequence converges if and only if it converges uniformly on every bounded set of inputs, almost every $B$ means every one outside a set of parameters of Lebesgue measure zero, and $\mathcal S \cap \mathcal R$ has measure zero in $\mathcal R$ when the residual networks that compute a function of $\mathcal S$ have their weights in such a set. The first relation holds because scaling the write of each block up, and the read of the next block down by as much, makes every block outweigh its skip by a factor $t$ while each map $f_\ell$ keeps its arguments in the skipless network, up to an error of order $1/t$ (\cref{prop:limits}). The second holds for $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm \ge 2$: a skipless network keeps a change of basis at every hidden state, so its functional dimension stays below that of the residual networks (\cref{thm:noabsorb}(f)). The last two say that a skip is worth exactly $\dm$ hidden ReLU or GELU units, and more than any number of the other units (\cref{thm:noabsorb}). \Cref{tab:results} lists the results.
 
 \begin{figure}[t]
 \centering
