@@ -110,24 +110,26 @@ Skip connections are a building block of almost every deep network trained today
 \renewcommand{\arraystretch}{1.15}
 \setlength{\tabcolsep}{3.5pt}
 \newcommand{\cell}[1]{\begin{tabular}[c]{@{}c@{}}#1\end{tabular}}
-\makebox[\linewidth][c]{\begin{tabular}{|l|c|c|c|c|c|c|c|}
+\makebox[\linewidth][c]{\begin{tabular}{|l|c|c|c|c|c|c|c|c|}
 \hline
-\textbf{Proved} & \textbf{Depth} & \textbf{Section} & \textbf{Attention} & \textbf{GELU} & \cell{$\boldsymbol{\tanh}$, \textbf{SwiGLU,}\\ \textbf{GeGLU}} & \textbf{ReLU} & \cell{\textbf{ReLU$^2$,}\\ \textbf{ReGLU}} \\
+\textbf{Proved} & \textbf{Depth} & \textbf{Section} & \textbf{Attention} & \textbf{GELU} & $\boldsymbol{\tanh}$ & \cell{\textbf{SwiGLU,}\\ \textbf{GeGLU}} & \textbf{ReLU} & \cell{\textbf{ReLU$^2$,}\\ \textbf{ReGLU}} \\
 \hline
-$\mathcal S \subseteq \overline{\mathcal R}$ & any & \ref{sec:limits} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+$\mathcal S \subseteq \overline{\mathcal R}$ & any & \ref{sec:limits} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
 \hline
-$\mathcal S \cap \mathcal R$ & one block & \ref{sec:oneblock} & $\emptyset$ & measure zero & $\emptyset$ & measure zero & $\emptyset$ \\
+$\mathcal S \cap \mathcal R$ & one block & \ref{sec:oneblock} & $\emptyset$ & measure zero & $\emptyset$ & $\emptyset$ & measure zero & $\emptyset$ \\
 \hline
-$\mathcal S \cap \mathcal R$ & any & \ref{sec:oneblock} & measure zero & measure zero & $\emptyset$ & unknown & $\emptyset$ \\
+$\mathcal S \cap \mathcal R$ & any & \ref{sec:oneblock} & measure zero & measure zero & $\emptyset$ & $\emptyset$ & unknown & $\emptyset$ \\
 \hline
-symmetries removed by the skips & any & \ref{sec:count} & \multicolumn{5}{c|}{$L\dm^2$ (resp.\ $L\dm(\dm-1)/2$)} \\
+symmetries removed by the skips & any & \ref{sec:count} & \multicolumn{6}{c|}{$L\dm^2$ (resp.\ $L\dm(\dm-1)/2$)} \\
 \hline
-$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & one block & \ref{sec:onelayer} & \multicolumn{5}{c|}{$\dm^2$ (resp.\ $\ge \dm(\dm-1)/2$)} \\
+$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & one block & \ref{sec:onelayer} & \multicolumn{6}{c|}{$\dm^2$ (resp.\ $\ge \dm(\dm-1)/2$)} \\
 \hline
-$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & any & \ref{sec:measured} & \multicolumn{3}{c|}{$\ge L\dm^2$, equal for $\tanh$ and GELU (resp.\ $\ge L\dm(\dm-1)/2$)} & unknown & unknown \\
+$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & any & \ref{sec:measured} & $\ge L\dm^2$ & $= L\dm^2$, wide & $= L\dm^2$ & $\ge L\dm^2$ & unknown & unknown \\
+\hline
+\quad with pre-RMSNorm & any & \ref{sec:measured} & \multicolumn{4}{c|}{$\ge L\dm(\dm-1)/2$} & unknown & unknown \\
 \hline
 \end{tabular}}
-\caption{Proved, under the assumptions of \cref{sec:setup}, for skipless ($\mathcal S$) and residual ($\mathcal R$) networks of $L$ blocks without normalization (resp.\ with pre-RMSNorm). $\mathcal S \cap \mathcal R$: $\emptyset$ if $ED \neq 0$, at any widths; measure zero at equal widths. Equality for GELU: blocks of width at least $2\dm$. Unknown: not proved. Measured: \cref{tab:measured}.}
+\caption{Proved, under the assumptions of \cref{sec:setup}, for skipless ($\mathcal S$) and residual ($\mathcal R$) networks of $L$ blocks without normalization (resp.\ with pre-RMSNorm). $\mathcal S \cap \mathcal R$: $\emptyset$ if $ED \neq 0$, at any widths; measure zero at equal widths. Wide: blocks of width at least $2\dm$. Unknown: not proved. Measured: \cref{tab:measured}.}
 \label{tab:overview}
 \end{table}
 
