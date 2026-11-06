@@ -126,16 +126,20 @@ $\mathcal S \cap \mathcal R$ & $\ge 2$ & \ref{sec:oneblock} & measure zero & mea
 \hline
 \quad with pre-RMSNorm & $\ge 1$ & \ref{sec:oneblock} & \multicolumn{4}{c|}{measure zero} & unknown & unknown \\
 \thickhline
-symmetries removed by the skips & $\ge 1$ & \ref{sec:count} & \multicolumn{6}{c|}{$L\dm^2$ (resp.\ $L\dm(\dm-1)/2$)} \\
+symmetries removed by the skips & $\ge 1$ & \ref{sec:count} & \multicolumn{6}{c|}{$L\dm^2$} \\
+\hline
+\quad with pre-RMSNorm & $\ge 1$ & \ref{sec:count} & \multicolumn{6}{c|}{$L\dm(\dm-1)/2$} \\
 \thickhline
-$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $= 1$ & \ref{sec:onelayer} & \multicolumn{6}{c|}{$\dm^2$ (resp.\ $\ge \dm(\dm-1)/2$)} \\
+$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $= 1$ & \ref{sec:onelayer} & \multicolumn{6}{c|}{$= \dm^2$} \\
+\hline
+\quad with pre-RMSNorm & $= 1$ & \ref{sec:onelayer} & \multicolumn{6}{c|}{$\ge \dm(\dm-1)/2$} \\
 \hline
 $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $\ge 2$ & \ref{sec:measured} & $\ge L\dm^2$ & \cell{$\ge L\dm^2$;\\ $= L\dm^2$ if every\\ hidden dim $\ge 2\dm$} & $= L\dm^2$ & $\ge L\dm^2$ & unknown & unknown \\
 \hline
 \quad with pre-RMSNorm & $\ge 2$ & \ref{sec:measured} & \multicolumn{4}{c|}{$\ge L\dm(\dm-1)/2$} & unknown & unknown \\
 \hline
 \end{tabular}}
-\caption{Proved, under the assumptions of \cref{sec:setup}, for skipless ($\mathcal S$) and residual ($\mathcal R$) networks of $L$ blocks without biases, and without normalization (resp.\ with pre-RMSNorm). $\mathcal S \cap \mathcal R$: $\emptyset$ if $ED \neq 0$, at any widths; measure zero at equal widths. Hidden dim: number of hidden units of a block. Unknown: not proved. Measured: \cref{tab:measured}.}
+\caption{Proved for skipless ($\mathcal S$) and residual ($\mathcal R$) networks of $L$ blocks, without biases or normalization, and with pre-RMSNorm ($\varepsilon > 0$ unless stated) where marked; assumptions in \cref{sec:setup}. $\mathcal S \cap \mathcal R$: $\emptyset$ if $ED \neq 0$, at any widths; measure zero at equal widths. Hidden dim: number of hidden units of a block. Unknown: not proved. Measured: \cref{tab:measured}.}
 \label{tab:overview}
 \end{table}
 
@@ -472,7 +476,7 @@ Let $M \neq 0$ be a $\dm \times \dm$ matrix and $B$ a vanilla or GLU MLP block w
 \end{restatable}
 \proofin{app:absorb}
 
-Here $\Wread[{:},S]$ and $\Wwrite[S,{:}]$ keep the columns and the rows of the units in $S$. Parts (a), (b) and (d) compare how the two sides scale along rays from the origin. In part (c) the even part of the activation matches the hidden units of the two blocks up to sign and scale, and its odd part, $z/2$, turns a sign flip into a linear term, as \citet[Section~3]{petzka2020symmetries} show for two-layer ReLU networks with one output. So a residual block is not a block of the same kind and width without a skip, and the identity units of a mixed block are determined by its function: if two mixed blocks of the same kind and width compute the same function, the difference $M$ of their merged matrices satisfies $xM + B(x) = B'(x)$, so $M = 0$ in cases (a) and (b), and one of finitely many matrices in case (c). The merge of \cref{prop:junction}(a) is thus the only continuous symmetry that the identity units add, and the gauge fix of \cref{thm:gauge} is well defined. In part (e), two units with opposite reads add a rank-one linear term, and the matching of part (c) shows that every extra unit adds at most one. With a bounded activation, such as $\tanh$, no block of any width absorbs a skip: both blocks are bounded, and $xM$ is not. For the same reason no composition of $\tanh$ blocks without skips equals a composition of residual ones.
+Here $\Wread[{:},S]$ and $\Wwrite[S,{:}]$ keep the columns and the rows of the units in $S$. Parts (a), (b) and (d) compare how the two sides scale along rays from the origin. In part (c) the even part of the activation matches the hidden units of the two blocks up to sign and scale, and its odd part, $z/2$, turns a sign flip into a linear term, as \citet[Section~3]{petzka2020symmetries} show for two-layer ReLU networks with one output. So a residual block is not a block of the same kind and width without a skip, and the identity units of a mixed block are determined by its function: if two mixed blocks of the same kind and width compute the same function, the difference $M$ of their merged matrices satisfies $xM + B(x) = B'(x)$, so $M = 0$ in cases (a) and (b), and one of finitely many matrices in case (c). The merge of \cref{prop:junction}(a) is thus the only continuous symmetry that the identity units add, and the gauge fix of \cref{thm:gauge} is well defined. In part (e), two units with opposite reads add a rank-one linear term, and the matching of part (c) shows that every extra unit adds at most one. With a bounded activation, such as $\tanh$, no block of any width absorbs a skip: both blocks are bounded, and $xM$ is not. For the same reason no composition of $\tanh$ blocks without skips equals a composition of residual ones. Applied to the reads $E\Wread$ and the writes $\Wwrite D$, part (c) also holds for networks of one block with an embedding $E$ and a readout $D$, with $M = ED$.
 
 Part (f) compares dimensions. A change of basis at each hidden state leaves a skipless network unchanged. Its functional dimension is therefore at most $P - 2\dm^2 - s$, from the changes of basis at $h_0$ and $h_L$ alone, and at most $P - (L+1)\dm^2 - s$ when every block has width at least $\dm$ (\cref{cor:count}); here $s$ counts the symmetries inside the blocks, and $s = 0$ for networks of GELU blocks. With small writes, a residual network is, to first order, the linear map $xED$ plus one wide block that holds all its hidden units and heads, and its functional dimension there is $P - \dm^2 - s$ (\cref{lem:smallwrites}). The larger dimension keeps almost every residual network outside the skipless ones (\cref{lem:rankcrit}). In part (g) each extra hidden unit adds $2\dm$ parameters against a gap of $L\dm^2$, so absorbing the skips takes between $L\dm/2$ and $L\dm$ extra units, the latter by part (e). Part (h) compares ranks. Near almost every input, a generic residual ReLU network is linear of rank $\dm$. The units of the first block that are active at an input and at its negative are disjoint, so with fewer than $2\dm$ units a skipless network has fewer than $\dm$ active units at one of the two, and some direction of inputs leaves it unchanged there.
 
@@ -495,7 +499,7 @@ Let $M \neq 0$ be a $\dm\times\dm$ matrix, and set $F(h) = hM + B(h) - B'(h)$.\\
 \end{restatable}
 \proofin{app:attention}
 
-The proof uses only that each row of attention weights sums to $1$ and is uniform for a zero query, so it also holds with rotary position embeddings. Adding heads does not help, whereas $\dm$ more ReLU or GELU units absorb the skip of an MLP block (\cref{thm:noabsorb}(e)).
+The proof uses only that each row of attention weights sums to $1$ and is uniform for a zero query, so it also holds with rotary position embeddings. With an embedding $E$ and a readout $D$, the same two inputs show that a residual network of one attention block equals no skipless network of one attention block whenever $ED \neq 0$. Adding heads does not help, whereas $\dm$ more ReLU or GELU units absorb the skip of an MLP block (\cref{thm:noabsorb}(e)).
 
 \para{The softmaxes must match.} With three or more tokens there is a sharper reason why a skip cannot be absorbed: the heads of $B$ and $B'$ must cancel each other exactly, and then nothing is left to produce $hM$. What tells heads apart is where their softmaxes have poles in the complex plane.
 
