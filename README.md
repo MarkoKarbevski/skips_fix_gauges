@@ -73,6 +73,23 @@ With `RECOMPUTE = False`, the default in the setup cell, Sections 10 and 13 draw
 
 Wall-clock times are for two CPU cores, with the experiments rerun in Sections 10 and 13.
 
+## Trained networks
+
+The folder `trained/` trains the small networks of Figures 1 and 4 of the note on four small classification datasets and computes the rank of their Jacobian at the trained weights.
+
+    trained/small_nets.py   networks, datasets, training and Jacobians, shared by the two notebooks
+    trained/train.ipynb     trains and stores the networks, with its outputs
+    trained/analyze.ipynb   loads them and computes the Jacobians, with its outputs
+    trained/runs/           the 768 stored networks: parameters in float64, curves and accuracies
+    trained/results/        linear baselines, training summary, ranks, spectra and figures
+
+The networks are those of the figures: an embedding R^p → R^4, three MLP blocks of width 8 and a readout R^4 → R^q, without biases; tanh, GELU, ReGLU or SwiGLU blocks; no normalization or pre-RMSNorm with ε = 10⁻⁵; with skips, without, and without skips with hidden units added. Two datasets come from scikit-learn's generators (`hypercube`, `clusters`) and two from PMLB (`satimage`, `segmentation`, downloaded into `trained/data/` on first use). The learning rate is chosen on the validation loss of seed 0, five seeds are trained to convergence, and a network counts as trained when it beats tuned logistic regression on the test set: 436 of 480 do.
+
+At the trained weights the rank equals the symmetry count in 398 of the 436 trained networks, on inputs of the dataset and on Gaussian inputs alike, and the skips add exactly L d² = 48 without normalization and L d(d−1)/2 = 18 under RMSNorm. Of the 38 exceptions, 36 are skipless ReGLU networks under RMSNorm, the exception of Figure 4 at random weights too; one GELU network with skips on `clusters` is 8 below the count and one tanh network with skips under RMSNorm on `satimage` is 1 below.
+
+    uv run jupyter nbconvert --to notebook --execute --inplace trained/train.ipynb      # 36 min; stored networks are loaded
+    uv run jupyter nbconvert --to notebook --execute --inplace trained/analyze.ipynb    # 2 min
+
 ## Citation
 
     @misc{karbevski2026skip,
