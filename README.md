@@ -6,7 +6,7 @@ The note shows that a skip connection is a gauge fix. Give each block of a netwo
 
 The notebook `experiments.ipynb` reproduces every computed number, table and figure of the note, in its order and numbering. Each section says what it reproduces and runs on its own after the setup cell. The notebook is saved with its outputs, so you can read the results without running it.
 
-The note itself is `skip-connections-gauge-fixes-.pdf`, and its LaTeX source is in `paper docs/` (`main.tex`, `refs.bib` and `figs/`).
+The note itself is `skip-connections-gauge-fixes-.pdf`, and its LaTeX source is in `paper docs/` (`new_main.tex`, `refs.bib` and `figs/`).
 
 ## Contents
 
