@@ -71,7 +71,7 @@
 \author{Anonymous authors}
 \else
 \author{Antonij Mijoski$^{*}$\\ IRMA, Universit\'e de Strasbourg\\ {\small\texttt{antonij.mijoski@unistra.fr}}\\ {\small\texttt{antonijmijo@gmail.com}}
-\and Marko Karbevski$^{*}$\\ In Simplicity Technologies\\ {\small\texttt{markokarbevski@insimplicity.tech}}\\ {\small\texttt{markokarbevski@gmail.com}}}
+\and Marko Karbevski$^{*\dagger}$\\ In Simplicity Technologies\\ {\small\texttt{markokarbevski@insimplicity.tech}}\\ {\small\texttt{markokarbevski@gmail.com}}}
 \fi
 \date{}
 
@@ -80,7 +80,8 @@
 \suppressfloats[t]
 \ifanon\else
 {\renewcommand{\thefootnote}{$*$}%
-\footnotetext{\emph{Author contributions.} Marko Karbevski (MK) conceived and led the study. Antonij Mijoski (AM) proved the absorption result for a single ReLU block (\cref{thm:noabsorb}(c), \cref{thm:f3}), the difficult case, paving the way forward. MK extended the tools to GELU (\cref{thm:f4}), proved the cases of ReLU$^2$ and of the gated (GLU) variants (\cref{thm:noabsorb}(a) and (b)), and worked on the symmetry breaking across layers and its counting, the parameter counts at model scale and the applications. Both authors worked on the experiments and on the writing.}}
+\footnotetext{\emph{Author contributions.} Marko Karbevski (MK) conceived and led the study. Antonij Mijoski (AM) proved the absorption result for a single ReLU block (\cref{thm:noabsorb}(c), \cref{thm:f3}), the difficult case, paving the way forward. MK extended the tools to GELU (\cref{thm:f4}), proved the cases of ReLU$^2$ and of the gated (GLU) variants (\cref{thm:noabsorb}(a) and (b)) and the results at depth (\cref{thm:noabsorb}(f)--(h), \cref{cor:resdepth,cor:exactgain}), and worked on the symmetry breaking across layers and its counting, the parameter counts at model scale and the applications. Both authors worked on the experiments and on the writing. All of MK's work on the results, the proofs and the experiments was done with AI assistants.}}
+{\renewcommand{\thefootnote}{$\dagger$}\footnotetext{Corresponding author.}}
 \fi
 \vspace{-1.5em}
 
@@ -712,7 +713,7 @@ For $\tanh$, GELU, SwiGLU and GeGLU blocks, the residual half of the conjecture 
 % ===== sections/statements.tex =====
 \section*{Use of AI}
 \addcontentsline{toc}{section}{Use of AI}
-The conception of the study and its results are the authors' own.\ifanon\else\footnote{This note builds on our preprint \emph{Can an MLP Absorb Its Own Skip Connection Exactly?} (\url{https://arxiv.org/abs/2604.23705}); \cref{sec:oneblock} restates its results on absorption and extends some of them.}\fi{} AI assistants were used to verify and simplify proofs and to write the code of the experiments, which the authors validated. In some of the proofs, AI assistants were also used through continuous conversation.
+The conception of the study is the authors' own.\ifanon\else\footnote{This note builds on our preprint \emph{Can an MLP Absorb Its Own Skip Connection Exactly?} (\url{https://arxiv.org/abs/2604.23705}); \cref{sec:oneblock} restates its results on absorption and extends some of them.}\fi{} One author obtained their results, proofs and experiments working with AI assistants, through continuous conversation; the assistants were used to find, verify and simplify proofs and to write the code of the experiments, which the authors validated.
 
 \section*{Code availability}
 \addcontentsline{toc}{section}{Code availability}
