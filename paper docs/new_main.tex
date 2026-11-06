@@ -114,25 +114,25 @@ Skip connections are a building block of almost every deep network trained today
 \newcommand{\thickhline}{\noalign{\global\arrayrulewidth=1.2pt}\hline\noalign{\global\arrayrulewidth=0.4pt}}
 \makebox[\linewidth][c]{\begin{tabular}{|l|c|c|c|c|c|c|c|c|}
 \hline
-\textbf{Proved} & \textbf{Depth} & \textbf{Section} & \textbf{Attention} & \textbf{GELU} & $\boldsymbol{\tanh}$ & \cell{\textbf{SwiGLU,}\\ \textbf{GeGLU}} & \textbf{ReLU} & \cell{\textbf{ReLU$^2$,}\\ \textbf{ReGLU}} \\
+\textbf{Proved} & $\boldsymbol{L}$ & \textbf{Section} & \textbf{Attention} & \textbf{GELU} & $\boldsymbol{\tanh}$ & \cell{\textbf{SwiGLU,}\\ \textbf{GeGLU}} & \textbf{ReLU} & \cell{\textbf{ReLU$^2$,}\\ \textbf{ReGLU}} \\
 \thickhline
-$\mathcal S \subseteq \overline{\mathcal R}$ & any & \ref{sec:limits} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+$\mathcal S \subseteq \overline{\mathcal R}$ & $\ge 1$ & \ref{sec:limits} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
 \hline
-\quad with pre-RMSNorm & any & \ref{sec:limits} & \multicolumn{6}{c|}{\checkmark\ if $\varepsilon = 0$; unknown if $\varepsilon > 0$} \\
+\quad with pre-RMSNorm & $\ge 1$ & \ref{sec:limits} & \multicolumn{6}{c|}{\checkmark\ if $\varepsilon = 0$; unknown if $\varepsilon > 0$} \\
 \thickhline
-$\mathcal S \cap \mathcal R$ & one block & \ref{sec:oneblock} & $\emptyset$ & measure zero & $\emptyset$ & $\emptyset$ & measure zero & $\emptyset$ \\
+$\mathcal S \cap \mathcal R$ & $= 1$ & \ref{sec:oneblock} & $\emptyset$ & measure zero & $\emptyset$ & $\emptyset$ & measure zero & $\emptyset$ \\
 \hline
-$\mathcal S \cap \mathcal R$ & any & \ref{sec:oneblock} & measure zero & measure zero & $\emptyset$ & $\emptyset$ & \cell{measure zero if\\ first hidden dim\\ $< 2\dm$; open\\ problem otherwise} & $\emptyset$ \\
+$\mathcal S \cap \mathcal R$ & $\ge 2$ & \ref{sec:oneblock} & measure zero & measure zero & $\emptyset$ & $\emptyset$ & \cell{measure zero if\\ first hidden dim\\ $< 2\dm$; open\\ problem otherwise} & $\emptyset$ \\
 \hline
-\quad with pre-RMSNorm & any & \ref{sec:oneblock} & \multicolumn{4}{c|}{measure zero} & unknown & unknown \\
+\quad with pre-RMSNorm & $\ge 1$ & \ref{sec:oneblock} & \multicolumn{4}{c|}{measure zero} & unknown & unknown \\
 \thickhline
-symmetries removed by the skips & any & \ref{sec:count} & \multicolumn{6}{c|}{$L\dm^2$ (resp.\ $L\dm(\dm-1)/2$)} \\
+symmetries removed by the skips & $\ge 1$ & \ref{sec:count} & \multicolumn{6}{c|}{$L\dm^2$ (resp.\ $L\dm(\dm-1)/2$)} \\
 \thickhline
-$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & one block & \ref{sec:onelayer} & \multicolumn{6}{c|}{$\dm^2$ (resp.\ $\ge \dm(\dm-1)/2$)} \\
+$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $= 1$ & \ref{sec:onelayer} & \multicolumn{6}{c|}{$\dm^2$ (resp.\ $\ge \dm(\dm-1)/2$)} \\
 \hline
-$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & any & \ref{sec:measured} & $\ge L\dm^2$ & \cell{$\ge L\dm^2$;\\ $= L\dm^2$ if every\\ hidden dim $\ge 2\dm$} & $= L\dm^2$ & $\ge L\dm^2$ & unknown & unknown \\
+$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $\ge 2$ & \ref{sec:measured} & $\ge L\dm^2$ & \cell{$\ge L\dm^2$;\\ $= L\dm^2$ if every\\ hidden dim $\ge 2\dm$} & $= L\dm^2$ & $\ge L\dm^2$ & unknown & unknown \\
 \hline
-\quad with pre-RMSNorm & any & \ref{sec:measured} & \multicolumn{4}{c|}{$\ge L\dm(\dm-1)/2$} & unknown & unknown \\
+\quad with pre-RMSNorm & $\ge 2$ & \ref{sec:measured} & \multicolumn{4}{c|}{$\ge L\dm(\dm-1)/2$} & unknown & unknown \\
 \hline
 \end{tabular}}
 \caption{Proved, under the assumptions of \cref{sec:setup}, for skipless ($\mathcal S$) and residual ($\mathcal R$) networks of $L$ blocks without biases, and without normalization (resp.\ with pre-RMSNorm). $\mathcal S \cap \mathcal R$: $\emptyset$ if $ED \neq 0$, at any widths; measure zero at equal widths. Hidden dim: number of hidden units of a block. Unknown: not proved. Measured: \cref{tab:measured}.}
