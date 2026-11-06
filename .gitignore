@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+
+# datasets that trained/small_nets.py downloads from PMLB on first use
+trained/data/
