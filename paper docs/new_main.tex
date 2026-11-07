@@ -80,7 +80,7 @@
 \suppressfloats[t]
 \ifanon\else
 {\renewcommand{\thefootnote}{$*$}%
-\footnotetext{\emph{Author contributions.} Marko Karbevski (MK) conceived and led the study. Antonij Mijoski (AM) proved the absorption result for a single ReLU block (\cref{thm:noabsorb}(c), \cref{thm:f3}), the difficult case, paving the way forward. MK extended the tools to GELU (\cref{thm:f4}), proved the cases of ReLU$^2$ and of the gated (GLU) variants (\cref{thm:noabsorb}(a) and (b)) and the results at depth (\cref{thm:noabsorb}(f)--(h), \cref{cor:resdepth,cor:exactgain}), and worked on the symmetry breaking across layers and its counting, the parameter counts at model scale and the applications. Both authors worked on the experiments and on the writing. All of MK's work on the results, the proofs and the experiments was done with AI assistants.}}
+\footnotetext{\emph{Author contributions.} Marko Karbevski (MK) conceived and led the study. Antonij Mijoski (AM) proved the absorption result for a single ReLU block (\cref{thm:relugelu}(a), \cref{thm:f3}), the difficult case, paving the way forward. MK extended the tools to GELU (\cref{thm:f4}), proved the cases of ReLU$^2$ and of the gated (GLU) variants (\cref{thm:homgated}) and the results at depth (\cref{thm:depthgelu,thm:relufirst}, \cref{cor:resdepth,cor:exactgain}), and worked on the symmetry breaking across layers and its counting, the parameter counts at model scale and the applications. Both authors worked on the experiments and on the writing. All of MK's work on the results, the proofs and the experiments was done with AI assistants.}}
 {\renewcommand{\thefootnote}{$\dagger$}\footnotetext{Corresponding author.}}
 \fi
 \vspace{-1.5em}
@@ -114,31 +114,33 @@ Skip connections are a building block of almost every deep network trained today
 \setlength{\tabcolsep}{3.5pt}
 \newcommand{\cell}[1]{\begin{tabular}[c]{@{}c@{}}#1\end{tabular}}
 \newcommand{\thickhline}{\noalign{\global\arrayrulewidth=1.2pt}\hline\noalign{\global\arrayrulewidth=0.4pt}}
-\makebox[\linewidth][c]{\begin{tabular}{|l|c|c|c|c|c|c|c|c|}
+\newcommand{\rtag}[2]{{\footnotesize #1~\ref{#2}}}
+\newcommand{\res}[3]{\cell{#1\\ \rtag{#2}{#3}}}
+\makebox[\linewidth][c]{\begin{tabular}{|l|c|c|c|c|c|c|c|}
 \hline
-\textbf{Proven} & \cell{$\boldsymbol{L}$\\ \textbf{(blocks)}} & \textbf{Result} & \cell{\textbf{Attention}\\ ($\ge 2$ tokens)} & \textbf{GELU} & $\boldsymbol{\tanh}$ & \cell{\textbf{SwiGLU,}\\ \textbf{GeGLU}} & \textbf{ReLU} & \cell{\textbf{ReLU$^2$,}\\ \textbf{ReGLU}} \\
+\textbf{Proven} & \cell{$\boldsymbol{L}$\\ \textbf{(blocks)}} & \cell{\textbf{Attention}\\ ($\ge 2$ tokens)} & \textbf{GELU} & $\boldsymbol{\tanh}$ & \cell{\textbf{SwiGLU,}\\ \textbf{GeGLU}} & \textbf{ReLU} & \cell{\textbf{ReLU$^2$,}\\ \textbf{ReGLU}} \\
 \thickhline
-$\mathcal S \subseteq \overline{\mathcal R}$ & $\ge 1$ & Prop.~\ref{prop:limits} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+$\mathcal S \subseteq \overline{\mathcal R}$ & $\ge 1$ & \multicolumn{6}{c|}{\res{\checkmark}{Prop.}{prop:limits}} \\
 \hline
-\quad with pre-RMSNorm & $\ge 1$ & Prop.~\ref{prop:limits} & \multicolumn{6}{c|}{\checkmark\ if $\varepsilon = 0$; unknown if $\varepsilon > 0$} \\
+\quad with pre-RMSNorm & $\ge 1$ & \multicolumn{6}{c|}{\res{\checkmark\ if $\varepsilon = 0$}{Prop.}{prop:limits}\qquad\cell{unknown if $\varepsilon > 0$\\ ~}} \\
 \thickhline
-$\mathcal S \cap \mathcal R$ & $= 1$ & \cell{Thm.~\ref{thm:noabsorb},\\ Prop.~\ref{prop:attention},\\ Cor.~\ref{cor:depth}} & $\emptyset$ & measure zero & $\emptyset$ & $\emptyset$ & measure zero & $\emptyset$ \\
+$\mathcal S \cap \mathcal R$ & $= 1$ & \res{$\emptyset$}{Prop.}{prop:attention} & \res{measure zero}{Thm.}{thm:relugelu} & \multicolumn{2}{c|}{\res{$\emptyset$}{Thm.}{thm:homgated}} & \res{measure zero}{Thm.}{thm:relugelu} & \res{$\emptyset$}{Thm.}{thm:homgated} \\
 \hline
-$\mathcal S \cap \mathcal R$ & $\ge 2$ & \cell{Thm.~\ref{thm:noabsorb},\\ Cor.~\ref{cor:depth}} & measure zero & measure zero & $\emptyset$ & $\emptyset$ & \cell{measure zero if\\ first hidden dim\\ $< 2\dm$; open\\ problem otherwise} & $\emptyset$ \\
+$\mathcal S \cap \mathcal R$ & $\ge 2$ & \multicolumn{2}{c|}{\res{measure zero}{Thm.}{thm:depthgelu}} & \multicolumn{2}{c|}{\res{$\emptyset$}{Thm.}{thm:homgated}} & \cell{measure zero if\\ first hidden dim\\ $< 2\dm$\\ \rtag{Thm.}{thm:relufirst}\\ otherwise unknown} & \res{$\emptyset$}{Thm.}{thm:homgated} \\
 \hline
-\quad with pre-RMSNorm & $\ge 1$ & \cell{Thm.~\ref{thm:noabsorb},\\ Cor.~\ref{cor:depth}} & measure zero & measure zero & measure zero & $\emptyset$ & unknown & $\emptyset$ \\
+\quad with pre-RMSNorm & $\ge 1$ & \multicolumn{3}{c|}{\res{measure zero}{Thm.}{thm:depthgelu}} & \res{$\emptyset$}{Thm.}{thm:homgated} & unknown & \res{$\emptyset$}{Thm.}{thm:homgated} \\
 \thickhline
-symmetries removed by the skips & $\ge 1$ & Cor.~\ref{cor:count} & \multicolumn{6}{c|}{$L\dm^2$} \\
+symmetries removed by the skips & $\ge 1$ & \multicolumn{6}{c|}{\res{$L\dm^2$}{Cor.}{cor:count}} \\
 \hline
-\quad with pre-RMSNorm & $\ge 1$ & Cor.~\ref{cor:count} & \multicolumn{6}{c|}{$L\dm(\dm-1)/2$} \\
+\quad with pre-RMSNorm & $\ge 1$ & \multicolumn{6}{c|}{\res{$L\dm(\dm-1)/2$}{Cor.}{cor:count}} \\
 \thickhline
-$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $= 1$ & Thm.~\ref{thm:onelayer} & \multicolumn{6}{c|}{$= \dm^2$} \\
+$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $= 1$ & \multicolumn{6}{c|}{\res{$= \dm^2$}{Thm.}{thm:onelayer}} \\
 \hline
-\quad with pre-RMSNorm & $= 1$ & Thm.~\ref{thm:onelayer} & \multicolumn{6}{c|}{$\ge \dm(\dm-1)/2$} \\
+\quad with pre-RMSNorm & $= 1$ & \multicolumn{6}{c|}{\res{$\ge \dm(\dm-1)/2$}{Thm.}{thm:onelayer}} \\
 \hline
-$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $\ge 2$ & \cell{Cor.~\ref{cor:resdepth},\\ Cor.~\ref{cor:exactgain},\\ Rem.~\ref{rem:reludepth}} & $\ge L\dm^2$ & \cell{$\ge L\dm^2$;\\ $= L\dm^2$ if every\\ hidden dim $\ge 2\dm$} & $= L\dm^2$ & $\ge L\dm^2$ & \cell{$\ge L\dm^2$ near\\ small writes} & \cell{$\ge L\dm^2$ near\\ small writes} \\
+$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $\ge 2$ & \res{$\ge L\dm^2$}{Cor.}{cor:resdepth} & \cell{$\ge L\dm^2$\\ \rtag{Cor.}{cor:resdepth}\\ $= L\dm^2$ if every\\ hidden dim $\ge 2\dm$\\ \rtag{Cor.}{cor:exactgain}} & \res{$= L\dm^2$}{Cor.}{cor:exactgain} & \res{$\ge L\dm^2$}{Cor.}{cor:resdepth} & \multicolumn{2}{c|}{\res{$\ge L\dm^2$ near small writes}{Rem.}{rem:reludepth}} \\
 \hline
-\quad with pre-RMSNorm & $\ge 2$ & Cor.~\ref{cor:resdepth} & \multicolumn{4}{c|}{$\ge L\dm(\dm-1)/2$} & unknown & unknown \\
+\quad with pre-RMSNorm & $\ge 2$ & \multicolumn{4}{c|}{\res{$\ge L\dm(\dm-1)/2$}{Cor.}{cor:resdepth}} & unknown & unknown \\
 \hline
 \end{tabular}}
 \caption{Proven for skipless ($\mathcal S$) and residual ($\mathcal R$) networks of $L$ blocks, without biases or normalization, and with pre-RMSNorm ($\varepsilon > 0$ unless stated) where marked; assumptions in \cref{sec:setup}. $\mathcal S \cap \mathcal R$: $\emptyset$ if $ED \neq 0$, at any widths; measure zero at equal widths. Hidden dim: number of hidden units of a block. Measured: \cref{tab:measured}.}
@@ -266,18 +268,18 @@ On the representational side, \citet{lin2018resnet} show that deep single-neuron
 In this work we investigate what differences the skip connections induce in wide-hidden-layer MLP and attention layers. Do residual networks compute functions that skipless networks of the same widths cannot? And how many more directions in function space do their parameters reach?
 
 Fix $\dm \ge 2$. Let $\mathcal S$ (skipless) and $\mathcal R$ (residual) be the sets of functions $x \mapsto h_LD$ computed by networks of $L$ MLP or attention blocks of fixed kinds and widths, without and with skip connections, and without biases or normalization: $h_0 = xE$, then $h_\ell = B_\ell(h_{\ell-1})$ in $\mathcal S$ and $h_\ell = h_{\ell-1} + B_\ell(h_{\ell-1})$ in $\mathcal R$, over all embeddings $E$, blocks $B_\ell$ and readouts $D$ (\cref{sec:setup}). For a single MLP block $B$ with $N \ge \dm$ hidden units, write $\mathrm{Id} + B$ for the residual block $h \mapsto h + B(h)$, and let $\mathcal S_{N'}$ be the set of maps computed by blocks of the same kind with $N'$ hidden units and no skip. Then
-\begin{equation}\label{eq:classes}
-\begin{array}{@{}ll@{}}
-\text{networks, any blocks:} & \mathcal S \subseteq \overline{\mathcal R}\\[3pt]
-\text{smooth blocks, any depth:} & \mathcal S \cap \mathcal R \text{ has measure zero in } \mathcal R\\[3pt]
-\text{ReLU, first block under $2\dm$ units:} & \mathcal S \cap \mathcal R \text{ has measure zero in } \mathcal R\\[3pt]
-\text{ReLU, GELU, almost every $B$:} & \mathrm{Id} + B \in \mathcal S_{N+\dm} \setminus \mathcal S_{N+\dm-1}\\[3pt]
-\text{ReLU$^2$, ReGLU, SwiGLU, GeGLU, every $B$:} & \mathrm{Id} + B \notin \mathcal S_{N'} \text{ for every } N'.
+\[
+\begin{array}{@{}ll@{\qquad}l@{}}
+\text{networks, any blocks:} & \mathcal S \subseteq \overline{\mathcal R} & \text{Prop.~\ref{prop:limits}}\\[3pt]
+\text{smooth blocks, any depth:} & \mathcal S \cap \mathcal R \text{ has measure zero in } \mathcal R & \text{Thm.~\ref{thm:depthgelu}}\\[3pt]
+\text{ReLU, first block under $2\dm$ units:} & \mathcal S \cap \mathcal R \text{ has measure zero in } \mathcal R & \text{Thm.~\ref{thm:relufirst}}\\[3pt]
+\text{ReLU, GELU, almost every $B$:} & \mathrm{Id} + B \in \mathcal S_{N+\dm} \setminus \mathcal S_{N+\dm-1} & \text{Thm.~\ref{thm:relugelu}}\\[3pt]
+\text{ReLU$^2$, ReGLU, SwiGLU, GeGLU, every $B$:} & \mathrm{Id} + B \notin \mathcal S_{N'} \text{ for every } N' & \text{Thm.~\ref{thm:homgated}}
 \end{array}
-\end{equation}
+\]
 Here smooth blocks are attention and $\tanh$, GELU, SwiGLU or GeGLU blocks, and $\overline{\mathcal R}$ is the closure of $\mathcal R$ under uniform convergence on bounded sets of inputs. $\mathcal S \cap \mathcal R$ has measure zero in $\mathcal R$ when the residual networks that compute a function of $\mathcal S$ have their weights in a set of Lebesgue measure zero, and almost every $B$ means every $B$ outside such a set.
 
-The first relation holds because scaling each write up by a power of $t$, and the next read down by as much, leaves a skipless network unchanged and makes the skips of a residual network negligible, with an error of order $1/t$ (\cref{prop:limits}). The second holds for $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm$: a skipless network keeps a change of basis at every hidden state, so its functional dimension stays below that of the residual networks (\cref{thm:noabsorb}(f)). The third holds because near almost every input a generic residual ReLU network is linear of rank $\dm$, while a skipless one uses disjoint units of its first block at an input and at its negative (\cref{thm:noabsorb}(h)). The last two say that a skip is worth exactly $\dm$ hidden ReLU or GELU units, and more than any number of the other units (\cref{thm:noabsorb}(a)--(e)).
+The first relation holds because scaling each write up by a power of $t$, and the next read down by as much, leaves a skipless network unchanged and makes the skips of a residual network negligible, with an error of order $1/t$ (\cref{prop:limits}). The second holds for $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm$: a skipless network keeps a change of basis at every hidden state, so its functional dimension stays below that of the residual networks (\cref{thm:depthgelu}). The third holds because near almost every input a generic residual ReLU network is linear of rank $\dm$, while a skipless one uses disjoint units of its first block at an input and at its negative (\cref{thm:relufirst}). The last two say that a skip is worth exactly $\dm$ hidden ReLU or GELU units, and more than any number of the other units (\cref{thm:homgated,thm:relugelu}).
 
 \Cref{sec:setup} provides a common framework for the standard MLP, the MLP with a skip connection (including one with learned weights) as well as the attention layer.
 
@@ -363,7 +365,7 @@ Skips are gauge fixes & \cref{prop:junction}, \cref{thm:gauge} & Without normali
 \addlinespace[1pt]
 Symmetry removed & \cref{cor:count}, \cref{sec:norm} & Against the skipless network with the same parameters, the skips remove $L\dim\G$ dimensions of symmetry: $L\dm^2$ without normalization; with $\varepsilon > 0$, $L\dm(\dm-1)/2$ under RMSNorm, $L(\dm-1)(\dm-2)/2$ under LayerNorm. & Proof \\
 \addlinespace[1pt]
-Identity units are new & \cref{thm:noabsorb} & Without biases, a block never absorbs its identity units for ReLU$^2$, ReGLU, SwiGLU and GeGLU, whatever its width; for ReLU and GELU, $\dm$ more units do, and fewer only on a set of weights of measure zero. At any depth, with or without pre-RMSNorm, a residual network of smooth blocks equals a skipless one of the same widths only on a set of weights of measure zero, and, without normalization, for GELU blocks also with fewer than $L\dm/2$ more hidden units in all. A residual ReLU network equals a skipless one whose first block has fewer than $2\dm$ units only on a set of weights of measure zero. & Proof \\
+Identity units are new & \cref{thm:homgated,thm:relugelu,thm:depthgelu,thm:relufirst} & Without biases, a block never absorbs its identity units for ReLU$^2$, ReGLU, SwiGLU and GeGLU, whatever its width; for ReLU and GELU, $\dm$ more units do, and fewer only on a set of weights of measure zero. At any depth, with or without pre-RMSNorm, a residual network of smooth blocks equals a skipless one of the same widths only on a set of weights of measure zero, and, without normalization, for GELU blocks also with fewer than $L\dm/2$ more hidden units in all. A residual ReLU network equals a skipless one whose first block has fewer than $2\dm$ units only on a set of weights of measure zero. & Proof \\
 \addlinespace[1pt]
 Learned skips under RMSNorm & \cref{thm:rms} & Learned skips reduce to triangular or symmetric matrices; the identity skip fixes $\dm(\dm-1)/2$ dimensions of gauge and, under the equality condition, imposes $\dm(\dm+1)/2$ constraints. & Proof, checked, measured \\
 \addlinespace[1pt]
@@ -465,22 +467,41 @@ The changes of basis form a group of dimension $(L+1)\dim\G$ in a skipless netwo
 
 The gain needs identity units that the other units of a block cannot absorb. A linear branch absorbs them: $h + hA = h(I + A)$, the deep linear residual network of \citet{hardt2017identity}, whose identity parametrization adds no functional dimension. So do $\dm$ more ReLU, GELU or SiLU units, since $\sigma(z) - \sigma(-z) = z$. With fewer units the common blocks cannot. A block is \emph{nondegenerate} if the columns of $\Wread$ are nonzero and pairwise non-collinear and the rows of $\Wwrite$ are nonzero.
 
-\begin{restatable}[No absorption inside a block]{theorem}{thmNoAbsorb}\label{thm:noabsorb}
-Let $M \neq 0$ be a $\dm \times \dm$ matrix and $B$ a vanilla or GLU MLP block without biases (\cref{sec:setup}), and ask for a block $B'$ of the same kind, that is, with the same activation or the same gate function but any read and write, also without biases, such that $xM + B(x) = B'(x)$ for all row vectors $x \in \R^{1\times\dm}$.\\
-\textup{(a)} If the blocks are positively homogeneous of degree $k \neq 1$, as ReLU$^2$ and ReGLU blocks are, there is none, of any width.\\
-\textup{(b)} If the blocks are gated with a gate that is differentiable at $0$ and vanishes there, as SwiGLU and GeGLU blocks are, there is none, of any width.\\
-\textup{(c)} If $\sigma$ is ReLU or GELU, $\dm \ge 2$ and $B$ is nondegenerate, a $B'$ of the same width exists if and only if $\Wread[{:},S]\,\Wwrite[S,{:}] = -M$ for some set $S$ of hidden units; for generic weights there is none.\\
-\textup{(d)} For blocks without biases as in (a) with $k > 1$ or as in (b), no composition of one or more blocks without skips equals a composition of residual blocks, whatever their numbers and widths.\\
-\textup{(e)} If $\sigma$ is ReLU or GELU, $\dm \ge 2$ and $M$ is invertible, a $B'$ with $\dm$ more hidden units than $B$ exists when $\Wread$ has rank $\dm$, and for generic weights none with fewer exists.\\
-\textup{(f)} If $\sigma$ is GELU and $\dm \ge 2$, then for almost every choice of weights, a composition of $L \ge 2$ residual blocks equals no composition of $L$ blocks without skips of the same widths. With an embedding and a readout, the same holds for networks of smooth blocks of any depth $L \ge 1$, also under pre-RMSNorm with $\varepsilon > 0$.\\
-\textup{(g)} If $\sigma$ is GELU and $\dm \ge 2$, with an embedding and a readout as in (f), then for almost every choice of weights, a residual network of $L$ blocks equals no skipless network of $L$ blocks that each have at least $\dm$ hidden units and that have fewer than $L\dm/2$ more hidden units in all. With $\dm$ more hidden units in every block, some skipless network equals it whenever every read has rank $\dm$.\\
-\textup{(h)} If $\sigma$ is ReLU and $\dm \ge 2$, with an embedding and a readout as in (f), then for almost every choice of weights, a residual network equals no skipless network whose first block has fewer than $2\dm$ hidden units, whatever its depth and its other widths.
+We ask whether a block can absorb a linear term. Let $M \neq 0$ be a $\dm \times \dm$ matrix and $B$ a vanilla or GLU MLP block without biases (\cref{sec:setup}). We look for a block $B'$ of the same kind, with the same activation or the same gate function but any read and write, also without biases, such that
+\begin{equation}\label{eq:absorbask}
+xM + B(x) = B'(x) \qquad \text{for all row vectors } x \in \R^{1\times\dm}.
+\end{equation}
+
+\begin{restatable}[Homogeneous, gated and bounded blocks]{theorem}{thmAbsorbHom}\label{thm:homgated}
+Let the blocks be positively homogeneous of degree $k \neq 1$, as ReLU$^2$ and ReGLU blocks are, or gated with a gate that is differentiable at $0$ and vanishes there, as SwiGLU and GeGLU blocks are.\\
+\textup{(a)} No block $B'$ of any width satisfies \eqref{eq:absorbask}.\\
+\textup{(b)} For gated blocks, and for homogeneous blocks with $k > 1$, no composition of one or more blocks without skips equals a composition of residual blocks, whatever their numbers and widths. With an embedding $E$ and a readout $D$, no skipless network equals a residual network with $ED \neq 0$, also under pre-RMSNorm with $\varepsilon > 0$.\\
+\textup{(c)} Without normalization, (a) and (b) also hold for $\tanh$ blocks.
 \end{restatable}
 \proofin{app:absorb}
 
-Here $\Wread[{:},S]$ and $\Wwrite[S,{:}]$ keep the columns and the rows of the units in $S$. Parts (a), (b) and (d) compare how the two sides scale along rays from the origin. In part (c) the even part of the activation matches the hidden units of the two blocks up to sign and scale, and its odd part, $z/2$, turns a sign flip into a linear term, as \citet[Section~3]{petzka2020symmetries} show for two-layer ReLU networks with one output. So a residual block is not a block of the same kind and width without a skip, and the identity units of a mixed block are determined by its function: if two mixed blocks of the same kind and width compute the same function, the difference $M$ of their merged matrices satisfies $xM + B(x) = B'(x)$, so $M = 0$ in cases (a) and (b), and one of finitely many matrices in case (c). The merge of \cref{prop:junction}(a) is thus the only continuous symmetry that the identity units add, and the gauge fix of \cref{thm:gauge} is well defined. In part (e), two units with opposite reads add a rank-one linear term, and the matching of part (c) shows that every extra unit adds at most one. With a bounded activation, such as $\tanh$, no block of any width absorbs a skip: both blocks are bounded, and $xM$ is not. For the same reason no composition of $\tanh$ blocks without skips equals a composition of residual ones, and with an embedding $E$ and a readout $D$ no skipless network equals a residual one with $ED \neq 0$. Parts (a), (b) and (d) extend in the same way, also under pre-RMSNorm with $\varepsilon > 0$ (\cref{cor:depth}). Applied to the reads $E\Wread$ and the writes $\Wwrite D$, part (c) holds for networks of one block with $M = ED$.
+\begin{restatable}[ReLU and GELU blocks]{theorem}{thmAbsorbReLU}\label{thm:relugelu}
+Let $\sigma$ be ReLU or GELU and $\dm \ge 2$.\\
+\textup{(a)} If $B$ is nondegenerate, a block $B'$ of the same width satisfies \eqref{eq:absorbask} if and only if some set $S$ of hidden units has $\Wread[{:},S]\,\Wwrite[S,{:}] = -M$; for generic weights there is none.\\
+\textup{(b)} If $M$ is invertible and $\Wread$ has rank $\dm$, a block $B'$ with $\dm$ more hidden units satisfies \eqref{eq:absorbask}, and for generic weights none with fewer does.
+\end{restatable}
+\proofin{app:absorb}
 
-Part (f) compares dimensions. A change of basis at each hidden state leaves a skipless network unchanged. Its functional dimension is therefore at most $P - 2\dm^2 - s$, from the changes of basis at $h_0$ and $h_L$ alone, and at most $P - (L+1)\dm^2 - s$ when every block has width at least $\dm$ (\cref{cor:count}); here $s$ counts the symmetries inside the blocks, and $s = 0$ for networks of GELU blocks. With small writes, a residual network is, to first order, the linear map $xED$ plus one wide block that holds all its hidden units and heads, and its functional dimension there is $P - \dm^2 - s$ (\cref{lem:smallwrites}). The larger dimension keeps almost every residual network outside the skipless ones (\cref{lem:rankcrit}). In part (g) each extra hidden unit adds $2\dm$ parameters against a gap of $L\dm^2$, so absorbing the skips takes between $L\dm/2$ and $L\dm$ extra units, the latter by part (e). Part (h) compares ranks. Near almost every input, a generic residual ReLU network is linear of rank $\dm$. The units of the first block that are active at an input and at its negative are disjoint, so with fewer than $2\dm$ units a skipless network has fewer than $\dm$ active units at one of the two, and some direction of inputs leaves it unchanged there.
+\begin{restatable}[GELU and smooth blocks at depth]{theorem}{thmAbsorbDepth}\label{thm:depthgelu}
+Let $\dm \ge 2$.\\
+\textup{(a)} For GELU blocks and almost every choice of weights, a composition of $L \ge 2$ residual blocks equals no composition of $L$ blocks without skips of the same widths. With an embedding and a readout, the same holds for networks of smooth blocks of any depth $L \ge 1$, also under pre-RMSNorm with $\varepsilon > 0$.\\
+\textup{(b)} For GELU blocks with an embedding and a readout, and almost every choice of weights, a residual network of $L$ blocks equals no skipless network of $L$ blocks that each have at least $\dm$ hidden units and that have fewer than $L\dm/2$ more hidden units in all. With $\dm$ more hidden units in every block, some skipless network equals it whenever every read has rank $\dm$.
+\end{restatable}
+\proofin{app:absorb}
+
+\begin{restatable}[ReLU blocks at depth]{theorem}{thmAbsorbFirst}\label{thm:relufirst}
+Let $\sigma$ be ReLU and $\dm \ge 2$, with an embedding and a readout. For almost every choice of weights, a residual network equals no skipless network whose first block has fewer than $2\dm$ hidden units, whatever its depth and its other widths.
+\end{restatable}
+\proofin{app:absorb}
+
+Here $\Wread[{:},S]$ and $\Wwrite[S,{:}]$ keep the columns and the rows of the units in $S$. \Cref{thm:homgated} compares how the two sides scale along rays from the origin; for $\tanh$ blocks both sides are bounded, and $xM$ is not. In \cref{thm:relugelu}(a) the even part of the activation matches the hidden units of the two blocks up to sign and scale, and its odd part, $z/2$, turns a sign flip into a linear term, as \citet[Section~3]{petzka2020symmetries} show for two-layer ReLU networks with one output. So a residual block is not a block of the same kind and width without a skip, and the identity units of a mixed block are determined by its function: if two mixed blocks of the same kind and width compute the same function, the difference $M$ of their merged matrices satisfies \eqref{eq:absorbask}, so $M = 0$ for the blocks of \cref{thm:homgated}, and $M$ is one of finitely many matrices for those of \cref{thm:relugelu}. The merge of \cref{prop:junction}(a) is thus the only continuous symmetry that the identity units add, and the gauge fix of \cref{thm:gauge} is well defined. In \cref{thm:relugelu}(b), two units with opposite reads add a rank-one linear term, and the matching of part (a) shows that every extra unit adds at most one. Applied to the reads $E\Wread$ and the writes $\Wwrite D$, \cref{thm:relugelu}(a) holds for networks of one block with an embedding $E$ and a readout $D$, with $M = ED$.
+
+\Cref{thm:depthgelu}(a) compares dimensions. A change of basis at each hidden state leaves a skipless network unchanged. Its functional dimension is therefore at most $P - 2\dm^2 - s$, from the changes of basis at $h_0$ and $h_L$ alone, and at most $P - (L+1)\dm^2 - s$ when every block has width at least $\dm$ (\cref{cor:count}); here $s$ counts the symmetries inside the blocks, and $s = 0$ for networks of GELU blocks. With small writes, a residual network is, to first order, the linear map $xED$ plus one wide block that holds all its hidden units and heads, and its functional dimension there is $P - \dm^2 - s$ (\cref{lem:smallwrites}). The larger dimension keeps almost every residual network outside the skipless ones (\cref{lem:rankcrit}). In \cref{thm:depthgelu}(b) each extra hidden unit adds $2\dm$ parameters against a gap of $L\dm^2$, so absorbing the skips takes between $L\dm/2$ and $L\dm$ extra units, the latter by \cref{thm:relugelu}(b). \Cref{thm:relufirst} compares ranks. Near almost every input, a generic residual ReLU network is linear of rank $\dm$. The units of the first block that are active at an input and at its negative are disjoint, so with fewer than $2\dm$ units a skipless network has fewer than $\dm$ active units at one of the two, and some direction of inputs leaves it unchanged there.
 
 \para{Attention.} Attention mixes tokens; a skip keeps each token where it is. Two inputs make this precise. If all tokens are equal, mixing changes nothing, so the heads must reproduce the skip. If one token is zero, its query is zero, so attention gives it an equal mix of all tokens. The skip gives it zero.
 
@@ -501,7 +522,7 @@ Let $M \neq 0$ be a $\dm\times\dm$ matrix, and set $F(h) = hM + B(h) - B'(h)$.\\
 \end{restatable}
 \proofin{app:attention}
 
-The proof uses only that each row of attention weights sums to $1$ and is uniform for a zero query, so it also holds with rotary position embeddings. With an embedding $E$ and a readout $D$, the same two inputs show that a residual network of one attention block equals no skipless network of one attention block whenever $ED \neq 0$. Adding heads does not help, whereas $\dm$ more ReLU or GELU units absorb the skip of an MLP block (\cref{thm:noabsorb}(e)).
+The proof uses only that each row of attention weights sums to $1$ and is uniform for a zero query, so it also holds with rotary position embeddings. With an embedding $E$ and a readout $D$, the same two inputs show that a residual network of one attention block equals no skipless network of one attention block whenever $ED \neq 0$. Adding heads does not help, whereas $\dm$ more ReLU or GELU units absorb the skip of an MLP block (\cref{thm:relugelu}(b)).
 
 \para{The softmaxes must match.} With three or more tokens there is a sharper reason why a skip cannot be absorbed: the heads of $B$ and $B'$ must cancel each other exactly, and then nothing is left to produce $hM$. What tells heads apart is where their softmaxes have poles in the complex plane.
 
@@ -635,7 +656,7 @@ Let the blocks be smooth, in any order and of any width. At generic parameters t
 \end{corollary}
 \proofin{app:absorb}
 
-With small writes, a residual network behaves, to first order, like one with a single wide block that holds all its heads and units, and there its rank is the largest that its symmetries allow (\cref{lem:smallwrites}). An analytic network keeps its largest rank at generic parameters. The argument needs the skip: without it, small writes leave no linear path from the embedding to the readout. For ReLU-type blocks it holds only near small writes (\cref{rem:reludepth}). For the skipless network the equality condition remains measured, with two exceptions. For $\tanh$ blocks, the function of a generic network determines its weights up to changes of basis at its hidden states and permutations and sign flips of its units \citep{fefferman1994}. For GELU blocks of width at least $2\dm$, a skipless network can equal a residual network with $\dm$ fewer units per block (\cref{thm:noabsorb}(g)), and around it the reads of the added units supply the $L\dm^2$ directions that the residual network lacks.
+With small writes, a residual network behaves, to first order, like one with a single wide block that holds all its heads and units, and there its rank is the largest that its symmetries allow (\cref{lem:smallwrites}). An analytic network keeps its largest rank at generic parameters. The argument needs the skip: without it, small writes leave no linear path from the embedding to the readout. For ReLU-type blocks it holds only near small writes (\cref{rem:reludepth}). For the skipless network the equality condition remains measured, with two exceptions. For $\tanh$ blocks, the function of a generic network determines its weights up to changes of basis at its hidden states and permutations and sign flips of its units \citep{fefferman1994}. For GELU blocks of width at least $2\dm$, a skipless network can equal a residual network with $\dm$ fewer units per block (\cref{thm:depthgelu}(b)), and around it the reads of the added units supply the $L\dm^2$ directions that the residual network lacks.
 
 \begin{corollary}[Exact gain for $\tanh$ and GELU]\label{cor:exactgain}
 Without normalization, let the blocks be $\tanh$ blocks, or GELU blocks of width at least $2\dm$ without biases. Then the skipless network satisfies the equality condition too: at generic parameters its functional dimension is $P - (L+1)\dm^2$, and, for $\tanh$ blocks with biases, $(L+1)\dm$ lower. The skips therefore raise the functional dimension by exactly $L\dm^2$.
@@ -853,12 +874,15 @@ The lemma extends to transformers. Attention blocks also carry the per-head symm
 \end{proof}
 
 
-\subsection{No absorption inside a block\texorpdfstring{ (Theorem~\ref*{thm:noabsorb})}{}}\label{app:absorb}
+\subsection{No absorption inside a block\texorpdfstring{ (Theorems~\ref*{thm:homgated} to~\ref*{thm:relufirst})}{}}\label{app:absorb}
 
-We recall \cref{thm:noabsorb} from \cref{sec:oneblock}.
-\thmNoAbsorb*
+We recall \cref{thm:homgated,thm:relugelu,thm:depthgelu,thm:relufirst} from \cref{sec:oneblock}, for the question \eqref{eq:absorbask}.
+\thmAbsorbHom*
+\thmAbsorbReLU*
+\thmAbsorbDepth*
+\thmAbsorbFirst*
 
-\para{Overview.} Parts (a), (b) and (d) compare orders. Along rays from the origin a linear skip scales like $\lambda$ and a block that is homogeneous of degree $k \neq 1$ like $\lambda^k$, and near the origin a gated block is of second order, so the two sides of the absorption equation cannot agree (\cref{prop:f2,prop:gated}); comparing Jacobians at the origin extends this to any depth (\cref{cor:depth}). Part (c) is the substantial case. The absorption equation splits into its odd and even parts in $x$. The even part determines the hidden units of the absorbing block up to sign, and for ReLU up to a positive rescaling, through the kinks for ReLU (\cref{thm:f3}) and through linear independence of ridge functions for GELU (\cref{lem:ridge,thm:f4}). The odd part of ReLU and GELU is exactly $z/2$, so the odd part of the equation is linear and reads off the set $S$ of units whose signs flip; conversely, flipping the signs of the units in $S$ absorbs the skip whenever the condition holds. The generic clause holds because the condition is a finite union of algebraic sets of positive codimension (\cref{cor:f5}), and \cref{rem:singular} covers singular $M$. Part (e) counts the extra units that the matching requires (\cref{prop:widthd}). Part (f) compares dimensions: a skipless network has a change of basis at every hidden state as a symmetry, and with small writes a residual network is, to first order, one wide block plus a linear map, whose flat directions \cref{lem:unitid} determines (\cref{lem:rankcrit,lem:smallwrites}). Part (g) adds the parameters of extra units to the same comparison. Part (h) compares the ranks of the linear pieces at an input and at its negative.
+\para{Overview.} \Cref{thm:homgated} compares orders. Along rays from the origin a linear skip scales like $\lambda$ and a block that is homogeneous of degree $k \neq 1$ like $\lambda^k$, and near the origin a gated block is of second order, so the two sides of the absorption equation cannot agree (\cref{prop:f2,prop:gated}); comparing Jacobians at the origin extends this to any depth (\cref{cor:depth}). \Cref{thm:relugelu}(a) is the substantial case. The absorption equation splits into its odd and even parts in $x$. The even part determines the hidden units of the absorbing block up to sign, and for ReLU up to a positive rescaling, through the kinks for ReLU (\cref{thm:f3}) and through linear independence of ridge functions for GELU (\cref{lem:ridge,thm:f4}). The odd part of ReLU and GELU is exactly $z/2$, so the odd part of the equation is linear and reads off the set $S$ of units whose signs flip; conversely, flipping the signs of the units in $S$ absorbs the skip whenever the condition holds. The generic clause holds because the condition is a finite union of algebraic sets of positive codimension (\cref{cor:f5}), and \cref{rem:singular} covers singular $M$. \Cref{thm:relugelu}(b) counts the extra units that the matching requires (\cref{prop:widthd}). \Cref{thm:depthgelu}(a) compares dimensions: a skipless network has a change of basis at every hidden state as a symmetry, and with small writes a residual network is, to first order, one wide block plus a linear map, whose flat directions \cref{lem:unitid} determines (\cref{lem:rankcrit,lem:smallwrites}). \Cref{thm:depthgelu}(b) adds the parameters of extra units to the same comparison. \Cref{thm:relufirst} compares the ranks of the linear pieces at an input and at its negative.
 
 The arguments show that the function of a block determines its parameters, in the manner used for $\tanh$ networks by \citet{sussmann1992} and \citet{fefferman1994} and for ReLU networks by \citet{buithimai2020functional}, \citet{petzka2020symmetries} and \citet{rolnick2020reverse}: kink alignment for ReLU, ridge-function independence for GELU. For two-layer ReLU networks with a single output, \citet[Section~3]{petzka2020symmetries} already give the corresponding sign flips, show that irreducible networks computing the same function differ only by these flips, permutations and positive rescalings (their Theorem~1), and state the matching criterion for removing a linear term. \Cref{lem:f1} reduces any invertible skip to the identity skip.
 
@@ -975,7 +999,7 @@ Any activation whose even part $\psi$ is analytic and not a polynomial matches t
 \end{remark}
 
 \begin{remark}[Singular linear skips]\label{rem:singular}
-Nothing in the proofs of Theorems~\ref{thm:f3} and~\ref{thm:f4} uses that the linear term is the identity. With $xM$ in place of $x$ on the left of \eqref{eq:absorb}, the odd part of the equation reads $\Wread'\Wwrite' = \Wread\Wwrite + 2M$, the even part is unchanged, and the sign step yields $\Wread\Pi_S\Wwrite = -M$. So for any $M \neq 0$, invertible or not, absorption holds if and only if $\Wread[{:},S]\Wwrite[S,{:}] = -M$ for some $S$, with $|S| \ge \operatorname{rank}M$, which is a measure-zero condition on the weights for each fixed $M$. This gives \cref{thm:noabsorb}(c) for singular $M$.
+Nothing in the proofs of Theorems~\ref{thm:f3} and~\ref{thm:f4} uses that the linear term is the identity. With $xM$ in place of $x$ on the left of \eqref{eq:absorb}, the odd part of the equation reads $\Wread'\Wwrite' = \Wread\Wwrite + 2M$, the even part is unchanged, and the sign step yields $\Wread\Pi_S\Wwrite = -M$. So for any $M \neq 0$, invertible or not, absorption holds if and only if $\Wread[{:},S]\Wwrite[S,{:}] = -M$ for some $S$, with $|S| \ge \operatorname{rank}M$, which is a measure-zero condition on the weights for each fixed $M$. This gives \cref{thm:relugelu}(a) for singular $M$.
 \end{remark}
 
 \begin{corollary}[Generic disjointness for one block]\label{cor:f5}
@@ -1004,7 +1028,15 @@ Let $\sigma$ be ReLU or GELU, $\dm \ge 2$ and $M \in \R^{\dm\times\dm}$ invertib
 Every class of a column $w_i$ contains some $w'_j$, since $P_u \neq 0$, and every mixed class contains at least two, so $m' \ge m$ plus the number of mixed classes. If $m' < m + \dm$, the right side has rank less than $\dm$, so the left side is singular, which the weights exclude.
 \end{proof}
 
-\para{Depth.} Parts (f) and (g) and \cref{cor:resdepth} rest on two lemmas. The first turns a gap in functional dimension into disjointness. The second shows that with small writes the Jacobian of a residual network reaches the largest rank that its symmetries allow, by the argument of \cref{thm:onelayer} for one block.
+\begin{proof}[Proof of \cref{thm:homgated}]
+Part (a) is \cref{prop:f2} for homogeneous blocks and \cref{prop:gated} for gated ones, and part (b) is \cref{cor:depth}. For $\tanh$ blocks, $B$ and $B'$ are bounded and $xM$ is not, which gives (a), and (b) is again \cref{cor:depth}.
+\end{proof}
+
+\begin{proof}[Proof of \cref{thm:relugelu}]
+Part (a) is \cref{thm:f3,thm:f4}, with \cref{lem:f1} for invertible $M$ and \cref{rem:singular} for singular $M$; for each $M$ the condition holds only on a set of weights of measure zero (\cref{cor:f5,rem:singular}). Part (b) is \cref{prop:widthd}.
+\end{proof}
+
+\para{Depth.} \Cref{thm:depthgelu} and \cref{cor:resdepth} rest on two lemmas. The first turns a gap in functional dimension into disjointness. The second shows that with small writes the Jacobian of a residual network reaches the largest rank that its symmetries allow, by the argument of \cref{thm:onelayer} for one block.
 
 \begin{lemma}[A rank criterion]\label{lem:rankcrit}
 Let $\theta \mapsto F_\theta$, $\theta \in \R^P$, and $\eta \mapsto G_\eta$, $\eta \in \R^{P'}$, be two families of networks with the same inputs and outputs, whose outputs are real-analytic in the parameters. Let a Lie group act smoothly on $\R^{P'}$ without changing $G_\eta$, with orbits of dimension at least $k$ at generic $\eta$. If at some $\theta_0$ the Jacobian of $\theta \mapsto (F_\theta(x))_{x \in X}$ has rank greater than $P' - k$ on some finite batch $X$, then for almost every $\theta$ no $\eta$ satisfies $F_\theta = G_\eta$.
@@ -1047,15 +1079,15 @@ with $N$ applied to every token. So $J_0\,\eta = \Der N(h)\,\big(x\eta_E + k(n)\
 In each case the kernel of $J_0$ shrinks as the batch grows and becomes stationary at the flat directions, so on some finite batch $J_0$ has rank $P$ minus this dimension. By lower semicontinuity the Jacobian of the residual network on this batch has at least this rank for all small $\tau \neq 0$. Its symmetries bound the rank by the same number, since they move the parameters in independent directions when $E$ has rank $\dm$ and the queries and values of every head have full column rank: the global change of basis (\cref{thm:gauge}(c)), the translations (\cref{lem:translations}), the rescalings of the units and the changes of basis inside the heads.
 \end{proof}
 
-\begin{proof}[Proof of part (f)]
+\begin{proof}[Proof of \cref{thm:depthgelu}(a)]
 By \cref{lem:smallwrites}, a residual network without biases has functional dimension $P - \dm^2 - s$ at some parameters, where $s$ counts the changes of basis inside the heads and the rescalings of the values of gated units, and a network of GELU blocks without an embedding and a readout has functional dimension $P$. In a skipless network of the same widths, with embedding $E'$ and readout $D'$, the changes of basis at $h_0$ and $h_L$, those inside the heads and the rescalings have orbits of dimension $2\dm^2 + s$ at generic parameters, where $E'$ and $D'$ have rank $\dm$ and the queries and values of every head have full column rank. As $P - \dm^2 - s > P - 2\dm^2 - s$, \cref{lem:rankcrit} gives the claim. Without an embedding, a readout and attention blocks, for $L \ge 2$ the changes of basis at $h_1$ have orbits of positive dimension, since every block has at least one unit, so \cref{lem:rankcrit} applies again. Under pre-RMSNorm with $\varepsilon > 0$ the networks stay analytic, \cref{lem:smallwrites} gives the residual network functional dimension $P - \dm(\dm-1)/2 - s$, and the orthogonal changes of basis at $h_0$ and $h_L$, which commute with the normalization, have orbits of dimension $\dm(\dm-1) + s$ in the skipless network; as $\dm \ge 2$, \cref{lem:rankcrit} applies once more.
 \end{proof}
 
-\begin{proof}[Proof of part (g)]
-Let the residual network have blocks with $m_1, \dots, m_L$ hidden units and $P$ parameters. A skipless network whose blocks have $m'_\ell \ge \dm$ hidden units has $P' = P + 2\dm\sum_\ell(m'_\ell - m_\ell)$ parameters, and its changes of basis at $h_0, \dots, h_L$ have orbits of dimension $(L+1)\dm^2$ at generic parameters (\cref{lem:free}). By \cref{lem:smallwrites} the residual network has functional dimension $P - \dm^2$ at some parameters, which exceeds $P' - (L+1)\dm^2$ exactly when $\sum_\ell(m'_\ell - m_\ell) < L\dm/2$. For each of the finitely many such choices of widths, \cref{lem:rankcrit} gives a set of weights of measure zero, and so does their union. With $\dm$ more units in every block, part (e) turns each residual block into a block without a skip, and composing these gives a skipless network that equals the residual one.
+\begin{proof}[Proof of \cref{thm:depthgelu}(b)]
+Let the residual network have blocks with $m_1, \dots, m_L$ hidden units and $P$ parameters. A skipless network whose blocks have $m'_\ell \ge \dm$ hidden units has $P' = P + 2\dm\sum_\ell(m'_\ell - m_\ell)$ parameters, and its changes of basis at $h_0, \dots, h_L$ have orbits of dimension $(L+1)\dm^2$ at generic parameters (\cref{lem:free}). By \cref{lem:smallwrites} the residual network has functional dimension $P - \dm^2$ at some parameters, which exceeds $P' - (L+1)\dm^2$ exactly when $\sum_\ell(m'_\ell - m_\ell) < L\dm/2$. For each of the finitely many such choices of widths, \cref{lem:rankcrit} gives a set of weights of measure zero, and so does their union. With $\dm$ more units in every block, \cref{thm:relugelu}(b) turns each residual block into a block without a skip, and composing these gives a skipless network that equals the residual one.
 \end{proof}
 
-\begin{proof}[Proof of part (h)]
+\begin{proof}[Proof of \cref{thm:relufirst}]
 MLP blocks act on each token separately, so we compare the networks on rows $x \in \R^{1\times d_{\mathrm{in}}}$. Outside a set of weights of measure zero, $E$ and $D$ have rank $\dm$, no read of a unit vanishes, and $I + \Wread^{\ell}[{:},S]\,\Wwrite^{\ell}[S,{:}]$ is invertible for every block $\ell$ and every set $S$ of its units, since each determinant is a polynomial in the weights that equals $1$ when the writes vanish. On an open set of inputs on which no unit of the residual network switches, with active sets $S_\ell$, the network is the linear map $x \mapsto xEMD$ with $M = \prod_\ell\big(I + \Wread^{\ell}[{:},S_\ell]\,\Wwrite^{\ell}[S_\ell,{:}]\big)$ invertible, of rank $\dm$. By induction over the blocks, on such a set the pre-activation of each unit of the next block is $x$ times a nonzero vector, so the inputs at which some unit switches have measure zero, and the inputs near which the network is linear of rank $\dm$ form an open dense set $\Omega$.
 
 Let a skipless network $F'$ have embedding $E'$ and a first block with reads $w'_1, \dots, w'_{m'}$, $m' < 2\dm$, and set $a_i = E'w'_i$. Take $x_0$ with $x_0, -x_0 \in \Omega$ and $x_0a_i \neq 0$ whenever $a_i \neq 0$. The units active near $x_0$, those with $x_0a_i > 0$, and those active near $-x_0$ are disjoint, so one of the two sets, say the first after replacing $x_0$ by $-x_0$ if needed, has fewer than $\dm$ units. Near $x_0$ the other units of the first block output zero, so $F'$ depends on $x$ only through the numbers $xa_i$ of the active units, and $F'(x_0 + u) = F'(x_0)$ for every small $u$ in a subspace of dimension greater than $d_{\mathrm{in}} - \dm$. The residual network $F$ changes by $uEMD$, which vanishes only on a subspace of dimension $d_{\mathrm{in}} - \dm$. So some small $u$ changes $F$ and leaves $F'$ unchanged, and $F' \neq F$.
