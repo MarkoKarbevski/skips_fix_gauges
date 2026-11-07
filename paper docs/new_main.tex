@@ -116,32 +116,32 @@ Skip connections are a building block of almost every deep network trained today
 \newcommand{\thickhline}{\noalign{\global\arrayrulewidth=1.2pt}\hline\noalign{\global\arrayrulewidth=0.4pt}}
 \makebox[\linewidth][c]{\begin{tabular}{|l|c|c|c|c|c|c|c|c|}
 \hline
-\textbf{Proved} & \cell{$\boldsymbol{L}$\\ \textbf{(blocks)}} & \textbf{Section} & \cell{\textbf{Attention}\\ ($\ge 2$ tokens)} & \textbf{GELU} & $\boldsymbol{\tanh}$ & \cell{\textbf{SwiGLU,}\\ \textbf{GeGLU}} & \textbf{ReLU} & \cell{\textbf{ReLU$^2$,}\\ \textbf{ReGLU}} \\
+\textbf{Proven} & \cell{$\boldsymbol{L}$\\ \textbf{(blocks)}} & \textbf{Result} & \cell{\textbf{Attention}\\ ($\ge 2$ tokens)} & \textbf{GELU} & $\boldsymbol{\tanh}$ & \cell{\textbf{SwiGLU,}\\ \textbf{GeGLU}} & \textbf{ReLU} & \cell{\textbf{ReLU$^2$,}\\ \textbf{ReGLU}} \\
 \thickhline
-$\mathcal S \subseteq \overline{\mathcal R}$ & $\ge 1$ & \ref{sec:limits} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+$\mathcal S \subseteq \overline{\mathcal R}$ & $\ge 1$ & Prop.~\ref{prop:limits} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
 \hline
-\quad with pre-RMSNorm & $\ge 1$ & \ref{sec:limits} & \multicolumn{6}{c|}{\checkmark\ if $\varepsilon = 0$; unknown if $\varepsilon > 0$} \\
+\quad with pre-RMSNorm & $\ge 1$ & Prop.~\ref{prop:limits} & \multicolumn{6}{c|}{\checkmark\ if $\varepsilon = 0$; unknown if $\varepsilon > 0$} \\
 \thickhline
-$\mathcal S \cap \mathcal R$ & $= 1$ & \ref{sec:oneblock} & $\emptyset$ & measure zero & $\emptyset$ & $\emptyset$ & measure zero & $\emptyset$ \\
+$\mathcal S \cap \mathcal R$ & $= 1$ & \cell{Thm.~\ref{thm:noabsorb},\\ Prop.~\ref{prop:attention},\\ Cor.~\ref{cor:depth}} & $\emptyset$ & measure zero & $\emptyset$ & $\emptyset$ & measure zero & $\emptyset$ \\
 \hline
-$\mathcal S \cap \mathcal R$ & $\ge 2$ & \ref{sec:oneblock} & measure zero & measure zero & $\emptyset$ & $\emptyset$ & \cell{measure zero if\\ first hidden dim\\ $< 2\dm$; open\\ problem otherwise} & $\emptyset$ \\
+$\mathcal S \cap \mathcal R$ & $\ge 2$ & \cell{Thm.~\ref{thm:noabsorb},\\ Cor.~\ref{cor:depth}} & measure zero & measure zero & $\emptyset$ & $\emptyset$ & \cell{measure zero if\\ first hidden dim\\ $< 2\dm$; open\\ problem otherwise} & $\emptyset$ \\
 \hline
-\quad with pre-RMSNorm & $\ge 1$ & \ref{sec:oneblock} & measure zero & measure zero & measure zero & $\emptyset$ & unknown & $\emptyset$ \\
+\quad with pre-RMSNorm & $\ge 1$ & \cell{Thm.~\ref{thm:noabsorb},\\ Cor.~\ref{cor:depth}} & measure zero & measure zero & measure zero & $\emptyset$ & unknown & $\emptyset$ \\
 \thickhline
-symmetries removed by the skips & $\ge 1$ & \ref{sec:count} & \multicolumn{6}{c|}{$L\dm^2$} \\
+symmetries removed by the skips & $\ge 1$ & Cor.~\ref{cor:count} & \multicolumn{6}{c|}{$L\dm^2$} \\
 \hline
-\quad with pre-RMSNorm & $\ge 1$ & \ref{sec:count} & \multicolumn{6}{c|}{$L\dm(\dm-1)/2$} \\
+\quad with pre-RMSNorm & $\ge 1$ & Cor.~\ref{cor:count} & \multicolumn{6}{c|}{$L\dm(\dm-1)/2$} \\
 \thickhline
-$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $= 1$ & \ref{sec:onelayer} & \multicolumn{6}{c|}{$= \dm^2$} \\
+$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $= 1$ & Thm.~\ref{thm:onelayer} & \multicolumn{6}{c|}{$= \dm^2$} \\
 \hline
-\quad with pre-RMSNorm & $= 1$ & \ref{sec:onelayer} & \multicolumn{6}{c|}{$\ge \dm(\dm-1)/2$} \\
+\quad with pre-RMSNorm & $= 1$ & Thm.~\ref{thm:onelayer} & \multicolumn{6}{c|}{$\ge \dm(\dm-1)/2$} \\
 \hline
-$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $\ge 2$ & \ref{sec:measured} & $\ge L\dm^2$ & \cell{$\ge L\dm^2$;\\ $= L\dm^2$ if every\\ hidden dim $\ge 2\dm$} & $= L\dm^2$ & $\ge L\dm^2$ & \cell{$\ge L\dm^2$ near\\ small writes} & \cell{$\ge L\dm^2$ near\\ small writes} \\
+$\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $\ge 2$ & \cell{Cor.~\ref{cor:resdepth},\\ Cor.~\ref{cor:exactgain},\\ Rem.~\ref{rem:reludepth}} & $\ge L\dm^2$ & \cell{$\ge L\dm^2$;\\ $= L\dm^2$ if every\\ hidden dim $\ge 2\dm$} & $= L\dm^2$ & $\ge L\dm^2$ & \cell{$\ge L\dm^2$ near\\ small writes} & \cell{$\ge L\dm^2$ near\\ small writes} \\
 \hline
-\quad with pre-RMSNorm & $\ge 2$ & \ref{sec:measured} & \multicolumn{4}{c|}{$\ge L\dm(\dm-1)/2$} & unknown & unknown \\
+\quad with pre-RMSNorm & $\ge 2$ & Cor.~\ref{cor:resdepth} & \multicolumn{4}{c|}{$\ge L\dm(\dm-1)/2$} & unknown & unknown \\
 \hline
 \end{tabular}}
-\caption{Proved for skipless ($\mathcal S$) and residual ($\mathcal R$) networks of $L$ blocks, without biases or normalization, and with pre-RMSNorm ($\varepsilon > 0$ unless stated) where marked; assumptions in \cref{sec:setup}. $\mathcal S \cap \mathcal R$: $\emptyset$ if $ED \neq 0$, at any widths; measure zero at equal widths. Hidden dim: number of hidden units of a block. Unknown: not proved. Measured: \cref{tab:measured}.}
+\caption{Proven for skipless ($\mathcal S$) and residual ($\mathcal R$) networks of $L$ blocks, without biases or normalization, and with pre-RMSNorm ($\varepsilon > 0$ unless stated) where marked; assumptions in \cref{sec:setup}. $\mathcal S \cap \mathcal R$: $\emptyset$ if $ED \neq 0$, at any widths; measure zero at equal widths. Hidden dim: number of hidden units of a block. Unknown: not proven. Measured: \cref{tab:measured}.}
 \label{tab:overview}
 \end{table}
 
@@ -149,9 +149,9 @@ $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $\ge 2$ & \ref{sec:mea
 \centering
 % What skip connections add, by normalization and block. A proof covers its whole band; simulations are per block.
 % Sources: fdim/tree/grid_core.tex and tags_paper.tex in the scratch tree; variants in figs/decision_variants.
-{\def\fdprf#1#2{{\hypersetup{linkcolor=white}\hyperref[#1]{#2}}}%
-\def\fdPrA{pr/{\fdprf{thm:onelayer}{$L = 1$, proven}}}
-\def\fdPrB{pr/{\fdprf{thm:onelayer}{$L = 1$, proven as lower bound}}}
+{\def\fdprf#1#2#3{{\hypersetup{linkcolor=white}\hyperref[#2]{#3, #1~\ref*{#2}}}}%
+\def\fdPrA{pr/{\fdprf{Thm.}{thm:onelayer}{$L = 1$}}}
+\def\fdPrB{pr/{\fdprf{Thm.}{thm:onelayer}{$L = 1$, lower bound}}}
 \def\fdReLUa{sm/{$L > 1$, simulated: $L\,d^2$ or more}}
 \def\fdReLUb{sm/{$L = 1$, simulated}}
 \def\fdReLUsqa{sm/{$L > 1$, simulated}}
@@ -159,17 +159,17 @@ $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $\ge 2$ & \ref{sec:mea
 \def\fdReGLUa{sm/{$L > 1$, simulated}}
 \def\fdReGLUb{sm/{$L > 1$, simulated}}
 \def\fdReGLUc{sm/{$L > 1$, simulated}}
-\def\fdAttna{pr/{\fdprf{cor:resdepth}{$L > 1$, proven as lower bound}}}
-\def\fdAttnb{pr/{\fdprf{cor:resdepth}{$L > 1$, proven as lower bound}}}
-\def\fdTanha{pr/{\fdprf{cor:exactgain}{$L > 1$, proven}}}
-\def\fdTanhb{pr/{\fdprf{cor:resdepth}{$L > 1$, proven as lower bound}}}
+\def\fdAttna{pr/{\fdprf{Cor.}{cor:resdepth}{$L > 1$, lower bound}}}
+\def\fdAttnb{pr/{\fdprf{Cor.}{cor:resdepth}{$L > 1$, lower bound}}}
+\def\fdTanha{pr/{\fdprf{Cor.}{cor:exactgain}{$L > 1$}}}
+\def\fdTanhb{pr/{\fdprf{Cor.}{cor:resdepth}{$L > 1$, lower bound}}}
 \def\fdTanhc{sm/{$L > 1$, simulated}}
-\def\fdGELUa{pr/{\fdprf{cor:resdepth}{$L > 1$, proven as lower bound}}}
-\def\fdGELUb{pr/{\fdprf{cor:resdepth}{$L > 1$, proven as lower bound}}}
-\def\fdSwiGLUa{pr/{\fdprf{cor:resdepth}{$L > 1$, proven as lower bound}}}
-\def\fdSwiGLUb{pr/{\fdprf{cor:resdepth}{$L > 1$, proven as lower bound}}}
-\def\fdGeGLUa{pr/{\fdprf{cor:resdepth}{$L > 1$, proven as lower bound}}}
-\def\fdGeGLUb{pr/{\fdprf{cor:resdepth}{$L > 1$, proven as lower bound}}}
+\def\fdGELUa{pr/{\fdprf{Cor.}{cor:resdepth}{$L > 1$, lower bound}}}
+\def\fdGELUb{pr/{\fdprf{Cor.}{cor:resdepth}{$L > 1$, lower bound}}}
+\def\fdSwiGLUa{pr/{\fdprf{Cor.}{cor:resdepth}{$L > 1$, lower bound}}}
+\def\fdSwiGLUb{pr/{\fdprf{Cor.}{cor:resdepth}{$L > 1$, lower bound}}}
+\def\fdGeGLUa{pr/{\fdprf{Cor.}{cor:resdepth}{$L > 1$, lower bound}}}
+\def\fdGeGLUb{pr/{\fdprf{Cor.}{cor:resdepth}{$L > 1$, lower bound}}}
 \def\fdUnkA{uk/{$L = 1$, unknown}}
 \def\fdReLUc{uk/{$L > 1$, unknown}}
 \def\fdReLUsqc{uk/{$L > 1$, unknown}}
@@ -177,9 +177,9 @@ $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $\ge 2$ & \ref{sec:mea
 \def\fdGELUc{uk/{$L > 1$, unknown}}
 \def\fdSwiGLUc{uk/{$L > 1$, unknown}}
 \def\fdGeGLUc{uk/{$L > 1$, unknown}}
-\def\fdLearna{pr/{\fdprf{thm:gauge}{any $L$, proven}}}
-\def\fdLearnb{pr/{\fdprf{thm:onelayer}{$L = 1$, proven}},sm/{$\tanh$, $L > 1$, simulated}}
-\def\fdLearnc{pr/{\fdprf{thm:onelayer}{homogeneous, $L = 1$, proven}},pr/{\fdprf{thm:onelayer}{$L = 1$, proven as upper bound}},sm/{$\tanh$, $L > 1$, simulated}}
+\def\fdLearna{pr/{\fdprf{Thm.}{thm:gauge}{any $L$}}}
+\def\fdLearnb{pr/{\fdprf{Thm.}{thm:onelayer}{$L = 1$}},sm/{$\tanh$, $L > 1$, simulated}}
+\def\fdLearnc{pr/{\fdprf{Thm.}{thm:onelayer}{homogeneous, $L = 1$}},pr/{\fdprf{Thm.}{thm:onelayer}{$L = 1$, upper bound}},sm/{$\tanh$, $L > 1$, simulated}}
 \definecolor{idskip}{HTML}{2A78D6}%
 \definecolor{lrskip}{HTML}{1BAF7A}%
 \begin{tikzpicture}[x=1mm,y=1mm,
@@ -255,7 +255,7 @@ $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $\ge 2$ & \ref{sec:mea
 \fdvtags{\fdC}{-90.2}{\fdLearnc}
 \end{tikzpicture}
 }
-\caption{Values from the symmetry counts (\cref{cor:count,thm:rms}); proofs in \cref{thm:gauge,thm:onelayer,cor:resdepth,cor:exactgain}; simulations, which attain the lower bounds, in \cref{app:checks}.}
+\caption{Values from the symmetry counts (\cref{cor:count,thm:rms}). Black tags: proven, by the result named; white: simulated, at the lower bound (\cref{app:checks}); dashed: unknown.}
 \label{fig:decision}
 \end{figure}
 
@@ -903,10 +903,10 @@ A unit of a gated block computes $g(u\cdot x)\,(v\cdot x)$. Since $g(0) = 0$ and
 \end{proof}
 
 \begin{corollary}[Any depth]\label{cor:depth}
-Let every block be as in \cref{prop:f2} with $k > 1$ or as in \cref{prop:gated}, of any widths. Let $F$ be a composition of residual blocks $h \mapsto h + B_\ell(h)$ and $H$ a composition of one or more blocks without skips. Then $F \neq H$. With embeddings and readouts, the residual network $x \mapsto F(xE)D$ differs from the skipless network $x \mapsto H(xE')D'$ whenever $ED \neq 0$, also with pre-RMSNorm and $\varepsilon > 0$.
+Let every block be as in \cref{prop:f2} with $k > 1$ or as in \cref{prop:gated}, of any widths. Let $F$ be a composition of residual blocks $h \mapsto h + B_\ell(h)$ and $H$ a composition of one or more blocks without skips. Then $F \neq H$. With embeddings and readouts, the residual network $x \mapsto F(xE)D$ differs from the skipless network $x \mapsto H(xE')D'$ whenever $ED \neq 0$, also with pre-RMSNorm and $\varepsilon > 0$. Without normalization the same holds for $\tanh$ blocks.
 \end{corollary}
 \begin{proof}
-Each such block maps $0$ to $0$ and has Jacobian $0$ there, because it is $O(\norm{x}^k)$ with $k > 1$, respectively $O(\norm{x}^2)$. By the chain rule $F$ has Jacobian $I$ at the origin and $H$ has Jacobian $0$; with embeddings and readouts these become $ED$ and $0$. Under pre-RMSNorm with $\varepsilon > 0$, $N(0) = 0$ and $N$ has Jacobian $I/\sqrt{\varepsilon}$ at $0$, so every block, read through $N$, still has Jacobian $0$ there, and the residual and the skipless network have Jacobians $ED/\sqrt{\varepsilon}$ and $0$ at the origin.
+Each such block maps $0$ to $0$ and has Jacobian $0$ there, because it is $O(\norm{x}^k)$ with $k > 1$, respectively $O(\norm{x}^2)$. By the chain rule $F$ has Jacobian $I$ at the origin and $H$ has Jacobian $0$; with embeddings and readouts these become $ED$ and $0$. Under pre-RMSNorm with $\varepsilon > 0$, $N(0) = 0$ and $N$ has Jacobian $I/\sqrt{\varepsilon}$ at $0$, so every block, read through $N$, still has Jacobian $0$ there, and the residual and the skipless network have Jacobians $ED/\sqrt{\varepsilon}$ and $0$ at the origin. For $\tanh$ blocks without normalization, $H$ and $F(h) - h$ are bounded, so $F(xE)D - H(xE')D'$ differs from $xED$ by a bounded function and does not vanish when $ED \neq 0$.
 \end{proof}
 
 \para{Parity.} The remaining activations have an odd part that is exactly linear. For ReLU, $\mathrm{ReLU}(z) = |z|/2 + z/2$. For GELU, $\mathrm{GELU}(z) = z\Phi(z)$ with $\Phi$ the standard normal distribution function, and since $\Phi(-z) = 1 - \Phi(z)$,
