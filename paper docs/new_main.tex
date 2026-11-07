@@ -467,7 +467,7 @@ The changes of basis form a group of dimension $(L+1)\dim\G$ in a skipless netwo
 
 The gain needs identity units that the other units of a block cannot absorb. A linear branch absorbs them: $h + hA = h(I + A)$, the deep linear residual network of \citet{hardt2017identity}, whose identity parametrization adds no functional dimension. So do $\dm$ more ReLU, GELU or SiLU units, since $\sigma(z) - \sigma(-z) = z$. With fewer units the common blocks cannot. A block is \emph{nondegenerate} if the columns of $\Wread$ are nonzero and pairwise non-collinear and the rows of $\Wwrite$ are nonzero.
 
-We ask whether a block can absorb a linear term. Let $M \neq 0$ be a $\dm \times \dm$ matrix and $B$ a vanilla or GLU MLP block without biases (\cref{sec:setup}). We look for a block $B'$ of the same kind, with the same activation or the same gate function but any read and write, also without biases, such that
+We ask whether a block can absorb a linear term.\ifanon{} \citet{mijoski2026absorb} ask this for the identity skip; this section restates their results and extends some of them.\fi{} Let $M \neq 0$ be a $\dm \times \dm$ matrix and $B$ a vanilla or GLU MLP block without biases (\cref{sec:setup}). We look for a block $B'$ of the same kind, with the same activation or the same gate function but any read and write, also without biases, such that
 \begin{equation}\label{eq:absorbask}
 xM + B(x) = B'(x) \qquad \text{for all row vectors } x \in \R^{1\times\dm}.
 \end{equation}
