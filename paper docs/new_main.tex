@@ -134,7 +134,7 @@ $\mathcal S \subseteq \overline{\mathcal R}$ & $\ge 1$ & \multicolumn{6}{c|}{\re
 \hline
 \quad with pre-RMSNorm & $\ge 1$ & \multicolumn{6}{c|}{\res{\checkmark\ if $\varepsilon = 0$}{Prop.}{prop:limits}{b}\qquad\cell{unknown if $\varepsilon > 0$\\ ~}} \\
 \thickhline
-$\mathcal S \cap \mathcal R$ & $= 1$ & \res{$\emptyset$}{Prop.}{prop:attention}{c} & \res{measure zero}{Thm.}{thm:relugelu}{a} & \res{$\emptyset$}{Thm.}{thm:homgated}{d} & \res{$\emptyset$}{Thm.}{thm:homgated}{c} & \res{measure zero}{Thm.}{thm:relugelu}{a} & \res{$\emptyset$}{Thm.}{thm:homgated}{c} \\
+$\mathcal S \cap \mathcal R$ & $= 1$ & \res{$\emptyset$}{Cor.}{cor:attention}{b} & \res{measure zero}{Thm.}{thm:relugelu}{a} & \res{$\emptyset$}{Thm.}{thm:homgated}{d} & \res{$\emptyset$}{Thm.}{thm:homgated}{c} & \res{measure zero}{Thm.}{thm:relugelu}{a} & \res{$\emptyset$}{Thm.}{thm:homgated}{c} \\
 \hline
 $\mathcal S \cap \mathcal R$ & $\ge 2$ & \multicolumn{2}{c|}{\res{measure zero}{Thm.}{thm:depthgelu}{b}} & \res{$\emptyset$}{Thm.}{thm:homgated}{d} & \res{$\emptyset$}{Thm.}{thm:homgated}{c} & \cell{measure zero if\\ first hidden dim\\ $< 2\dm$\\ \rtag{Thm.}{thm:relufirst}{}\\ otherwise unknown} & \res{$\emptyset$}{Thm.}{thm:homgated}{c} \\
 \hline
@@ -433,12 +433,12 @@ with $\tilde f\big(\big[\, u \;\big|\; z \,\big]\big) = \big[\, u \;\big|\; f(z)
 
 \subsection{Junctions}\label{sec:junctions}
 
-Nothing nonlinear happens between the read of the identity units and their write, nor, without skips, between the write into a hidden state and the reads of it: both are linear junctions, where only the products of the matrices on the two sides enter the function.
+Nothing nonlinear happens between the read of the identity units and their write. Without skips, nothing nonlinear happens between the write into a hidden state and its reads either. Both are linear junctions: only the products of the matrices on the two sides enter the function.
 
 \begin{restatable}[Junctions]{proposition}{propJunction}\label{prop:junction}
-\textup{(a)}\ptlabel{prop:junction:a} \pname{Identity units} In a mixed block, $(U, V) \mapsto (UK, K^{-1}V)$ preserves the function for every $K \in \GL(\dm)$.\\
-\textup{(b)}\ptlabel{prop:junction:b} \pname{Hidden states} In a skipless network, and in a network of mixed blocks, multiplying the matrices that write a hidden state on the right by $G \in \G$, and the matrices that read it on the left by $G^{-1}$, preserves the function; for $\varepsilon = 0$, a read through RMSNorm is multiplied by $Q^\top$ instead, where $G = cQ$ with $c > 0$ and $Q$ orthogonal.\\
-\textup{(c)}\ptlabel{prop:junction:c} \pname{Count} These maps commute when they act at different junctions. A skipless network therefore carries one copy of $\G$ per hidden state, and a network of mixed blocks one more copy of $\GL(\dm)$ per block.
+\textup{(a)}\ptlabel{prop:junction:a} \pname{Only $UV$ matters} In a mixed block, $(U, V) \mapsto (UK, K^{-1}V)$ preserves the function for every $K \in \GL(\dm)$.\\
+\textup{(b)}\ptlabel{prop:junction:b} \pname{Hidden states are junctions} In a skipless network, and in a network of mixed blocks, the map $W \mapsto WG$ on the matrices that write a hidden state and $W \mapsto G^{-1}W$ on those that read it preserves the function for every $G \in \G$. For $\varepsilon = 0$ and $G = cQ$, a read through RMSNorm maps to $Q^\top W$ instead.\\
+\textup{(c)}\ptlabel{prop:junction:c} \pname{One group per junction} The maps of (a) and (b) commute when they act at different junctions. A skipless network therefore carries one copy of $\G$ per hidden state, and a network of mixed blocks one more copy of $\GL(\dm)$ per block.
 \end{restatable}
 \proofin{app:prf-junction}
 
@@ -446,7 +446,7 @@ Part (a) is the merge: a mixed block depends on $U$ and $V$ only through $A = UV
 
 \subsection{The gauge fix}\label{sec:gaugefix}
 
-The changes of basis at the junctions bring the read and the write of every identity unit to the identity. In a network of mixed blocks, let $A_\ell = U_\ell V_\ell$ be the skip of block $\ell$; in a network with learned skips, $A_\ell$ is the learned skip. Let $\Lambda_\ell = A_{\ell+1} A_{\ell+2} \cdots A_L$ be the product of the skips after $h_\ell$, with $\Lambda_L = I$.
+The changes of basis at the junctions bring the read and the write of every identity unit to the identity. Let $\Lambda_\ell = A_{\ell+1} A_{\ell+2} \cdots A_L$, with $A_\ell = U_\ell V_\ell$ and $\Lambda_L = I$.
 
 \begin{restatable}[Skip connections are gauge fixes]{corollary}{corGauge}\label{cor:gauge}
 \textup{(a)}\ptlabel{cor:gauge:a} \pname{Same function} Without normalization, if every $A_\ell$ is invertible, the network of mixed blocks and the network with learned skips compute the same function as the residual network with the embedding $E\Lambda_0$, the reads $\Lambda_{\ell-1}^{-1}\Wread^{\ell}$, the writes $\Wwrite^{\ell}\Lambda_\ell$ and the readout $D$.\\
@@ -468,9 +468,9 @@ The frozen identity units carry $h_{\ell-1}$ in the basis $G_{\ell-1}$, and the 
 \subsection{What the skips remove}\label{sec:count}
 
 \begin{restatable}[What the skips remove]{corollary}{corCount}\label{cor:count}
-\textup{(a)}\ptlabel{cor:count:a} \pname{Symmetry removed} The changes of basis form a group of dimension $(L+1)\dim\G$ in a skipless network and $\dim\G$ in a residual one, so the $L$ skips remove $L\dim\G$ dimensions of symmetry.\\
-\textup{(b)}\ptlabel{cor:count:b} \pname{Upper bounds} If in both networks the symmetries act freely at generic parameters, then at generic parameters the functional dimension is at most $P - (L+1)\dim\G - s$ without skips and at most $P - \dim\G - s$ with them.\\
-\textup{(c)}\ptlabel{cor:count:c} \pname{Gain} If in addition both networks satisfy the equality condition, the skips raise the functional dimension by exactly $L\dim\G$, which is $L\dm^2$ without normalization.
+\textup{(a)}\ptlabel{cor:count:a} \pname{Symmetry removed} The changes of basis that preserve the function at all parameters form a group of dimension $(L+1)\dim\G$ in a skipless network and $\dim\G$ in a residual one, so the $L$ skips remove $L\dim\G$ dimensions of symmetry.\\
+\textup{(b)}\ptlabel{cor:count:b} \pname{Upper bounds on functional dimension} If in both networks the symmetries act freely at generic parameters, the functional dimension at these parameters is at most $P - (L+1)\dim\G - s$ without skips and $P - \dim\G - s$ with them.\\
+\textup{(c)}\ptlabel{cor:count:c} \pname{Exact gain} If in addition both networks satisfy the equality condition, the skips raise the functional dimension by exactly $L\dim\G$, which is $L\dm^2$ without normalization.
 \end{restatable}
 \proofin{app:prf-count}
 
@@ -481,38 +481,37 @@ The frozen identity units carry $h_{\ell-1}$ in the basis $G_{\ell-1}$, and the 
 
 The gain needs identity units that the other units of a block cannot absorb. A linear branch absorbs them: $h + hA = h(I + A)$, the deep linear residual network of \citet{hardt2017identity}, whose identity parametrization adds no functional dimension. So do $\dm$ more ReLU, GELU or SiLU units, since $\sigma(z) - \sigma(-z) = z$. With fewer units the common blocks cannot. A block is \emph{nondegenerate} if the columns of $\Wread$ are nonzero and pairwise non-collinear and the rows of $\Wwrite$ are nonzero. For a set $S$ of hidden units, $\Wread[{:},S]$ and $\Wwrite[S,{:}]$ keep the columns and the rows of the units in $S$.
 
-We ask whether a block can absorb a linear term.\ifanon{} \citet{mijoski2026absorb} ask this for the identity skip; this section restates their results and extends some of them.\fi{} Let $M \neq 0$ be a $\dm \times \dm$ matrix and $B$ a vanilla or GLU MLP block without biases (\cref{sec:setup}). We look for a block $B'$ of the same kind, with the same activation or the same gate function but any read and write, also without biases, such that
+We ask whether a block can absorb a linear term.\ifanon{} \citet{mijoski2026absorb} ask this for the identity skip; this section restates their results and extends some of them.\fi{} Let $M \neq 0$ be a $\dm \times \dm$ matrix, and let $B_\theta$ be a vanilla or GLU MLP block with parameters $\theta = (\Wread, \Wwrite)$ (\cref{sec:setup}). We look for parameters $\theta'$ of a block with the same activation or gate function, and of any width, such that
 \begin{equation}\label{eq:absorbask}
-xM + B(x) = B'(x) \qquad \text{for all row vectors } x \in \R^{1\times\dm}.
+xM + B_\theta(x) = B_{\theta'}(x) \qquad \text{for all row vectors } x \in \R^{1\times\dm}.
 \end{equation}
 
 \begin{restatable}[Homogeneous, gated and bounded blocks]{theorem}{thmAbsorbHom}\label{thm:homgated}
 Let the blocks be positively homogeneous of degree $k \neq 1$, as ReLU$^2$ and ReGLU blocks are, or gated with a gate that is differentiable at $0$ and vanishes there, as SwiGLU and GeGLU blocks are.\\
-\textup{(a)}\ptlabel{thm:homgated:a} \pname{One block} No block $B'$ of any width satisfies \eqref{eq:absorbask}.\\
+\textup{(a)}\ptlabel{thm:homgated:a} \pname{One block} No block $B_{\theta'}$ of any width satisfies \eqref{eq:absorbask}.\\
 \textup{(b)}\ptlabel{thm:homgated:b} \pname{Compositions} For gated blocks, and for homogeneous blocks with $k > 1$, no composition of one or more blocks without skips equals a composition of residual blocks, whatever their numbers and widths.\\
-\textup{(c)}\ptlabel{thm:homgated:c} \pname{With an embedding and a readout} For the blocks of (b), with an embedding $E$ and a readout $D$, no skipless network equals a residual network with $ED \neq 0$, also under pre-RMSNorm with $\varepsilon > 0$.\\
-\textup{(d)}\ptlabel{thm:homgated:d} \pname{$\tanh$ blocks} Without normalization, (a), (b) and (c) also hold for $\tanh$ blocks.
+\textup{(c)}\ptlabel{thm:homgated:c} \pname{Networks} For the blocks of (b), with an embedding $E$ and a readout $D$, no skipless network equals a residual network with $ED \neq 0$, also under pre-RMSNorm with $\varepsilon > 0$.\\
+\textup{(d)}\ptlabel{thm:homgated:d} \pname{Bounded blocks} Without normalization, (a), (b) and (c) also hold for $\tanh$ blocks.
 \end{restatable}
 \proofin{app:absorb}
 
 \begin{restatable}[ReLU and GELU blocks]{theorem}{thmAbsorbReLU}\label{thm:relugelu}
-Let $\sigma$ be ReLU or GELU and $\dm \ge 2$.\\
-\textup{(a)}\ptlabel{thm:relugelu:a} \pname{Same width} If $B$ is nondegenerate, a block $B'$ of the same width satisfies \eqref{eq:absorbask} if and only if some set $S$ of hidden units has $\Wread[{:},S]\,\Wwrite[S,{:}] = -M$; for generic weights there is none.\\
-\textup{(b)}\ptlabel{thm:relugelu:b} \pname{$\dm$ more units} If $M$ is invertible and $\Wread$ has rank $\dm$, a block $B'$ with $\dm$ more hidden units satisfies \eqref{eq:absorbask}, and for generic weights none with fewer does.
+Let $\sigma$ be ReLU or GELU.\\
+\textup{(a)}\ptlabel{thm:relugelu:a} \pname{Same width} If $B_\theta$ is nondegenerate, a block $B_{\theta'}$ of the same width satisfies \eqref{eq:absorbask} if and only if some set $S$ of hidden units has $\Wread[{:},S]\,\Wwrite[S,{:}] = -M$; for generic $\theta$ there is none.\\
+\textup{(b)}\ptlabel{thm:relugelu:b} \pname{Extra units} If $M$ is invertible and $\Wread$ has rank $\dm$, a block $B_{\theta'}$ with $\dm$ more hidden units satisfies \eqref{eq:absorbask}, and for generic $\theta$ none with fewer does.
 \end{restatable}
 \proofin{app:absorb}
 
 \begin{restatable}[GELU and smooth blocks at depth]{theorem}{thmAbsorbDepth}\label{thm:depthgelu}
-Let $\dm \ge 2$.\\
 \textup{(a)}\ptlabel{thm:depthgelu:a} \pname{GELU compositions} For GELU blocks and almost every choice of weights, a composition of $L \ge 2$ residual blocks equals no composition of $L$ blocks without skips of the same widths.\\
 \textup{(b)}\ptlabel{thm:depthgelu:b} \pname{Smooth networks} With an embedding and a readout, the same holds for networks of smooth blocks of any depth $L \ge 1$, also under pre-RMSNorm with $\varepsilon > 0$.\\
-\textup{(c)}\ptlabel{thm:depthgelu:c} \pname{Fewer than $L\dm/2$ extra units} For GELU blocks with an embedding and a readout, and almost every choice of weights, a residual network of $L$ blocks equals no skipless network of $L$ blocks that each have at least $\dm$ hidden units and that have fewer than $L\dm/2$ more hidden units in all.\\
-\textup{(d)}\ptlabel{thm:depthgelu:d} \pname{$\dm$ extra units per block} For GELU blocks with an embedding and a readout, a residual network whose reads all have rank $\dm$ equals a skipless network with $\dm$ more hidden units in every block.
+\textup{(c)}\ptlabel{thm:depthgelu:c} \pname{Too few extra units} For GELU blocks with an embedding and a readout, and almost every choice of weights, a residual network of $L$ blocks equals no skipless network of $L$ blocks with fewer than $L\dm/2$ more hidden units in all.\\
+\textup{(d)}\ptlabel{thm:depthgelu:d} \pname{Enough extra units} For GELU blocks with an embedding and a readout, a residual network whose reads all have rank $\dm$ equals a skipless network with $\dm$ more hidden units in every block.
 \end{restatable}
 \proofin{app:absorb}
 
 \begin{restatable}[ReLU blocks at depth]{theorem}{thmAbsorbFirst}\label{thm:relufirst}
-Let $\sigma$ be ReLU and $\dm \ge 2$, with an embedding and a readout. For almost every choice of weights, a residual network equals no skipless network whose first block has fewer than $2\dm$ hidden units, whatever its depth and its other widths.
+Consider networks of ReLU blocks with an embedding and a readout. For almost every choice of weights, a residual network equals no skipless network whose first block has fewer than $2\dm$ hidden units, whatever its depth and its other widths.
 \end{restatable}
 \proofin{app:absorb}
 
@@ -522,30 +521,29 @@ Let $\sigma$ be ReLU and $\dm \ge 2$, with an embedding and a readout. For almos
 
 \para{Attention.} Attention mixes tokens; a skip keeps each token where it is. Two inputs make this precise. If all tokens are equal, mixing changes nothing, so the heads must reproduce the skip. If one token is zero, its query is zero, so attention gives it an equal mix of all tokens. The skip gives it zero.
 
-An \emph{attention block} with $H$ heads maps $h \in \R^{T\times\dm}$, whose rows are the $T \ge 2$ tokens, to
+An \emph{attention block} with parameters $\theta = (W_{Q,i}, W_{K,i}, W_{V,i}, W_{O,i})_{i=1}^{H}$ maps $h \in \R^{T\times\dm}$, whose rows are the $T \ge 2$ tokens, to
 \begin{equation}\label{eq:attn}
-B(h) = \sum_{i=1}^{H} P_i(h)\, h\, W_{V,i} W_{O,i}, \qquad P_i(h) = \mathrm{softmax}\big(h\, W_{Q,i} W_{K,i}^\top h^\top/\sqrt{d_h}\big),
+B_\theta(h) = \sum_{i=1}^{H} P_{\Gamma_i}(h)\, h\, W_{V,i} W_{O,i}, \qquad P_\Gamma(h) = \mathrm{softmax}\big(h\, \Gamma h^\top\big), \qquad \Gamma_i = W_{Q,i} W_{K,i}^\top/\sqrt{d_h},
 \end{equation}
-with $W_{Q,i}, W_{K,i}, W_{V,i} \in \R^{\dm\times d_h}$ and $W_{O,i} \in \R^{d_h\times\dm}$, and no biases. The softmax acts on each row of the $T\times T$ matrix of scores, with or without a causal mask, so each row of $P_i(h)$ is a probability vector. For a second attention block $B'$, with $H'$ heads of width $d_h'$, primes mark the weights and the attention maps $P_j'$.
+where $W_{Q,i}, W_{K,i}, W_{V,i} \in \R^{\dm\times d_h}$ and $W_{O,i} \in \R^{d_h\times\dm}$. The softmax acts on each row of the $T\times T$ matrix of scores, with or without a causal mask, so each row of $P_\Gamma(h)$ is a probability vector. Head $i$ has the score matrix $\Gamma_i$ and the value--output product $W_{V,i}W_{O,i}$.
 
-\begin{restatable}[No absorption in attention]{proposition}{propAttention}\label{prop:attention}
-Let $T \ge 2$, let $B$ and $B'$ be attention blocks with any numbers and widths of heads, let $M \neq 0$ be a $\dm\times\dm$ matrix, and set $F(h) = hM + B(h) - B'(h)$.\\
-\textup{(a)}\ptlabel{prop:attention:a} \pname{Almost every input} $F(h) \neq 0$ for almost every $h \in \R^{T\times\dm}$.\\
-\textup{(b)}\ptlabel{prop:attention:b} \pname{A uniform gap} Some $h$ whose rows have norm at most $1$ has a row of $F(h)$ of norm at least $\norm{M}/3$, where $\norm{M}$ is the spectral norm. For the identity skip, $M = I$, this is $1/3$.\\
-\textup{(c)}\ptlabel{prop:attention:c} \pname{With an embedding and a readout} With an embedding $E$ and a readout $D$, the residual network $x \mapsto \big(xE + B(xE)\big)D$ differs from every network $x \mapsto B'(xE')D'$ whenever $ED \neq 0$.
+\begin{restatable}[No absorption in attention]{corollary}{corAttention}\label{cor:attention}
+Let $\theta$ and $\theta'$ be parameters of attention blocks with any numbers and widths of heads, and let $M \neq 0$ be a $\dm\times\dm$ matrix.\\
+\textup{(a)}\ptlabel{cor:attention:a} \pname{One block} For almost every $h \in \R^{T\times\dm}$, $hM + B_\theta(h) \neq B_{\theta'}(h)$.\\
+\textup{(b)}\ptlabel{cor:attention:b} \pname{Networks} With an embedding $E$ and a readout $D$ with $ED \neq 0$, the residual network $x \mapsto \big(xE + B_\theta(xE)\big)D$ differs from every skipless network $x \mapsto B_{\theta'}(xE')D'$.
 \end{restatable}
-\proofin{app:attention}
+\corof{prop:attention}{app:attention}
 
-The proof uses only that each row of attention weights sums to $1$ and is uniform for a zero query, so it also holds with rotary position embeddings. Adding heads does not help, whereas $\dm$ more ReLU or GELU units absorb the skip of an MLP block (\cpref{thm:relugelu}{b}).
+The proof gives a gap: some input whose rows have norm at most $1$ has a row in which $hM + B_\theta(h)$ and $B_{\theta'}(h)$ differ by at least $\norm{M}/3$, where $\norm{M}$ is the spectral norm (\cpref{prop:attention}{b}). It uses only that each row of attention weights sums to $1$ and is uniform for a zero query, so it also holds with rotary position embeddings. Adding heads does not help, whereas $\dm$ more ReLU or GELU units absorb the skip of an MLP block (\cpref{thm:relugelu}{b}).
 
-\para{The softmaxes must match.} With three or more tokens there is a sharper reason why a skip cannot be absorbed: the heads of $B$ and $B'$ must cancel each other exactly, and then nothing is left to produce $hM$. What tells heads apart is where their softmaxes have poles in the complex plane.
+\para{The softmaxes must match.} With three or more tokens there is a sharper reason why a skip cannot be absorbed: the heads of $B_\theta$ and $B_{\theta'}$ must cancel each other exactly, and then nothing is left to produce $hM$. What tells heads apart is where their softmaxes have poles in the complex plane.
 
 \begin{restatable}[The softmaxes must match]{corollary}{corMatch}\label{cor:match}
-Let $T \ge 3$, let $B$ and $B'$ be attention blocks as in \cref{prop:attention}, and suppose that $hM + B(h) = B'(h)$ for all $h$ in a nonempty open set. Then $M = 0$. Moreover, for every score matrix $\Gamma$, the heads of $B$ with $W_{Q,i}W_{K,i}^\top/\sqrt{d_h} = \Gamma$ and the heads of $B'$ with $W_{Q,j}'W_{K,j}'^\top/\sqrt{d_h'} = \Gamma$ have the same sum of value--output products.
+Let $T \ge 3$, let $\theta$ and $\theta'$ be parameters of attention blocks, and suppose that $hM + B_\theta(h) = B_{\theta'}(h)$ for all $h$ in a nonempty open set. Then $M = 0$, and for every matrix $\Gamma$, the heads with score matrix $\Gamma$ have the same sum of value--output products in $B_\theta$ as in $B_{\theta'}$.
 \end{restatable}
 \corof{lem:heads}{app:attention}
 
-\Cref{lem:heads} shows that, with three or more tokens, a linear term $hM$ and heads with distinct score matrices cancel on an open set of inputs only if each of them vanishes. With two tokens they can cancel. The softmax of two scores is the logistic function $1/(1 + e^{-z})$ of their difference $z$, and $1/(1 + e^{-z}) + 1/(1 + e^{z}) = 1$ gives $P_\Gamma(h)h + P_{-\Gamma}(h)h = 2P_0(h)h$: two heads with opposite score matrices add up to a uniform head. A skip still cannot be absorbed when $T = 2$ (\cref{prop:attention}). With a causal mask, the same proof runs on the last row, which attends to all tokens.
+\Cref{lem:heads} shows that, with three or more tokens, a linear term $hM$ and heads with distinct score matrices cancel on an open set of inputs only if each of them vanishes. With two tokens they can cancel. The softmax of two scores is the logistic function $1/(1 + e^{-z})$ of their difference $z$, and $1/(1 + e^{-z}) + 1/(1 + e^{z}) = 1$ gives $P_\Gamma(h)h + P_{-\Gamma}(h)h = 2P_0(h)h$: two heads with opposite score matrices add up to a uniform head. A skip still cannot be absorbed when $T = 2$ (\cpref{cor:attention}{a}). With a causal mask, the same proof runs on the last row, which attends to all tokens.
 
 % ===== sections/norm.tex =====
 \section{Under normalization: triangular skips}\label{sec:norm}
@@ -556,13 +554,13 @@ Under normalization the identity units, which carry the skip, read $h$, while th
 \begin{equation}\label{eq:prenorm}
 h_\ell = h_{\ell-1}A_\ell + f_\ell\big(N(h_{\ell-1})\,\Wread^{\ell}\big)\,\Wwrite^{\ell},\qquad y = N(h_L)\,D.
 \end{equation}
-A change of basis at $h_\ell$ must now pass through $N$, so it lies in $\G$, which is $\Ort(\dm)$ for $\varepsilon > 0$ (\cref{lem:rms}), while the skip matrices, which read the raw stream, absorb any change of basis: $A_\ell \mapsto G_{\ell-1}^{-1}A_\ell G_\ell$. We write $\Pi_\ell = A_1 \cdots A_\ell$ for the product of the first $\ell$ skips, with $\Pi_0 = I$.
+A change of basis at $h_\ell$ must now pass through $N$, so it lies in $\G$, which is $\Ort(\dm)$ for $\varepsilon > 0$ (\cref{lem:rms}). The skips read the raw stream and absorb any change of basis: $A_\ell \mapsto G_{\ell-1}^{-1}A_\ell G_\ell$. Let $\Pi_\ell = A_1 \cdots A_\ell$, with $\Pi_0 = I$.
 
 \begin{restatable}[RMSNorm: a gauge fix and a constraint]{corollary}{corRMS}\label{cor:rms}
 Consider pre-RMSNorm networks with $\varepsilon > 0$, and the network with learned skips of \cref{eq:prenorm}.\\
 \textup{(a)}\ptlabel{cor:rms:a} \pname{Triangular skips} If every $A_\ell$ is invertible, there are orthogonal $Q_1, \dots, Q_L$, with $Q_0 = I$, such that every $Q_{\ell-1}^\top A_\ell Q_\ell$ is upper triangular with positive diagonal, and the network with the skips $Q_{\ell-1}^\top A_\ell Q_\ell$, the reads $Q_{\ell-1}^\top\Wread^{\ell}$, the writes $\Wwrite^{\ell}Q_\ell$ and the readout $Q_L^\top D$ computes the same function. Other orthogonal $Q_\ell$ make every skip symmetric positive definite instead.\\
 \textup{(b)}\ptlabel{cor:rms:b} \pname{Orthogonal skips are gauge} If every $A_\ell$ is orthogonal, the network computes the same function as the residual network with the embedding $E$, the reads $\Pi_{\ell-1}\Wread^{\ell}$, the writes $\Wwrite^{\ell}\Pi_\ell^\top$ and the readout $\Pi_LD$.\\
-\textup{(c)}\ptlabel{cor:rms:c} \pname{Functional dimension} Under the equality condition for the networks with learned skips, with identity skips and without skips, the functional dimension of the network with learned skips exceeds that of the residual network by $L\,\dm(\dm+1)/2$, and that of the residual network exceeds that of the skipless network by $L\,\dm(\dm-1)/2$.
+\textup{(c)}\ptlabel{cor:rms:c} \pname{What each skip adds} Under the equality condition for the networks with learned skips, with identity skips and without skips, the functional dimension of the network with learned skips exceeds that of the residual network by $L\,\dm(\dm+1)/2$, and that of the residual network exceeds that of the skipless network by $L\,\dm(\dm-1)/2$.
 \end{restatable}
 \corof{thm:rmsfull}{app:prf-rms}
 
@@ -583,8 +581,8 @@ Consider pre-RMSNorm networks with $\varepsilon > 0$, and the network with learn
 At a hidden state $h_\ell$, pick an invertible $\dm \times \dm$ block $W_1$, formed by $\dm$ columns of a matrix that reads $h_\ell$ or by $\dm$ rows of a matrix that writes it.
 
 \begin{restatable}[One free block per hidden state]{proposition}{propNormalForm}\label{prop:normalform}
-\textup{(a)}\ptlabel{prop:normalform:a} \pname{Without skips} In a skipless network or a network of mixed blocks, multiplying every matrix that writes $h_\ell$ on the right by $G \in \G$ and every matrix that reads $h_\ell$ on the left by $G^{-1}$ preserves the function. Without normalization, $G = W_1$ if $W_1$ is part of a read, and $G = W_1^{-1}$ if it is part of a write, turns $W_1$ into the identity. Under RMSNorm with $\varepsilon > 0$, $G = Q$ from a QR factorization $W_1 = QT$, or $W_1^\top = QT$ if $W_1$ is part of a write, turns $W_1$ into a triangular matrix. This can be done at every hidden state at once, and removes $\dm^2$, respectively $\dm(\dm-1)/2$, parameters per hidden state.\\
-\textup{(b)}\ptlabel{prop:normalform:b} \pname{With skips} In a residual network, the same map with one $G$ at every hidden state preserves the function, and turns a single such block of the whole network, in any one read or write, into the identity or a triangular matrix.
+\textup{(a)}\ptlabel{prop:normalform:a} \pname{Without skips} In a skipless network or a network of mixed blocks, the map $W \mapsto WG$ on the matrices that write $h_\ell$ and $W \mapsto G^{-1}W$ on those that read it turns $W_1$ into the identity for $G = W_1$ if $W_1$ is part of a read, and for $G = W_1^{-1}$ if it is part of a write. Under RMSNorm with $\varepsilon > 0$, $G = Q$ from a QR factorization $W_1 = QT$, or $W_1^\top = QT$ for a write, turns $W_1$ into a triangular matrix. Done at every hidden state, this removes $\dm^2$, respectively $\dm(\dm-1)/2$, parameters per hidden state without changing the function.\\
+\textup{(b)}\ptlabel{prop:normalform:b} \pname{With skips} In a residual network, the same map with one $G$ at all hidden states preserves the function and turns one such block, in any read or write of the network, into the identity or a triangular matrix.
 \end{restatable}
 \proofin{app:prf-normalform}
 
@@ -655,12 +653,12 @@ ReLU & 3 & \ref{app:checks} & none & $\ge L\dm^2$ \\
 \label{tab:measured}
 \end{table}
 
-\para{Residual networks at any depth.} For residual networks of smooth blocks the equality condition holds at every depth.
+For residual networks of smooth blocks the equality condition holds at every depth.
 
 \begin{corollary}[Residual networks at any depth]\label{cor:resdepth}
 Let the blocks be smooth, in any order and of any width.\\
-\textup{(a)}\ptlabel{cor:resdepth:a} \pname{Equality condition} At generic parameters the residual network of $L$ blocks satisfies the equality condition: its functional dimension is $P - \dim\G - s$. Without normalization or attention blocks, it does so with biases too, with a functional dimension $(L+1)\dm$ lower.\\
-\textup{(b)}\ptlabel{cor:resdepth:b} \pname{Gain} If every block has width at least $\dm$, the skips raise the functional dimension by at least $L\dim\G$, and by exactly $L\dim\G$ when the skipless network satisfies the equality condition too.
+\textup{(a)}\ptlabel{cor:resdepth:a} \pname{Redundancy equals symmetry} At generic parameters the residual network of $L$ blocks satisfies the equality condition: its functional dimension is $P - \dim\G - s$. Without normalization or attention blocks, it does so with biases too, with a functional dimension $(L+1)\dm$ lower.\\
+\textup{(b)}\ptlabel{cor:resdepth:b} \pname{A lower bound on the gain} If every block has width at least $\dm$, the skips raise the functional dimension by at least $L\dim\G$, and by exactly $L\dim\G$ when the skipless network satisfies the equality condition too.
 \end{corollary}
 \proofin{app:absorb}
 
@@ -682,11 +680,11 @@ Without normalization, in the two cases below the skipless network satisfies the
 
 \subsection{Skipless networks as limits of residual networks}\label{sec:limits}
 
-Every skipless network is a limit of residual networks with the same widths, so the gain in functional dimension does not come at the price of functions. In this subsection the networks have no biases, and no normalization unless said otherwise.
+Every skipless network without biases or normalization is a limit of residual networks with the same widths, so the gain in functional dimension does not come at the price of functions.
 
 \begin{restatable}[Skipless networks as limits of residual networks]{proposition}{propLimits}\label{prop:limits}
-Let $S$ be a skipless network without biases whose maps $f_\ell$ are locally Lipschitz.\\
-\textup{(a)}\ptlabel{prop:limits:a} \pname{Without normalization} $S$ is a limit of residual networks with the same widths and the same maps $f_\ell$, uniformly on bounded sets of inputs.\\
+Let $S$ be a skipless network whose maps $f_\ell$ are locally Lipschitz.\\
+\textup{(a)}\ptlabel{prop:limits:a} \pname{Without normalization} The network $S$ is a limit of residual networks with the same widths and the same maps $f_\ell$, uniformly on bounded sets of inputs.\\
 \textup{(b)}\ptlabel{prop:limits:b} \pname{Under pre-RMSNorm with $\varepsilon = 0$} If no hidden state of $S$ has a zero row at any input $x$ whose rows of $xE$ are nonzero, the same holds on bounded sets of such inputs.
 \end{restatable}
 \proofin{app:prf-limits}
@@ -823,9 +821,9 @@ a parameter of the residual network, with the same formula for learned skips. Wi
 
 \begin{theorem}[The gauge fix]\label{thm:gaugefull}
 Consider networks without normalization in (a) and (b), and parameters $\theta$ whose skips $A_\ell$ are invertible.\\
-\textup{(a)}\ptlabel{thm:gaugefull:a} \pname{The gauge map} The maps $T_{G,K}$ preserve the function. With $G_\ell = \Lambda_\ell$ and $K_\ell = U_\ell^{-1}\Lambda_{\ell-1}$, $T_{G,K}$ sets every $U_\ell$ and $V_\ell$ to $I$ and the other parameters to $\Phi(\theta)$, so $F_\theta = F^{\mathrm{res}}_{\Phi(\theta)}$. For learned skips, $T_G$ with $G_\ell = \Lambda_\ell$ sets every $A_\ell$ to $I$ in the same way.\\
+\textup{(a)}\ptlabel{thm:gaugefull:a} \pname{Same function} The maps $T_{G,K}$ preserve the function. With $G_\ell = \Lambda_\ell$ and $K_\ell = U_\ell^{-1}\Lambda_{\ell-1}$, $T_{G,K}$ sets every $U_\ell$ and $V_\ell$ to $I$ and the other parameters to $\Phi(\theta)$, so $F_\theta = F^{\mathrm{res}}_{\Phi(\theta)}$. For learned skips, $T_G$ with $G_\ell = \Lambda_\ell$ sets every $A_\ell$ to $I$ in the same way.\\
 \textup{(b)}\ptlabel{thm:gaugefull:b} \pname{What the gauge fix identifies} Every parameter of the residual network is $\Phi(\theta)$ for some $\theta$, and $\Phi(\theta) = \Phi(\theta')$ exactly when $\theta' = T_{G,K}(\theta)$ for some $G$ and $K$ with $G_L = I$. The derivative of $\Phi$ is onto at every $\theta$. So the networks of mixed blocks with invertible skips and the residual networks compute the same set of functions, with the same functional dimension at $\theta$ and at $\Phi(\theta)$. The same holds for learned skips, without the $K_\ell$, and for networks with biases.\\
-\textup{(c)}\ptlabel{thm:gaugefull:c} \pname{The tie} With or without RMSNorm, let every block be nonzero for some value of its parameters, and let $G_0, \dots, G_L \in \G$. The map $T_G$ of the embedding, the reads, the writes and the readout preserves the function of every residual network if and only if $G_0 = G_1 = \dots = G_L$. Under RMSNorm with $\varepsilon = 0$, where $G_\ell = c_\ell Q_\ell$ with $c_\ell > 0$ and $Q_\ell$ orthogonal, $T_G$ multiplies the reads and the readout by $Q_{\ell-1}^\top$ and $Q_L^\top$ in place of $G_{\ell-1}^{-1}$ and $G_L^{-1}$.
+\textup{(c)}\ptlabel{thm:gaugefull:c} \pname{One change of basis is left} With or without RMSNorm, let every block be nonzero for some value of its parameters, and let $G_0, \dots, G_L \in \G$. The map $T_G$ of the embedding, the reads, the writes and the readout preserves the function of every residual network if and only if $G_0 = G_1 = \dots = G_L$. Under RMSNorm with $\varepsilon = 0$, where $G_\ell = c_\ell Q_\ell$ with $c_\ell > 0$ and $Q_\ell$ orthogonal, $T_G$ multiplies the reads and the readout by $Q_{\ell-1}^\top$ and $Q_L^\top$ in place of $G_{\ell-1}^{-1}$ and $G_L^{-1}$.
 \end{theorem}
 
 \para{Overview.} Part (a) is an induction along the network: in the coordinates $h'_\ell = h_\ell\Lambda_\ell$ the identity units become identity skips, and we check that the residual recursion with transformed weights produces exactly these coordinates. Part (b) lifts every direction on the residual side to one with the identity units held fixed, which makes the derivative of $\Phi$ onto, and solves for the maps $T_{G,K}$ that relate two parameters with the same image. Part (c) switches off all branches but one, so that the output compares the bases on the two sides of that block, and a branch that is not identically zero forces them to agree. With biases every hidden state also carries a translation, which the skips do not tie (\cref{lem:translations}).
@@ -911,7 +909,7 @@ The lemma extends to transformers. Attention blocks also carry the per-head symm
 
 \subsection{No absorption inside a block\texorpdfstring{ (Theorems~\ref*{thm:homgated} to~\ref*{thm:relufirst})}{}}\label{app:absorb}
 
-We recall \cref{thm:homgated,thm:relugelu,thm:depthgelu,thm:relufirst} from \cref{sec:oneblock}, for the question \eqref{eq:absorbask}.
+We recall \cref{thm:homgated,thm:relugelu,thm:depthgelu,thm:relufirst} from \cref{sec:oneblock}, for the question \eqref{eq:absorbask}. Below we write $B$ for $B_\theta$, and $B'$ for $B_{\theta'}$ with $\theta' = (\Wread', \Wwrite')$.
 \thmAbsorbHom*
 \thmAbsorbReLU*
 \thmAbsorbDepth*
@@ -1156,19 +1154,25 @@ in the limit. Suppose that $J_0\,\eta$ plus a sum of these vanishes for all $x$.
 For ReLU, ReLU$^2$ and ReGLU blocks without normalization, the proof of \cref{lem:smallwrites} goes through on a finite batch on which no pre-activation of the limit vanishes: \cref{lem:unitid} covers these units, and for small $\tau$ every pre-activation keeps its sign on the batch, so the Jacobian is polynomial in the weights near these parameters. The residual network therefore has functional dimension $P - \dm^2 - s$ on an open set of weights that contains all small enough multiples of generic writes, and at almost every point of this set the skips add at least $L\dm^2$ when every block has width at least $\dm$. The count fails on another open set. For $\dm = 2$, the block $h \mapsto h + 2\big(\mathrm{ReLU}(-h_1), \mathrm{ReLU}(-h_2)\big) = \big(\lvert h_1\rvert, \lvert h_2\rvert\big)$ maps the plane onto a quadrant, and a unit of the next block with the read $-(1, 1)^\top$ never switches on. Its read and its write then leave $2\dm - 1$ more directions flat, and small changes of the weights keep this. Which weights keep the count is left for future work.
 \end{remark}
 
-\subsection{No absorption in attention\texorpdfstring{ (Proposition~\ref*{prop:attention}, Corollary~\ref*{cor:match}, Lemma~\ref*{lem:heads})}{}}\label{app:attention}
+\subsection{No absorption in attention\texorpdfstring{ (Proposition~\ref*{prop:attention}, Lemma~\ref*{lem:heads})}{}}\label{app:attention}
 
-We recall \cref{prop:attention} from \cref{sec:oneblock}; primes mark the weights and the attention maps of $B'$.
-\propAttention*
+\Cref{cor:attention} collects what the main text uses of the following proposition, for the attention blocks $B_\theta$ of \cref{eq:attn}.
+
+\begin{proposition}[Attention and linear terms]\label{prop:attention}
+Let $\theta$ and $\theta'$ be parameters of attention blocks with any numbers and widths of heads, and let $M \neq 0$ be a $\dm\times\dm$ matrix.\\
+\textup{(a)}\ptlabel{prop:attention:a} \pname{One block} For almost every $h \in \R^{T\times\dm}$, $hM + B_\theta(h) \neq B_{\theta'}(h)$.\\
+\textup{(b)}\ptlabel{prop:attention:b} \pname{A gap of $\norm{M}/3$} Some $h$ whose rows have norm at most $1$ has a row in which $hM + B_\theta(h)$ and $B_{\theta'}(h)$ differ by at least $\norm{M}/3$, where $\norm{M}$ is the spectral norm.\\
+\textup{(c)}\ptlabel{prop:attention:c} \pname{Networks} With an embedding $E$ and a readout $D$ with $ED \neq 0$, the residual network $x \mapsto \big(xE + B_\theta(xE)\big)D$ differs from every skipless network $x \mapsto B_{\theta'}(xE')D'$.
+\end{proposition}
 
 \para{Overview.} Two kinds of input suffice. If all tokens are equal, attention returns them unchanged, so the value--output products of all heads must add up to $M$. If one token is zero, all its scores are zero, so every head gives it the average of the tokens, while the skip gives it zero; this asks the same sum to vanish. Part (b) makes the conflict quantitative, and analyticity turns it into part (a). With an embedding and a readout, the same two inputs give part (c).
 
 \begin{proof}[Proof of Proposition~\ref{prop:attention}]
-The difference $B'(h) - B(h)$ is one attention block with $H + H'$ heads,
+Let $F(h) = hM + B_\theta(h) - B_{\theta'}(h)$, and let $\theta'$ have $H'$ heads. The difference $B_{\theta'} - B_\theta$ is one attention block with $H + H'$ heads,
 \[
-B'(h) - B(h) = \sum_{k=1}^{H+H'} R_k(h)\, h\, C_k,
+B_{\theta'}(h) - B_\theta(h) = \sum_{k=1}^{H+H'} R_k(h)\, h\, C_k,
 \]
-where the $R_k(h)$ are the $P_j'(h)$ and the $P_i(h)$, and the $C_k$ are the $W_{V,j}'W_{O,j}'$ and the $-W_{V,i}W_{O,i}$. Let $C = \sum_k C_k$.
+where the $R_k(h)$ are the attention maps of the heads of $\theta'$ and of $\theta$, and the $C_k$ are their value--output products, with a minus sign for the heads of $\theta$. Let $C = \sum_k C_k$.
 
 \emph{Step 1: equal tokens.} Let every row of $h$ be $x$. Each row of $R_k(h)$ sums to $1$, so every row of $R_k(h)h$ is $x$. Hence every row of $F(h)$ is $x(M - C)$.
 
@@ -1178,7 +1182,14 @@ where the $R_k(h)$ are the $P_j'(h)$ and the $P_i(h)$, and the $C_k$ are the $W_
 
 \emph{Proof of (a).} $F$ is real-analytic, because the softmax is, and by (b) some entry of $F$ is not identically zero. The zeros of a real-analytic function that is not identically zero form a set of measure zero: in one variable they are isolated, and the general case follows by induction on the dimension with Fubini's theorem.
 
-\emph{Proof of (c).} Let $C_B$ and $C_{B'}$ be the sums of the value--output products of $B$ and $B'$. On inputs whose rows all equal a row vector $u$, Step 1 gives the rows $uE(I + C_B)D$ in the residual network and $uE'C_{B'}D'$ in the network without a skip. On inputs whose last row is $0$ and whose other rows equal $v$, Step 2 gives the last rows $\frac{T-1}{T}\,vEC_BD$ and $\frac{T-1}{T}\,vE'C_{B'}D'$. If the two networks are equal, then $E(I + C_B)D = E'C_{B'}D' = EC_BD$, so $ED = 0$.
+\emph{Proof of (c).} Let $C_\theta$ and $C_{\theta'}$ be the sums of the value--output products of the heads of $\theta$ and of $\theta'$. On inputs whose rows all equal a row vector $u$, Step 1 gives the rows $uE(I + C_\theta)D$ in the residual network and $uE'C_{\theta'}D'$ in the network without a skip. On inputs whose last row is $0$ and whose other rows equal $v$, Step 2 gives the last rows $\frac{T-1}{T}\,vEC_\theta D$ and $\frac{T-1}{T}\,vE'C_{\theta'}D'$. If the two networks are equal, then $E(I + C_\theta)D = E'C_{\theta'}D' = EC_\theta D$, so $ED = 0$.
+\end{proof}
+
+We recall \cref{cor:attention} from \cref{sec:oneblock}.
+\corAttention*
+
+\begin{proof}[Proof of \cref{cor:attention}]
+Parts (a) and (b) are \cpref{prop:attention}{a} and \ptlink{prop:attention}{c}.
 \end{proof}
 
 \Cref{cor:match} follows from a lemma on attention heads.
@@ -1221,7 +1232,7 @@ We recall \cref{cor:match} from \cref{sec:oneblock}.
 \corMatch*
 
 \begin{proof}[Proof of Corollary~\ref{cor:match}]
-Group the heads of $B' - B$ by score matrix, add their value--output products ($W_{V,j}'W_{O,j}'$ for $B'$, $-W_{V,i}W_{O,i}$ for $B$), and apply \cref{lem:heads}.
+Group the heads of $B_{\theta'}$ and $B_\theta$ by score matrix, add their value--output products, with a minus sign for the heads of $\theta$, and apply \cref{lem:heads}.
 \end{proof}
 
 \subsection{One free block per hidden state\texorpdfstring{ (Proposition~\ref*{prop:normalform})}{}}\label{app:prf-normalform}
@@ -1264,7 +1275,7 @@ Section~6 of the notebook (\cref{app:checks}) checks each step on a residual pre
 Consider pre-RMSNorm networks with $\varepsilon \ge 0$, and the network with learned skips of \cref{eq:prenorm}, whose skips $A_\ell$ are invertible in (a) and (b).\\
 \textup{(a)}\ptlabel{thm:rmsfull:a} \pname{Triangular or symmetric skips} Let $Q_0 = I$, and for $\ell = 1, \dots, L$ let $Q_{\ell-1}^\top A_\ell = R_\ell Q_\ell^\top$ be an RQ factorization, with $R_\ell$ upper triangular with positive diagonal and $Q_\ell$ orthogonal. The network with the skips $R_\ell$, the reads $Q_{\ell-1}^\top\Wread^{\ell}$, the writes $\Wwrite^{\ell}Q_\ell$ and the readout $Q_L^\top D$ computes the same function. So does the network built in the same way from the polar decompositions $Q_{\ell-1}^\top A_\ell = S_\ell Q_\ell^\top$, with $S_\ell$ symmetric positive definite in place of $R_\ell$.\\
 \textup{(b)}\ptlabel{thm:rmsfull:b} \pname{Orthogonal skips are gauge} If every $\Pi_\ell$ lies in $\G$, write $\Pi_\ell = c_\ell P_\ell$ with $c_\ell > 0$ and $P_\ell$ orthogonal, where $c_\ell = 1$ if $\varepsilon > 0$. Then the network computes the same function as the residual network with the embedding $E$, the reads $P_{\ell-1}\Wread^{\ell}$, the writes $\Wwrite^{\ell}\Pi_\ell^{-1}$ and the readout $P_LD$. Conversely, let the reads and the readout have rank $\dm$, and let invertible $G_0, \dots, G_L$ turn every skip into the identity, $G_{\ell-1}^{-1}A_\ell G_\ell = I$. If the network, written in the variables $h_\ell G_\ell$, is a pre-RMSNorm residual network, then every $\Pi_\ell$ lies in $\G$.\\
-\textup{(c)}\ptlabel{thm:rmsfull:c} \pname{Functional dimension} Under the equality condition for the networks with learned skips, with identity skips and without skips, the functional dimension of the network with learned skips exceeds that of the residual network by $L\,(\dm^2 - \dim\G)$, and that of the residual network exceeds that of the skipless network by $L\dim\G$. These are $L\,\dm(\dm+1)/2$ and $L\,\dm(\dm-1)/2$ for $\varepsilon > 0$, and $L\,(\dm(\dm+1)/2 - 1)$ and $L\,(\dm(\dm-1)/2 + 1)$ for $\varepsilon = 0$.
+\textup{(c)}\ptlabel{thm:rmsfull:c} \pname{What each skip adds} Under the equality condition for the networks with learned skips, with identity skips and without skips, the functional dimension of the network with learned skips exceeds that of the residual network by $L\,(\dm^2 - \dim\G)$, and that of the residual network exceeds that of the skipless network by $L\dim\G$. These are $L\,\dm(\dm+1)/2$ and $L\,\dm(\dm-1)/2$ for $\varepsilon > 0$, and $L\,(\dm(\dm+1)/2 - 1)$ and $L\,(\dm(\dm-1)/2 + 1)$ for $\varepsilon = 0$.
 \end{theorem}
 
 \para{Overview.} Part (a) runs the sweep in the proof of \cpref{thm:gaugefull}{a} forward, with orthogonal matrices only, which remove the orthogonal factor of each skip and leave its triangular or symmetric factor. Part (b) reruns the change of variables of that proof and locates the only step that can fail, the read through $N$; \cref{lem:rms} says exactly when a matrix can be moved through $N$. Part (c) counts the symmetries with \cref{prop:junction} and \cref{cor:count}.
