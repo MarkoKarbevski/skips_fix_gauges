@@ -134,22 +134,30 @@ $\mathcal S \cap \mathcal R$ & $= 1$ & \res{$\emptyset$}{Prop.}{prop:attention}{
 \hline
 $\mathcal S \cap \mathcal R$ & $\ge 2$ & \multicolumn{2}{c|}{\res{measure zero}{Thm.}{thm:depthgelu}{b}} & \res{$\emptyset$}{Thm.}{thm:homgated}{d} & \res{$\emptyset$}{Thm.}{thm:homgated}{c} & \cell{measure zero if\\ first hidden dim\\ $< 2\dm$\\ \rtag{Thm.}{thm:relufirst}{}\\ otherwise unknown} & \res{$\emptyset$}{Thm.}{thm:homgated}{c} \\
 \hline
-\quad with pre-RMSNorm & $\ge 1$ & \multicolumn{3}{c|}{\res{measure zero}{Thm.}{thm:depthgelu}{b}} & \res{$\emptyset$}{Thm.}{thm:homgated}{c} & unknown & \res{$\emptyset$}{Thm.}{thm:homgated}{c} \\
+\quad with pre-RMSNorm, $\varepsilon > 0$ & $\ge 1$ & \multicolumn{3}{c|}{\res{measure zero}{Thm.}{thm:depthgelu}{b}} & \res{$\emptyset$}{Thm.}{thm:homgated}{c} & unknown & \res{$\emptyset$}{Thm.}{thm:homgated}{c} \\
+\hline
+\quad with pre-RMSNorm, $\varepsilon = 0$ & $\ge 1$ & \multicolumn{6}{c|}{unknown} \\
 \thickhline
 symmetries removed by the skips & $\ge 1$ & \multicolumn{6}{c|}{\res{$L\dm^2$}{Cor.}{cor:count}{a}} \\
 \hline
-\quad with pre-RMSNorm & $\ge 1$ & \multicolumn{6}{c|}{\res{$L\dm(\dm-1)/2$}{Cor.}{cor:count}{a}} \\
+\quad with pre-RMSNorm, $\varepsilon > 0$ & $\ge 1$ & \multicolumn{6}{c|}{\res{$L\dm(\dm-1)/2$}{Cor.}{cor:count}{a}} \\
+\hline
+\quad with pre-RMSNorm, $\varepsilon = 0$ & $\ge 1$ & \multicolumn{4}{c|}{\res{$L\big(\dm(\dm-1)/2 + 1\big)$}{Cor.}{cor:count}{a}} & \multicolumn{2}{c|}{\res{$L\dm^2$}{Lem.}{lem:homrms}{a}} \\
 \thickhline
 $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $= 1$ & \multicolumn{6}{c|}{\res{$= \dm^2$}{Thm.}{thm:onelayer}{a}} \\
 \hline
-\quad with pre-RMSNorm & $= 1$ & \multicolumn{6}{c|}{\res{$\ge \dm(\dm-1)/2$}{Thm.}{thm:onelayer}{b}} \\
+\quad with pre-RMSNorm, $\varepsilon > 0$ & $= 1$ & \multicolumn{6}{c|}{\res{$\ge \dm(\dm-1)/2$}{Thm.}{thm:onelayer}{b}} \\
+\hline
+\quad with pre-RMSNorm, $\varepsilon = 0$ & $= 1$ & \multicolumn{4}{c|}{unknown} & \multicolumn{2}{c|}{\res{$= \dm^2$}{Thm.}{thm:onelayer}{d}} \\
 \hline
 $\mathrm{fdim}\,\mathcal R - \mathrm{fdim}\,\mathcal S$ & $\ge 2$ & \res{$\ge L\dm^2$}{Cor.}{cor:resdepth}{b} & \cell{$\ge L\dm^2$\\ \rtag{Cor.}{cor:resdepth}{b}\\ $= L\dm^2$ if every\\ hidden dim $\ge 2\dm$\\ \rtag{Cor.}{cor:exactgain}{b}} & \res{$= L\dm^2$}{Cor.}{cor:exactgain}{a} & \res{$\ge L\dm^2$}{Cor.}{cor:resdepth}{b} & \multicolumn{2}{c|}{\res{$\ge L\dm^2$ near small writes}{Rem.}{rem:reludepth}{}} \\
 \hline
-\quad with pre-RMSNorm & $\ge 2$ & \multicolumn{4}{c|}{\res{$\ge L\dm(\dm-1)/2$}{Cor.}{cor:resdepth}{b}} & unknown & unknown \\
+\quad with pre-RMSNorm, $\varepsilon > 0$ & $\ge 2$ & \multicolumn{4}{c|}{\res{$\ge L\dm(\dm-1)/2$}{Cor.}{cor:resdepth}{b}} & unknown & unknown \\
+\hline
+\quad with pre-RMSNorm, $\varepsilon = 0$ & $\ge 2$ & \multicolumn{6}{c|}{unknown} \\
 \hline
 \end{tabular}}
-\caption{Proven for skipless ($\mathcal S$) and residual ($\mathcal R$) networks of $L$ blocks, without biases or normalization, and with pre-RMSNorm ($\varepsilon > 0$ unless stated) where marked; assumptions in \cref{sec:setup}. $\mathcal S \cap \mathcal R$: $\emptyset$ if $ED \neq 0$, at any widths; measure zero at equal widths. Hidden dim: number of hidden units of a block. Measured: \cref{tab:measured}.}
+\caption{Proven for skipless ($\mathcal S$) and residual ($\mathcal R$) networks of $L$ blocks, without biases or normalization, and with pre-RMSNorm where marked; assumptions in \cref{sec:setup}. $\mathcal S \cap \mathcal R$: $\emptyset$ if $ED \neq 0$, at any widths; measure zero at equal widths. Hidden dim: number of hidden units of a block. Measured: \cref{tab:measured}.}
 \label{tab:overview}
 \end{table}
 
@@ -380,7 +388,7 @@ Reduction without skips & \cref{prop:normalform} & One $\dm\times\dm$ block per 
 \addlinespace[1pt]
 One global change of basis & \cref{sec:global} & A symmetry outside the product of the groups of the blocks; with an untied readout it also removes one block, for example $0.03$ to $0.10$ percent of Llama-3.1. & Proof, checked, count \\
 \addlinespace[1pt]
-Gain, one block & \cpref{thm:onelayer}{a}--\ptlink{thm:onelayer}{c} & The skip adds exactly $\dm^2$ to the functional dimension ($\tanh$, GELU, ReLU, ReLU$^2$, ReGLU, SwiGLU, GeGLU, attention), and under RMSNorm at least $\dm(\dm-1)/2$; a learned skip adds exactly $\dm(\dm+1)/2$ more. & Proof, measured \\
+Gain, one block & \cpref{thm:onelayer}{a}--\ptlink{thm:onelayer}{d} & The skip adds exactly $\dm^2$ to the functional dimension ($\tanh$, GELU, ReLU, ReLU$^2$, ReGLU, SwiGLU, GeGLU, attention), and under RMSNorm at least $\dm(\dm-1)/2$ with $\varepsilon > 0$ and exactly $\dm^2$ for ReLU, ReLU$^2$ and ReGLU with $\varepsilon = 0$; a learned skip adds exactly $\dm(\dm+1)/2$ more. & Proof, measured \\
 \addlinespace[1pt]
 Gain, any depth & \cref{cor:resdepth,cor:exactgain} & For smooth blocks the residual network satisfies the equality condition, so the skips add at least $L\dim\G$, and, without normalization, exactly $L\dm^2$ in networks of $\tanh$ blocks or of GELU blocks of width at least $2\dm$. & Proof \\
 \addlinespace[1pt]
@@ -782,8 +790,8 @@ Let $\varepsilon = 0$, so $N(h) = \sqrt \dm\,h/\norm{h}$. If $G = cQ$ then $N(h\
 
 \begin{lemma}[Homogeneous blocks under RMSNorm]\label{lem:homrms}
 Let a skipless network with pre-RMSNorm, $h_\ell = B_\ell(N(h_{\ell-1}))$ for $\ell = 1, \dots, L$ and $y = N(h_L)D$, have blocks that are positively homogeneous of degree $k$, and let $r_i^2 = \norm{h_i}^2/\dm$. Apply the change of basis $G \in \GL(\dm)$ at $h_\ell$ with $\ell < L$, or the scaling $G = cI$ at $h_L$ with its read $D$ unchanged. At every input whose hidden states are nonzero, the output becomes $\Lambda y$ with a scalar $\Lambda > 0$, and\\
-\textup{(a)} $\Lambda = 1$ if $\varepsilon = 0$ or $G$ is orthogonal;\\
-\textup{(b)} for $G = e^{tS}$ with $S$ symmetric and $\ell < L$,
+\textup{(a)}\ptlabel{lem:homrms:a} $\Lambda = 1$ if $\varepsilon = 0$ or $G$ is orthogonal;\\
+\textup{(b)}\ptlabel{lem:homrms:b} for $G = e^{tS}$ with $S$ symmetric and $\ell < L$,
 \[
 \frac{d}{dt}\log\Lambda\Big|_{t=0} = -\,k^{L-\ell}\,\frac{h_\ell S h_\ell^\top}{\dm\,(r_\ell^2+\varepsilon)}\prod_{i=\ell+1}^{L}\frac{\varepsilon}{r_i^2+\varepsilon},
 \]
