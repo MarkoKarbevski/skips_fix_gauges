@@ -492,7 +492,7 @@ The frozen identity units carry $h_{\ell-1}$ in the basis $G_{\ell-1}$, and the 
 
 The gain needs identity units that the other units of a block cannot absorb. A linear branch absorbs them: $h + hA = h(I + A)$, the deep linear residual network of \citet{hardt2017identity}, whose identity parametrization adds no functional dimension. So do $\dm$ more ReLU, GELU or SiLU units, since $\sigma(z) - \sigma(-z) = z$. With fewer units the common blocks cannot. A block is \emph{nondegenerate} if the columns of $\Wread$ are nonzero and pairwise non-collinear and the rows of $\Wwrite$ are nonzero. For a set $S$ of hidden units, $\Wread[{:},S]$ and $\Wwrite[S,{:}]$ keep the columns and the rows of the units in $S$.
 
-We ask whether a block can absorb a linear term.\ifanon{} \citet{mijoski2026absorb} ask this for the identity skip; this section restates their results and extends some of them.\fi{} Let $M \neq 0$ be a $\dm \times \dm$ matrix, and let $B_\theta$ be a vanilla or GLU MLP block with parameters $\theta = (\Wread, \Wwrite)$ (\cref{sec:setup}). We look for parameters $\theta'$ of a block with the same activation or gate function, and of any width, such that
+We ask whether a block can absorb a linear term. Let $M \neq 0$ be a $\dm \times \dm$ matrix, and let $B_\theta$ be a vanilla or GLU MLP block with parameters $\theta = (\Wread, \Wwrite)$ (\cref{sec:setup}). We look for parameters $\theta'$ of a block with the same activation or gate function, and of any width, such that
 \begin{equation}\label{eq:absorbask}
 xM + B_\theta(x) = B_{\theta'}(x) \qquad \text{for all row vectors } x \in \R^{1\times\dm}.
 \end{equation}
@@ -759,7 +759,7 @@ For $\tanh$, GELU, SwiGLU and GeGLU blocks, the residual half of the conjecture 
 % ===== sections/statements.tex =====
 \section*{Use of AI}
 \addcontentsline{toc}{section}{Use of AI}
-The conception of the study is the authors' own.\ifanon\else\footnote{This note builds on our preprint \emph{Can an MLP Absorb Its Own Skip Connection Exactly?} (\url{https://arxiv.org/abs/2604.23705}); \cref{sec:oneblock} restates its results on absorption and extends some of them.}\fi{} One author obtained their results, proofs and experiments working with AI assistants, through continuous conversation; the assistants were used to find, verify and simplify proofs and to write the code of the experiments, which the authors validated.
+The conception of the study is the authors' own. One author obtained their results, proofs and experiments working with AI assistants, through continuous conversation; the assistants were used to find, verify and simplify proofs and to write the code of the experiments, which the authors validated.
 
 \section*{Code availability}
 \addcontentsline{toc}{section}{Code availability}
