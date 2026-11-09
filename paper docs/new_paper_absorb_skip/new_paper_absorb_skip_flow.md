@@ -2,27 +2,27 @@
 
 | Unit | Section | Kind | Defines | First uses | Start |
 |---|---|---|---|---|---|
-| 0 | abstract | para | ReLU squared, d_model, the width, gated block, readout / unembedding | ReLU squared, d_model, the width, gated block, generic / almost every, readout / unembedding, residual, skipless | \begin{abstract} Residual networks add each block's input to its outpu |
+| 0 | abstract | para | ReLU squared, d_model, the dimension, gated block, readout / unembedding | d_model, the dimension, gated block, generic / almost every, readout / unembedding, residual, skipless | \begin{abstract} Residual networks add each block's input to its outpu |
 | 1 | Introduction | para |  |  | \section{Introduction}\label{sec:intro} |
 | 2 | Introduction | para |  |  | Almost every deep network trained today adds the input of a block to i |
 | 3 | Introduction | para |  |  | Skipless networks now train too. \citet{he2024simplifying} remove the  |
 | 4 | Introduction | para | H and d_h, absorb, m, number of units | H and d_h, absorb, attention block, m, number of units | We answer this question block by block. Take an MLP block $B$ with $m$ |
-| 5 | Introduction | para |  |  | \para{Without biases, the answer depends on the activation.} \begin{it |
+| 5 | Introduction | para |  | ReLU squared | \para{Without biases, the answer depends on the activation.} \begin{it |
 | 6 | Introduction | para | t and u, a ray | t and u, a ray | \para{Four one-line reasons.} Follow the input along a ray, $x = tu$ w |
 | 7 | Introduction | para | RMSNorm and its epsilon, pre-RMSNorm | RMSNorm and its epsilon, pre-RMSNorm | \para{Networks.} Throughout, a network starts with a linear embedding  |
-| 8 | Introduction | para |  |  | \para{Exact, yet approximable.} Without normalization, every skipless  |
+| 8 | Introduction | para |  |  | \para{No function lost in the limit.} Without normalization, every ski |
 | 9 | Introduction | float |  |  | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.12} \ |
 | 10 | Setup | para |  |  | \section{Setup}\label{sec:setup} \takeaway{One equation states the que |
 | 11 | Setup | para | B_theta, Wread, Wwrite, theta, T, number of tokens, read / write (nouns) | B_theta, Wread, Wwrite, theta, T, number of tokens, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
 | 12 | Setup | para | M, the linear term | M, the linear term | \para{The question as an equation.} A skip adds $x$ to the output of a |
-| 13 | Setup | para | E and D, L, the number of blocks, N(h), residual, skipless | E and D, L, the number of blocks, N(h) | \para{Networks.} Every network starts with a linear embedding $E$ and  |
+| 13 | Setup | para | E and D, L, the number of blocks, N(h), residual, skipless | E and D, L, the number of blocks, N(h) | \para{Networks.} Every network starts with a linear embedding $E \in \ |
 | 14 | Setup | para | generic / almost every |  | \para{Scope.} Blocks have no biases, and the answers depend on it. Wit |
-| 15 | One block | para |  |  | \section{One block}\label{sec:oneblock} \takeaway{For a ReLU or GELU b |
+| 15 | One block | para |  |  | \section{One block}\label{sec:oneblock} \takeaway{For almost every ReL |
 | 16 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para |  |  | \subsection{ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm |
 | 17 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | mirror image | mirror image | Both activations satisfy \begin{equation}\label{eq:odd} \sigma(z) - \s |
-| 18 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | with more units. | with more units. | \emph{With more units.} Let unit $i$ have read $w_i$ and write $a_i$.  |
+| 18 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | w_i and hat w_i, read and write of a unit, with more units. | w_i and hat w_i, read and write of a unit, with more units. | \emph{With more units.} Let unit $i$ have read $w_i$, a column of $\Wr |
 | 19 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | S, a set of units, at the same width. | S, a set of units, at the same width. | \emph{At the same width.} Flipping the read of unit $i$ to $-w_i$ chan |
-| 20 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | nondegenerate | nondegenerate | The theorem says that these are the only ways. A block is \emph{nondeg |
+| 20 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | nondegenerate | nondegenerate | The next theorem says that these are the only ways. A block is \emph{n |
 | 21 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | statement |  |  | \begin{restatable}[ReLU and GELU blocks]{theorem}{thmAbsorbReLU}\label |
 | 22 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para |  |  | In (i), generic weights give no set of units with the required product |
 | 23 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para |  |  | The proof matches the units of the two blocks. The even part of the ac |
@@ -35,7 +35,7 @@
 | 30 | ReLU\texorpdfstring{$^2$ | para |  |  | The three cases of \cref{fig:reasons} are three one-line proofs. A hom |
 | 31 | Attention blocks | para |  |  | \subsection{Attention blocks}\label{sec:attention} |
 | 32 | Attention blocks | para | Gamma, attention scores, attention block, score matrix, value-output product | Gamma, attention scores, score matrix, value-output product | An \emph{attention block} with parameters $\theta = (W_{Q,i}, W_{K,i}, |
-| 33 | Attention blocks | para |  |  | Attention mixes tokens, and a skip keeps each token where it is. Two i |
+| 33 | Attention blocks | para |  |  | Attention mixes tokens, and a skip keeps each token where it is. Suppo |
 | 34 | Attention blocks | statement |  |  | \begin{restatable}[Attention blocks]{theorem}{thmAttention}\label{thm: |
 | 35 | Attention blocks | para |  |  | The proof gives a gap: on some input with rows of norm at most $1$, on |
 | 36 | Networks | para |  |  | \section{Networks}\label{sec:networks} \takeaway{Between an embedding  |
@@ -61,6 +61,6 @@
 | 56 | Related work | para |  |  | \para{Training without skips.} Skipless networks train with careful in |
 | 57 | Conclusion | para |  |  | \section{Conclusion}\label{sec:conclusion} |
 | 58 | Conclusion | para |  |  | Can a skip let a block compute a function that no skipless block of th |
-| 59 | Conclusion | para |  |  | \para{Open questions.} The dashes of \cref{tab:results} leave four que |
+| 59 | Conclusion | para |  |  | \para{Open questions.} The dashes of \cref{tab:results} leave three qu |
 | 60 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
 | 61 | Use of AI | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |

@@ -2,3 +2,5 @@
 residual # well known: residual networks
 change of basis # well known from linear algebra; Section 3.1 defines the map on the weights
 redundancy # plain English in the abstract; Section 4.1 defines it precisely
+generic # standard mathematical term in Table 1's caption; the Setup defines it
+per block # plain in the abstract; the Setup says what a block is in a transformer
