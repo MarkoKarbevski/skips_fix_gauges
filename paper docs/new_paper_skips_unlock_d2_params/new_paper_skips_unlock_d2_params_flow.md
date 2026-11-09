@@ -15,7 +15,7 @@
 | 10 | Introduction | float | functional dimension added by the skips, smooth blocks | functional dimension added by the skips, generic, smooth blocks | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \n |
 | 11 | Setup | para |  |  | \section{Setup}\label{sec:setup} \takeaway{A block reads a hidden stat |
 | 12 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, m, number of units, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, m, number of units, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
-| 13 | Setup | para | E and D, per block, residual | E and D | \para{Networks.} Every network starts with a linear embedding $E \in \ |
+| 13 | Setup | para | E and D, per block, residual | E and D | \para{Networks.} A network maps an input $x \in \R^{T\times d_{\mathrm |
 | 14 | Setup | para | N(h) | N(h) | \para{Normalization.} In a \emph{pre-RMSNorm} network the blocks and t |
 | 15 | Setup | para | generic |  | \para{Scope.} For simplicity, networks have no biases. Every MLP block |
 | 16 | Free changes of basis remove parameters exactly | para |  |  | \section{Free changes of basis remove parameters exactly}\label{sec:re |

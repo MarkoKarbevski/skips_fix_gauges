@@ -15,7 +15,7 @@
 | 10 | Setup | para |  |  | \section{Setup}\label{sec:setup} \takeaway{One equation states the que |
 | 11 | Setup | para | B_theta, Wread, Wwrite, theta, T, number of tokens, read / write (nouns) | B_theta, Wread, Wwrite, theta, T, number of tokens, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
 | 12 | Setup | para | M, the linear term | M, the linear term | \para{The question as an equation.} A skip adds $x$ to the output of a |
-| 13 | Setup | para | E and D, L, the number of blocks, N(h), X, the input of a network, residual, skipless | E and D, L, the number of blocks, N(h), X, the input of a network | \para{Networks.} Every network starts with a linear embedding $E \in \ |
+| 13 | Setup | para | E and D, L, the number of blocks, N(h), X, the input of a network, residual, skipless | E and D, L, the number of blocks, N(h), X, the input of a network | \para{Networks.} A network maps an input $X \in \R^{T\times d_{\mathrm |
 | 14 | Setup | para |  |  | \para{No biases.} Blocks have no biases, and the answers depend on it. |
 | 15 | Setup | para | generic / almost every |  | \para{Scope.} Every MLP block has at least $\dm$ hidden units, so that |
 | 16 | One block | para |  |  | \section{One block}\label{sec:oneblock} \takeaway{For almost every ReL |
