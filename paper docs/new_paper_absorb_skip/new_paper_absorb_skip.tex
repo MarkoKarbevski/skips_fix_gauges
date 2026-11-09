@@ -100,7 +100,7 @@
 \vspace{-1.5em}
 
 \begin{abstract}
-Residual networks add each block's input to its output; skipless ones now train as well. Can a block absorb its skip: can a skipless block of the same kind compute the same function? Here we show that, without biases, almost every ReLU or GELU block of at least $\dm$ units absorbs its skip with exactly $\dm$ more units, with $\dm$ the model dimension, while no number of squared-ReLU, gated (ReGLU, SwiGLU, GeGLU) or $\tanh$ units or attention heads does. Without normalization, no skipless squared-ReLU, gated or $\tanh$ network equals a residual one, and a skipless ReLU or GELU network needs at least $2\dm$ units in its first block to equal almost any residual one. Yet every skipless network is a limit of residual ones of equal widths. Under RMSNorm, almost no residual network equals any skipless one. These results say when a skip can be traded for hidden units.
+Residual networks add each block's input to its output; skipless ones now train as well. Can a block without biases absorb its skip: can a skipless block of the same kind compute the same function? Here we show that almost every ReLU or GELU block of at least $\dm$ units absorbs its skip with exactly $\dm$ more units, with $\dm$ the model dimension, while no number of squared-ReLU, gated (ReGLU, SwiGLU, GeGLU) or $\tanh$ units or attention heads does. Without normalization, no skipless squared-ReLU, gated or $\tanh$ network equals a residual one, and a skipless ReLU or GELU network needs at least $2\dm$ units in its first block to equal almost any residual one; yet every skipless network is a limit of residual ones of equal widths. Under RMSNorm, almost no residual network equals any skipless one. These results say when a skip can be traded for hidden units.
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
@@ -113,15 +113,15 @@ We answer this question block by block. Take an MLP block $B$ with $m$ hidden un
 
 \para{Without biases, the answer depends on the activation.}
 \begin{itemize}
-\item For almost every ReLU or GELU block with at least $\dm$ units, a skip is worth exactly $\dm$ units: $\dm$ new units with the negated input weights of existing units absorb it, and fewer do not (\cpref{thm:relugelu}{ii}).
+\item For almost every ReLU or GELU block with at least $\dm$ units, a skip is worth exactly $\dm$ units: $\dm$ new units, each mirroring an existing unit, absorb it, and fewer do not (\cpref{thm:relugelu}{ii}).
 \item For ReLU$^2$ blocks, whose activation is the square of ReLU, gated blocks (ReGLU, SwiGLU, GeGLU) and $\tanh$ blocks, no number of units absorbs a skip (\cref{thm:homgated}).
 \item For attention blocks, no number of heads absorbs a skip (\cref{thm:attention}).
 \end{itemize}
-These answers hold for blocks without biases, as in many current language models \citep{olmo2025olmo2,yang2025qwen3}. With biases, $4\dm$ ReLU$^2$ units or $2\dm$ gated units absorb a skip (\cref{sec:setup}).
+Outside \cref{app:biases}, blocks have no biases, as in many current language models \citep{olmo2025olmo2,yang2025qwen3}. With biases, every ReLU$^2$ and gated block absorbs its skip with more units, while $\tanh$ and attention blocks still never do (\cref{app:biases}).
 
 \para{Four one-line reasons.} Follow the input along a ray, $x = tu$ with $t > 0$. The skip adds $tu$, which grows like $t$. A ReLU$^2$ block grows like $t^2$. A gated block, whose gate vanishes at $0$, is of order $t^2$ near the origin. A $\tanh$ block stays bounded. So none of them can produce the term $tu$ (\cref{fig:reasons}, \cref{sec:never}). Attention mixes the tokens of a sequence, while a skip leaves each token where it is.
 
-\para{Networks.} Throughout, a network starts with a linear embedding and ends with a linear unembedding. In a pre-RMSNorm network, every block and the unembedding read their input through RMSNorm, which divides each token by its root mean square, regularized by a constant $\varepsilon \ge 0$. Without normalization, no residual network of ReLU$^2$, gated or $\tanh$ blocks equals a skipless network of any widths (\cref{thm:homgatednet}), and a skipless ReLU or GELU network needs at least $2\dm$ units in its first block, whatever its later widths, to equal almost any residual one (\cref{thm:relufirst}). Under RMSNorm, almost no residual network, of any blocks, equals a skipless network of any widths (\cref{thm:rmsnet}). As an input is scaled by $t \to \infty$, the output of a skipless network moves at order $1/t^2$ or less, and that of almost every residual network at order $1/t$.
+\para{Networks.} Throughout, a network starts with a linear embedding and ends with a linear unembedding. In a pre-RMSNorm network, every block and the unembedding read their input through RMSNorm, which divides each token by its root mean square, regularized by a constant $\varepsilon \ge 0$. Without normalization, no residual network of ReLU$^2$, gated or $\tanh$ blocks equals a skipless network of any widths (\cref{thm:homgatednet}), and a skipless ReLU or GELU network needs at least $2\dm$ units in its first block, whatever its later widths, to equal almost any residual one (\cref{thm:relufirst}). Under RMSNorm, almost no residual network, of any blocks, equals a skipless network of any widths (\cref{thm:rmsnet}): as an input is scaled by $t \to \infty$, the output of a skipless network converges at rate $1/t^2$ or faster, and that of almost every residual network only at rate $1/t$.
 
 \para{No function lost in the limit.} Without normalization, every skipless network is a limit of residual networks of the same widths, uniformly on bounded sets of inputs, as their weights diverge (\cpref{prop:limits}{i}): the skip adds functions and, in the limit, removes none. \Cref{tab:results} collects the results; \cref{sec:setup} fixes the setting, \cref{sec:oneblock} treats one block, \cref{sec:networks} networks and \cref{sec:limits} limits. Proofs are in the appendix.
 
@@ -186,7 +186,7 @@ The skip is $M = I$. Other matrices cover learned linear skips and, below, netwo
 
 \para{Networks.} Every network starts with a linear embedding $E \in \R^{d_{\mathrm{in}}\times\dm}$ and ends with a linear readout $D \in \R^{\dm\times d_{\mathrm{out}}}$, the unembedding: it maps an input $X \in \R^{T\times d_{\mathrm{in}}}$ to $h_0 = XE$, passes it through $L \ge 1$ blocks, and returns $y = h_LD$. A \emph{skipless} network has $h_\ell = B_\ell(h_{\ell-1})$, and a \emph{residual} network has $h_\ell = h_{\ell-1} + B_\ell(h_{\ell-1})$. In a \emph{pre-RMSNorm} network every block and the readout read the normalized state $N(h)$, while the skips carry $h$: the two networks compute $h_\ell = B_\ell\big(N(h_{\ell-1})\big)$ and $h_\ell = h_{\ell-1} + B_\ell\big(N(h_{\ell-1})\big)$, and $y = N(h_L)D$. Here $N$ divides each row $v$ of $h$ by $\sqrt{\norm{v}^2/\dm + \varepsilon}$, with $\varepsilon \ge 0$. For $\varepsilon = 0$, $N$ is defined on hidden states without zero rows, a network is defined at the inputs at which no state that it normalizes has a zero row, and two networks are equal if they agree on a dense set of inputs at which both are defined.
 
-\para{No biases.} Blocks have no biases, and the answers depend on it. With biases, $4\dm$ ReLU$^2$ units absorb a skip: their activation $r(z) = \max(z, 0)^2$ satisfies $\tfrac14\big(r(z+1) - r(z-1) - r(1-z) + r(-1-z)\big) = z$. So do $2\dm$ gated units whose values are constant biases: two such units with opposite gate reads and opposite values add up to a linear term. The gate matters too: the logistic sigmoid gate of the original GLU does not vanish at $0$, so a unit with a zero gate read is linear, and $\dm$ such units absorb a skip.
+\para{No biases.} Blocks have no biases, and the answers depend on it. With biases, a gated unit whose gate read is zero has a constant gate, so it is affine in $x$, and $\dm$ such units absorb a skip. \Cref{app:biases} shows that, with biases, every ReLU, GELU, ReLU$^2$ and gated block absorbs its skip, and no $\tanh$ or attention block does; almost every ReLU, GELU and gated block needs exactly $\dm$ more units. The gate matters even without biases: the logistic sigmoid gate of the original GLU does not vanish at $0$, so a unit with a zero gate read is linear, and $\dm$ such units absorb a skip.
 
 \para{Scope.} Every MLP block has at least $\dm$ hidden units, so that its read can have rank $\dm$. Residual networks have $ED \neq 0$. For simplicity, all MLP blocks of a network are of one kind, all attention blocks of a network have the same number of heads, and $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm \ge 2$. Most results hold more generally, and the appendix states them so. A statement holds for \emph{generic} weights, or for almost every choice of weights, if it holds outside a set of Lebesgue measure zero.
 
@@ -280,7 +280,7 @@ B_\theta(h) = \sum_{i=1}^{H} P_{\Gamma_i}(h)\, h\, W_{V,i} W_{O,i}, \qquad P_\Ga
 \end{equation}
 where $W_{Q,i}, W_{K,i}, W_{V,i} \in \R^{\dm\times d_h}$ and $W_{O,i} \in \R^{d_h\times\dm}$, with $d_h$ the head dimension. The softmax acts on each row of the $T\times T$ matrix of scores, with or without a causal mask, so each row of $P_\Gamma(h)$ is a probability vector. The read of the block holds the matrices $W_{Q,i}$, $W_{K,i}$ and $W_{V,i}$, and its write the matrices $W_{O,i}$. Head $i$ has the score matrix $\Gamma_i$ and the value--output product $W_{V,i}W_{O,i}$.
 
-Attention mixes tokens, and a skip keeps each token where it is. Suppose that $hM + B_\theta(h) = B_{\theta'}(h)$ for all $h$; two inputs show that $M = 0$. If all tokens are equal, mixing changes nothing, so the sums of the value--output products over the heads of the two blocks must differ by $M$. Now let one token be zero, placed last when the mask is causal. Its query is zero, so every head gives it the plain mean of the tokens it sees, and the two blocks differ there by this mean times $M$. The skip adds zero to this token, so the mean times $M$ vanishes for all other tokens, and $M = 0$.
+Attention mixes tokens, and a skip keeps each token where it is. Suppose that $hM + B_\theta(h) = B_{\theta'}(h)$ for all $h$; two inputs show that $M = 0$. If all tokens are equal, mixing changes nothing, so the sums of the value--output products over the heads of the two blocks must differ by $M$. Now let one token be zero, placed last when the mask is causal. Its query is zero, so every head gives it the plain mean of the tokens it sees, and the two blocks differ there by this mean times $M$. The skip adds zero to this token, so this mean times $M$ vanishes for every choice of the other tokens, and $M = 0$.
 
 \begin{restatable}[Attention blocks]{theorem}{thmAttention}\label{thm:attention}
 Let $\theta$ and $\theta'$ be parameters of attention blocks with any numbers of heads and any head dimensions, and let $M \neq 0$ be a $\dm\times\dm$ matrix. For almost every $h \in \R^{T\times\dm}$, $hM + B_\theta(h) \neq B_{\theta'}(h)$.
@@ -319,7 +319,7 @@ Let $\sigma$ be ReLU or GELU. Without normalization, a residual network whose re
 \end{restatable}
 \proofin{app:absorb}
 
-So $L\dm$ extra units in all suffice, and the first block needs at least $2\dm$ units (\cref{thm:relufirst}). The two bounds meet when the residual first block has $\dm$ units; otherwise the gap is open.
+So $\dm$ extra units per block suffice, and the first block of a skipless network needs at least $2\dm$ units (\cref{thm:relufirst}). For the first block, the two bounds meet when the residual first block has $\dm$ units; beyond that, the number of extra units is open.
 
 \para{RMSNorm: the skip keeps the norm of each token.} A skipless network sees its input only through its first normalization, and $N(ch)$ depends on $c > 0$ only through $\varepsilon/c^2$: with $\varepsilon = 0$ the norm of each token is lost, and with $\varepsilon > 0$ its effect fades like $\varepsilon/c^2$ as $c$ grows.
 
@@ -328,7 +328,7 @@ Consider pre-RMSNorm networks, with $\varepsilon \ge 0$ and blocks of any kind a
 \end{restatable}
 \proofin{app:prf-epszero}
 
-Scale an input $X$ by a factor $t \to \infty$. A skipless network with embedding $E'$ depends on $t$ only through $N(tXE')$, so its output changes at order $1/t^2$ or less. In a residual network the skips carry $tXE$ to the last normalization, and every block reads, up to $O(1/t)$, the same normalized input and adds a bounded output. These outputs turn each token by an angle of order $1/t$, so the output of the network changes at order $1/t$, unless in every token they add up to a multiple of the token itself. For almost every choice of weights, at some input they do not.
+Scale an input $X$ by a factor $t \to \infty$. A skipless network with embedding $E'$ depends on $t$ only through $N(tXE')$, so its output converges at rate $1/t^2$ or faster. In a residual network the skips carry $tXE$ to the last normalization, and every block reads, up to $O(1/t)$, the same normalized input and adds a bounded output. These outputs turn each token by an angle of order $1/t$, so the output of the network converges only at rate $1/t$, unless in every token they add up to a multiple of the token itself. For almost every choice of weights, at some input they do not.
 
 \section{Skipless networks are limits of residual ones}\label{sec:limits}
 \takeaway{A skip removes no function in the limit: without normalization, residual networks of the same widths approach every skipless network.}
@@ -346,7 +346,7 @@ Let $F$ be a skipless network whose blocks are locally Lipschitz.\\
 
 \section{Related work}\label{sec:related}
 
-\para{Expressivity of residual networks.} \citet{lin2018resnet} show that residual ReLU networks with one hidden unit per block are universal approximators, which networks of width $d_{\mathrm{in}}$ without skips are not; they count the identity map as $\dm$ hidden units. For blocks without biases and with at least $\dm$ units, \cpref{thm:relugelu}{ii} shows that this count is exact for almost every ReLU or GELU block, and \cref{thm:homgated} that no count works for ReLU$^2$, gated and $\tanh$ blocks. \citet{hardt2017identity} show that deep linear residual networks have no spurious local optima, and that residual ReLU networks can fit any finite sample once they have more parameters than samples. These results concern approximation, optimization or finite samples; ours concern exact equality of functions, block by block and activation by activation.
+\para{Expressivity of residual networks.} \citet{lin2018resnet} show that residual ReLU networks with one hidden unit per block are universal approximators, which networks of width $d_{\mathrm{in}}$ without skips are not; they count the identity map as $\dm$ hidden units. For blocks without biases and with at least $\dm$ units, \cpref{thm:relugelu}{ii} shows that this count is exact for almost every ReLU or GELU block, and \cref{thm:homgated} that no count works for ReLU$^2$, gated and $\tanh$ blocks. With biases, as in their blocks, the count stays exact for almost every ReLU or GELU block with at least $\dm$ units (\cref{thm:biascount} in \cref{app:biases}). \citet{hardt2017identity} show that deep linear residual networks have no spurious local optima, and that residual ReLU networks can fit any finite sample once they have more parameters than samples. These results concern approximation, optimization or finite samples; ours concern exact equality of functions, block by block and activation by activation.
 
 \para{Identifiability.} For $\tanh$ networks, the function determines the weights up to sign flips and permutations of hidden units \citep{sussmann1992,fefferman1994}, and similar statements hold for other activations \citep{vlacic2019identifiability} and for ReLU networks \citep{petzka2020symmetries,rolnick2020reverse,buithimai2020functional}. Our proofs identify the units of a block from its function in the same spirit, and then ask what is left for the linear term of the skip.
 
@@ -354,12 +354,12 @@ Let $F$ be a skipless network whose blocks are locally Lipschitz.\\
 
 \section{Conclusion}\label{sec:conclusion}
 
-Can a block absorb its skip? Without biases, it depends on the activation. At the same width, almost no block absorbs its skip. Almost every ReLU or GELU block needs exactly $\dm$ more units, and ReLU$^2$, gated, $\tanh$ and attention blocks cannot absorb the skip at any width. Between an embedding and a readout and without normalization, no skipless network of ReLU$^2$, gated or $\tanh$ blocks equals a residual one, and a skipless ReLU or GELU network needs a first block of at least $2\dm$ units to equal almost any residual one. Under RMSNorm, with any $\varepsilon \ge 0$, no width suffices for almost every residual network. So, without normalization, a trained residual ReLU or GELU network whose reads have rank $\dm$ can be rewritten exactly without skips with $\dm$ more units per block, and a ReLU$^2$, gated or $\tanh$ network with $ED \neq 0$ cannot be rewritten at any width.
+Can a block absorb its skip? Without biases, it depends on the activation. At the same width, almost no block absorbs its skip. Almost every ReLU or GELU block needs exactly $\dm$ more units, and ReLU$^2$, gated, $\tanh$ and attention blocks cannot absorb the skip at any width. Between an embedding and a readout and without normalization, no skipless network of ReLU$^2$, gated or $\tanh$ blocks equals a residual one, and a skipless ReLU or GELU network needs a first block of at least $2\dm$ units to equal almost any residual one. Under RMSNorm, with any $\varepsilon \ge 0$, no width suffices for almost every residual network. So, without normalization or biases, a trained residual ReLU or GELU network whose reads have rank $\dm$ can be rewritten exactly without skips with $\dm$ more units per block, and a ReLU$^2$, gated or $\tanh$ network with $ED \neq 0$ cannot be rewritten at any width. With biases, ReLU$^2$ and gated networks can be rewritten too (\cref{app:biases}).
 
 \para{Open questions.} The unknown cells and the conditions of \cref{tab:results} leave three questions, and a fourth lies beyond the table.
 \begin{enumerate}[label=(\arabic*)]
 \item Networks of attention blocks at depth, without normalization. At the same widths, a companion paper answers this by counting functional dimensions, the numbers of directions in which the parameters move the function \citep{karbevski2026unlock}; with more heads it is open.
-\item How many extra units ReLU and GELU networks need, without normalization: $\dm$ more per block suffice, and the first block needs at least $2\dm$ units in all.
+\item How many extra units ReLU and GELU networks need, without normalization: $\dm$ more per block suffice, and the first block needs at least $2\dm$ units.
 \item Skipless networks as limits of residual networks under RMSNorm with $\varepsilon > 0$.
 \item Approximate absorption: how many units a skip is worth at a given error.
 \end{enumerate}
@@ -707,5 +707,157 @@ The proofs give the rate $1/t$. Without normalization, for every bounded set $\m
 \citet{lin2018resnet} show that residual ReLU networks whose blocks have a single hidden unit, $h \mapsto h + \mathrm{ReLU}(hw + c)\,v$ with $w \in \R^{d\times 1}$, $v \in \R^{1\times d}$ and a bias $c \in \R$, approximate every integrable function on $\R^d$ in $L^1$ as the depth grows, while ReLU networks without skips whose hidden layers have width at most the input dimension $d$ cannot (their Proposition~2.1). The separation is confined to this narrow regime: with hidden layers of width $d + 1$, ReLU networks without skips already approximate every continuous function uniformly on compact sets \citep{hanin2017approximating}.
 
 The construction also needs the biases, for the shifts and the cut-offs at constants of its blocks (their Proposition~3.2). Without biases, a ReLU network, with or without skips, is positively homogeneous of degree one, $F(\lambda x) = \lambda F(x)$ for $\lambda > 0$, since ReLU and the linear maps are. On every ray $\{t\theta : t > 0\}$ such a network is a multiple of $t$, and so is every limit of such networks, uniformly or in $L^1$ on a compact set, on almost every ray: the multiples of $t$ form a closed space, and by Fubini $L^1$ convergence passes to almost every ray. In one dimension, for instance, every such network is $x \mapsto a\,\mathrm{ReLU}(x) - b\,\mathrm{ReLU}(-x)$, which stays at $L^1$ distance at least $(2 - \sqrt2)/3$ from $x^2$ on $[-1, 1]$. On all of $\R^d$, no integrable function other than $0$ can be approximated in $L^1$, since a positively homogeneous function other than $0$ is not integrable.
+
+
+\section{Blocks with biases}\label{app:biases}
+
+The main text treats blocks without biases, as in many current language models. With biases the answers change: every ReLU, GELU, ReLU$^2$ and gated block absorbs a linear term with more units, while $\tanh$ and attention blocks still never do (\cref{thm:biasexact}). Almost every ReLU, GELU and gated block needs exactly $\dm$ more units, and almost every ReLU$^2$ block between $2\dm$ and $3\dm$ (\cref{thm:biascount}). \Cref{tab:biases} collects these results.
+
+\para{Blocks with biases.} A vanilla MLP block with biases computes $B_\theta(x) = f(x\Wread + b)\,\Wwrite + c$, with $\theta = (\Wread, b, \Wwrite, c)$, a unit bias $b \in \R^{1\times m}$ and an output bias $c \in \R^{1\times\dm}$; unit $i$ has the read $w_i$, the bias $b_i$ and the write $\hat w_i$. In a gated block with biases, unit $j$ has a gate read $g_j$, a column of $W_{\mathrm g}$, with a gate bias $b^{\mathrm g}_j$, a value read $v_j$, a column of $W_{\mathrm v}$, with a value bias $b^{\mathrm v}_j$, and a write $\hat w_j$, and
+\[
+B_\theta(x) = \sum_{j=1}^{m} \sigma\big(xg_j + b^{\mathrm g}_j\big)\,\big(xv_j + b^{\mathrm v}_j\big)\,\hat w_j + c .
+\]
+An attention block with biases adds a bias row to every query, key and value and to its output: with $\mathbf 1$ the column of $T$ ones,
+\[
+B_\theta(h) = \sum_{i=1}^{H} P_i(h)\,\big(hW_{V,i} + \mathbf 1 b_{V,i}\big)\,W_{O,i} + \mathbf 1 b_O,
+\]
+where $P_i(h)$ is the softmax, row by row, of $(hW_{Q,i} + \mathbf 1 b_{Q,i})(hW_{K,i} + \mathbf 1 b_{K,i})^\top/\sqrt{d_h}$, with or without a causal mask, the same in both blocks. These scores do not depend on the positions of the tokens, which excludes rotary embeddings. A block absorbs $xM$, for $M \neq 0$, if a block of the same kind with biases satisfies \eqref{eq:absorbask}, or for attention $hM + B_\theta(h) = B_{\theta'}(h)$ for all $h \in \R^{T\times\dm}$.
+
+\begin{theorem}[Exact absorption with biases]\label{thm:biasexact}
+Let blocks have biases, and let $M \neq 0$.\\
+\stpart{thm:biasexact}{i}{} Every ReLU, GELU, ReLU$^2$, ReGLU, SwiGLU or GeGLU block absorbs $xM$ with more hidden units.\\
+\stpart{thm:biasexact}{ii}{} No $\tanh$ block and no attention block absorbs $xM$, at any width.\\
+\stpart{thm:biasexact}{iii}{} For generic $\theta$, no block of the same width absorbs $xM$.
+\end{theorem}
+
+\begin{theorem}[Extra units with biases]\label{thm:biascount}
+Let blocks have biases, let $M$ be invertible and let $\theta$ be generic.\\
+\stpart{thm:biascount}{i}{} A ReGLU, SwiGLU or GeGLU block absorbs $xM$ with $\dm$ more hidden units, and not with fewer.\\
+\stpart{thm:biascount}{ii}{} A ReLU or GELU block with at least $\dm$ hidden units absorbs $xM$ with $\dm$ more hidden units, and not with fewer.\\
+\stpart{thm:biascount}{iii}{} A ReLU$^2$ block with at least $\dm$ hidden units absorbs $xM$ with $3\dm$ more hidden units, and not with fewer than $2\dm$.
+\end{theorem}
+
+\begin{table}[ht]
+\centering\small
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{3pt}
+\newcommand{\cell}[1]{\begin{tabular}[c]{@{}c@{}}#1\end{tabular}}
+\newcommand{\rtag}[3]{{\footnotesize\if\relax\detokenize{#3}\relax\hyperref[#2]{#1~\ref*{#2}}\else\hyperref[#2:#3]{#1~\ref*{#2}(#3)}\fi}}
+\newcommand{\res}[4]{\cell{#1\\ \rtag{#2}{#3}{#4}}}
+\newcommand{\lcell}[1]{\begin{tabular}[c]{@{}l@{}}#1\end{tabular}}
+\makebox[\linewidth][c]{\begin{tabular}{|l|c|c|c|c|c|c|}
+\hline
+\textbf{Proven} & \textbf{ReLU} & \textbf{GELU} & $\boldsymbol{\tanh}$ & \textbf{ReLU$\boldsymbol{^2}$} & \cell{\textbf{ReGLU, SwiGLU,}\\ \textbf{GeGLU}} & \textbf{Attention} \\
+\hline
+one block, same width & \multicolumn{2}{c|}{\res{measure zero}{Thm.}{thm:biasexact}{iii}} & \res{never}{Thm.}{thm:biasexact}{ii} & \multicolumn{2}{c|}{\res{measure zero}{Thm.}{thm:biasexact}{iii}} & \res{never}{Thm.}{thm:biasexact}{ii} \\
+\hline
+\lcell{one block, more\\ hidden units or heads} & \multicolumn{2}{c|}{\res{exactly $\dm$ more}{Thm.}{thm:biascount}{ii}} & \res{no}{Thm.}{thm:biasexact}{ii} & \res{$2\dm$ to $3\dm$ more}{Thm.}{thm:biascount}{iii} & \res{exactly $\dm$ more}{Thm.}{thm:biascount}{i} & \res{no}{Thm.}{thm:biasexact}{ii} \\
+\hline
+\end{tabular}}
+\caption{What is proven for one block with biases. Never or no: for no weights. Measure zero: only for a null set of weights. Exactly $\dm$ more: for almost every block, $\dm$ more hidden units suffice and fewer do not. Scope as in \cref{sec:setup}.}
+\label{tab:biases}
+\end{table}
+
+\begin{remark}[Constructions for every block]\label{rem:biasconstr}
+Every gated block absorbs $xM$ with $\operatorname{rank}M$ more units, and for generic $\theta$ fewer do not (\cref{lem:biasgated}). Every ReLU or GELU block absorbs $xM$ with $2\dm$ more units, and with $\dm$ when its read has rank $\dm$. Every ReLU$^2$ block absorbs $xM$ with $4\dm$ more units, and with $3\dm$ when its read has rank $\dm$. Almost every ReLU$^2$ block with at least $\dm(\dm+3)/2$ units absorbs it with $\dm(\dm+3)/2$ more, which is fewer than $3\dm$ only for $\dm = 2$, where it is $5$.
+\end{remark}
+
+\begin{remark}[Bounded sets of inputs]\label{rem:biasbounded}
+GELU, SwiGLU, GeGLU, $\tanh$ and attention blocks are real-analytic in their input, so an equality on a nonempty open set of inputs holds everywhere, and \cref{thm:biasexact,thm:biascount} hold on every such set. ReLU, ReLU$^2$ and ReGLU blocks are not. On a bounded open set $\mathcal X$ of inputs, a unit whose kink lies outside $\mathcal X$ is a polynomial on $\mathcal X$. If $\dm$ units of a ReLU block, or $\dm(\dm+3)/2$ units of a ReLU$^2$ or ReGLU block, are active on all of $\mathcal X$, changing their writes and the output bias absorbs $xM$ on $\mathcal X$ at the same width. So on $\mathcal X$, the entries ``measure zero'' of \cref{tab:biases} fail for an open set of blocks. The lower bounds below use inputs of unbounded size: rays $x = tu$ with $t \to \infty$, or the kinks of the units wherever they lie.
+\end{remark}
+
+\begin{remark}[Networks]\label{rem:biasnetworks}
+Without normalization, absorbing the skip block by block, with $M = I$, shows that every residual network of ReLU$^2$, ReGLU, SwiGLU or GeGLU blocks with biases equals a skipless network with $4\dm$ (ReLU$^2$) or $\dm$ (gated) more units per block; without biases, none with $ED \neq 0$ does (\cpref{thm:homgatednet}{i}). As without biases, every residual ReLU or GELU network whose reads have rank $\dm$ equals a skipless one with $\dm$ more units per block. A skipless network of $\tanh$ blocks with biases is bounded, so it equals no residual one with $ED \neq 0$. Networks with biases under pre-RMSNorm are not treated here.
+\end{remark}
+
+\para{Open questions.} The exact number of extra units for ReLU$^2$ blocks lies between $2\dm$ and $3\dm$; for $\dm = 2$, five suffice once the block has five units (\cref{rem:biasconstr}). Attention with biases and rotary embeddings is open.
+
+\subsection{Constructions and blocks that never absorb}
+
+Let $e_a$ be the $a$-th standard basis column of $\R^{\dm}$ and $M_a$ the $a$-th row of $M$; then $xM$ is the sum over $a$ of $(xe_a)\,M_a$.
+
+\begin{proof}[Proof of \cpref{thm:biasexact}{i}]
+The constructions also give the upper bounds of \cref{thm:biascount}. Each construction keeps the units of $B_\theta$, changes some of their writes and the output bias, and adds units.
+
+\emph{Gated.} A unit with gate read $0$ and gate bias $1$ computes $\sigma(1)\,(xv + b^{\mathrm v})\,\hat w$, which is affine in $x$, and $\sigma(1) \neq 0$ for ReLU, SiLU and GELU. Write $M = \sum_{k=1}^{r} v_k\hat w_k$, with $r$ the rank of $M$. Then the $r$ units with gate reads $0$, gate biases $1$, value reads $v_k$, value biases $0$ and writes $\hat w_k/\sigma(1)$ add $xM$.
+
+\emph{ReLU and GELU.} Both satisfy \eqref{eq:odd}. Two new units with reads $\pm e_a$, biases $0$ and writes $\pm M_a$ add $(xe_a)\,M_a$, so $2\dm$ new units add $xM$. If the read has rank $\dm$, choose $\dm$ units with linearly independent reads, and let the rows $\gamma_i$, for these units $i$, solve $\sum_i w_i\gamma_i = M$. Give unit $i$ the write $\hat w_i + \gamma_i$, and add a unit with read $-w_i$, bias $-b_i$ and write $-\gamma_i$. By \eqref{eq:odd} the two add $(xw_i + b_i)\,\gamma_i$, and subtracting $\sum_i b_i\gamma_i$ from the output bias leaves $xM$, with $\dm$ new units.
+
+\emph{ReLU$^2$.} Let $r(z) = \max(z, 0)^2$, so that $r(z) + r(-z) = z^2$. Four new units with reads $\pm e_a$ and biases $\pm1$, with the writes $M_a/4$ for $r\big(\pm(xe_a + 1)\big)$ and $-M_a/4$ for $r\big(\pm(xe_a - 1)\big)$, add $\big((xe_a + 1)^2 - (xe_a - 1)^2\big)M_a/4 = (xe_a)\,M_a$, so $4\dm$ new units add $xM$. If the read has rank $\dm$, take the units $i$ and the rows $\gamma_i$ as above, and let $z_i = xw_i + b_i$. Give unit $i$ the write $\hat w_i + \gamma_i$ and add three units: one with read $-w_i$, bias $-b_i$ and write $\gamma_i$, and two with reads $\pm w_i$, biases $\pm(b_i - \frac12)$ and writes $-\gamma_i$. Together they add $\gamma_i\big(z_i^2 - (z_i - \tfrac12)^2\big) = (xw_i)\,\gamma_i + (b_i - \tfrac14)\,\gamma_i$, and the output bias absorbs the constants: $3\dm$ new units. Finally, for $\dm(\dm+3)/2$ units $i$ of the block, give unit $i$ the write $\hat w_i + \gamma_i$ and add a unit with read $-w_i$, bias $-b_i$ and write $\gamma_i$: these add $\sum_i \gamma_iz_i^2$. For each output coordinate, $\sum_i \gamma_iz_i^2 = xM + \text{const}$ is a square linear system in the coordinates of the $\gamma_i$, one equation for each coefficient of a polynomial of degree two other than the constant, and for generic $\theta$ it has a solution.
+\end{proof}
+
+\begin{proof}[Proof of \cpref{thm:biasexact}{ii}]
+\emph{$\tanh$.} $B_{\theta'} - B_\theta$ is bounded, and $xM$ is not.
+
+\emph{Attention.} Suppose that $hM + B_\theta(h) = B_{\theta'}(h)$ for all $h$, and let $C$ and $C'$ be the sums of the value--output products $W_{V,i}W_{O,i}$ of the heads of $\theta$ and of $\theta'$. If all rows of $h$ equal $x$, all keys of a head are equal, so each row of $P_i(h)$ is uniform on the tokens it sees, and all values equal $xW_{V,i} + b_{V,i}$. So every row of $B_\theta(h)$ is $xC$ plus a constant row, and the equation gives $M = C' - C$. Now add $\epsilon\delta$ to the first row of this $h$, for a row $\delta$, and look at the second row, which sees the first token with or without a causal mask. The second row of $hM$ does not change. In the second row of $B_\theta(h)$, the derivatives of the attention weights at $\epsilon = 0$ sum to zero over the tokens and multiply equal values, so the derivative in $\epsilon$ at $\epsilon = 0$ is $\delta C/T_2$, with $T_2$ the number of tokens that the second token sees. Hence $\delta C = \delta C'$ for every $\delta$, so $C = C'$ and $M = 0$, a contradiction.
+\end{proof}
+
+\subsection{Lower bounds}
+
+For a unit $j$ of a gated block with biases, let $\Delta_j = \big(b^{\mathrm g}_jv_j + b^{\mathrm v}_jg_j\big)\,\hat w_j$, a $\dm\times\dm$ matrix of rank at most one.
+
+\begin{lemma}[Gated blocks with biases]\label{lem:biasgated}
+Let ReGLU, SwiGLU or GeGLU blocks $B_\theta$ and $B_{\theta'}$ with biases satisfy \eqref{eq:absorbask}, where $B_{\theta'}$ has $n$ more units than $B_\theta$. Let the gate reads of $B_\theta$ be nonzero and pairwise non-collinear, and its value reads and writes nonzero. Then for some set $S$ of units of $B_\theta$, the matrix $M + \sum_{i\in S}\Delta_i$ is a sum of at most $n$ matrices of rank one.
+\end{lemma}
+
+\begin{proof}
+\emph{Outline.} Along rays $x = tu$ with $t \to \infty$, every gate becomes a ReLU gate. The terms of order $t^2$ and $t$ of \eqref{eq:absorbask} then split hyperplane by hyperplane, and those of order $t$ express $M$ through the units on one side of each hyperplane.
+
+\emph{Expansion along rays.} Group the units of both blocks with a nonzero gate read $g$ by the hyperplane $\mathcal H = \{x : xg = 0\}$, choose a unit normal $\nu$ of $\mathcal H$, and write $g = s\eta\nu$ with $\eta > 0$ and a side $s = \pm1$. Let $[\,\cdot\,]$ be $1$ if the condition inside holds and $0$ otherwise. For $x \notin \mathcal H$ and $t \to \infty$,
+\[
+\sigma\big(txg + b^{\mathrm g}\big) = t\eta\,\mathrm{ReLU}(s\,x\nu) + b^{\mathrm g}\,[s\,x\nu > 0] + o(1/t),
+\]
+exactly for large $t$ when $\sigma$ is ReLU, and up to terms that decay exponentially in $t$ when $\sigma$ is SiLU or GELU. So the unit contributes
+\[
+t^2\,\mathrm{ReLU}(s\,x\nu)\,(xv)\,\eta\hat w + t\,\big(\mathrm{ReLU}(s\,x\nu)\,\eta b^{\mathrm v}\hat w + [s\,x\nu > 0]\,(xv)\,b^{\mathrm g}\hat w\big) + O(1),
+\]
+and a unit with gate read $0$ contributes $t\,\sigma(b^{\mathrm g})\,(xv)\,\hat w + O(1)$. Put $tx$ into \eqref{eq:absorbask} and compare the coefficients of $t^2$ and of $t$ at each $x$ off all the hyperplanes. For a hyperplane $\mathcal H$ and a side $\pm$, let $A^\pm$, $a^\pm$ and $G^\pm$ be the sums of $\eta v\hat w$, $\eta b^{\mathrm v}\hat w$ and $b^{\mathrm g}v\hat w$ over the units of $B_{\theta'}$ on that side, minus the same sums over the units of $B_\theta$, and let $\Delta_0$ be the same difference for the sums of $\sigma(b^{\mathrm g})\,v\hat w$ over the units with gate read $0$. Then, with sums over the hyperplanes,
+\begin{align*}
+0 &= \textstyle\sum_{\mathcal H}\big(\mathrm{ReLU}(x\nu)\,xA^+ + \mathrm{ReLU}(-x\nu)\,xA^-\big),\\
+xM &= \textstyle\sum_{\mathcal H}\big(\mathrm{ReLU}(x\nu)\,a^+ + \mathrm{ReLU}(-x\nu)\,a^- + [x\nu > 0]\,xG^+ + [x\nu < 0]\,xG^-\big) + x\Delta_0 .
+\end{align*}
+
+\emph{One hyperplane at a time.} Near a point of $\mathcal H$ that lies on no other hyperplane, the terms of the other hyperplanes are smooth. In the second identity, continuity across $\mathcal H$ forces $yG^+ = yG^-$ for every row $y$ with $y\nu = 0$, so $G^+ - G^- = \nu q$ for a row $q$. Then $[x\nu > 0]\,x\nu q = \mathrm{ReLU}(x\nu)\,q$, and since the identity has no kink at $\mathcal H$, $a^+ + q + a^- = 0$. The terms of $\mathcal H$ are then $x\Delta_{\mathcal H}$, with
+\[
+\Delta_{\mathcal H} = G^- - \nu a^- = G^+ + \nu a^+,
+\]
+and the second identity becomes $M = \sum_{\mathcal H}\Delta_{\mathcal H} + \Delta_0$. As $g = \pm\eta\nu$ on side $\pm$, $G^\pm \pm \nu a^\pm$ is the sum of the matrices $\Delta_j$ over the units of $B_{\theta'}$ on side $\pm$, minus the same sum over the units of $B_\theta$. In the first identity, the same argument applied to $\mathrm{ReLU}(\pm x\nu) = (\lvert x\nu\rvert \pm x\nu)/2$ gives $A^+ + A^- = \nu p$ for a row $p$, and then $p = 0$, since $\lvert x\nu\rvert\,x\nu$ has a jump in its second derivative. So $A^+ + A^- = 0$.
+
+\emph{Counting.} Orient the hyperplane $\mathcal H_i$ of unit $i$ of $B_\theta$ so that unit $i$ lies on side $+$; no other unit of $B_\theta$ lies on $\mathcal H_i$. Let $J^\pm$ be the sets of units of $B_{\theta'}$ on side $\pm$ of $\mathcal H_i$. If both were empty, $A^+ + A^- = -\eta_iv_i\hat w_i$ would not vanish, so $\mathcal H_i$ carries $\lvert J^+\rvert + \lvert J^-\rvert - 1 \ge 0$ extra units. If $J^+$ is empty, $\Delta_{\mathcal H_i} = -\Delta_i$. Otherwise $\Delta_{\mathcal H_i}$ is the sum of the $\Delta_j$ over $J^-$, at most $\lvert J^-\rvert \le \lvert J^+\rvert + \lvert J^-\rvert - 1$ matrices of rank one. A hyperplane of no unit of $B_\theta$ carries $\lvert J^+\rvert + \lvert J^-\rvert$ units of $B_{\theta'}$, and $\Delta_{\mathcal H}$ is a sum of at most that many matrices of rank one. Each unit of $B_{\theta'}$ with gate read $0$ adds one matrix of rank one to $\Delta_0$, and $B_\theta$ has no such unit. With $S$ the units $i$ for which $J^+$ is empty, $M + \sum_{i\in S}\Delta_i$ is therefore a sum of at most $n$ matrices of rank one.
+\end{proof}
+
+\begin{proof}[Proof of \cpref{thm:biascount}{i}]
+The argument also gives \cpref{thm:biasexact}{iii} for gated blocks. The construction above gives $\dm$ units. For each set $S$ of units of $B_\theta$, the determinant of $M + \sum_{i\in S}\Delta_i$ is a polynomial in $\theta$, and it equals $\det M \neq 0$ when all biases vanish. So for generic $\theta$ it is nonzero for each of the finitely many sets $S$, the hypotheses of \cref{lem:biasgated} hold, and the lemma gives $n \ge \dm$. For $M \neq 0$ of any rank, the same argument gives $n \ge \operatorname{rank}M \ge 1$.
+\end{proof}
+
+\begin{proof}[Proof of \cpref{thm:biascount}{ii}]
+The argument also gives \cpref{thm:biasexact}{iii} for ReLU and GELU blocks. The construction above gives $\dm$ units. For the converse, ReLU changes by at most $\lvert b\rvert$ when its argument changes by $b$, and GELU differs from ReLU by at most $\kappa < 0.17$ (proof of \cref{thm:relufirst}). So for both activations and all $t > 0$,
+\[
+\big\lvert \sigma(tz + b) - t\,\mathrm{ReLU}(z)\big\rvert \le \lvert b\rvert + \kappa,
+\]
+and $\sigma(tz + b)/t \to \mathrm{ReLU}(z)$ as $t \to \infty$. Put $tx$ into \eqref{eq:absorbask}, divide by $t$, and let $t \to \infty$: the ReLU blocks without biases that have the reads and writes of $B_\theta$ and $B_{\theta'}$ satisfy \eqref{eq:absorbask}. For generic $\theta$ these reads and writes are generic, so $B_{\theta'}$ has at least $\dm$ more units by \cpref{prop:widthd}{ii}, and for any $M \neq 0$ it is not of the same width, by \cpref{thm:relugelu}{i}.
+\end{proof}
+
+\begin{proof}[Proof of \cpref{thm:biascount}{iii}]
+The argument also gives \cpref{thm:biasexact}{iii} for ReLU$^2$ blocks. The construction above gives $3\dm$ units. For the converse, let $r(z) = \max(z, 0)^2$.
+
+\emph{Squares.} Group the units of both blocks with a nonzero read by their kink, the hyperplane $\mathcal H = \{x : xu + b = 0\}$, with a representative $(u, b)$ and a side: a unit with read $cu$ and bias $cb$ computes $c^2\,r\big(\pm(xu + b)\big)$ times its write, on side $\pm$ as $c \gtrless 0$. Let $\mu^\pm$ be the sum of $c^2$ times the write over the units of $B_{\theta'}$ on side $\pm$, minus the same sum over the units of $B_\theta$. By \eqref{eq:absorbask}, $B_{\theta'} - B_\theta$ is a polynomial. Near a point of $\mathcal H$ on no other hyperplane, the terms of $\mathcal H$ are $\mu^+r(z) + \mu^-r(-z)$, with $z = xu + b$, whose second derivative in the direction of $u$ jumps across $\mathcal H$ by a nonzero multiple of $\mu^+ - \mu^-$. So $\mu^+ = \mu^- =: \mu_{\mathcal H}$, the terms of $\mathcal H$ are $\mu_{\mathcal H}\,z^2$, and
+\begin{equation}\label{eq:biassquares}
+\textstyle\sum_{\mathcal H}\mu_{\mathcal H}\,(xu_{\mathcal H} + b_{\mathcal H})^2 = xM + \text{const},
+\end{equation}
+with the representatives $(u_{\mathcal H}, b_{\mathcal H})$.
+
+\emph{Costs.} For generic $\theta$ the units of $B_\theta$ have nonzero reads and writes and lie on distinct hyperplanes. Take unit $i$ itself, $(w_i, b_i)$, as the representative of its hyperplane $\mathcal H_i$, on side $+$. Then $B_{\theta'}$ has the weighted writes $\hat w_i + \mu_{\mathcal H_i}$ on side $+$ and $\mu_{\mathcal H_i}$ on side $-$, so it has at least one unit on $\mathcal H_i$, and at least two unless $\mu_{\mathcal H_i} \in \{0, -\hat w_i\}$. On a hyperplane of no unit of $B_\theta$, it has at least two units if $\mu_{\mathcal H} \neq 0$. Let $S$ and $U$ be the sets of units $i$ of $B_\theta$ with $\mu_{\mathcal H_i} = -\hat w_i$ and with $\mu_{\mathcal H_i} \notin \{0, -\hat w_i\}$, and $\mathcal N$ the set of the other hyperplanes with $\mu_{\mathcal H} \neq 0$. Then $n \ge \lvert U\rvert + 2\lvert\mathcal N\rvert$.
+
+\emph{Dimensions.} Modulo constants, a polynomial of degree at most two is a pair of a quadratic form and a linear part, in a space of dimension $\dm(\dm+3)/2$, in which $(xu + b)^2$ becomes $\varphi(u, b) = (uu^\top, 2bu)$. For each output coordinate $o$, with $M_{:,o}$ the column $o$ of $M$, \eqref{eq:biassquares} reads
+\[
+\textstyle\sum_{i\in U}\mu_{\mathcal H_i,o}\,\varphi(w_i, b_i) + \sum_{\mathcal H\in\mathcal N}\mu_{\mathcal H,o}\,\varphi(u_{\mathcal H}, b_{\mathcal H}) = \tau_o, \qquad \tau_o = (0, M_{:,o}) + \sum_{i\in S}\hat w_{i,o}\,\varphi(w_i, b_i).
+\]
+So the vectors $\tau_1, \dots, \tau_{\dm}$ and $\varphi(w_i, b_i)$, $i \in U$, lie in the span of $\lvert U\rvert + \lvert\mathcal N\rvert$ vectors.
+
+\emph{Genericity.} For disjoint sets $S$ and $U$ of units of $B_\theta$, these $\dm + \lvert U\rvert$ vectors span a space of dimension at least $\min\big(\dm(\dm+3)/2, \dm + \lvert U\rvert\big)$ for generic $\theta$. The condition is that some minor of the matrix with these columns, a polynomial in $\theta$, does not vanish. It holds when the writes $\hat w_i$, $i \in S$, vanish and the reads are generic: then the $\tau_o = (0, M_{:,o})$ span all linear parts, as $M$ is invertible, and the forms $w_iw_i^\top$ of $\lvert U\rvert$ generic columns are linearly independent up to $\dm(\dm+1)/2$ of them.
+
+\emph{Conclusion.} So $\lvert U\rvert + \lvert\mathcal N\rvert \ge \min\big(\dm(\dm+3)/2, \dm + \lvert U\rvert\big)$. If the minimum is $\dm + \lvert U\rvert$, then $\lvert\mathcal N\rvert \ge \dm$ and $n \ge 2\dm$. Otherwise $\lvert U\rvert + \lvert\mathcal N\rvert \ge \dm(\dm+3)/2 \ge 2\dm$, and again $n \ge 2\dm$. For $M \neq 0$ of any rank, the same argument with $\operatorname{rank}M$ in place of $\dm$ gives $n \ge 2$.
+\end{proof}
 
 \end{document}

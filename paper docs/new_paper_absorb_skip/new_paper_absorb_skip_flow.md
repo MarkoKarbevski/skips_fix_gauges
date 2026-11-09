@@ -7,7 +7,7 @@
 | 2 | Introduction | para |  |  | Almost every deep network trained today, from residual networks \citep |
 | 3 | Introduction | para |  |  | Skipless networks now train too. \citet{he2024simplifying} remove the  |
 | 4 | Introduction | para | B, the map of a block, H and d_h, m, number of units | B, the map of a block, H and d_h, attention block, m, number of units | We answer this question block by block. Take an MLP block $B$ with $m$ |
-| 5 | Introduction | para |  | ReLU squared | \para{Without biases, the answer depends on the activation.} \begin{it |
+| 5 | Introduction | para |  | ReLU squared, mirror image | \para{Without biases, the answer depends on the activation.} \begin{it |
 | 6 | Introduction | para | t and u, a ray | t and u, a ray | \para{Four one-line reasons.} Follow the input along a ray, $x = tu$ w |
 | 7 | Introduction | para | RMSNorm, epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | \para{Networks.} Throughout, a network starts with a linear embedding  |
 | 8 | Introduction | para |  |  | \para{No function lost in the limit.} Without normalization, every ski |
@@ -20,7 +20,7 @@
 | 15 | Setup | para | generic / almost every |  | \para{Scope.} Every MLP block has at least $\dm$ hidden units, so that |
 | 16 | One block | para |  |  | \section{One block}\label{sec:oneblock} \takeaway{For almost every ReL |
 | 17 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para |  |  | \subsection{ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm |
-| 18 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | mirror image | mirror image | Both activations satisfy \begin{equation}\label{eq:odd} \sigma(z) - \s |
+| 18 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | mirror image |  | Both activations satisfy \begin{equation}\label{eq:odd} \sigma(z) - \s |
 | 19 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | w_i and hat w_i, read and write of a unit, with more units. | w_i and hat w_i, read and write of a unit, with more units. | \emph{With more units.} Let unit $i$ have read $w_i$, a column of $\Wr |
 | 20 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | S, a set of units, at the same width. | S, a set of units, at the same width. | \emph{At the same width.} Flipping the read of unit $i$ to $-w_i$ chan |
 | 21 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | nondegenerate | nondegenerate | The next theorem says that at the same width these flips are the only  |
@@ -48,7 +48,7 @@
 | 43 | Networks | para |  |  | For ReLU the proof compares ranks. Near almost every input, a generic  |
 | 44 | Networks | para |  |  | Conversely, the construction of \cref{sec:relugelu} works block by blo |
 | 45 | Networks | statement |  |  | \begin{restatable}[Extra units]{proposition}{propExtraUnits}\label{pro |
-| 46 | Networks | para |  |  | So $L\dm$ extra units in all suffice, and the first block needs at lea |
+| 46 | Networks | para |  |  | So $\dm$ extra units per block suffice, and the first block of a skipl |
 | 47 | Networks | para |  |  | \para{RMSNorm: the skip keeps the norm of each token.} A skipless netw |
 | 48 | Networks | statement |  |  | \begin{restatable}[Networks under RMSNorm]{theorem}{thmRMSNet}\label{t |
 | 49 | Networks | para |  |  | Scale an input $X$ by a factor $t \to \infty$. A skipless network with |
