@@ -73,6 +73,8 @@
 | 68 | Related work | para |  |  | \para{Training without skips.} Skipless networks train with careful in |
 | 69 | Conclusion | para |  |  | \section{Conclusion}\label{sec:conclusion} |
 | 70 | Conclusion | para |  |  | Can a block absorb its skip? Without biases, it depends on the activat |
-| 71 | Conclusion | para |  |  | \para{Open questions.} The unknown cells and the conditions of \cref{t |
-| 72 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
-| 73 | Use of AI | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 71 | Conclusion | para |  |  | Between an embedding and a readout and without normalization, no skipl |
+| 72 | Conclusion | para |  |  | So, without normalization or biases, a trained residual ReLU or GELU n |
+| 73 | Conclusion | para |  |  | \para{Open questions.} The unknown cells and the conditions of \cref{t |
+| 74 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
+| 75 | Use of AI | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |

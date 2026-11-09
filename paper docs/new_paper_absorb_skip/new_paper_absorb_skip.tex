@@ -117,7 +117,7 @@ We answer this question block by block. Take an MLP block $B$ with $m$ hidden un
 \item For ReLU$^2$ blocks, whose activation is the square of ReLU, gated blocks (ReGLU, SwiGLU, GeGLU) and $\tanh$ blocks, no number of units absorbs a skip (\cref{thm:homgated}).
 \item For attention blocks, no number of heads absorbs a skip (\cref{thm:attention}).
 \end{itemize}
-Outside \cref{app:biases}, blocks have no biases, as in many current language models \citep{olmo2025olmo2,yang2025qwen3}. With biases, more units let every ReLU$^2$ and gated block absorb its skip, and more heads every attention block with rotary embeddings \citep{su2021roformer}. $\tanh$ blocks, and attention blocks without rotary embeddings, still never do (\cref{app:biases}).
+Outside \cref{app:biases}, blocks have no biases, as in many current language models \citep{olmo2025olmo2,yang2025qwen3}. With biases, every ReLU$^2$ and gated block absorbs its skip once it has more units, and every attention block with rotary embeddings \citep{su2021roformer} once it has more heads. $\tanh$ blocks, and attention blocks without rotary embeddings, still never do (\cref{app:biases}).
 
 \para{Four one-line reasons.} Follow the input along a ray, $x = tu$ with $t > 0$. The skip adds $tu$, which grows like $t$. A ReLU$^2$ block grows like $t^2$. A gated block, whose gate vanishes at $0$, is of order $t^2$ near the origin. A $\tanh$ block stays bounded. So none of them can produce the term $tu$ (\cref{fig:reasons}, \cref{sec:never}). Attention mixes the tokens of a sequence, while a skip leaves each token where it is.
 
@@ -392,7 +392,11 @@ Let $F$ be a skipless network whose blocks are locally Lipschitz.\\
 
 \section{Conclusion}\label{sec:conclusion}
 
-Can a block absorb its skip? Without biases, it depends on the activation. At the same width, almost no block absorbs its skip. Almost every ReLU or GELU block needs exactly $\dm$ more units, and ReLU$^2$, gated, $\tanh$ and attention blocks cannot absorb the skip at any width. Between an embedding and a readout and without normalization, no skipless network of ReLU$^2$, gated or $\tanh$ blocks equals a residual one. Neither does a network of attention blocks, once sequences have at least two more tokens than the residual network has blocks. A skipless ReLU or GELU network needs a first block of at least $2\dm$ units to equal almost any residual one. Under RMSNorm, with any $\varepsilon \ge 0$, no width suffices for almost every residual network. Without normalization, every skipless network is still a limit of residual networks of the same widths. So, without normalization or biases, a trained residual ReLU or GELU network whose reads have rank $\dm$ can be rewritten exactly as a skipless network with $\dm$ more units per block, and a ReLU$^2$, gated or $\tanh$ network with $ED \neq 0$ cannot be rewritten at any width. With biases, ReLU$^2$ and gated networks can be rewritten too (\cref{app:biases}).
+Can a block absorb its skip? Without biases, it depends on the activation. At the same width, almost no block absorbs its skip. Almost every ReLU or GELU block needs exactly $\dm$ more units, and ReLU$^2$, gated, $\tanh$ and attention blocks cannot absorb the skip at any width.
+
+Between an embedding and a readout and without normalization, no skipless network of ReLU$^2$, gated or $\tanh$ blocks equals a residual one. Neither does a network of attention blocks, once sequences have at least two more tokens than the residual network has blocks. A skipless ReLU or GELU network needs a first block of at least $2\dm$ units to equal almost any residual one. Under RMSNorm, with any $\varepsilon \ge 0$, no width suffices for almost every residual network. Without normalization, every skipless network is still a limit of residual networks of the same widths.
+
+So, without normalization or biases, a trained residual ReLU or GELU network whose reads have rank $\dm$ can be rewritten exactly as a skipless network with $\dm$ more units per block, and a ReLU$^2$, gated or $\tanh$ network with $ED \neq 0$ cannot be rewritten at any width. With biases, ReLU$^2$ and gated networks can be rewritten too (\cref{app:biases}).
 
 \para{Open questions.} The unknown cells and the conditions of \cref{tab:results} leave three questions, and a fourth lies beyond the table.
 \begin{enumerate}[label=(\arabic*)]
