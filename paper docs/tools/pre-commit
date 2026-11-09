@@ -1,8 +1,14 @@
 #!/bin/bash
-# Optional git pre-commit hook: block a commit that stages a paper whose main text uses a term or
-# symbol before defining it. Not installed by default; to enable it:
-#   cp "paper docs/tools/pre-commit" .git/hooks/pre-commit
+# Git pre-commit hook for this clone: block a commit that stages a paper whose main text uses a term
+# or symbol before defining it. It runs only on commits made in this clone, never on Overleaf commits.
+# Install with: cp "paper docs/tools/pre-commit" .git/hooks/pre-commit
 root=$(git rev-parse --show-toplevel)
+# Check only commits authored in this clone: never a merge, rebase or cherry-pick that brings in
+# commits made elsewhere (for example from Overleaf).
+gd=$(git rev-parse --git-dir)
+for f in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD rebase-merge rebase-apply; do
+  [ -e "$gd/$f" ] && exit 0
+done
 cd "$root/paper docs" || exit 0
 fail=0
 for k in A B; do
