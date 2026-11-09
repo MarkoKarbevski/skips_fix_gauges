@@ -70,15 +70,16 @@
 | 65 | A gap that separates function classes | para |  |  | \subsection{A gap that separates function classes}\label{sec:classes} |
 | 66 | A gap that separates function classes | para |  |  | For smooth blocks, the gap in functional dimension keeps the two class |
 | 67 | A gap that separates function classes | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
-| 68 | A gap that separates function classes | para |  |  | In (ii), each extra GELU unit adds $2\dm$ parameters against a gap of  |
+| 68 | A gap that separates function classes | para |  |  | Part (i) covers attention networks, and in (ii) each extra GELU unit a |
 | 69 | Related work | para |  |  | \section{Related work}\label{sec:related} |
-| 70 | Related work | para |  |  | \para{Changes of basis at hidden layers.} \citet{zhao2023symmetries} d |
-| 71 | Related work | para |  |  | \para{Removing weights.} Changes of basis can set the values and proje |
-| 72 | Related work | para |  |  | \para{The basis of the residual stream.} The residual stream has no pr |
-| 73 | Related work | para |  |  | \para{Symmetries and residual networks in theory.} \citet{wang2025gaug |
-| 74 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
-| 75 | Conclusion | para |  |  | Skips tie the bases of all hidden states into one. A skipless network  |
-| 76 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth remains open fo |
-| 77 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
-| 78 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
-| 79 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 70 | Related work | para |  |  | \para{Absorbing the skip.} Without normalization, $\dm$ more ReLU or G |
+| 71 | Related work | para |  |  | \para{Changes of basis at hidden layers.} \citet{zhao2023symmetries} d |
+| 72 | Related work | para |  |  | \para{Removing weights.} Changes of basis can set the values and proje |
+| 73 | Related work | para |  |  | \para{The basis of the residual stream.} The residual stream has no pr |
+| 74 | Related work | para |  |  | \para{Symmetries and residual networks in theory.} \citet{wang2025gaug |
+| 75 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
+| 76 | Conclusion | para |  |  | Skips tie the bases of all hidden states into one. A skipless network  |
+| 77 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth remains open fo |
+| 78 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
+| 79 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
+| 80 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
