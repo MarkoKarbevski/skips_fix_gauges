@@ -11,7 +11,7 @@
 | 6 | Introduction | para | P, the number of parameters, running example | P, the number of parameters, running example | \para{Fewer parameters, the same functions.} For almost every choice o |
 | 7 | Introduction | para |  |  | \para{Known symmetries.} Permuting the hidden units or heads of a bloc |
 | 8 | Introduction | float |  |  | \begin{figure}[t] \centering \includegraphics[width=0.94\linewidth]{fi |
-| 9 | Introduction | para | A_l, a learned skip, U and V, exact reduction, identity units, learned skip, learned skips are identity units, one change of basis is left, skips unlock functional dimension | A_l, a learned skip, U and V, exact reduction, identity units, learned skip, learned skips are identity units, one change of basis is left, skips unlock functional dimension | \para{Contributions.} \begin{enumerate}[label=\arabic*.] \item \emph{E |
+| 9 | Introduction | para | A_l, a learned skip, exact reduction, identity units, learned skip, learned skips are identity units, one change of basis is left, skips unlock functional dimension | A_l, a learned skip, exact reduction, identity units, learned skip, learned skips are identity units, one change of basis is left, skips unlock functional dimension | \para{Contributions.} \begin{enumerate}[label=\arabic*.] \item \emph{E |
 | 10 | Introduction | float | functional dimension added by the skips, smooth blocks | functional dimension added by the skips, generic, smooth blocks | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \n |
 | 11 | Setup | para |  |  | \section{Setup}\label{sec:setup} \takeaway{A block reads a hidden stat |
 | 12 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, m, number of units, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, m, number of units, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
@@ -25,7 +25,7 @@
 | 20 | Without skips: one free submatrix per hidden state | statement | W_1, the chosen block | W_1, the chosen block | \begin{restatable}[One free submatrix per hidden state]{proposition}{p |
 | 21 | Without skips: one free submatrix per hidden state | para |  |  | Rows of a write work too: if $\dm$ rows of the write into $h_\ell$ for |
 | 22 | Without skips: one free submatrix per hidden state | para |  |  | So skipless networks with one identity submatrix per hidden state comp |
-| 23 | Without skips: one free submatrix per hidden state | float |  |  | \begin{figure}[t] \centering [a TikZ drawing, omitted here; the captio |
+| 23 | Without skips: one free submatrix per hidden state | float | U and V | U and V | \begin{figure}[t] \centering [a TikZ drawing, omitted here; the captio |
 | 24 | Learned skips are blocks of identity units | para |  |  | \subsection{Learned skips are blocks of identity units}\label{sec:lear |
 | 25 | Learned skips are blocks of identity units | para |  |  | A learned skip, which adds $hA$ in place of $h$, is a block in disguis |
 | 26 | Learned skips are blocks of identity units | para |  |  | \para{Merge.} Nothing nonlinear happens between $U$ and $V$, so the id |
@@ -65,7 +65,7 @@
 | 60 | Measured at depth | para |  |  | For deeper networks we compute the rank of the Jacobian on a large bat |
 | 61 | Measured at depth | float |  |  | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \b |
 | 62 | Measured at depth | para |  |  | In two cases the measured rank stays below the upper bound. Under RMSN |
-| 63 | Measured at depth | statement |  |  | \begin{conjecture}[Equality condition]\label{conj:equality} Consider M |
+| 63 | Measured at depth | statement |  |  | \begin{conjecture}[Equality condition]\label{conj:equality} With or wi |
 | 64 | Measured at depth | para |  |  | For smooth blocks, \cref{thm:resdepth} proves the residual half of the |
 | 65 | A gap that separates function classes | para |  |  | \subsection{A gap that separates function classes}\label{sec:classes} |
 | 66 | A gap that separates function classes | para |  |  | For smooth blocks, the gap in functional dimension keeps the two class |
@@ -79,7 +79,7 @@
 | 74 | Related work | para |  |  | \para{Symmetries and residual networks in theory.} \citet{wang2025gaug |
 | 75 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
 | 76 | Conclusion | para |  |  | Skips tie the bases of all hidden states into one. A skipless network  |
-| 77 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth remains open fo |
+| 77 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth is open for ski |
 | 78 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
 | 79 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
 | 80 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
