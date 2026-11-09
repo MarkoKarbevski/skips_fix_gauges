@@ -1,0 +1,4 @@
+# Terms accepted without a definition before first use, case by case (paper B).
+residual # well known: residual networks
+change of basis # well known from linear algebra; Section 3.1 defines the map on the weights
+redundancy # plain English in the abstract; Section 4.1 defines it precisely

@@ -1,0 +1,31 @@
+# Terms and symbols of paper A: (name, pattern of a use, pattern of the defining sentence).
+TERMS = [
+    ('d_model, the width', r'\\dm', r'(?i)(\$\\dm\$|d_\{\\mathrm\{model\}\}) (is|being|the) (the )?(model )?width|with \$\\dm\$ the model width|width \$\\dm\$'),
+    ('absorb', r'(?i)\babsorb', r'\\emph\{absorbs\}'),
+    ('read / write (nouns)', r'(?i)\b(the|a|each|its) (read|write)s?\b', r'(?i)with a read \$\\Wread\$ and a write'),
+    ('ReLU squared', r'ReLU\$\^2\$', r'(?i)square of ReLU|squared-ReLU'),
+    ('gated block', r'(?i)\bgated\b', r'(?i)in a gated block|gated \(GLU\)'),
+    ('RMSNorm and its epsilon', r'RMSNorm|\\varepsilon', r'divides each token by its root mean square|divides each row of \$h\$ by'),
+    ('pre-RMSNorm', r'(?i)pre-RMSNorm', r'In a pre-RMSNorm network|\\emph\{pre-RMSNorm\}'),
+    ('generic / almost every', r'(?i)\bgeneric|almost every', r'\\emph\{Generic\}'),
+    ('nondegenerate', r'(?i)nondegenerate', r'\\emph\{nondegenerate\}'),
+    ('value-output product', r'(?i)value--output product', r'value--output product \$W_'),
+    ('score matrix', r'(?i)score matri', r'score matrix \$\\Gamma_i\$'),
+    ('readout / unembedding', r'(?i)readout|unembedding', r'linear readout \$D\$|linear embedding and unembedding|ends with a linear unembedding'),
+    ('skipless', r'(?i)\bskipless\b', r'\\emph\{skipless\}'),
+    ('mirror image', r'(?i)mirror', r'mirror image, with the opposite read'),
+]
+SYMBOLS = [
+    ('M, the linear term', r'xM\b|\$M\b|hM\b|uM\b|M = I', r'linear term \$xM\$, for a'),
+    ('E and D', r'xE\b|\$E\$|\$D\$|h_LD|ED\b', r'embedding \$E\$'),
+    ('L, the number of blocks', r'\$L\b|L\\dm|L \\ge', r'(?i)\$L\$ blocks'),
+    ('B_theta, Wread, Wwrite, theta', r'B_\\theta|\\Wread|\\Wwrite', r'B_\\theta\(x\) = f'),
+    ('m, number of units', r'\\times m\b|\$m\$', r'with \$m\$ hidden units'),
+    ('H and d_h', r'Hd_h|d_h|\$H\$', r'(?i)\$H\$ heads'),
+    ('T, number of tokens', r'T\\times|T \\ge', r'the \$T\$ tokens'),
+    ('N(h)', r'N\(h|N\(xE', r'normalized state \$N\(h\)\$'),
+    ('t and u, a ray', r'tu\b|t\\,uM|\$t\$', r'\$x = tu\$ with'),
+    ('S, a set of units', r'\[\{:\},S\]|set \$S\$', r'some set \$S\$ of units'),
+    ('F, the function of a network', r'F\(cx\)|\$F\$', r'The function \$F\$ of every|Let \$F\$ be a skipless network'),
+    ('Gamma, attention scores', r'\\Gamma', r'\\Gamma_i = W_\{Q,i\}'),
+]

@@ -1,0 +1,22 @@
+#!/bin/bash
+# Optional git pre-commit hook: block a commit that stages a paper whose main text uses a term or
+# symbol before defining it. Not installed by default; to enable it:
+#   cp "paper docs/tools/pre-commit" .git/hooks/pre-commit
+root=$(git rev-parse --show-toplevel)
+cd "$root/paper docs" || exit 0
+fail=0
+for k in A B; do
+  case $k in
+    A) f=new_paper_absorb_skip/new_paper_absorb_skip.tex ;;
+    B) f=new_paper_skips_unlock_d2_params/new_paper_skips_unlock_d2_params.tex ;;
+  esac
+  if git diff --cached --name-only | grep -qF "paper docs/$f"; then
+    if ! res=$(python3 tools/check_flow.py "$f" tools/glossary_$k.py tools/flow_allow_$k.txt); then
+      echo "$res" | grep -v '^  unit'
+      echo "Commit blocked: paper $k uses a term or symbol before defining it."
+      echo "Fix the text, or accept a term well known to the readers in tools/flow_allow_$k.txt, with a reason."
+      fail=1
+    fi
+  fi
+done
+exit $fail
