@@ -24,7 +24,7 @@
 | 19 | Without skips: one free submatrix per hidden state | para |  |  | A symmetry can be spent. |
 | 20 | Without skips: one free submatrix per hidden state | statement | W_1, the chosen block | W_1, the chosen block | \begin{restatable}[One free submatrix per hidden state]{proposition}{p |
 | 21 | Without skips: one free submatrix per hidden state | para |  |  | Rows of a write work too: if $\dm$ rows of the write into $h_\ell$ for |
-| 22 | Without skips: one free submatrix per hidden state | para |  |  | So, up to a set of weights of measure zero, the reduced networks compu |
+| 22 | Without skips: one free submatrix per hidden state | para |  |  | So skipless networks with one identity submatrix per hidden state comp |
 | 23 | Without skips: one free submatrix per hidden state | float |  |  | \begin{figure}[t] \centering [a TikZ drawing, omitted here; the captio |
 | 24 | Learned skips are blocks of identity units | para |  |  | \subsection{Learned skips are blocks of identity units}\label{sec:lear |
 | 25 | Learned skips are blocks of identity units | para |  |  | A learned skip, which adds $hA$ in place of $h$, is a block in disguis |
@@ -40,7 +40,7 @@
 | 35 | Under RMSNorm: orthogonal maps pass, triangles stay | para |  |  | \subsection{Under RMSNorm: orthogonal maps pass, triangles stay}\label |
 | 36 | Under RMSNorm: orthogonal maps pass, triangles stay | para |  |  | With pre-RMSNorm, the network with learned skips computes \begin{equat |
 | 37 | Under RMSNorm: orthogonal maps pass, triangles stay | statement |  |  | \begin{restatable}[Triangles under RMSNorm]{theorem}{thmRMSTri}\label{ |
-| 38 | Under RMSNorm: orthogonal maps pass, triangles stay | para |  |  | \para{What a learned skip carries.} Write a skip as $A = RQ$, an upper |
+| 38 | Under RMSNorm: orthogonal maps pass, triangles stay | para |  |  | \para{What a learned skip carries.} Write a skip as an upper triangula |
 | 39 | Under RMSNorm: orthogonal maps pass, triangles stay | para |  |  | LayerNorm is RMSNorm after a projection that removes the mean of each  |
 | 40 | What trained models give up | para |  |  | \subsection{What trained models give up}\label{sec:trained} |
 | 41 | What trained models give up | para |  |  | \para{A skipless ViT-B.} The skipless ViT-B of \citet{ji2026cutting} h |
@@ -64,7 +64,7 @@
 | 59 | Measured at depth | para |  |  | \subsection{Measured at depth}\label{sec:measured} |
 | 60 | Measured at depth | para |  |  | For deeper networks we compute the rank of the Jacobian on a large bat |
 | 61 | Measured at depth | float |  |  | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \b |
-| 62 | Measured at depth | para |  |  | There are two exceptions. Under RMSNorm with $\varepsilon = 10^{-5}$,  |
+| 62 | Measured at depth | para |  |  | In two cases the measured rank stays below the upper bound. Under RMSN |
 | 63 | Measured at depth | statement |  |  | \begin{conjecture}[Equality condition]\label{conj:equality} Consider M |
 | 64 | Measured at depth | para |  |  | For smooth blocks, \cref{thm:resdepth} proves the residual half of the |
 | 65 | A gap that separates function classes | para |  |  | \subsection{A gap that separates function classes}\label{sec:classes} |
@@ -73,11 +73,11 @@
 | 68 | A gap that separates function classes | para |  |  | In (ii), each extra GELU unit adds $2\dm$ parameters against a gap of  |
 | 69 | Related work | para |  |  | \section{Related work}\label{sec:related} |
 | 70 | Related work | para |  |  | \para{Changes of basis at hidden layers.} \citet{zhao2023symmetries} d |
-| 71 | Related work | para |  |  | \para{Removing weights.} \citet{graef2024tricks} merges the queries an |
+| 71 | Related work | para |  |  | \para{Removing weights.} Changes of basis can set the values and proje |
 | 72 | Related work | para |  |  | \para{The basis of the residual stream.} The residual stream has no pr |
 | 73 | Related work | para |  |  | \para{Symmetries and residual networks in theory.} \citet{wang2025gaug |
 | 74 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
-| 75 | Conclusion | para |  |  | What do skips change in parameter space? They tie the bases of all hid |
+| 75 | Conclusion | para |  |  | Skips tie the bases of all hidden states into one. A skipless network  |
 | 76 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth remains open fo |
 | 77 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
 | 78 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |

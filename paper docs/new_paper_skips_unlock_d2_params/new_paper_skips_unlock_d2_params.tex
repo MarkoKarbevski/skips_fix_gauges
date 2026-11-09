@@ -102,36 +102,36 @@
 \vspace{-1.5em}
 
 \begin{abstract}
-Residual and skipless networks with the same blocks have the same parameters. Do they use them alike? Here we show that skip connections unlock $\dm^2$ parameters per block, or $\dm(\dm-1)/2$ under RMSNorm, where $\dm$ is the hidden dimension. Without skips, every hidden state has a free basis: the next block undoes any change of basis. A skip adds the old hidden state to the new one, tying these bases into one. Fixing each free basis removes exactly that many parameters: $8.5$ percent of a skipless ViT-B. Where these changes of basis are the only redundancy, the skips raise the functional dimension, the number of directions in which parameters move the function, by as much. Without normalization, we prove this for one block and for $\tanh$ networks; with or without RMSNorm, we prove at least this gain for attention and GELU networks of any depth on continuous inputs.
+Residual and skipless networks with the same blocks have the same parameters. Do they use them alike? Here we show that skip connections unlock $\dm^2$ parameters per block, or $\dm(\dm-1)/2$ under RMSNorm, where $\dm$ is the hidden dimension. Without skips, every hidden state has a free basis: the next block undoes any change of basis. A skip adds the old hidden state to the new one, tying these bases into one. Fixing each free basis removes exactly that many parameters, $8.5$ percent of a skipless LayerNorm ViT-B. Where symmetries are the only redundancy, the skips raise the functional dimension, the number of directions in which parameters move the function, by as much. Without normalization, we prove the exact gain for one block and for $\tanh$ networks; with or without RMSNorm, at least this gain at any depth for attention, $\tanh$, GELU, SwiGLU and GeGLU networks on continuous inputs.
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
 
-Skip connections are a building block of almost every deep network trained today \citep{he2016resnet}. The usual reason is training: skips make deep networks easier to optimize \citep{he2016resnet,balduzzi2017shattered,orhan2018skip}. Recent skipless models challenge this need. \citet{ji2026cutting} remove every skip from a ViT-B \citep{dosovitskiy2021an} and train it on ImageNet-1k, where it outperforms the residual ViT-B in top-1 accuracy, and \citet{he2023shortcuts,he2024simplifying} train transformers without skips.
+Skip connections are a building block of almost every deep network trained today \citep{he2016resnet}. The usual reason is training: skips make deep networks easier to optimize \citep{he2016resnet,balduzzi2017shattered,orhan2018skip}. Recent skipless models challenge the need for skips. \citet{ji2026cutting} remove every skip from a ViT-B \citep{dosovitskiy2021an} and train it on ImageNet-1k, where it outperforms the residual ViT-B in top-1 accuracy, and \citet{he2023shortcuts,he2024simplifying} train transformers without skips.
 
 So what do skips change, besides training? A residual network adds the input of every block to its output through an \emph{identity skip}, and a skipless network returns the output alone. The two have the same parameters. We ask whether they use them alike. Throughout, a network starts with a linear embedding and ends with a linear readout, the unembedding, and its hidden states, in between, have dimension $\dm$. In a pre-RMSNorm network, every block and the readout read their input through RMSNorm, which divides each token by its root mean square, regularized by a constant $\varepsilon > 0$.
 
 \para{Hidden states have units.} Think of the coordinates of a hidden state as units of measurement, such as meters or feet. Without normalization, every hidden state of a skipless network can change its units. Let $G$ be an invertible $\dm\times\dm$ matrix, and let hidden states be row vectors $h$. If the matrix $W$ that writes the output of a block becomes $WG$, and the matrix $W'$ through which the next block reads it becomes $G^{-1}W'$, the next block sees $hG\,G^{-1}W' = hW'$, and the function does not change. A skip adds the old hidden state to the new one, and only quantities in the same units can be added. So the skips tie the units of all hidden states into one.
 
-\para{Free bases are removable parameters.} Each such $G$ can be spent to set a $\dm\times\dm$ submatrix of the weights to the identity, which removes $\dm^2$ parameters without changing the function. A skipless network of $L$ blocks has $L+1$ hidden states, so $(L+1)\dm^2$ of its parameters are removable; a residual network keeps one free change of basis, so $\dm^2$. Under RMSNorm only orthogonal matrices pass through the normalization, and a QR factorization makes the submatrix triangular instead, which removes the $\dm(\dm-1)/2$ entries below its diagonal at each hidden state. With LayerNorm, which acts as RMSNorm in dimension $\dm - 1$, this removes $8.5$ percent of the skipless ViT-B, whose $24$ blocks, $12$ attention and $12$ MLP blocks, have $25$ hidden states (\cref{sec:trained}).
+\para{Free bases are removable parameters.} Each such $G$ can be spent to set a $\dm\times\dm$ submatrix of the weights to the identity, which removes $\dm^2$ parameters without changing the function. A skipless network of $L$ blocks has $L+1$ hidden states, so $(L+1)\dm^2$ of its parameters are removable; a residual network keeps one free change of basis, so $\dm^2$. Under RMSNorm only orthogonal matrices pass through the normalization, and a QR factorization makes the submatrix triangular instead, which removes the $\dm(\dm-1)/2$ entries below its diagonal at each hidden state. With LayerNorm, which acts as RMSNorm in dimension $\dm - 1$, the skipless ViT-B loses $8.5$ percent of its parameters this way, at its $25$ hidden states (\cref{sec:trained}).
 
-\para{Fewer parameters, the same functions.} For almost every choice of weights, removing these parameters does not change the function. What the skips change is the functional dimension, the number of independent directions in which the parameters move the function \citep{grigsby2022functional}. Our running example has an embedding $\R^6 \to \R^4$, so $\dm = 4$, then $L = 3$ MLP blocks with $8$ hidden GELU units each, and a readout $\R^4 \to \R^6$: $P = 240$ parameters. Of these, $64$ are removable without skips and $16$ with them. The functional dimension is $176$ without skips and $224$ with them (\cref{fig:gelu}): the skips unlock $L\dm^2 = 48$ parameters.
+\para{Fewer parameters, the same functions.} For almost every choice of weights, removing these parameters does not change the function. What the skips change is the functional dimension, the number of independent directions in which the parameters move the function \citep{grigsby2022functional}. Our running example, without biases or normalization, has an embedding $\R^6 \to \R^4$, so $\dm = 4$, then $L = 3$ MLP blocks with $8$ hidden GELU units each, and a readout $\R^4 \to \R^6$: $P = 240$ parameters. Of these, $64$ are removable without skips and $16$ with them. The functional dimension is $176$ without skips and $224$ with them (\cref{fig:gelu}): the skips unlock $L\dm^2 = 48$ parameters.
 
 \para{Known symmetries.} Permuting the hidden units or heads of a block, and flipping the signs of $\tanh$ units, preserve the function \citep{sussmann1992,fefferman1994,theus2025glmc}; these symmetries are finite and remove no parameters. Rescaling a ReLU unit preserves the function too \citep{rolnick2020reverse,godfrey2022symmetries} and removes one parameter, so a block of $4\dm$ units loses $4\dm$ parameters to rescalings, against $\dm^2$ to a change of basis. Rescalings and the changes of basis inside attention heads \citep{wang2025gauge,theus2025glmc} act inside a block, alike with and without skips, so they cancel when the two networks are compared. Changes of basis at hidden states are known too \citep{zhao2023symmetries}, and so is one rotation of the residual stream under RMSNorm \citep{ashkboos2024slicegpt,theus2025glmc}, the one change of basis that the skips leave. In residual ReLU networks, permutations and rescalings of the hidden states preserve the function when they agree at all hidden states that the skips join \citep[Remark~3.6]{godfrey2022symmetries}. Beyond these, we count the $L\dm^2$ dimensions of symmetry that the skips remove, and show when they become functional dimension.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.94\linewidth]{figs/spectra_gelu.pdf}
-\caption{Singular values of the Jacobian of the parameter-to-output map on $4000$ Gaussian inputs, with and without skips at the same weights, for the running example; median and range over $20$ draws of the weights. The skips add $48$ to its rank, the functional dimension, and $18$ under RMSNorm.}
+\caption{Singular values of the Jacobian of the parameter-to-output map on $4000$ Gaussian inputs, with and without skips at the same weights, for the running example; median and range over $20$ draws of the weights. The skips raise the rank of this Jacobian, the functional dimension, by $48$, and by $18$ under RMSNorm.}
 \label{fig:gelu}
 \end{figure}
 
 \para{Contributions.}
 \begin{enumerate}[label=\arabic*.]
 \item \emph{Exact reduction} (\cref{sec:skipless}). The change of basis at each hidden state of a skipless network sets one $\dm\times\dm$ submatrix of its weights to the identity. \citet{zhao2023symmetries} describe this symmetry, and \citet{graef2024tricks} uses an instance of it to remove weights from skipless transformers; here it is a general tool.
-\item \emph{Learned skips are identity units} (\cref{sec:learned}). A learned skip adds $hA$ in place of $h$, for a trainable $\dm\times\dm$ matrix $A$. It is a block of $\dm$ hidden units whose activation is the identity. The same tool merges the matrices $U$ and $V$ that read and write these units into $A = UV$, and then turns $A$ into the identity: without normalization, a network with invertible learned skips is a residual network. Under RMSNorm, learned skips become triangular.
+\item \emph{Learned skips are identity units} (\cref{sec:learned}). A learned skip adds $hA$ in place of $h$, for a trainable $\dm\times\dm$ matrix $A$. It is a block of $\dm$ hidden units whose activation is the identity, read by a matrix $U$ and written by a matrix $V$. The same tool merges $U$ and $V$ into $A = UV$, and then turns $A$ into the identity: without normalization, a network with invertible learned skips is a residual network. Under RMSNorm, learned skips become triangular.
 \item \emph{One change of basis is left} (\cref{sec:global}). A residual network keeps one change of basis for all its hidden states. When the embedding and the readout count among the parameters, this change of basis is a counterexample to the statement of \citet{wang2025gauge} that the symmetry group of a transformer is the product of the groups of its blocks.
-\item \emph{Skips unlock functional dimension} (\cref{sec:gain}). Where the symmetries are the only redundancy, the skips raise the functional dimension by $\dm^2$ per block, and by $\dm(\dm-1)/2$ under RMSNorm. Without normalization we prove this for one block, attention included, and for networks of $\tanh$ blocks or of GELU blocks with at least $2\dm$ hidden units. For networks of attention, $\tanh$, GELU, SwiGLU and GeGLU blocks on continuous inputs, with or without RMSNorm, we prove that the gain is at least this large at any depth, so that almost no such residual network equals a skipless network of the same widths. We measure the gain in deeper MLPs and small transformers.
+\item \emph{Skips unlock functional dimension} (\cref{sec:gain}). Where the symmetries are the only redundancy, the skips raise the functional dimension by $\dm^2$ per block, and by $\dm(\dm-1)/2$ under RMSNorm. Without normalization we prove this gain for one block, attention included, and for networks of $\tanh$ blocks or of GELU blocks with at least $2\dm$ hidden units. At any depth, with or without RMSNorm and on continuous inputs, we prove that the gain is at least this large for attention, $\tanh$, GELU, SwiGLU and GeGLU blocks. Hence almost no such residual network equals a skipless network of the same widths. We measure the gain in deeper MLPs and small transformers.
 \end{enumerate}
 \Cref{tab:results} lists the results. \Cref{sec:setup} fixes the setting, \cref{sec:reduce} removes parameters and \cref{sec:gain} counts functional dimension; proofs are in the appendix.
 
@@ -146,7 +146,7 @@ So what do skips change, besides training? A residual network adds the input of 
 \multicolumn{4}{@{}l}{\emph{Parameters removed exactly, without changing the function}} \\
 \quad without skips & $(L+1)\dm^2$ & all & \rtag{Prop.}{prop:skipless}{} \\
 \quad\quad with pre-RMSNorm & $(L+1)\dm(\dm-1)/2$ & all & \rtag{Thm.}{thm:rmstri}{i} \\
-\quad learned skips & $L\dm^2$, all of them & all & \rtag{Thm.}{thm:learned}{} \\
+\quad learned skips & $L\dm^2$, every skip entry & all & \rtag{Thm.}{thm:learned}{} \\
 \quad\quad with pre-RMSNorm & $L\dm(\dm-1)/2$ & all & \rtag{Thm.}{thm:rmstri}{iv} \\
 \quad identity skips & $\dm^2$ & all & \rtag{Thm.}{thm:tie}{iii} \\
 \quad\quad with pre-RMSNorm & $\dm(\dm-1)/2$ & all & \rtag{Thm.}{thm:rmstri}{iii} \\
@@ -158,17 +158,17 @@ So what do skips change, besides training? A residual network adds the input of 
 \multicolumn{4}{@{}l}{\emph{Functional dimension added by the skips}} \\
 \quad $L = 1$ & exactly $\dm^2$ & all & \rtag{Thm.}{thm:oneblock}{i} \\
 \quad\quad with pre-RMSNorm & at least $\dm(\dm-1)/2$ & all & \rtag{Thm.}{thm:oneblock}{ii} \\
-\quad $L \ge 2$ & at least $L\dm^2$ & smooth & \rtag{Thm.}{thm:resdepth}{ii} \\
-\quad & exactly $L\dm^2$ & $\tanh$ & \rtag{Thm.}{thm:exactgain}{i} \\
-\quad & exactly $L\dm^2$ & GELU, $\ge 2\dm$ units & \rtag{Thm.}{thm:exactgain}{ii} \\
-\quad\quad with pre-RMSNorm & at least $L\dm(\dm-1)/2$ & smooth & \rtag{Thm.}{thm:resdepth}{ii} \\
+\quad $L \ge 2$ & at least $L\dm^2$ & smooth & \rtag{Thm.}{thm:resdepth}{} \\
+\quad\quad with pre-RMSNorm & at least $L\dm(\dm-1)/2$ & smooth & \rtag{Thm.}{thm:resdepth}{} \\
+\quad $L \ge 2$ & exactly $L\dm^2$ & $\tanh$ & \rtag{Thm.}{thm:exactgain}{i} \\
+\quad $L \ge 2$ & exactly $L\dm^2$ & GELU, $\ge 2\dm$ units & \rtag{Thm.}{thm:exactgain}{ii} \\
 \midrule
 \multicolumn{4}{@{}l}{\emph{Residual networks that equal a skipless network of the same widths}} \\
 \quad any $L$ & measure zero & smooth & \rtag{Thm.}{thm:classes}{i} \\
 \quad\quad with pre-RMSNorm & measure zero & smooth & \rtag{Thm.}{thm:classes}{i} \\
 \bottomrule
 \end{tabular}
-\caption{The results, for networks of $L$ blocks with hidden states of dimension $\dm$, at generic parameters; scope in \cref{sec:setup}. All: every block in scope. Smooth: attention, $\tanh$, GELU, SwiGLU and GeGLU blocks. Measured at depth: \cref{tab:measured}.}
+\caption{The results, for networks of $L$ blocks with hidden states of dimension $\dm$, at generic parameters; scope in \cref{sec:setup}. All: every block of \cref{sec:setup}. Smooth: attention, $\tanh$, GELU, SwiGLU and GeGLU blocks. Measured at depth: \cref{tab:measured}.}
 \label{tab:results}
 \end{table}
 
@@ -179,7 +179,7 @@ So what do skips change, besides training? A residual network adds the input of 
 \begin{equation}\label{eq:block}
 B(h) = f(h\Wread)\,\Wwrite.
 \end{equation}
-We keep the word block for these maps, and call a part of a matrix a submatrix. In an MLP block with $m$ hidden units, its width, $\Wread \in \R^{\dm\times m}$, $\Wwrite \in \R^{m\times\dm}$, and $f$ applies an activation to every unit of every token: $\tanh$, GELU, ReLU, or its square, ReLU$^2$. In a gated block the read has $2m$ columns, a gate $g_i$ and a value $v_i$ for each unit, and unit $i$ computes $\sigma(g_i)\,v_i$, with $\sigma$ the ReLU in ReGLU, SiLU in SwiGLU and GELU in GeGLU \citep{shazeer2020glu}. In an attention block with $H$ heads of width $d_h$, the read holds the query, key and value matrices $W_Q$, $W_K$ and $W_V$ of all heads, $f$ is the attention map, and the write is the output projection $W_O$; the width of the block is $Hd_h$.
+We keep the word block for these maps; a submatrix keeps some rows and columns of a matrix. In an MLP block with $m$ hidden units, its width, $\Wread \in \R^{\dm\times m}$, $\Wwrite \in \R^{m\times\dm}$, and $f$ applies an activation to every unit of every token: $\tanh$, GELU, ReLU, or its square, ReLU$^2$. In a gated block the read has $2m$ columns, a gate $g_i$ and a value $v_i$ for each unit, and unit $i$ computes $\sigma(g_i)\,v_i$, with $\sigma$ the ReLU in ReGLU, SiLU in SwiGLU and GELU in GeGLU \citep{shazeer2020glu}. In an attention block with $H$ heads of width $d_h$, the read holds the query, key and value matrices $W_Q$, $W_K$ and $W_V$ of all heads, $f$ is the attention map, and the write is the output projection $W_O$; the width of the block is $Hd_h$.
 
 \para{Networks.} Every network starts with a linear embedding $E \in \R^{d_{\mathrm{in}}\times\dm}$ and ends with a linear readout $D \in \R^{\dm\times d_{\mathrm{out}}}$, the unembedding: it maps an input $x \in \R^{T\times d_{\mathrm{in}}}$ to $h_0 = xE$, passes it through $L$ blocks, and returns $y = h_LD$. For $\ell = 1, \dots, L$, a \emph{skipless} network, a \emph{residual} network and a network with \emph{learned skips} compute
 \begin{equation}\label{eq:nets}
@@ -189,7 +189,7 @@ with a trainable $\dm\times\dm$ skip matrix $A_\ell$. The skipless and the resid
 
 \para{Normalization.} In a \emph{pre-RMSNorm} network the blocks and the readout read $N(h)$ in place of $h$, where $N$ divides each row $h_t$ of $h$ by $\sqrt{\norm{h_t}^2/\dm + \varepsilon}$, with $\varepsilon > 0$. Skips read $h$ itself, so a residual network computes $h_\ell = h_{\ell-1} + B_\ell\big(N(h_{\ell-1})\big)$ and $y = N(h_L)D$. A learned gain after $N$ is folded into the next read.
 
-\para{Scope.} For simplicity, networks have no biases. Every MLP block has at least $\dm$ hidden units, and all MLP blocks of a network are of one kind. All attention blocks have the same number of heads, of width at most $\dm$ and of total width $Hd_h \ge \dm$, and act on sequences of at least two tokens. Inputs are continuous: they range over an open set of $\R^{T\times d_{\mathrm{in}}}$, which excludes one-hot tokens, and $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm \ge 2$. Most results hold more generally, and the appendix states them so. \emph{Generic} parameters are those outside a set of Lebesgue measure zero. Attention, $\tanh$, GELU, SwiGLU and GeGLU blocks are \emph{smooth}.
+\para{Scope.} For simplicity, networks have no biases. Every MLP block has at least $\dm$ hidden units, and all MLP blocks of a network are of one kind. All attention blocks have the same number of heads, of width at most $\dm$ and of total width $Hd_h \ge \dm$, and act on sequences of at least two tokens. Inputs are continuous: they range over an open set of $\R^{T\times d_{\mathrm{in}}}$, which excludes one-hot tokens, and $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm \ge 2$. The exact reductions of \cref{sec:reduce} hold for any inputs, and with biases. Most results hold more generally, and the appendix states them so. A statement holds at \emph{generic} parameters if it holds outside a set of Lebesgue measure zero. Attention, $\tanh$, GELU, SwiGLU and GeGLU blocks are \emph{smooth}.
 
 \section{Free changes of basis remove parameters exactly}\label{sec:reduce}\label{sec:gauge}
 \takeaway{Without normalization, every change of basis that a network keeps can set a $\dm\times\dm$ submatrix of its weights to the identity without changing its function: one per hidden state without skips, and one in all with identity skips. A learned skip is itself such a submatrix, and becomes the identity. Under RMSNorm, these submatrices become triangular.}
@@ -211,7 +211,7 @@ Without normalization, let $\dm$ columns of the read of $h_\ell$ in a skipless n
 
 Rows of a write work too: if $\dm$ rows of the write into $h_\ell$ form an invertible matrix, the change of basis by its inverse turns them into the identity. In a skipless transformer with $Hd_h = \dm$, $G = W_Q$ before an attention block sets its queries to the identity, and $G = W_O^{-1}$ after it sets its output projection to the identity: $2\dm^2$ parameters per layer. This is how \citet{graef2024tricks} removes $15$ percent of the weights of a skipless Mistral-7B.
 
-So, up to a set of weights of measure zero, the reduced networks compute the same functions with fewer parameters. \Cref{sec:gain} asks what this means for the size of a network.
+So skipless networks with one identity submatrix per hidden state compute, up to a set of weights of measure zero, the same functions with $(L+1)\dm^2$ fewer parameters. \Cref{sec:gain} asks what this means for the size of a network.
 
 \begin{figure}[t]
 \centering
@@ -298,7 +298,7 @@ h_{\ell-1}G_{\ell-1} + B_\ell(h_{\ell-1})\,G_\ell \;=\; h_\ell G_\ell + h_{\ell-
 The skip carries $h_{\ell-1}$ in the basis $G_{\ell-1}$, and the block writes in the basis $G_\ell$, like feet added to meters. Unless the two agree, the defect $h_{\ell-1}(G_{\ell-1} - G_\ell)$ reaches every later block.
 
 \begin{restatable}[One change of basis is left]{theorem}{thmTie}\label{thm:tie}
-Without normalization, let every block be nonzero for some value of its parameters, and let $G, G_0, \dots, G_L$ be invertible.\\
+Without normalization, let $G_0, \dots, G_L$ be invertible.\\
 \stpart{thm:tie}{i}{} The map $E \mapsto EG_0$, $\Wread^{\ell} \mapsto G_{\ell-1}^{-1}\Wread^{\ell}$, $\Wwrite^{\ell} \mapsto \Wwrite^{\ell}G_\ell$, $D \mapsto G_L^{-1}D$ preserves the function of every residual network if and only if $G_0 = G_1 = \dots = G_L$.\\
 \stpart{thm:tie}{ii}{} The changes of basis that preserve the function at all parameters form a group of dimension $(L+1)\dm^2$ in a skipless network and $\dm^2$ in a residual one.\\
 \stpart{thm:tie}{iii}{} In a residual network, let $\dm$ columns of any one read form an invertible matrix $W_1$. The same change of basis $W_1$ at all hidden states preserves the function and turns $W_1$ into the identity.
@@ -307,7 +307,7 @@ Without normalization, let every block be nonzero for some value of its paramete
 
 So the $L$ skips remove $L\dm^2$ dimensions of symmetry. In the language of gauge theory, they turn a symmetry that is local in depth into a global one \citep{hashimoto2024unification}. Where a block outweighs its skip, the defect is small, and separate changes of basis on its two sides are approximate symmetries \citep[Section~6.4]{gong2026aro}.
 
-\para{A counterexample.} \citet[Theorem~7]{wang2025gauge} state that the symmetry group of a transformer is the product of the groups of its blocks. When the embedding and the readout count among the parameters, the change of basis that the skips leave is a counterexample: it changes the embedding, which no element of that product does. Two instances preserve the function of common transformers. A global permutation of the coordinates of the hidden states does for every placement of the normalization, as \citet[Section~3.3]{verma2024merging} use to merge BERT models. A global rotation does in pre-RMSNorm models with an untied readout, the construction behind Theorem~1 of \citet{ashkboos2024slicegpt} (\cref{app:product}).
+\para{A counterexample.} \citet[Theorem~7]{wang2025gauge} state that the symmetry group of a transformer is the product of the groups of its blocks. When the embedding and the readout count among the parameters, the change of basis that the skips leave is a counterexample: it changes the embedding, which no element of that product does. Two instances of it preserve the function of common transformers. A global permutation of the coordinates of the hidden states does for every placement of the normalization, as \citet[Section~3.3]{verma2024merging} use to merge BERT models. A global rotation does in pre-RMSNorm models with an untied readout, the construction behind Theorem~1 of \citet{ashkboos2024slicegpt} (\cref{app:product}).
 
 \subsection{Under RMSNorm: orthogonal maps pass, triangles stay}\label{sec:norm}
 
@@ -315,7 +315,7 @@ With pre-RMSNorm, the network with learned skips computes
 \begin{equation}\label{eq:prenorm}
 h_\ell = h_{\ell-1}A_\ell + B_\ell\big(N(h_{\ell-1})\big), \qquad y = N(h_L)\,D.
 \end{equation}
-A change of basis $G$ at $h_\ell$ now reaches the reads through $N$, as $N(h_\ell G)$. Orthogonal matrices pass: $N(hQ) = N(h)Q$ for every orthogonal $Q$, since $N$ only rescales each row, and the read absorbs $Q$ by $W \mapsto Q^\top W$. Since $\varepsilon > 0$, no other invertible matrix passes (\cref{lem:rms}). So every hidden state keeps an orthogonal change of basis, $\dm(\dm-1)/2$ dimensions. It cannot turn a submatrix into the identity, but a QR factorization shows that it can make it triangular.
+A change of basis $G$ at $h_\ell$ now reaches the reads through $N$, as $N(h_\ell G)$. Orthogonal matrices pass: $N(hQ) = N(h)Q$ for every orthogonal $Q$, since $N$ only rescales each row, and the read absorbs $Q$ by $W \mapsto Q^\top W$. Since $\varepsilon > 0$, no other invertible matrix passes (\cref{lem:rms}). So every hidden state of a skipless network, or of one with learned skips, keeps an orthogonal change of basis, $\dm(\dm-1)/2$ dimensions. It cannot turn a submatrix into the identity, but a QR factorization shows that it can make it triangular.
 
 \begin{restatable}[Triangles under RMSNorm]{theorem}{thmRMSTri}\label{thm:rmstri}
 Consider pre-RMSNorm networks.\\
@@ -326,9 +326,9 @@ Consider pre-RMSNorm networks.\\
 \end{restatable}
 \proofin{app:prf-rms}
 
-\para{What a learned skip carries.} Write a skip as $A = RQ$, an upper triangular matrix times an orthogonal one. The orthogonal factor $Q$, of dimension $\dm(\dm-1)/2$, is removable: part (iv) spends the changes of basis on it. The $\dm(\dm+1)/2$ entries of $R$ stay, and an identity skip fixes them as well. So under RMSNorm an identity skip does two things: it spends the change of basis at a hidden state, and it fixes the triangle, a constraint that \cref{sec:count} counts.
+\para{What a learned skip carries.} Write a skip as an upper triangular matrix times an orthogonal one. The orthogonal factor, of dimension $\dm(\dm-1)/2$, is removable: \cpref{thm:rmstri}{iv} spends the changes of basis on it. The $\dm(\dm+1)/2$ entries of the triangular factor stay, and an identity skip fixes them as well. So under RMSNorm an identity skip does two things: it ties the change of basis at $h_\ell$ to the one at $h_{\ell-1}$, and it fixes the triangle, a constraint that \cref{sec:count} counts.
 
-LayerNorm is RMSNorm after a projection that removes the mean of each row, and it reduces to RMSNorm of dimension $\dm - 1$ (\cref{prop:ln}). Every count above then holds with $\dm - 1$ in place of $\dm$: $(\dm-1)(\dm-2)/2$ per hidden state.
+LayerNorm is RMSNorm after a projection that removes the mean of each row, and it reduces to RMSNorm of dimension $\dm - 1$ (\cref{prop:ln}). Every RMSNorm count above then holds with $\dm - 1$ in place of $\dm$: $(\dm-1)(\dm-2)/2$ per hidden state.
 
 \subsection{What trained models give up}\label{sec:trained}
 
@@ -347,10 +347,10 @@ LayerNorm is RMSNorm after a projection that removes the mean of each row, and i
 
 \subsection{What the skips unlock}\label{sec:count}
 
-Blocks also have \emph{symmetries inside}, which leave the hidden states alone. Besides permutations and sign flips, of dimension zero, they are the rescalings of the hidden units of ReLU and ReLU$^2$ blocks, of the values of gated units, and in ReGLU of their gates too, and in each attention head a change of basis between queries and keys and one between values and outputs \citep{elhage2021circuits,theus2025glmc}. Let $s$ be their total dimension, summed over the blocks. It is the same with and without skips, and $s = 0$ for $\tanh$ and GELU blocks. Let $\G$ be the group of changes of basis that pass the reads: $\GL(\dm)$ without normalization, of dimension $\dm^2$, and $\Ort(\dm)$ under RMSNorm, of dimension $\dm(\dm-1)/2$.
+Blocks also have \emph{symmetries inside}, which leave the hidden states alone. Besides permutations and sign flips, of dimension zero, they are: a rescaling of each hidden unit of a ReLU or ReLU$^2$ block, of the value of each gated unit and, in ReGLU, of its gate; and in each attention head, a change of basis between queries and keys and one between values and outputs, of dimension $d_h^2$ each \citep{elhage2021circuits,theus2025glmc}. Let $s$ be their total dimension, summed over the blocks. It is the same with and without skips, and $s = 0$ for $\tanh$ and GELU blocks. Let $\G$ be the group of changes of basis that pass the reads: $\GL(\dm)$ without normalization, of dimension $\dm^2$, and $\Ort(\dm)$ under RMSNorm, of dimension $\dm(\dm-1)/2$.
 
 \begin{restatable}[What the skips unlock]{theorem}{thmUnlock}\label{thm:unlock}
-At generic parameters, the functional dimension is at most $P - (L+1)\dim\G - s$ without skips and at most $P - \dim\G - s$ with identity skips.
+With or without pre-RMSNorm, at generic parameters, the functional dimension is at most $P - (L+1)\dim\G - s$ without skips and at most $P - \dim\G - s$ with identity skips.
 \end{restatable}
 \specialof{thm:count}{app:prf-count}
 
@@ -358,7 +358,7 @@ A network satisfies the \emph{equality condition} if its bound in \cref{thm:unlo
 
 \para{Learned skips.} A network with learned skips has $P + L\dm^2$ parameters, and its changes of basis act at every hidden state, so its functional dimension is at most $P + L\dm^2 - (L+1)\dim\G - s$. Without normalization this is $P - \dm^2 - s$, the bound of the residual network, and with invertible skips the two functional dimensions are equal (\cpref{thm:gaugefull}{ii}). Under RMSNorm the bound exceeds the residual one by $L\dm(\dm+1)/2$, and where both are attained, each learned skip adds its triangle (\cpref{thm:rmsfull}{iii}).
 
-\para{At equal parameter count.} Under the equality condition, a residual network with $P$ parameters has the functional dimension of a skipless network with $L\dim\G$ more, so comparisons at equal parameter count favor residual networks. Where the symmetries are the only redundancy, the skipless ViT-B of \citet{ji2026cutting} outperforms the residual one with about $8$ percent less functional dimension (\cref{app:scale}).
+\para{At equal parameter count.} Under the equality condition, a residual network with $P$ parameters has the functional dimension of a skipless network with $L\dim\G$ more, so at equal parameter count residual networks have more functional dimension. The skipless ViT-B of \citet{ji2026cutting} outperforms the residual one; if its symmetries are its only redundancy, it does so with about $8$ percent less functional dimension (\cref{app:scale}).
 
 \subsection{When the bounds are attained}\label{sec:onelayer}
 
@@ -372,9 +372,7 @@ Let $L = 1$, with a $\tanh$, GELU, ReLU, ReLU$^2$, ReGLU, SwiGLU, GeGLU or atten
 \specialof{thm:onelayer}{app:onelayer}
 
 \begin{restatable}[Residual networks at any depth]{theorem}{thmResDepth}\label{thm:resdepth}
-Let the blocks be smooth.\\
-\stpart{thm:resdepth}{i}{} The residual network satisfies the equality condition: at generic parameters its functional dimension is $P - \dim\G - s$.\\
-\stpart{thm:resdepth}{ii}{} The skips raise the functional dimension by at least $L\dim\G$, and by exactly $L\dim\G$ when the skipless network satisfies the equality condition too.
+Let the blocks be smooth, with or without pre-RMSNorm. The residual network satisfies the equality condition: at generic parameters its functional dimension is $P - \dim\G - s$. So the skips raise the functional dimension by at least $L\dim\G$, and by exactly $L\dim\G$ when the skipless network satisfies the equality condition too.
 \end{restatable}
 \proofin{app:depth}
 
@@ -385,11 +383,11 @@ Without normalization, in the two cases below the skipless network satisfies the
 \end{restatable}
 \proofin{app:depth}
 
-\para{How the proofs go.} With one block, the parameters enter the function only through the products $ED$, $\Wwrite D$ and $E\Wread$. A factorization of a matrix of rank $\dm$ into two factors is unique up to a change of basis between them, so the skipless network keeps one change of basis at $h_0$ and one at $h_1$, and the term $xED$ of the skip ties them into one. At any depth, with small writes, a residual network is to first order the linear map $xED$ plus one wide block that holds all its units and heads, which brings the one-block argument to every depth; without the skip, small writes leave no linear path from the embedding to the readout. For skipless GELU networks, the proof of \cpref{thm:exactgain}{ii} starts from a residual network and absorbs each skip with $\dm$ more units per block, so it reaches only blocks of at least $2\dm$ units.
+\para{How the proofs go.} With one block, the parameters enter the function only through the products $ED$, $\Wwrite D$ and $E\Wread$. A factorization of a matrix of rank $\dm$ into two factors is unique up to a change of basis between them, so the skipless network keeps one change of basis at $h_0$ and one at $h_1$, and the term $xED$ of the skip ties them into one. At any depth, small writes make a residual network, to first order, the linear map $xED$ plus one wide block that holds all its units and heads. This brings the one-block argument to every depth, and analyticity, which smooth blocks give, carries the rank to generic parameters. Without the skip, small writes leave no linear path from the embedding to the readout. For skipless GELU networks, the proof of \cpref{thm:exactgain}{ii} starts from a residual network and absorbs each skip with $\dm$ more units per block, so it reaches only blocks of at least $2\dm$ units.
 
 \subsection{Measured at depth}\label{sec:measured}
 
-For deeper networks we compute the rank of the Jacobian on a large batch of inputs (\cref{app:checks}); for ViT-B, this Jacobian would fill over $50$ petabytes. The rank is a lower bound on the functional dimension, and \cref{thm:unlock} gives an upper bound. Where they meet, the functional dimension is known exactly, and in all networks of \cref{tab:measured} but the ReLU ones, the skips add $L\dim\G$.
+For deeper networks we compute the rank of the Jacobian on a large batch of inputs (\cref{app:checks}). The rank is a lower bound on the functional dimension, and \cref{thm:unlock} gives an upper bound. Where they meet, the functional dimension is known exactly, and in all networks of \cref{tab:measured} but the plain ReLU ones, the skips add $L\dim\G$.
 
 \begin{table}[t]
 \centering\small
@@ -409,10 +407,10 @@ nanoGPT: attention and GELU & 2 to 8 & none, LayerNorm & $L\dim\G$ \\
 \label{tab:measured}
 \end{table}
 
-There are two exceptions. Under RMSNorm with $\varepsilon = 10^{-5}$, some directions of skipless ReGLU networks have singular values below double precision. In one of eight skipless ReLU networks, five units active on the same inputs act as one linear map, as can happen on sets of positive measure \citep{grigsby2023hidden}. For $\tanh$, GELU and gated MLP blocks we expect the equality condition to hold.
+In two cases the measured rank stays below the upper bound. Under RMSNorm with $\varepsilon = 10^{-5}$, some directions of skipless ReGLU networks have singular values below double precision. In one of eight skipless ReLU networks, five units active on the same inputs act as one linear map, as can happen on sets of positive measure \citep{grigsby2023hidden}. For skipless $\tanh$, GELU and gated networks we expect the equality condition to hold.
 
 \begin{conjecture}[Equality condition]\label{conj:equality}
-Consider MLP networks with $\tanh$, GELU, SwiGLU, GeGLU or ReGLU blocks, on inputs that range over an open set. At generic parameters the skipless and the residual network both satisfy the equality condition, so the skips raise the functional dimension by exactly $L\dim\G$.
+Consider MLP networks with $\tanh$, GELU, SwiGLU, GeGLU or ReGLU blocks, on inputs that range over an open set. The skipless and the residual network both satisfy the equality condition, so the skips raise the functional dimension by exactly $L\dim\G$.
 \end{conjecture}
 
 For smooth blocks, \cref{thm:resdepth} proves the residual half of the conjecture, and \cref{thm:exactgain} both halves for $\tanh$ networks and for GELU networks with at least $2\dm$ units, without normalization. With one-hot token inputs under RMSNorm, the change of basis at the embedding of a skipless network is no longer restricted to orthogonal matrices, which adds $\dm(\dm+1)/2$ symmetries to it (\cref{tab:checks}).
@@ -423,17 +421,17 @@ For smooth blocks, the gap in functional dimension keeps the two classes of func
 
 \begin{restatable}[Different function classes]{theorem}{thmClasses}\label{thm:classes}
 \stpart{thm:classes}{i}{} For networks of smooth blocks, without normalization or with pre-RMSNorm, and almost every choice of weights, a residual network equals no skipless network of the same widths.\\
-\stpart{thm:classes}{ii}{Too few extra units} For networks of GELU blocks without normalization, and almost every choice of weights, a residual network of $L$ blocks equals no skipless network of $L$ blocks with fewer than $L\dm/2$ more hidden units in all.
+\stpart{thm:classes}{ii}{Too few extra units} For networks of GELU blocks without normalization, and almost every choice of weights, a residual network of $L$ blocks equals no skipless network of $L$ blocks with, in total, fewer than $L\dm/2$ more hidden units.
 \end{restatable}
 \specialof{thm:depthgelu}{app:depth}
 
-In (ii), each extra GELU unit adds $2\dm$ parameters against a gap of $L\dm^2$. A companion paper shows that, without normalization, $\dm$ more ReLU or GELU units per block let a skipless network equal almost any residual one, and that for gated, ReLU$^2$ and $\tanh$ networks no number of units does; under RMSNorm, almost no residual network equals a skipless network of any widths \citep{mijoski2026worth}.
+In (ii), each extra GELU unit adds $2\dm$ parameters against a gap of $L\dm^2$. A companion paper shows that, without normalization, $\dm$ more ReLU or GELU units per block let a skipless network equal almost any residual one, and that no number of units does for gated, ReLU$^2$ and $\tanh$ networks. Under RMSNorm, it shows that almost no residual network equals a skipless network of any widths \citep{mijoski2026worth}.
 
 \section{Related work}\label{sec:related}
 
 \para{Changes of basis at hidden layers.} \citet{zhao2023symmetries} define a change of basis at every hidden layer of an MLP, which preserves the function where the activation is linear and, for orthogonal changes, where it is a radial rescaling (their Proposition~C.1). They remark that the proposition adapts to networks with skips (their Appendix~C.5); what the skips do to the symmetry is not worked out there. Written as identity units, \cref{eq:mixed}, a skip fits their proposition as it stands, and the sweep of \cref{thm:learned} combines their changes of basis at the identity units and at the hidden states.
 
-\para{Removing weights.} \citet{graef2024tricks} merges the queries and the output projections of skipless transformers, the pattern of \cref{sec:skipless}. Changes of basis can set the values and projections of skipless blocks to the identity, as \citet{he2024simplifying} do, or make them triangular under normalization. SliceGPT inserts rotations into identity skips, so that neighboring blocks can carry different ones, and then deletes rows and columns, which approximates the original model \citep[Sections~3.3 and~3.4]{ashkboos2024slicegpt}; \cref{thm:learned} takes the matrices of learned skips out, exactly. RMNet emulates the skips of trained convolutional networks with ReLU units \citep{meng2021rmnet}, and LAuReL trains skips that differ from the identity by a low-rank matrix \citep{menghani2024laurel}; without normalization, \cref{thm:learned} removes invertible ones.
+\para{Removing weights.} Changes of basis can set the values and projections of skipless blocks to the identity, as \citet{he2024simplifying} do, or make them triangular under normalization. SliceGPT inserts rotations into identity skips and then deletes rows and columns, which approximates the original model \citep[Sections~3.3 and~3.4]{ashkboos2024slicegpt}; \cref{thm:learned} takes the matrices of learned skips out, exactly. RMNet emulates the skips of trained convolutional networks with ReLU units \citep{meng2021rmnet}, and LAuReL trains skips that differ from the identity by a low-rank matrix \citep{menghani2024laurel}; without normalization, \cref{thm:learned} removes invertible ones.
 
 \para{The basis of the residual stream.} The residual stream has no privileged basis \citep{elhage2021circuits}. SliceGPT proves that an RMSNorm transformer computes the same function after one rotation of every matrix that touches the stream (their Theorem~1), QuaRot and SpinQuant use this invariance for quantization \citep{ashkboos2024quarot,liu2024spinquant}, and model merging aligns residual streams with one global orthogonal matrix \citep{theus2025glmc}. All of these use the one change of basis that a residual network keeps. \citet{vannierop2024gauge} counts the symmetries of LayerNorm transformers, with one rotation of the stream for the whole model.
 
@@ -441,9 +439,9 @@ In (ii), each extra GELU unit adds $2\dm$ parameters against a gap of $L\dm^2$. 
 
 \section{Conclusion}\label{sec:outlook}\label{sec:conclusion}
 
-What do skips change in parameter space? They tie the bases of all hidden states into one. A skipless network keeps a free change of basis at every hidden state, $\dm^2$ removable parameters each, and a residual network keeps one. Where the symmetries are the only redundancy, the skips turn these parameters into $\dm^2$ dimensions of functions per block, $\dm(\dm-1)/2$ under RMSNorm. We prove this in the cases of \cref{tab:results} and measure it in deeper networks. The free bases can also be spent after training: $8.5$ percent of a skipless ViT-B, every learned skip without normalization, and the orthogonal part of every learned skip under RMSNorm come out without changing the function.
+Skips tie the bases of all hidden states into one. A skipless network keeps a free change of basis at every hidden state, $\dm^2$ removable parameters each, and a residual network keeps one. Where the symmetries are the only redundancy, the skips turn these parameters into $\dm^2$ dimensions of functions per block, $\dm(\dm-1)/2$ under RMSNorm. We prove this gain in the cases of \cref{tab:results}, exactly or as a lower bound, and measure it in deeper networks. The free bases can also be spent after training: $8.5$ percent of a skipless ViT-B, every invertible learned skip without normalization, and its orthogonal part under RMSNorm come out exactly.
 
-\para{Open questions.} The equality condition at depth remains open for skipless networks beyond those of \cref{thm:exactgain} (\cref{conj:equality}), and for ReLU-type blocks, whose functional dimension drops where units never switch on. Whether networks train better in the reduced forms is untested: a skipless network with one identity submatrix per hidden state, or triangular learned skips under RMSNorm, which add $\dm(\dm+1)/2$ dimensions each where the bounds are attained, against full ones. Input-dependent skips, as in mHC \citep{xie2025mhc}, make the map between hidden states nonlinear and are beyond our scope.
+\para{Open questions.} The equality condition at depth remains open for skipless networks beyond those of \cref{thm:exactgain} (\cref{conj:equality}), and for ReLU-type blocks, whose functional dimension drops where units never switch on or switch on together. Whether the reduced forms, such as triangular learned skips, train better is untested. Input-dependent skips, as in mHC \citep{xie2025mhc}, make the map between hidden states nonlinear and lie beyond our scope.
 
 \section*{Use of AI}
 \addcontentsline{toc}{section}{Use of AI}
@@ -761,7 +759,7 @@ In each case the kernel of $J_0$ shrinks as the batch grows and becomes stationa
 \begin{theorem}[GELU and smooth networks at depth]\label{thm:depthgelu}
 \stpart{thm:depthgelu}{i}{} For GELU blocks and almost every choice of weights, a composition of $L \ge 2$ residual blocks equals no composition of $L$ blocks without skips of the same widths.\\
 \stpart{thm:depthgelu}{ii}{} With an embedding and a readout, the same holds for networks of smooth blocks of any depth $L \ge 1$, also under pre-RMSNorm with $\varepsilon > 0$.\\
-\stpart{thm:depthgelu}{iii}{Too few extra units} For GELU blocks with an embedding and a readout, without normalization, and almost every choice of weights, a residual network of $L$ blocks equals no skipless network of $L$ blocks with fewer than $L\dm/2$ more hidden units in all.
+\stpart{thm:depthgelu}{iii}{Too few extra units} For GELU blocks with an embedding and a readout, without normalization, and almost every choice of weights, a residual network of $L$ blocks equals no skipless network of $L$ blocks with, in total, fewer than $L\dm/2$ more hidden units.
 \end{theorem}
 
 \begin{proof}[Proof of \cref{thm:depthgelu}(i) and (ii)]
@@ -785,16 +783,16 @@ We recall \cref{thm:resdepth,thm:exactgain} from \cref{sec:onelayer}.
 \thmResDepth*
 
 \begin{proof}[Proof of \cref{thm:resdepth}]
-\emph{Part (i).} Let $r$ be $P$ minus the dimension of the symmetries of the residual network, the value in \cref{lem:smallwrites}. At generic parameters the symmetries move the parameters in independent directions, so the rank of the Jacobian is at most $r$ on every batch. \Cref{lem:smallwrites} gives parameters and a finite batch on which it equals $r$. On this batch the rank is therefore at least $r$ outside the zero set of the sum of the squares of the minors of size $r$, an analytic function that is not identically zero, so this zero set has measure zero. At generic parameters the functional dimension is thus $r$, which is the equality condition.
+\emph{The equality condition.} Let $r$ be $P$ minus the dimension of the symmetries of the residual network, the value in \cref{lem:smallwrites}. At generic parameters the symmetries move the parameters in independent directions, so the rank of the Jacobian is at most $r$ on every batch. \Cref{lem:smallwrites} gives parameters and a finite batch on which it equals $r$. On this batch the rank is therefore at least $r$ outside the zero set of the sum of the squares of the minors of size $r$, an analytic function that is not identically zero, so this zero set has measure zero. At generic parameters the functional dimension is thus $r$, which is the equality condition.
 
-\emph{Part (ii).} When every block has width at least $\dm$, the functional dimension of the skipless network is at most $P - (L+1)\dim\G - s$, and $(L+1)\dm$ lower with biases (\cpref{thm:count}{ii}, \cref{rem:attnfree}, \cref{lem:translations}); with biases, the induction in the proof of \cref{lem:free} also makes the translations act freely, through the entries at $b_E$ and at the write biases. This gives the gain of at least $L\dim\G$, with equality when the skipless network satisfies the equality condition.
+\emph{The gain.} When every block has width at least $\dm$, the functional dimension of the skipless network is at most $P - (L+1)\dim\G - s$, and $(L+1)\dm$ lower with biases (\cpref{thm:count}{ii}, \cref{rem:attnfree}, \cref{lem:translations}); with biases, the induction in the proof of \cref{lem:free} also makes the translations act freely, through the entries at $b_E$ and at the write biases. This gives the gain of at least $L\dim\G$, with equality when the skipless network satisfies the equality condition.
 \end{proof}
 
 
 \thmExactGain*
 
 \begin{proof}[Proof of \cref{thm:exactgain}]
-By \cpref{thm:resdepth}{i} the residual network satisfies the equality condition, so it remains to show it for the skipless network; the gain is then $L\dm^2$, with or without biases.
+By \cref{thm:resdepth} the residual network satisfies the equality condition, so it remains to show it for the skipless network; the gain is then $L\dm^2$, with or without biases.
 
 \emph{Part (i), $\tanh$.} With read biases $b_\ell$ and write biases $c_\ell$, which may vanish, the skipless network computes
 \[

@@ -8,7 +8,7 @@ TERMS = [
     ('RMSNorm', r'RMSNorm', r'divides each token by its root mean square|divides each row of \$h\$ by'),
     ('epsilon of RMSNorm', r'\\varepsilon', r'regularized by a constant \$\\varepsilon|divides each row of \$h\$ by'),
     ('pre-RMSNorm', r'(?i)pre-RMSNorm', r'In a pre-RMSNorm network|\\emph\{pre-RMSNorm\}'),
-    ('generic / almost every', r'(?i)\bgeneric|almost every', r'\\emph\{Generic\}'),
+    ('generic / almost every', r'(?i)\bgeneric|almost every', r'(?i)\\emph\{generic\}'),
     ('nondegenerate', r'(?i)nondegenerate', r'\\emph\{nondegenerate\}'),
     ('value-output product', r'(?i)value--output product', r'value--output product \$W_'),
     ('score matrix', r'(?i)score matri', r'score matrix \$\\Gamma_i\$'),
