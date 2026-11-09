@@ -142,13 +142,13 @@ Outside \cref{app:biases}, blocks have no biases, as in many current language mo
 \hline
 one block, same width & \multicolumn{2}{c|}{\res{measure zero}{Thm.}{thm:relugelu}{i}} & \multicolumn{3}{c|}{\res{never}{Thm.}{thm:homgated}{}} & \res{never}{Thm.}{thm:attention}{} \\
 \hline
-\lcell{one block, more\\ hidden units or heads} & \multicolumn{2}{c|}{\res{exactly $\dm$ more}{Thm.}{thm:relugelu}{ii}} & \multicolumn{3}{c|}{\res{no}{Thm.}{thm:homgated}{}} & \res{no}{Thm.}{thm:attention}{} \\
+\lcell{one block, more\\ hidden units or heads} & \multicolumn{2}{c|}{\res{exactly $\dm$ more}{Thm.}{thm:relugelu}{ii}} & \multicolumn{3}{c|}{\res{never}{Thm.}{thm:homgated}{}} & \res{never}{Thm.}{thm:attention}{} \\
 \hline
 networks of one block, same width & \multicolumn{2}{c|}{\res{measure zero}{Prop.}{prop:oneblocknet}{}} & \res{never}{Thm.}{thm:homgatednet}{ii} & \multicolumn{2}{c|}{\res{never}{Thm.}{thm:homgatednet}{i}} & \res{never}{Thm.}{thm:attentionfull}{iii} \\
 \hline
 \lcell{deeper networks,\\ same depth and widths} & \cell{measure zero if the first\\ block has fewer than $2\dm$\\ units, else unknown\\ \rtag{Thm.}{thm:relufirst}{}} & \cell{measure zero\\ \ctag} & \res{never}{Thm.}{thm:homgatednet}{ii} & \multicolumn{2}{c|}{\res{never}{Thm.}{thm:homgatednet}{i}} & \cell{measure zero\\ \ctag} \\
 \hline
-\lcell{networks, more hidden\\ units or heads per block} & \multicolumn{2}{c|}{\cell{generically, $\dm$ more suffice\\ \rtag{Prop.}{prop:extraunits}{}, and the first\\ block needs $2\dm$ \rtag{Thm.}{thm:relufirst}{}}} & \res{no}{Thm.}{thm:homgatednet}{ii} & \multicolumn{2}{c|}{\res{no}{Thm.}{thm:homgatednet}{i}} & Unknown \\
+\lcell{networks, more hidden\\ units or heads per block} & \multicolumn{2}{c|}{\cell{generically, $\dm$ more suffice\\ \rtag{Prop.}{prop:extraunits}{}, and the first\\ block needs $2\dm$ \rtag{Thm.}{thm:relufirst}{}}} & \res{never}{Thm.}{thm:homgatednet}{ii} & \multicolumn{2}{c|}{\res{never}{Thm.}{thm:homgatednet}{i}} & unknown \\
 \hline
 \multicolumn{7}{|l|}{\emph{With pre-RMSNorm:}} \\
 \hline
@@ -162,10 +162,10 @@ without normalization & \multicolumn{6}{c|}{\res{yes}{Prop.}{prop:limits}{i}} \\
 \hline
 with pre-RMSNorm, $\varepsilon = 0$ & \multicolumn{6}{c|}{\res{yes}{Prop.}{prop:limits}{ii}} \\
 \hline
-with pre-RMSNorm, $\varepsilon > 0$ & \multicolumn{6}{c|}{Unknown} \\
+with pre-RMSNorm, $\varepsilon > 0$ & \multicolumn{6}{c|}{unknown} \\
 \hline
 \end{tabular}}
-\caption{What is proven, by setting. Never or no: for no weights. Measure zero: only for a null set of weights. Exactly $\dm$ more: for almost every block, $\dm$ more hidden units suffice and fewer do not. Companion: \citet{karbevski2026unlock}. No biases; scope in \cref{sec:setup}.}
+\caption{What is proven, by setting. Never: for no weights. Measure zero: only for a null set of weights. Exactly $\dm$ more: for almost every block, $\dm$ more hidden units suffice and fewer do not. Companion: \citet{karbevski2026unlock}. No biases; scope in \cref{sec:setup}.}
 \label{tab:results}
 \end{table}
 
@@ -757,10 +757,10 @@ Let blocks have biases, let $M$ be invertible and let $\theta$ be generic.\\
 \hline
 one block, same width & \multicolumn{2}{c|}{\res{measure zero}{Thm.}{thm:biasexact}{iii}} & \res{never}{Thm.}{thm:biasexact}{ii} & \multicolumn{2}{c|}{\res{measure zero}{Thm.}{thm:biasexact}{iii}} & \res{never}{Thm.}{thm:biasexact}{ii} \\
 \hline
-\lcell{one block, more\\ hidden units or heads} & \multicolumn{2}{c|}{\res{exactly $\dm$ more}{Thm.}{thm:biascount}{ii}} & \res{no}{Thm.}{thm:biasexact}{ii} & \res{$2\dm$ to $3\dm$ more}{Thm.}{thm:biascount}{iii} & \res{exactly $\dm$ more}{Thm.}{thm:biascount}{i} & \res{no}{Thm.}{thm:biasexact}{ii} \\
+\lcell{one block, more\\ hidden units or heads} & \multicolumn{2}{c|}{\res{exactly $\dm$ more}{Thm.}{thm:biascount}{ii}} & \res{never}{Thm.}{thm:biasexact}{ii} & \res{$2\dm$ to $3\dm$ more}{Thm.}{thm:biascount}{iii} & \res{exactly $\dm$ more}{Thm.}{thm:biascount}{i} & \res{never}{Thm.}{thm:biasexact}{ii} \\
 \hline
 \end{tabular}}
-\caption{What is proven for one block with biases. Never or no: for no weights. Measure zero: only for a null set of weights. Exactly $\dm$ more: for almost every block, $\dm$ more hidden units suffice and fewer do not. Scope as in \cref{sec:setup}.}
+\caption{What is proven for one block with biases. Never: for no weights. Measure zero: only for a null set of weights. Exactly $\dm$ more: for almost every block, $\dm$ more hidden units suffice and fewer do not. Scope as in \cref{sec:setup}.}
 \label{tab:biases}
 \end{table}
 
