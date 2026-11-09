@@ -94,7 +94,7 @@
 \suppressfloats[t]
 \ifanon\else
 {\renewcommand{\thefootnote}{$*$}%
-\footnotetext{\emph{Author contributions.} Marko Karbevski (MK) conceived and led the study. Antonij Mijoski (AM) proved the absorption result for a single ReLU block (\cpref{thm:relugelu}{i}, \cref{thm:f3}), the difficult case, paving the way forward. MK extended the tools to GELU (\cref{thm:f4}), proved the cases of ReLU$^2$ and of the gated (GLU) variants (\cref{thm:homgated,thm:homgatednet}) and the results at depth (\cref{thm:relufirst,prop:extraunits}), and worked on the symmetry breaking across layers and its counting, the parameter counts at model scale and the applications. Both authors worked on the experiments and on the writing. All of MK's work on the results, the proofs and the experiments was done with AI assistants.}}
+\footnotetext{\emph{Author contributions.} Marko Karbevski (MK) conceived and led the study. Antonij Mijoski (AM) proved the absorption result for a single ReLU block (\cpref{thm:relugelu}{i}, \cref{thm:f3}), the difficult case, paving the way forward. MK extended the tools to GELU (\cref{thm:f4}), proved the cases of ReLU$^2$ and of the gated (GLU) variants (\cref{thm:homgated,thm:homgatednet}) and the results at depth (\cref{thm:relufirst,prop:extraunits}). Both authors worked on the writing. All of MK's work on the results and the proofs was done with AI assistants.}}
 {\renewcommand{\thefootnote}{$\dagger$}\footnotetext{Corresponding author.}}
 \fi
 \vspace{-1.5em}
@@ -348,7 +348,7 @@ Can a skip let a block compute a function that no skipless block of the same kin
 
 \para{Open questions.} The dashes of \cref{tab:results} leave four questions.
 \begin{enumerate}[label=(\arabic*)]
-\item GELU and attention networks at depth, and GELU, $\tanh$ and attention networks under RMSNorm with $\varepsilon > 0$. At the same widths, a count of functional dimensions answers them in a companion paper \citep{mijoski2026unlock}; with more units they are open.
+\item GELU and attention networks at depth, and GELU, $\tanh$ and attention networks under RMSNorm with $\varepsilon > 0$. At the same widths, a count of functional dimensions answers them in a companion paper \citep{karbevski2026unlock}; with more units they are open.
 \item ReLU networks whose first block has at least $2\dm$ units, and ReLU networks under RMSNorm with $\varepsilon > 0$.
 \item Skipless networks as limits of residual networks under RMSNorm with $\varepsilon > 0$.
 \item Approximate absorption: how many units a skip is worth at a given error.
