@@ -25,61 +25,60 @@
 | 20 | Without skips: one free submatrix per hidden state | statement |  |  | \begin{restatable}[One free submatrix per hidden state]{proposition}{p |
 | 21 | Without skips: one free submatrix per hidden state | para |  |  | Rows of a write work too: if $\dm$ rows of the write into $h_\ell$ for |
 | 22 | Without skips: one free submatrix per hidden state | para |  |  | So, up to a set of weights of measure zero, the reduced networks compu |
-| 23 | Without skips: one free submatrix per hidden state | para |  |  | \begin{figure}[t] \centering |
-| 24 | Without skips: one free submatrix per hidden state | float |  |  | \caption{(a)~A block with a learned skip is a block with $\dm$ identit |
-| 25 | Learned skips are blocks of identity units | para |  |  | \subsection{Learned skips are blocks of identity units}\label{sec:lear |
-| 26 | Learned skips are blocks of identity units | para |  |  | A learned skip, which adds $hA$ in place of $h$, is a block in disguis |
-| 27 | Learned skips are blocks of identity units | para |  |  | \para{Merge.} Nothing nonlinear happens between $U$ and $V$, so the id |
-| 28 | Learned skips are blocks of identity units | para | Lambda | Lambda | \para{Reduce.} The skip $A_\ell$ reads $h_{\ell-1}$ and writes $h_\ell |
-| 29 | Learned skips are blocks of identity units | statement |  |  | \begin{restatable}[Learned skips are identity skips]{theorem}{thmLearn |
-| 30 | Learned skips are blocks of identity units | para |  |  | So all $L\dm^2$ parameters of the learned skips can go, and with them  |
-| 31 | Identity skips tie the hidden states | para |  |  | \subsection{Identity skips tie the hidden states}\label{sec:global}\la |
-| 32 | Identity skips tie the hidden states | para |  |  | After the sweep one change of basis is left, and it must be the same a |
-| 33 | Identity skips tie the hidden states | statement |  |  | \begin{restatable}[One change of basis is left]{theorem}{thmTie}\label |
-| 34 | Identity skips tie the hidden states | para |  |  | So the $L$ skips remove $L\dm^2$ dimensions of symmetry. In the langua |
-| 35 | Identity skips tie the hidden states | para |  |  | \para{A counterexample.} \citet[Theorem~7]{wang2025gauge} state that t |
-| 36 | Under RMSNorm: orthogonal maps pass, triangles stay | para |  |  | \subsection{Under RMSNorm: orthogonal maps pass, triangles stay}\label |
-| 37 | Under RMSNorm: orthogonal maps pass, triangles stay | para |  |  | With pre-RMSNorm, the network with learned skips computes \begin{equat |
-| 38 | Under RMSNorm: orthogonal maps pass, triangles stay | statement |  |  | \begin{restatable}[Triangles under RMSNorm]{theorem}{thmRMSTri}\label{ |
-| 39 | Under RMSNorm: orthogonal maps pass, triangles stay | para |  |  | \para{What a learned skip carries.} Write a skip as $A = RQ$, an upper |
-| 40 | Under RMSNorm: orthogonal maps pass, triangles stay | para |  |  | LayerNorm is RMSNorm after a projection that removes the mean of each  |
-| 41 | What trained models give up | para |  |  | \subsection{What trained models give up}\label{sec:trained} |
-| 42 | What trained models give up | para |  |  | \para{A skipless ViT-B.} The skipless ViT-B of \citet{ji2026cutting} h |
-| 43 | What trained models give up | para |  |  | \para{Llama-3.1.} A pre-RMSNorm language model with an untied readout  |
-| 44 | Fewer parameters is not fewer functions | para |  |  | \section{Fewer parameters is not fewer functions}\label{sec:gain} \tak |
-| 45 | Functional dimension | para |  |  | \subsection{Functional dimension}\label{sec:fd} |
-| 46 | Functional dimension | para | F_theta, redundancy | F_theta | \para{Functional dimension.} Let $F_\theta$ be the function computed a |
-| 47 | Functional dimension | para |  |  | \para{Three matrices, one map.} The linear network $x \mapsto xM_1M_2M |
-| 48 | What the skips unlock | para |  |  | \subsection{What the skips unlock}\label{sec:count} |
-| 49 | What the skips unlock | para | s, symmetries inside, script G, symmetries inside blocks | s, symmetries inside, script G, symmetries inside blocks | Blocks also have \emph{symmetries inside}, which leave the hidden stat |
-| 50 | What the skips unlock | statement |  |  | \begin{restatable}[What the skips unlock]{theorem}{thmUnlock}\label{th |
-| 51 | What the skips unlock | para | equality condition | equality condition | A network satisfies the \emph{equality condition} if its bound in (i)  |
-| 52 | What the skips unlock | para |  |  | \para{Learned skips.} A network with learned skips has $P + L\dm^2$ pa |
-| 53 | What the skips unlock | para |  |  | \para{At equal parameter count.} Under the equality condition, a resid |
-| 54 | When the bounds are attained | para |  |  | \subsection{When the bounds are attained}\label{sec:onelayer} |
-| 55 | When the bounds are attained | para |  |  | The equality condition is a hypothesis. We prove it in three cases. |
-| 56 | When the bounds are attained | statement |  |  | \begin{restatable}[One block]{theorem}{thmOneBlock}\label{thm:oneblock |
-| 57 | When the bounds are attained | statement |  |  | \begin{restatable}[Residual networks at any depth]{theorem}{thmResDept |
-| 58 | When the bounds are attained | statement |  |  | \begin{restatable}[Exact gain for $\tanh$ and GELU]{theorem}{thmExactG |
-| 59 | When the bounds are attained | para |  |  | \para{How the proofs go.} With one block, the parameters enter the fun |
-| 60 | Measured at depth | para |  |  | \subsection{Measured at depth}\label{sec:measured} |
-| 61 | Measured at depth | para |  |  | For deeper networks we compute the rank of the Jacobian on a large bat |
-| 62 | Measured at depth | float |  |  | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \b |
-| 63 | Measured at depth | para |  |  | There are two kinds of exceptions. Under RMSNorm with $\varepsilon = 1 |
-| 64 | Measured at depth | statement |  |  | \begin{conjecture}[Equality condition]\label{conj:equality} Consider M |
-| 65 | Measured at depth | para |  |  | For $\tanh$, GELU, SwiGLU and GeGLU blocks, the residual half of the c |
-| 66 | A gap that separates function classes | para |  |  | \subsection{A gap that separates function classes}\label{sec:classes} |
-| 67 | A gap that separates function classes | para |  |  | A gap in functional dimension keeps two families of functions apart: f |
-| 68 | A gap that separates function classes | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
-| 69 | A gap that separates function classes | para |  |  | In (ii), each extra GELU unit adds $2\dm$ parameters against a gap of  |
-| 70 | Related work | para |  |  | \section{Related work}\label{sec:related} |
-| 71 | Related work | para |  |  | \para{Changes of basis at hidden layers.} \citet{zhao2023symmetries} d |
-| 72 | Related work | para |  |  | \para{Removing weights.} \citet{graef2024tricks} merges the queries an |
-| 73 | Related work | para |  |  | \para{The basis of the residual stream.} The residual stream has no pr |
-| 74 | Related work | para |  |  | \para{Symmetries and residual networks in theory.} \citet{wang2025gaug |
-| 75 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
-| 76 | Conclusion | para |  |  | What do skips change in parameter space? They tie the bases of all hid |
-| 77 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth remains open fo |
-| 78 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
-| 79 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
-| 80 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 23 | Without skips: one free submatrix per hidden state | float |  |  | \begin{figure}[t] \centering [a TikZ drawing, omitted here; the captio |
+| 24 | Learned skips are blocks of identity units | para |  |  | \subsection{Learned skips are blocks of identity units}\label{sec:lear |
+| 25 | Learned skips are blocks of identity units | para |  |  | A learned skip, which adds $hA$ in place of $h$, is a block in disguis |
+| 26 | Learned skips are blocks of identity units | para |  |  | \para{Merge.} Nothing nonlinear happens between $U$ and $V$, so the id |
+| 27 | Learned skips are blocks of identity units | para | Lambda | Lambda | \para{Reduce.} The skip $A_\ell$ reads $h_{\ell-1}$ and writes $h_\ell |
+| 28 | Learned skips are blocks of identity units | statement |  |  | \begin{restatable}[Learned skips are identity skips]{theorem}{thmLearn |
+| 29 | Learned skips are blocks of identity units | para |  |  | So all $L\dm^2$ parameters of the learned skips can go: without normal |
+| 30 | Identity skips tie the hidden states | para |  |  | \subsection{Identity skips tie the hidden states}\label{sec:global}\la |
+| 31 | Identity skips tie the hidden states | para |  |  | After the sweep one change of basis is left, and it must be the same a |
+| 32 | Identity skips tie the hidden states | statement |  |  | \begin{restatable}[One change of basis is left]{theorem}{thmTie}\label |
+| 33 | Identity skips tie the hidden states | para |  |  | So the $L$ skips remove $L\dm^2$ dimensions of symmetry. In the langua |
+| 34 | Identity skips tie the hidden states | para |  |  | \para{A counterexample.} \citet[Theorem~7]{wang2025gauge} state that t |
+| 35 | Under RMSNorm: orthogonal maps pass, triangles stay | para |  |  | \subsection{Under RMSNorm: orthogonal maps pass, triangles stay}\label |
+| 36 | Under RMSNorm: orthogonal maps pass, triangles stay | para |  |  | With pre-RMSNorm, the network with learned skips computes \begin{equat |
+| 37 | Under RMSNorm: orthogonal maps pass, triangles stay | statement |  |  | \begin{restatable}[Triangles under RMSNorm]{theorem}{thmRMSTri}\label{ |
+| 38 | Under RMSNorm: orthogonal maps pass, triangles stay | para |  |  | \para{What a learned skip carries.} Write a skip as $A = RQ$, an upper |
+| 39 | Under RMSNorm: orthogonal maps pass, triangles stay | para |  |  | LayerNorm is RMSNorm after a projection that removes the mean of each  |
+| 40 | What trained models give up | para |  |  | \subsection{What trained models give up}\label{sec:trained} |
+| 41 | What trained models give up | para |  |  | \para{A skipless ViT-B.} The skipless ViT-B of \citet{ji2026cutting} h |
+| 42 | What trained models give up | para |  |  | \para{Llama-3.1.} A pre-RMSNorm language model with an untied readout  |
+| 43 | Fewer parameters is not fewer functions | para |  |  | \section{Fewer parameters is not fewer functions}\label{sec:gain} \tak |
+| 44 | Functional dimension | para |  |  | \subsection{Functional dimension}\label{sec:fd} |
+| 45 | Functional dimension | para | F_theta, redundancy | F_theta | \para{Functional dimension.} Let $F_\theta$ be the function computed a |
+| 46 | Functional dimension | para |  |  | \para{Three matrices, one map.} The linear network $x \mapsto xM_1M_2M |
+| 47 | What the skips unlock | para |  |  | \subsection{What the skips unlock}\label{sec:count} |
+| 48 | What the skips unlock | para | s, symmetries inside, script G, symmetries inside blocks | s, symmetries inside, script G, symmetries inside blocks | Blocks also have \emph{symmetries inside}, which leave the hidden stat |
+| 49 | What the skips unlock | statement |  |  | \begin{restatable}[What the skips unlock]{theorem}{thmUnlock}\label{th |
+| 50 | What the skips unlock | para | equality condition | equality condition | A network satisfies the \emph{equality condition} if its bound in (i)  |
+| 51 | What the skips unlock | para |  |  | \para{Learned skips.} A network with learned skips has $P + L\dm^2$ pa |
+| 52 | What the skips unlock | para |  |  | \para{At equal parameter count.} Under the equality condition, a resid |
+| 53 | When the bounds are attained | para |  |  | \subsection{When the bounds are attained}\label{sec:onelayer} |
+| 54 | When the bounds are attained | para |  |  | The equality condition is a hypothesis. We prove it in three cases. |
+| 55 | When the bounds are attained | statement |  |  | \begin{restatable}[One block]{theorem}{thmOneBlock}\label{thm:oneblock |
+| 56 | When the bounds are attained | statement |  |  | \begin{restatable}[Residual networks at any depth]{theorem}{thmResDept |
+| 57 | When the bounds are attained | statement |  |  | \begin{restatable}[Exact gain for $\tanh$ and GELU]{theorem}{thmExactG |
+| 58 | When the bounds are attained | para |  |  | \para{How the proofs go.} With one block, the parameters enter the fun |
+| 59 | Measured at depth | para |  |  | \subsection{Measured at depth}\label{sec:measured} |
+| 60 | Measured at depth | para |  |  | For deeper networks we compute the rank of the Jacobian on a large bat |
+| 61 | Measured at depth | float |  |  | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \b |
+| 62 | Measured at depth | para |  |  | There are two exceptions. Under RMSNorm with $\varepsilon = 10^{-5}$,  |
+| 63 | Measured at depth | statement |  |  | \begin{conjecture}[Equality condition]\label{conj:equality} Consider M |
+| 64 | Measured at depth | para |  |  | For smooth blocks, \cref{thm:resdepth} proves the residual half of the |
+| 65 | A gap that separates function classes | para |  |  | \subsection{A gap that separates function classes}\label{sec:classes} |
+| 66 | A gap that separates function classes | para |  |  | For smooth blocks, the gap in functional dimension keeps the two class |
+| 67 | A gap that separates function classes | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
+| 68 | A gap that separates function classes | para |  |  | In (ii), each extra GELU unit adds $2\dm$ parameters against a gap of  |
+| 69 | Related work | para |  |  | \section{Related work}\label{sec:related} |
+| 70 | Related work | para |  |  | \para{Changes of basis at hidden layers.} \citet{zhao2023symmetries} d |
+| 71 | Related work | para |  |  | \para{Removing weights.} \citet{graef2024tricks} merges the queries an |
+| 72 | Related work | para |  |  | \para{The basis of the residual stream.} The residual stream has no pr |
+| 73 | Related work | para |  |  | \para{Symmetries and residual networks in theory.} \citet{wang2025gaug |
+| 74 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
+| 75 | Conclusion | para |  |  | What do skips change in parameter space? They tie the bases of all hid |
+| 76 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth remains open fo |
+| 77 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
+| 78 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
+| 79 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |

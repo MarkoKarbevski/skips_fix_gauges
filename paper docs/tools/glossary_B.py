@@ -1,6 +1,6 @@
 # Terms and symbols of paper B: (name, pattern of a use, pattern of the defining sentence).
 TERMS = [
-    ('d_model, the width', r'\\dm', r'(?i)\$\\dm\$ is the dimension of the hidden states|have dimension \$\\dm\$'),
+    ('d_model, the width', r'\\dm', r'(?i)\$\\dm\$ is the dimension of the hidden states|\$\\dm\$ is the hidden dimension|have dimension \$\\dm\$'),
     ('read / write (nouns)', r'(?i)\b(the|a|each|its) (read|write)s?\b', r'the \\emph\{read\}'),
     ('functional dimension', r'(?i)functional dimension', r'(?i)functional dimension, the number of'),
     ('equality condition', r'(?i)equality condition', r'\\emph\{equality condition\}'),

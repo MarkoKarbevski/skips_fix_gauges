@@ -20,7 +20,8 @@ def load_units(tex):
     m0 = tex.index('\\begin{abstract}')
     m1 = tex.index('\\appendix')
     body = tex[m0:m1]
-    body = re.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', '', body, flags=re.S)
+    # A drawing is replaced by a placeholder, so that a reader of the units knows that it exists.
+    body = re.sub(r'\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}', '[a TikZ drawing, omitted here; the caption describes it]', body, flags=re.S)
     body = re.sub(r'(?m)^%.*$', '', body)
     units, sec = [], 'abstract'
     for raw in re.split(r'\n\s*\n', body):
