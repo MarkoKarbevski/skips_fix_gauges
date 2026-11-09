@@ -148,7 +148,7 @@ networks of one block, same width & \multicolumn{2}{c|}{\res{measure zero}{Prop.
 \hline
 \lcell{deeper networks,\\ same depth and widths} & \cell{measure zero if the first\\ block has fewer than $2\dm$\\ units, else unknown\\ \rtag{Thm.}{thm:relufirst}{}} & \cell{measure zero\\ \ctag} & \res{never}{Thm.}{thm:homgatednet}{ii} & \multicolumn{2}{c|}{\res{never}{Thm.}{thm:homgatednet}{i}} & \cell{measure zero\\ \ctag} \\
 \hline
-\lcell{networks, more hidden\\ units or heads per block} & \multicolumn{2}{c|}{\cell{for almost all weights,\\ $\dm$ more suffice\\ \rtag{Prop.}{prop:extraunits}{}, and the first\\ block needs $2\dm$ \rtag{Thm.}{thm:relufirst}{}}} & \res{never}{Thm.}{thm:homgatednet}{ii} & \multicolumn{2}{c|}{\res{never}{Thm.}{thm:homgatednet}{i}} & unknown \\
+\lcell{networks, more hidden\\ units or heads per block} & \multicolumn{2}{c|}{\cell{for almost all weights,\\ $\dm$ more suffice\\ \rtag{Prop.}{prop:extraunits}{}, and the first\\ block needs $2\dm$ \rtag{Thm.}{thm:relufirst}{};\\ every block, if contractive \rtag{Prop.}{prop:everyblock}{}}} & \res{never}{Thm.}{thm:homgatednet}{ii} & \multicolumn{2}{c|}{\res{never}{Thm.}{thm:homgatednet}{i}} & unknown \\
 \hline
 \multicolumn{7}{|l|}{\emph{With pre-RMSNorm:}} \\
 \hline
@@ -165,7 +165,7 @@ with pre-RMSNorm, $\varepsilon = 0$ & \multicolumn{6}{c|}{\res{yes}{Prop.}{prop:
 with pre-RMSNorm, $\varepsilon > 0$ & \multicolumn{6}{c|}{unknown} \\
 \hline
 \end{tabular}}
-\caption{What is proven, by setting. Never: for no weights. Measure zero: only for a null set of weights. Exactly $\dm$ more: for almost every block, $\dm$ more hidden units suffice and fewer do not. Companion: \citet{karbevski2026unlock}. No biases. Scope in \cref{sec:setup}.}
+\caption{What is proven, by setting. Never: for no weights. Measure zero: only for a null set of weights. Exactly $\dm$ more: for almost every block, $\dm$ more hidden units suffice and fewer do not. Contractive: as in \cref{prop:everyblock}. Companion: \citet{karbevski2026unlock}. No biases. Scope in \cref{sec:setup}.}
 \label{tab:results}
 \end{table}
 
@@ -323,7 +323,14 @@ Let $\sigma$ be ReLU or GELU. Without normalization, a residual network whose re
 \end{restatable}
 \proofin{app:absorb}
 
-So $\dm$ extra units per block suffice, and the first block of a skipless network needs at least $2\dm$ units (\cref{thm:relufirst}). For the first block, the two bounds meet when the residual first block has $\dm$ units; beyond that, the number of extra units is open.
+So $\dm$ extra units per block suffice, and the first block of a skipless network needs at least $2\dm$ units (\cref{thm:relufirst}). For the first block, the two bounds meet when the residual first block has $\dm$ units. They meet at every block when the blocks of the residual network are contractions.
+
+\begin{restatable}[Contractive blocks]{proposition}{propEveryBlock}\label{prop:everyblock}
+Let $\sigma$ be ReLU or GELU, without normalization, and let $E$ and $D$ have rank $\dm$. If every block of a residual network has $\norm{\Wread}\,\norm{\Wwrite} < 1$, in spectral norm, every skipless network that equals it, of any depth, has at least $2\dm$ hidden units in every block.
+\end{restatable}
+\proofin{app:absorb}
+
+The condition holds on an open set of weights, which contains every network with small enough writes. On it, a residual network of blocks with $\dm$ hidden units needs exactly $\dm$ extra units in every block. The proof turns on injectivity: a contractive residual block maps distinct tokens to distinct tokens, so every block of an equal skipless network must too, and a ReLU block without biases does so only with $2\dm$ units, since no unit is active at both $h$ and $-h$. For ReLU some condition is needed: on another open set of weights a block folds the tokens onto a cone, the units of later blocks are never active, and $\dm$ extra units in the first block suffice at every depth (\cref{rem:fold}).
 
 \para{RMSNorm: the skip keeps the norm of each token.} A skipless network sees its input only through its first normalization, and $N(ch)$ depends on $c > 0$ only through $\varepsilon/c^2$: with $\varepsilon = 0$ the norm of each token is lost, and with $\varepsilon > 0$ its effect fades like $\varepsilon/c^2$ as $c$ grows.
 
@@ -363,7 +370,7 @@ Can a block absorb its skip? Without biases, it depends on the activation. At th
 \para{Open questions.} The unknown cells and the conditions of \cref{tab:results} leave three questions, and a fourth lies beyond the table.
 \begin{enumerate}[label=(\arabic*)]
 \item Networks of attention blocks at depth, without normalization. At the same widths, a companion paper answers this by counting functional dimensions, the numbers of directions in which the parameters move the function \citep{karbevski2026unlock}; with more heads it is open.
-\item How many extra units ReLU and GELU networks need, without normalization: $\dm$ more per block suffice, and the first block needs at least $2\dm$ units.
+\item How many extra units ReLU and GELU networks need, without normalization, when the blocks are wider than $\dm$ or are not contractions. A GELU network needs at least $L\dm/2$ in total \citep{karbevski2026unlock}.
 \item Skipless networks as limits of residual networks under RMSNorm with $\varepsilon > 0$.
 \item Approximate absorption: how many units a skip is worth at a given error.
 \end{enumerate}
@@ -380,13 +387,14 @@ The conception of the study is the authors' own. One author obtained their resul
 
 \subsection{MLP blocks and networks\texorpdfstring{ (Sections~\ref*{sec:oneblock} and~\ref*{sec:networks})}{}}\label{app:absorb}
 
-We recall \cref{thm:relugelu,prop:oneblocknet,thm:homgated} from \cref{sec:oneblock} and \cref{thm:homgatednet,thm:relufirst,prop:extraunits} from \cref{sec:networks}, for the question \eqref{eq:absorbask}. Below we write $B$ for $B_\theta$, and $B'$ for $B_{\theta'}$ with $\theta' = (\Wread', \Wwrite')$.
+We recall \cref{thm:relugelu,prop:oneblocknet,thm:homgated} from \cref{sec:oneblock} and \cref{thm:homgatednet,thm:relufirst,prop:extraunits,prop:everyblock} from \cref{sec:networks}, for the question \eqref{eq:absorbask}. Below we write $B$ for $B_\theta$, and $B'$ for $B_{\theta'}$ with $\theta' = (\Wread', \Wwrite')$.
 \thmAbsorbReLU*
 \propOneBlockNet*
 \thmAbsorbHom*
 \thmAbsorbHomNet*
 \thmAbsorbFirst*
 \propExtraUnits*
+\propEveryBlock*
 
 \para{Overview.} \Cref{thm:homgated} compares orders. Along rays from the origin a linear skip scales like $\lambda$ and a block that is homogeneous of degree $k \neq 1$ like $\lambda^k$, and near the origin a gated block is of second order, so the two sides of the absorption equation cannot agree (\cref{prop:f2,prop:gated}); comparing Jacobians at the origin extends this to networks of any depth, \cref{thm:homgatednet} (\cref{cor:depth}). \Cpref{thm:relugelu}{i} is the substantial case. The absorption equation splits into its odd and even parts in $x$. The even part determines the hidden units of the absorbing block up to sign, and for ReLU up to a positive rescaling, through the kinks for ReLU (\cref{thm:f3}) and through linear independence of ridge functions for GELU (\cref{lem:ridge,thm:f4}). The odd part of ReLU and GELU is exactly $z/2$, so the odd part of the equation is linear and reads off the set $S$ of units whose signs flip; conversely, flipping the signs of the units in $S$ absorbs the skip whenever the condition holds. The generic clause holds because the condition is a finite union of algebraic sets of positive codimension (\cref{cor:f5}), and \cref{rem:singular} covers singular $M$. \Cpref{thm:relugelu}{ii} counts the extra units that the matching requires (\cref{prop:widthd}). \Cref{prop:extraunits} applies \cpref{thm:relugelu}{ii} block by block. \Cref{thm:relufirst} compares the ranks of the linear pieces of a ReLU network at an input and at its negative, and reduces GELU to ReLU along rays.
 
@@ -559,6 +567,20 @@ Let a skipless network $F'$ have embedding $E'$ and a first block with reads $w'
 \begin{proof}[Proof of \cref{prop:extraunits}]
 \Cpref{thm:relugelu}{ii} with $M = I$ turns each residual block, whose read has rank $\dm$, into a skipless block with $\dm$ more hidden units. Composing these blocks, with the same embedding and readout, gives a skipless network that equals the residual one.
 \end{proof}
+
+\begin{proof}[Proof of \cref{prop:everyblock}]
+As in the proof of \cref{thm:relufirst}, we compare the networks on rows $x \in \R^{1\times d_{\mathrm{in}}}$, and GELU reduces to ReLU: if a residual GELU network equals a skipless one, the two ReLU networks with the same weights are equal, and the condition on the norms does not involve the activation. So let $\sigma$ be ReLU. Every block below is positively homogeneous, $B(ch) = cB(h)$ for $c > 0$, since there are no biases.
+
+\emph{Step 1: the residual network is injective.} Let $\Phi_\ell(h) = h + B_\ell(h)$. As ReLU is $1$-Lipschitz, $\norm{B_\ell(h) - B_\ell(h')} \le \norm{\Wread^{\ell}}\,\norm{\Wwrite^{\ell}}\,\norm{h - h'}$. So $\Phi_\ell(h) = \Phi_\ell(h')$ gives $\norm{h - h'} = \norm{B_\ell(h') - B_\ell(h)} < \norm{h - h'}$ unless $h = h'$. As $D$ has rank $\dm$, the residual network $F$ satisfies $F(x) = F(x')$ only if $xE = x'E$.
+
+\emph{Step 2: every skipless block is injective.} Let a skipless network $F' = F$ have embedding $E'$, blocks $B'_1, \dots, B'_{L'}$ and readout $D'$, and write $F'(x) = H(xE')$. If $xE' = x'E'$, then $F(x) = F(x')$, so $xE = x'E$: the kernel of $E'$ lies in that of $E$. As $E$ has rank $\dm$, so does $E'$, the two kernels are equal, and $H$ is injective on all of $\R^{1\times\dm}$. In particular $B'_1$ is injective. A continuous, positively homogeneous, injective map $\psi$ of $\R^{1\times\dm}$ to itself is onto: $\psi(u) \neq 0$ for $u \neq 0$, so $\norm{\psi(u)} \ge c\norm{u}$ with $c > 0$ the minimum of $\norm{\psi}$ on the unit sphere, hence the image of $\psi$ is closed, and by invariance of domain it is open. So $B'_1$ is onto, $B'_2$ is injective on all of $\R^{1\times\dm}$, and by induction every block $B'_k$ is.
+
+\emph{Step 3: an injective block has $2\dm$ units.} Let $B'_k$ have reads $r_1, \dots, r_{m'}$, and drop the units with $r_i = 0$, which are never active. Off the hyperplanes $\{u : ur_i = 0\}$, the block is linear near $u$, equal to $u \mapsto u\,\Wread'[{:},S]\,\Wwrite'[S,{:}]$ with $S$ the set of units active at $u$. Injectivity makes this matrix invertible, so $\lvert S\rvert \ge \dm$. No unit is active at both $u$ and $-u$, so $B'_k$ has at least $2\dm$ units.
+\end{proof}
+
+\begin{remark}[Folding]\label{rem:fold}
+For ReLU, \cref{prop:everyblock} fails without a condition on the blocks. Let block~$1$ of a residual network have $\dm$ units with $\Wread = -I$ and $\Wwrite = 2I$, and further units with small writes. Its map $h \mapsto h + B_1(h)$ is then close to $h \mapsto (\lvert h_1\rvert, \dots, \lvert h_{\dm}\rvert)$, which folds every coordinate axis at $0$, and its image lies in a closed convex cone $K$ near the nonnegative orthant. Let every read of blocks $2, \dots, L$ have negative entries, so that their units are never active. These conditions hold on an open set of weights, and there the residual network computes $x \mapsto \big(xE + B_1(xE)\big)D$. A skipless network equals it with $\dm$ more units in its first block (\cpref{thm:relugelu}{ii}) and the same widths after: each later block computes the identity on $K$ with $\dm$ units whose reads $v_1, \dots, v_{\dm}$ are linearly independent and positive on $K \setminus \{0\}$ and whose writes form the inverse of $[\,v_1 \cdots v_{\dm}\,]$, and its other units have reads negative on $K \setminus \{0\}$.
+\end{remark}
 
 \subsection{No absorption in attention\texorpdfstring{ (Theorem~\ref*{thm:attention}, Proposition~\ref*{prop:match})}{}}\label{app:attention}
 

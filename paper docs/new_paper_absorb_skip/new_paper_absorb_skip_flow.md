@@ -49,19 +49,21 @@
 | 44 | Networks | para |  |  | Conversely, the construction of \cref{sec:relugelu} works block by blo |
 | 45 | Networks | statement |  |  | \begin{restatable}[Extra units]{proposition}{propExtraUnits}\label{pro |
 | 46 | Networks | para |  |  | So $\dm$ extra units per block suffice, and the first block of a skipl |
-| 47 | Networks | para |  |  | \para{RMSNorm: the skip keeps the norm of each token.} A skipless netw |
-| 48 | Networks | statement |  |  | \begin{restatable}[Networks under RMSNorm]{theorem}{thmRMSNet}\label{t |
-| 49 | Networks | para |  |  | Scale an input $X$ by a factor $t \to \infty$. A skipless network with |
-| 50 | Skipless networks are limits of residual ones | para |  |  | \section{Skipless networks are limits of residual ones}\label{sec:limi |
-| 51 | Skipless networks are limits of residual ones | statement | F, the function of a network | F, the function of a network | \begin{restatable}[Skipless networks as limits of residual networks]{p |
-| 52 | Skipless networks are limits of residual ones | para |  |  | \para{Blocks that outweigh their skips.} The proof scales the reads of |
-| 53 | Skipless networks are limits of residual ones | para |  |  | \para{Under RMSNorm.} With $\varepsilon = 0$, RMSNorm ignores the size |
-| 54 | Related work | para |  |  | \section{Related work}\label{sec:related} |
-| 55 | Related work | para |  |  | \para{Expressivity of residual networks.} \citet{lin2018resnet} show t |
-| 56 | Related work | para |  |  | \para{Identifiability.} For $\tanh$ networks, the function determines  |
-| 57 | Related work | para |  |  | \para{Training without skips.} Skipless networks train with careful in |
-| 58 | Conclusion | para |  |  | \section{Conclusion}\label{sec:conclusion} |
-| 59 | Conclusion | para |  |  | Can a block absorb its skip? Without biases, it depends on the activat |
-| 60 | Conclusion | para |  |  | \para{Open questions.} The unknown cells and the conditions of \cref{t |
-| 61 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
-| 62 | Use of AI | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 47 | Networks | statement |  |  | \begin{restatable}[Contractive blocks]{proposition}{propEveryBlock}\la |
+| 48 | Networks | para |  |  | The condition holds on an open set of weights, which contains every ne |
+| 49 | Networks | para |  |  | \para{RMSNorm: the skip keeps the norm of each token.} A skipless netw |
+| 50 | Networks | statement |  |  | \begin{restatable}[Networks under RMSNorm]{theorem}{thmRMSNet}\label{t |
+| 51 | Networks | para |  |  | Scale an input $X$ by a factor $t \to \infty$. A skipless network with |
+| 52 | Skipless networks are limits of residual ones | para |  |  | \section{Skipless networks are limits of residual ones}\label{sec:limi |
+| 53 | Skipless networks are limits of residual ones | statement | F, the function of a network | F, the function of a network | \begin{restatable}[Skipless networks as limits of residual networks]{p |
+| 54 | Skipless networks are limits of residual ones | para |  |  | \para{Blocks that outweigh their skips.} The proof scales the reads of |
+| 55 | Skipless networks are limits of residual ones | para |  |  | \para{Under RMSNorm.} With $\varepsilon = 0$, RMSNorm ignores the size |
+| 56 | Related work | para |  |  | \section{Related work}\label{sec:related} |
+| 57 | Related work | para |  |  | \para{Expressivity of residual networks.} \citet{lin2018resnet} show t |
+| 58 | Related work | para |  |  | \para{Identifiability.} For $\tanh$ networks, the function determines  |
+| 59 | Related work | para |  |  | \para{Training without skips.} Skipless networks train with careful in |
+| 60 | Conclusion | para |  |  | \section{Conclusion}\label{sec:conclusion} |
+| 61 | Conclusion | para |  |  | Can a block absorb its skip? Without biases, it depends on the activat |
+| 62 | Conclusion | para |  |  | \para{Open questions.} The unknown cells and the conditions of \cref{t |
+| 63 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
+| 64 | Use of AI | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
