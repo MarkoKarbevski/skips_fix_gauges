@@ -26,7 +26,7 @@
 | 21 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | statement |  |  | \begin{restatable}[ReLU and GELU blocks]{theorem}{thmAbsorbReLU}\label |
 | 22 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para |  |  | In (i), generic weights give no set of units with the required product |
 | 23 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para |  |  | The proof matches the units of the two blocks. The even part of the ac |
-| 24 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para |  |  | \para{Networks of one block.} A network of one block computes $X \maps |
+| 24 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para |  |  | \para{Networks of one block.} A residual network of one block is a blo |
 | 25 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | statement |  |  | \begin{restatable}[Networks of one block]{proposition}{propOneBlockNet |
 | 26 | ReLU\texorpdfstring{$^2$ | para |  |  | \subsection{ReLU\texorpdfstring{$^2$}{2}, gated and tanh blocks}\label |
 | 27 | ReLU\texorpdfstring{$^2$ | para |  |  | \begin{figure}[t] \centering |
@@ -49,7 +49,7 @@
 | 44 | Networks | para |  |  | Conversely, the construction of \cref{sec:relugelu} works block by blo |
 | 45 | Networks | statement |  |  | \begin{restatable}[Extra units]{proposition}{propExtraUnits}\label{pro |
 | 46 | Networks | para |  |  | So $L\dm$ extra units in all suffice; for ReLU, the first block needs  |
-| 47 | Networks | para |  |  | \para{RMSNorm with $\varepsilon = 0$: the skip keeps the length of the |
+| 47 | Networks | para |  |  | \para{RMSNorm with $\varepsilon = 0$: the skip keeps the norm of each  |
 | 48 | Networks | statement | F, the function of a network | F, the function of a network | \begin{restatable}[Absorption under RMSNorm with $\varepsilon = 0$]{pr |
 | 49 | Networks | para |  |  | For (ii), let $c \to \infty$: the blocks read $N(h)$, whose rows have  |
 | 50 | Skipless networks are limits of residual ones | para |  |  | \section{Skipless networks are limits of residual ones}\label{sec:limi |
