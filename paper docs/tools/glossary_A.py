@@ -21,7 +21,7 @@ SYMBOLS = [
     ('M, the linear term', r'xM\b|\$M\b|hM\b|uM\b|M = I', r'linear term \$xM\$, for a'),
     ('E and D', r'xE\b|XE\b|\$E\$|\$D\$|h_LD|ED\b', r'embedding \$E(\$| \\in)'),
     ('X, the input of a network', r'\$X\b|XE\b|F\(cX', r'an input \$X \\in'),
-    ('L, the number of blocks', r'\$L\b|L\\dm|L \\ge', r'(?i)\$L\$ blocks'),
+    ('L, the number of blocks', r'\$L\b|L\\dm|L \\ge', r'(?i)\$L\$ blocks|\$L \\ge 1\$ blocks'),
     ('B_theta, Wread, Wwrite, theta', r'B_\\theta|\\Wread|\\Wwrite', r'B_\\theta\(x\) = f'),
     ('m, number of units', r'\\times m\b|\$m\$', r'with \$m\$ hidden units'),
     ('H and d_h', r'Hd_h|d_h|\$H\$', r'(?i)\$H\$ heads'),
