@@ -5,7 +5,8 @@ TERMS = [
     ('read / write (nouns)', r'(?i)\b(the|a|each|its) (read|write)s?\b', r'(?i)with a read \$\\Wread\$ and a write'),
     ('ReLU squared', r'ReLU\$\^2\$', r'(?i)square of ReLU|squared-ReLU'),
     ('gated block', r'(?i)\bgated\b', r'(?i)in a gated block|gated \(ReGLU'),
-    ('RMSNorm and its epsilon', r'RMSNorm|\\varepsilon', r'divides each token by its root mean square|divides each row of \$h\$ by'),
+    ('RMSNorm', r'RMSNorm', r'divides each token by its root mean square|divides each row of \$h\$ by'),
+    ('epsilon of RMSNorm', r'\\varepsilon', r'regularized by a constant \$\\varepsilon|divides each row of \$h\$ by'),
     ('pre-RMSNorm', r'(?i)pre-RMSNorm', r'In a pre-RMSNorm network|\\emph\{pre-RMSNorm\}'),
     ('generic / almost every', r'(?i)\bgeneric|almost every', r'\\emph\{Generic\}'),
     ('nondegenerate', r'(?i)nondegenerate', r'\\emph\{nondegenerate\}'),
@@ -16,6 +17,7 @@ TERMS = [
     ('mirror image', r'(?i)mirror', r'mirror image, with the opposite read'),
 ]
 SYMBOLS = [
+    ('B, the map of a block', r'B\(x\)|B\(h\)|\$B\$', r'Take an MLP block \$B\$'),
     ('M, the linear term', r'xM\b|\$M\b|hM\b|uM\b|M = I', r'linear term \$xM\$, for a'),
     ('E and D', r'xE\b|XE\b|\$E\$|\$D\$|h_LD|ED\b', r'embedding \$E(\$| \\in)'),
     ('X, the input of a network', r'\$X\b|XE\b|F\(cX', r'an input \$X \\in'),

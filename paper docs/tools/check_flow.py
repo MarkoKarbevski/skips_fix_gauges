@@ -80,6 +80,13 @@ def main():
             problems.append((first, name, 'never defined in the main text'))
         elif first < d:
             problems.append((first, name, 'used in unit %d, defined in unit %d (%s)' % (first, d, units[d]['sec'])))
+    # The opening of the introduction hooks the reader in words: no formula in its first two paragraphs.
+    intro = [i for i, u in enumerate(units) if u['sec'].lower() == 'introduction' and u['kind'] == 'para'
+             and not u['text'].lstrip().startswith('\\section')][:2]
+    for k, i in enumerate(intro):
+        t = plain(units[i]['text'])
+        if (k == 0 and '$' in t) or re.search(r'\$[^$]*(\(|\+|=|\\mapsto)[^$]*\$', t):
+            problems.append((i, 'formula in the opening', 'a formula in the first paragraph of the introduction, or an expression in the second; say it in words'))
     problems.sort()
     allowed = {}
     if len(sys.argv) > 3:

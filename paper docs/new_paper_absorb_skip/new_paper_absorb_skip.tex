@@ -78,7 +78,7 @@
 \newcommand{\stpart}[3]{\ifx\relax#1\relax\else\ptlabel{#1:#2}\fi{\upshape\bfseries\boldmath(#2)\ifx\relax#3\relax\else\ #3.\fi}}
 % A lemma and its proof inside another proof: indented, with a thin gray rule on the left.
 
-\title{\Large\bfseries\boldmath How Many Hidden Units Is a Skip Connection Worth?}
+\title{\Large\bfseries\boldmath Can an MLP Absorb Its Skip Connection Exactly?}
 
 \newif\ifanon \anonfalse
 \ifanon
@@ -100,12 +100,12 @@
 \vspace{-1.5em}
 
 \begin{abstract}
-Residual networks add each block's input to its output, and skipless networks now train to match them. Can a skip let a block compute what no skipless block of the same kind computes? Here we show that, without biases, a skip is worth exactly $\dm$ ReLU or GELU units, with $\dm$ the model dimension, for almost every block of at least $\dm$ units. It is worth more than any number of squared-ReLU, gated (ReGLU, SwiGLU, GeGLU) or $\tanh$ units or attention heads. Without normalization, between a linear embedding and unembedding, no residual network of squared-ReLU, gated or $\tanh$ blocks equals a skipless one, and a skipless ReLU network needs at least $2\dm$ units in its first block to equal almost any residual one; yet every skipless network is a limit of residual ones of equal widths. These results say when a residual block can be rewritten without its skip.
+Residual networks add each block's input to its output; skipless ones now train as well. Can a skip let a block compute what no skipless block of the same kind computes? Here we show that, without biases, a skip is worth exactly $\dm$ ReLU or GELU units, with $\dm$ the model dimension, for almost every block of at least $\dm$ units, and more than any number of squared-ReLU, gated (ReGLU, SwiGLU, GeGLU) or $\tanh$ units or attention heads. In networks without normalization, the same holds for squared-ReLU, gated and $\tanh$ blocks, a skipless ReLU or GELU network needs at least $2\dm$ units in its first block to equal almost any residual one, and every skipless network is a limit of residual ones of equal widths. Under RMSNorm, almost no residual network equals any skipless one. These results say when a skip can be traded for hidden units.
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
 
-Almost every deep network trained today adds the input of a block to its output. A residual block computes $x + B(x)$ \citep{he2016resnet}, and transformers stack such blocks \citep{vaswani2017attention}. The usual reason is training: the sum gives the gradient a short path through the network, and it makes the identity map easy to express \citep{veit2016ensembles,hardt2017identity}.
+Almost every deep network trained today, from residual networks \citep{he2016resnet} to transformers \citep{vaswani2017attention}, adds the input of each block to its output through a skip connection. The usual reason is training: the sum gives the gradient a short path through the network, and it makes the identity map easy to express \citep{veit2016ensembles,hardt2017identity}.
 
 Skipless networks now train too. \citet{he2024simplifying} remove the skips of transformer blocks without losing training speed, and \citet{ji2026cutting} train a skipless ViT-B on ImageNet that outperforms the residual one. Can a skip let a block compute a function that no skipless block of the same kind computes?
 
@@ -113,15 +113,15 @@ We answer this question block by block. Take an MLP block $B$ with $m$ hidden un
 
 \para{Without biases, the answer depends on the activation.}
 \begin{itemize}
-\item For almost every ReLU or GELU block with at least $\dm$ units, a skip is worth exactly $\dm$ units: since both activations satisfy $\sigma(z) - \sigma(-z) = z$, $\dm$ new units with the opposite reads of existing units absorb it, and fewer do not (\cpref{thm:relugelu}{ii}).
+\item For almost every ReLU or GELU block with at least $\dm$ units, a skip is worth exactly $\dm$ units: $\dm$ new units with the opposite reads of existing units absorb it, and fewer do not (\cpref{thm:relugelu}{ii}).
 \item For ReLU$^2$ blocks, whose activation is the square of ReLU, gated blocks (ReGLU, SwiGLU, GeGLU) and $\tanh$ blocks, no number of units absorbs a skip (\cref{thm:homgated}).
-\item For attention blocks, no number of heads absorbs a skip (\cpref{thm:attention}{i}).
+\item For attention blocks, no number of heads absorbs a skip (\cref{thm:attention}).
 \end{itemize}
 These answers hold for blocks without biases, as in many current language models \citep{olmo2025olmo2,yang2025qwen3}. With biases, ReLU$^2$ and gated blocks absorb a skip too (\cref{sec:setup}).
 
 \para{Four one-line reasons.} Follow the input along a ray, $x = tu$ with $t > 0$. The skip grows like $t$. A ReLU$^2$ block grows like $t^2$, a gated block, whose gate vanishes at $0$, starts at order $t^2$ near the origin, and a $\tanh$ block stays bounded, so none of them can produce the linear term (\cref{fig:reasons}, \cref{sec:never}). Attention mixes the tokens of a sequence, while a skip leaves each token where it is.
 
-\para{Networks.} Throughout, a network starts with a linear embedding and ends with a linear unembedding. In a pre-RMSNorm network, every block and the unembedding read their input through RMSNorm, which divides each token by its root mean square, regularized by a constant $\varepsilon \ge 0$. Without normalization, no residual network of ReLU$^2$, gated or $\tanh$ blocks equals a skipless network of any widths (\cref{thm:homgatednet}), and a skipless ReLU network needs at least $2\dm$ units in its first block, whatever its later widths, to equal almost any residual one (\cref{thm:relufirst}). For ReLU$^2$ and gated blocks, the first result also holds under RMSNorm with $\varepsilon > 0$. Under RMSNorm with $\varepsilon = 0$, a skipless network forgets the norm of each token and the skip keeps it, so for almost every residual network no width helps (\cpref{prop:epszero}{iii}).
+\para{Networks.} Throughout, a network starts with a linear embedding and ends with a linear unembedding. In a pre-RMSNorm network, every block and the unembedding read their input through RMSNorm, which divides each token by its root mean square, regularized by a constant $\varepsilon \ge 0$. Without normalization, no residual network of ReLU$^2$, gated or $\tanh$ blocks equals a skipless network of any widths (\cref{thm:homgatednet}), and a skipless ReLU or GELU network needs at least $2\dm$ units in its first block, whatever its later widths, to equal almost any residual one (\cref{thm:relufirst}). Under RMSNorm, almost no residual network, of any blocks, equals a skipless network of any widths (\cref{thm:rmsnet}): the first normalization of a skipless network keeps at most a trace of the norm of each token, while the skips keep all of it.
 
 \para{No function lost in the limit.} Without normalization, every skipless network is a limit of residual networks of the same widths (\cpref{prop:limits}{i}): the skip adds functions and, in the limit, removes none. \Cref{tab:results} collects the results; \cref{sec:setup} fixes the setting, \cref{sec:oneblock} treats one block, \cref{sec:networks} networks and \cref{sec:limits} limits. Proofs are in the appendix.
 
@@ -132,32 +132,34 @@ These answers hold for blocks without biases, as in many current language models
 \newcommand{\cell}[1]{\begin{tabular}[c]{@{}c@{}}#1\end{tabular}}
 \newcommand{\rtag}[3]{{\footnotesize\if\relax\detokenize{#3}\relax\hyperref[#2]{#1~\ref*{#2}}\else\hyperref[#2:#3]{#1~\ref*{#2}(#3)}\fi}}
 \newcommand{\res}[4]{\cell{#1\\ \rtag{#2}{#3}{#4}}}
+\newcommand{\lcell}[1]{\begin{tabular}[c]{@{}l@{}}#1\end{tabular}}
+\newcommand{\ctag}{{\footnotesize\hyperlink{cite.karbevski2026unlock}{companion}}}
 \makebox[\linewidth][c]{\begin{tabular}{|l|c|c|c|c|c|c|}
 \hline
 \textbf{Proven} & \textbf{ReLU} & \textbf{GELU} & $\boldsymbol{\tanh}$ & \cell{\textbf{ReLU$\boldsymbol{^2}$,}\\ \textbf{ReGLU}} & \cell{\textbf{SwiGLU,}\\ \textbf{GeGLU}} & \textbf{Attention} \\
 \hline
-one block, same width & \multicolumn{2}{c|}{\res{measure zero}{Thm.}{thm:relugelu}{i}} & \multicolumn{3}{c|}{\res{never}{Thm.}{thm:homgated}{}} & \res{never}{Thm.}{thm:attention}{i} \\
+one block, same width & \multicolumn{2}{c|}{\res{measure zero}{Thm.}{thm:relugelu}{i}} & \multicolumn{3}{c|}{\res{never}{Thm.}{thm:homgated}{}} & \res{never}{Thm.}{thm:attention}{} \\
 \hline
-one block, more units & \multicolumn{2}{c|}{\res{exactly $\dm$ more}{Thm.}{thm:relugelu}{ii}} & \multicolumn{3}{c|}{\res{no number}{Thm.}{thm:homgated}{}} & \res{no number of heads}{Thm.}{thm:attention}{i} \\
+\lcell{one block, more\\ hidden units or heads} & \multicolumn{2}{c|}{\res{exactly $\dm$ more}{Thm.}{thm:relugelu}{ii}} & \multicolumn{3}{c|}{\res{no}{Thm.}{thm:homgated}{}} & \res{no}{Thm.}{thm:attention}{} \\
 \hline
-networks of one block, same width & \multicolumn{2}{c|}{\res{measure zero}{Prop.}{prop:oneblocknet}{}} & \res{never}{Thm.}{thm:homgatednet}{ii} & \multicolumn{2}{c|}{\res{never}{Thm.}{thm:homgatednet}{i}} & \res{never}{Thm.}{thm:attention}{ii} \\
+networks of one block, same width & \multicolumn{2}{c|}{\res{measure zero}{Prop.}{prop:oneblocknet}{}} & \res{never}{Thm.}{thm:homgatednet}{ii} & \multicolumn{2}{c|}{\res{never}{Thm.}{thm:homgatednet}{i}} & \res{never}{Thm.}{thm:attentionfull}{iii} \\
 \hline
-deeper networks, same width & \cell{measure zero if the\\ first block has fewer\\ than $2\dm$ units\\ \rtag{Thm.}{thm:relufirst}{}} & -- & \res{never}{Thm.}{thm:homgatednet}{ii} & \multicolumn{2}{c|}{\res{never}{Thm.}{thm:homgatednet}{i}} & -- \\
+deeper networks, same width & \cell{measure zero if the\\ first block has fewer\\ than $2\dm$ units\\ \rtag{Thm.}{thm:relufirst}{}} & \cell{measure zero\\ \ctag} & \res{never}{Thm.}{thm:homgatednet}{ii} & \multicolumn{2}{c|}{\res{never}{Thm.}{thm:homgatednet}{i}} & \cell{measure zero\\ \ctag} \\
 \hline
-networks, more units per block & \multicolumn{2}{c|}{\res{$\dm$ more suffice}{Prop.}{prop:extraunits}{}} & \res{no number}{Thm.}{thm:homgatednet}{ii} & \multicolumn{2}{c|}{\res{no number}{Thm.}{thm:homgatednet}{i}} & -- \\
+\lcell{networks, more hidden\\ units or heads per block} & \multicolumn{2}{c|}{\cell{$\dm$ more suffice \rtag{Prop.}{prop:extraunits}{};\\ the first block needs $2\dm$ \rtag{Thm.}{thm:relufirst}{}}} & \res{no}{Thm.}{thm:homgatednet}{ii} & \multicolumn{2}{c|}{\res{no}{Thm.}{thm:homgatednet}{i}} & Unknown \\
 \hline
-networks with pre-RMSNorm, $\varepsilon > 0$ & -- & -- & -- & \multicolumn{2}{c|}{\res{never}{Thm.}{thm:homgatednet}{i}} & -- \\
+networks with pre-RMSNorm, $\varepsilon > 0$ & \multicolumn{3}{c|}{\res{measure zero, at any width}{Thm.}{thm:rmsnet}{}} & \multicolumn{2}{c|}{\res{never}{Thm.}{thm:homgatednet}{i}} & \cell{measure zero,\\ at any width\\ \rtag{Thm.}{thm:rmsnet}{}} \\
 \hline
-networks with pre-RMSNorm, $\varepsilon = 0$ & \multicolumn{6}{c|}{\res{measure zero, at any width}{Prop.}{prop:epszero}{iii}} \\
+networks with pre-RMSNorm, $\varepsilon = 0$ & \multicolumn{6}{c|}{\res{measure zero, at any width}{Thm.}{thm:rmsnet}{}} \\
 \hline
 skipless as limits of residual & \multicolumn{6}{c|}{\res{yes, at the same widths}{Prop.}{prop:limits}{i}} \\
 \hline
-\quad with pre-RMSNorm, $\varepsilon = 0$ & \multicolumn{6}{c|}{\res{yes, if no token's hidden state is zero}{Prop.}{prop:limits}{ii}} \\
+\quad with pre-RMSNorm, $\varepsilon = 0$ & \multicolumn{6}{c|}{\res{yes}{Prop.}{prop:limits}{ii}} \\
 \hline
-\quad with pre-RMSNorm, $\varepsilon > 0$ & \multicolumn{6}{c|}{--} \\
+\quad with pre-RMSNorm, $\varepsilon > 0$ & \multicolumn{6}{c|}{Unknown} \\
 \hline
 \end{tabular}}
-\caption{Can a skipless network equal a residual one? Never: for no weights. Measure zero: only for weights in a set of measure zero. Exactly $\dm$ more: for almost every block, $\dm$ more units suffice and fewer do not. A dash: open. No biases; scope in \cref{sec:setup}.}
+\caption{Can a skipless network equal a residual one? Never or no: for no weights. Measure zero: only for a null set of weights. Exactly $\dm$ more: $\dm$ more hidden units suffice, and for almost every block fewer do not. Companion: \citet{karbevski2026unlock}. No biases; scope in \cref{sec:setup}.}
 \label{tab:results}
 \end{table}
 
@@ -178,7 +180,7 @@ The skip is $M = I$. Other matrices cover learned linear skips and, below, netwo
 
 \para{Networks.} Every network starts with a linear embedding $E \in \R^{d_{\mathrm{in}}\times\dm}$ and ends with a linear readout $D \in \R^{\dm\times d_{\mathrm{out}}}$, the unembedding: it maps an input $X \in \R^{T\times d_{\mathrm{in}}}$ to $h_0 = XE$, passes it through $L$ blocks, and returns $y = h_LD$. A \emph{skipless} network has $h_\ell = B_\ell(h_{\ell-1})$, and a \emph{residual} network has $h_\ell = h_{\ell-1} + B_\ell(h_{\ell-1})$. In a \emph{pre-RMSNorm} network every block and the readout read the normalized state $N(h)$, while the skips carry $h$: the two networks compute $h_\ell = B_\ell\big(N(h_{\ell-1})\big)$ and $h_\ell = h_{\ell-1} + B_\ell\big(N(h_{\ell-1})\big)$, and $y = N(h_L)D$. Here $N$ divides each row $v$ of $h$ by $\sqrt{\norm{v}^2/\dm + \varepsilon}$, with $\varepsilon \ge 0$; for $\varepsilon = 0$, $N$ is defined on hidden states without zero rows.
 
-\para{Scope.} Blocks have no biases, and the answers depend on it. With biases, $4\dm$ ReLU$^2$ units absorb a skip: their activation $r(z) = \max(z, 0)^2$ satisfies $\tfrac14\big(r(z+1) - r(z-1) - r(1-z) + r(-1-z)\big) = z$. So do $2\dm$ gated units whose values are constant biases, since the gates satisfy $\sigma(z) - \sigma(-z) = z$. The gate matters too: the logistic sigmoid gate of the original GLU does not vanish at $0$, so a unit with a zero gate read is linear, and $\dm$ such units absorb a skip. Every MLP block has at least $\dm$ hidden units, so that its read can have rank $\dm$, and residual networks have $ED \neq 0$. For simplicity, all MLP blocks of a network are of one kind, all attention blocks of a network have the same number of heads, and $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm \ge 2$. Most results hold more generally, and the appendix states them so. \emph{Generic} weights, or almost every choice of weights, are those outside a set of Lebesgue measure zero.
+\para{Scope.} Blocks have no biases, and the answers depend on it. With biases, $4\dm$ ReLU$^2$ units absorb a skip: their activation $r(z) = \max(z, 0)^2$ satisfies $\tfrac14\big(r(z+1) - r(z-1) - r(1-z) + r(-1-z)\big) = z$. So do $2\dm$ gated units whose values are constant biases: two such units with opposite gate reads and opposite values add up to a linear term. The gate matters too: the logistic sigmoid gate of the original GLU does not vanish at $0$, so a unit with a zero gate read is linear, and $\dm$ such units absorb a skip. Every MLP block has at least $\dm$ hidden units, so that its read can have rank $\dm$, and residual networks have $ED \neq 0$. For simplicity, all MLP blocks of a network are of one kind, all attention blocks of a network have the same number of heads, and $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm \ge 2$. Most results hold more generally, and the appendix states them so. \emph{Generic} weights, or almost every choice of weights, are those outside a set of Lebesgue measure zero.
 
 \section{One block}\label{sec:oneblock}
 \takeaway{For almost every ReLU or GELU block, a skip is worth exactly $\dm$ hidden units. For ReLU$^2$, gated, $\tanh$ and attention blocks it is worth more than any number.}
@@ -206,7 +208,7 @@ Let $\sigma$ be ReLU or GELU.\\
 
 In (i), generic weights give no set of units with the required product, since there are finitely many sets and each gives one matrix. By (ii), for almost every block the skip, $M = I$, is worth exactly $\dm$ units.
 
-The proof matches the units of the two blocks. The even part of the activation, $\big(\sigma(z) + \sigma(-z)\big)/2$, fixes the units of the absorbing block up to sign and scale: for ReLU through the kinks of $\lvert z\rvert$, and for GELU through the linear independence of ridge functions, which depend on $x$ only through one product $xw$. The odd part, $z/2$, turns each sign flip into a linear term, as \citet[Section~3]{petzka2020symmetries} show for two-layer ReLU networks with one output. Each extra unit then adds at most one rank-one term, and $M = I$ has rank $\dm$.
+The proof matches the units of the two blocks. The even part of the activation, $\big(\sigma(z) + \sigma(-z)\big)/2$, fixes the units of the absorbing block up to sign and scale: for ReLU through the kinks of $\lvert z\rvert$, and for GELU through the linear independence of ridge functions, which depend on $x$ only through one product $xw$. The odd part, $z/2$, turns each sign flip into a linear term, as \citet[Section~3]{petzka2020symmetries} show for two-layer ReLU networks with one output. Each extra unit then adds at most one rank-one term, and $M = I$ has rank $\dm$. So the theorem needs more than \eqref{eq:odd}: the activation $z/2 + \lvert z\rvert^3$ satisfies it, but scaling the read of a unit by $c > 0$ and its write by $c^{-3}$ keeps the even part of the unit and changes its linear part, which gives more ways to absorb $xM$ (\cref{rem:evenpart}).
 
 \para{Networks of one block.} A residual network of one block is a block with the reads $E\Wread$ and the writes $\Wwrite D$, plus the linear term $XED$: it computes $X \mapsto XED + f(XE\Wread)\,\Wwrite D$. The proof of \cpref{thm:relugelu}{i} holds for such rectangular reads, writes and linear terms, which gives the following.
 
@@ -273,16 +275,14 @@ where $W_{Q,i}, W_{K,i}, W_{V,i} \in \R^{\dm\times d_h}$ and $W_{O,i} \in \R^{d_
 Attention mixes tokens, and a skip keeps each token where it is. Suppose that $hM + B_\theta(h) = B_{\theta'}(h)$ for all $h$; two inputs show that $M = 0$. If all tokens are equal, mixing changes nothing, so the sums of the value--output products over the heads of the two blocks must differ by $M$. If one token is zero, placed last when the mask is causal, its query is zero, and attention gives it an equal mix of the tokens it sees: the difference of the two blocks gives it the mean of the tokens it sees, times $M$, while the skip gives it zero.
 
 \begin{restatable}[Attention blocks]{theorem}{thmAttention}\label{thm:attention}
-Let $\theta$ and $\theta'$ be parameters of attention blocks with any numbers of heads and any head dimensions, and let $M \neq 0$ be a $\dm\times\dm$ matrix.\\
-\stpart{thm:attention}{i}{} For almost every $h \in \R^{T\times\dm}$, $hM + B_\theta(h) \neq B_{\theta'}(h)$.\\
-\stpart{thm:attention}{ii}{} With an embedding $E$ and a readout $D$ with $ED \neq 0$, the residual network $X \mapsto \big(XE + B_\theta(XE)\big)D$ differs from every skipless network $X \mapsto B_{\theta'}(XE')D'$.
+Let $\theta$ and $\theta'$ be parameters of attention blocks with any numbers of heads and any head dimensions, and let $M \neq 0$ be a $\dm\times\dm$ matrix. For almost every $h \in \R^{T\times\dm}$, $hM + B_\theta(h) \neq B_{\theta'}(h)$.
 \end{restatable}
 \specialof{thm:attentionfull}{app:attention}
 
-The proof gives a gap: on some input with rows of norm at most $1$, one row of $hM + B_\theta(h) - B_{\theta'}(h)$ has norm at least $\norm{M}/3$, with $\norm{M}$ the spectral norm (\cpref{thm:attentionfull}{ii}). It uses only that each row of attention weights sums to $1$ and is uniform for a zero query, so it also holds with rotary position embeddings. With three or more tokens, more is true: two attention blocks that agree on an open set of inputs have, for every score matrix, the same sum of value--output products over their heads with that score matrix (\cref{prop:match} in \cref{app:attention}).
+The same two inputs show that a residual network of one attention block equals no skipless network of one attention block, with any number of heads (\cpref{thm:attentionfull}{iii}). The proof also gives a gap: on some input with rows of norm at most $1$, one row of $hM + B_\theta(h) - B_{\theta'}(h)$ has norm at least $\norm{M}/3$, with $\norm{M}$ the spectral norm (\cpref{thm:attentionfull}{ii}). It uses only that each row of attention weights sums to $1$ and is uniform for a zero query, so it also holds with rotary position embeddings. With three or more tokens, the function of an attention block determines the score matrices and the value--output products of its heads, up to merging heads that share a score matrix and dropping heads that output zero (\cref{prop:match} in \cref{app:attention}).
 
 \section{Networks}\label{sec:networks}
-\takeaway{Between an embedding and a readout, and without normalization, the picture survives: no residual network of ReLU$^2$, gated or $\tanh$ blocks equals a skipless network, and a skipless ReLU network needs a wide first block.}
+\takeaway{Between an embedding and a readout, the picture survives: without normalization, no residual network of ReLU$^2$, gated or $\tanh$ blocks equals a skipless network, and a skipless ReLU or GELU network needs a wide first block; under RMSNorm, almost no residual network equals a skipless one.}
 
 Recall that a network embeds its input as $h_0 = XE$ and reads out $y = h_LD$, and that its skips add $h_{\ell-1}$ at every block.
 
@@ -295,14 +295,14 @@ Let the residual network have $ED \neq 0$.\\
 
 With $E = D = I$, this covers compositions of blocks. The reasons are those of \cref{fig:reasons}, now for the whole network. A gated block, and a homogeneous block of degree $k > 1$, has derivative $0$ at the origin, so every skipless network of them has Jacobian $0$ at the input $X = 0$, while a residual network has Jacobian $ED \neq 0$ there, or $ED/\sqrt{\varepsilon}$ under RMSNorm; this comparison of derivatives is why the networks need $k > 1$. A skipless $\tanh$ network is bounded, while a residual one grows like $XED$ along rays.
 
-\para{ReLU networks need a wide first block.}
+\para{ReLU and GELU networks need a wide first block.}
 
-\begin{restatable}[ReLU networks]{theorem}{thmAbsorbFirst}\label{thm:relufirst}
-Consider networks of ReLU blocks without normalization. For almost every choice of weights, a residual network equals no skipless network whose first block has fewer than $2\dm$ hidden units, whatever its depth and its other widths.
+\begin{restatable}[ReLU and GELU networks]{theorem}{thmAbsorbFirst}\label{thm:relufirst}
+Consider networks of ReLU blocks, or of GELU blocks, without normalization. For almost every choice of weights, a residual network equals no skipless network whose first block has fewer than $2\dm$ hidden units, whatever its depth and its other widths.
 \end{restatable}
 \proofin{app:absorb}
 
-The proof compares ranks. Near almost every input, a generic residual ReLU network is a linear map of rank $\dm$. No unit of the first block is active at both an input and its negative, so with fewer than $2\dm$ units a skipless network has fewer than $\dm$ active units at one of the two, and some direction of inputs leaves it unchanged there.
+For ReLU the proof compares ranks. Near almost every input, a generic residual ReLU network is a linear map of rank $\dm$. No unit of the first block is active at both an input and its negative, so with fewer than $2\dm$ units a skipless network has fewer than $\dm$ active units at one of the two, and some direction of inputs leaves it unchanged there. GELU reduces to ReLU along rays: $\lvert\mathrm{GELU}(tz) - t\,\mathrm{ReLU}(z)\rvert < 0.17$ for all $z$ and all $t > 0$, so as $t \to \infty$ the output of a GELU network at the input $tX$, divided by $t$, tends to the output at $X$ of the ReLU network with the same weights. Two GELU networks that are equal therefore stay equal with ReLU in place of GELU.
 
 Conversely, the construction of \cref{sec:relugelu} works block by block.
 
@@ -311,19 +311,16 @@ Let $\sigma$ be ReLU or GELU. Without normalization, a residual network whose re
 \end{restatable}
 \proofin{app:absorb}
 
-So $L\dm$ extra units in all suffice; for ReLU, the first block needs at least $2\dm$ units (\cref{thm:relufirst}).
+So $L\dm$ extra units in all suffice, and the first block needs at least $2\dm$ units (\cref{thm:relufirst}), a bound that is tight when the residual first block has $\dm$ units.
 
-\para{RMSNorm with $\varepsilon = 0$: the skip keeps the norm of each token.} With $\varepsilon = 0$, $N(ch) = N(h)$ for every $c > 0$, so the first normalization of a skipless network discards the norm of each token. The skip of a residual network passes it on.
+\para{RMSNorm: the skip keeps the norm of each token.} A skipless network sees its input only through its first normalization, and $N(ch)$ depends on $c > 0$ only through $\varepsilon/c^2$: with $\varepsilon = 0$ the norm of each token is lost, and with $\varepsilon > 0$ only a trace of it is left.
 
-\begin{restatable}[Absorption under RMSNorm with $\varepsilon = 0$]{proposition}{propEpsZero}\label{prop:epszero}
-Consider pre-RMSNorm networks with $\varepsilon = 0$, with blocks of any kind and width.\\
-\stpart{prop:epszero}{i}{} The function $F$ of every skipless network satisfies $F(cX) = F(X)$ for all $c > 0$.\\
-\stpart{prop:epszero}{ii}{} A residual network with this property computes $X \mapsto N(XE)D$.\\
-\stpart{prop:epszero}{iii}{} The residual networks that equal a skipless network have parameters in a set of measure zero.
+\begin{restatable}[Networks under RMSNorm]{theorem}{thmRMSNet}\label{thm:rmsnet}
+Consider pre-RMSNorm networks, with $\varepsilon \ge 0$ and blocks of any kind and width. For almost every choice of weights, a residual network equals no skipless network, whatever its depth and widths.
 \end{restatable}
 \proofin{app:prf-epszero}
 
-For (ii), let $c \to \infty$: the blocks read $N(h)$, whose rows have length $\sqrt{\dm}$, so their outputs stay bounded while the skips carry $cXE$, and the output tends to $N(XE)D$.
+Scale an input $X$ by a factor $t \to \infty$. A skipless network with embedding $E'$ depends on $t$ only through $N(tXE')$, so its output changes at order $1/t^2$ or less. In a residual network the skips carry $tXE$ to the last normalization, and each block, which reads a normalized state, adds a bounded output. These outputs turn each token by an angle of order $1/t$, so the output of the network changes at order $1/t$, unless in every token they add up to a multiple of the token itself. For almost every choice of weights they do not.
 
 \section{Skipless networks are limits of residual ones}\label{sec:limits}
 \takeaway{A skip removes no function in the limit: without normalization, residual networks of the same widths approach every skipless network.}
@@ -331,7 +328,7 @@ For (ii), let $c \to \infty$: the blocks read $N(h)$, whose rows have length $\s
 \begin{restatable}[Skipless networks as limits of residual networks]{proposition}{propLimits}\label{prop:limits}
 Let $F$ be a skipless network whose blocks are locally Lipschitz.\\
 \stpart{prop:limits}{i}{Without normalization} The network $F$ is a limit of residual networks with blocks of the same kinds and widths, uniformly on bounded sets of inputs.\\
-\stpart{prop:limits}{ii}{Under pre-RMSNorm with $\varepsilon = 0$} If, at every input $X$ for which $XE$ has no zero row, no hidden state of $F$ has a zero row, the same holds on bounded sets of these inputs.
+\stpart{prop:limits}{ii}{Under pre-RMSNorm with $\varepsilon = 0$} The network $F$ is a limit of residual networks with blocks of the same kinds and widths, uniformly on compact sets of inputs at which $F$ is defined.
 \end{restatable}
 \proofin{app:prf-limits}
 
@@ -345,16 +342,16 @@ Let $F$ be a skipless network whose blocks are locally Lipschitz.\\
 
 \para{Identifiability.} For $\tanh$ networks, the function determines the weights up to sign flips and permutations of hidden units \citep{sussmann1992,fefferman1994}, and similar statements hold for other activations \citep{vlacic2019identifiability} and for ReLU networks \citep{petzka2020symmetries,rolnick2020reverse,buithimai2020functional}. Our proofs identify the units of a block from its function in the same spirit, and then ask what is left for the linear term of the skip.
 
-\para{Training without skips.} Skipless networks train with careful initialization or activation shaping \citep{martens2021dks,zhang2022rectifiers}, and skipless transformers with modified attention \citep{he2023shortcuts,noci2023shaped} or simplified blocks \citep{he2024simplifying}. \citet{ji2026cutting} train a skipless ViT-B that outperforms the residual one. Our results say when a skipless block or MLP network can compute exactly what a residual one computes, and with how many units.
+\para{Training without skips.} Skipless networks train with careful initialization or activation shaping \citep{martens2021dks,zhang2022rectifiers}, and skipless transformers with modified attention \citep{he2023shortcuts,noci2023shaped} or simplified blocks \citep{he2024simplifying}. \citet{ji2026cutting} train a skipless ViT-B that outperforms the residual one. Our results say when a skipless block or network can compute exactly what a residual one computes, and with how many units.
 
 \section{Conclusion}\label{sec:conclusion}
 
-Can a skip let a block compute a function that no skipless block of the same kind computes? Without biases, yes: for almost every block, no skipless block of the same kind and width computes $x + B(x)$. Almost every ReLU or GELU block needs exactly $\dm$ more units, and ReLU$^2$, gated, $\tanh$ and attention blocks cannot absorb the skip at any width. Without normalization, the same holds for networks of ReLU$^2$, gated or $\tanh$ blocks between an embedding and a readout, and a skipless ReLU network needs a first block of at least $2\dm$ units to equal almost any residual one; under RMSNorm with $\varepsilon = 0$, no width suffices for almost every residual network. So, without normalization, a trained residual ReLU or GELU network whose reads have rank $\dm$ can be rewritten exactly without skips with $\dm$ more units per block, and a ReLU$^2$, gated or $\tanh$ network with $ED \neq 0$ cannot be rewritten at any width.
+Can a skip let a block compute a function that no skipless block of the same kind computes? Without biases, yes: for almost every block, no skipless block of the same kind and width computes $x + B(x)$. Almost every ReLU or GELU block needs exactly $\dm$ more units, and ReLU$^2$, gated, $\tanh$ and attention blocks cannot absorb the skip at any width. Without normalization, the same holds for networks of ReLU$^2$, gated or $\tanh$ blocks between an embedding and a readout, and a skipless ReLU or GELU network needs a first block of at least $2\dm$ units to equal almost any residual one; under RMSNorm, with any $\varepsilon \ge 0$, no width suffices for almost every residual network. So, without normalization, a trained residual ReLU or GELU network whose reads have rank $\dm$ can be rewritten exactly without skips with $\dm$ more units per block, and a ReLU$^2$, gated or $\tanh$ network with $ED \neq 0$ cannot be rewritten at any width.
 
-\para{Open questions.} The dashes of \cref{tab:results} leave three questions, and a fourth lies beyond the table.
+\para{Open questions.} The unknown cells and the conditions of \cref{tab:results} leave three questions, and a fourth lies beyond the table.
 \begin{enumerate}[label=(\arabic*)]
-\item GELU and attention networks at depth, and GELU, $\tanh$ and attention networks under RMSNorm with $\varepsilon > 0$. At the same widths, a companion paper answers them by counting functional dimensions, the numbers of directions in which the parameters move the function \citep{karbevski2026unlock}; with more units they are open.
-\item ReLU networks whose first block has at least $2\dm$ units, and ReLU networks under RMSNorm with $\varepsilon > 0$.
+\item Networks of attention blocks at depth, without normalization. At the same widths, a companion paper answers this by counting functional dimensions, the numbers of directions in which the parameters move the function \citep{karbevski2026unlock}; with more heads it is open.
+\item ReLU and GELU networks whose first block has at least $2\dm$ units, without normalization. For GELU at the same widths, the companion paper answers this too.
 \item Skipless networks as limits of residual networks under RMSNorm with $\varepsilon > 0$.
 \item Approximate absorption: how many units a skip is worth at a given error.
 \end{enumerate}
@@ -379,7 +376,7 @@ We recall \cref{thm:relugelu,prop:oneblocknet,thm:homgated} from \cref{sec:onebl
 \thmAbsorbFirst*
 \propExtraUnits*
 
-\para{Overview.} \Cref{thm:homgated} compares orders. Along rays from the origin a linear skip scales like $\lambda$ and a block that is homogeneous of degree $k \neq 1$ like $\lambda^k$, and near the origin a gated block is of second order, so the two sides of the absorption equation cannot agree (\cref{prop:f2,prop:gated}); comparing Jacobians at the origin extends this to networks of any depth, \cref{thm:homgatednet} (\cref{cor:depth}). \Cpref{thm:relugelu}{i} is the substantial case. The absorption equation splits into its odd and even parts in $x$. The even part determines the hidden units of the absorbing block up to sign, and for ReLU up to a positive rescaling, through the kinks for ReLU (\cref{thm:f3}) and through linear independence of ridge functions for GELU (\cref{lem:ridge,thm:f4}). The odd part of ReLU and GELU is exactly $z/2$, so the odd part of the equation is linear and reads off the set $S$ of units whose signs flip; conversely, flipping the signs of the units in $S$ absorbs the skip whenever the condition holds. The generic clause holds because the condition is a finite union of algebraic sets of positive codimension (\cref{cor:f5}), and \cref{rem:singular} covers singular $M$. \Cpref{thm:relugelu}{ii} counts the extra units that the matching requires (\cref{prop:widthd}). \Cref{prop:extraunits} applies \cpref{thm:relugelu}{ii} block by block. \Cref{thm:relufirst} compares the ranks of the linear pieces at an input and at its negative.
+\para{Overview.} \Cref{thm:homgated} compares orders. Along rays from the origin a linear skip scales like $\lambda$ and a block that is homogeneous of degree $k \neq 1$ like $\lambda^k$, and near the origin a gated block is of second order, so the two sides of the absorption equation cannot agree (\cref{prop:f2,prop:gated}); comparing Jacobians at the origin extends this to networks of any depth, \cref{thm:homgatednet} (\cref{cor:depth}). \Cpref{thm:relugelu}{i} is the substantial case. The absorption equation splits into its odd and even parts in $x$. The even part determines the hidden units of the absorbing block up to sign, and for ReLU up to a positive rescaling, through the kinks for ReLU (\cref{thm:f3}) and through linear independence of ridge functions for GELU (\cref{lem:ridge,thm:f4}). The odd part of ReLU and GELU is exactly $z/2$, so the odd part of the equation is linear and reads off the set $S$ of units whose signs flip; conversely, flipping the signs of the units in $S$ absorbs the skip whenever the condition holds. The generic clause holds because the condition is a finite union of algebraic sets of positive codimension (\cref{cor:f5}), and \cref{rem:singular} covers singular $M$. \Cpref{thm:relugelu}{ii} counts the extra units that the matching requires (\cref{prop:widthd}). \Cref{prop:extraunits} applies \cpref{thm:relugelu}{ii} block by block. \Cref{thm:relufirst} compares the ranks of the linear pieces of a ReLU network at an input and at its negative, and reduces GELU to ReLU along rays.
 
 The arguments show that the function of a block determines its parameters, in the manner used for $\tanh$ networks by \citet{sussmann1992} and \citet{fefferman1994} and for ReLU networks by \citet{buithimai2020functional}, \citet{petzka2020symmetries} and \citet{rolnick2020reverse}: kink alignment for ReLU, ridge-function independence for GELU. For two-layer ReLU networks with a single output, \citet[Section~3]{petzka2020symmetries} already give the corresponding sign flips, show that irreducible networks computing the same function differ only by these flips, permutations and positive rescalings (their Theorem~1), and state the matching criterion for removing a linear term. \Cref{lem:f1} reduces any invertible skip to the identity skip.
 
@@ -542,6 +539,8 @@ A network of one block computes $X \mapsto XED + f(XE\Wread)\,\Wwrite D$, and a 
 MLP blocks act on each token separately, so we compare the networks on rows $x \in \R^{1\times d_{\mathrm{in}}}$. Outside a set of weights of measure zero, $E$ and $D$ have rank $\dm$, no read of a unit vanishes, and $I + \Wread^{\ell}[{:},S]\,\Wwrite^{\ell}[S,{:}]$ is invertible for every block $\ell$ and every set $S$ of its units, since each determinant is a polynomial in the weights that equals $1$ when the writes vanish. On an open set of inputs on which no unit of the residual network switches, with active sets $S_\ell$, the network is the linear map $x \mapsto xEMD$ with $M = \prod_\ell\big(I + \Wread^{\ell}[{:},S_\ell]\,\Wwrite^{\ell}[S_\ell,{:}]\big)$ invertible, of rank $\dm$. By induction over the blocks, on such a set the pre-activation of each unit of the next block is $x$ times a nonzero vector, so the inputs at which some unit switches have measure zero, and the inputs near which the network is linear of rank $\dm$ form an open dense set $\Omega$.
 
 Let a skipless network $F'$ have embedding $E'$ and a first block with reads $w'_1, \dots, w'_{m'}$, $m' < 2\dm$, and set $a_i = E'w'_i$. Take $x_0$ with $x_0, -x_0 \in \Omega$ and $x_0a_i \neq 0$ whenever $a_i \neq 0$. The units active near $x_0$, those with $x_0a_i > 0$, and those active near $-x_0$ are disjoint, so one of the two sets, say the first after replacing $x_0$ by $-x_0$ if needed, has fewer than $\dm$ units. Near $x_0$ the other units of the first block output zero, so $F'$ depends on $x$ only through the numbers $xa_i$ of the active units, and $F'(x_0 + u) = F'(x_0)$ for every small $u$ in a subspace of dimension greater than $d_{\mathrm{in}} - \dm$. The residual network $F$ changes by $uEMD$, which vanishes only on a subspace of dimension $d_{\mathrm{in}} - \dm$. So some small $u$ changes $F$ and leaves $F'$ unchanged, and $F' \neq F$.
+
+\emph{GELU.} As $\mathrm{GELU}(y) - \mathrm{ReLU}(y) = -\lvert y\rvert\,\Phi(-\lvert y\rvert)$, with $\Phi$ the standard normal distribution function, we have $\lvert\mathrm{GELU}(ty)/t - \mathrm{ReLU}(y)\rvert \le \kappa/t$ for all $y \in \R$ and $t > 0$, where $\kappa = \max_{u \ge 0} u\,\Phi(-u) < 0.17$. Given a network of GELU blocks without normalization, let $h_\ell(t)$ be its hidden states at the input $tx$, and $h^{\mathrm R}_\ell$ those of the ReLU network with the same weights at the input $x$. Then $h_0(t)/t = h^{\mathrm R}_0$. If $h_{\ell-1}(t)/t = h^{\mathrm R}_{\ell-1} + O(1/t)$, the output of block $\ell$, divided by $t$, is $\mathrm{GELU}\big(h_{\ell-1}(t)\Wread^{\ell}\big)\Wwrite^{\ell}/t = \mathrm{ReLU}\big(h^{\mathrm R}_{\ell-1}\Wread^{\ell}\big)\Wwrite^{\ell} + O(1/t)$, by the bound and since ReLU is $1$-Lipschitz, so $h_\ell(t)/t = h^{\mathrm R}_\ell + O(1/t)$, with or without the skip. So the output of the GELU network at $tx$, divided by $t$, tends to the output of the ReLU network at $x$. If a residual GELU network equals a skipless one, the two ReLU networks with the same weights are therefore equal. By the case of ReLU, the weights of the residual network for which this happens with a skipless network whose first block has fewer than $2\dm$ units form a set of measure zero.
 \end{proof}
 
 
@@ -584,7 +583,7 @@ We recall \cref{thm:attention} from \cref{sec:oneblock}.
 \thmAttention*
 
 \begin{proof}[Proof of \cref{thm:attention}]
-Parts (i) and (ii) are \cpref{thm:attentionfull}{i} and \ptlink{thm:attentionfull}{iii}.
+It is \cpref{thm:attentionfull}{i}.
 \end{proof}
 
 \Cref{prop:match} follows from a lemma on attention heads.
@@ -623,7 +622,7 @@ Because $T \ge 3$, the sum has at least two terms, $r = 1$ and $r = 3$, and $z_3
 \emph{The skip.} What remains is $hM + P_0(h)\,h\,C_0 = 0$, where $C_0$ is the coefficient of $\Gamma = 0$ (or $0$ if no $\Gamma_k$ vanishes). This is linear in $h$, so it holds for all $h$. Take the first row of $h$ equal to $x$ and the other rows $0$: the first two rows give $x(M + C_0/T) = 0$ and $xC_0/T = 0$. So $C_0 = 0$ and $M = 0$.
 \end{proof}
 
-The lemma gives the proposition that \cref{sec:attention} cites: with three or more tokens, the heads must cancel in groups with the same score matrix.
+The lemma gives the proposition that \cref{sec:attention} cites.
 \begin{proposition}[The softmaxes must match]\label{prop:match}
 Let $T \ge 3$, let $\theta$ and $\theta'$ be parameters of attention blocks, and suppose that $hM + B_\theta(h) = B_{\theta'}(h)$ for all $h$ in a nonempty open set. Then $M = 0$, and for every matrix $\Gamma$, the heads with score matrix $\Gamma$ have the same sum of value--output products in $B_\theta$ as in $B_{\theta'}$.
 \end{proposition}
@@ -632,20 +631,30 @@ Let $T \ge 3$, let $\theta$ and $\theta'$ be parameters of attention blocks, and
 Group the heads of $B_{\theta'}$ and $B_\theta$ by score matrix, add their value--output products, with a minus sign for the heads of $\theta$, and apply \cref{lem:heads}.
 \end{proof}
 
-With two tokens, heads can cancel: the softmax of two scores is the logistic function of their difference, and $1/(1 + e^{-z}) + 1/(1 + e^{z}) = 1$ makes two heads with opposite score matrices add up to a uniform head. A skip still cannot be absorbed when $T = 2$ (\cpref{thm:attention}{i}).
+With two tokens, heads can cancel: the softmax of two scores is the logistic function of their difference, and $1/(1 + e^{-z}) + 1/(1 + e^{z}) = 1$ makes two heads with opposite score matrices add up to a uniform head. A skip still cannot be absorbed when $T = 2$ (\cref{thm:attention}).
 
 
-\subsection{Absorption under RMSNorm with \texorpdfstring{$\varepsilon = 0$ (Proposition~\ref*{prop:epszero})}{epsilon = 0}}\label{app:prf-epszero}
+\subsection{Networks under RMSNorm\texorpdfstring{ (Theorem~\ref*{thm:rmsnet})}{}}\label{app:prf-epszero}
 
-We recall \cref{prop:epszero} from \cref{sec:networks}.
-\propEpsZero*
+We recall \cref{thm:rmsnet} from \cref{sec:networks}.
+\thmRMSNet*
 
-\begin{proof}
-(i) The skipless network reads its input only through $N(XE)$, and $N(cXE) = N(XE)$ for $c > 0$ when $\varepsilon = 0$.
+Write $N_0$ for RMSNorm with $\varepsilon = 0$, which maps each nonzero row $w$ to $\sqrt{\dm}\,w/\norm{w}$, with the derivative $\Der N_0(w)[b] = \sqrt{\dm}\,\big(b - (b\cdot\hat w)\,\hat w\big)/\norm{w}$, where $\hat w = w/\norm{w}$; it vanishes exactly when $b$ is a multiple of $w$. Outside a set of weights of measure zero, $E$ and $D$ have rank $\dm$, so that $XE$ takes every value in $\R^{T\times\dm}$ and $vD = 0$ only for $v = 0$. Each block is linear in its write, which for an attention block holds the matrices $W_{O,i}$: block $\ell$ adds $a_\ell\Wwrite^{\ell}$ to the stream, where $a_\ell$, a function of the normalized state $n$ that block $\ell$ reads, holds the activations of its hidden units, or for an attention block the matrices $P_{\Gamma_i}(n)\,n\,W_{V,i}$ of its heads side by side. It depends on the read of block $\ell$ only.
 
-(ii) Fix an input $X$ for which $XE$ has no zero row, and let $c \to \infty$. Every block reads rows of length $\sqrt{\dm}$, so its output stays bounded, and the hidden states of the residual network at $cX$ are $h_\ell = cXE + O(1)$. Hence $N(h_L) \to N(XE)$ row by row, and $F(cX) \to N(XE)D$. If $F(cX) = F(X)$ for all $c > 0$, then $F(X) = N(XE)D$.
+\begin{proof}[Proof of \cref{thm:rmsnet}]
+Fix an input $X$ for which $XE$ has no zero row, and let $t \to \infty$.
 
-(iii) By (i) and (ii), a residual network that equals a skipless network computes $X \mapsto N(XE)D$; we show that the set $Z$ of such parameters has measure zero. Outside a set of measure zero, $E$ and $D$ have rank $\dm$, so $vD = v'D$ only for $v = v'$. Block $\ell$ adds $a_\ell(x)\Wwrite^{\ell}$ to the stream, where $a_\ell(x)$ is the input of its write: the activations of its hidden units at $N(h_{\ell-1})$, and for attention the rows $P_{\Gamma_i}(N(h_{\ell-1}))\,N(h_{\ell-1})\,W_{V,i}$ of its heads, with the output projections as the write. If $a_\ell$ is not identically zero but every $a_k$ with $k > \ell$ is, the blocks after $\ell$ add nothing, so the parameters lie in the set $Y_\ell$ where $a_\ell$ is not identically zero and $N(h_\ell(X)) = N(XE)$ for all $X$. Fix all parameters but $\Wwrite^{\ell}$, which leaves $h_{\ell-1}$ and $a_\ell$ unchanged, and an input $X$ with a row $t$ in which $a_\ell(X) \neq 0$. In that row the condition asks $a_{\ell,t}(X)\Wwrite^{\ell}$ to lie on the ray $\{\lambda X_tE - h_{\ell-1,t}(X) : \lambda > 0\}$. As $\Wwrite^{\ell}$ varies, $a_{\ell,t}(X)\Wwrite^{\ell}$ takes every value in $\R^{1\times\dm}$, so this happens on a set of measure zero, since $\dm \ge 2$, and by Fubini's theorem $Y_\ell$ has measure zero. On the rest of $Z$ every $a_\ell$ vanishes identically, in particular $a_1$, whose argument $N(XE)$ takes every value on the sphere of radius $\sqrt{\dm}$. For each block of \cref{sec:setup} this forces a column of the read of block $1$, or of one of its value matrices, to vanish, which again happens on a set of measure zero.
+\emph{The skipless network.} Its hidden states depend on the input only through $N(tXE')$, at its embedding $E'$. On a row $w$ of $XE'$, $N(tw) = w/\sqrt{\norm{w}^2/\dm + \varepsilon/t^2}$. For $\varepsilon = 0$ this is $N(w)$, so the output at $tX$ is the output at $X$. For $\varepsilon > 0$ it is a smooth function of $\varepsilon/t^2$ that equals $N_0(w)$ at $0$, or $0$ if $w = 0$, and the rest of the network is locally Lipschitz, so the output at $tX$ is $G(X) + O(1/t^2)$ for some $G(X)$.
+
+\emph{The residual network.} Let $S = N_0(XE)$ and $\beta(X) = \sum_\ell a_\ell(S)\Wwrite^{\ell}$, the sum of the outputs of all blocks at the normalized state $S$. By induction over the blocks, $h_\ell = tXE + \sum_{k \le \ell} a_k(S)\Wwrite^{k} + O(1/t)$: each hidden state is $tXE + O(1)$, so for large $t$ it has no zero row, the next block reads $N(h_\ell) = S + O(1/t)$, and, being locally Lipschitz, it adds its output at $S$ up to $O(1/t)$. At the readout, on each row, $N(tw + b + O(1/t)) = N_0\big(w + b/t + O(1/t^2)\big) + O(1/t^2) = N_0(w) + \Der N_0(w)[b]/t + O(1/t^2)$. So the output at $tX$ is
+\[
+N_0(XE)D + \rho(X)/t + O(1/t^2), \qquad \rho(X) = \Der N_0(XE)\big[\beta(X)\big]\,D,
+\]
+with $\Der N_0$ taken row by row.
+
+\emph{Comparison.} If the two networks are equal, their outputs at $tX$ agree for all large $t$, so $\rho(X) = 0$. As $D$ has rank $\dm$, each row of $\beta(X)$ is then a multiple of the same row of $XE$. Here $\beta(X)$ depends on $X$ only through $S$, and as $XE$ takes every value without zero rows, $S$ takes every value whose rows have norm $\sqrt{\dm}$. So equality requires that for every such $S$, each row of $\sum_\ell a_\ell(S)\Wwrite^{\ell}$ is a multiple of the same row of $S$.
+
+\emph{Measure zero.} Fix all weights but the writes. The condition is linear in the writes, so the writes that satisfy it form a linear subspace. The subspace is proper if some $a_\ell(S)$ has a nonzero entry $(r, j)$ at some $S$: the write of block $\ell$ whose row $j$ is not a multiple of row $r$ of $S$, with all other entries and all other writes zero, violates the condition. And $a_1$ vanishes for all $S$ only if the read of block $1$ has a zero column, which happens on a set of measure zero. By Fubini's theorem, the weights that satisfy the condition form a set of measure zero.
 \end{proof}
 
 
@@ -672,15 +681,15 @@ Finally $F_t(X) = t^{-L}h_LD = F(X) + r_LD$, so $\norm{F_t(X) - F(X)} \le C_L\no
 \end{proof}
 
 \begin{proof}[Proof of (ii)]
-Let $\mathcal X$ be a bounded set of inputs $X$ for which $XE$ has no zero row. Here $N$ divides each row of $h$ by its norm and multiplies it by $\sqrt{\dm}$, so $N(ch) = N(h)$ for $c > 0$, and $\norm{N(y') - N(y)} \le 2\sqrt{\dm}\,\norm{y' - y}/\norm{y}$ for nonzero rows $y, y'$. The hidden states of $F$ are $s_0 = XE$ and $s_\ell = B_\ell(N(s_{\ell-1}))$, and $F(X) = N(s_L)D$. For $\ell \ge 1$, $s_\ell$ depends on $X$ only through $N(XE)$, whose rows lie on the sphere of radius $\sqrt{\dm}$; as no row of $s_\ell$ vanishes, continuity and compactness give $c > 0$ below the norm of every row of every $s_\ell$, $\ell \ge 1$. Since $N$ removes the factor $t^{\ell-1}$, the hidden states of $F_t$ are again $h_0 = s_0$ and $h_\ell = t^\ell(s_\ell + r_\ell)$, now with $r_0 = 0$ and
+Let $\mathcal X$ be a compact set of inputs at which $F$ is defined, that is, at which no row of $XE$ or of a hidden state of $F$ vanishes. Here $N$ divides each row of $h$ by its norm and multiplies it by $\sqrt{\dm}$, so $N(ch) = N(h)$ for $c > 0$, and $\norm{N(y') - N(y)} \le 2\sqrt{\dm}\,\norm{y' - y}/\norm{y}$ for nonzero rows $y, y'$. The hidden states of $F$ are $s_0 = XE$ and $s_\ell = B_\ell(N(s_{\ell-1}))$, and $F(X) = N(s_L)D$. As no row of $s_\ell$ vanishes on $\mathcal X$, continuity and compactness give $\delta > 0$ below the norm of every row of every $s_\ell$, $\ell \ge 1$, on $\mathcal X$. Since $N$ removes the factor $t^{\ell-1}$, the hidden states of $F_t$ are again $h_0 = s_0$ and $h_\ell = t^\ell(s_\ell + r_\ell)$, now with $r_0 = 0$ and
 \[
 r_\ell \;=\; B_\ell\big(N(s_{\ell-1} + r_{\ell-1})\big) - B_\ell\big(N(s_{\ell-1})\big) \;+\; t^{-1}\,(s_{\ell-1} + r_{\ell-1}),
 \]
-as long as no row of $s_{\ell-1} + r_{\ell-1}$ vanishes. The maps $B_\ell$ are Lipschitz on the bounded image of $N$, with some constants $\Lambda_\ell$, and $\sigma_\ell = \sup_{X \in \mathcal X}\norm{s_\ell}$ is finite. If every row of $r_{\ell-1}$ is shorter than $c$, then $\norm{r_\ell} \le 2\sqrt{\dm}\,\Lambda_\ell\norm{r_{\ell-1}}/c + t^{-1}(\sigma_{\ell-1} + \norm{r_{\ell-1}})$, so by induction $\norm{r_\ell} \le C_\ell/t$ on $\mathcal X$, and every row of $r_\ell$ is shorter than $c$ once $t \ge t_0 = \max_\ell 2C_\ell/c$. Finally $\norm{F_t(X) - F(X)} = \norm{(N(s_L + r_L) - N(s_L))D} \le 2\sqrt{\dm}\,\norm{D}\,C_L/(ct)$ for all $X \in \mathcal X$ and $t \ge t_0$.
+as long as no row of $s_{\ell-1} + r_{\ell-1}$ vanishes. The maps $B_\ell$ are Lipschitz on the bounded image of $N$, with some constants $\Lambda_\ell$, and $\sigma_\ell = \sup_{X \in \mathcal X}\norm{s_\ell}$ is finite. If every row of $r_{\ell-1}$ is shorter than $\delta$, then $\norm{r_\ell} \le 2\sqrt{\dm}\,\Lambda_\ell\norm{r_{\ell-1}}/\delta + t^{-1}(\sigma_{\ell-1} + \norm{r_{\ell-1}})$, so by induction $\norm{r_\ell} \le C_\ell/t$ on $\mathcal X$, and every row of $r_\ell$ is shorter than $\delta$ once $t \ge t_0 = \max_\ell 2C_\ell/\delta$. Finally $\norm{F_t(X) - F(X)} = \norm{(N(s_L + r_L) - N(s_L))D} \le 2\sqrt{\dm}\,\norm{D}\,C_L/(\delta t)$ for all $X \in \mathcal X$ and $t \ge t_0$.
 \end{proof}
 
 \begin{remark}[The rate]\label{rem:limitrate}
-The proofs give the rate $1/t$. Without normalization, for every bounded set $\mathcal X$ of inputs there is $C$ such that $\norm{F_t(X) - F(X)} \le C/t$ for all $X \in \mathcal X$ and $t \ge 1$. Under pre-RMSNorm with $\varepsilon = 0$, the same holds for all $t \ge t_0$, for every bounded set $\mathcal X$ of inputs $X$ for which $XE$ has no zero row, with $t_0$ depending on $\mathcal X$. The constants depend on $\mathcal X$ and on $F$.
+The proofs give the rate $1/t$. Without normalization, for every bounded set $\mathcal X$ of inputs there is $C$ such that $\norm{F_t(X) - F(X)} \le C/t$ for all $X \in \mathcal X$ and $t \ge 1$. Under pre-RMSNorm with $\varepsilon = 0$, the same holds for all $t \ge t_0$, for every compact set $\mathcal X$ of inputs at which $F$ is defined, with $t_0$ depending on $\mathcal X$. The constants depend on $\mathcal X$ and on $F$.
 \end{remark}
 
 % ===== appendix/b_onelayer.tex =====
