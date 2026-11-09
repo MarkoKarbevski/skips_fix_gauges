@@ -12,7 +12,7 @@ TERMS = [
     ('nondegenerate', r'(?i)nondegenerate', r'\\emph\{nondegenerate\}'),
     ('value-output product', r'(?i)value--output product', r'value--output product \$W_'),
     ('score matrix', r'(?i)score matri', r'score matrix \$\\Gamma_i\$'),
-    ('readout / unembedding', r'(?i)readout|unembedding', r'linear readout \$D\$|linear embedding and unembedding|ends with a linear unembedding'),
+    ('readout / unembedding', r'(?i)readout|unembedding', r'linear readout \$D\$|linear embedding and unembedding|ends with a linear unembedding|ends with a linear readout'),
     ('skipless', r'(?i)\bskipless\b', r'\\emph\{skipless\}'),
     ('mirror image', r'(?i)mirror', r'mirror image, with the opposite read'),
 ]
