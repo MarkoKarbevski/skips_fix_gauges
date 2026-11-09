@@ -48,9 +48,9 @@
 | 43 | Networks | para |  |  | For ReLU the proof compares ranks. Near almost every input, a generic  |
 | 44 | Networks | para |  |  | Conversely, the construction of \cref{sec:relugelu} works block by blo |
 | 45 | Networks | statement |  |  | \begin{restatable}[Extra units]{proposition}{propExtraUnits}\label{pro |
-| 46 | Networks | para |  |  | So $\dm$ extra units per block suffice, and the first block of a skipl |
+| 46 | Networks | para | contraction | contraction | So $\dm$ extra units per block suffice, and the first block of a skipl |
 | 47 | Networks | statement |  |  | \begin{restatable}[Contractive blocks]{proposition}{propEveryBlock}\la |
-| 48 | Networks | para |  |  | The condition holds on an open set of weights, which contains every ne |
+| 48 | Networks | para |  |  | This condition holds on an open set of weights, which contains every n |
 | 49 | Networks | para |  |  | \para{RMSNorm: the skip keeps the norm of each token.} A skipless netw |
 | 50 | Networks | statement |  |  | \begin{restatable}[Networks under RMSNorm]{theorem}{thmRMSNet}\label{t |
 | 51 | Networks | para |  |  | Scale an input $X$ by a factor $t \to \infty$. A skipless network with |
