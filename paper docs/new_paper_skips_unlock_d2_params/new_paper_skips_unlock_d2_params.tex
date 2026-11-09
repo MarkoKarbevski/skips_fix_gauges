@@ -441,7 +441,7 @@ In (ii), each extra GELU unit adds $2\dm$ parameters against a gap of $L\dm^2$. 
 
 Skips tie the bases of all hidden states into one. A skipless network keeps a free change of basis at every hidden state, $\dm^2$ removable parameters each, and a residual network keeps one. Where the symmetries are the only redundancy, the skips turn these parameters into $\dm^2$ dimensions of functions per block, $\dm(\dm-1)/2$ under RMSNorm. We prove this gain in the cases of \cref{tab:results}, exactly or as a lower bound, and measure it in deeper networks. The free bases can also be spent after training: $8.5$ percent of a skipless ViT-B, every invertible learned skip without normalization, and its orthogonal part under RMSNorm come out exactly.
 
-\para{Open questions.} The equality condition at depth remains open for skipless networks beyond those of \cref{thm:exactgain} (\cref{conj:equality}), and for ReLU-type blocks, whose functional dimension drops where units never switch on or switch on together. Whether the reduced forms, such as triangular learned skips, train better is untested. Input-dependent skips, as in mHC \citep{xie2025mhc}, make the map between hidden states nonlinear and lie beyond our scope.
+\para{Open questions.} The equality condition at depth remains open for skipless networks beyond those of \cref{thm:exactgain} (\cref{conj:equality}), and for ReLU$^2$ and ReGLU blocks. For ReLU blocks it fails, as units can die (\cref{app:folding}). Whether the reduced forms, such as triangular learned skips, train better is untested. Input-dependent skips, as in mHC \citep{xie2025mhc}, make the map between hidden states nonlinear and lie beyond our scope.
 
 \section*{Use of AI}
 \addcontentsline{toc}{section}{Use of AI}
@@ -811,8 +811,48 @@ in the limit. Suppose that $J_0\,\eta$ plus a sum of these vanishes for all $x$.
 
 
 \begin{remark}[ReLU-type blocks]\label{rem:reludepth}
-For ReLU, ReLU$^2$ and ReGLU blocks without normalization, the proof of \cref{lem:smallwrites} goes through on a finite batch on which no pre-activation of the limit vanishes: \cref{lem:unitid} covers these units, and for small $\tau$ every pre-activation keeps its sign on the batch, so the Jacobian is polynomial in the weights near these parameters. The residual network therefore has functional dimension $P - \dm^2 - s$ on an open set of weights that contains all small enough multiples of generic writes, and at almost every point of this set the skips add at least $L\dm^2$ when every block has width at least $\dm$. The count fails on another open set. For $\dm = 2$, the block $h \mapsto h + 2\big(\mathrm{ReLU}(-h_1), \mathrm{ReLU}(-h_2)\big) = \big(\lvert h_1\rvert, \lvert h_2\rvert\big)$ maps the plane onto a quadrant, and a unit of the next block with the read $-(1, 1)^\top$ never switches on. Its read and its write then leave $2\dm - 1$ more directions flat, and small changes of the weights keep this. Which weights keep the count is left for future work.
+For ReLU, ReLU$^2$ and ReGLU blocks without normalization, the proof of \cref{lem:smallwrites} goes through on a finite batch on which no pre-activation $h\Wread$ of the limit vanishes: \cref{lem:unitid} covers these units, and for small $\tau$ every pre-activation keeps its sign on the batch, so the Jacobian is polynomial in the weights near these parameters. The residual network therefore has functional dimension $P - \dm^2 - s$ on an open set of weights that contains all small enough multiples of generic writes, and at almost every point of this set the skips add at least $L\dm^2$ when every block has width at least $\dm$. The count fails on another open set, where a block folds the hidden state and units of later blocks are never active (\cref{app:folding}).
 \end{remark}
+
+\subsection{ReLU blocks: folding and dead units}\label{app:folding}
+
+This section explains why the count of \cref{rem:reludepth} holds on one open set of weights and fails on another, so that it does not hold at almost every parameter. The blocks are ReLU blocks, without normalization. An MLP block acts on each token separately, so we take inputs with one token, $x \in \R^{1\times d_{\mathrm{in}}}$, and hidden states $h \in \R^{1\times\dm}$. In this section inputs range over all of $\R^{1\times d_{\mathrm{in}}}$, and $E$ has rank $\dm$.
+
+\para{Active and dead units.} Unit $i$ of block $\ell$ has the read $r_i$, column $i$ of $\Wread^{\ell}$, and the write $\hat r_i$, row $i$ of $\Wwrite^{\ell}$. Its \emph{pre-activation} at the input $x$ is the number $z_i(x) = h_{\ell-1}(x)\,r_i$, and the unit adds $\mathrm{ReLU}(z_i(x))\,\hat r_i$ to the output of the block. The unit is \emph{active} at $x$ if $z_i(x) > 0$. Where $z_i(x) < 0$, the unit adds nothing, and the derivatives of the output with respect to $r_i$ and $\hat r_i$ vanish. A unit is \emph{dead} if it is active at no input. A dead unit can be deleted, or its write changed, without changing the function.
+
+\begin{definition}[Folding]
+Let $\Phi_\ell(h) = h + B_\ell(h)$ be the map of $\R^{1\times\dm}$ computed by residual block $\ell$. The block \emph{folds} if $\Phi_\ell$ is not injective: two different hidden states give the same next hidden state.
+\end{definition}
+
+For example, take $m = \dm$, $\Wread = -I$ and $\Wwrite = 2I$. Then $B(h) = 2\,\mathrm{ReLU}(-h)$, and coordinate $j$ of $h + B(h)$ is $h_j$ if $h_j \ge 0$ and $-h_j$ if $h_j < 0$. So the block maps $h$ to $(\lvert h_1\rvert, \dots, \lvert h_{\dm}\rvert)$. It folds every coordinate axis at $0$, like a sheet folded along a line, and its image is the nonnegative orthant. Wherever no coordinate vanishes, its Jacobian is $\mathrm{diag}(\pm 1)$, so a block can fold although its Jacobian is invertible wherever it exists.
+
+\begin{proposition}[Blocks that do not fold keep units alive]\label{prop:nofold}
+Consider a residual network of ReLU blocks without normalization.\\
+\stpart{prop:nofold}{i}{} If block $\ell$ does not fold, $\Phi_\ell$ is a homeomorphism of $\R^{1\times\dm}$.\\
+\stpart{prop:nofold}{ii}{} If no block folds, every unit with a nonzero read is active on a nonempty open set of inputs and inactive on another. In particular, no unit with a nonzero read is dead.\\
+\stpart{prop:nofold}{iii}{} A block with $\norm{\Wread}\,\norm{\Wwrite} < 1$, in spectral norm, does not fold.
+\end{proposition}
+
+\begin{proof}
+(i) The map $\Phi_\ell$ is continuous, and $\Phi_\ell(ch) = c\,\Phi_\ell(h)$ for $c > 0$, since there are no biases. As $\Phi_\ell(0) = 0$ and $\Phi_\ell$ is injective, $\Phi_\ell(h) \neq 0$ for $h \neq 0$. So $c_0 = \min_{\norm{h} = 1}\norm{\Phi_\ell(h)}$ is positive, and $\norm{\Phi_\ell(h)} \ge c_0\norm{h}$. Hence the preimage of a bounded set is bounded, and the image of $\Phi_\ell$ is closed. By invariance of domain, an injective continuous map of $\R^{\dm}$ to itself is open. So the image is also open, hence all of $\R^{1\times\dm}$, and the inverse is continuous.
+(ii) The map $x \mapsto xE$ is onto $\R^{1\times\dm}$, and by (i) so is the continuous map $x \mapsto h_{\ell-1}(x)$. The sets $\{h : hr_i > 0\}$ and $\{h : hr_i < 0\}$ are open and not empty, and so are their preimages.
+(iii) As $\mathrm{ReLU}$ is $1$-Lipschitz, $\norm{B_\ell(h) - B_\ell(h')} \le \norm{\Wread}\,\norm{\Wwrite}\,\norm{h - h'}$. If $\Phi_\ell(h) = \Phi_\ell(h')$, then $\norm{h - h'} = \norm{B_\ell(h') - B_\ell(h)}$, so $h = h'$. This is the condition under which \citet{behrmann2019invertible} invert residual networks (their Theorem~1).
+\end{proof}
+
+By (iii), small enough writes never fold, which is the regime of \cref{rem:reludepth}. The condition of (iii) is only sufficient. With $\Wread = I$ and $\Wwrite = 2I$, the block maps each coordinate $h_j$ to $h_j$ if $h_j \le 0$ and to $3h_j$ if $h_j > 0$, so it does not fold, although $\norm{\Wread}\,\norm{\Wwrite} = 2$.
+
+\begin{proposition}[Folding blocks can kill units and lower the functional dimension]\label{prop:fold}
+Consider residual networks of $L \ge 2$ ReLU blocks without normalization.\\
+\stpart{prop:fold}{i}{} There is a nonempty open set of weights on which block~$1$ folds and block~$2$ has a dead unit.\\
+\stpart{prop:fold}{ii}{} If $\nu$ units are dead, then on every batch on which no pre-activation vanishes, the Jacobian has rank at most $P - \dm^2 - s - (2\dm - 1)\nu$.
+\end{proposition}
+
+\begin{proof}
+(i) Let block~$1$ hold the $\dm$ units of the example above, with $\Wread = -I$ and $\Wwrite = 2I$. Give its other units zero writes. Let a unit of block~$2$ have a read $r$ whose entries are all negative. Then $\Phi_1(h)\,r < 0$ for every $h \neq 0$, since $\Phi_1(h)$ is a nonzero vector with no negative entry. By compactness of the unit sphere, $\max_{\norm{h} = 1}\Phi_1(h)\,r < 0$ persists under small changes of all the weights. Since the perturbed $\Phi_1$ is still positively homogeneous, $\Phi_1(h)\,r < 0$ then holds for every $h \neq 0$. As $h_1(x) = \Phi_1(xE)$ and $\Phi_1(0) = 0$, the unit is active at no input, so it is dead. And $\Phi_1$ misses the half-space $\{h : hr > 0\}$, so it is not onto, and block~$1$ folds by \cpref{prop:nofold}{i}.
+(ii) The columns of the Jacobian that belong to the read and the write of a dead unit vanish, $2\dm\nu$ columns in all. The other columns are those of the network with the dead units deleted. That network has $P - 2\dm\nu$ parameters and $s - \nu$ unit rescalings, since $s$ counts one rescaling per ReLU unit. Its function does not change under the change of basis of the hidden states and these rescalings. At generic parameters they act with orbits of dimension $\dm^2 + s - \nu$, since $E$ has rank $\dm$. On the open set of parameters at which no pre-activation vanishes on the batch, the outputs on the batch are polynomial in the parameters. So, as in the proof of \cref{lem:rankcrit}, the rank is at most $P - 2\dm\nu - \dm^2 - (s - \nu)$ at generic points of this set, and by lower semicontinuity at all of them.
+\end{proof}
+
+So on the open set of \cpref{prop:fold}{i} the residual network has functional dimension below $P - \dm^2 - s$. For ReLU networks, the bound of \cref{thm:unlock} is therefore attained on one open set of weights and missed on another. Without skips, the hidden state $\mathrm{ReLU}(h\Wread)\Wwrite$ lies in the cone spanned by the rows of $\Wwrite$. If this cone is pointed, for instance when $m = \dm$ and $\Wwrite$ is invertible, a unit of the next block whose read is negative on the cone away from $0$ is dead, and stays dead under small changes of the weights. Whether almost every residual ReLU network whose blocks all satisfy $\norm{\Wread}\,\norm{\Wwrite} < 1$ has functional dimension $P - \dm^2 - s$ is open.
 
 
 \section{The one-block theorem}\label{app:onelayer}
