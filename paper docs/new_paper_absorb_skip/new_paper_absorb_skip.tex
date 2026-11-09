@@ -613,7 +613,7 @@ Because $T \ge 3$, the sum has at least two terms, $r = 1$ and $r = 3$, and $z_3
 \emph{The skip.} What remains is $hM + P_0(h)\,h\,C_0 = 0$, where $C_0$ is the coefficient of $\Gamma = 0$ (or $0$ if no $\Gamma_k$ vanishes). This is linear in $h$, so it holds for all $h$. Take the first row of $h$ equal to $x$ and the other rows $0$: the first two rows give $x(M + C_0/T) = 0$ and $xC_0/T = 0$. So $C_0 = 0$ and $M = 0$.
 \end{proof}
 
-With three or more tokens, the heads must even cancel in groups with the same score matrix.
+The lemma gives the proposition that \cref{sec:attention} cites: with three or more tokens, the heads must cancel in groups with the same score matrix.
 \begin{proposition}[The softmaxes must match]\label{prop:match}
 Let $T \ge 3$, let $\theta$ and $\theta'$ be parameters of attention blocks, and suppose that $hM + B_\theta(h) = B_{\theta'}(h)$ for all $h$ in a nonempty open set. Then $M = 0$, and for every matrix $\Gamma$, the heads with score matrix $\Gamma$ have the same sum of value--output products in $B_\theta$ as in $B_{\theta'}$.
 \end{proposition}
