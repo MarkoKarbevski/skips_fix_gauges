@@ -66,7 +66,7 @@
 | 61 | Measured at depth | float |  |  | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \b |
 | 62 | Measured at depth | para |  |  | In two cases the measured rank stays below the upper bound. Under RMSN |
 | 63 | Measured at depth | statement |  |  | \begin{conjecture}[Equality condition]\label{conj:equality} With or wi |
-| 64 | Measured at depth | para |  |  | For smooth blocks, \cref{thm:resdepth} proves the residual half of the |
+| 64 | Measured at depth | para |  |  | Without normalization, \cref{thm:oneblock} proves the conjecture for o |
 | 65 | A gap that separates function classes | para |  |  | \subsection{A gap that separates function classes}\label{sec:classes} |
 | 66 | A gap that separates function classes | para |  |  | For smooth blocks, the gap in functional dimension keeps the two class |
 | 67 | A gap that separates function classes | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
@@ -79,7 +79,7 @@
 | 74 | Related work | para |  |  | \para{Symmetries and residual networks in theory.} \citet{wang2025gaug |
 | 75 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
 | 76 | Conclusion | para |  |  | Skips tie the bases of all hidden states into one. A skipless network  |
-| 77 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth is open for ski |
+| 77 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth is open for the |
 | 78 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
 | 79 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
 | 80 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
