@@ -107,7 +107,7 @@ Residual networks add each block's input to its output; skipless ones now train 
 
 Nearly every deep network trained today, from residual networks \citep{he2016resnet} to transformers \citep{vaswani2017attention}, adds the input of each block to its output through a skip connection. The usual reason is training: the sum gives the gradient a short path through the network, and it makes the identity map easy to express \citep{veit2016ensembles,hardt2017identity}.
 
-Skipless networks now train too. \citet{he2024simplifying} remove the skips of transformer blocks without losing training speed, and \citet{ji2026cutting} train a skipless ViT-B on ImageNet that outperforms the residual one. Can a skip let a block compute a function that no skipless block of the same kind computes?
+Skipless networks now train too. \citet{he2024simplifying} remove the skips of transformer blocks without losing training speed, and \citet{ji2026cutting} train a skipless ViT-B that outperforms the residual one. Can a skip let a block compute a function that no skipless block of the same kind computes?
 
 Let $B$ be an MLP block with $m$ hidden units, or an attention block with $H$ heads, acting on tokens of dimension $\dm$; its width is $m$ or $H$. We say that $B$ \emph{absorbs} its skip if the residual block $x \mapsto x + B(x)$ equals, as a function, a skipless block of the same kind, of the same width or wider. Two blocks are of the same kind if both are attention blocks, or both are MLP blocks of the same type, vanilla or gated (\cref{sec:setup}), with the same activation. The skip is worth $n$ units if $B$ absorbs it with $n$ extra units but not with $n - 1$; if no width suffices, it is worth more than any number of units. Equality is exact, at every input: where a skip is absorbed, a trained residual network can be rewritten without it, with the same outputs. How closely a skipless block can approximate a residual one is another question, which we leave open apart from a bound for attention blocks (\cpref{thm:attention}{ii}).
 
@@ -190,13 +190,13 @@ In a vanilla block with $m$ hidden units, $\Wread \in \R^{\dm\times m}$, $\Wwrit
 \begin{equation}\label{eq:absorbask}
 xM + B_\theta(x) = B_{\theta'}(x) \qquad\text{for all } x \in \R^{1\times\dm}.
 \end{equation}
-The skip is $M = I$. Other matrices $M$ cover learned linear skips and the networks of one block of \cref{sec:relugelu}.
+The skip is $M = I$; other $M$ cover learned linear skips and networks of one block (\cref{sec:relugelu}).
 
 \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathrm{in}}\times\dm}$, then $L \ge 1$ blocks $B_1, \dots, B_L$, each with a skip $A_\ell$, then a linear readout, or unembedding, $D \in \R^{\dm\times d_{\mathrm{out}}}$, and an output function $C$. It maps an input $X \in \R^{T\times d_{\mathrm{in}}}$ to
 \[
 \mathcal M(X) = C \circ D \circ (A_L + B_L) \circ \dots \circ (A_1 + B_1) \circ E\,(X),
 \]
-where $E$ and $D$ stand for the maps $X \mapsto XE$ and $h \mapsto hD$. The skip $A_\ell$ of block $\ell$ is the zero map in a \emph{skipless} network and the identity map $I$ in a \emph{residual} one. The output function $C$ is set by the task, for example the identity for regression and the softmax for multiclass classification \citep[Sections~5.1 and~5.2]{bishop2006pattern}. So the hidden states are $h_0 = XE$ and $h_\ell = B_\ell(h_{\ell-1})$ in a skipless network and $h_\ell = h_{\ell-1} + B_\ell(h_{\ell-1})$ in a residual one, the readout gives $y = h_LD$, and $\mathcal M(X) = C(y)$. The function $C$ has no weights, and we ignore it: equality of networks, and every result below, concern $y$, the logits of a classifier. Networks with the same $y$ have the same $\mathcal M$, but not conversely; a softmax, for instance, does not change when the same number is added to every output.
+where $E$ and $D$ stand for the maps $X \mapsto XE$ and $h \mapsto hD$. The skip $A_\ell$ of block $\ell$ is the zero map in a \emph{skipless} network and the identity map $I$ in a \emph{residual} one. The output function $C$ is set by the task: the identity for regression, the logistic sigmoid of each output for multilabel classification, and the softmax for multiclass classification \citep[Sections~5.1 and~5.2]{bishop2006pattern}. So the hidden states are $h_0 = XE$ and $h_\ell = B_\ell(h_{\ell-1})$ in a skipless network and $h_\ell = h_{\ell-1} + B_\ell(h_{\ell-1})$ in a residual one, the readout gives $y = h_LD$, and $\mathcal M(X) = C(y)$. The function $C$ has no weights, and we ignore it: equality of networks, and every result below, concern $y$, the logits of a classifier. Networks with the same $y$ have the same $\mathcal M$, but not conversely; a softmax, for instance, does not change when the same number is added to every output.
 
 \para{Normalization.} RMSNorm, written $N$, divides each row $v$ of a hidden state by $\sqrt{\norm{v}^2/\dm + \varepsilon}$, with a constant $\varepsilon \ge 0$. In a \emph{pre-RMSNorm} network every block and the readout read the normalized state $N(h)$, while the skips carry $h$: in the display, $B_\ell$ and $D$ become $B_\ell \circ N$ and $D \circ N$, so the skipless and the residual network compute $h_\ell = B_\ell\big(N(h_{\ell-1})\big)$ and $h_\ell = h_{\ell-1} + B_\ell\big(N(h_{\ell-1})\big)$, and $y = N(h_L)D$. For $\varepsilon = 0$, $N$ is defined on hidden states without zero rows, a network is defined at the inputs at which no state that it normalizes has a zero row, and two networks are equal if they agree on a dense set of inputs at which both are defined.
 
@@ -234,7 +234,7 @@ In (i), the equation $\Wread[{:},S]\,\Wwrite[S,{:}] = -M$ is polynomial in the w
 
 The proof matches the units of the two blocks. The even part of the activation, $\big(\sigma(z) + \sigma(-z)\big)/2$, matches each unit of $B_{\theta'}$ to a unit of $B_\theta$, up to sign and scale: for ReLU through the kinks of $\lvert z\rvert$, and for GELU through the linear independence of ridge functions, which depend on $x$ only through one product $xw$. The odd part, $z/2$, turns each sign flip into a linear term. Each extra unit then adds at most one rank-one term, and $M = I$ has rank $\dm$. For two-layer ReLU networks with one output, with biases and a linear term, \citet[Theorem~1]{petzka2020symmetries} show that permutations, rescalings and such sign flips are the only transformations between two irreducible networks that compute the same function; part (i) is the analogue for blocks with several outputs and without biases, and for GELU. Identity \eqref{eq:odd} alone does not make these flips the only way: \cref{rem:evenpart} gives an activation that satisfies it and absorbs $xM$ in more ways.
 
-\para{Networks of one block.} A residual network of one block is a block with the reads $E\Wread$ and the writes $\Wwrite D$, plus the linear term $XED$: it computes $X \mapsto XED + f(XE\Wread)\,\Wwrite D$. The proof of \cpref{thm:relugelu}{i} holds for such rectangular reads, writes and linear terms, which gives the following.
+\para{Networks of one block.} A residual network of one block is a block with the reads $E\Wread$ and the writes $\Wwrite D$, plus the linear term $XED$: it computes $X \mapsto XED + f(XE\Wread)\,\Wwrite D$. The proof of \cpref{thm:relugelu}{i} holds for such rectangular reads, writes and linear terms.
 
 \begin{restatable}[Networks of one block]{proposition}{propOneBlockNet}\label{prop:oneblocknet}
 Let $\sigma$ be ReLU or GELU. For almost every choice of weights, a residual network of one block equals no skipless network of one block of the same width.
@@ -279,7 +279,7 @@ Let $\sigma$ be ReLU or GELU. For almost every choice of weights, a residual net
 \label{fig:reasons}
 \end{figure}
 
-Recall that a block absorbs $xM$ if a block of the same kind satisfies \eqref{eq:absorbask}: $xM + B_\theta(x) = B_{\theta'}(x)$ for all $x$.
+A block absorbs $xM$ if a block of the same kind satisfies \eqref{eq:absorbask}: $xM + B_\theta(x) = B_{\theta'}(x)$ for all $x$.
 
 \begin{restatable}[No width suffices]{theorem}{thmAbsorbHom}\label{thm:homgated}
 Let $B_\theta$ be (a) a block that is positively homogeneous of degree $k \neq 1$, (b) a gated block whose gate vanishes at $0$ and is differentiable there, or (c) a $\tanh$ block. ReLU$^2$ and ReGLU blocks fall under (a), SwiGLU and GeGLU blocks under (b). For every $M \neq 0$, no block $B_{\theta'}$ of the same kind and of any width satisfies \eqref{eq:absorbask}.

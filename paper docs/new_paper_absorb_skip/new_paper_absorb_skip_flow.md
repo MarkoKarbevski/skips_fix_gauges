@@ -34,7 +34,7 @@
 | 29 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | statement |  |  | \begin{restatable}[Networks of one block]{proposition}{propOneBlockNet |
 | 30 | ReLU\texorpdfstring{$^2$ | para |  |  | \subsection{ReLU\texorpdfstring{$^2$}{2}, gated and \texorpdfstring{$\ |
 | 31 | ReLU\texorpdfstring{$^2$ | float |  |  | \begin{figure}[t] \centering [a TikZ drawing, omitted here; the captio |
-| 32 | ReLU\texorpdfstring{$^2$ | para |  |  | Recall that a block absorbs $xM$ if a block of the same kind satisfies |
+| 32 | ReLU\texorpdfstring{$^2$ | para |  |  | A block absorbs $xM$ if a block of the same kind satisfies \eqref{eq:a |
 | 33 | ReLU\texorpdfstring{$^2$ | statement |  |  | \begin{restatable}[No width suffices]{theorem}{thmAbsorbHom}\label{thm |
 | 34 | ReLU\texorpdfstring{$^2$ | para |  |  | The three cases of \cref{fig:reasons} are three one-line proofs. A hom |
 | 35 | Attention blocks: no number of heads suffices | para |  |  | \subsection{Attention blocks: no number of heads suffices}\label{sec:a |
