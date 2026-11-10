@@ -287,9 +287,13 @@ Rows of a write work too: if $\dm$ rows of the write into $h_\ell$ form an inver
 
 \subsection{Learned skips: reduction to identity skips}\label{sec:learned}
 
-In this subsection, networks have no normalization. Under RMSNorm a skip reads $h$ while its block reads $N(h)$, and \cref{sec:norm} treats that case. A learned skip adds $hA$ to the output of a block, in place of $h$. It acts as $\dm$ more hidden units with the identity as activation, the read $A$ and the write $I$. We call them \emph{identity units} \citep[Section~4]{lin2018resnet}. A block together with its learned skip is therefore a wider block of the form \eqref{eq:block} (\cref{fig:junctions}a):
+In this subsection, networks have no normalization. Under RMSNorm a skip reads $h$ while its block reads $N(h)$, and \cref{sec:norm} treats that case. A learned skip adds $hA$ to the output of a block, in place of $h$. It acts as $\dm$ more hidden units with the identity as activation, the read $A$ and the write $I$. We call them \emph{identity units} \citep[Section~4]{lin2018resnet}. A block together with its learned skip is therefore a wider block of the form \eqref{eq:block} (\cref{fig:junctions}a). Let the read of the block have $p$ columns and its write $q$ rows, so that $f$ maps $\R^{T\times p}$ to $\R^{T\times q}$. Define the fixed map of the wider block,
+\[
+\tilde f : \R^{T\times\dm} \times \R^{T\times p} \to \R^{T\times(\dm+q)}, \qquad \tilde f\big([\,u \mid z\,]\big) = \big[\,u \mid f(z)\,\big],
+\]
+which is the identity on the first $\dm$ columns and $f$ on the others. Then
 \begin{equation}\label{eq:mixed}
-hA + f(h\Wread)\,\Wwrite \;=\; \tilde f\big(h\,[\,A \mid \Wread\,]\big)\begin{bmatrix} I \\ \Wwrite \end{bmatrix}, \qquad \tilde f\big([\,u \mid z\,]\big) = \big[\,u \mid f(z)\,\big].
+hA + f(h\Wread)\,\Wwrite \;=\; \tilde f\big(h\,[\,A \mid \Wread\,]\big)\begin{bmatrix} I \\ \Wwrite \end{bmatrix}.
 \end{equation}
 We apply \cref{def:cob} to these wider blocks, with the reads and writes of \eqref{eq:mixed}. Under the changes of basis $G_{\ell-1}$ at $h_{\ell-1}$ and $G_\ell$ at $h_\ell$, the read of the identity units of block~$\ell$ becomes $G_{\ell-1}^{-1}A_\ell$ and their write becomes $G_\ell$. These units then add $h\,G_{\ell-1}^{-1}A_\ell\,G_\ell$ to the output of the block, so the block has a learned skip again, and the two changes of basis map it as
 \begin{equation}\label{eq:skipmap}
