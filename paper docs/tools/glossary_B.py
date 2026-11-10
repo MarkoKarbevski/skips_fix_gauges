@@ -22,7 +22,7 @@ TERMS = [
 ]
 SYMBOLS = [
     ('B, the map of a block', r'B\(h\)|B_\\ell\(|\$B\$', r'B\(h\) = f\(h\\Wread\)'),
-    ('G, a change of basis', r'WG\b|G\^\{-1\}W|matrix \$G\$', r'(?i)Let \$G\$ be an invertible|For an invertible \$\\dm\\times\\dm\$ matrix \$G\$|any invertible matrix \$G\$'),
+    ('G, a change of basis', r'WG\b|G\^\{-1\}W|matrix \$G\$', r'(?i)Let \$G\$ be an invertible|For an invertible \$\\dm\\times\\dm\$ matrix \$G\$|For any invertible \$\\dm\\times\\dm\$ matrix \$G\$'),
     ('W, a generic weight matrix', r'\$W \\mapsto|\bW \\mapsto', r'(?i)the matrix \$W\$ that writes|W \\mapsto WG \\ \\text\{ for the writes'),
     ('W_1, the chosen block', r'W_1(?![W_0-9])', r'form an invertible matrix \$W_1\$'),
     ('L, the number of blocks', r'\$L\b|\(L\+1\)|L\\dm|L = 3', r'(?i)\$L\$ blocks|\$L = 3\$ blocks'),

@@ -195,17 +195,27 @@ where $E$, $D$ and $A_\ell$ stand for the maps $x \mapsto xE$, $h \mapsto hD$ an
 
 \section{Changes of basis that preserve the function}\label{sec:reduce}\label{sec:gauge}
 
-When two weight matrices follow each other with no activation between them, only their product enters the function. The first can then be multiplied on the right by any invertible matrix $G$, and the second on the left by $G^{-1}$. \citet{zhao2023symmetries} formalize this symmetry for MLPs. It adapts easily to a normalization $\sigma(z) = f(\norm{z})\,z$ between the two matrices, for which $G$ must be orthogonal. \citet{graef2024tricks} applied it independently to an attention block without normalization, and set $W_O$ and one of $W_Q$, $W_K$ and $W_V$ to the identity.
+The results of this section rest on one symmetry, which the first two blocks of a skipless network without normalization already show. Block~1 writes the hidden state $h_1 = f_1(h_0\Wread^{1})\,\Wwrite^{1}$, where $f_1$ is its fixed map, and block~2 reads it as
+\begin{equation}\label{eq:product}
+h_1\Wread^{2} \;=\; f_1(h_0\Wread^{1})\;\Wwrite^{1}\Wread^{2}.
+\end{equation}
+So the write of block~1 and the read of block~2 enter the function only through their product $\Wwrite^{1}\Wread^{2}$. For any invertible $\dm\times\dm$ matrix $G$, the matrices $\Wwrite^{1}G$ and $G^{-1}\Wread^{2}$ have the same product, and the network with these two matrices computes the same function. Its hidden state is $h_1G$: the same tokens, written in another basis.
 
-In the form \eqref{eq:block}, every block starts with a read and ends with a write, so the symmetry applies directly to every block of \cref{sec:setup}. For an attention block, $\Wread = [\,W_Q \mid W_K \mid W_V\,]$ and $\Wwrite = W_O$. The symmetry also applies to a block with a learned skip $A$, whose read is $[\,A \mid \Wread\,]$. There it shows that the networks with invertible learned skips compute the same functions as the residual networks, with $L\dm^2$ more parameters (\cref{sec:learned}). Under pre-RMSNorm, the same is true of orthogonal learned skips (\cref{sec:norm}).
-
-\subsection{Skipless networks: one change of basis per hidden state}\label{sec:skipless}\label{sec:junctions}
-
-In a skipless network without normalization, every hidden state $h_\ell$ lies between two such matrices. The writes into $h_\ell$ are $\Wwrite^{\ell}$, or $E$ if $\ell = 0$, and the reads of $h_\ell$ are $\Wread^{\ell+1}$, or $D$ if $\ell = L$. For an invertible $\dm\times\dm$ matrix $G$, the \emph{change of basis} $G$ at $h_\ell$ maps
+\begin{definition}[Change of basis]\label{def:cob}
+Let $G$ be an invertible $\dm\times\dm$ matrix. The \emph{change of basis} $G$ at the hidden state $h_\ell$ maps
 \begin{equation}\label{eq:cob}
 W \mapsto WG \ \text{ for the writes into } h_\ell, \qquad W \mapsto G^{-1}W \ \text{ for the reads of } h_\ell.
 \end{equation}
-The hidden state becomes $h_\ell G$, every read of it computes the same product as before, and the function does not change (\cref{fig:junctions}b). A suitable $G$ removes parameters.
+In a skipless network, the writes into $h_\ell$ are $\Wwrite^{\ell}$, or $E$ if $\ell = 0$, and the reads of $h_\ell$ are $\Wread^{\ell+1}$, or $D$ if $\ell = L$.
+\end{definition}
+
+\citet{zhao2023symmetries} formalize this symmetry for MLPs. It adapts easily to pre-RMSNorm, where block~2 reads $N(h_1)$. RMSNorm rescales each token by a function of its norm, so $N(h_1Q) = N(h_1)\,Q$ for an orthogonal matrix $Q$, and the change of basis $Q$ preserves the function. \citet{graef2024tricks} applied the symmetry independently to an attention block without normalization, and set $W_O$ and one of $W_Q$, $W_K$ and $W_V$ to the identity.
+
+The computation \eqref{eq:product} uses only the form \eqref{eq:block} of a block: a read, a fixed map and a write. So the symmetry applies directly to every block of \cref{sec:setup}. For an attention block, $\Wread = [\,W_Q \mid W_K \mid W_V\,]$ and $\Wwrite = W_O$. The symmetry also applies to a block with a learned skip $A$, whose read is $[\,A \mid \Wread\,]$. There it shows that the networks with invertible learned skips compute the same functions as the residual networks, with $L\dm^2$ more parameters (\cref{sec:learned}). Under pre-RMSNorm, the same is true of orthogonal learned skips (\cref{sec:norm}).
+
+\subsection{Skipless networks: one change of basis per hidden state}\label{sec:skipless}\label{sec:junctions}
+
+In a skipless network without normalization, the computation \eqref{eq:product} holds at every hidden state. The change of basis $G$ at $h_\ell$ turns $h_\ell$ into $h_\ell G$, every read of it computes the same product as before, and the function does not change (\cref{fig:junctions}b). A suitable $G$ removes parameters.
 
 \begin{restatable}[Exact reduction without skips]{proposition}{propSkipless}\label{prop:skipless}
 Without normalization, let $\dm$ columns of the read of $h_\ell$ in a skipless network form an invertible matrix $W_1$. The change of basis $G = W_1$ at $h_\ell$ preserves the function and turns $W_1$ into the identity. At generic parameters every hidden state has such columns, and these changes of basis at all $L+1$ hidden states remove $(L+1)\dm^2$ parameters.
