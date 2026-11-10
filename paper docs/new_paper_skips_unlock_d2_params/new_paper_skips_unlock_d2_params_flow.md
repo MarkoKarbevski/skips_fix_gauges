@@ -18,7 +18,7 @@
 | 13 | Setup | para | generic |  | \para{Scope.} Networks have no biases, and their inputs are continuous |
 | 14 | Changes of basis that preserve the function | para |  |  | \section{Changes of basis that preserve the function}\label{sec:reduce |
 | 15 | Changes of basis that preserve the function | para | G, a change of basis | G, a change of basis | The results of this section rest on one symmetry, which the first two  |
-| 16 | Changes of basis that preserve the function | statement | W, a generic weight matrix, change of basis | W, a generic weight matrix | \begin{definition}[Change of basis]\label{def:cob} Let $G$ be an inver |
+| 16 | Changes of basis that preserve the function | statement | W, a generic weight matrix, change of basis | W, a generic weight matrix | \begin{definition}[Change of basis]\label{def:cob} In a skipless and i |
 | 17 | Changes of basis that preserve the function | para |  |  | \citet{zhao2023symmetries} formalize this symmetry for MLPs. It adapts |
 | 18 | Changes of basis that preserve the function | para |  |  | The computation \eqref{eq:product} uses only the form \eqref{eq:block} |
 | 19 | Skipless networks: one change of basis per hidden state | para |  |  | \subsection{Skipless networks: one change of basis per hidden state}\l |
@@ -27,9 +27,9 @@
 | 22 | Skipless networks: one change of basis per hidden state | para |  |  | Rows of a write work too: if $\dm$ rows of the write into $h_\ell$ for |
 | 23 | Skipless networks: one change of basis per hidden state | float |  |  | \begin{figure}[t] \centering [a TikZ drawing, omitted here; the captio |
 | 24 | Learned skips: reduction to identity skips | para |  |  | \subsection{Learned skips: reduction to identity skips}\label{sec:lear |
-| 25 | Learned skips: reduction to identity skips | para | Lambda, identity units | Lambda, identity units | A learned skip, which adds $hA$ in place of $h$, is a block of $\dm$ \ |
+| 25 | Learned skips: reduction to identity skips | para | Lambda, identity units | Lambda, identity units | In this subsection, networks have no normalization. Under RMSNorm a sk |
 | 26 | Learned skips: reduction to identity skips | statement |  |  | \begin{restatable}[Learned skips reduce to identity skips]{theorem}{th |
-| 27 | Learned skips: reduction to identity skips | para |  |  | So the residual network is the network with learned skips after its $L |
+| 27 | Learned skips: reduction to identity skips | para |  |  | So the networks with invertible learned skips have $L\dm^2$ more param |
 | 28 | Identity skips: one change of basis for the whole network | para |  |  | \subsection{Identity skips: one change of basis for the whole network} |
 | 29 | Identity skips: one change of basis for the whole network | para |  |  | A residual network keeps one change of basis, the same at all its hidd |
 | 30 | Identity skips: one change of basis for the whole network | statement |  |  | \begin{restatable}[One change of basis for the whole network]{theorem} |
@@ -37,7 +37,7 @@
 | 32 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \subsection{RMSNorm and LayerNorm: orthogonal changes of basis}\label{ |
 | 33 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | With pre-RMSNorm, the network with learned skips computes \begin{equat |
 | 34 | RMSNorm and LayerNorm: orthogonal changes of basis | statement |  |  | \begin{restatable}[Orthogonal changes of basis under RMSNorm]{theorem} |
-| 35 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{Learned skips under RMSNorm.} Under RMSNorm, the reduction of \c |
+| 35 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{Learned skips under RMSNorm.} In \eqref{eq:prenorm} the skip $A_ |
 | 36 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{LayerNorm.} LayerNorm is RMSNorm after a projection that removes |
 | 37 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{Trained models.}\label{sec:trained} The reduction applies to tra |
 | 38 | Functional dimension with and without skips | para |  |  | \section{Functional dimension with and without skips}\label{sec:gain}  |
