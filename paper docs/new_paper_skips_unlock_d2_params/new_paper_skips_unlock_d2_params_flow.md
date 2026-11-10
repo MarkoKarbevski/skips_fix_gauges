@@ -2,7 +2,7 @@
 
 | Unit | Section | Kind | Defines | First uses | Start |
 |---|---|---|---|---|---|
-| 0 | abstract | para |  | RMSNorm, change of basis, d_model, the width, functional dimension, per block, pre-RMSNorm | \begin{abstract} Skip connections are credited with easing training, y |
+| 0 | abstract | para |  | RMSNorm, change of basis, d_model, the width, functional dimension, per block, pre-RMSNorm | \begin{abstract} Skip connections change the function class of an MLP  |
 | 1 | Introduction | para |  |  | \section{Introduction}\label{sec:intro}\label{sec:related} |
 | 2 | Introduction | para | d_model, the width |  | Skip connections are a building block of almost every deep network tra |
 | 3 | Introduction | para |  | residual | Skipless networks are now trained as well. \citet{he2023shortcuts} tra |
