@@ -2,15 +2,15 @@
 
 | Unit | Section | Kind | Defines | First uses | Start |
 |---|---|---|---|---|---|
-| 0 | abstract | para |  | RMSNorm, change of basis, d_model, the width, functional dimension, per block, pre-RMSNorm | \begin{abstract} Skip connections change the function class of an MLP  |
+| 0 | abstract | para |  | RMSNorm, d_model, the width, functional dimension, per block, pre-RMSNorm | \begin{abstract} Skip connections change the function class of an MLP  |
 | 1 | Introduction | para |  |  | \section{Introduction}\label{sec:intro}\label{sec:related} |
 | 2 | Introduction | para | d_model, the width |  | Skip connections are a building block of almost every deep network tra |
 | 3 | Introduction | para |  | residual | Skipless networks are now trained as well. \citet{he2023shortcuts} tra |
-| 4 | Introduction | para | L, the number of blocks | L, the number of blocks | \para{Where the degrees of freedom come from.} Without skips, the basi |
+| 4 | Introduction | para | L, the number of blocks | L, the number of blocks, change of basis, readout / unembedding | \para{Where the degrees of freedom come from.} Without skips, the basi |
 | 5 | Introduction | para | functional dimension | generic | \para{Functional dimension.} By the degrees of freedom of a network we |
 | 6 | Introduction | float |  |  | \begin{figure}[t] \centering \includegraphics[width=0.94\linewidth]{fi |
-| 7 | Introduction | para |  |  | \para{Functional dimension and equality of functions.} A set of functi |
-| 8 | Introduction | para | A_l, a learned skip, identity skip, identity units, learned skip | A_l, a learned skip, identity skip, identity units, learned skip, readout / unembedding, redundancy | \para{Contributions and related work.} \Cref{tab:results} lists the re |
+| 7 | Introduction | para |  |  | \para{Functional dimension and equality of functions.} The result of \ |
+| 8 | Introduction | para | A_l, a learned skip, identity skip, identity units, learned skip | A_l, a learned skip, identity skip, identity units, learned skip, redundancy | \para{Contributions and related work.} \Cref{tab:results} lists the re |
 | 9 | Introduction | float | analytic blocks, functional dimension added by the skips | functional dimension added by the skips | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \n |
 | 10 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, m, number of units, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, m, number of units, read / write (nouns) | \section{Setup}\label{sec:setup} \para{Blocks.} A hidden state is a ma |
 | 11 | Setup | para | E and D, P, the number of parameters, per block, readout / unembedding, residual | E and D, P, the number of parameters | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
