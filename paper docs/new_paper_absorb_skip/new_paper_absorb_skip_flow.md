@@ -15,7 +15,7 @@
 | 10 | Introduction | float | with pre-rmsnorm: | with pre-rmsnorm: | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.12} \ |
 | 11 | Setup | para |  |  | \section{Setup}\label{sec:setup} \takeaway{One equation states the que |
 | 12 | Setup | para | B_theta, Wread, Wwrite, theta, T, number of tokens, m, number of units, read / write (nouns) | B_theta, Wread, Wwrite, theta, T, number of tokens, m, number of units, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
-| 13 | Setup | para | M, the linear term | M, the linear term | \para{Absorbing a linear term.} A skip adds $x$ to the output of a blo |
+| 13 | Setup | para | M, the linear term | M, the linear term | \para{Absorbing a linear term.} Can a block absorb a linear term $xM$, |
 | 14 | Setup | para | L, the number of blocks, residual, skipless | L, the number of blocks | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
 | 15 | Setup | para | N(h), RMSNorm | N(h) | \para{Normalization.} RMSNorm, written $N$, divides each row $v$ of a  |
 | 16 | Setup | para |  |  | \para{Biases.} Blocks have no biases, and the answers depend on it (\c |

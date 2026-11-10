@@ -190,7 +190,7 @@ B_\theta(x) = f(x\Wread)\,\Wwrite.
 \end{equation}
 In a vanilla block with $m$ hidden units, $\Wread \in \R^{\dm\times m}$, $\Wwrite \in \R^{m\times\dm}$, and $f$ applies an activation $\sigma$ to each unit: ReLU, GELU, $\tanh$, or the square of ReLU, ReLU$^2$. In a gated block the read has two halves, $\Wread = [\,W_{\mathrm g} \mid W_{\mathrm v}\,]$ with $W_{\mathrm g}, W_{\mathrm v} \in \R^{\dm\times m}$. Column $i$ of $W_{\mathrm g}$ is the gate read of unit $i$, and column $i$ of $W_{\mathrm v}$ is its value read. The unit multiplies $\sigma\big((xW_{\mathrm g})_i\big)$ by its value $(xW_{\mathrm v})_i$. The activation $\sigma$ of a gated block is called its gate: ReLU in ReGLU, SiLU in SwiGLU and GELU in GeGLU \citep{shazeer2020glu}. Two MLP blocks are of the same kind if they are of the same type, vanilla or gated, and have the same activation. All attention blocks are of one kind; they follow in \cref{sec:attention}.
 
-\para{Absorbing a linear term.} A skip adds $x$ to the output of a block. More generally, can a block absorb a linear term $xM$, for a $\dm\times\dm$ matrix $M \neq 0$? We look for parameters $\theta'$ of a block of the same kind, and of any width, such that
+\para{Absorbing a linear term.} Can a block absorb a linear term $xM$, for a $\dm\times\dm$ matrix $M \neq 0$? We look for parameters $\theta'$ of a block of the same kind, and of any width, such that
 \begin{equation}\label{eq:absorbask}
 xM + B_\theta(x) = B_{\theta'}(x) \qquad\text{for all } x \in \R^{1\times\dm}.
 \end{equation}
