@@ -60,19 +60,20 @@
 | 55 | When the bounds are attained | statement |  |  | \begin{restatable}[Exact gain for $\tanh$ and GELU]{theorem}{thmExactG |
 | 56 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
 | 57 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
-| 58 | Residual and skipless networks compute different functions | para | limit |  | Fix a finite set $X$ of inputs, and let $\mathcal S_X$ and $\mathcal R |
-| 59 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
-| 60 | Residual and skipless networks compute different functions | para |  |  | Outside GELU blocks without normalization, \citet{mijoski2026worth} al |
-| 61 | Numerical ranks at depth, and a conjecture | para |  |  | \subsection{Numerical ranks at depth, and a conjecture}\label{sec:meas |
-| 62 | Numerical ranks at depth, and a conjecture | para |  |  | At depth we compute the rank of the Jacobian on a large batch of input |
-| 63 | Numerical ranks at depth, and a conjecture | float |  |  | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \b |
-| 64 | Numerical ranks at depth, and a conjecture | para |  |  | In two cases the measured rank stays below the upper bound. In skiples |
-| 65 | Numerical ranks at depth, and a conjecture | statement |  |  | \begin{conjecture}[Equality without skips]\label{conj:equality} With o |
-| 66 | Numerical ranks at depth, and a conjecture | para |  |  | For ReLU$^2$ and ReGLU blocks we expect the equality condition to hold |
-| 67 | Numerical ranks at depth, and a conjecture | para |  |  | \para{One-hot tokens.} With one-hot tokens under RMSNorm, the rows of  |
-| 68 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
-| 69 | Conclusion | para |  |  | Skip connections change how a network uses its parameters. Without ski |
-| 70 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth is open for the |
-| 71 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
-| 72 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
-| 73 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 58 | Residual and skipless networks compute different functions | para | limit |  | A network $F$ is a \emph{limit} of a family of networks if, for all in |
+| 59 | Residual and skipless networks compute different functions | para |  |  | By \cref{def:fd,thm:resdepth}, there is a batch $X = (x_1, \dots, x_n) |
+| 60 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
+| 61 | Residual and skipless networks compute different functions | para |  |  | For GELU blocks without normalization, \citet{mijoski2026worth} show t |
+| 62 | Numerical ranks at depth, and a conjecture | para |  |  | \subsection{Numerical ranks at depth, and a conjecture}\label{sec:meas |
+| 63 | Numerical ranks at depth, and a conjecture | para |  |  | At depth we compute the rank of the Jacobian on a large batch of input |
+| 64 | Numerical ranks at depth, and a conjecture | float |  |  | \begin{table}[b] \centering\small \renewcommand{\arraystretch}{1.1} \b |
+| 65 | Numerical ranks at depth, and a conjecture | para |  |  | In two cases the measured rank stays below the upper bound. In skiples |
+| 66 | Numerical ranks at depth, and a conjecture | statement |  |  | \begin{conjecture}[Equality without skips]\label{conj:equality} With o |
+| 67 | Numerical ranks at depth, and a conjecture | para |  |  | For ReLU$^2$ and ReGLU blocks we expect the equality condition to hold |
+| 68 | Numerical ranks at depth, and a conjecture | para |  |  | \para{One-hot tokens.} With one-hot tokens under RMSNorm, the rows of  |
+| 69 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
+| 70 | Conclusion | para |  |  | Skip connections change how a network uses its parameters. Without ski |
+| 71 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth is open for the |
+| 72 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
+| 73 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
+| 74 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
