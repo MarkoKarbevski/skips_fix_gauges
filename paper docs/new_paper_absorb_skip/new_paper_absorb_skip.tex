@@ -105,13 +105,13 @@ Skip connections aid training and change which functions a block can represent. 
 
 Skip connections are widely used in deep networks, from ResNets to transformers \citep{he2016resnet,vaswani2017attention,dosovitskiy2021an,grattafiori2024llama3}. By adding a block's input to the output of its learned branch, they give gradients a short path and make the identity map easy to express \citep{veit2016ensembles,hardt2017identity}. Recent work has trained transformers with modified blocks and no skips \citep{he2024simplifying}, and a skipless ViT-B has outperformed its residual counterpart on ImageNet \citep{ji2026cutting}. Those results motivate a separate question about representation: given the function of a trained residual block, can we remove the skip and preserve its output on every input?
 
-Take a block $B$ without biases that acts on tokens of dimension $\dm$. It \emph{absorbs} its skip if some skipless block of the same kind and at least the same width computes the sum of the input and the original block output. For an MLP, the replacement uses the same type and activation, and width counts hidden units. For attention, we count heads. We first solve this problem for an isolated block and then ask whether a whole network can preserve its function after its skips are removed.
+Take a block $B$ without biases that acts on tokens of dimension $\dm$. We say that $B$ \emph{absorbs} its skip if a skipless block of the same kind and at least the same width computes the sum of $B$'s output and its input on every input. For MLPs, the replacement keeps the original type and activation, and width counts hidden units. For attention, width counts heads.
 
-For ReLU and GELU, the identity $\sigma(z)-\sigma(-z)=z$ supplies a construction: reflecting the input weights of selected units adds the linear term carried by the skip. A matching lower bound shows that almost every block needs exactly $\dm$ extra units (\cref{sec:relugelu}). The other blocks fail for distinct reasons. Squared-ReLU and gated blocks lack the required linear variation near zero, $\tanh$ outputs are bounded, and a zero query forces attention to average across tokens (\cref{sec:never,sec:attention}). Biases change this picture for several architectures. For example, a gate held at a nonzero constant can supply a linear term. \Cref{app:biases} gives the corresponding results, including for attention with rotary embeddings \citep{su2021roformer}. The bias-free setting covers many language models \citep{olmo2025olmo2,yang2025qwen3}.
+ReLU and GELU allow exact absorption because $\sigma(z)-\sigma(-z)=z$. Pairing a unit with a reflected copy supplies a rank-one linear term. With $\dm$ independent input directions, these terms can reproduce the identity skip. Almost every ReLU or GELU block of width at least $\dm$ needs exactly $\dm$ extra units (\cref{sec:relugelu}). Squared-ReLU, gated, $\tanh$, and attention blocks face different obstructions, which we derive in \cref{sec:never,sec:attention}. We focus on bias-free blocks, as used in many language models \citep{olmo2025olmo2,yang2025qwen3}. With biases, a gate held at a nonzero constant can supply a linear term. \Cref{app:biases} treats this construction and the corresponding results for other blocks, including attention with rotary embeddings \citep{su2021roformer}.
 
-At network scale, the linear embedding $E$ and linear readout $D$ expose a direct path $XED$ from an input $X$ through the skips. We assume $ED \neq 0$ for residual networks. Two networks are \emph{equal} if they compute the same function. In an unnormalized network the blockwise construction removes every ReLU or GELU skip. A separate lower bound forces the first skipless block to have at least $2\dm$ units for almost every residual network. For squared-ReLU, gated and $\tanh$ networks the obstruction rules out skipless replacements of the same kind. For attention stacks, the obstruction depends on the mask, sequence length, and depths (\cref{sec:networks}).
+Two networks are \emph{equal} if they compute the same function. A residual network with linear embedding $E$ and linear readout $D$ has a path that bypasses all learned branches. It sends an input $X$ directly to $XED$, and we assume $ED\neq 0$. Without normalization, replacing each ReLU or GELU block by its widened skipless equivalent preserves the composition. Even if the replacement can change depth and later widths, its first block needs at least $2\dm$ units for almost every residual network. The direct path also helps explain why the obstructions for squared-ReLU, gated, $\tanh$, and attention blocks can persist at depth (\cref{sec:networks}).
 
-In a pre-RMSNorm network, each block and the readout see normalized tokens, while the skips carry the unnormalized state. RMSNorm divides each token by its root mean square, regularized by a constant $\varepsilon \ge 0$. The two architectures approach their large-input limits at different rates, ruling out exact skip removal for almost every residual network. In the reverse direction, without normalization every skipless network can be approximated arbitrarily closely on bounded input sets by residual networks of the same widths (\cref{sec:limits}). \Cref{tab:results} summarizes the exact and limiting comparisons.
+In a pre-RMSNorm network, each learned branch and the readout receive normalized tokens. RMSNorm divides each token by its root mean square, regularized by a constant $\varepsilon \ge 0$. The skips carry the unnormalized state forward through the stack. This difference changes how the two networks respond to large inputs and rules out exact skip removal for almost every residual network. The approximation result reverses the roles: without normalization, every skipless network is a uniform limit on bounded input sets of residual networks of the same widths (\cref{sec:limits}). \Cref{tab:results} summarizes both comparisons.
 
 \begin{table}[t]
 \centering\small
@@ -195,7 +195,7 @@ ReLU and GELU both satisfy
 \end{equation}
 Let unit $i$ have read $w_i$, a column of $\Wread$, and write $\hat w_i$, a row of $\Wwrite$. By \eqref{eq:odd}, unit $i$ and its mirror image, a unit with read $-w_i$ and write $-\hat w_i$, add up to the linear term $(xw_i)\,\hat w_i$. This gives two ways to absorb $xM$.
 
-\emph{Widening the block.} Choose a row $\gamma \in \R^{1\times\dm}$. Adding a unit with read $-w_i$ and write $-\gamma$, and changing the write of unit $i$ to $\hat w_i+\gamma$, adds the rank-one term $(xw_i)\gamma$. If the reads span $\R^{\dm}$, choosing a basis from them lets $\dm$ such pairs realize any $xM$.
+\emph{Widening the block.} Choose a row $\gamma \in \R^{1\times\dm}$. Add $\gamma$ to the write of unit $i$, and add a new unit with read $-w_i$ and write $-\gamma$. The added output is $\big(\sigma(xw_i)-\sigma(-xw_i)\big)\gamma=(xw_i)\gamma$. If the original reads span $\R^{\dm}$, choose $\dm$ of them as a basis and choose the rows $\gamma$ so that the resulting rank-one terms sum to $xM$.
 
 \emph{At the same width.} Flipping the read of unit $i$ to $-w_i$ changes the block by $-(xw_i)\,\hat w_i$. So $B_\theta$ absorbs $xM$ at the same width if some set $S$ of units has $\Wread[{:},S]\,\Wwrite[S,{:}] = -M$, where $\Wread[{:},S]$ and $\Wwrite[S,{:}]$ keep the columns and rows of the units in $S$.
 
@@ -210,7 +210,9 @@ Let $\sigma$ be ReLU or GELU, and fix a matrix $M \neq 0$.\\
 
 For each subset $S$, the condition in (i) is a polynomial equation in the weights. Setting all writes to zero shows that it is nontrivial for fixed $M\neq 0$. The finitely many subsets therefore give a measure-zero exceptional set. Part (ii) gives the exact cost of an identity skip, $\dm$ extra units for almost every block.
 
-The proof separates the even and odd parts of the activation. The even part identifies the original unit directions through the kinks of $\lvert z\rvert$ for ReLU and through linear independence of ridge functions for GELU. Here a ridge function depends on $x$ only through a scalar product $xw$. The odd part, $z/2$, determines the linear contribution of a sign flip. The resulting rank constraint yields the width lower bound. This extends the sign-flip mechanism of \citet[Theorem~1]{petzka2020symmetries} to multiple outputs and to GELU in the bias-free setting. \Cref{rem:evenpart} gives an example showing that \eqref{eq:odd} alone is insufficient for the characterization.
+The even part of the output determines which original read directions the replacement must keep. For ReLU, each direction is identified by the kink of an absolute-value term. For GELU, the proof uses linear independence of ridge functions, each depending on $x$ through a single scalar product $xw$. The linear target $xM$ disappears from this comparison because it is odd in $x$.
+
+The odd part then determines what remains of $M$ after sign flips of the matched units. For generic weights that remaining matrix still has rank $\dm$ when $M$ is invertible. Each direction with units of both signs requires at least one extra unit and contributes a matrix of rank at most one. The replacement therefore needs at least $\dm$ extra units. The same-width result extends the sign-flip mechanism of \citet[Theorem~1]{petzka2020symmetries} to multiple outputs and to GELU in the bias-free setting. \Cref{rem:evenpart} gives an example showing why the form of the even part matters.
 
 \para{Networks of one block.} A residual network of one block is a block with the reads $E\Wread$ and the writes $\Wwrite D$, plus the linear term $XED$: it computes $X \mapsto XED + f(XE\Wread)\,\Wwrite D$. The proof of \cpref{thm:relugelu}{i} holds for such rectangular reads, writes and linear terms.
 
@@ -274,7 +276,9 @@ B_\theta(h) = \sum_{i=1}^{H} P_{\Gamma_i}(h)\, h\, W_{V,i} W_{O,i}, \qquad P_\Ga
 \end{equation}
 The entries of the $T\times T$ matrix $h\,\Gamma_i h^\top$ are the scores of head $i$. The softmax acts on each of its rows, with or without a causal mask, so each row of $P_\Gamma(h)$ is a probability vector. The read of the block holds the matrices $W_{Q,i}$, $W_{K,i}$ and $W_{V,i}$, and its write the matrices $W_{O,i}$. Head $i$ has the score matrix $\Gamma_i$ and the value--output product $W_{V,i}W_{O,i}$.
 
-Two input families force incompatible constraints on the summed value--output products. On a sequence of identical tokens, the skipless sum must equal the residual branch's sum plus $M$. Now set one token to zero, placing it last with a causal mask. Its zero query makes each head average the visible tokens. The skip contributes zero at that token, so the difference of the two sums must annihilate every possible visible mean. These constraints force $M=0$.
+Suppose a skipless block matches the residual block on every input. First give both blocks a sequence in which every token is the same row $x$. Each head averages identical values, so its attention weights disappear from the output. Equality for every $x$ forces the sum of the skipless head products to equal the sum of the residual branch's head products plus $M$.
+
+Now set one token to zero, choosing the last token when the mask is causal. Its query is zero, so every head averages the visible tokens uniformly. The skip contributes zero at this token. The two outputs therefore differ by the visible mean multiplied by $M$. The other tokens can realize any such mean, so equality would force $M=0$.
 
 \begin{restatable}[No absorption in attention blocks]{theorem}{thmAttention}\label{thm:attention}
 Let $\theta$ and $\theta'$ be parameters of attention blocks with any numbers of heads and any head dimensions, and let $M \neq 0$ be a $\dm\times\dm$ matrix.\\
@@ -283,11 +287,11 @@ Let $\theta$ and $\theta'$ be parameters of attention blocks with any numbers of
 \end{restatable}
 \specialof{thm:attentionfull}{app:attention}
 
-The discrepancy is analytic in $h$, so a single disagreement implies disagreement on almost every input. Part (ii) strengthens this to a uniform lower bound on the worst-case error over sequences whose rows have norm at most $1$. The argument also applies to bias-free rotary attention, since a rotated zero query still gives uniform weights over visible tokens. The same comparison rules out equality for a one-block network with embedding and readout (\cpref{thm:attentionfull}{iii}).
+For a fixed candidate block, the output difference is analytic in $h$. The two input families show it is nonzero somewhere, so the blocks disagree on almost every input. Part (ii) also gives a quantitative guarantee. For each candidate, some sequence with row norms at most $1$ has an output error of at least $\norm{M}/3$ in one row. The bound is independent of the candidate, though the sequence can depend on it. A rotated zero query still gives uniform weights over visible tokens, so the argument also covers bias-free rotary attention. With embedding and readout, the same comparison rules out equality for a one-block network (\cpref{thm:attentionfull}{iii}).
 
 \section{Exact skip removal in networks}\label{sec:networks}
 
-The isolated-block results give a sufficient construction for whole networks when a skip can be absorbed locally. A network-level lower bound needs a separate argument, since the replacement can redistribute computation across blocks or change the embedding and readout. We first quantify the cost for ReLU and GELU, then compare input-output invariants for the remaining networks.
+Replacing each block by an equivalent one is enough to preserve an unnormalized network. To prove that a replacement needs a given width, however, we must allow the skipless network to change how it distributes computation across blocks, including how it embeds and reads out its states. The lower bounds below compare the functions of the whole networks.
 
 \subsection{Width bounds for unnormalized ReLU and GELU networks}\label{sec:relunets}
 
@@ -305,7 +309,7 @@ Consider networks of ReLU blocks, or of GELU blocks, without normalization. For 
 \end{restatable}
 \proofin{app:absorb}
 
-For ReLU, the residual map is locally linear of rank $\dm$ near almost every input at generic weights. A first-layer unit can be active at at most one of an input and its negative. With fewer than $2\dm$ units, one of those two inputs therefore has fewer than $\dm$ active units, and the skipless map loses an input direction there.
+At generic weights, the residual ReLU network is locally linear with rank $\dm$ near almost every input. A first-layer unit in the skipless network has opposite preactivations at an input and its negative, so it is active at at most one of them. If the first block has fewer than $2\dm$ units, at least one of the two inputs has fewer than $\dm$ active units. At that input the first block has rank below $\dm$, and composing later blocks cannot restore the missing input directions.
 
 For GELU, rescale the input by $t$ and divide the output by $t$. The bound $\lvert\mathrm{GELU}(tz)-t\,\mathrm{ReLU}(z)\rvert<0.17$ for $t>0$ implies that the rescaled network converges to the ReLU network at the original input and with the same weights. An exact GELU equality thus implies a ReLU equality, to which the rank obstruction applies.
 
@@ -320,7 +324,7 @@ Let $\sigma$ be ReLU or GELU, without normalization, and let $E$ and $D$ have ra
 
 The condition holds when every block has $\norm{\Wread}\,\norm{\Wwrite} < 1$, in spectral norm: the ReLU block $B$ is then a contraction, so $x \mapsto x + B(x)$ is injective. This is an open condition on the weights, and it holds for every network whose writes are small enough for fixed reads, $E$ and $D$. When every block of the residual network also has $\dm$ hidden units and an invertible read, an equal skipless network of the same depth needs exactly $\dm$ extra units in every block, by \cref{prop:extraunits}.
 
-An injective residual stack with embedding and readout of rank $\dm$ sends distinct embedded tokens to distinct outputs. An equivalent skipless network must preserve that distinction through each block. For ReLU, comparing active units at opposite inputs then gives the width bound. The GELU case uses the same comparison after taking the limit along rays.
+With embedding and readout of rank $\dm$, an injective residual stack preserves distinctions between all embedded tokens. In an equal skipless network with the same hidden dimension, the preceding maps must reach every token at each hidden state. The proof establishes this for the ReLU maps by combining injectivity with positive homogeneity (\cref{app:absorb}). Thus no skipless block can identify two different tokens, and the active-unit comparison at opposite inputs applies at each block. For GELU, apply the same reasoning to the ReLU limit along rays.
 
 For ReLU, a different open set of weights illustrates why injectivity matters. The map $x\mapsto x+2\,\mathrm{ReLU}(-x)$ folds each coordinate onto its absolute value. Near this first block, later blocks can have all their units inactive on the image of the first, so $\dm$ extra units in the first block suffice at every depth (\cref{rem:fold}). The corresponding GELU question remains open.
 
@@ -346,7 +350,7 @@ The direct skip path distinguishes the network derivatives at the origin. Every 
 
 \subsection{Attention stacks: the effect of sequence length}\label{sec:attnnets}
 
-At the origin, a skipless attention stack composes token averages. Its first-order map is $\delta\mapsto U^{L'}\delta\,\Lambda'$ for some matrix $\Lambda'$, where $U$ replaces each token by the mean of its visible tokens and $L'$ is the skipless depth. Each residual block adds a path that bypasses $U$, and the path that bypasses every block contributes $\delta\mapsto\delta\,ED$.
+At zero input, every head assigns uniform weight to its visible tokens. To first order, an attention block therefore applies a fixed token-averaging matrix $U$ and a linear feature map. A skipless stack of depth $L'$ averages at every block, so its Jacobian has the form $\delta\mapsto U^{L'}\delta\,\Lambda'$ for some feature matrix $\Lambda'$. In a residual stack, the identity path bypasses token averaging. The path that uses every skip contributes a term proportional to $\delta\,ED$ with no factor of $U$.
 
 \begin{restatable}[Attention networks on long and short sequences]{theorem}{thmAttnNet}\label{thm:attnnet}
 Without normalization or with pre-RMSNorm and $\varepsilon > 0$, let a residual network of $L$ attention blocks have $ED \neq 0$. Consider skipless networks of $L' \ge 1$ attention blocks, with any numbers of heads and any head dimensions.\\
@@ -367,7 +371,9 @@ Consider pre-RMSNorm networks, with $\varepsilon \ge 0$ and blocks of any kind a
 \end{restatable}
 \proofin{app:prf-epszero}
 
-Along a ray $tX$, the first skipless normalization is $N(tXE')$, whose dependence on $t$ enters through $\varepsilon/t^2$. The skipless output therefore approaches its limit at order $1/t^2$ or faster. In the residual stack, the blocks add bounded corrections to $tXE$. Their transverse component rotates the token directions by order $1/t$, which is visible after the final normalization. For almost every choice of weights there is an input with a nonzero transverse correction. The difference in rates applies to mixed attention and MLP stacks as well.
+Along a ray $tX$, the skipless stack receives $N(tXE')$, with $E'$ its embedding. Cancelling $t$ in the numerator and denominator leaves $\varepsilon/t^2$ as the only dependence on $t$. The output therefore differs from its limit by at most order $1/t^2$, and for $\varepsilon=0$ it is constant along the ray wherever it is defined.
+
+The residual stack carries $tXE$ and adds bounded block outputs to it. A component of their sum perpendicular to a token changes the direction of that token by order $1/t$. The final normalization removes the leading scale, leaving that change of direction visible to a generic readout. Exact equality would require these $1/t$ corrections to vanish for every input. The proof shows that this occurs only on a measure-zero set of residual weights, including for mixed attention and MLP stacks.
 
 \section{Approximating skipless networks with residual networks}\label{sec:limits}
 
@@ -380,7 +386,7 @@ Let $F$ be a skipless network whose blocks are locally Lipschitz.\\
 \end{restatable}
 \proofin{app:prf-limits}
 
-\para{Rescaling construction.} Scale the read and write of block $\ell$ by $t^{1-\ell}$ and $t^\ell$, respectively, and the readout by $t^{-L}$. After undoing these scale factors, each block receives the target skipless state up to $O(1/t)$ and its skip is suppressed by a factor of $t$ (\cref{rem:limitrate}). The large scale factors sit in the writes, so the argument also applies to bounded activations such as $\tanh$. The approximating weights diverge as $t\to\infty$.
+\para{Rescaling construction.} Aim for the residual state after block $\ell$ to be $t^\ell$ times the corresponding skipless state. Multiply the read of block $\ell$ by $t^{1-\ell}$ so it cancels the scale of the incoming state, and multiply its write by $t^\ell$ to set the new scale. The skip still carries the old scale $t^{\ell-1}$, so after dividing by the new scale its contribution is of order $1/t$. Induction controls the accumulated error, and the readout factor $t^{-L}$ restores the output scale (\cref{rem:limitrate}). The construction applies to bounded activations such as $\tanh$ because their inputs stay bounded. The approximating weights diverge as $t\to\infty$.
 
 \para{Effect of the regularizer.} At $\varepsilon=0$, RMSNorm removes positive scale exactly, so scaling the writes suffices. With $\varepsilon>0$, scaling a hidden state by $t^\ell$ changes the effective regularizer to $\varepsilon/t^{2\ell}$. Whether same-width residual networks can approximate every skipless network in that setting remains open.
 
