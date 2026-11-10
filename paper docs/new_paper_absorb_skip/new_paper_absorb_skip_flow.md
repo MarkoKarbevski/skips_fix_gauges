@@ -24,7 +24,7 @@
 | 19 | One block | para |  |  | \section{One block}\label{sec:oneblock} \takeaway{For almost every ReL |
 | 20 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para |  |  | \subsection{ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm |
 | 21 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | mirror image, w_i and hat w_i, read and write of a unit | mirror image, w_i and hat w_i, read and write of a unit | ReLU and GELU both satisfy \begin{equation}\label{eq:odd} \sigma(z) -  |
-| 22 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | with more units. |  | \emph{With more units.} For a row $\gamma \in \R^{1\times\dm}$, a new  |
+| 22 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | with more units. |  | \emph{With more units.} Take a row $\gamma \in \R^{1\times\dm}$. Add a |
 | 23 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | S, a set of units, at the same width. | S, a set of units, at the same width. | \emph{At the same width.} Flipping the read of unit $i$ to $-w_i$ chan |
 | 24 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | nondegenerate | nondegenerate | The next theorem says that at the same width these flips are the only  |
 | 25 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | statement |  |  | \begin{restatable}[Absorption with $\dm$ more units]{theorem}{thmAbsor |
@@ -52,7 +52,7 @@
 | 47 | Attention networks: never equal on long sequences | statement |  |  | \begin{restatable}[Attention networks on long and short sequences]{the |
 | 48 | Attention networks: never equal on long sequences | para |  |  | In the cases of (i), no number of heads helps. Neither does depth, onc |
 | 49 | Networks under RMSNorm: almost never equal | para |  |  | \subsection{Networks under RMSNorm: almost never equal}\label{sec:rmsn |
-| 50 | Networks under RMSNorm: almost never equal | para |  |  | Under RMSNorm the answer no longer depends on the kind of block. A ski |
+| 50 | Networks under RMSNorm: almost never equal | para |  |  | Under RMSNorm the answer no longer depends on the kind of block. The s |
 | 51 | Networks under RMSNorm: almost never equal | statement |  |  | \begin{restatable}[Almost no equality under RMSNorm]{theorem}{thmRMSNe |
 | 52 | Networks under RMSNorm: almost never equal | para |  |  | The proof compares rates of convergence along rays $tX$, as $t \to \in |
 | 53 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | \subsection{ReLU and GELU networks without normalization: \texorpdfstr |
@@ -66,7 +66,7 @@
 | 61 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | statement |  |  | \begin{restatable}[Injective blocks: $2\dm$ units in every block]{prop |
 | 62 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | The condition holds when every block has $\norm{\Wread}\,\norm{\Wwrite |
 | 63 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | The proof turns on injectivity. If every residual block is injective,  |
-| 64 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | For ReLU networks the condition cannot be dropped. On another open set |
+| 64 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | For ReLU networks the condition cannot be dropped. Let the first resid |
 | 65 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para | full | full | \para{Wide residual blocks: a bound from counting dimensions.} When th |
 | 66 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | statement |  |  | \begin{restatable}[A lower bound from counting dimensions]{proposition |
 | 67 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | A skipless network has a change of basis at each of its $L + 1$ hidden |

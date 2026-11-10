@@ -70,6 +70,10 @@
 \DeclareRobustCommand{\Cpref}[2]{\hyperref[#1:#2]{\Cref*{#1}(#2)}}
 \DeclareRobustCommand{\rpref}[2]{\hyperref[#1:#2]{\ref*{#1}(#2)}}
 \DeclareRobustCommand{\ptlink}[2]{\hyperref[#1:#2]{(#2)}}
+% No page break between a statement and the line that follows it (its "Proof in" line, or its proof).
+\makeatletter
+\@ifundefined{AddToHook}{}{\AddToHook{env/restatable/begin}{\@endparpenalty\@M}}
+\makeatother
 \newcommand{\proofin}[1]{\par\vspace{-0.4\baselineskip}\noindent\hfill{\small\itshape Proof in \cref{#1}.}\par\smallskip}
 % A main-text result that is a special case of, or follows from, a result in the appendix.
 \newcommand{\specialof}[2]{\par\vspace{-0.4\baselineskip}\noindent\hfill{\small\itshape A special case of \cref{#1}, proved in \cref{#2}.}\par\smallskip}
@@ -217,7 +221,7 @@ ReLU and GELU both satisfy
 \end{equation}
 Let unit $i$ have read $w_i$, a column of $\Wread$, and write $\hat w_i$, a row of $\Wwrite$. By \eqref{eq:odd}, unit $i$ and its mirror image, a unit with read $-w_i$ and write $-\hat w_i$, add up to the linear term $(xw_i)\,\hat w_i$. This gives two ways to absorb $xM$.
 
-\emph{With more units.} For a row $\gamma \in \R^{1\times\dm}$, a new unit with read $-w_i$ and write $-\gamma$, with the write of unit $i$ changed to $\hat w_i + \gamma$, adds $(xw_i)\,\gamma$ to the block. So each new unit adds one rank-one term, and $\dm$ new units, mirroring $\dm$ units whose reads span $\R^{\dm}$, add any $xM$.
+\emph{With more units.} Take a row $\gamma \in \R^{1\times\dm}$. Add a unit with read $-w_i$ and write $-\gamma$, and change the write of unit $i$ to $\hat w_i + \gamma$. By \eqref{eq:odd}, the block gains the term $(xw_i)\,\gamma$. So each new unit adds one rank-one term, and $\dm$ new units, mirroring $\dm$ units whose reads span $\R^{\dm}$, add any $xM$.
 
 \emph{At the same width.} Flipping the read of unit $i$ to $-w_i$ changes the block by $-(xw_i)\,\hat w_i$. So $B_\theta$ absorbs $xM$ at the same width if some set $S$ of units has $\Wread[{:},S]\,\Wwrite[S,{:}] = -M$, where $\Wread[{:},S]$ and $\Wwrite[S,{:}]$ keep the columns and rows of the units in $S$.
 
@@ -232,7 +236,7 @@ Let $\sigma$ be ReLU or GELU, and fix a matrix $M \neq 0$.\\
 
 In (i), the equation $\Wread[{:},S]\,\Wwrite[S,{:}] = -M$ is polynomial in the weights for each of the finitely many sets $S$, and it fails when the writes vanish, so it holds only on a set of weights of measure zero. By (ii), for almost every block the skip, $M = I$, is worth exactly $\dm$ units.
 
-The proof matches the units of the two blocks. The even part of the activation, $\big(\sigma(z) + \sigma(-z)\big)/2$, matches each unit of $B_{\theta'}$ to a unit of $B_\theta$, up to sign and scale: for ReLU through the kinks of $\lvert z\rvert$, and for GELU through the linear independence of ridge functions, which depend on $x$ only through one product $xw$. The odd part, $z/2$, turns each sign flip into a linear term. Each extra unit then adds at most one rank-one term, and $M = I$ has rank $\dm$. For two-layer ReLU networks with one output, with biases and a linear term, \citet[Theorem~1]{petzka2020symmetries} show that permutations, rescalings and such sign flips are the only transformations between two irreducible networks that compute the same function; part (i) is the analogue for blocks with several outputs and without biases, and for GELU. Identity \eqref{eq:odd} alone does not make these flips the only way: \cref{rem:evenpart} gives an activation that satisfies it and absorbs $xM$ in more ways.
+The proof matches the units of the two blocks. The even part of the activation, $\big(\sigma(z) + \sigma(-z)\big)/2$, matches each unit of $B_{\theta'}$ to a unit of $B_\theta$, up to sign and scale: for ReLU through the kinks of $\lvert z\rvert$, and for GELU through the linear independence of ridge functions, which depend on $x$ only through one product $xw$. The odd part, $z/2$, turns each sign flip into a linear term. Each extra unit then adds at most one rank-one term, and $M = I$ has rank $\dm$. For two-layer ReLU networks with one output, with biases and a linear term, \citet[Theorem~1]{petzka2020symmetries} show that permutations, rescalings and such sign flips are the only transformations between two irreducible networks that compute the same function. Part (i) is the analogue for blocks with several outputs and without biases, and for GELU. Identity \eqref{eq:odd} alone does not make these flips the only way: \cref{rem:evenpart} gives an activation that satisfies it and absorbs $xM$ in more ways.
 
 \para{Networks of one block.} A residual network of one block is a block with the reads $E\Wread$ and the writes $\Wwrite D$, plus the linear term $XED$: it computes $X \mapsto XED + f(XE\Wread)\,\Wwrite D$. The proof of \cpref{thm:relugelu}{i} holds for such rectangular reads, writes and linear terms.
 
@@ -321,7 +325,7 @@ Let the residual network have $ED \neq 0$.\\
 \end{restatable}
 \proofin{app:absorb}
 
-The reasons are those of \cref{fig:reasons}, now for the whole network. A gated block, and a homogeneous block of degree $k > 1$, has derivative $0$ at the origin. So every skipless network of them has Jacobian $0$ at the input $X = 0$, while a residual network has Jacobian $ED \neq 0$ there, or $ED/\sqrt{\varepsilon}$ under RMSNorm. This comparison of derivatives needs $k > 1$. A skipless $\tanh$ network is bounded, while a residual one grows like $XED$ along rays. With $E = D = I$, the theorem covers compositions of blocks.
+The reasons are those of \cref{fig:reasons}, now for the whole network. A gated block, and a homogeneous block of degree $k > 1$, has derivative $0$ at the origin. So every skipless network of such blocks has Jacobian $0$ at the input $X = 0$, while a residual network has Jacobian $ED \neq 0$ there, or $ED/\sqrt{\varepsilon}$ under RMSNorm. This comparison of derivatives needs $k > 1$. A skipless $\tanh$ network is bounded, while a residual one grows like $XED$ along rays. With $E = D = I$, the theorem covers compositions of blocks.
 
 \subsection{Attention networks: never equal on long sequences}\label{sec:attnnets}
 
@@ -339,7 +343,7 @@ In the cases of (i), no number of heads helps. Neither does depth, once a sequen
 
 \subsection{Networks under RMSNorm: almost never equal}\label{sec:rmsnets}
 
-Under RMSNorm the answer no longer depends on the kind of block. A skip keeps the norm of each token, and a skipless network loses it at its first normalization.
+Under RMSNorm the answer no longer depends on the kind of block. The skips carry the norm of each token to the last normalization, while a skipless network loses it at the first.
 
 \begin{restatable}[Almost no equality under RMSNorm]{theorem}{thmRMSNet}\label{thm:rmsnet}
 Consider pre-RMSNorm networks, with $\varepsilon \ge 0$ and blocks of any kind and width. For almost every choice of weights, a residual network equals no skipless network, whatever its depth, widths and kinds of blocks.
@@ -379,7 +383,7 @@ The condition holds when every block has $\norm{\Wread}\,\norm{\Wwrite} < 1$, in
 
 The proof turns on injectivity. If every residual block is injective, the residual network maps distinct embedded tokens $xE$ to distinct outputs. So every block of an equal skipless network must map distinct tokens to distinct tokens, and a ReLU block without biases does so only with $2\dm$ units, since no unit is active at both $x$ and $-x$.
 
-For ReLU networks the condition cannot be dropped. On another open set of weights, around the first block $x \mapsto x + 2\,\mathrm{ReLU}(-x)$, which replaces every coordinate of $x$ by its absolute value, the first block is not injective, the units of later blocks are never active, and $\dm$ extra units in the first block suffice at every depth (\cref{rem:fold}). For GELU networks without the condition, the question is open.
+For ReLU networks the condition cannot be dropped. Let the first residual block compute $x \mapsto x + 2\,\mathrm{ReLU}(-x)$, which replaces every coordinate of $x$ by its absolute value and so is not injective, and let the reads of the later blocks have negative entries. Then the units of the later blocks are never active, and $\dm$ extra units in the first block suffice at every depth. The same holds on an open set of weights around such networks (\cref{rem:fold}). For GELU networks without the condition, the question is open.
 
 \para{Wide residual blocks: a bound from counting dimensions.} When the residual blocks have $2\dm$ units or more, \cref{prop:everyblock} says nothing. Counting dimensions still bounds the extra units of ReLU networks. Let the residual network have $P$ weights and $s$ hidden units. Its function does not change under one change of basis of the hidden states, nor when the read of a unit is multiplied by $c > 0$ and its write by $1/c$. So on any finite set of inputs, the Jacobian of the outputs with respect to the weights has rank at most $P - \dm^2 - s$ \citep{karbevski2026unlock}. We call a residual ReLU network \emph{full} if this rank is reached on some finite set of inputs at which no unit has argument $0$: its only redundancy is then these symmetries.
 
@@ -402,7 +406,7 @@ Let $F$ be a skipless network whose blocks are locally Lipschitz.\\
 
 \para{Idea of the proof.} The proof scales the reads of block $\ell$ by $t^{1-\ell}$, its writes by $t^\ell$ and the readout by $t^{-L}$. Block $\ell$ then sees the hidden state of $F$, up to $O(1/t)$, and outweighs its skip by a factor $t$, so the residual network computes $F + O(1/t)$ (\cref{rem:limitrate}). The large constants sit in the writes, so no activation sees a large argument, and the construction applies alike to $\tanh$, GELU, ReLU, ReLU$^2$, gated and attention blocks. In this construction the weights diverge as $t \to \infty$. So without normalization, residual networks come arbitrarily close to every skipless network on bounded sets of inputs, even where none equals it.
 
-\para{Under RMSNorm.} With $\varepsilon = 0$, RMSNorm ignores the size of the hidden states, so only the writes grow. With $\varepsilon > 0$ the construction fails, since on a hidden state of size $t^{\ell}$ RMSNorm acts as RMSNorm with $\varepsilon/t^{2\ell}$; whether skipless networks are limits of residual ones there is open.
+\para{Under RMSNorm.} With $\varepsilon = 0$, RMSNorm ignores the size of the hidden states, so only the writes grow. With $\varepsilon > 0$ the construction fails, since on a hidden state of size $t^{\ell}$ RMSNorm acts as RMSNorm with $\varepsilon/t^{2\ell}$. Whether skipless networks are limits of residual networks in that case is open.
 
 \section{Related work}\label{sec:related}
 
