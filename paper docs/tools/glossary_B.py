@@ -2,7 +2,7 @@
 TERMS = [
     ('d_model, the width', r'\\dm', r'(?i)\$\\dm\$ is the dimension of the hidden states|\$\\dm\$ is the hidden dimension|have dimension \$\\dm\$|\$\\dm\$ is the model dimension'),
     ('read / write (nouns)', r'(?i)\b(the|a|each|its) (read|write)s?\b', r'the \\emph\{read\}'),
-    ('functional dimension', r'(?i)functional dimension', r'(?i)functional dimension, the number of'),
+    ('functional dimension', r'(?i)functional dimension', r'(?i)functional dimension\}?, the number of'),
     ('equality condition', r'(?i)equality condition', r'\\emph\{equality condition\}'),
     ('change of basis', r'(?i)changes? of (basis|units)', r'(?i)\\emph\{change of basis\}|change of units is an invertible'),
     ('learned skip', r'(?i)learned skip', r'(?i)\\emph\{learned skips\}|learned skip adds \$hA\$|learned skip multiplies the hidden state'),
