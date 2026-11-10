@@ -127,7 +127,7 @@ Skipless networks are now trained as well. \citet{he2023shortcuts} train deep tr
 \label{fig:gelu}
 \end{figure}
 
-\para{Functional dimension and equality of functions.} The result of \citet{mijoski2026worth} does not cover GELU blocks without normalization: there, they show that almost every residual network computes the same function as a skipless network with $\dm$ more units per block. Functional dimension shows that extra units are needed. At the same widths, skipless networks have the lower functional dimension, and a set of functions cannot lie inside a set of lower dimension. So almost no residual network of GELU blocks computes the same function as a skipless network of GELU blocks of the same widths (\cpref{thm:classes}{i}). Without normalization, the same argument excludes wider skipless networks as well: almost no residual network of $L$ GELU blocks computes the same function as a skipless network of $L$ GELU blocks that has, in total, fewer than $L\dm/2$ more hidden units than the residual network (\cpref{thm:classes}{ii}). For attention, $\tanh$, GELU, SwiGLU and GeGLU blocks, with or without pre-RMSNorm, almost no residual network is even a limit of skipless networks of the same widths (\cref{thm:classes}). Conversely, without normalization, every skipless network is a limit of residual networks of the same widths \citep{mijoski2026worth}.
+\para{Functional dimension and equality of functions.} The result of \citet{mijoski2026worth} does not cover GELU blocks without normalization: there, they show that almost every residual network computes the same function as a skipless network with $\dm$ more units per block. Functional dimension shows that extra units are needed. At the same widths, skipless networks have the lower functional dimension, and a set of functions cannot lie inside a set of lower dimension. So almost no residual network of GELU blocks computes the same function as a skipless network of GELU blocks of the same widths (\cpref{thm:classes}{i}). Without normalization, the same argument excludes wider skipless networks as well: almost no residual network of $L$ GELU blocks computes the same function as a skipless network of $L$ GELU blocks that has, in total, fewer than $L\dm/2$ more hidden units than the residual network (\cpref{thm:classes}{ii}). \citet{mijoski2026worth} also show that, without normalization, every skipless network is a limit of residual networks of the same widths. In the other direction, almost no residual network is a limit of skipless networks of the same widths, for attention, $\tanh$, GELU, SwiGLU and GeGLU blocks, with or without pre-RMSNorm (\cpref{thm:classes}{i}).
 
 \para{Contributions and related work.} \Cref{tab:results} lists the results, and the proofs are in the appendix.
 \begin{enumerate}[label=\arabic*.]
@@ -414,11 +414,13 @@ Without normalization, in the two cases below the skipless network satisfies the
 
 \subsection{Residual and skipless networks compute different functions}\label{sec:classes}
 
-Fix a finite set $X$ of inputs, and let $\mathcal S_X$ and $\mathcal R_X$ be the sets of outputs on $X$ of the skipless and of the residual networks of the same widths. For analytic blocks and a suitable $X$, \cref{thm:unlock,thm:resdepth} give
+A network $F$ is a \emph{limit} of a family of networks if, for all inputs $x_1, \dots, x_n$ and every $\delta > 0$, some network $F'$ of the family has $\norm{F'(x_i) - F(x_i)} < \delta$ for all $i$. \citet{mijoski2026worth} show that, without normalization, every skipless network is a limit of residual networks of the same widths, even uniformly on bounded sets of inputs. They also show that a residual network of analytic blocks at generic parameters equals no skipless network of blocks of the same kind, whatever its depth and widths, except for GELU blocks without normalization. We show that, for all analytic blocks, with or without pre-RMSNorm, a residual network at generic parameters is not even a limit of skipless networks of the same widths.
+
+By \cref{def:fd,thm:resdepth}, there is a batch $X = (x_1, \dots, x_n)$ of inputs on which the Jacobian of the residual network has rank $P - \dim\G - s$ at generic parameters. Let $\mathcal S_X$ and $\mathcal R_X$ be the images of the map $\theta \mapsto (F_\theta(x_1), \dots, F_\theta(x_n))$ of \cref{def:fd} for the skipless and for the residual networks of the same widths: the sets of their outputs on $X$. The dimension of each image is the rank of the Jacobian of its map at generic $\theta$, so \cref{thm:unlock} and the choice of $X$ give
 \begin{equation}\label{eq:gap}
 \dim\overline{\mathcal S_X} \;=\; \dim\mathcal S_X \;\le\; P - (L+1)\dim\G - s \;<\; P - \dim\G - s \;=\; \dim\mathcal R_X.
 \end{equation}
-The first equality holds because $\tanh$, GELU, SiLU and the softmax are definable in an o-minimal structure, where a set and its closure have the same dimension (\cref{lem:closure}). A set of lower dimension meets one of higher dimension in a set of measure zero, so the outputs of almost every residual network lie outside $\overline{\mathcal S_X}$: the network equals no skipless network of the same widths, and it is not a limit of such networks. Here a network $F$ is a \emph{limit} of a family of networks if, for all inputs $x_1, \dots, x_n$ and every $\delta > 0$, some network $F'$ of the family has $\norm{F'(x_i) - F(x_i)} < \delta$ for all $i$. Conversely, without normalization, every skipless network is a limit of residual networks of the same widths, even uniformly on bounded sets of inputs \citep{mijoski2026worth}.
+The first equality, between $\mathcal S_X$ and its closure $\overline{\mathcal S_X}$, holds because $\tanh$, GELU, SiLU, the softmax and RMSNorm are definable in an o-minimal structure: $\mathcal S_X$ is then a definable set, and a definable set and its closure have the same dimension (\cref{lem:closure}). A limit of these skipless networks has its outputs on $X$ in $\overline{\mathcal S_X}$. By \eqref{eq:gap}, the residual networks whose outputs on $X$ lie in $\overline{\mathcal S_X}$ have parameters in a set of measure zero (\cref{lem:rankcrit}).
 
 \begin{restatable}[Different function classes]{theorem}{thmClasses}\label{thm:classes}
 \stpart{thm:classes}{i}{} For analytic blocks, with or without pre-RMSNorm, a residual network at generic parameters equals no skipless network of the same widths, and is not a limit of such networks.\\
@@ -426,17 +428,17 @@ The first equality holds because $\tanh$, GELU, SiLU and the softmax are definab
 \end{restatable}
 \specialof{thm:depthgelu}{app:depth}
 
-Outside GELU blocks without normalization, \citet{mijoski2026worth} already show that a residual network at generic parameters equals no skipless network, of any depth and widths. \Cref{thm:classes} adds the GELU blocks without normalization and, in every case, that the residual network is not a limit of the skipless networks. In (ii), $k$ more GELU units give the skipless network $2\dm k$ more parameters. With $\dim\G = \dm^2$ and $s = 0$, its bound in \eqref{eq:gap} stays below the dimension of the residual network as long as
+For GELU blocks without normalization, \citet{mijoski2026worth} show that almost every residual network equals a skipless network with $\dm$ more units per block. Part (ii) bounds the number of extra units from below. A skipless network with $k$ more GELU units than the residual network has $2\dm k$ more parameters, so its bound in \cref{thm:unlock} is $P + 2\dm k - (L+1)\dm^2$, with $\dim\G = \dm^2$ and $s = 0$. The argument for \eqref{eq:gap} applies as long as this bound stays below $\dim\mathcal R_X$:
 \begin{equation}\label{eq:extra}
 P + 2\dm k - (L+1)\dm^2 \;<\; P - \dm^2, \qquad\text{that is,}\quad k < L\dm/2.
 \end{equation}
-Since $\dm$ more units per block suffice for almost every residual GELU network to equal a skipless network \citep{mijoski2026worth}, such a skipless network needs between $L\dm/2$ and $L\dm$ more units than the residual network, in total.
+So the smallest number of extra units with which a skipless network of $L$ blocks equals a residual network at generic parameters lies between $L\dm/2$ and $L\dm$.
 
 \subsection{Numerical ranks at depth, and a conjecture}\label{sec:measured}
 
 At depth we compute the rank of the Jacobian on a large batch of inputs (\cref{app:checks}), which is a lower bound on the functional dimension. Where this rank meets the upper bound of \cref{thm:unlock}, the functional dimension is known exactly. The two meet in every row of \cref{tab:measured}, and also for SwiGLU and GeGLU networks and for nanoGPT \citep{karpathy2023nanogpt} at other depths and without normalization (\cref{tab:checks,tab:nanogpt}). After training on four datasets, $398$ of $436$ small MLPs keep the rank that they have at random weights (\cref{fig:trained}), and $36$ of the other $38$ are the skipless ReGLU networks under RMSNorm treated below.
 
-\begin{table}[t]
+\begin{table}[b]
 \centering\small
 \renewcommand{\arraystretch}{1.1}
 \begin{tabular}{@{}lrrlrrrr@{}}
