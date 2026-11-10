@@ -7,14 +7,14 @@
 | 2 | Introduction | para |  |  | Skip connections are a building block of almost every deep network tra |
 | 3 | Introduction | para |  | residual | Skipless networks are now trained as well. \citet{he2023shortcuts} tra |
 | 4 | Introduction | para |  |  | \para{Where the degrees of freedom come from.} Without skips, the basi |
-| 5 | Introduction | para |  | redundancy | \para{Functional dimension.} Our measure is the \emph{functional dimen |
+| 5 | Introduction | para |  | redundancy | \para{Functional dimension.} We measure degrees of freedom by the \emp |
 | 6 | Introduction | float |  |  | \begin{figure}[t] \centering \includegraphics[width=0.94\linewidth]{fi |
-| 7 | Introduction | para | L, the number of blocks | L, the number of blocks | \para{A gain in dimension and an equality of functions.} \citet{mijosk |
-| 8 | Introduction | para | A_l, a learned skip, identity skip, identity units, learned skip | A_l, a learned skip, generic, identity skip, learned skip, readout / unembedding | \para{Contributions and related work.} Each item states what we add, a |
+| 7 | Introduction | para | L, the number of blocks | L, the number of blocks | \para{A gain in dimension and an equality of functions.} A gain in fun |
+| 8 | Introduction | para | A_l, a learned skip, identity skip, identity units, learned skip | A_l, a learned skip, generic, identity skip, learned skip, readout / unembedding | \para{Contributions and related work.} \Cref{tab:results} lists the re |
 | 9 | Introduction | float | analytic blocks, functional dimension added by the skips | functional dimension added by the skips | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \n |
 | 10 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, m, number of units, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, m, number of units, read / write (nouns) | \section{Setup}\label{sec:setup} \para{Blocks.} A hidden state is a ma |
 | 11 | Setup | para | E and D, P, the number of parameters, per block, readout / unembedding, residual | E and D, P, the number of parameters | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
-| 12 | Setup | para | N(h), RMSNorm, epsilon of RMSNorm, pre-RMSNorm | N(h), epsilon of RMSNorm | \para{Normalization.} RMSNorm, written $N$, divides each row $v$ of $h |
+| 12 | Setup | para | N(h), RMSNorm, epsilon of RMSNorm, pre-RMSNorm, under rmsnorm | N(h), epsilon of RMSNorm, under rmsnorm | \para{Normalization.} RMSNorm, written $N$, divides each row $v$ of $h |
 | 13 | Setup | para | generic |  | \para{Scope.} Networks have no biases, and their inputs are continuous |
 | 14 | Skipless networks: one change of basis per hidden state | para |  |  | \section{Changes of basis that preserve the function}\label{sec:reduce |
 | 15 | Skipless networks: one change of basis per hidden state | para | G, a change of basis, W, a generic weight matrix, change of basis | G, a change of basis, W, a generic weight matrix | Without normalization, nothing nonlinear happens between the write of  |
@@ -49,7 +49,7 @@
 | 44 | Upper bounds from the symmetries | para |  | analytic blocks | \para{Functional dimension and identifiability.} The two notions meet  |
 | 45 | Upper bounds from the symmetries | para |  |  | \para{The gain in a transformer.} Under the equality condition, a resi |
 | 46 | When the bounds are attained | para |  |  | \subsection{When the bounds are attained}\label{sec:onelayer} |
-| 47 | When the bounds are attained | para |  |  | The equality condition is a hypothesis, which can fail (\cref{sec:meas |
+| 47 | When the bounds are attained | para |  |  | The equality condition is a hypothesis, and it can fail (\cref{sec:mea |
 | 48 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for one block]{theorem}{thmOneBlock}\label |
 | 49 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for residual networks at any depth]{theore |
 | 50 | When the bounds are attained | statement |  |  | \begin{restatable}[Exact gain for $\tanh$ and GELU]{theorem}{thmExactG |
@@ -66,7 +66,7 @@
 | 61 | Numerical ranks at depth, and a conjecture | para |  |  | For ReLU$^2$ and ReGLU blocks we expect the equality condition to hold |
 | 62 | Numerical ranks at depth, and a conjecture | para |  |  | \para{One-hot tokens.} With one-hot tokens under RMSNorm, the rows of  |
 | 63 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
-| 64 | Conclusion | para |  |  | Skips tie the bases of all hidden states into one: a skipless network  |
+| 64 | Conclusion | para |  |  | Skip connections change how a network uses its parameters. Without ski |
 | 65 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth is open for the |
 | 66 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
 | 67 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
