@@ -127,7 +127,7 @@ Skipless networks are now trained as well. \citet{he2023shortcuts} train deep tr
 \label{fig:gelu}
 \end{figure}
 
-\para{Functional dimension and equality of functions.} The result of \citet{mijoski2026worth} does not cover GELU blocks without normalization: there, they show that almost every residual network computes the same function as a skipless network with $\dm$ more units per block. Functional dimension shows that extra units are needed. At the same widths, skipless networks have the lower functional dimension, and a set of functions cannot lie inside a set of lower dimension. So almost no residual network of GELU blocks computes the same function as a skipless network of GELU blocks of the same widths (\cpref{thm:classes}{i}). Without normalization, the same argument excludes wider skipless networks as well: almost no residual network of $L$ GELU blocks computes the same function as a skipless network of $L$ GELU blocks that has, in total, fewer than $L\dm/2$ more hidden units than the residual network (\cpref{thm:classes}{ii}). A greater functional dimension does not guarantee the inclusion in the other direction, that residual networks compute every function of the skipless networks of the same widths. Without normalization, every skipless network is nevertheless a limit of residual networks of the same widths, uniformly on bounded sets of inputs \citep{mijoski2026worth}.
+\para{Functional dimension and equality of functions.} The result of \citet{mijoski2026worth} does not cover GELU blocks without normalization: there, they show that almost every residual network computes the same function as a skipless network with $\dm$ more units per block. Functional dimension shows that extra units are needed. At the same widths, skipless networks have the lower functional dimension, and a set of functions cannot lie inside a set of lower dimension. So almost no residual network of GELU blocks computes the same function as a skipless network of GELU blocks of the same widths (\cpref{thm:classes}{i}). Without normalization, the same argument excludes wider skipless networks as well: almost no residual network of $L$ GELU blocks computes the same function as a skipless network of $L$ GELU blocks that has, in total, fewer than $L\dm/2$ more hidden units than the residual network (\cpref{thm:classes}{ii}). For attention, $\tanh$, GELU, SwiGLU and GeGLU blocks, with or without pre-RMSNorm, almost no residual network is even a limit of skipless networks of the same widths (\cref{thm:classes}). Conversely, without normalization, every skipless network is a limit of residual networks of the same widths \citep{mijoski2026worth}.
 
 \para{Contributions and related work.} \Cref{tab:results} lists the results, and the proofs are in the appendix.
 \begin{enumerate}[label=\arabic*.]
@@ -166,7 +166,7 @@ Skipless networks are now trained as well. \citet{he2023shortcuts} train deep tr
 \quad $L \ge 2$ & exactly $L\dm^2$ & $\tanh$ & \rtag{Thm.}{thm:exactgain}{i} \\
 \quad $L \ge 2$ & exactly $L\dm^2$ & GELU, $\ge 2\dm$ units & \rtag{Thm.}{thm:exactgain}{ii} \\
 \midrule
-\multicolumn{4}{@{}l}{\emph{Residual networks that equal a skipless network}} \\
+\multicolumn{4}{@{}l}{\emph{Residual networks that equal, or are limits of, skipless networks}} \\
 \quad same widths, any $L$ & measure zero & analytic & \rtag{Thm.}{thm:classes}{i} \\
 \quad\quad with pre-RMSNorm & measure zero & analytic & \rtag{Thm.}{thm:classes}{i} \\
 \quad $< L\dm/2$ more units & measure zero & GELU & \rtag{Thm.}{thm:classes}{ii} \\
@@ -414,15 +414,23 @@ Without normalization, in the two cases below the skipless network satisfies the
 
 \subsection{Residual and skipless networks compute different functions}\label{sec:classes}
 
-A set of functions cannot lie inside a set of lower dimension, so for analytic blocks the gain in functional dimension excludes almost every residual network from the skipless networks of the same widths. It guarantees no inclusion in the other direction, although without normalization every skipless network is a limit of residual networks of the same widths \citep{mijoski2026worth}.
+Fix a finite set $X$ of inputs, and let $\mathcal S_X$ and $\mathcal R_X$ be the sets of outputs on $X$ of the skipless and of the residual networks of the same widths. For analytic blocks and a suitable $X$, \cref{thm:unlock,thm:resdepth} give
+\begin{equation}\label{eq:gap}
+\dim\overline{\mathcal S_X} \;=\; \dim\mathcal S_X \;\le\; P - (L+1)\dim\G - s \;<\; P - \dim\G - s \;=\; \dim\mathcal R_X.
+\end{equation}
+The first equality holds because $\tanh$, GELU, SiLU and the softmax are definable in an o-minimal structure, where a set and its closure have the same dimension (\cref{lem:closure}). A set of lower dimension meets one of higher dimension in a set of measure zero, so the outputs of almost every residual network lie outside $\overline{\mathcal S_X}$: the network equals no skipless network of the same widths, and it is not a limit of such networks. Here a network $F$ is a \emph{limit} of a family of networks if, for all inputs $x_1, \dots, x_n$ and every $\delta > 0$, some network $F'$ of the family has $\norm{F'(x_i) - F(x_i)} < \delta$ for all $i$. Conversely, without normalization, every skipless network is a limit of residual networks of the same widths, even uniformly on bounded sets of inputs \citep{mijoski2026worth}.
 
 \begin{restatable}[Different function classes]{theorem}{thmClasses}\label{thm:classes}
-\stpart{thm:classes}{i}{} For analytic blocks, with or without pre-RMSNorm, a residual network at generic parameters equals no skipless network of the same widths.\\
-\stpart{thm:classes}{ii}{Too few extra units} For networks of GELU blocks without normalization, a residual network of $L$ blocks at generic parameters equals no skipless network of $L$ blocks with, in total, fewer than $L\dm/2$ more hidden units.
+\stpart{thm:classes}{i}{} For analytic blocks, with or without pre-RMSNorm, a residual network at generic parameters equals no skipless network of the same widths, and is not a limit of such networks.\\
+\stpart{thm:classes}{ii}{Too few extra units} For networks of GELU blocks without normalization, a residual network of $L$ blocks at generic parameters equals no skipless network of $L$ blocks with, in total, fewer than $L\dm/2$ more hidden units, and is not a limit of such networks.
 \end{restatable}
 \specialof{thm:depthgelu}{app:depth}
 
-In (ii), each extra GELU unit adds $2\dm$ parameters against a gain of $L\dm^2$. Since $\dm$ more units per block suffice \citep{mijoski2026worth}, a skipless GELU network needs between $L\dm/2$ and $L\dm$ more units in total.
+Outside GELU blocks without normalization, \citet{mijoski2026worth} already show that a residual network at generic parameters equals no skipless network, of any depth and widths. \Cref{thm:classes} adds the GELU blocks without normalization and, in every case, that the residual network is not a limit of the skipless networks. In (ii), $k$ more GELU units give the skipless network $2\dm k$ more parameters. With $\dim\G = \dm^2$ and $s = 0$, its bound in \eqref{eq:gap} stays below the dimension of the residual network as long as
+\begin{equation}\label{eq:extra}
+P + 2\dm k - (L+1)\dm^2 \;<\; P - \dm^2, \qquad\text{that is,}\quad k < L\dm/2.
+\end{equation}
+Since $\dm$ more units per block suffice for almost every residual GELU network to equal a skipless network \citep{mijoski2026worth}, such a skipless network needs between $L\dm/2$ and $L\dm$ more units than the residual network, in total.
 
 \subsection{Numerical ranks at depth, and a conjecture}\label{sec:measured}
 
@@ -786,14 +794,28 @@ If $r = P - k$, then $O$ is open in $Z$, since the two have the same dimension. 
 
 \subsection{Depth\texorpdfstring{ (Theorems~\ref*{thm:resdepth}, \ref*{thm:exactgain} and~\ref*{thm:classes})}{}}\label{app:depth}
 
-This subsection uses \cref{lem:fact,lem:unitid} and the proof of \cref{thm:onelayer} from \cref{app:onelayer}, which does not depend on it. \Cref{thm:depthgelu} below and \cref{thm:resdepth} rest on two lemmas. The first turns a gap in functional dimension into disjointness. The second shows that with small writes the Jacobian of a residual network reaches the largest rank that its symmetries allow, by the argument of \cref{thm:onelayer} for one block.
+This subsection uses \cref{lem:fact,lem:unitid} and the proof of \cref{thm:onelayer} from \cref{app:onelayer}, which does not depend on it. \Cref{thm:depthgelu} below and \cref{thm:resdepth} rest on two lemmas. The first turns a gap in functional dimension into disjointness, and for definable networks into a positive distance. The second shows that with small writes the Jacobian of a residual network reaches the largest rank that its symmetries allow, by the argument of \cref{thm:onelayer} for one block.
 
-\begin{lemma}[A rank criterion]\label{lem:rankcrit}
-Let $\theta \mapsto F_\theta$, $\theta \in \R^P$, and $\eta \mapsto G_\eta$, $\eta \in \R^{P'}$, be two families of networks with the same inputs and outputs, whose outputs are real-analytic in the parameters. Let a Lie group act smoothly on $\R^{P'}$ without changing $G_\eta$, with orbits of dimension at least $k$ at generic $\eta$. If at some $\theta_0$ the Jacobian of $\theta \mapsto (F_\theta(x))_{x \in X}$ has rank greater than $P' - k$ on some finite batch $X$, then for almost every $\theta$ no $\eta$ satisfies $F_\theta = G_\eta$.
+\para{Definable networks.} An \emph{o-minimal structure} on the real field is a family of subsets of the spaces $\R^k$, the \emph{definable} sets, that contains the algebraic sets, is closed under finite unions, complements, products and coordinate projections, and whose members in $\R$ are the finite unions of points and intervals \citep[Definition~1.4]{coste1999ominimal}. A map is definable if its graph is, and compositions of definable maps and images of definable sets under them are definable. The Pfaffian closure of the real field is an o-minimal structure in which the solutions of $y' = F(x, y)$ with definable $F$ of class $C^1$, and the antiderivatives of definable continuous functions, are definable \citep{speissegger1997pfaffian}. So $\exp$ is definable in it, as the solution of $y' = y$ with $y(0) = 1$, and so is the error function, as an antiderivative of a multiple of $e^{-x^2}$. Hence $\tanh$, the softmax, SiLU, GELU and RMSNorm with $\varepsilon > 0$ are definable, and so are the outputs of a network of attention, $\tanh$, GELU, SwiGLU and GeGLU blocks, with or without pre-RMSNorm, as functions of its weights. Below, definable means definable in this structure.
+
+\begin{lemma}[The closure of a definable set]\label{lem:closure}
+A nonempty definable set $B \subset \R^k$ and its closure $\bar B$ have the same dimension. If $B$ has Lebesgue measure zero, then so has $\bar B$.
 \end{lemma}
 
 \begin{proof}
-Write $F_X(\theta), G_X(\eta) \in \R^n$ for the outputs on $X$. At generic $\eta$ the map $G_X$ is constant along an orbit of dimension at least $k$, so its Jacobian has rank at most $r_0 = P' - k$; the rank is lower semicontinuous, so the bound holds at every $\eta$. The Jacobian of $F_X$ reaches its largest rank $r^*$, which exceeds $r_0$ by hypothesis, outside the zero set of the sum of the squares of its minors of size $r^*$. This function is analytic and not identically zero, so its zero set has measure zero. Take $\theta$ outside it. By the constant rank theorem, $F_X$ maps a neighborhood $U$ of $\theta$ onto an embedded manifold $Y$ of dimension $r^*$, and after shrinking $U$ a linear projection $\pi : \R^n \to \R^{r^*}$ maps $Y$ diffeomorphically onto an open set. The map $\pi \circ G_X$ has rank at most $r_0 < r^*$, so all its values are critical, and by Sard's theorem its image has measure zero. So $G_X(\R^{P'}) \cap Y$ has measure zero in $Y$, and so does its preimage under $F_X$ in $U$, which contains every $\theta'$ in $U$ with $F_{\theta'} = G_\eta$ for some $\eta$. Countably many such $U$ cover the complement of the zero set.
+A cell of $\R^k$ is the graph of a continuous definable function over a cell of $\R^{k-1}$, or the band between two such graphs, and its dimension is that of the cell below it, plus one for a band \citep[Section~2.2]{coste1999ominimal}. By induction on $k$, a cell of dimension $k$ is open, and a cell of dimension below $k$ has measure zero. Decompose $\R^k$ into finitely many cells such that $B$ and $\bar B \setminus B$ are unions of cells \citep[Theorem~2.10]{coste1999ominimal}; the dimension of a definable set is the largest dimension of its cells \citep[Proposition~3.17]{coste1999ominimal}. The set $\bar B \setminus B$ has smaller dimension than $B$ \citep[Theorem~3.22]{coste1999ominimal}, which gives the first claim. If $B$ has measure zero, it contains no open cell, so $\dim B < k$. Then $\bar B \setminus B$ is a union of cells of dimension below $k$ and has measure zero.
+\end{proof}
+
+\begin{lemma}[A rank criterion]\label{lem:rankcrit}
+Let $\theta \mapsto F_\theta$, $\theta \in \R^P$, and $\eta \mapsto G_\eta$, $\eta \in \R^{P'}$, be two families of networks with the same inputs and outputs, whose outputs are real-analytic in the parameters. Let a Lie group act smoothly on $\R^{P'}$ without changing $G_\eta$, with orbits of dimension at least $k$ at generic $\eta$. Suppose that at some $\theta_0$ the Jacobian of $\theta \mapsto (F_\theta(x))_{x \in X}$ has rank greater than $P' - k$ on some finite batch $X$.\\
+\stpart{lem:rankcrit}{i}{} For almost every $\theta$, no $\eta$ satisfies $F_\theta = G_\eta$.\\
+\stpart{lem:rankcrit}{ii}{} If the outputs $G_\eta(x)$, $x \in X$, are definable functions of $\eta$, then for almost every $\theta$ there is a $\delta > 0$ such that every $\eta$ has $\norm{F_\theta(x) - G_\eta(x)} \ge \delta$ at some $x \in X$.
+\end{lemma}
+
+\begin{proof}
+Write $F_X(\theta), G_X(\eta) \in \R^n$ for the outputs on $X$. At generic $\eta$ the map $G_X$ is constant along an orbit of dimension at least $k$, so its Jacobian has rank at most $r_0 = P' - k$; the rank is lower semicontinuous, so the bound holds at every $\eta$. The Jacobian of $F_X$ reaches its largest rank $r^*$, which exceeds $r_0$ by hypothesis, outside the zero set of the sum of the squares of its minors of size $r^*$. This function is analytic and not identically zero, so its zero set has measure zero. Take $\theta$ outside it. By the constant rank theorem, $F_X$ maps a neighborhood $U$ of $\theta$ onto an embedded manifold $Y$ of dimension $r^*$, and after shrinking $U$ a linear projection $\pi : \R^n \to \R^{r^*}$ maps $Y$ diffeomorphically onto an open set. The map $\pi \circ G_X$ has rank at most $r_0 < r^*$, so all its values are critical, and by Sard's theorem its image has measure zero. So $G_X(\R^{P'}) \cap Y$ has measure zero in $Y$, and so does its preimage under $F_X$ in $U$, which contains every $\theta'$ in $U$ with $F_{\theta'} = G_\eta$ for some $\eta$. Countably many such $U$ cover the complement of the zero set, which gives (i).
+
+For (ii), let $S = G_X(\R^{P'})$, with closure $\bar S$. The image $\pi(S)$ of $\pi \circ G_X$ is definable and has measure zero, so its closure has measure zero (\cref{lem:closure}). As $\pi$ is continuous, this closure contains $\pi(\bar S \cap Y)$. So $\bar S \cap Y$ has measure zero in $Y$, and so does its preimage under $F_X$ in $U$. For $\theta'$ in $U$ outside this preimage, $F_X(\theta')$ does not lie in $\bar S$, so some $\delta > 0$ has $\norm{F_X(\theta') - G_X(\eta)} \ge \delta\sqrt{\lvert X\rvert}$ for every $\eta$, and then $\norm{F_{\theta'}(x) - G_\eta(x)} \ge \delta$ at some $x \in X$. Countably many such $U$ cover the complement of the zero set again.
 \end{proof}
 
 \begin{lemma}[Small writes]\label{lem:smallwrites}
@@ -833,7 +855,8 @@ In each case the kernel of $J_0$ shrinks as the batch grows and becomes stationa
 \begin{theorem}[GELU and analytic networks at depth]\label{thm:depthgelu}
 \stpart{thm:depthgelu}{i}{} For GELU blocks and almost every choice of weights, a composition of $L \ge 2$ residual blocks equals no composition of $L$ blocks without skips of the same widths.\\
 \stpart{thm:depthgelu}{ii}{} With an embedding and a readout, the same holds for networks of analytic blocks of any depth $L \ge 1$, also under pre-RMSNorm with $\varepsilon > 0$.\\
-\stpart{thm:depthgelu}{iii}{Too few extra units} For GELU blocks with an embedding and a readout, without normalization, and almost every choice of weights, a residual network of $L$ blocks equals no skipless network of $L$ blocks with, in total, fewer than $L\dm/2$ more hidden units.
+\stpart{thm:depthgelu}{iii}{Too few extra units} For GELU blocks with an embedding and a readout, without normalization, and almost every choice of weights, a residual network of $L$ blocks equals no skipless network of $L$ blocks with, in total, fewer than $L\dm/2$ more hidden units.\\
+\stpart{thm:depthgelu}{iv}{No limits} In (ii), and in (iii) for skipless networks whose blocks all have at least $\dm$ hidden units, almost every choice of weights of the residual network $F$ has a finite set $X$ of inputs and a $\delta > 0$ such that every such skipless network $G$ has $\norm{G(x) - F(x)} \ge \delta$ at some $x \in X$. So $F$ is not a limit of these skipless networks, in the sense of \cref{sec:classes}.
 \end{theorem}
 
 \begin{proof}[Proof of \cref{thm:depthgelu}(i) and (ii)]
@@ -845,12 +868,15 @@ By \cref{lem:smallwrites}, a residual network without biases has functional dime
 Let the residual network have blocks with $m_1, \dots, m_L$ hidden units and $P$ parameters, and let a skipless network have blocks with $m'_1, \dots, m'_L$ hidden units. If some $m'_\ell < \dm$, the hidden state $h_\ell$ of the skipless network lies in a subspace of dimension $m'_\ell$, so the Jacobian of its output with respect to the input has rank below $\dm$ at every input. That of the residual network is $ED + O(\tau)$ when its writes are multiplied by $\tau$, of rank $\dm$ for small $\tau$, so by analyticity it has rank $\dm$ at some input for almost every choice of weights, and the two networks differ. So let every $m'_\ell \ge \dm$. The skipless network then has $P' = P + 2\dm\sum_\ell(m'_\ell - m_\ell)$ parameters, and its changes of basis at $h_0, \dots, h_L$ have orbits of dimension $(L+1)\dm^2$ at generic parameters (\cref{lem:free}). By \cref{lem:smallwrites} the residual network has functional dimension $P - \dm^2$ at some parameters, which exceeds $P' - (L+1)\dm^2$ exactly when $\sum_\ell(m'_\ell - m_\ell) < L\dm/2$. For each of the finitely many such choices of widths, \cref{lem:rankcrit} gives a set of weights of measure zero, and so does their union.
 \end{proof}
 
+\begin{proof}[Proof of \cref{thm:depthgelu}(iv)]
+The networks of (ii) and (iii) are definable. So where the proofs above apply \cpref{lem:rankcrit}{i} to them, \cpref{lem:rankcrit}{ii} applies as well, on a batch $X$ on which the Jacobian of the residual network reaches the rank used there. In (iii) this covers the finitely many choices of widths with every $m'_\ell \ge \dm$, on the same batch, and the smallest of their $\delta$ serves for all. Display \eqref{eq:gap} of \cref{sec:classes} sums up the argument in terms of dimensions. A definable set has dimension at least $k$ exactly when one of its coordinate projections to $\R^k$ has nonempty interior \citep[Section~2.2 and Proposition~3.17]{coste1999ominimal}. So the set $\mathcal S_X$ of outputs of the skipless networks on $X$ has dimension at most the bound $r_0$ on the rank of $G_X$, by Sard's theorem applied to these projections; its closure has the same dimension (\cref{lem:closure}); and the set $\mathcal R_X$ of outputs of the residual networks has the dimension $r^*$ of the manifold $Y$.
+\end{proof}
 
 We recall \cref{thm:classes} from \cref{sec:classes}.
 \thmClasses*
 
 \begin{proof}[Proof of \cref{thm:classes}]
-Part (i) is \cpref{thm:depthgelu}{ii}, and part (ii) is \cpref{thm:depthgelu}{iii}.
+In the main text every MLP block has at least $\dm$ hidden units (\cref{sec:setup}). Part (i) is \cpref{thm:depthgelu}{ii} with (iv), and part (ii) is \cpref{thm:depthgelu}{iii} with (iv).
 \end{proof}
 
 We recall \cref{thm:resdepth,thm:exactgain} from \cref{sec:onelayer}.
