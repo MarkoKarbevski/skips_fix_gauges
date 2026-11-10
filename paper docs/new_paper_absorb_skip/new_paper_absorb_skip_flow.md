@@ -2,84 +2,83 @@
 
 | Unit | Section | Kind | Defines | First uses | Start |
 |---|---|---|---|---|---|
-| 0 | abstract | para | ReLU squared, absorb, d_model, the dimension, gated block | RMSNorm, absorb, attention block, d_model, the dimension, gated block, generic / almost every, residual, skipless | \begin{abstract} Residual networks add each block's input to its outpu |
+| 0 | abstract | para | ReLU squared, absorb, d_model, the dimension, gated block, pre-RMSNorm | RMSNorm, ReLU squared, absorb, attention block, d_model, the dimension, gated block, generic / almost every, pre-RMSNorm, residual, skipless | \begin{abstract} A block \emph{absorbs} its skip if a skipless block o |
 | 1 | Introduction | para |  |  | \section{Introduction}\label{sec:intro} |
-| 2 | Introduction | para |  |  | Most deep networks trained today add the input of each block to its ou |
-| 3 | Introduction | para |  |  | Skipless networks now train too. \citet{he2024simplifying} remove the  |
-| 4 | Introduction | para | B, the map of a block, width, worth | B, the map of a block, width, worth | We answer this question exactly. Take a block $B$ without biases that  |
-| 5 | Introduction | para |  | ReLU squared, with more units. | \para{One block: the answer depends on the activation.} \begin{itemize |
-| 6 | Introduction | para | t and u, a ray | t and u, a ray | \para{Why the other blocks never absorb.} Follow the input along a ray |
-| 7 | Introduction | para | E and D, X, the input of a network, epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | E and D, X, the input of a network, epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | \para{Networks: the negative answers carry over.} A network has a line |
-| 8 | Introduction | para |  |  | \para{Skipless networks as limits.} Without normalization, every skipl |
-| 9 | Introduction | para |  |  | \Cref{tab:results} collects the results, and the proofs are in the app |
-| 10 | Introduction | float | with pre-rmsnorm: | with pre-rmsnorm: | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.12} \ |
-| 11 | Setup | para |  |  | \section{Setup}\label{sec:setup} \takeaway{One equation states the que |
-| 12 | Setup | para | B_theta, Wread, Wwrite, theta, T, number of tokens, m, number of units, read / write (nouns) | B_theta, Wread, Wwrite, theta, T, number of tokens, m, number of units, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
-| 13 | Setup | para | M, the linear term | M, the linear term | \para{Absorbing a linear term.} A skip adds $x$ to the output of a blo |
-| 14 | Setup | para | L, the number of blocks, residual, skipless | L, the number of blocks | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
-| 15 | Setup | para | N(h), RMSNorm | N(h) | \para{Normalization.} RMSNorm, written $N$, divides each row $v$ of a  |
-| 16 | Setup | para |  |  | \para{Biases.} Blocks have no biases, and the answers depend on it (\c |
-| 17 | Setup | para |  |  | \para{Scope.} Every MLP block has at least $\dm$ hidden units, so that |
-| 18 | Setup | para | generic / almost every |  | \para{Generic weights.} A statement holds for \emph{generic} weights,  |
-| 19 | One block | para |  |  | \section{One block}\label{sec:oneblock} \takeaway{For almost every ReL |
-| 20 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para |  |  | \subsection{ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm |
-| 21 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | mirror image, w_i and hat w_i, read and write of a unit | mirror image, w_i and hat w_i, read and write of a unit | ReLU and GELU both satisfy \begin{equation}\label{eq:odd} \sigma(z) -  |
-| 22 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | with more units. |  | \emph{With more units.} For a row $\gamma \in \R^{1\times\dm}$, a new  |
-| 23 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | S, a set of units, at the same width. | S, a set of units, at the same width. | \emph{At the same width.} Flipping the read of unit $i$ to $-w_i$ chan |
-| 24 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | nondegenerate | nondegenerate | The next theorem says that at the same width these flips are the only  |
-| 25 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | statement |  |  | \begin{restatable}[Absorption with $\dm$ more units]{theorem}{thmAbsor |
-| 26 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para |  |  | In (i), the equation $\Wread[{:},S]\,\Wwrite[S,{:}] = -M$ is polynomia |
-| 27 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para |  |  | The proof matches the units of the two blocks. The even part of the ac |
-| 28 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para |  |  | \para{Networks of one block.} A residual network of one block is a blo |
-| 29 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | statement |  |  | \begin{restatable}[Networks of one block]{proposition}{propOneBlockNet |
-| 30 | ReLU\texorpdfstring{$^2$ | para |  |  | \subsection{ReLU\texorpdfstring{$^2$}{2}, gated and \texorpdfstring{$\ |
-| 31 | ReLU\texorpdfstring{$^2$ | float |  |  | \begin{figure}[t] \centering [a TikZ drawing, omitted here; the captio |
-| 32 | ReLU\texorpdfstring{$^2$ | para |  |  | A block absorbs $xM$ if a block of the same kind satisfies \eqref{eq:a |
-| 33 | ReLU\texorpdfstring{$^2$ | statement |  |  | \begin{restatable}[No width suffices]{theorem}{thmAbsorbHom}\label{thm |
-| 34 | ReLU\texorpdfstring{$^2$ | para |  |  | The three cases of \cref{fig:reasons} are three one-line proofs. A hom |
-| 35 | Attention blocks: no number of heads suffices | para |  |  | \subsection{Attention blocks: no number of heads suffices}\label{sec:a |
-| 36 | Attention blocks: no number of heads suffices | para | Gamma, attention scores, H and d_h, attention block, score matrix, value-output product | Gamma, attention scores, H and d_h, score matrix, value-output product | An \emph{attention block} has $H$ heads of dimension $d_h$. Head $i$ h |
-| 37 | Attention blocks: no number of heads suffices | para |  |  | Two inputs show that an attention block absorbs no linear term. Suppos |
-| 38 | Attention blocks: no number of heads suffices | statement |  |  | \begin{restatable}[No absorption in attention blocks]{theorem}{thmAtte |
-| 39 | Attention blocks: no number of heads suffices | para |  |  | The two inputs give one $h$ at which the two sides differ, and both si |
-| 40 | Networks | para |  |  | \section{Networks}\label{sec:networks} \takeaway{The negative answers  |
-| 41 | Networks | para |  |  | Recall that a network embeds its input as $h_0 = XE$ and reads out $y  |
-| 42 | ReLU\texorpdfstring{$^2$ | para |  |  | \subsection{ReLU\texorpdfstring{$^2$}{2}, gated and \texorpdfstring{$\ |
-| 43 | ReLU\texorpdfstring{$^2$ | statement |  |  | \begin{restatable}[No equality for ReLU$^2$, gated and $\tanh$ network |
-| 44 | ReLU\texorpdfstring{$^2$ | para |  |  | The reasons are those of \cref{fig:reasons}, now for the whole network |
-| 45 | Attention networks: never equal on long sequences | para |  |  | \subsection{Attention networks: never equal on long sequences}\label{s |
-| 46 | Attention networks: never equal on long sequences | para |  |  | The comparison at $X = 0$ also settles networks of attention blocks. N |
-| 47 | Attention networks: never equal on long sequences | statement |  |  | \begin{restatable}[Attention networks on long and short sequences]{the |
-| 48 | Attention networks: never equal on long sequences | para |  |  | In the cases of (i), no number of heads helps. Neither does depth, onc |
-| 49 | Networks under RMSNorm: almost never equal | para |  |  | \subsection{Networks under RMSNorm: almost never equal}\label{sec:rmsn |
-| 50 | Networks under RMSNorm: almost never equal | para |  |  | Under RMSNorm the answer no longer depends on the kind of block. A ski |
-| 51 | Networks under RMSNorm: almost never equal | statement |  |  | \begin{restatable}[Almost no equality under RMSNorm]{theorem}{thmRMSNe |
-| 52 | Networks under RMSNorm: almost never equal | para |  |  | The proof compares rates of convergence along rays $tX$, as $t \to \in |
-| 53 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | \subsection{ReLU and GELU networks without normalization: \texorpdfstr |
-| 54 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | Without normalization, ReLU and GELU networks are the one case in whic |
-| 55 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | statement |  |  | \begin{restatable}[$\dm$ more units per block suffice]{proposition}{pr |
-| 56 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | Some of these units are needed, at least in the first block. |
-| 57 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | statement |  |  | \begin{restatable}[The first block needs $2\dm$ units]{theorem}{thmAbs |
-| 58 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | For ReLU the proof compares ranks. Near almost every input, a generic  |
-| 59 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | For the first block, the two bounds meet when the residual first block |
-| 60 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | \para{Injective residual blocks: every skipless block needs $2\dm$ uni |
-| 61 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | statement |  |  | \begin{restatable}[Injective blocks: $2\dm$ units in every block]{prop |
-| 62 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | The condition holds when every block has $\norm{\Wread}\,\norm{\Wwrite |
-| 63 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | The proof turns on injectivity. If every residual block is injective,  |
-| 64 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | For ReLU networks the condition cannot be dropped. On another open set |
-| 65 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para | full | full | \para{Wide residual blocks: a bound from counting dimensions.} When th |
-| 66 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | statement |  |  | \begin{restatable}[A lower bound from counting dimensions]{proposition |
-| 67 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | A skipless network has a change of basis at each of its $L + 1$ hidden |
-| 68 | Skipless networks are limits of residual ones | para |  |  | \section{Skipless networks are limits of residual ones}\label{sec:limi |
-| 69 | Skipless networks are limits of residual ones | statement | F, the function of a network | F, the function of a network | \begin{restatable}[Skipless networks as limits of residual networks]{p |
-| 70 | Skipless networks are limits of residual ones | para |  |  | \para{Idea of the proof.} The proof scales the reads of block $\ell$ b |
-| 71 | Skipless networks are limits of residual ones | para |  |  | \para{Under RMSNorm.} With $\varepsilon = 0$, RMSNorm ignores the size |
-| 72 | Related work | para |  |  | \section{Related work}\label{sec:related} |
-| 73 | Related work | para |  |  | \para{Expressivity of residual networks.} \citet{lin2018resnet} show t |
-| 74 | Related work | para |  |  | \para{Identifiability.} For $\tanh$ networks, the function determines  |
-| 75 | Related work | para |  |  | \para{Training without skips.} Skipless networks train with weights pa |
-| 76 | Conclusion | para |  |  | \section{Conclusion}\label{sec:conclusion} |
-| 77 | Conclusion | para |  |  | Without normalization or biases, a trained residual ReLU or GELU netwo |
-| 78 | Conclusion | para |  |  | \para{Open questions.} The unknown cells and the conditions of \cref{t |
-| 79 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
-| 80 | Use of AI | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 2 | Introduction | para |  |  | Residual blocks add their input to the output of a learned branch \cit |
+| 3 | Introduction | para | B, the map of a block | B, the map of a block | Take a block $B$ without biases that acts on tokens of dimension $\dm$ |
+| 4 | Introduction | para |  |  | For ReLU and GELU, the identity $\sigma(z)-\sigma(-z)=z$ supplies a co |
+| 5 | Introduction | para | E and D, X, the input of a network, readout / unembedding | E and D, X, the input of a network, readout / unembedding | At network scale, the linear embedding $E$ and linear readout $D$ expo |
+| 6 | Introduction | para | RMSNorm, epsilon of RMSNorm | epsilon of RMSNorm | In a pre-RMSNorm network, each block and the readout see normalized to |
+| 7 | Introduction | float | with pre-rmsnorm: | with pre-rmsnorm: | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.12} \ |
+| 8 | Architectures and exact equivalence | para |  |  | \section{Architectures and exact equivalence}\label{sec:setup} |
+| 9 | Architectures and exact equivalence | para | B_theta, Wread, Wwrite, theta, T, number of tokens, m, number of units, read / write (nouns) | B_theta, Wread, Wwrite, theta, T, number of tokens, m, number of units, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
+| 10 | Architectures and exact equivalence | para | M, the linear term | M, the linear term | \para{Exact absorption.} We study the more general linear term $xM$, f |
+| 11 | Architectures and exact equivalence | para | L, the number of blocks, residual, skipless | L, the number of blocks | \para{Networks.} A linear embedding $E \in \R^{d_{\mathrm{in}}\times\d |
+| 12 | Architectures and exact equivalence | para | N(h) | N(h) | \para{Normalization.} RMSNorm, written $N$, divides each row $v$ of a  |
+| 13 | Architectures and exact equivalence | para |  |  | \para{Biases.} The main results concern blocks without biases. \Cref{a |
+| 14 | Architectures and exact equivalence | para |  |  | \para{Scope.} Every MLP has at least $\dm$ hidden units, so its read c |
+| 15 | Architectures and exact equivalence | para | generic / almost every |  | \para{Generic weights.} A statement holds for \emph{generic} weights,  |
+| 16 | Exact absorption in a single block | para |  |  | \section{Exact absorption in a single block}\label{sec:oneblock} |
+| 17 | ReLU and GELU: the cost of a linear skip | para |  |  | \subsection{ReLU and GELU: the cost of a linear skip}\label{sec:reluge |
+| 18 | ReLU and GELU: the cost of a linear skip | para | mirror image, w_i and hat w_i, read and write of a unit | mirror image, w_i and hat w_i, read and write of a unit | ReLU and GELU both satisfy \begin{equation}\label{eq:odd} \sigma(z) -  |
+| 19 | ReLU and GELU: the cost of a linear skip | para | widening the block. | widening the block. | \emph{Widening the block.} Choose a row $\gamma \in \R^{1\times\dm}$.  |
+| 20 | ReLU and GELU: the cost of a linear skip | para | S, a set of units, at the same width. | S, a set of units, at the same width. | \emph{At the same width.} Flipping the read of unit $i$ to $-w_i$ chan |
+| 21 | ReLU and GELU: the cost of a linear skip | para | nondegenerate | nondegenerate | Call a block \emph{nondegenerate} when the columns of $\Wread$ are non |
+| 22 | ReLU and GELU: the cost of a linear skip | statement |  |  | \begin{restatable}[Absorption with $\dm$ more units]{theorem}{thmAbsor |
+| 23 | ReLU and GELU: the cost of a linear skip | para |  |  | For each subset $S$, the condition in (i) is a polynomial equation in  |
+| 24 | ReLU and GELU: the cost of a linear skip | para |  |  | The proof separates the even and odd parts of the activation. The even |
+| 25 | ReLU and GELU: the cost of a linear skip | para |  |  | \para{Networks of one block.} A residual network of one block is a blo |
+| 26 | ReLU and GELU: the cost of a linear skip | statement |  |  | \begin{restatable}[Networks of one block]{proposition}{propOneBlockNet |
+| 27 | MLP obstructions from scaling and boundedness | para |  |  | \subsection{MLP obstructions from scaling and boundedness}\label{sec:n |
+| 28 | MLP obstructions from scaling and boundedness | para | t and u, a ray | t and u, a ray | For the remaining MLPs, compare the two sides of \eqref{eq:absorbask}  |
+| 29 | MLP obstructions from scaling and boundedness | float |  |  | \begin{figure}[t] \centering [a TikZ drawing, omitted here; the captio |
+| 30 | MLP obstructions from scaling and boundedness | statement |  |  | \begin{restatable}[No width suffices]{theorem}{thmAbsorbHom}\label{thm |
+| 31 | MLP obstructions from scaling and boundedness | para |  |  | The three obstructions in \cref{fig:reasons} follow from different pro |
+| 32 | Attention: an obstruction from uniform averaging | para |  |  | \subsection{Attention: an obstruction from uniform averaging}\label{se |
+| 33 | Attention: an obstruction from uniform averaging | para | Gamma, attention scores, H and d_h, attention block, score matrix, value-output product | Gamma, attention scores, H and d_h, score matrix, value-output product | An \emph{attention block} has $H$ heads of dimension $d_h$. Head $i$ h |
+| 34 | Attention: an obstruction from uniform averaging | para |  |  | Two input families force incompatible constraints on the summed value- |
+| 35 | Attention: an obstruction from uniform averaging | statement |  |  | \begin{restatable}[No absorption in attention blocks]{theorem}{thmAtte |
+| 36 | Attention: an obstruction from uniform averaging | para |  |  | The discrepancy is analytic in $h$, so a single disagreement implies d |
+| 37 | Exact skip removal in networks | para |  |  | \section{Exact skip removal in networks}\label{sec:networks} |
+| 38 | Exact skip removal in networks | para |  |  | The isolated-block results give a sufficient construction for whole ne |
+| 39 | Width bounds for unnormalized ReLU and GELU networks | para |  |  | \subsection{Width bounds for unnormalized ReLU and GELU networks}\labe |
+| 40 | Width bounds for unnormalized ReLU and GELU networks | para |  |  | The construction in \cref{sec:relugelu} replaces each residual block b |
+| 41 | Width bounds for unnormalized ReLU and GELU networks | statement |  |  | \begin{restatable}[$\dm$ more units per block suffice]{proposition}{pr |
+| 42 | Width bounds for unnormalized ReLU and GELU networks | para |  |  | The construction gives an upper bound for each block. The first block  |
+| 43 | Width bounds for unnormalized ReLU and GELU networks | statement |  |  | \begin{restatable}[The first block needs $2\dm$ units]{theorem}{thmAbs |
+| 44 | Width bounds for unnormalized ReLU and GELU networks | para |  |  | For ReLU, the residual map is locally linear of rank $\dm$ near almost |
+| 45 | Width bounds for unnormalized ReLU and GELU networks | para |  |  | For GELU, rescale the input by $t$ and divide the output by $t$. The b |
+| 46 | Width bounds for unnormalized ReLU and GELU networks | para |  |  | The bounds coincide for the first block when the residual first block  |
+| 47 | Width bounds for unnormalized ReLU and GELU networks | para |  |  | \para{Injective residual blocks: every skipless block needs $2\dm$ uni |
+| 48 | Width bounds for unnormalized ReLU and GELU networks | statement |  |  | \begin{restatable}[Injective blocks: $2\dm$ units in every block]{prop |
+| 49 | Width bounds for unnormalized ReLU and GELU networks | para |  |  | The condition holds when every block has $\norm{\Wread}\,\norm{\Wwrite |
+| 50 | Width bounds for unnormalized ReLU and GELU networks | para |  |  | An injective residual stack with embedding and readout of rank $\dm$ s |
+| 51 | Width bounds for unnormalized ReLU and GELU networks | para |  |  | For ReLU, a different open set of weights illustrates why injectivity  |
+| 52 | Width bounds for unnormalized ReLU and GELU networks | para | full | full | \para{Wide residual blocks.} A dimension count can force additional Re |
+| 53 | Width bounds for unnormalized ReLU and GELU networks | statement |  |  | \begin{restatable}[A lower bound from counting dimensions]{proposition |
+| 54 | Width bounds for unnormalized ReLU and GELU networks | para |  |  | A skipless network has a change of basis at each of its $L + 1$ hidden |
+| 55 | Network obstructions from derivatives and growth | para |  |  | \subsection{Network obstructions from derivatives and growth}\label{se |
+| 56 | Network obstructions from derivatives and growth | statement |  |  | \begin{restatable}[No equality for ReLU$^2$, gated and $\tanh$ network |
+| 57 | Network obstructions from derivatives and growth | para |  |  | The direct skip path distinguishes the network derivatives at the orig |
+| 58 | Attention stacks: the effect of sequence length | para |  |  | \subsection{Attention stacks: the effect of sequence length}\label{sec |
+| 59 | Attention stacks: the effect of sequence length | para |  |  | At the origin, a skipless attention stack composes token averages. Its |
+| 60 | Attention stacks: the effect of sequence length | statement |  |  | \begin{restatable}[Attention networks on long and short sequences]{the |
+| 61 | Attention stacks: the effect of sequence length | para |  |  | With a causal mask, row $j$ of $U$ averages the first $j$ tokens, so i |
+| 62 | Pre-RMSNorm: the effect of input scale | para |  |  | \subsection{Pre-RMSNorm: the effect of input scale}\label{sec:rmsnets} |
+| 63 | Pre-RMSNorm: the effect of input scale | para |  |  | Pre-RMSNorm creates an obstruction even when the block types differ. A |
+| 64 | Pre-RMSNorm: the effect of input scale | statement |  |  | \begin{restatable}[Almost no equality under RMSNorm]{theorem}{thmRMSNe |
+| 65 | Pre-RMSNorm: the effect of input scale | para |  |  | Along a ray $tX$, the first skipless normalization is $N(tXE')$, whose |
+| 66 | Approximating skipless networks with residual networks | para |  |  | \section{Approximating skipless networks with residual networks}\label |
+| 67 | Approximating skipless networks with residual networks | para |  |  | The previous section starts with a residual function and asks for an e |
+| 68 | Approximating skipless networks with residual networks | statement | F, the function of a network | F, the function of a network | \begin{restatable}[Skipless networks as limits of residual networks]{p |
+| 69 | Approximating skipless networks with residual networks | para |  |  | \para{Rescaling construction.} Scale the read and write of block $\ell |
+| 70 | Approximating skipless networks with residual networks | para |  |  | \para{Effect of the regularizer.} At $\varepsilon=0$, RMSNorm removes  |
+| 71 | Related work | para |  |  | \section{Related work}\label{sec:related} |
+| 72 | Related work | para |  |  | \para{Approximation and exact representation.} \citet{lin2018resnet} p |
+| 73 | Related work | para |  |  | \para{Identifiability.} Recovering units from the function is central  |
+| 74 | Related work | para |  |  | \para{Training skipless models.} Prior work trains skipless architectu |
+| 75 | Conclusions and open problems | para |  |  | \section{Conclusions and open problems}\label{sec:conclusion} |
+| 76 | Conclusions and open problems | para |  |  | For bias-free ReLU and GELU networks without normalization, the single |
+| 77 | Conclusions and open problems | para |  |  | The following cases separate the established width and limit results f |
+| 78 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
+| 79 | Use of AI | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
