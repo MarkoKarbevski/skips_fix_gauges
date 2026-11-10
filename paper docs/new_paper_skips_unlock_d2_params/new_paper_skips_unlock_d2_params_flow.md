@@ -7,13 +7,13 @@
 | 2 | Introduction | para |  |  | Skip connections are a building block of almost every deep network tra |
 | 3 | Introduction | para |  | residual | Skipless networks are now trained as well. \citet{he2023shortcuts} tra |
 | 4 | Introduction | para |  |  | \para{Where the degrees of freedom come from.} Without skips, the basi |
-| 5 | Introduction | para | L, the number of blocks, P, the number of parameters, running example | L, the number of blocks, P, the number of parameters, redundancy, running example | \para{Functional dimension.} Our measure is the \emph{functional dimen |
+| 5 | Introduction | para |  | redundancy | \para{Functional dimension.} Our measure is the \emph{functional dimen |
 | 6 | Introduction | float |  |  | \begin{figure}[t] \centering \includegraphics[width=0.94\linewidth]{fi |
-| 7 | Introduction | para |  |  | \para{A gain in dimension and an equality of functions.} \citet{mijosk |
+| 7 | Introduction | para | L, the number of blocks | L, the number of blocks | \para{A gain in dimension and an equality of functions.} \citet{mijosk |
 | 8 | Introduction | para | A_l, a learned skip, identity skip, identity units, learned skip | A_l, a learned skip, generic, identity skip, learned skip, readout / unembedding | \para{Contributions and related work.} Each item states what we add, a |
 | 9 | Introduction | float | analytic blocks, functional dimension added by the skips | functional dimension added by the skips | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \n |
 | 10 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, m, number of units, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, m, number of units, read / write (nouns) | \section{Setup}\label{sec:setup} \para{Blocks.} A hidden state is a ma |
-| 11 | Setup | para | E and D, per block, readout / unembedding, residual | E and D | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
+| 11 | Setup | para | E and D, P, the number of parameters, per block, readout / unembedding, residual | E and D, P, the number of parameters | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
 | 12 | Setup | para | N(h), RMSNorm, epsilon of RMSNorm, pre-RMSNorm | N(h), epsilon of RMSNorm | \para{Normalization.} RMSNorm, written $N$, divides each row $v$ of $h |
 | 13 | Setup | para | generic |  | \para{Scope.} Networks have no biases, and their inputs are continuous |
 | 14 | Skipless networks: one change of basis per hidden state | para |  |  | \section{Changes of basis that preserve the function}\label{sec:reduce |
