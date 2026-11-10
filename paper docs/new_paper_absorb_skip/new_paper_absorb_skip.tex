@@ -109,7 +109,7 @@ Skip connections are usually seen as an aid to training, yet deep networks can n
 
 \section{Introduction}\label{sec:intro}
 
-Since the introduction of residual networks \citep{he2016resnet}, skip connections have been a building block of most state-of-the-art neural networks, including transformers \citep{vaswani2017attention,dosovitskiy2021an,grattafiori2024llama3}. The usual explanation for their success is training: a skip connection adds the input of a block to its output, which gives the gradient a short path through the network and makes the identity map easy to express \citep{veit2016ensembles,hardt2017identity}.
+Since the introduction of residual networks \citep{he2016resnet}, skip connections have been a building block of most state-of-the-art neural networks, including transformers \citep{vaswani2017attention,dosovitskiy2021an,grattafiori2024llama3}. The usual explanation for their success is training: a skip connection gives the gradient a short path through the network and makes the identity map easy to express \citep{veit2016ensembles,hardt2017identity}.
 
 Yet deep networks can now be trained without skip connections. \citet{he2024simplifying} remove the skips of transformer blocks without losing training speed, and \citet{ji2026cutting} train a skipless ViT-B on ImageNet that outperforms its residual counterpart. So does a skip only help training, or does it also let a block compute functions that it cannot compute without one?
 

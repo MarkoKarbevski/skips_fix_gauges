@@ -5,7 +5,7 @@
 | 0 | abstract | para | d_model, the width, functional dimension | RMSNorm, change of basis, d_model, the width, functional dimension, per block, residual | \begin{abstract} Residual and skipless networks with the same blocks h |
 | 1 | Introduction | para |  |  | \section{Introduction}\label{sec:intro}\label{sec:related} |
 | 2 | Introduction | para |  |  | Skip connections are a building block of almost every deep network tra |
-| 3 | Introduction | para | epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | Skipless networks are now trained as well \citep{he2023shortcuts,he202 |
+| 3 | Introduction | para | epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | Skipless networks are now trained as well. \citet{he2023shortcuts} tra |
 | 4 | Introduction | para | G, a change of basis, W, a generic weight matrix, h, a hidden state | G, a change of basis, h, a hidden state | \para{Hidden states have free bases.} Without normalization, a skiples |
 | 5 | Introduction | para | L, the number of blocks | L, the number of blocks | \para{A free basis removes $\dm^2$ parameters.} A suitable $G$ sets a  |
 | 6 | Introduction | para | P, the number of parameters, running example | P, the number of parameters, redundancy, running example | \para{Functional dimension.} Our measure is the \emph{functional dimen |
