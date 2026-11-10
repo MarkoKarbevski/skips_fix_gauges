@@ -1,7 +1,7 @@
 # Terms and symbols of paper A: (name, pattern of a use, pattern of the defining sentence).
 TERMS = [
     ('d_model, the dimension', r'\\dm', r'the model dimension \$\\dm\$|with \$\\dm\$ the model dimension|of dimension \$\\dm\$'),
-    ('absorb', r'(?i)\babsorb', r'\\emph\{absorbs\}|absorb its skip: can a skipless block'),
+    ('absorb', r'(?i)\babsorb', r'\\emph\{absorbs\}|If so, the block absorbs its skip connection'),
     ('read / write (nouns)', r'(?i)\b(the|a|each|its) (read|write)s?\b', r'(?i)a read \$\\Wread\$ and a write'),
     ('ReLU squared', r'ReLU\$\^2\$', r'(?i)square of ReLU|squared-ReLU'),
     ('gated block', r'(?i)\bgated\b', r'(?i)in a gated block|gated \(ReGLU'),

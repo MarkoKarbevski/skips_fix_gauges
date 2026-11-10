@@ -2,14 +2,14 @@
 
 | Unit | Section | Kind | Defines | First uses | Start |
 |---|---|---|---|---|---|
-| 0 | abstract | para | ReLU squared, absorb, d_model, the dimension, gated block | RMSNorm, absorb, attention block, d_model, the dimension, gated block, generic / almost every, residual, skipless | \begin{abstract} Residual networks add each block's input to its outpu |
+| 0 | abstract | para | ReLU squared, absorb, d_model, the dimension, gated block | RMSNorm, absorb, attention block, d_model, the dimension, gated block, generic / almost every, residual, skipless | \begin{abstract} Skip connections are usually seen as an aid to traini |
 | 1 | Introduction | para |  |  | \section{Introduction}\label{sec:intro} |
-| 2 | Introduction | para |  |  | Most deep networks trained today add the input of each block to its ou |
-| 3 | Introduction | para |  |  | Skipless networks now train too. \citet{he2024simplifying} remove the  |
+| 2 | Introduction | para |  |  | Since the introduction of residual networks \citep{he2016resnet}, skip |
+| 3 | Introduction | para |  |  | Yet deep networks can now be trained without skip connections. \citet{ |
 | 4 | Introduction | para | B, the map of a block, width, worth | B, the map of a block, width, worth | We answer this question exactly. Take a block $B$ without biases that  |
 | 5 | Introduction | para |  | ReLU squared, with more units. | \para{One block: the answer depends on the activation.} \begin{itemize |
-| 6 | Introduction | para | t and u, a ray | t and u, a ray | \para{Why the other blocks never absorb.} Follow the input along a ray |
-| 7 | Introduction | para | E and D, X, the input of a network, epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | E and D, X, the input of a network, epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | \para{Networks: the negative answers carry over.} A network has a line |
+| 6 | Introduction | para | t and u, a ray | t and u, a ray | \para{Why the other blocks never absorb their skip.} Follow the input  |
+| 7 | Introduction | para | E and D, X, the input of a network, epsilon of RMSNorm, equal, pre-RMSNorm, readout / unembedding | E and D, X, the input of a network, epsilon of RMSNorm, equal, pre-RMSNorm, readout / unembedding | \para{Networks: the negative answers carry over.} A network has a line |
 | 8 | Introduction | para |  |  | \para{Skipless networks as limits.} Without normalization, every skipl |
 | 9 | Introduction | para |  |  | \Cref{tab:results} collects the results, and the proofs are in the app |
 | 10 | Introduction | float | with pre-rmsnorm: | with pre-rmsnorm: | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.12} \ |
@@ -70,16 +70,16 @@
 | 65 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para | full | full | \para{Wide residual blocks: a bound from counting dimensions.} When th |
 | 66 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | statement |  |  | \begin{restatable}[A lower bound from counting dimensions]{proposition |
 | 67 | ReLU and GELU networks without normalization: \texorpdfstring{$\dm$ | para |  |  | A skipless network has a change of basis at each of its $L + 1$ hidden |
-| 68 | Skipless networks are limits of residual ones | para |  |  | \section{Skipless networks are limits of residual ones}\label{sec:limi |
-| 69 | Skipless networks are limits of residual ones | statement | F, the function of a network | F, the function of a network | \begin{restatable}[Skipless networks as limits of residual networks]{p |
-| 70 | Skipless networks are limits of residual ones | para |  |  | \para{Idea of the proof.} The proof scales the reads of block $\ell$ b |
-| 71 | Skipless networks are limits of residual ones | para |  |  | \para{Under RMSNorm.} With $\varepsilon = 0$, RMSNorm ignores the size |
+| 68 | Skipless networks are limits of residual networks | para |  |  | \section{Skipless networks are limits of residual networks}\label{sec: |
+| 69 | Skipless networks are limits of residual networks | statement | F, the function of a network | F, the function of a network | \begin{restatable}[Skipless networks as limits of residual networks]{p |
+| 70 | Skipless networks are limits of residual networks | para |  |  | \para{Idea of the proof.} The proof scales the reads of block $\ell$ b |
+| 71 | Skipless networks are limits of residual networks | para |  |  | \para{Under RMSNorm.} With $\varepsilon = 0$, RMSNorm ignores the size |
 | 72 | Related work | para |  |  | \section{Related work}\label{sec:related} |
 | 73 | Related work | para |  |  | \para{Expressivity of residual networks.} \citet{lin2018resnet} show t |
 | 74 | Related work | para |  |  | \para{Identifiability.} For $\tanh$ networks, the function determines  |
-| 75 | Related work | para |  |  | \para{Training without skips.} Skipless networks train with weights pa |
+| 75 | Related work | para |  |  | \para{Training without skips.} Skipless networks have been trained in  |
 | 76 | Conclusion | para |  |  | \section{Conclusion}\label{sec:conclusion} |
 | 77 | Conclusion | para |  |  | Without normalization or biases, a trained residual ReLU or GELU netwo |
-| 78 | Conclusion | para |  |  | \para{Open questions.} The unknown cells and the conditions of \cref{t |
+| 78 | Conclusion | para |  |  | \para{Open questions.} \begin{enumerate}[label=(\arabic*)] \item Netwo |
 | 79 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
 | 80 | Use of AI | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
