@@ -9,7 +9,7 @@
 | 4 | Introduction | para | L, the number of blocks | L, the number of blocks, change of basis, readout / unembedding | \para{Where the degrees of freedom come from.} Without skips, the basi |
 | 5 | Introduction | para | functional dimension | generic | \para{Functional dimension.} By the degrees of freedom of a network we |
 | 6 | Introduction | float |  |  | \begin{figure}[t] \centering \includegraphics[width=0.94\linewidth]{fi |
-| 7 | Introduction | para |  |  | \para{Functional dimension and equality of functions.} The result of \ |
+| 7 | Introduction | para |  | limit | \para{Functional dimension and equality of functions.} The result of \ |
 | 8 | Introduction | para | A_l, a learned skip, identity skip, learned skip | A_l, a learned skip, identity skip, learned skip, redundancy | \para{Contributions and related work.} \Cref{tab:results} lists the re |
 | 9 | Introduction | float | analytic blocks, functional dimension added by the skips | functional dimension added by the skips | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \n |
 | 10 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, m, number of units, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, m, number of units, read / write (nouns) | \section{Setup}\label{sec:setup} \para{Blocks.} A hidden state is a ma |
@@ -60,9 +60,9 @@
 | 55 | When the bounds are attained | statement |  |  | \begin{restatable}[Exact gain for $\tanh$ and GELU]{theorem}{thmExactG |
 | 56 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
 | 57 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
-| 58 | Residual and skipless networks compute different functions | para |  |  | A set of functions cannot lie inside a set of lower dimension, so for  |
+| 58 | Residual and skipless networks compute different functions | para | limit |  | Fix a finite set $X$ of inputs, and let $\mathcal S_X$ and $\mathcal R |
 | 59 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
-| 60 | Residual and skipless networks compute different functions | para |  |  | In (ii), each extra GELU unit adds $2\dm$ parameters against a gain of |
+| 60 | Residual and skipless networks compute different functions | para |  |  | Outside GELU blocks without normalization, \citet{mijoski2026worth} al |
 | 61 | Numerical ranks at depth, and a conjecture | para |  |  | \subsection{Numerical ranks at depth, and a conjecture}\label{sec:meas |
 | 62 | Numerical ranks at depth, and a conjecture | para |  |  | At depth we compute the rank of the Jacobian on a large batch of input |
 | 63 | Numerical ranks at depth, and a conjecture | float |  |  | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \b |
