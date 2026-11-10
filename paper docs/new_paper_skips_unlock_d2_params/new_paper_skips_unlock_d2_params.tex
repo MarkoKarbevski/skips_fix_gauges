@@ -355,7 +355,11 @@ The parameters removed in \cref{sec:reduce} did not change the function, so the 
 \subsection{Definition and a linear example}\label{sec:fd}
 
 \begin{definition}[Functional dimension {\citep{grigsby2022functional}}]\label{def:fd}
-Let $F_\theta$ be the function computed at parameters $\theta \in \R^P$. The \emph{functional dimension} at $\theta$ is the largest rank of the Jacobian of $\theta \mapsto (F_\theta(x_1), \dots, F_\theta(x_n))$ over finite batches of inputs $x_1, \dots, x_n$. The \emph{redundancy} at $\theta$ is $P$ minus the functional dimension.
+Let $F_\theta$ be the function computed at parameters $\theta \in \R^P$. For a finite batch $X = (x_1, \dots, x_n)$ of inputs, let $F_X(\theta) = (F_\theta(x_1), \dots, F_\theta(x_n))$ be the outputs on $X$, and $\Der F_X(\theta)$ the Jacobian of $\theta \mapsto F_X(\theta)$. The \emph{functional dimension} and the \emph{redundancy} at $\theta$ are
+\[
+\operatorname{fd}(\theta) \;=\; \max_{X}\, \operatorname{rank} \Der F_X(\theta), \qquad\qquad \operatorname{red}(\theta) \;=\; P - \operatorname{fd}(\theta),
+\]
+where the maximum is over all finite batches $X$.
 \end{definition}
 
 A continuous symmetry adds to the redundancy: if a continuous family of maps of the parameters preserves the function, the directions in which it moves $\theta$ lie in the kernel of every such Jacobian.
