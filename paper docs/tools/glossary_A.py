@@ -17,7 +17,7 @@ TERMS = [
     ('mirror image', r'(?i)mirror', r'mirror image, with the opposite read'),
 ]
 SYMBOLS = [
-    ('B, the map of a block', r'B\(x\)|B\(h\)|\$B\$', r'Take an MLP block \$B\$'),
+    ('B, the map of a block', r'B\(x\)|B\(h\)|\$B\$', r'Take an MLP block \$B\$|Let \$B\$ be an MLP block'),
     ('M, the linear term', r'xM\b|\$M\b|hM\b|uM\b|M = I', r'linear term \$xM\$, for a'),
     ('E and D', r'xE\b|XE\b|\$E\$|\$D\$|h_LD|ED\b', r'embedding \$E(\$| \\in)|\$E\$ is the linear embedding'),
     ('X, the input of a network', r'\$X\b|XE\b|F\(cX', r'an input \$X \\in'),
