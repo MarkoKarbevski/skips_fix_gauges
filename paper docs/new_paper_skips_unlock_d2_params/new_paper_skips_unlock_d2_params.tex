@@ -360,8 +360,8 @@ Let $F_\theta$ be the function computed at parameters $\theta \in \R^P$. The \em
 
 A continuous symmetry adds to the redundancy: if a continuous family of maps of the parameters preserves the function, the directions in which it moves $\theta$ lie in the kernel of every such Jacobian.
 
-\begin{example}[A product of three matrices]\label{ex:three}
-The linear network $x \mapsto xM_1M_2M_3$, with three $\dm\times\dm$ matrices, has $3\dm^2$ parameters and computes every linear map $x \mapsto xM$. So its functional dimension is $\dm^2$ at generic parameters, and its redundancy is $2\dm^2$: one change of basis at each of its two hidden states. Merging $M_2$ and $M_3$ into $M_2' = M_2M_3$ leaves $2\dm^2$ parameters, the same functions and the same functional dimension. Using a symmetry in this way lowers the parameter count and leaves the functional dimension unchanged.
+\begin{example}[Not all reductions are maximal]\label{ex:three}
+Take the linear network $x \mapsto xM_1M_2M_3$, with three $\dm\times\dm$ matrices. It has $3\dm^2$ parameters and computes the linear maps $x \mapsto xM$, so its functional dimension is $\dm^2$ at generic parameters and its redundancy is $2\dm^2$: one change of basis at each of its two hidden states. Using the change of basis at one hidden state gives $x \mapsto xM_1M_2'$, with $2\dm^2$ parameters. The functions and the functional dimension are unchanged, and the redundancy is now $\dm^2$. So a reduced network can still carry symmetries. The reduction is maximal only after the change of basis at the second hidden state is used as well: the $\dm^2$ parameters that remain then equal the functional dimension.
 \end{example}
 
 \subsection{Upper bounds from the symmetries}\label{sec:count}
