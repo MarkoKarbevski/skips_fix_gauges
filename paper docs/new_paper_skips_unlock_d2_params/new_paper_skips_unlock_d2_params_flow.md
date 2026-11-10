@@ -5,17 +5,17 @@
 | 0 | abstract | para | d_model, the width, functional dimension | RMSNorm, change of basis, d_model, the width, functional dimension, per block, residual | \begin{abstract} Residual and skipless networks with the same blocks h |
 | 1 | Introduction | para |  |  | \section{Introduction}\label{sec:intro}\label{sec:related} |
 | 2 | Introduction | para |  |  | Skip connections are a building block of almost every deep network tra |
-| 3 | Introduction | para | epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | Skipless networks are now trained as well. \citet{he2023shortcuts} tra |
+| 3 | Introduction | para |  |  | Skipless networks are now trained as well. \citet{he2023shortcuts} tra |
 | 4 | Introduction | para | G, a change of basis, W, a generic weight matrix, h, a hidden state | G, a change of basis, h, a hidden state | \para{Hidden states have free bases.} Without normalization, a skiples |
 | 5 | Introduction | para | L, the number of blocks | L, the number of blocks | \para{A free basis removes $\dm^2$ parameters.} A suitable $G$ sets a  |
 | 6 | Introduction | para | P, the number of parameters, running example | P, the number of parameters, redundancy, running example | \para{Functional dimension.} Our measure is the \emph{functional dimen |
 | 7 | Introduction | float |  |  | \begin{figure}[t] \centering \includegraphics[width=0.94\linewidth]{fi |
 | 8 | Introduction | para |  |  | \para{A gain in dimension and an equality of functions.} \citet{mijosk |
-| 9 | Introduction | para | A_l, a learned skip, identity skip, identity units, learned skip | A_l, a learned skip, generic, identity skip, learned skip | \para{Contributions and related work.} Each item states what we add, a |
+| 9 | Introduction | para | A_l, a learned skip, identity skip, identity units, learned skip | A_l, a learned skip, generic, identity skip, learned skip, pre-RMSNorm, readout / unembedding | \para{Contributions and related work.} Each item states what we add, a |
 | 10 | Introduction | float | analytic blocks, functional dimension added by the skips | functional dimension added by the skips | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \n |
 | 11 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, m, number of units, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, m, number of units, read / write (nouns) | \section{Setup}\label{sec:setup} \para{Blocks.} A hidden state is a ma |
-| 12 | Setup | para | E and D, per block, residual | E and D | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
-| 13 | Setup | para | N(h), RMSNorm | N(h) | \para{Normalization.} RMSNorm, written $N$, divides each row $v$ of $h |
+| 12 | Setup | para | E and D, per block, readout / unembedding, residual | E and D | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
+| 13 | Setup | para | N(h), RMSNorm, epsilon of RMSNorm, pre-RMSNorm | N(h), epsilon of RMSNorm | \para{Normalization.} RMSNorm, written $N$, divides each row $v$ of $h |
 | 14 | Setup | para | generic |  | \para{Scope.} Networks have no biases, and their inputs are continuous |
 | 15 | Skipless networks: one change of basis per hidden state | para |  |  | \section{Changes of basis that preserve the function}\label{sec:reduce |
 | 16 | Skipless networks: one change of basis per hidden state | para | change of basis | W, a generic weight matrix | Without normalization, nothing nonlinear happens between the write of  |
