@@ -44,7 +44,7 @@
 | 39 | Definition and a linear example | para |  |  | \subsection{Definition and a linear example}\label{sec:fd} |
 | 40 | Definition and a linear example | statement | F_theta, redundancy | F_theta | \begin{definition}[Functional dimension {\citep{grigsby2022functional} |
 | 41 | Definition and a linear example | para |  |  | A continuous symmetry adds to the redundancy: if a continuous family o |
-| 42 | Definition and a linear example | para |  |  | \begin{example}[A product of three matrices]\label{ex:three} The linea |
+| 42 | Definition and a linear example | para |  |  | \begin{example}[Not all reductions are maximal]\label{ex:three} Take t |
 | 43 | Upper bounds from the symmetries | para |  |  | \subsection{Upper bounds from the symmetries}\label{sec:count} |
 | 44 | Upper bounds from the symmetries | para | s, symmetries inside, script G, symmetries inside blocks, symmetries inside the blocks | s, symmetries inside, script G, symmetries inside blocks, symmetries inside the blocks | Two kinds of symmetry bound the functional dimension. The changes of b |
 | 45 | Upper bounds from the symmetries | statement |  |  | \begin{restatable}[Upper bounds]{theorem}{thmUnlock}\label{thm:unlock} |
