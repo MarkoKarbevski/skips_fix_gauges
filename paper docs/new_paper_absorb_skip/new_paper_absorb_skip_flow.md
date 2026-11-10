@@ -4,27 +4,27 @@
 |---|---|---|---|---|---|
 | 0 | abstract | para | ReLU squared, absorb, d_model, the dimension, gated block | RMSNorm, absorb, attention block, d_model, the dimension, gated block, generic / almost every, residual, skipless | \begin{abstract} Residual networks add each block's input to its outpu |
 | 1 | Introduction | para |  |  | \section{Introduction}\label{sec:intro} |
-| 2 | Introduction | para |  |  | Nearly every deep network trained today, from residual networks \citep |
+| 2 | Introduction | para |  |  | Most deep networks trained today add the input of each block to its ou |
 | 3 | Introduction | para |  |  | Skipless networks now train too. \citet{he2024simplifying} remove the  |
-| 4 | Introduction | para | B, the map of a block, H and d_h, m, number of units | B, the map of a block, H and d_h, m, number of units | Let $B$ be an MLP block with $m$ hidden units, or an attention block w |
-| 5 | Introduction | para |  | ReLU squared | \para{One block: the answer depends on the activation.} \begin{itemize |
-| 6 | Introduction | para | t and u, a ray | t and u, a ray | \para{Why the other blocks never absorb.} Along a ray $x = tu$ with $t |
-| 7 | Introduction | para | E and D, RMSNorm, X, the input of a network, epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | E and D, X, the input of a network, epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | \para{Networks: the negative answers carry over.} Throughout, a networ |
+| 4 | Introduction | para | B, the map of a block, width, worth | B, the map of a block, width, worth | We answer this question exactly. Take a block $B$ without biases that  |
+| 5 | Introduction | para |  | ReLU squared, with more units. | \para{One block: the answer depends on the activation.} \begin{itemize |
+| 6 | Introduction | para | t and u, a ray | t and u, a ray | \para{Why the other blocks never absorb.} Follow the input along a ray |
+| 7 | Introduction | para | E and D, X, the input of a network, epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | E and D, X, the input of a network, epsilon of RMSNorm, pre-RMSNorm, readout / unembedding | \para{Networks: the negative answers carry over.} A network has a line |
 | 8 | Introduction | para |  |  | \para{Skipless networks as limits.} Without normalization, every skipl |
-| 9 | Introduction | para |  |  | \para{Outline.} \Cref{tab:results} collects the results. \Cref{sec:set |
+| 9 | Introduction | para |  |  | \Cref{tab:results} collects the results, and the proofs are in the app |
 | 10 | Introduction | float | with pre-rmsnorm: | with pre-rmsnorm: | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.12} \ |
 | 11 | Setup | para |  |  | \section{Setup}\label{sec:setup} \takeaway{One equation states the que |
-| 12 | Setup | para | B_theta, Wread, Wwrite, theta, T, number of tokens, read / write (nouns) | B_theta, Wread, Wwrite, theta, T, number of tokens, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
+| 12 | Setup | para | B_theta, Wread, Wwrite, theta, T, number of tokens, m, number of units, read / write (nouns) | B_theta, Wread, Wwrite, theta, T, number of tokens, m, number of units, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
 | 13 | Setup | para | M, the linear term | M, the linear term | \para{Absorbing a linear term.} A skip adds $x$ to the output of a blo |
 | 14 | Setup | para | L, the number of blocks, residual, skipless | L, the number of blocks | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
-| 15 | Setup | para | N(h) | N(h) | \para{Normalization.} RMSNorm, written $N$, divides each row $v$ of a  |
-| 16 | Setup | para |  |  | \para{Biases.} Blocks have no biases, and the answers depend on it. Wi |
+| 15 | Setup | para | N(h), RMSNorm | N(h) | \para{Normalization.} RMSNorm, written $N$, divides each row $v$ of a  |
+| 16 | Setup | para |  |  | \para{Biases.} Blocks have no biases, and the answers depend on it (\c |
 | 17 | Setup | para |  |  | \para{Scope.} Every MLP block has at least $\dm$ hidden units, so that |
 | 18 | Setup | para | generic / almost every |  | \para{Generic weights.} A statement holds for \emph{generic} weights,  |
 | 19 | One block | para |  |  | \section{One block}\label{sec:oneblock} \takeaway{For almost every ReL |
 | 20 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para |  |  | \subsection{ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm |
 | 21 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | mirror image, w_i and hat w_i, read and write of a unit | mirror image, w_i and hat w_i, read and write of a unit | ReLU and GELU both satisfy \begin{equation}\label{eq:odd} \sigma(z) -  |
-| 22 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | with more units. | with more units. | \emph{With more units.} For a row $\gamma \in \R^{1\times\dm}$, a new  |
+| 22 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | with more units. |  | \emph{With more units.} For a row $\gamma \in \R^{1\times\dm}$, a new  |
 | 23 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | S, a set of units, at the same width. | S, a set of units, at the same width. | \emph{At the same width.} Flipping the read of unit $i$ to $-w_i$ chan |
 | 24 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | para | nondegenerate | nondegenerate | The next theorem says that at the same width these flips are the only  |
 | 25 | ReLU and GELU blocks: a skip is worth \texorpdfstring{$\dm$ | statement |  |  | \begin{restatable}[Absorption with $\dm$ more units]{theorem}{thmAbsor |
@@ -38,7 +38,7 @@
 | 33 | ReLU\texorpdfstring{$^2$ | statement |  |  | \begin{restatable}[No width suffices]{theorem}{thmAbsorbHom}\label{thm |
 | 34 | ReLU\texorpdfstring{$^2$ | para |  |  | The three cases of \cref{fig:reasons} are three one-line proofs. A hom |
 | 35 | Attention blocks: no number of heads suffices | para |  |  | \subsection{Attention blocks: no number of heads suffices}\label{sec:a |
-| 36 | Attention blocks: no number of heads suffices | para | Gamma, attention scores, attention block, score matrix, value-output product | Gamma, attention scores, score matrix, value-output product | An \emph{attention block} has $H$ heads of dimension $d_h$. Head $i$ h |
+| 36 | Attention blocks: no number of heads suffices | para | Gamma, attention scores, H and d_h, attention block, score matrix, value-output product | Gamma, attention scores, H and d_h, score matrix, value-output product | An \emph{attention block} has $H$ heads of dimension $d_h$. Head $i$ h |
 | 37 | Attention blocks: no number of heads suffices | para |  |  | Two inputs show that an attention block absorbs no linear term. Suppos |
 | 38 | Attention blocks: no number of heads suffices | statement |  |  | \begin{restatable}[No absorption in attention blocks]{theorem}{thmAtte |
 | 39 | Attention blocks: no number of heads suffices | para |  |  | The two inputs give one $h$ at which the two sides differ, and both si |

@@ -3,5 +3,6 @@ residual # well known: residual networks
 skipless # well known: networks without skip connections
 generic / almost every # standard measure-theoretic phrase in the abstract; Setup defines "generic"
 attention block # well known; Section 3.3 defines the block precisely
-RMSNorm # well known to ML theory researchers; the abstract names it, and the introduction glosses it
-mirror image # the introduction glosses it informally ("each mirroring an existing unit"); Section 3.1 defines it
+RMSNorm # well known to ML theory researchers; the Setup defines it
+mirror image # Section 3.1 defines it
+with more units. # a run-in label of Section 3.1, not a term

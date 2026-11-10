@@ -1,11 +1,11 @@
 # Terms and symbols of paper A: (name, pattern of a use, pattern of the defining sentence).
 TERMS = [
-    ('d_model, the dimension', r'\\dm', r'with \$\\dm\$ the model dimension|of dimension \$\\dm\$'),
+    ('d_model, the dimension', r'\\dm', r'the model dimension \$\\dm\$|with \$\\dm\$ the model dimension|of dimension \$\\dm\$'),
     ('absorb', r'(?i)\babsorb', r'\\emph\{absorbs\}|absorb its skip: can a skipless block'),
-    ('read / write (nouns)', r'(?i)\b(the|a|each|its) (read|write)s?\b', r'(?i)(with|has) a read \$\\Wread\$ and a write'),
+    ('read / write (nouns)', r'(?i)\b(the|a|each|its) (read|write)s?\b', r'(?i)a read \$\\Wread\$ and a write'),
     ('ReLU squared', r'ReLU\$\^2\$', r'(?i)square of ReLU|squared-ReLU'),
     ('gated block', r'(?i)\bgated\b', r'(?i)in a gated block|gated \(ReGLU'),
-    ('RMSNorm', r'RMSNorm', r'divides each token by its root mean square|divides each row of \$h\$ by'),
+    ('RMSNorm', r'RMSNorm', r'divides each token by its root mean square|divides each row \$v\$ of a hidden state by'),
     ('epsilon of RMSNorm', r'\\varepsilon', r'regularized by a constant \$\\varepsilon|divides each row of \$h\$ by'),
     ('pre-RMSNorm', r'(?i)pre-RMSNorm', r'In a pre-RMSNorm network|\\emph\{pre-RMSNorm\}'),
     ('generic / almost every', r'(?i)\bgeneric|almost every', r'(?i)\\emph\{generic\}'),
@@ -17,7 +17,7 @@ TERMS = [
     ('mirror image', r'(?i)mirror', r'mirror image, a unit with read'),
 ]
 SYMBOLS = [
-    ('B, the map of a block', r'B\(x\)|B\(h\)|\$B\$', r'Take an MLP block \$B\$|Let \$B\$ be an MLP block'),
+    ('B, the map of a block', r'B\(x\)|B\(h\)|\$B\$', r'Take a block \$B\$|Take an MLP block \$B\$|Let \$B\$ be an MLP block'),
     ('M, the linear term', r'xM\b|\$M\b|hM\b|uM\b|M = I', r'linear term \$xM\$, for a'),
     ('E and D', r'xE\b|XE\b|\$E\$|\$D\$|h_LD|ED\b', r'embedding \$E(\$| \\in)|\$E\$ is the linear embedding'),
     ('X, the input of a network', r'\$X\b|XE\b|F\(cX', r'an input \$X(\$| \\in)'),
