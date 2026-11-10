@@ -124,7 +124,7 @@ These answers are for blocks without biases, as in many current language models 
 \para{Networks: the answers carry over.} Throughout, a network starts with a linear embedding $E$ and ends with a linear readout $D$, and a residual network has $ED \neq 0$. In a pre-RMSNorm network, every block and the readout read their input through RMSNorm, which divides each token by its root mean square, regularized by a constant $\varepsilon \ge 0$.
 \begin{itemize}
 \item No residual network of ReLU$^2$, gated or $\tanh$ blocks equals a skipless network of any depth and widths, without normalization; for ReLU$^2$ and gated blocks, also under pre-RMSNorm with $\varepsilon > 0$ (\cref{thm:homgatednet}).
-\item Neither does a residual network of attention blocks, when the attention has no mask, or a causal mask and at least two more tokens than blocks (\cref{thm:attnnet}).
+\item No residual network of attention blocks equals a skipless one, when the attention has no mask, or a causal mask and at least two more tokens than blocks (\cref{thm:attnnet}).
 \item Under pre-RMSNorm, almost no residual network, of any blocks, equals a skipless network of any depth and widths (\cref{thm:rmsnet}). This covers pre-RMSNorm transformers.
 \item Without normalization, almost every residual ReLU or GELU network equals a skipless one with $\dm$ more units per block (\cref{prop:extraunits}), and almost none equals a skipless one whose first block has fewer than $2\dm$ units (\cref{thm:relufirst}). For wider blocks, such as the usual $4\dm$, \cref{sec:relunets} gives partial bounds.
 \end{itemize}
@@ -935,7 +935,9 @@ I = \sum_{j=1}^{J}\lambda_jP_{\tau_j} \qquad\text{with } J \le T^2 \text{ and re
 Write $M = M_1 + \dots + M_n$ with $n = \lceil\operatorname{rank}M/d_h\rceil$ and every $M_i$ of rank at most $d_h$. For each $j$ and $i$, add to the block a head with the queries and keys above at $\tau = \tau_j$, no value bias, and the value--output product $\lambda_jM_i$. The new heads add $\sum_{j,i}\lambda_jP_{\tau_j}\,h\,M_i = hM$ to the block.
 \end{proof}
 
-The count $T^2$ is not sharp: the rows of every $P_\tau$ sum to $1$, which already gives $J \le T^2 - T + 1$. The heads depend on $T$. Under a causal mask they also serve every shorter sequence, since the attention matrix of the first $T'$ tokens is the top-left block of $P_\tau$. Without a mask, the same argument applied to the matrices $P_\tau$ of all lengths $2, \dots, T$ at once gives heads that serve all these lengths. With the value--output products $-\lambda_jM_i$, the heads of the proof alone form a block $B_\theta$ with $hM + B_\theta(h) = 0$, so some blocks absorb $hM$ at the same width.
+\begin{remark}[The count and the sequence length]\label{rem:rotarycount}
+The count $T^2$ is not sharp: the rows of every $P_\tau$ sum to $1$, which already gives $J \le T^2 - T + 1$. The heads depend on $T$. Under a causal mask they also serve every shorter sequence, since the attention matrix of the first $T'$ tokens is the top-left block of $P_\tau$; without a mask, the same argument applied to the matrices $P_\tau$ of all lengths $2, \dots, T$ at once gives heads that serve all these lengths. Some blocks absorb $hM$ at the same width: with the value--output products $-\lambda_jM_i$, the heads of the proof alone form a block $B_\theta$ with $hM + B_\theta(h) = 0$.
+\end{remark}
 
 \para{Open questions.} The exact number of extra units for ReLU$^2$ blocks lies between $2\dm$ and $3\dm$; for $\dm = 2$, five suffice once the block has five units (\cref{rem:biasconstr}). For attention blocks with biases and rotary embeddings, the least number of heads, and whether almost every block fails to absorb a linear term at the same width, are open.
 
