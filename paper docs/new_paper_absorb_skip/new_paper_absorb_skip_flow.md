@@ -4,7 +4,7 @@
 |---|---|---|---|---|---|
 | 0 | abstract | para | ReLU squared, absorb, d_model, the dimension, gated block, pre-RMSNorm | RMSNorm, ReLU squared, absorb, attention block, d_model, the dimension, gated block, generic / almost every, pre-RMSNorm, residual, skipless | \begin{abstract} Skip connections aid training and change which functi |
 | 1 | Introduction | para |  |  | \section{Introduction}\label{sec:intro} |
-| 2 | Introduction | para |  |  | Residual blocks add their input to the output of a learned branch \cit |
+| 2 | Introduction | para |  |  | Skip connections are widely used in deep networks, from ResNets to tra |
 | 3 | Introduction | para | B, the map of a block | B, the map of a block | Take a block $B$ without biases that acts on tokens of dimension $\dm$ |
 | 4 | Introduction | para |  |  | For ReLU and GELU, the identity $\sigma(z)-\sigma(-z)=z$ supplies a co |
 | 5 | Introduction | para | E and D, X, the input of a network, equal, readout / unembedding | E and D, X, the input of a network, equal, readout / unembedding | At network scale, the linear embedding $E$ and linear readout $D$ expo |

@@ -4,7 +4,7 @@
 |---|---|---|---|---|---|
 | 0 | abstract | para | d_model, the width, functional dimension, identity skip, pre-RMSNorm | RMSNorm, change of basis, d_model, the width, functional dimension, identity skip, pre-RMSNorm, residual | \begin{abstract} Residual and skipless networks with the same blocks h |
 | 1 | Introduction | para |  |  | \section{Introduction}\label{sec:intro} |
-| 2 | Introduction | para |  |  | An \emph{identity skip} adds a block's input to its output without add |
+| 2 | Introduction | para |  |  | Skip connections are standard in modern deep networks \citep{he2016res |
 | 3 | Introduction | para |  |  | In a skipless network, changing the coordinates of a hidden state can  |
 | 4 | Introduction | para | G, a change of basis, L, the number of blocks, W, a generic weight matrix, h, a hidden state | G, a change of basis, L, the number of blocks, h, a hidden state | To see the constraint, consider an unnormalized network. Let $G$ be an |
 | 5 | Introduction | para | A_l, a learned skip, RMSNorm, epsilon of RMSNorm, learned skip, readout / unembedding | A_l, a learned skip, epsilon of RMSNorm, learned skip, readout / unembedding, redundancy | These basis choices account for a concrete redundancy. An arbitrary in |
@@ -72,10 +72,11 @@
 | 67 | Related work | para |  |  | \para{Residual-stream invariance and parameter reduction.} The residua |
 | 68 | Related work | para |  |  | \para{Identifiability and Jacobian rank.} \citet{wang2025gauge} charac |
 | 69 | Related work | para |  |  | \para{Functional dimension.} \citet{grigsby2022functional} define func |
-| 70 | Related work | para |  |  | \para{Exact removal of identity skips.} Our companion paper constructs |
-| 71 | Conclusions and open problems | para |  |  | \section{Conclusions and open problems}\label{sec:outlook}\label{sec:c |
-| 72 | Conclusions and open problems | para |  |  | A fixed skip constrains the relative bases at its endpoints. Across de |
-| 73 | Conclusions and open problems | para |  |  | The main open problem is to characterize redundancy in deep skipless n |
-| 74 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
-| 75 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
-| 76 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 70 | Related work | para |  |  | \para{Training with and without skips.} Skip connections ease optimiza |
+| 71 | Related work | para |  |  | \para{Exact removal of identity skips.} Our companion paper constructs |
+| 72 | Conclusions and open problems | para |  |  | \section{Conclusions and open problems}\label{sec:outlook}\label{sec:c |
+| 73 | Conclusions and open problems | para |  |  | A fixed skip constrains the relative bases at its endpoints. Across de |
+| 74 | Conclusions and open problems | para |  |  | The main open problem is to characterize redundancy in deep skipless n |
+| 75 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
+| 76 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
+| 77 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
