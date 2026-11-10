@@ -61,7 +61,7 @@
 | 56 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
 | 57 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
 | 58 | Residual and skipless networks compute different functions | para | limit |  | A network $F$ is a \emph{limit} of a family of networks if, for all in |
-| 59 | Residual and skipless networks compute different functions | para |  |  | By \cref{def:fd,thm:resdepth}, there is a batch $X = (x_1, \dots, x_n) |
+| 59 | Residual and skipless networks compute different functions | para | definable in an o-minimal structure | definable in an o-minimal structure | By \cref{def:fd,thm:resdepth}, the Jacobian of the residual network ha |
 | 60 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
 | 61 | Residual and skipless networks compute different functions | para |  |  | For GELU blocks without normalization, \citet{mijoski2026worth} show t |
 | 62 | Numerical ranks at depth, and a conjecture | para |  |  | \subsection{Numerical ranks at depth, and a conjecture}\label{sec:meas |
