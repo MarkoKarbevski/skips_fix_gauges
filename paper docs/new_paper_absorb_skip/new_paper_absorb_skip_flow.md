@@ -2,12 +2,12 @@
 
 | Unit | Section | Kind | Defines | First uses | Start |
 |---|---|---|---|---|---|
-| 0 | abstract | para | ReLU squared, absorb, d_model, the dimension, gated block, pre-RMSNorm | RMSNorm, ReLU squared, absorb, attention block, d_model, the dimension, gated block, generic / almost every, pre-RMSNorm, residual, skipless | \begin{abstract} A block \emph{absorbs} its skip if a skipless block o |
+| 0 | abstract | para | ReLU squared, absorb, d_model, the dimension, gated block, pre-RMSNorm | RMSNorm, ReLU squared, absorb, attention block, d_model, the dimension, gated block, generic / almost every, pre-RMSNorm, residual, skipless | \begin{abstract} Skip connections aid training and change which functi |
 | 1 | Introduction | para |  |  | \section{Introduction}\label{sec:intro} |
 | 2 | Introduction | para |  |  | Residual blocks add their input to the output of a learned branch \cit |
 | 3 | Introduction | para | B, the map of a block | B, the map of a block | Take a block $B$ without biases that acts on tokens of dimension $\dm$ |
 | 4 | Introduction | para |  |  | For ReLU and GELU, the identity $\sigma(z)-\sigma(-z)=z$ supplies a co |
-| 5 | Introduction | para | E and D, X, the input of a network, readout / unembedding | E and D, X, the input of a network, readout / unembedding | At network scale, the linear embedding $E$ and linear readout $D$ expo |
+| 5 | Introduction | para | E and D, X, the input of a network, equal, readout / unembedding | E and D, X, the input of a network, equal, readout / unembedding | At network scale, the linear embedding $E$ and linear readout $D$ expo |
 | 6 | Introduction | para | RMSNorm, epsilon of RMSNorm | epsilon of RMSNorm | In a pre-RMSNorm network, each block and the readout see normalized to |
 | 7 | Introduction | float | with pre-rmsnorm: | with pre-rmsnorm: | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.12} \ |
 | 8 | Architectures and exact equivalence | para |  |  | \section{Architectures and exact equivalence}\label{sec:setup} |
@@ -15,7 +15,7 @@
 | 10 | Architectures and exact equivalence | para | M, the linear term | M, the linear term | \para{Exact absorption.} We study the more general linear term $xM$, f |
 | 11 | Architectures and exact equivalence | para | L, the number of blocks, residual, skipless | L, the number of blocks | \para{Networks.} A linear embedding $E \in \R^{d_{\mathrm{in}}\times\d |
 | 12 | Architectures and exact equivalence | para | N(h) | N(h) | \para{Normalization.} RMSNorm, written $N$, divides each row $v$ of a  |
-| 13 | Architectures and exact equivalence | para |  |  | \para{Biases.} The main results concern blocks without biases. \Cref{a |
+| 13 | Architectures and exact equivalence | para |  |  | \para{Biases.} With biases, ReLU, GELU, ReLU$^2$, and gated blocks can |
 | 14 | Architectures and exact equivalence | para |  |  | \para{Scope.} Every MLP has at least $\dm$ hidden units, so its read c |
 | 15 | Architectures and exact equivalence | para | generic / almost every |  | \para{Generic weights.} A statement holds for \emph{generic} weights,  |
 | 16 | Exact absorption in a single block | para |  |  | \section{Exact absorption in a single block}\label{sec:oneblock} |
@@ -79,6 +79,6 @@
 | 74 | Related work | para |  |  | \para{Training skipless models.} Prior work trains skipless architectu |
 | 75 | Conclusions and open problems | para |  |  | \section{Conclusions and open problems}\label{sec:conclusion} |
 | 76 | Conclusions and open problems | para |  |  | For bias-free ReLU and GELU networks without normalization, the single |
-| 77 | Conclusions and open problems | para |  |  | The following cases separate the established width and limit results f |
+| 77 | Conclusions and open problems | para |  |  | \para{Open questions.} \begin{enumerate}[label=(\arabic*)] \item Netwo |
 | 78 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
 | 79 | Use of AI | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
