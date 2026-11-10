@@ -6,11 +6,11 @@
 | 1 | Introduction | para |  |  | \section{Introduction}\label{sec:intro}\label{sec:related} |
 | 2 | Introduction | para | d_model, the width |  | Skip connections are a building block of almost every deep network tra |
 | 3 | Introduction | para |  | residual | Skipless networks are now trained as well. \citet{he2023shortcuts} tra |
-| 4 | Introduction | para |  |  | \para{Where the degrees of freedom come from.} Without skips, the basi |
-| 5 | Introduction | para | functional dimension | redundancy | \para{Functional dimension.} By the degrees of freedom of a network we |
+| 4 | Introduction | para | L, the number of blocks | L, the number of blocks | \para{Where the degrees of freedom come from.} Without skips, the basi |
+| 5 | Introduction | para | functional dimension | generic | \para{Functional dimension.} By the degrees of freedom of a network we |
 | 6 | Introduction | float |  |  | \begin{figure}[t] \centering \includegraphics[width=0.94\linewidth]{fi |
-| 7 | Introduction | para | L, the number of blocks | L, the number of blocks | \para{A gain in dimension and an equality of functions.} A gain in fun |
-| 8 | Introduction | para | A_l, a learned skip, identity skip, identity units, learned skip | A_l, a learned skip, generic, identity skip, learned skip, readout / unembedding | \para{Contributions and related work.} \Cref{tab:results} lists the re |
+| 7 | Introduction | para |  |  | \para{Functional dimension and equality of functions.} A set of functi |
+| 8 | Introduction | para | A_l, a learned skip, identity skip, identity units, learned skip | A_l, a learned skip, identity skip, identity units, learned skip, readout / unembedding, redundancy | \para{Contributions and related work.} \Cref{tab:results} lists the re |
 | 9 | Introduction | float | analytic blocks, functional dimension added by the skips | functional dimension added by the skips | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \n |
 | 10 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, m, number of units, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, m, number of units, read / write (nouns) | \section{Setup}\label{sec:setup} \para{Blocks.} A hidden state is a ma |
 | 11 | Setup | para | E and D, P, the number of parameters, per block, readout / unembedding, residual | E and D, P, the number of parameters | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
@@ -22,7 +22,7 @@
 | 17 | Skipless networks: one change of basis per hidden state | para |  |  | Rows of a write work too: if $\dm$ rows of the write into $h_\ell$ for |
 | 18 | Skipless networks: one change of basis per hidden state | float |  |  | \begin{figure}[t] \centering [a TikZ drawing, omitted here; the captio |
 | 19 | Learned skips: reduction to identity skips | para |  |  | \subsection{Learned skips: reduction to identity skips}\label{sec:lear |
-| 20 | Learned skips: reduction to identity skips | para | Lambda | Lambda, identity units | A learned skip, which adds $hA$ in place of $h$, is a block of $\dm$ \ |
+| 20 | Learned skips: reduction to identity skips | para | Lambda | Lambda | A learned skip, which adds $hA$ in place of $h$, is a block of $\dm$ \ |
 | 21 | Learned skips: reduction to identity skips | statement |  |  | \begin{restatable}[Learned skips reduce to identity skips]{theorem}{th |
 | 22 | Learned skips: reduction to identity skips | para |  |  | So all $L\dm^2$ parameters of invertible learned skips can be removed, |
 | 23 | Identity skips: one change of basis for the whole network | para |  |  | \subsection{Identity skips: one change of basis for the whole network} |
@@ -44,7 +44,7 @@
 | 39 | Upper bounds from the symmetries | para | s, symmetries inside, script G, symmetries inside blocks, symmetries inside the blocks | s, symmetries inside, script G, symmetries inside blocks, symmetries inside the blocks | Two kinds of symmetry bound the functional dimension. The changes of b |
 | 40 | Upper bounds from the symmetries | statement |  |  | \begin{restatable}[Upper bounds]{theorem}{thmUnlock}\label{thm:unlock} |
 | 41 | Upper bounds from the symmetries | statement | equality condition | equality condition | \begin{definition}[Equality condition]\label{def:equality} A network s |
-| 42 | Upper bounds from the symmetries | para |  |  | When the skipless and the residual network both satisfy it, each skip  |
+| 42 | Upper bounds from the symmetries | para |  |  | When the residual network satisfies it, each skip unlocks $\dim\G$ par |
 | 43 | Upper bounds from the symmetries | statement | identifiable up to its symmetries, locally identifiable | identifiable up to its symmetries, locally identifiable | \begin{definition}[Identifiability up to symmetries]\label{def:ident}  |
 | 44 | Upper bounds from the symmetries | para |  | analytic blocks | \para{Functional dimension and identifiability.} The two notions meet  |
 | 45 | Upper bounds from the symmetries | para |  |  | \para{The gain in a transformer.} Under the equality condition, a resi |
@@ -55,7 +55,7 @@
 | 50 | When the bounds are attained | statement |  |  | \begin{restatable}[Exact gain for $\tanh$ and GELU]{theorem}{thmExactG |
 | 51 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
 | 52 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
-| 53 | Residual and skipless networks compute different functions | para |  |  | A family of functions cannot lie inside one of lower dimension, so for |
+| 53 | Residual and skipless networks compute different functions | para |  |  | A set of functions cannot lie inside a set of lower dimension, so for  |
 | 54 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
 | 55 | Residual and skipless networks compute different functions | para |  |  | In (ii), each extra GELU unit adds $2\dm$ parameters against a gain of |
 | 56 | Numerical ranks at depth, and a conjecture | para |  |  | \subsection{Numerical ranks at depth, and a conjecture}\label{sec:meas |
