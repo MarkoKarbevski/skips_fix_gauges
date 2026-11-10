@@ -7,7 +7,7 @@
 | 2 | Introduction | para | d_model, the width |  | Skip connections are a building block of almost every deep network tra |
 | 3 | Introduction | para |  | residual | Skipless networks are now trained as well. \citet{he2023shortcuts} tra |
 | 4 | Introduction | para |  |  | \para{Where the degrees of freedom come from.} Without skips, the basi |
-| 5 | Introduction | para | functional dimension | redundancy | \para{Functional dimension.} We measure degrees of freedom by the \emp |
+| 5 | Introduction | para | functional dimension | redundancy | \para{Functional dimension.} By the degrees of freedom of a network we |
 | 6 | Introduction | float |  |  | \begin{figure}[t] \centering \includegraphics[width=0.94\linewidth]{fi |
 | 7 | Introduction | para | L, the number of blocks | L, the number of blocks | \para{A gain in dimension and an equality of functions.} A gain in fun |
 | 8 | Introduction | para | A_l, a learned skip, identity skip, identity units, learned skip | A_l, a learned skip, generic, identity skip, learned skip, readout / unembedding | \para{Contributions and related work.} \Cref{tab:results} lists the re |
