@@ -2,7 +2,7 @@
 TERMS = [
     ('d_model, the dimension', r'\\dm', r'with \$\\dm\$ the model dimension|of dimension \$\\dm\$'),
     ('absorb', r'(?i)\babsorb', r'\\emph\{absorbs\}|absorb its skip: can a skipless block'),
-    ('read / write (nouns)', r'(?i)\b(the|a|each|its) (read|write)s?\b', r'(?i)with a read \$\\Wread\$ and a write'),
+    ('read / write (nouns)', r'(?i)\b(the|a|each|its) (read|write)s?\b', r'(?i)(with|has) a read \$\\Wread\$ and a write'),
     ('ReLU squared', r'ReLU\$\^2\$', r'(?i)square of ReLU|squared-ReLU'),
     ('gated block', r'(?i)\bgated\b', r'(?i)in a gated block|gated \(ReGLU'),
     ('RMSNorm', r'RMSNorm', r'divides each token by its root mean square|divides each row of \$h\$ by'),
@@ -14,13 +14,13 @@ TERMS = [
     ('score matrix', r'(?i)score matri', r'score matrix \$\\Gamma_i\$'),
     ('readout / unembedding', r'(?i)readout|unembedding', r'linear readout \$D\$|linear embedding and unembedding|ends with a linear unembedding|ends with a linear readout'),
     ('skipless', r'(?i)\bskipless\b', r'\\emph\{skipless\}'),
-    ('mirror image', r'(?i)mirror', r'mirror image, with the opposite read'),
+    ('mirror image', r'(?i)mirror', r'mirror image, a unit with read'),
 ]
 SYMBOLS = [
     ('B, the map of a block', r'B\(x\)|B\(h\)|\$B\$', r'Take an MLP block \$B\$|Let \$B\$ be an MLP block'),
     ('M, the linear term', r'xM\b|\$M\b|hM\b|uM\b|M = I', r'linear term \$xM\$, for a'),
     ('E and D', r'xE\b|XE\b|\$E\$|\$D\$|h_LD|ED\b', r'embedding \$E(\$| \\in)|\$E\$ is the linear embedding'),
-    ('X, the input of a network', r'\$X\b|XE\b|F\(cX', r'an input \$X \\in'),
+    ('X, the input of a network', r'\$X\b|XE\b|F\(cX', r'an input \$X(\$| \\in)'),
     ('L, the number of blocks', r'\$L\b|L\\dm|L \\ge', r'(?i)\$L\$ blocks|\$L \\ge 1\$ blocks'),
     ('B_theta, Wread, Wwrite, theta', r'B_\\theta|\\Wread|\\Wwrite', r'B_\\theta\(x\) = f'),
     ('m, number of units', r'\\times m\b|\$m\$', r'with \$m\$ hidden units'),
