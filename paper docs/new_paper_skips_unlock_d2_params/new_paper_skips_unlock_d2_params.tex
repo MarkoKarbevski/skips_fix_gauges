@@ -199,7 +199,11 @@ The results of this section rest on one symmetry, which the first two blocks of 
 \begin{equation}\label{eq:product}
 h_1\Wread^{2} \;=\; f_1(h_0\Wread^{1})\;\Wwrite^{1}\Wread^{2}.
 \end{equation}
-So the write of block~1 and the read of block~2 enter the function only through their product $\Wwrite^{1}\Wread^{2}$. For any invertible $\dm\times\dm$ matrix $G$, the matrices $\Wwrite^{1}G$ and $G^{-1}\Wread^{2}$ have the same product, and the network with these two matrices computes the same function. Its hidden state is $h_1G$: the same tokens, written in another basis.
+The write of block~1 and the read of block~2 enter the function only through their product, and for any invertible $\dm\times\dm$ matrix $G$ we have the invariance
+\begin{equation}\label{eq:invariance}
+\big(\Wwrite^{1}G\big)\big(G^{-1}\Wread^{2}\big) \;=\; \Wwrite^{1}\Wread^{2}.
+\end{equation}
+So the network with the write $\Wwrite^{1}G$ and the read $G^{-1}\Wread^{2}$ computes the same function. Its hidden state is $h_1G$: the same tokens, written in another basis.
 
 \begin{definition}[Change of basis]\label{def:cob}
 Let $G$ be an invertible $\dm\times\dm$ matrix. The \emph{change of basis} $G$ at the hidden state $h_\ell$ maps
@@ -215,7 +219,7 @@ The computation \eqref{eq:product} uses only the form \eqref{eq:block} of a bloc
 
 \subsection{Skipless networks: one change of basis per hidden state}\label{sec:skipless}\label{sec:junctions}
 
-In a skipless network without normalization, the computation \eqref{eq:product} holds at every hidden state. The change of basis $G$ at $h_\ell$ turns $h_\ell$ into $h_\ell G$, every read of it computes the same product as before, and the function does not change (\cref{fig:junctions}b). A suitable $G$ removes parameters.
+In a skipless network without normalization, the invariance \eqref{eq:invariance} holds at every hidden state, so every change of basis preserves the function (\cref{fig:junctions}b). A suitable $G$ removes parameters.
 
 \begin{restatable}[Exact reduction without skips]{proposition}{propSkipless}\label{prop:skipless}
 Without normalization, let $\dm$ columns of the read of $h_\ell$ in a skipless network form an invertible matrix $W_1$. The change of basis $G = W_1$ at $h_\ell$ preserves the function and turns $W_1$ into the identity. At generic parameters every hidden state has such columns, and these changes of basis at all $L+1$ hidden states remove $(L+1)\dm^2$ parameters.

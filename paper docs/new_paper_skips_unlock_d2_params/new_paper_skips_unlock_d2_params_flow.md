@@ -22,7 +22,7 @@
 | 17 | Changes of basis that preserve the function | para |  |  | \citet{zhao2023symmetries} formalize this symmetry for MLPs. It adapts |
 | 18 | Changes of basis that preserve the function | para |  |  | The computation \eqref{eq:product} uses only the form \eqref{eq:block} |
 | 19 | Skipless networks: one change of basis per hidden state | para |  |  | \subsection{Skipless networks: one change of basis per hidden state}\l |
-| 20 | Skipless networks: one change of basis per hidden state | para |  |  | In a skipless network without normalization, the computation \eqref{eq |
+| 20 | Skipless networks: one change of basis per hidden state | para |  |  | In a skipless network without normalization, the invariance \eqref{eq: |
 | 21 | Skipless networks: one change of basis per hidden state | statement | W_1, the chosen block | W_1, the chosen block | \begin{restatable}[Exact reduction without skips]{proposition}{propSki |
 | 22 | Skipless networks: one change of basis per hidden state | para |  |  | Rows of a write work too: if $\dm$ rows of the write into $h_\ell$ for |
 | 23 | Skipless networks: one change of basis per hidden state | float |  |  | \begin{figure}[t] \centering [a TikZ drawing, omitted here; the captio |
