@@ -6,7 +6,7 @@ TERMS = [
     ('ReLU squared', r'ReLU\$\^2\$', r'(?i)square of ReLU|squared-ReLU'),
     ('gated block', r'(?i)\bgated\b', r'(?i)in a gated block|gated \(ReGLU'),
     ('RMSNorm', r'RMSNorm', r'divides each token by its root mean square|divides each row \$v\$ of a hidden state by'),
-    ('epsilon of RMSNorm', r'\\varepsilon', r'regularized by a constant \$\\varepsilon|divides each row of \$h\$ by'),
+    ('epsilon of RMSNorm', r'\\varepsilon', r'regularization constant \$\\varepsilon\$|with a constant \$\\varepsilon'),
     ('pre-RMSNorm', r'(?i)pre-RMSNorm', r'In a pre-RMSNorm network|\\emph\{pre-RMSNorm\}'),
     ('generic / almost every', r'(?i)\bgeneric|almost every', r'(?i)\\emph\{generic\}'),
     ('nondegenerate', r'(?i)nondegenerate', r'\\emph\{nondegenerate\}'),
@@ -29,7 +29,7 @@ SYMBOLS = [
     ('N(h)', r'N\(h|N\(xE', r'normalized state \$N\(h\)\$'),
     ('t and u, a ray', r'tu\b|t\\,uM|\$t\$', r'\$x = tu\$ with'),
     ('w_i and hat w_i, read and write of a unit', r'w_i\b|\\hat w_i', r'Let unit \$i\$ have read \$w_i\$'),
-    ('S, a set of units', r'\[\{:\},S\]|set \$S\$', r'some set \$S\$ of units'),
+    ('S, a set of units', r'\[\{:\},S\]|set \$S\$', r'For a set \$S\$ of units'),
     ('F, the function of a network', r'F\(cx\)|\$F\$', r'The function \$F\$ of every|Let \$F\$ be a skipless network'),
     ('Gamma, attention scores', r'\\Gamma', r'\\Gamma_i = W_\{Q,i\}'),
 ]

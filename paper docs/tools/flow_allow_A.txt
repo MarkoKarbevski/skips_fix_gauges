@@ -6,3 +6,4 @@ attention block # well known; Section 3.3 defines the block precisely
 RMSNorm # well known to ML theory researchers; the Setup defines it
 mirror image # Section 3.1 defines it
 with more units. # a run-in label of Section 3.1, not a term
+pre-RMSNorm # well known: RMSNorm before each block and the readout (pre-norm); the Setup defines it
