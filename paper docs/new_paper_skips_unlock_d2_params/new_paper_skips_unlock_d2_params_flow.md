@@ -3,15 +3,15 @@
 | Unit | Section | Kind | Defines | First uses | Start |
 |---|---|---|---|---|---|
 | 0 | abstract | para |  | RMSNorm, d_model, the width, functional dimension, per block, pre-RMSNorm | \begin{abstract} Skip connections change the function class of an MLP  |
-| 1 | Introduction | para |  |  | \section{Introduction}\label{sec:intro}\label{sec:related} |
-| 2 | Introduction | para | d_model, the width |  | Skip connections are a building block of almost every deep network tra |
-| 3 | Introduction | para |  | residual | Skipless networks have recently been trained to varying degrees of suc |
-| 4 | Introduction | para | L, the number of blocks | L, the number of blocks, change of basis, readout / unembedding | \para{Where the degrees of freedom come from.} Without skips, the basi |
-| 5 | Introduction | para | functional dimension | generic | \para{Functional dimension.} By the degrees of freedom of a network we |
-| 6 | Introduction | float |  |  | \begin{figure}[t] \centering \includegraphics[width=0.94\linewidth]{fi |
-| 7 | Introduction | para |  |  | \para{Functional dimension and equality of functions.} The result of \ |
-| 8 | Introduction | para | A_l, a learned skip, identity skip, learned skip | A_l, a learned skip, identity skip, learned skip, redundancy | \para{Contributions and related work.} \Cref{tab:results} lists the re |
-| 9 | Introduction | float | analytic blocks, functional dimension added by the skips | functional dimension added by the skips | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \n |
+| 1 | abstract | float |  |  | \begin{figure}[!h] \centering \includegraphics[width=0.94\linewidth]{f |
+| 2 | Introduction | para |  |  | \section{Introduction}\label{sec:intro}\label{sec:related} |
+| 3 | Introduction | para | d_model, the width |  | Skip connections are a building block of almost every deep network tra |
+| 4 | Introduction | para |  | residual | Skipless networks have recently been trained to varying degrees of suc |
+| 5 | Introduction | para | L, the number of blocks | L, the number of blocks, change of basis, readout / unembedding | \para{Where the degrees of freedom come from.} Without skips, the basi |
+| 6 | Introduction | para | functional dimension | generic | \para{Functional dimension.} By the degrees of freedom of a network we |
+| 7 | Introduction | para | analytic blocks |  | \para{Main result.} Residual networks attain the bound at any depth wh |
+| 8 | Introduction | para | A_l, a learned skip, identity skip, learned skip, locally identifiable | A_l, a learned skip, analytic blocks, identity skip, learned skip, locally identifiable, redundancy | \para{Contributions and related work.} \Cref{tab:results} lists the re |
+| 9 | Introduction | float | functional dimension added by the skips | functional dimension added by the skips | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \n |
 | 10 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, m, number of units, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, m, number of units, read / write (nouns) | \section{Setup}\label{sec:setup} \para{Blocks.} A hidden state is a ma |
 | 11 | Setup | para | E and D, P, the number of parameters, per block, readout / unembedding, residual | E and D, P, the number of parameters | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
 | 12 | Setup | para | epsilon of RMSNorm, pre-RMSNorm, under rmsnorm | epsilon of RMSNorm, under rmsnorm | \para{Normalization.} RMSNorm with the constant $\varepsilon > 0$ is t |
@@ -51,9 +51,9 @@
 | 46 | Upper bounds from the symmetries | statement |  |  | \begin{restatable}[Upper bounds]{theorem}{thmUnlock}\label{thm:unlock} |
 | 47 | Upper bounds from the symmetries | statement | equality condition | equality condition | \begin{definition}[Equality condition]\label{def:equality} A network s |
 | 48 | Upper bounds from the symmetries | para |  |  | When the residual network satisfies it, each skip unlocks $\dim\G$ par |
-| 49 | Upper bounds from the symmetries | statement | identifiable up to its symmetries, locally identifiable | identifiable up to its symmetries, locally identifiable | \begin{definition}[Identifiability up to symmetries]\label{def:ident}  |
+| 49 | Upper bounds from the symmetries | statement | identifiable up to its symmetries | identifiable up to its symmetries | \begin{definition}[Identifiability up to symmetries]\label{def:ident}  |
 | 50 | Upper bounds from the symmetries | para |  |  | \citet{vlacic2020affine} define identifiability up to an equivalence r |
-| 51 | Upper bounds from the symmetries | para |  | analytic blocks | \para{Functional dimension and identifiability.} The two notions meet  |
+| 51 | Upper bounds from the symmetries | para |  |  | \para{Functional dimension and identifiability.} The two notions meet  |
 | 52 | Upper bounds from the symmetries | para |  |  | \para{The gain in a transformer.} Under the equality condition, a resi |
 | 53 | When the bounds are attained | para |  |  | \subsection{When the bounds are attained}\label{sec:onelayer} |
 | 54 | When the bounds are attained | para |  |  | The equality condition is a hypothesis, and it can fail (\cref{sec:mea |
