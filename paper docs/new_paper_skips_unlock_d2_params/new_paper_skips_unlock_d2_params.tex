@@ -202,6 +202,8 @@ Skipless networks have recently been trained to varying degrees of success. \cit
 \para{Identifiability and the symmetries of attention.} For skipless networks of attention blocks with one head and without softmax, \citet{henry2025lightning} prove that, at generic parameters, the function determines the weights up to scalings of the blocks and changes of basis inside and between them. With softmax, they prove for one block that the function determines the attention matrix, the product of the query and key matrices, and the value matrix, and they conjecture that at any depth it determines the weights up to the changes of basis inside and between the blocks. The remark after \cref{thm:oneblock} uses their theorem for one block, and for residual networks item~6 proves the corresponding local statement at any depth, with several heads. \citet{wang2025gauge} prove that an attention block with several heads of total width $\dm$ has, at generic parameters, no symmetries beyond the changes of basis inside its heads and the permutations of its heads. The symmetries of a block are the same with and without skips, so they cancel when a residual and a skipless network are compared (\cref{sec:count}). \citet{dahlgren2026polynomial}\ifanon\footnote{Concurrent work.}\else\footnote{Concurrently with and independently of our first version (7 October 2026, \url{https://github.com/MarkoKarbevski/skips_fix_gauges/commit/8128617}).}\fi{} prove that residual networks with polynomial activations, whose blocks have no output weights, are generically identifiable up to finitely many sign flips. The changes of basis that the skips remove do not arise there.
 
 \section{Setup}\label{sec:setup}
+This section fixes the networks that we compare. We write every block, MLP or attention, in one form. We then define the networks without skips, with identity skips and with learned skips, add normalization, and state the scope of the results.
+
 \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whose rows are the $T$ tokens of a sequence. A block reads it with a trainable matrix $\Wread$, the \emph{read}, applies a fixed map $f$, and writes the result with a trainable matrix $\Wwrite$, the \emph{write}:
 \begin{equation}\label{eq:block}
 B(h) = f(h\Wread)\,\Wwrite.
@@ -247,6 +249,8 @@ An identity skip has no weights, and a change of basis leaves it in place.
 \para{What this section builds.} We use the symmetry to remove parameters from every block of \cref{sec:setup}, MLP blocks and attention blocks alike: a change of basis turns a $\dm\times\dm$ submatrix of the weights into the identity (\cref{sec:skipless}). The computation \eqref{eq:product} uses only the form \eqref{eq:block} of a block. For an attention block, $\Wread = [\,W_Q \mid W_K \mid W_V\,]$ and $\Wwrite = W_O$. A block together with its learned skip $A$ has the form \eqref{eq:block} as well, with the read $[\,A \mid \Wread\,]$, and changes of basis turn invertible learned skips into identity skips (\cref{sec:learned}). With identity skips, changes of basis preserve the function only when they are the same at all hidden states (\cref{sec:global}). Under pre-RMSNorm only orthogonal changes of basis preserve the function, and the submatrix becomes triangular in place of the identity (\cref{sec:norm}).
 
 \subsection{Skipless networks: one change of basis per hidden state}\label{sec:skipless}\label{sec:junctions}
+
+We start with networks that have neither skips nor normalization, where the symmetry is largest. We show on an example how one change of basis removes $\dm^2$ parameters, and then do the same at every hidden state (\cref{prop:skipless}).
 
 In a skipless network without normalization, the invariance \eqref{eq:invariance} holds at every hidden state, so every change of basis preserves the function (\cref{fig:junctions}b). A change of basis that turns a $\dm\times\dm$ submatrix of the weights into the identity removes $\dm^2$ parameters: the entries of this submatrix are fixed, so they need not be stored or trained.
 
@@ -351,6 +355,8 @@ So the networks with invertible learned skips have $L\dm^2$ more parameters than
 
 \subsection{Identity skips: one change of basis for the whole network}\label{sec:global}\label{sec:gaugefix}
 
+\Cref{sec:learned} turned invertible learned skips into identity skips. We now ask which changes of basis remain once the skips are identities. We compute what two different changes of basis do to one residual block, and read off the answer (\cref{thm:tie}).
+
 A residual network keeps one change of basis, the same at all its hidden states. With a change of basis $G_{\ell-1}$ at $h_{\ell-1}$ and $G_\ell$ at $h_\ell$, a residual block computes
 \begin{equation}\label{eq:defect}
 h_{\ell-1}G_{\ell-1} + B_\ell(h_{\ell-1})\,G_\ell \;=\; h_\ell G_\ell + h_{\ell-1}(G_{\ell-1} - G_\ell).
@@ -368,6 +374,8 @@ Without normalization, let $G_0, \dots, G_L$ be invertible.\\
 So the $L$ skips remove $L\dm^2$ dimensions from this group, and \cref{sec:gain} shows when they become functional dimension.
 
 \subsection{RMSNorm and LayerNorm: orthogonal changes of basis}\label{sec:norm}
+
+Up to here the networks had no normalization. We now add pre-RMSNorm and go through the same steps: the block form, the changes of basis that preserve the function, and the parameters that they remove. One thing changes: the changes of basis must be orthogonal (\cref{thm:rmstri}). LayerNorm reduces to this case.
 
 With pre-RMSNorm, the network with learned skips computes
 \begin{equation}\label{eq:prenorm}
@@ -405,6 +413,8 @@ The reductions of \cref{sec:reduce} remove parameters without changing the funct
 
 \subsection{Definition and a linear example}\label{sec:fd}
 
+We first define the functional dimension and the redundancy, and compute both for a linear network, where they can be read off by hand.
+
 \begin{definition}[Functional dimension {\citep{grigsby2022functional}}]\label{def:fd}
 Let $F_\theta$ be the function computed at parameters $\theta \in \R^P$. For a finite batch $X = (x_1, \dots, x_n)$ of inputs, let $F_X(\theta) = (F_\theta(x_1), \dots, F_\theta(x_n))$ be the outputs on $X$, and $\Der F_X(\theta)$ the Jacobian of $\theta \mapsto F_X(\theta)$. The \emph{functional dimension} and the \emph{redundancy} at $\theta$ are
 \[
@@ -424,6 +434,8 @@ The orthogonal $\dm\times\dm$ matrices form a manifold of dimension $\dm(\dm-1)/
 \end{example}
 
 \subsection{Upper bounds from the symmetries}\label{sec:count}
+
+We now bound the functional dimension from above. A direction in which a symmetry moves the parameters does not change the function, so each dimension of symmetry is one dimension of redundancy. We count the symmetries, state the bounds with and without skips (\cref{thm:unlock}), and give a name to the case in which a bound is attained. We then relate this case to identifiability.
 
 Two kinds of symmetry bound the functional dimension. The changes of basis of one hidden state form a group $\G$: $\GL(\dm)$ without normalization, of dimension $\dm^2$, and $\Ort(\dm)$ under RMSNorm, of dimension $\dm(\dm-1)/2$. The \emph{symmetries inside the blocks} change the read and the write of one block and leave the map of that block unchanged. Permutations of hidden units or heads and sign flips of $\tanh$ hidden units are finite and remove no parameters \citep{sussmann1992,fefferman1994}. Each hidden unit of a ReLU or ReLU$^2$ block can be rescaled, and so can the value of each hidden unit of a gated block and, in ReGLU, its gate \citep{rolnick2020reverse,godfrey2022symmetries}. Each attention head has a change of basis between its queries and keys and one between its values and outputs, of dimension $d_h^2$ each \citep{elhage2021circuits,wang2025gauge,theus2025glmc}. A ReLU block with $\dhid = 4\dm$ has $4\dm$ rescalings, against $\dm^2$ dimensions for a change of basis. Let $s$ be the total dimension of the symmetries inside the blocks, summed over the blocks. For $\tanh$ and GELU blocks, $s = 0$. These symmetries leave the map of every block unchanged, so they preserve the function with skips and without them, and $s$ is the same number for both networks.
 
@@ -503,6 +515,8 @@ Without normalization, in the two cases below the skipless network satisfies the
 
 \subsection{Residual and skipless networks compute different functions}\label{sec:classes}
 
+The gain in functional dimension says something about the functions themselves: it separates what skipless networks can approximate from what residual networks compute. We first say what a limit is, then recall what is known, and then state the result (\cref{thm:classes}).
+
 \begin{definition*}[Pointwise limit]
 Let $\mathcal X = \R^{T\times d_{\mathrm{in}}}$ be the set of inputs, and let $\mathcal F$ be a set of networks with inputs in $\mathcal X$. A network $F$ is a \emph{pointwise limit} of $\mathcal F$ if
 \[
@@ -532,6 +546,8 @@ P + 2\dm k - (L+1)\dm^2 \;<\; P - \dm^2, \qquad\text{that is,}\quad k < L\dm/2.
 So the smallest number of extra hidden units with which a skipless network of $L$ blocks equals a residual network at generic parameters lies between $L\dm/2$ and $L\dm$.
 
 \subsection{Numerical ranks at depth, and a conjecture}\label{sec:measured}
+
+For skipless networks at depth, \cref{thm:exactgain} gives the equality condition only for $\tanh$ blocks and for wide GELU blocks. For the other cases we turn to numerical ranks, and we state what they suggest as a conjecture.
 
 At depth we compute the rank of the Jacobian on a large batch of inputs (\cref{app:checks}), which is a lower bound on the functional dimension. Where this rank meets the upper bound of \cref{thm:unlock}, the functional dimension is known exactly. The two meet in every row of \cref{tab:measured}, and also for SwiGLU and GeGLU networks and for nanoGPT \citep{karpathy2023nanogpt} at other depths and without normalization (\cref{tab:checks,tab:nanogpt}). After training on four datasets, $398$ of $436$ small MLPs keep the rank that they have at random weights (\cref{fig:trained}), and $36$ of the other $38$ are the skipless ReGLU networks under RMSNorm treated below.
 
