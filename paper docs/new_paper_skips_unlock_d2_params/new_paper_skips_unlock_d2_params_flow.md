@@ -5,7 +5,7 @@
 | 0 | abstract | para |  | RMSNorm, d_model, the width, functional dimension, per block, pre-RMSNorm | \begin{abstract} Skip connections change the function class of an MLP  |
 | 1 | Introduction | para |  |  | \section{Introduction}\label{sec:intro}\label{sec:related} |
 | 2 | Introduction | para | d_model, the width |  | Skip connections are a building block of almost every deep network tra |
-| 3 | Introduction | para |  | residual | Skipless networks are now trained as well. \citet{he2023shortcuts} tra |
+| 3 | Introduction | para |  | residual | Skipless networks have recently been trained to varying degrees of suc |
 | 4 | Introduction | para | L, the number of blocks | L, the number of blocks, change of basis, readout / unembedding | \para{Where the degrees of freedom come from.} Without skips, the basi |
 | 5 | Introduction | para | functional dimension | generic | \para{Functional dimension.} By the degrees of freedom of a network we |
 | 6 | Introduction | float |  |  | \begin{figure}[t] \centering \includegraphics[width=0.94\linewidth]{fi |
