@@ -9,7 +9,7 @@ TERMS = [
     ('identity skip', r'(?i)identity skip', r'\\emph\{identity skip\}'),
     ('pre-RMSNorm', r'(?i)pre-RMSNorm', r'In a pre-RMSNorm network|\\emph\{pre-RMSNorm\}'),
     ('RMSNorm', r'RMSNorm', r'divides each row \$v\$ of \$h\$ by'),
-    ('epsilon of RMSNorm', r'\\varepsilon', r'regularized by a constant \$\\varepsilon|divides each row \$v\$ of \$h\$ by'),
+    ('epsilon of RMSNorm', r'\\varepsilon', r'regularized by a constant \$\\varepsilon|divides each row \$v\$ of \$h\$ by|RMSNorm with the constant \$\\varepsilon'),
     ('generic', r'(?i)\bgeneric', r'(?i)\\emph\{generic\}'),
     ('analytic blocks', r'(?i)\banalytic (block|network)', r'\\emph\{analytic\}|Analytic: attention'),
     ('symmetries inside blocks', r'(?i)symmetries inside', r'\\emph\{symmetries inside'),
