@@ -362,7 +362,7 @@ Consider pre-RMSNorm networks.\\
 \para{Trained models.}\label{sec:trained} The reduction applies to trained weights. In the skipless ViT-B \citep{dosovitskiy2021an} of \citet{ji2026cutting}, with standard pre-LayerNorm blocks, the changes of basis at its $25$ hidden states remove $7.3$M parameters, $8.5$ percent of the model, without changing its function. A residual model keeps one change of basis, and \cref{app:scale} gives the counts for the residual ViT-B and for Llama-3.1 \citep{grattafiori2024llama3}.
 
 \section{Functional dimension with and without skips}\label{sec:gain}
-The reductions of \cref{sec:reduce} remove parameters without changing the function. Removing the skips is different: \citet{mijoski2026worth} show that, for most kinds of block, it changes the family of functions. Their result compares the residual and the skipless family through the functions that they share, and does not tell the extent of the change. We compare the degrees of freedom of the two families: their functional dimension. The same measure tells whether more parameters could be removed even after the stated reductions, a question that \cref{sec:reduce} leaves open.
+The reductions of \cref{sec:reduce} remove parameters without changing the function. Removing the skips is different: \citet{mijoski2026worth} show that, for most kinds of block, it changes the family of functions. Their result compares the residual and the skipless family through the functions that they share, and does not tell the extent of the change. We compare the degrees of freedom of the two families: their functional dimension. The same measure tells whether redundancy remains even after the stated reductions, a question that \cref{sec:reduce} leaves open.
 
 \subsection{Definition and a linear example}\label{sec:fd}
 
@@ -378,6 +378,10 @@ A continuous symmetry adds to the redundancy: if a continuous family of maps of 
 
 \begin{example}[Not all reductions are maximal]\label{ex:three}
 Take the linear network $x \mapsto xM_1M_2M_3$, with three $\dm\times\dm$ matrices. It has $3\dm^2$ parameters, and its functions are the linear maps $x \mapsto xM$ with $M = M_1M_2M_3$, which can be any $\dm\times\dm$ matrix. So its functional dimension is $\dm^2$ at generic parameters and its redundancy is $2\dm^2$: one change of basis at each of its two hidden states. The change of basis $G = M_3$ at the second hidden state turns $M_3$ into the identity and $M_2$ into $M_2' = M_2M_3$. It gives the network $x \mapsto xM_1M_2'$, with $2\dm^2$ parameters. The functions and the functional dimension are unchanged, and the redundancy is now $\dm^2$. So a reduced network can still carry symmetries. The reduction is maximal only after the change of basis $G = M_2'$ at the first hidden state is used as well. It gives $x \mapsto xM$ with $M = M_1M_2'$, and the $\dm^2$ parameters that remain equal the functional dimension.
+\end{example}
+
+\begin{example}[Degrees of freedom need not be entries]\label{ex:orth}
+The orthogonal $\dm\times\dm$ matrices form a family of dimension $\dm(\dm-1)/2$: near an orthogonal matrix $Q$ they are the matrices $Q\exp(S)$, with $S$ antisymmetric, and $S$ has $\dm(\dm-1)/2$ free entries. So the linear maps $x \mapsto xQ$ with $Q$ orthogonal have $\dm(\dm-1)/2$ degrees of freedom. Yet an orthogonal matrix is dense: it is stored with $\dm^2$ entries, and none of them can be deleted. The functional dimension counts the directions in which the function can move, and these need not correspond to entries of the weights. Orthogonal matrices are the changes of basis under RMSNorm (\cref{sec:norm}).
 \end{example}
 
 \subsection{Upper bounds from the symmetries}\label{sec:count}
