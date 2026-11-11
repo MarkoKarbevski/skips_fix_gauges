@@ -25,7 +25,7 @@ SYMBOLS = [
     ('G, a change of basis', r'WG\b|G\^\{-1\}W|matrix \$G\$', r'(?i)Let \$G\$ be an invertible|For an invertible \$\\dm\\times\\dm\$ matrix \$G\$|For any invertible \$\\dm\\times\\dm\$ matrix \$G\$'),
     ('W, a generic weight matrix', r'\$W \\mapsto|\bW \\mapsto', r'(?i)the matrix \$W\$ that writes|W \\mapsto WG \\ \\text\{ for the writes'),
     ('W_1, the chosen block', r'W_1(?![W_0-9])', r'form an invertible matrix \$W_1\$'),
-    ('L, the number of blocks', r'\$L\b|\(L\+1\)|L\\dm|L = 3', r'(?i)\$L\$ blocks|\$L = 3\$ blocks'),
+    ('L, the number of blocks', r'\$L\b|\(L\+1\)|L\\dm|L = 3', r'(?i)\$L\$ blocks|\$L = 3\$ blocks|\$L = 3\$ GELU blocks'),
     ('P, the number of parameters', r'\$P\b|P = 240|P - ', r'(?i)\$P = 240\$ parameters|same \$P\$ parameters'),
     ('E and D', r'xE\b|\$E\$|\$D\$|h_LD|ED\b', r'embedding \$E|\$E\$ is the linear embedding'),
     ('h, a hidden state', r'h_\\ell|\$h\b|\bhA\b|hU', r'A hidden state is a matrix \$h|let hidden states be row vectors \$h\$'),
@@ -38,6 +38,6 @@ SYMBOLS = [
     ('s, symmetries inside', r'- s\$|\$s = 0|- s\b', r'Let \$s\$ be the(ir)? (total )?dimension'),
     ('F_theta', r'F_\\theta', r'Let \$F_\\theta\$ be the function'),
     ('T, number of tokens', r'T\\times', r'the \$T\$ tokens'),
-    ('m, number of units', r'\\times m\b|\$m\$|2m\b', r'with \$m\$ hidden units'),
+    ('d_hidden, the number of hidden units', r'\\dhid', r'with \$\\dhid\$ hidden units|of \$\\dhid = 8\$ hidden units'),
     ('H and d_h', r'Hd_h|d_h', r'with \$H\$ heads of width \$d_h\$'),
 ]
