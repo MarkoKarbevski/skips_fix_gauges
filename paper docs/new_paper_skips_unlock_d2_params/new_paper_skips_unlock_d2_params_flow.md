@@ -11,7 +11,7 @@
 | 6 | Introduction | para | functional dimension | generic | \para{Functional dimension.} By the degrees of freedom of a network we |
 | 7 | Contributions | para |  |  | \subsection{Contributions}\label{sec:contributions} |
 | 8 | Contributions | para | analytic blocks |  | \para{Main result.} Residual networks attain the upper bound from the  |
-| 9 | Contributions | para | A_l, a learned skip, identity skip, learned skip, locally identifiable | A_l, a learned skip, analytic blocks, identity skip, learned skip, locally identifiable | \para{Further results.} \Cref{tab:results} lists the proven counts, an |
+| 9 | Contributions | para | A_l, a learned skip, identity skip, learned skip, locally identifiable | A_l, a learned skip, analytic blocks, identity skip, learned skip, locally identifiable | \begin{enumerate}[label=\arabic*.] \item \textit{Changes of basis, in  |
 | 10 | Contributions | float | functional dimension added by the skips | functional dimension added by the skips | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \n |
 | 11 | Related work | para |  |  | \subsection{Related work}\label{sec:related} |
 | 12 | Related work | para |  |  | \para{The change of basis as a symmetry.} \citet{zhao2023symmetries} f |
