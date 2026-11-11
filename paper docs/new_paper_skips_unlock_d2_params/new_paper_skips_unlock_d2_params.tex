@@ -372,7 +372,17 @@ With pre-RMSNorm, the network with learned skips computes
 \begin{equation}\label{eq:prenorm}
 h_\ell = h_{\ell-1}A_\ell + B_\ell\big(N_\varepsilon(h_{\ell-1})\big), \qquad y = N_\varepsilon(h_L)\,D.
 \end{equation}
-A change of basis $G$ at $h_\ell$ now reaches the reads as $N_\varepsilon(h_\ell G)$. For an orthogonal $Q$, $N_\varepsilon(hQ) = N_\varepsilon(h)Q$, since $Q$ preserves the norm of every row, and the read undoes $Q$ by $W \mapsto Q^\top W$. Since $\varepsilon > 0$, a read can undo no other invertible matrix (\cref{lem:rms}). So every hidden state of a skipless network, or of one with learned skips, keeps an orthogonal change of basis, $\dm(\dm-1)/2$ dimensions. It cannot turn a submatrix into the identity, but a QR factorization makes it triangular.
+The skip reads $h_{\ell-1}$ and the block reads $N_\varepsilon(h_{\ell-1})$. In the notation of \eqref{eq:mixed}, with the same map $\tilde f$, a block together with its skip is
+\begin{equation}\label{eq:prenormblock}
+hA + f\big(N_\varepsilon(h)\,\Wread\big)\,\Wwrite \;=\; \tilde f\left(\big[\,h \mid N_\varepsilon(h)\,\big]\begin{bmatrix} A & 0 \\ 0 & \Wread \end{bmatrix}\right)\begin{bmatrix} I \\ \Wwrite \end{bmatrix}.
+\end{equation}
+The block reads the hidden state through the fixed map $h \mapsto [\,h \mid N_\varepsilon(h)\,]$, and its read is block diagonal. Without normalization this map is $h \mapsto [\,h \mid h\,]$, and \eqref{eq:prenormblock} is \eqref{eq:mixed}.
+
+A change of basis $G$ at $h$ turns $[\,h \mid N_\varepsilon(h)\,]$ into $[\,hG \mid N_\varepsilon(hG)\,]$. For an orthogonal $Q$, $N_\varepsilon(hQ) = N_\varepsilon(h)Q$, since $Q$ preserves the norm of every row, so
+\[
+\big[\,hQ \mid N_\varepsilon(hQ)\,\big] \;=\; \big[\,h \mid N_\varepsilon(h)\,\big]\begin{bmatrix} Q & 0 \\ 0 & Q \end{bmatrix},
+\]
+and the read undoes $Q$ by $A \mapsto Q^\top A$ and $\Wread \mapsto Q^\top\Wread$. For any other invertible $G$, no matrix $M$ satisfies $N_\varepsilon(hG) = N_\varepsilon(h)M$ for all $h$, since $\varepsilon > 0$ (\cref{lem:rms}), so a read can undo no other change of basis. So every hidden state of a skipless network, or of one with learned skips, keeps an orthogonal change of basis, $\dm(\dm-1)/2$ dimensions. It cannot turn a submatrix into the identity, but a QR factorization makes it triangular.
 
 \begin{restatable}[Orthogonal changes of basis under RMSNorm]{theorem}{thmRMSTri}\label{thm:rmstri}
 Consider pre-RMSNorm networks.\\
