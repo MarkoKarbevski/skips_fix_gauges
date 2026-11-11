@@ -159,20 +159,20 @@ Skipless networks have recently been trained to varying degrees of success. \cit
 \textbf{Proven} & \textbf{Value} & \textbf{Blocks} & \textbf{Result} \\
 \midrule
 \multicolumn{4}{@{}l}{\emph{Parameters explicitly removed without changing the function of the network, post-training}} \\
-\quad without skips & $(L+1)\dm^2$ & all & \rtag{Prop.}{prop:skipless}{} \\
-\quad\quad with pre-RMSNorm & $(L+1)\dm(\dm-1)/2$ & all & \rtag{Thm.}{thm:rmstri}{i} \\
-\quad learned skips & $L\dm^2$, every skip entry & all & \rtag{Thm.}{thm:learned}{} \\
-\quad\quad with pre-RMSNorm & $L\dm(\dm-1)/2$ & all & \rtag{Thm.}{thm:rmstri}{iv} \\
-\quad identity skips & $\dm^2$ & all & \rtag{Thm.}{thm:tie}{iii} \\
-\quad\quad with pre-RMSNorm & $\dm(\dm-1)/2$ & all & \rtag{Thm.}{thm:rmstri}{iii} \\
+\quad without skips & $(L+1)\dm^2$ & any & \rtag{Prop.}{prop:skipless}{} \\
+\quad\quad with pre-RMSNorm & $(L+1)\dm(\dm-1)/2$ & any & \rtag{Thm.}{thm:rmstri}{i} \\
+\quad learned skips & $L\dm^2$, every skip entry & any & \rtag{Thm.}{thm:learned}{} \\
+\quad\quad with pre-RMSNorm & $L\dm(\dm-1)/2$ & any & \rtag{Thm.}{thm:rmstri}{iv} \\
+\quad identity skips & $\dm^2$ & any & \rtag{Thm.}{thm:tie}{iii} \\
+\quad\quad with pre-RMSNorm & $\dm(\dm-1)/2$ & any & \rtag{Thm.}{thm:rmstri}{iii} \\
 \midrule
 \multicolumn{4}{@{}l}{\emph{Dimensions of symmetry removed by the skips}} \\
-\quad any $L$ & $L\dm^2$ & all & \rtag{Thm.}{thm:tie}{ii} \\
-\quad\quad with pre-RMSNorm & $L\dm(\dm-1)/2$ & all & \rtag{Thm.}{thm:rmstri}{ii} \\
+\quad any $L$ & $L\dm^2$ & any & \rtag{Thm.}{thm:tie}{ii} \\
+\quad\quad with pre-RMSNorm & $L\dm(\dm-1)/2$ & any & \rtag{Thm.}{thm:rmstri}{ii} \\
 \midrule
 \multicolumn{4}{@{}l}{\emph{Functional dimension added by the skips}} \\
-\quad $L = 1$ & exactly $\dm^2$ & all & \rtag{Thm.}{thm:oneblock}{i} \\
-\quad\quad with pre-RMSNorm & at least $\dm(\dm-1)/2$ & all & \rtag{Thm.}{thm:oneblock}{ii} \\
+\quad $L = 1$ & exactly $\dm^2$ & any & \rtag{Thm.}{thm:oneblock}{i} \\
+\quad\quad with pre-RMSNorm & at least $\dm(\dm-1)/2$ & any & \rtag{Thm.}{thm:oneblock}{ii} \\
 \quad $L \ge 2$ & at least $L\dm^2$ & analytic & \rtag{Thm.}{thm:resdepth}{} \\
 \quad\quad with pre-RMSNorm & at least $L\dm(\dm-1)/2$ & analytic & \rtag{Thm.}{thm:resdepth}{} \\
 \quad $L \ge 2$ & exactly $L\dm^2$ & $\tanh$ & \rtag{Thm.}{thm:exactgain}{i} \\
@@ -184,7 +184,7 @@ Skipless networks have recently been trained to varying degrees of success. \cit
 \quad wider by $< L\dm/2$ & measure zero & GELU & \rtag{Thm.}{thm:classes}{ii} \\
 \bottomrule
 \end{tabular}
-\caption{The results at generic parameters, for networks of $L$ blocks with model dimension $\dm$ and MLP blocks of $\dhid$ hidden units; scope in \cref{sec:setup}. All: every block of \cref{sec:setup}. Analytic: attention, $\tanh$, GELU, SwiGLU and GeGLU blocks.}
+\caption{The results at generic parameters, for networks of $L$ blocks with model dimension $\dm$ and MLP blocks of $\dhid$ hidden units; scope in \cref{sec:setup}. Any: any block of \cref{sec:setup}. Analytic: attention, $\tanh$, GELU, SwiGLU and GeGLU blocks.}
 \label{tab:results}
 \end{table}
 
