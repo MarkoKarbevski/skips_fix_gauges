@@ -250,11 +250,11 @@ The computation \eqref{eq:product} uses only the form \eqref{eq:block} of a bloc
 In a skipless network without normalization, the invariance \eqref{eq:invariance} holds at every hidden state, so every change of basis preserves the function (\cref{fig:junctions}b). A change of basis that turns a $\dm\times\dm$ submatrix of the weights into the identity removes $\dm^2$ parameters: the entries of this submatrix are fixed, so they need not be stored or trained, and the function is unchanged.
 
 \begin{restatable}[Exact reduction without skips]{proposition}{propSkipless}\label{prop:skipless}
-Without normalization, let $\dm$ columns of the read of $h_\ell$ in a skipless network form an invertible matrix $W_1$. The change of basis $G = W_1$ at $h_\ell$ preserves the function and turns $W_1$ into the identity. At generic parameters every hidden state has such columns, and these changes of basis at all $L+1$ hidden states remove $(L+1)\dm^2$ parameters.
+Without normalization, in a skipless network, let $\dm$ columns of the read of $h_\ell$ ($\Wread^{\ell+1}$, or $D$ if $\ell = L$) form an invertible matrix $W_1$. The change of basis $G = W_1$ at $h_\ell$ preserves the function and turns $W_1$ into $G^{-1}W_1 = I$. At generic parameters every hidden state has such columns, and these changes of basis at all $L+1$ hidden states remove $(L+1)\dm^2$ parameters.
 \end{restatable}
 \specialof{prop:normalform}{app:prf-normalform}
 
-Rows of a write work too: if $\dm$ rows of the write into $h_\ell$ form an invertible matrix $W_1$, the change of basis $G = W_1^{-1}$ at $h_\ell$ turns them into the identity. Take an attention block $B_\ell$ of a skipless transformer with $Hd_h = \dm$, so that $W_Q$ and $W_O$ are $\dm\times\dm$ matrices, invertible at generic parameters. The change of basis $G = W_Q$ at $h_{\ell-1}$ turns $W_Q$ into $W_Q^{-1}W_Q = I$, and the change of basis $G = W_O^{-1}$ at $h_\ell$ turns $W_O$ into $W_OW_O^{-1} = I$. Together they remove $2\dm^2$ parameters per layer. \citet{graef2024tricks} found this reduction independently of \citet{zhao2023symmetries}. By Graef's count, it would remove $15$ percent of the weights of Mistral-7B if the model had no skip connections and no normalization. \Cref{prop:skipless} removes $\dm^2$ more, at the hidden state before the readout, and holds for every kind of block.
+Rows of a write work too: if $\dm$ rows of the write into $h_\ell$ ($\Wwrite^{\ell}$, or $E$ if $\ell = 0$) form an invertible matrix $W_1$, the change of basis $G = W_1^{-1}$ at $h_\ell$ turns them into $W_1G = I$. Take an attention block $B_\ell$ of a skipless transformer with $Hd_h = \dm$, so that $W_Q$ and $W_O$ are $\dm\times\dm$ matrices, invertible at generic parameters. The change of basis $G = W_Q$ at $h_{\ell-1}$ turns $W_Q$ into $W_Q^{-1}W_Q = I$, and the change of basis $G = W_O^{-1}$ at $h_\ell$ turns $W_O$ into $W_OW_O^{-1} = I$. Together they remove $2\dm^2$ parameters per layer. \citet{graef2024tricks} found this reduction independently of \citet{zhao2023symmetries}. By Graef's count, it would remove $15$ percent of the weights of Mistral-7B if the model had no skip connections and no normalization. \Cref{prop:skipless} removes $\dm^2$ more, at the hidden state before the readout, and holds for every kind of block.
 
 \begin{figure}[t]
 \centering
@@ -352,7 +352,7 @@ The skip carries $h_{\ell-1}$ in the basis $G_{\ell-1}$, and the block writes in
 Without normalization, let $G_0, \dots, G_L$ be invertible.\\
 \stpart{thm:tie}{i}{} The map $E \mapsto EG_0$, $\Wread^{\ell} \mapsto G_{\ell-1}^{-1}\Wread^{\ell}$, $\Wwrite^{\ell} \mapsto \Wwrite^{\ell}G_\ell$, $D \mapsto G_L^{-1}D$ preserves the function of every residual network if and only if $G_0 = G_1 = \dots = G_L$.\\
 \stpart{thm:tie}{ii}{} The changes of basis that preserve the function at all parameters form a group of dimension $(L+1)\dm^2$ in a skipless network and $\dm^2$ in a residual one.\\
-\stpart{thm:tie}{iii}{} In a residual network, let $\dm$ columns of any one read form an invertible matrix $W_1$. The same change of basis $W_1$ at all hidden states preserves the function and turns $W_1$ into the identity.
+\stpart{thm:tie}{iii}{} In a residual network, let $\dm$ columns of one of the reads $\Wread^{1}, \dots, \Wread^{L}, D$ form an invertible matrix $W_1$. The same change of basis $G = W_1$ at all hidden states preserves the function and turns $W_1$ into the identity.
 \end{restatable}
 \proofin{app:prf-gauge}
 
@@ -368,9 +368,9 @@ A change of basis $G$ at $h_\ell$ now reaches the reads as $N_\varepsilon(h_\ell
 
 \begin{restatable}[Orthogonal changes of basis under RMSNorm]{theorem}{thmRMSTri}\label{thm:rmstri}
 Consider pre-RMSNorm networks.\\
-\stpart{thm:rmstri}{i}{} In a skipless network, let $\dm$ columns of the read of $h_\ell$ form a matrix $W_1 = QR$, with $Q$ orthogonal and $R$ upper triangular. The change of basis $Q$ at $h_\ell$ preserves the function and turns $W_1$ into $R$; at all $L+1$ hidden states, they remove $(L+1)\dm(\dm-1)/2$ parameters.\\
+\stpart{thm:rmstri}{i}{} In a skipless network, let $\dm$ columns of the read of $h_\ell$ ($\Wread^{\ell+1}$, or $D$ if $\ell = L$) form a matrix $W_1 = QR$, with $Q$ orthogonal and $R$ upper triangular. The change of basis $Q$ at $h_\ell$ preserves the function and turns $W_1$ into $R$; at all $L+1$ hidden states, they remove $(L+1)\dm(\dm-1)/2$ parameters.\\
 \stpart{thm:rmstri}{ii}{} The changes of basis that preserve the function at all parameters are orthogonal, and in a residual network they agree at all hidden states. They form a group of dimension $(L+1)\dm(\dm-1)/2$ in a skipless network and $\dm(\dm-1)/2$ in a residual one.\\
-\stpart{thm:rmstri}{iii}{} In a residual network, let $\dm$ columns of any one read form a matrix $W_1 = QR$. The same change of basis $Q$ at all hidden states preserves the function and turns $W_1$ into $R$.\\
+\stpart{thm:rmstri}{iii}{} In a residual network, let $\dm$ columns of one of the reads $\Wread^{1}, \dots, \Wread^{L}, D$ form a matrix $W_1 = QR$. The same change of basis $Q$ at all hidden states preserves the function and turns $W_1$ into $R$.\\
 \stpart{thm:rmstri}{iv}{Triangular skips} If every learned skip $A_\ell$ is invertible, there are orthogonal $Q_1, \dots, Q_L$, with $Q_0 = I$, such that every $Q_{\ell-1}^\top A_\ell Q_\ell$ is upper triangular, and the network with these skips, the reads $Q_{\ell-1}^\top\Wread^{\ell}$, the writes $\Wwrite^{\ell}Q_\ell$ and the readout $Q_L^\top D$ computes the same function.
 \end{restatable}
 \proofin{app:prf-rms}
