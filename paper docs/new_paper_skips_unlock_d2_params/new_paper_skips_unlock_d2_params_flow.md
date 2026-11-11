@@ -45,37 +45,38 @@
 | 40 | Definition and a linear example | statement | F_theta, redundancy | F_theta | \begin{definition}[Functional dimension {\citep{grigsby2022functional} |
 | 41 | Definition and a linear example | para |  |  | A continuous symmetry adds to the redundancy: if a continuous family o |
 | 42 | Definition and a linear example | para |  |  | \begin{example}[Not all reductions are maximal]\label{ex:three} Take t |
-| 43 | Upper bounds from the symmetries | para |  |  | \subsection{Upper bounds from the symmetries}\label{sec:count} |
-| 44 | Upper bounds from the symmetries | para | s, symmetries inside, script G, symmetries inside blocks, symmetries inside the blocks | s, symmetries inside, script G, symmetries inside blocks, symmetries inside the blocks | Two kinds of symmetry bound the functional dimension. The changes of b |
-| 45 | Upper bounds from the symmetries | statement |  |  | \begin{restatable}[Upper bounds]{theorem}{thmUnlock}\label{thm:unlock} |
-| 46 | Upper bounds from the symmetries | statement | equality condition | equality condition | \begin{definition}[Equality condition]\label{def:equality} A network s |
-| 47 | Upper bounds from the symmetries | para |  |  | When the residual network satisfies it, each skip unlocks $\dim\G$ par |
-| 48 | Upper bounds from the symmetries | statement | identifiable up to its symmetries, locally identifiable | identifiable up to its symmetries, locally identifiable | \begin{definition}[Identifiability up to symmetries]\label{def:ident}  |
-| 49 | Upper bounds from the symmetries | para |  |  | \citet{vlacic2020affine} define identifiability up to an equivalence r |
-| 50 | Upper bounds from the symmetries | para |  | analytic blocks | \para{Functional dimension and identifiability.} The two notions meet  |
-| 51 | Upper bounds from the symmetries | para |  |  | \para{The gain in a transformer.} Under the equality condition, a resi |
-| 52 | When the bounds are attained | para |  |  | \subsection{When the bounds are attained}\label{sec:onelayer} |
-| 53 | When the bounds are attained | para |  |  | The equality condition is a hypothesis, and it can fail (\cref{sec:mea |
-| 54 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for one block]{theorem}{thmOneBlock}\label |
-| 55 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for residual networks at any depth]{theore |
-| 56 | When the bounds are attained | statement |  |  | \begin{restatable}[Exact gain for $\tanh$ and GELU]{theorem}{thmExactG |
-| 57 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
-| 58 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
-| 59 | Residual and skipless networks compute different functions | statement | pointwise limit | pointwise limit | \begin{definition*}[Pointwise limit] Let $\mathcal X = \R^{T\times d_{ |
-| 60 | Residual and skipless networks compute different functions | para |  |  | If a sequence of networks of $\mathcal F$ converges to $F$ at every in |
-| 61 | Residual and skipless networks compute different functions | para | definable in an o-minimal structure | definable in an o-minimal structure | By \cref{def:fd,thm:resdepth}, the Jacobian of the residual network ha |
-| 62 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
-| 63 | Residual and skipless networks compute different functions | para |  |  | For GELU blocks without normalization, \citet{mijoski2026worth} show t |
-| 64 | Numerical ranks at depth, and a conjecture | para |  |  | \subsection{Numerical ranks at depth, and a conjecture}\label{sec:meas |
-| 65 | Numerical ranks at depth, and a conjecture | para |  |  | At depth we compute the rank of the Jacobian on a large batch of input |
-| 66 | Numerical ranks at depth, and a conjecture | float |  |  | \begin{table}[b] \centering\small \renewcommand{\arraystretch}{1.1} \b |
-| 67 | Numerical ranks at depth, and a conjecture | para |  |  | In two cases the measured rank stays below the upper bound. In skiples |
-| 68 | Numerical ranks at depth, and a conjecture | statement |  |  | \begin{conjecture}[Equality without skips]\label{conj:equality} With o |
-| 69 | Numerical ranks at depth, and a conjecture | para |  |  | For ReLU$^2$ and ReGLU blocks we expect the equality condition to hold |
-| 70 | Numerical ranks at depth, and a conjecture | para |  |  | \para{One-hot tokens.} With one-hot tokens under RMSNorm, the rows of  |
-| 71 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
-| 72 | Conclusion | para |  |  | Skip connections change how a network uses its parameters. Without ski |
-| 73 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth is open for the |
-| 74 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
-| 75 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
-| 76 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 43 | Definition and a linear example | para |  |  | \begin{example}[Degrees of freedom need not be entries]\label{ex:orth} |
+| 44 | Upper bounds from the symmetries | para |  |  | \subsection{Upper bounds from the symmetries}\label{sec:count} |
+| 45 | Upper bounds from the symmetries | para | s, symmetries inside, script G, symmetries inside blocks, symmetries inside the blocks | s, symmetries inside, script G, symmetries inside blocks, symmetries inside the blocks | Two kinds of symmetry bound the functional dimension. The changes of b |
+| 46 | Upper bounds from the symmetries | statement |  |  | \begin{restatable}[Upper bounds]{theorem}{thmUnlock}\label{thm:unlock} |
+| 47 | Upper bounds from the symmetries | statement | equality condition | equality condition | \begin{definition}[Equality condition]\label{def:equality} A network s |
+| 48 | Upper bounds from the symmetries | para |  |  | When the residual network satisfies it, each skip unlocks $\dim\G$ par |
+| 49 | Upper bounds from the symmetries | statement | identifiable up to its symmetries, locally identifiable | identifiable up to its symmetries, locally identifiable | \begin{definition}[Identifiability up to symmetries]\label{def:ident}  |
+| 50 | Upper bounds from the symmetries | para |  |  | \citet{vlacic2020affine} define identifiability up to an equivalence r |
+| 51 | Upper bounds from the symmetries | para |  | analytic blocks | \para{Functional dimension and identifiability.} The two notions meet  |
+| 52 | Upper bounds from the symmetries | para |  |  | \para{The gain in a transformer.} Under the equality condition, a resi |
+| 53 | When the bounds are attained | para |  |  | \subsection{When the bounds are attained}\label{sec:onelayer} |
+| 54 | When the bounds are attained | para |  |  | The equality condition is a hypothesis, and it can fail (\cref{sec:mea |
+| 55 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for one block]{theorem}{thmOneBlock}\label |
+| 56 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for residual networks at any depth]{theore |
+| 57 | When the bounds are attained | statement |  |  | \begin{restatable}[Exact gain for $\tanh$ and GELU]{theorem}{thmExactG |
+| 58 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
+| 59 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
+| 60 | Residual and skipless networks compute different functions | statement | pointwise limit | pointwise limit | \begin{definition*}[Pointwise limit] Let $\mathcal X = \R^{T\times d_{ |
+| 61 | Residual and skipless networks compute different functions | para |  |  | If a sequence of networks of $\mathcal F$ converges to $F$ at every in |
+| 62 | Residual and skipless networks compute different functions | para | definable in an o-minimal structure | definable in an o-minimal structure | By \cref{def:fd,thm:resdepth}, the Jacobian of the residual network ha |
+| 63 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
+| 64 | Residual and skipless networks compute different functions | para |  |  | For GELU blocks without normalization, \citet{mijoski2026worth} show t |
+| 65 | Numerical ranks at depth, and a conjecture | para |  |  | \subsection{Numerical ranks at depth, and a conjecture}\label{sec:meas |
+| 66 | Numerical ranks at depth, and a conjecture | para |  |  | At depth we compute the rank of the Jacobian on a large batch of input |
+| 67 | Numerical ranks at depth, and a conjecture | float |  |  | \begin{table}[b] \centering\small \renewcommand{\arraystretch}{1.1} \b |
+| 68 | Numerical ranks at depth, and a conjecture | para |  |  | In two cases the measured rank stays below the upper bound. In skiples |
+| 69 | Numerical ranks at depth, and a conjecture | statement |  |  | \begin{conjecture}[Equality without skips]\label{conj:equality} With o |
+| 70 | Numerical ranks at depth, and a conjecture | para |  |  | For ReLU$^2$ and ReGLU blocks we expect the equality condition to hold |
+| 71 | Numerical ranks at depth, and a conjecture | para |  |  | \para{One-hot tokens.} With one-hot tokens under RMSNorm, the rows of  |
+| 72 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
+| 73 | Conclusion | para |  |  | Skip connections change how a network uses its parameters. Without ski |
+| 74 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth is open for the |
+| 75 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
+| 76 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
+| 77 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
