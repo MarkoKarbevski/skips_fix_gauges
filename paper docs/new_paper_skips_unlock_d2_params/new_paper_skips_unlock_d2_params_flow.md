@@ -12,7 +12,7 @@
 | 7 | Contributions | para |  |  | \subsection{Contributions}\label{sec:contributions} |
 | 8 | Contributions | para | analytic blocks |  | \para{Main result.} Residual networks attain the upper bound from the  |
 | 9 | Contributions | para | A_l, a learned skip, identity skip, learned skip, locally identifiable | A_l, a learned skip, analytic blocks, identity skip, learned skip, locally identifiable | \begin{enumerate}[label=\arabic*.] \item \textit{Changes of basis, in  |
-| 10 | Contributions | float | functional dimension added by the skips | functional dimension added by the skips | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \n |
+| 10 | Contributions | float | ReLU squared, functional dimension added by the skips | ReLU squared, functional dimension added by the skips | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \n |
 | 11 | Related work | para |  |  | \subsection{Related work}\label{sec:related} |
 | 12 | Related work | para |  |  | \para{The change of basis as a symmetry.} \citet{godfrey2022symmetries |
 | 13 | Related work | para |  |  | \para{One change of basis for a residual network.} Earlier work uses o |
@@ -20,7 +20,7 @@
 | 15 | Related work | para |  |  | \para{Functional dimension and the Jacobian.} \citet{grigsby2022functi |
 | 16 | Related work | para |  |  | \para{Identifiability and the symmetries of attention.} For skipless n |
 | 17 | Setup | para |  |  | \section{Setup}\label{sec:setup} This section fixes the networks that  |
-| 18 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
+| 18 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, T, number of tokens, gated block, h, a hidden state, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, T, number of tokens, gated block, h, a hidden state, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
 | 19 | Setup | para | E and D, P, the number of parameters, per block, readout / unembedding, residual | E and D, P, the number of parameters | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
 | 20 | Setup | para | epsilon of RMSNorm, pre-RMSNorm, under rmsnorm | epsilon of RMSNorm, under rmsnorm | \para{Normalization.} RMSNorm with the constant $\varepsilon > 0$ is t |
 | 21 | Setup | para | generic |  | \para{Scope.} Networks have no biases, and their inputs are continuous |
