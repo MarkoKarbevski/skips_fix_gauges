@@ -18,7 +18,7 @@
 | 13 | Related work | para |  |  | \para{One change of basis for a residual network.} Earlier work uses o |
 | 14 | Related work | para |  |  | \para{Learned and emulated skips.} LAuReL trains skips that are the id |
 | 15 | Related work | para |  |  | \para{Functional dimension and the Jacobian.} \citet{grigsby2022functi |
-| 16 | Related work | para |  | redundancy | \para{Identifiability and the symmetries of attention.} For attention  |
+| 16 | Related work | para |  |  | \para{Identifiability and the symmetries of attention.} For skipless n |
 | 17 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, read / write (nouns) | \section{Setup}\label{sec:setup} \para{Blocks.} A hidden state is a ma |
 | 18 | Setup | para | E and D, P, the number of parameters, per block, readout / unembedding, residual | E and D, P, the number of parameters | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
 | 19 | Setup | para | epsilon of RMSNorm, pre-RMSNorm, under rmsnorm | epsilon of RMSNorm, under rmsnorm | \para{Normalization.} RMSNorm with the constant $\varepsilon > 0$ is t |
@@ -49,7 +49,7 @@
 | 44 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{Learned skips under RMSNorm.} In \eqref{eq:prenorm} the skip $A_ |
 | 45 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{LayerNorm.} LayerNorm is RMSNorm after a projection that removes |
 | 46 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{Trained models.}\label{sec:trained} The reduction applies to tra |
-| 47 | Functional dimension with and without skips | para |  |  | \section{Functional dimension with and without skips}\label{sec:gain}  |
+| 47 | Functional dimension with and without skips | para |  | redundancy | \section{Functional dimension with and without skips}\label{sec:gain}  |
 | 48 | Definition and a linear example | para |  |  | \subsection{Definition and a linear example}\label{sec:fd} |
 | 49 | Definition and a linear example | statement | F_theta, redundancy | F_theta | \begin{definition}[Functional dimension {\citep{grigsby2022functional} |
 | 50 | Definition and a linear example | para |  |  | A continuous symmetry adds to the redundancy: if a continuous family o |
@@ -67,7 +67,7 @@
 | 62 | When the bounds are attained | para |  |  | \subsection{When the bounds are attained}\label{sec:onelayer} |
 | 63 | When the bounds are attained | para |  |  | The equality condition is a hypothesis, and it can fail (\cref{sec:mea |
 | 64 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for one block]{theorem}{thmOneBlock}\label |
-| 65 | When the bounds are attained | statement |  |  | \begin{remark*}[One attention head without a skip] With one head, the  |
+| 65 | When the bounds are attained | statement |  |  | \begin{remark*}[One attention head without a skip] For one head and no |
 | 66 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for residual networks at any depth]{theore |
 | 67 | When the bounds are attained | statement |  |  | \begin{restatable}[Exact gain for $\tanh$ and GELU]{theorem}{thmExactG |
 | 68 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
