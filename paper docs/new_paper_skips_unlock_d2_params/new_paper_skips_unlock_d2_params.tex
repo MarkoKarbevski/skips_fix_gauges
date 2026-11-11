@@ -444,14 +444,14 @@ A network is \emph{identifiable up to its symmetries} at $\theta$ if every $\the
 
 \citet{vlacic2020affine} define identifiability up to an equivalence relation on networks. For ReLU networks, \citet{stock2021embedding} define identifiability up to permutations and rescalings of the hidden units and local identifiability up to rescalings, and \citet{bonapellissier2022local} define local identifiability in the same way. In \cref{def:ident} the equivalence is given by the symmetries of \cref{thm:unlock}.
 
-\para{Functional dimension and identifiability.} The two notions meet in the equality condition: the symmetries are the only redundancy exactly when, near $\theta$, they reach every network with the same function.
+\para{Functional dimension and identifiability.} The equality condition can be stated as local identifiability.
 
 \begin{restatable}[The equality condition and local identifiability]{proposition}{propLocalId}\label{prop:localid}
 Let the blocks be analytic, with or without pre-RMSNorm, within the scope of \cref{sec:setup}. A skipless or a residual network satisfies the equality condition if and only if, at generic parameters, it is locally identifiable up to its symmetries. Every symmetry that is needed is then close to the identity.
 \end{restatable}
 \proofin{app:prf-count}
 
-So identifiability implies the equality condition. The equality condition does not give identifiability in return, because it says nothing about parameters far from $\theta$.
+The proposition compares only parameters that are close to each other. A network that is identifiable at generic parameters is locally identifiable there, so it satisfies the equality condition. In the other direction, the equality condition does not exclude a distant parameter with the same function that no symmetry reaches.
 
 \para{The gain in a transformer.} Under the equality condition, a residual network with $P$ parameters has the functional dimension of a skipless network with $L\dim\G$ more parameters. Under normalization, this is about a twelfth more for transformer layers with an MLP block of $\dhid = 4\dm$ (\cref{app:scale}). What functional dimension predicts is only partly known (\cref{sec:related}), and its link to accuracy is open. The skipless ViT-B of \citet{ji2026cutting} outperforms the residual one. If it satisfies the equality condition, it does so with less functional dimension, by the changes of basis at $24$ of its $25$ hidden states.
 
@@ -471,11 +471,11 @@ For one head and no skip, the equality condition of \cpref{thm:oneblock}{i} also
 \[
 \Xi \;=\; EW_QW_K^\top E^\top\big/\sqrt{d_h} \;\in\; \R^{d_{\mathrm{in}}\times d_{\mathrm{in}}}, \qquad \Psi \;=\; EW_VW_OD \;\in\; \R^{d_{\mathrm{in}}\times d_{\mathrm{out}}}.
 \]
-The skipless network with one attention head gives token $t$ the output $y_t = \sum_{s=1}^{T} a_{ts}\,x_s\Psi$, where $(a_{t1}, \dots, a_{tT})$ is the softmax of the scores $(x_t\Xi x_1^\top, \dots, x_t\Xi x_T^\top)$. Their theorem says that the map $x \mapsto y$ determines $\Xi$ and $\Psi$, for all matrices $\Xi$ and $\Psi \neq 0$ of these sizes. With one head, $d_h = \dm$ (\cref{sec:setup}). A factorization of a matrix of rank $\dm$ into two factors of rank $\dm$ is unique up to an invertible matrix between the factors. So, at generic parameters, the weights with the same $\Xi$ and $\Psi$ are exactly
+The skipless network with one attention head gives token $t$ the output $y_t = \sum_{s=1}^{T} a_{ts}\,x_s\Psi$, where $(a_{t1}, \dots, a_{tT})$ is the softmax of the scores $(x_t\Xi x_1^\top, \dots, x_t\Xi x_T^\top)$. Their theorem says that the map $x \mapsto y$ determines $\Xi$ and $\Psi$, for all matrices $\Xi$ and $\Psi \neq 0$ of these sizes. With one head, $d_h = \dm$ (\cref{sec:setup}), and at generic parameters $\Xi$ and $\Psi$ are products of two factors of rank $\dm$ each: $\sqrt{d_h}\,\Xi = (EW_Q)(EW_K)^\top$ and $\Psi = (EW_V)(W_OD)$. A factorization of a matrix of rank $\dm$ into two factors of rank $\dm$ is unique up to an invertible matrix between the factors. The same holds for the factors $E$ and $W_Q$ of $EW_Q$, with the same $E$ in $EW_K$ and $EW_V$, and for the factors $W_O$ and $D$. So the weights with the same $\Xi$ and $\Psi$ are exactly the following, with $G_0$, $G_1$, $C$ and $C'$ any invertible $\dm\times\dm$ matrices:
 \[
-EG_0, \qquad G_0^{-1}W_QC, \qquad G_0^{-1}W_KC^{-\top}, \qquad G_0^{-1}W_VC', \qquad C'^{-1}W_OG_1, \qquad G_1^{-1}D
+EG_0, \qquad G_0^{-1}W_QC, \qquad G_0^{-1}W_KC^{-\top}, \qquad G_0^{-1}W_VC', \qquad C'^{-1}W_OG_1, \qquad G_1^{-1}D.
 \]
-for invertible $\dm\times\dm$ matrices $G_0$, $G_1$, $C$ and $C'$. These are the symmetries of the network: $G_0$ and $G_1$ change the basis of $h_0$ and of $h_1$, and $C$ and $C'$ act inside the head. So the network is identifiable up to its symmetries at generic parameters, which implies the equality condition (\cref{prop:localid}). The proof of \cref{thm:oneblock} does not use their theorem, and it covers blocks with several heads and the residual network, the latter also under RMSNorm.
+Here $G_0$ and $G_1$ change the basis of $h_0$ and of $h_1$, and $C$ and $C'$ act inside the head, so all four are symmetries of the network (\cref{sec:count}). So the network is identifiable up to its symmetries at generic parameters, which implies the equality condition (\cref{prop:localid}). The proof of \cref{thm:oneblock} does not use their theorem, and it covers blocks with several heads and the residual network, the latter also under RMSNorm.
 \end{remark*}
 
 \begin{restatable}[Equality for residual networks at any depth]{theorem}{thmResDepth}\label{thm:resdepth}
@@ -484,7 +484,7 @@ Let the blocks be analytic, with or without pre-RMSNorm. The residual network sa
 \proofin{app:depth}
 
 \begin{corollary}[Residual networks are locally identifiable]\label{cor:localid}
-Let the blocks be analytic, with or without pre-RMSNorm. At generic parameters $\theta$, every parameter near $\theta$ with the same function is obtained from $\theta$ by symmetries inside the blocks and by one matrix $G \in \G$ near the identity, the same at all hidden states and for every block $\ell$:
+Let the blocks be analytic, with or without pre-RMSNorm, and let $\theta$ be generic parameters of the residual network. Every $\theta'$ near $\theta$ with the same function is obtained from $\theta$ by symmetries inside the blocks and by one matrix $G \in \G$, all close to the identity. The matrix $G$ is the same at all hidden states: for every block $\ell$,
 \[
 E \mapsto EG, \qquad \Wread^{\ell} \mapsto G^{-1}\Wread^{\ell}, \qquad \Wwrite^{\ell} \mapsto \Wwrite^{\ell}G, \qquad D \mapsto G^{-1}D.
 \]
@@ -498,8 +498,6 @@ Without normalization, in the two cases below the skipless network satisfies the
 \stpart{thm:exactgain}{ii}{} The blocks are GELU blocks with $\dhid \ge 2\dm$.
 \end{restatable}
 \proofin{app:depth}
-
-Part (i) uses identifiability in the other direction: skipless $\tanh$ networks are identifiable \citep{fefferman1994}, and this gives their equality condition.
 
 \para{Proof sketches.} With one block, the parameters enter the function only through the products $ED$, $\Wwrite D$ and $E\Wread$. A factorization of a matrix of rank $\dm$ into two factors is unique up to a change of basis between them, so the skipless network keeps one change of basis at $h_0$ and one at $h_1$, and the term $xED$ of the skip ties them into one. At any depth, multiply the writes by a small $\tau$: to first order in $\tau$ every block reads the embedding $xE$, and the residual network is the linear map $xED$ plus one wide block that holds all its hidden units and heads. This brings the one-block argument to every depth, and for analytic blocks a rank that is reached at one choice of weights is reached at almost all. For skipless $\tanh$ networks, the function determines the product of each write with the next read, up to permutations and sign flips \citep{fefferman1994}, and these products determine the weights up to the changes of basis. For skipless GELU networks, the proof starts from a residual network and absorbs each skip with $\dm$ more hidden units per block, so it reaches only blocks with $\dhid \ge 2\dm$.
 
@@ -564,13 +562,13 @@ In two cases the measured rank stays below the upper bound. In skipless ReGLU ne
 With or without pre-RMSNorm, skipless networks of $\tanh$, GELU, SwiGLU or GeGLU blocks satisfy the equality condition. By \cref{thm:resdepth}, the skips then raise the functional dimension by exactly $L\dim\G$.
 \end{conjecture}
 
-For skipless networks without normalization, with $\dhid = \dm$ and a generic polynomial activation of large enough degree, the equality condition follows from \citet[Theorem~4.1]{shahverdi2026razor}. For ReLU$^2$ and ReGLU blocks we expect the equality condition to hold only for residual networks: without skips, a hidden unit can be inactive at every input on an open set of weights (\cref{prop:deadskipless}). For ReLU blocks the condition fails on an open set of weights with skips as well (\cref{app:folding}).
+The analogue of the conjecture is known for polynomial activations. \citet[Theorem~4.1]{shahverdi2026razor} prove that an MLP whose activation is a generic polynomial of large enough degree has as many dimensions of functions as weights. Such an MLP is a skipless network with $\dhid = \dm$ in which each product $\Wwrite^{\ell}\Wread^{\ell+1}$ is one weight matrix, so this is the equality condition for it, without normalization. For ReLU$^2$ and ReGLU blocks we expect the equality condition to hold only for residual networks: without skips, a hidden unit can be inactive at every input on an open set of weights (\cref{prop:deadskipless}). For ReLU blocks the condition fails on an open set of weights with skips as well (\cref{app:folding}).
 
 \para{One-hot tokens.} With one-hot tokens under RMSNorm, the rows of the embedding table can be moved one by one to undo any change of basis near the identity, so the change of basis at the embedding of a skipless network need not be orthogonal, which adds $\dm(\dm+1)/2$ dimensions of symmetry (\cref{tab:checks}). The nanoGPT models take one-hot tokens too, but add a position embedding to each token embedding, and show no such addition (\cref{tab:nanogpt}).
 
 \section{Conclusion}\label{sec:outlook}\label{sec:conclusion}
 
-Skip connections change how a network uses its parameters. Without skips, the basis of every hidden state is free, and $\dm^2$ parameters per hidden state are redundant. With skips, all hidden states share one basis. Where the symmetries are the only redundancy, the parameters that are redundant without skips become functional dimension. We prove this gain in the cases of \cref{tab:results}, exactly or as a lower bound, and measure it in further networks. In these residual networks, when the blocks are analytic, nearby parameters with the same function differ only by the symmetries (\cref{cor:localid}). \citet{mijoski2026worth} establish that networks with and without skips differ in what they can represent, and this gain gives the difference a size. The changes of basis also apply to trained models. Without changing the function, they remove the redundant parameters of a skipless network, and without normalization they turn every invertible learned skip into an identity skip.
+Skip connections change how a network uses its parameters. Without skips, the basis of every hidden state is free, and $\dm^2$ parameters per hidden state are redundant. With skips, all hidden states share one basis. Where the symmetries are the only redundancy, the parameters that are redundant without skips become functional dimension. We prove this gain in the cases of \cref{tab:results}, exactly or as a lower bound, and measure it in further networks. \citet{mijoski2026worth} establish that networks with and without skips differ in what they can represent, and this gain gives the difference a size. Residual networks with analytic blocks are also locally identifiable at generic parameters: nearby parameters with the same function differ only by the symmetries (\cref{cor:localid}). The changes of basis also apply to trained models. Without changing the function, they remove the redundant parameters of a skipless network, and without normalization they turn every invertible learned skip into an identity skip.
 
 \para{Open questions.} The equality condition at depth is open for the skipless networks of \cref{conj:equality} beyond those of \cref{thm:exactgain}, and for residual ReLU$^2$ and ReGLU networks. Whether residual networks are identifiable, and not only locally, is open. Whether the reduced forms, such as triangular learned skips, train better is untested. Input-dependent skips, as in mHC \citep{xie2025mhc}, are nonlinear in the hidden state, and we do not treat them.
 
