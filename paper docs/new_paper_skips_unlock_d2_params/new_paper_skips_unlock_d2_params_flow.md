@@ -26,10 +26,10 @@
 | 21 | Skipless networks: one change of basis per hidden state | statement | W_1, the chosen block | W_1, the chosen block | \begin{restatable}[Exact reduction without skips]{proposition}{propSki |
 | 22 | Skipless networks: one change of basis per hidden state | para |  |  | Rows of a write work too: if $\dm$ rows of the write into $h_\ell$ for |
 | 23 | Skipless networks: one change of basis per hidden state | float |  |  | \begin{figure}[t] \centering [a TikZ drawing, omitted here; the captio |
-| 24 | Learned skips: reduction to identity skips | para |  |  | \subsection{Learned skips: reduction to identity skips}\label{sec:lear |
-| 25 | Learned skips: reduction to identity skips | para | Lambda, identity units | Lambda, identity units | In this subsection, networks have no normalization. Under RMSNorm a sk |
-| 26 | Learned skips: reduction to identity skips | statement |  |  | \begin{restatable}[Learned skips reduce to identity skips]{theorem}{th |
-| 27 | Learned skips: reduction to identity skips | para |  |  | So the networks with invertible learned skips have $L\dm^2$ more param |
+| 24 | Blocks with skips as wider blocks without skips | para |  |  | \subsection{Blocks with skips as wider blocks without skips}\label{sec |
+| 25 | Blocks with skips as wider blocks without skips | para | Lambda, identity units | Lambda, identity units | In this subsection, networks have no normalization. Under RMSNorm a sk |
+| 26 | Blocks with skips as wider blocks without skips | statement |  |  | \begin{restatable}[Learned skips reduce to identity skips]{theorem}{th |
+| 27 | Blocks with skips as wider blocks without skips | para |  |  | So the networks with invertible learned skips have $L\dm^2$ more param |
 | 28 | Identity skips: one change of basis for the whole network | para |  |  | \subsection{Identity skips: one change of basis for the whole network} |
 | 29 | Identity skips: one change of basis for the whole network | para |  |  | A residual network keeps one change of basis, the same at all its hidd |
 | 30 | Identity skips: one change of basis for the whole network | statement |  |  | \begin{restatable}[One change of basis for the whole network]{theorem} |
