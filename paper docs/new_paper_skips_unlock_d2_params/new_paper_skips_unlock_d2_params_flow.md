@@ -3,16 +3,16 @@
 | Unit | Section | Kind | Defines | First uses | Start |
 |---|---|---|---|---|---|
 | 0 | abstract | para |  | RMSNorm, d_model, the width, functional dimension, per block, pre-RMSNorm | \begin{abstract} Skip connections change the function class of an MLP  |
-| 1 | abstract | float |  |  | \begin{figure}[!h] \centering \includegraphics[width=0.94\linewidth]{f |
+| 1 | abstract | float | L, the number of blocks, d_hidden, the number of hidden units | L, the number of blocks, d_hidden, the number of hidden units | \begin{figure}[!h] \centering \includegraphics[width=0.94\linewidth]{f |
 | 2 | Introduction | para |  |  | \section{Introduction}\label{sec:intro}\label{sec:related} |
 | 3 | Introduction | para | d_model, the width |  | Skip connections are a building block of almost every deep network tra |
 | 4 | Introduction | para |  | residual | Skipless networks have recently been trained to varying degrees of suc |
-| 5 | Introduction | para | L, the number of blocks | L, the number of blocks, change of basis, readout / unembedding | \para{Where the degrees of freedom come from.} Without skips, the basi |
+| 5 | Introduction | para |  | change of basis, readout / unembedding | \para{Where the degrees of freedom come from.} Without skips, the basi |
 | 6 | Introduction | para | functional dimension | generic | \para{Functional dimension.} By the degrees of freedom of a network we |
 | 7 | Introduction | para | analytic blocks |  | \para{Main result.} Residual networks attain the bound at any depth wh |
 | 8 | Introduction | para | A_l, a learned skip, identity skip, learned skip, locally identifiable | A_l, a learned skip, analytic blocks, identity skip, learned skip, locally identifiable, redundancy | \para{Contributions and related work.} \Cref{tab:results} lists the re |
 | 9 | Introduction | float | functional dimension added by the skips | functional dimension added by the skips | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \n |
-| 10 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, m, number of units, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, m, number of units, read / write (nouns) | \section{Setup}\label{sec:setup} \para{Blocks.} A hidden state is a ma |
+| 10 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, ReLU squared, T, number of tokens, gated block, h, a hidden state, read / write (nouns) | \section{Setup}\label{sec:setup} \para{Blocks.} A hidden state is a ma |
 | 11 | Setup | para | E and D, P, the number of parameters, per block, readout / unembedding, residual | E and D, P, the number of parameters | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
 | 12 | Setup | para | epsilon of RMSNorm, pre-RMSNorm, under rmsnorm | epsilon of RMSNorm, under rmsnorm | \para{Normalization.} RMSNorm with the constant $\varepsilon > 0$ is t |
 | 13 | Setup | para | generic |  | \para{Scope.} Networks have no biases, and their inputs are continuous |
