@@ -380,8 +380,8 @@ A continuous symmetry adds to the redundancy: if a continuous family of maps of 
 Take the linear network $x \mapsto xM_1M_2M_3$, with three $\dm\times\dm$ matrices. It has $3\dm^2$ parameters, and its functions are the linear maps $x \mapsto xM$ with $M = M_1M_2M_3$, which can be any $\dm\times\dm$ matrix. So its functional dimension is $\dm^2$ at generic parameters and its redundancy is $2\dm^2$: one change of basis at each of its two hidden states. The change of basis $G = M_3$ at the second hidden state turns $M_3$ into the identity and $M_2$ into $M_2' = M_2M_3$. It gives the network $x \mapsto xM_1M_2'$, with $2\dm^2$ parameters. The functions and the functional dimension are unchanged, and the redundancy is now $\dm^2$. So a reduced network can still carry symmetries. The reduction is maximal only after the change of basis $G = M_2'$ at the first hidden state is used as well. It gives $x \mapsto xM$ with $M = M_1M_2'$, and the $\dm^2$ parameters that remain equal the functional dimension.
 \end{example}
 
-\begin{example}[Degrees of freedom need not be entries]\label{ex:orth}
-The orthogonal $\dm\times\dm$ matrices form a manifold of dimension $\dm(\dm-1)/2$. Yet an orthogonal matrix is dense: it is stored with $\dm^2$ entries, and none of them can be deleted. So degrees of freedom count directions, which need not be entries of the weights.
+\begin{example}[Fewer degrees of freedom than stored entries]\label{ex:orth}
+The orthogonal $\dm\times\dm$ matrices form a manifold of dimension $\dm(\dm-1)/2$. Yet no entry of an orthogonal matrix is fixed, so storing one without any computation at read time takes $\dm^2$ entries. With computation, $\dm(\dm-1)/2$ real numbers suffice, for example an antisymmetric $S$ with $Q = \exp(S)$. So the number of degrees of freedom can be smaller than the number of entries that must be stored.
 \end{example}
 
 \subsection{Upper bounds from the symmetries}\label{sec:count}
