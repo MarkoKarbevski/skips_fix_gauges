@@ -12,7 +12,7 @@
 | 7 | Contributions | para |  |  | \subsection{Contributions}\label{sec:contributions} |
 | 8 | Contributions | para | analytic blocks |  | \para{Main result.} Residual networks attain the upper bound from the  |
 | 9 | Contributions | para | A_l, a learned skip, identity skip, learned skip, locally identifiable | A_l, a learned skip, analytic blocks, identity skip, learned skip, locally identifiable | \begin{enumerate}[label=\arabic*.] \item \textit{Changes of basis, in  |
-| 10 | Contributions | float | ReLU squared, functional dimension added by the skips | ReLU squared, functional dimension added by the skips | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1} \n |
+| 10 | Contributions | float | ReLU squared, functional dimension added by the skips | ReLU squared, epsilon of RMSNorm, functional dimension added by the skips | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1}\se |
 | 11 | Related work | para |  |  | \subsection{Related work}\label{sec:related} |
 | 12 | Related work | para |  |  | \para{The change of basis as a symmetry.} \citet{godfrey2022symmetries |
 | 13 | Related work | para |  |  | \para{One change of basis for a residual network.} Earlier work uses o |
@@ -22,7 +22,7 @@
 | 17 | Setup | para |  |  | \section{Setup}\label{sec:setup} This section fixes the networks that  |
 | 18 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, T, number of tokens, gated block, h, a hidden state, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, T, number of tokens, gated block, h, a hidden state, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
 | 19 | Setup | para | E and D, P, the number of parameters, per block, readout / unembedding, residual | E and D, P, the number of parameters | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
-| 20 | Setup | para | epsilon of RMSNorm, pre-RMSNorm, under rmsnorm | epsilon of RMSNorm, under rmsnorm | \para{Normalization.} RMSNorm with the constant $\varepsilon > 0$ is t |
+| 20 | Setup | para | epsilon of RMSNorm, pre-RMSNorm, under rmsnorm | under rmsnorm | \para{Normalization.} RMSNorm with the constant $\varepsilon > 0$ is t |
 | 21 | Setup | para | generic |  | \para{Scope.} Networks have no biases, and their inputs are continuous |
 | 22 | Changes of basis that preserve the function | para |  |  | \section{Changes of basis that preserve the function}\label{sec:reduce |
 | 23 | Changes of basis that preserve the function | para | G, a change of basis | G, a change of basis | The results of this section rest on one symmetry, which the first two  |
@@ -89,24 +89,25 @@
 | 84 | When the bounds are attained | statement |  |  | \begin{restatable}[Exact gain for $\tanh$ and GELU]{theorem}{thmExactG |
 | 85 | When the bounds are attained | para |  |  | By \cref{prop:localid}, the skipless networks of \cref{thm:exactgain}  |
 | 86 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
-| 87 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
-| 88 | Residual and skipless networks compute different functions | para |  |  | The gain in functional dimension says something about the functions th |
-| 89 | Residual and skipless networks compute different functions | statement | pointwise limit | pointwise limit | \begin{definition*}[Pointwise limit] Let $\mathcal X = \R^{T\times d_{ |
-| 90 | Residual and skipless networks compute different functions | para |  |  | If a sequence of networks of $\mathcal F$ converges to $F$ at every in |
-| 91 | Residual and skipless networks compute different functions | para | definable in an o-minimal structure | definable in an o-minimal structure | By \cref{def:fd,thm:resdepth}, the Jacobian of the residual network ha |
-| 92 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
-| 93 | Residual and skipless networks compute different functions | para |  |  | For GELU blocks without normalization, \citet{mijoski2026worth} show t |
-| 94 | Numerical ranks at depth, and a conjecture | para |  |  | \subsection{Numerical ranks at depth, and a conjecture}\label{sec:meas |
-| 95 | Numerical ranks at depth, and a conjecture | para |  |  | For skipless networks at depth, \cref{thm:exactgain} gives the equalit |
-| 96 | Numerical ranks at depth, and a conjecture | para |  |  | At depth we compute the rank of the Jacobian on a large batch of input |
-| 97 | Numerical ranks at depth, and a conjecture | float |  |  | \begin{table}[b] \centering\small \renewcommand{\arraystretch}{1.1} \b |
-| 98 | Numerical ranks at depth, and a conjecture | para |  |  | In two cases the measured rank stays below the upper bound. In skiples |
-| 99 | Numerical ranks at depth, and a conjecture | statement |  |  | \begin{conjecture}[Equality without skips]\label{conj:equality} With o |
-| 100 | Numerical ranks at depth, and a conjecture | para |  |  | The analogue of the conjecture is known for polynomial activations. \c |
-| 101 | Numerical ranks at depth, and a conjecture | para |  |  | \para{One-hot tokens.} With one-hot tokens under RMSNorm, the rows of  |
-| 102 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
-| 103 | Conclusion | para |  |  | Skip connections change how a network uses its parameters. Without ski |
-| 104 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth is open for the |
-| 105 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
-| 106 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
-| 107 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 87 | When the bounds are attained | para |  |  | \para{RMSNorm with $\varepsilon = 0$.} The networks of \cref{sec:setup |
+| 88 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
+| 89 | Residual and skipless networks compute different functions | para |  |  | The gain in functional dimension says something about the functions th |
+| 90 | Residual and skipless networks compute different functions | statement | pointwise limit | pointwise limit | \begin{definition*}[Pointwise limit] Let $\mathcal X = \R^{T\times d_{ |
+| 91 | Residual and skipless networks compute different functions | para |  |  | If a sequence of networks of $\mathcal F$ converges to $F$ at every in |
+| 92 | Residual and skipless networks compute different functions | para | definable in an o-minimal structure | definable in an o-minimal structure | By \cref{def:fd,thm:resdepth}, the Jacobian of the residual network ha |
+| 93 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
+| 94 | Residual and skipless networks compute different functions | para |  |  | For GELU blocks without normalization, \citet{mijoski2026worth} show t |
+| 95 | Numerical ranks at depth, and a conjecture | para |  |  | \subsection{Numerical ranks at depth, and a conjecture}\label{sec:meas |
+| 96 | Numerical ranks at depth, and a conjecture | para |  |  | For skipless networks at depth, \cref{thm:exactgain} gives the equalit |
+| 97 | Numerical ranks at depth, and a conjecture | para |  |  | At depth we compute the rank of the Jacobian on a large batch of input |
+| 98 | Numerical ranks at depth, and a conjecture | float |  |  | \begin{table}[b] \centering\small \renewcommand{\arraystretch}{1.1} \b |
+| 99 | Numerical ranks at depth, and a conjecture | para |  |  | In two cases the measured rank stays below the upper bound. In skiples |
+| 100 | Numerical ranks at depth, and a conjecture | statement |  |  | \begin{conjecture}[Equality without skips]\label{conj:equality} With o |
+| 101 | Numerical ranks at depth, and a conjecture | para |  |  | The analogue of the conjecture is known for polynomial activations. \c |
+| 102 | Numerical ranks at depth, and a conjecture | para |  |  | \para{One-hot tokens.} With one-hot tokens under RMSNorm, the rows of  |
+| 103 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
+| 104 | Conclusion | para |  |  | Skip connections change how a network uses its parameters. Without ski |
+| 105 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth is open for the |
+| 106 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
+| 107 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
+| 108 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
