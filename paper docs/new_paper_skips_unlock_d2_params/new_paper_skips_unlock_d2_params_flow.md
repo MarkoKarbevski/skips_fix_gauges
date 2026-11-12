@@ -86,7 +86,7 @@
 | 81 | When the bounds are attained | para |  |  | This is \cref{thm:resdepth} together with \cref{prop:localid}. Whether |
 | 82 | When the bounds are attained | para |  |  | \begin{corollary}[Attention-only transformers: Conjecture~2.4 of \cite |
 | 83 | When the bounds are attained | para |  |  | \citet{henry2026generic} proves that one attention block without a ski |
-| 84 | When the bounds are attained | statement |  |  | \begin{restatable}[Exact gain for $\tanh$ and GELU]{theorem}{thmExactG |
+| 84 | When the bounds are attained | statement |  |  | \needspace{6\baselineskip} \begin{restatable}[Exact gain for $\tanh$ a |
 | 85 | When the bounds are attained | para |  |  | By \cref{prop:localid}, the skipless networks of \cref{thm:exactgain}  |
 | 86 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
 | 87 | When the bounds are attained | para |  |  | \para{RMSNorm with $\varepsilon = 0$.} The networks of \cref{sec:setup |
