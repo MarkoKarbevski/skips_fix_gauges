@@ -179,8 +179,10 @@ Skipless networks have recently been trained to varying degrees of success. \cit
 \quad\quad\quad with $\varepsilon = 0$ & at least $L\dm(\dm-1)/2 + L$ & analytic & \rtag{Thm.}{thm:epszero}{} \\
 \quad $L \ge 2$ & exactly $L\dm^2$ & $\tanh$ & \rtag{Thm.}{thm:exactgain}{i} \\
 \quad\quad with pre-RMSNorm & exactly $L\dm(\dm-1)/2$ & $\tanh$ & \rtag{Thm.}{thm:exactgain}{i} \\
+\quad\quad\quad with $\varepsilon = 0$ & exactly $L\dm(\dm-1)/2 + L$ & $\tanh$ & \rtag{Thm.}{thm:epszeroskipless}{} \\
 \quad $L \ge 2$ & exactly $L\dm^2$ & GELU, $\dhid \ge 2\dm$ & \rtag{Thm.}{thm:exactgain}{ii} \\
 \quad\quad with pre-RMSNorm & exactly $L\dm(\dm-1)/2$ & GELU, $\dhid \ge 2\dm$ & \rtag{Thm.}{thm:exactgain}{ii} \\
+\quad\quad\quad with $\varepsilon = 0$ & exactly $L\dm(\dm-1)/2 + L$ & GELU & \rtag{Thm.}{thm:epszeroskipless}{} \\
 \midrule
 \multicolumn{4}{@{}l}{\emph{Residual networks that equal, or are limits of, skipless networks}} \\
 \quad same widths, any $L$ & measure zero & analytic & \rtag{Thm.}{thm:classes}{i} \\
@@ -536,7 +538,7 @@ In the residual network of \cref{cor:localid}, these matrices are all equal.
 \[
 E \mapsto c\,EQ, \qquad \Wread^{\ell} \mapsto Q^\top\Wread^{\ell}, \qquad \Wwrite^{\ell} \mapsto c\,\Wwrite^{\ell}Q, \qquad D \mapsto Q^\top D,
 \]
-with the same $c$ and $Q$ for every block $\ell$: one orthogonal change of basis and one scale for all hidden states. The matrices $cQ$ form the group $\CO(\dm)$, of dimension $\dm(\dm-1)/2 + 1$. \Cref{thm:resdepth} extends to this case with $\G = \CO(\dm)$: for analytic blocks, at generic parameters, the residual network has functional dimension $P - \dm(\dm-1)/2 - 1 - s$, and the skips raise the functional dimension by at least $L\,(\dm(\dm-1)/2 + 1)$ (\cref{thm:epszero}).
+with the same $c$ and $Q$ for every block $\ell$: one orthogonal change of basis and one scale for all hidden states. The matrices $cQ$ form the group $\CO(\dm)$, of dimension $\dm(\dm-1)/2 + 1$. \Cref{thm:resdepth} extends to this case with $\G = \CO(\dm)$: for analytic blocks, at generic parameters, the residual network has functional dimension $P - \dm(\dm-1)/2 - 1 - s$, and the skips raise the functional dimension by at least $L\,(\dm(\dm-1)/2 + 1)$ (\cref{thm:epszero}). For $\tanh$ blocks and for GELU blocks of any width, the skipless network satisfies the equality condition as well, with a number $c_\ell$ and a matrix $Q_\ell$ of its own at every hidden state $h_\ell$, and the skips raise the functional dimension by exactly this number (\cref{thm:epszeroskipless}).
 
 \subsection{Residual and skipless networks compute different functions}\label{sec:classes}
 
@@ -1253,6 +1255,8 @@ Neither $h_{\ell-1,t}$ nor $f_{\ell,t}$ depends on $\Wwrite^{\ell}$. At a point 
 For small $\tau$, every hidden state at $\theta_\tau$ is $xE + O(\tau)$, so $\theta_\tau \in \mathcal O_X$. The sum of the squares of the minors of size $r$ of the Jacobian of $F_X$ is real-analytic on the connected open set $\mathcal O_X$ and does not vanish at $\theta_\tau$, so its zero set has measure zero. Hence the rank on $X$ is at least $r$ at almost every parameter. At generic parameters it is at most $r$ on every batch: the changes of basis in $\CO(\dm)$ (\cpref{thm:gaugefull}{iii}) and the symmetries inside the blocks move the parameters in $\dim\CO(\dm) + s$ independent directions, as in the proof of \cref{lem:smallwrites}. So the functional dimension is $r$ at generic parameters. When every block has width at least $\dm$, the functional dimension of the skipless network is at most $P - (L+1)\dim\CO(\dm) - s$ (\cpref{thm:count}{ii}, \cref{lem:free}), which gives the gain.
 \end{proof}
 
+For $\tanh$ blocks and for GELU blocks, the skipless network satisfies the equality condition too, so the gain is exactly $L\,(\dm(\dm-1)/2 + 1)$ (\cref{thm:epszeroskipless}).
+
 
 \thmExactGain*
 
@@ -1595,6 +1599,408 @@ Under RMSNorm $\G = \Ort(\dm)$, and $s = 0$ for $\tanh$ and GELU blocks, so at g
 Let $X_0$ be a finite batch on which $\Der_\theta F^0_{X_0}(\theta)$ has rank $P - (L+1)\dm^2$. The symmetric matrices $Y_0, \dots, Y_L$ and directions $\eta$ with $\Delta_Y = \Der_\theta F^0(\theta, \cdot)\,\eta$ on a batch form a linear space, which can only shrink when the batch grows, so some finite batch $X_1$ gives the same space as all inputs together. On $X = X_0 \cup X_1$, condition (a) of \cref{prop:rmsreduce} holds, because the directions $\eta^Y$ keep the rank at most $P - (L+1)\dm^2$ on every batch, and condition (b) holds by \cref{lem:indeptanh} or \cref{lem:indepgelu}. So the Jacobian of the skipless pre-RMSNorm network has rank at least $P - (L+1)\dm(\dm-1)/2$ on $X$ at $\theta_\lambda$, for small $\lambda > 0$. For $\varepsilon > 0$ this network is real-analytic in its parameters, so its functional dimension at generic parameters is the largest rank that its Jacobian attains on any batch at any parameters. It is therefore $P - (L+1)\dm(\dm-1)/2$: the skipless network satisfies the equality condition, and by \cref{thm:resdepth} the skips raise the functional dimension by exactly $L\dm(\dm-1)/2$.
 \end{proof}
 
+\subsection{Skipless networks under RMSNorm with \texorpdfstring{$\varepsilon = 0$}{epsilon = 0}}\label{app:epszeroskipless}
+
+\Cref{thm:epszero} gives the gain for $\varepsilon = 0$ only as a lower bound. This subsection proves that the skipless network attains its bound as well, for $\tanh$ and for GELU blocks (\cref{thm:epszeroskipless}). The proof of \cref{app:rmsskipless} does not carry over: for $\varepsilon = 0$, $N_\varepsilon(\lambda v) = N_\varepsilon(v)$ for every $\lambda > 0$, so there are no small hidden states on which RMSNorm is linear to first order. We show instead, at suitable parameters, that the function changes along every direction of the parameters that is not a direction of the symmetries, by removing the blocks one at a time (Claim~$(D_k)$ below). The input of every block lies on the sphere of the rows $n$ with $\norm{n}^2 = \dm$. We follow a great circle of this sphere to complex angles, as in the proof of \cref{lem:sphere}. Along it the hidden units of a $\tanh$ block saturate at different exponential rates, which separates them as on the rays of \cref{lem:raysep} (\cref{lem:e0steptanh}), and the hidden units of a GELU block differ from linear ones by Gaussian terms of different rates (\cref{lem:e0stepgelu}). The blocks are MLP blocks with the activation $\sigma$, without biases, and $\varepsilon = 0$ throughout, so $N_\varepsilon(v) = \sqrt{\dm}\,v/\norm{v}$ for a row $v \neq 0$. An MLP block acts on each token separately, so we take inputs with one token, $x \in \R^{1\times d_{\mathrm{in}}}$.
+
+\begin{theorem}[Skipless networks under RMSNorm with $\varepsilon = 0$]\label{thm:epszeroskipless}
+Let $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm \ge 2$, and consider networks under pre-RMSNorm with $\varepsilon = 0$, without biases, whose blocks are all $\tanh$ blocks or all GELU blocks, of width at least $\dm$. At generic parameters the skipless network has functional dimension
+\[
+P - (L+1)\dim\CO(\dm) \;=\; P - (L+1)\,\big(\dm(\dm-1)/2 + 1\big),
+\]
+which is the equality condition. So the skips raise the functional dimension by exactly
+\[
+L\,\big(\dm(\dm-1)/2 + 1\big).
+\]
+\end{theorem}
+
+For GELU blocks the theorem does not need $\dhid \ge 2\dm$, unlike \cref{thm:exactgain}.
+
+\para{Symmetries.} The skipless network computes $h_0 = xE$, $h_\ell = \sigma\big(N_\varepsilon(h_{\ell-1})\,\Wread^{\ell}\big)\,\Wwrite^{\ell}$ and $F_\theta(x) = N_\varepsilon(h_L)\,D$, at the inputs $x$ for which no $h_\ell$ vanishes. For orthogonal $\dm\times\dm$ matrices $Q_0, \dots, Q_L$ and numbers $\lambda_0, \dots, \lambda_L > 0$, the parameters
+\[
+\Big(\lambda_0\,EQ_0,\ \ \big\{Q_{\ell-1}^\top\Wread^{\ell},\ \ \lambda_\ell\,\Wwrite^{\ell}Q_\ell\big\}_{\ell=1}^{L},\ \ Q_L^\top D\Big)
+\]
+give the same function, with the hidden states $\lambda_\ell\,h_\ell Q_\ell$: one matrix $\lambda_\ell Q_\ell \in \CO(\dm)$ per hidden state. For antisymmetric matrices $Y_0, \dots, Y_L$ and numbers $\beta_0, \dots, \beta_L$ let
+\begin{equation}\label{eq:e0eta}
+\eta^{Y,\beta} \;=\; \Big(E\,(Y_0 + \beta_0 I),\ \ \big\{-Y_{\ell-1}\Wread^{\ell},\ \ \Wwrite^{\ell}(Y_\ell + \beta_\ell I)\big\}_{\ell=1}^{L},\ \ -Y_LD\Big) \in \R^P ,
+\end{equation}
+the derivative of these parameters at $\tau = 0$ for $Q_\ell = \exp(\tau Y_\ell)$ and $\lambda_\ell = e^{\tau\beta_\ell}$. So $\Der_\theta F(\theta, x)\,\eta^{Y,\beta} = 0$ at every input at which $F_\theta$ is defined. When $E$ and every $\Wwrite^{\ell}$ have rank $\dm$, the map $(Y, \beta) \mapsto \eta^{Y,\beta}$ is injective, so on every batch the Jacobian has rank at most
+\begin{equation}\label{eq:e0upper}
+P - (L+1)\,\big(\dm(\dm-1)/2 + 1\big).
+\end{equation}
+
+\para{Notation.} $\mathbb S$ is the set of the rows $n \in \R^{1\times\dm}$ with $\norm{n}^2 = \dm$. For rows $u, v$, real or complex, $\langle u, v\rangle = uv^\top$, without complex conjugation, and for two rows of the same length $\odot$ is their entrywise product. Block $\ell$ maps a normalized input $n$ to $g_\ell(n) = \sigma(n\,\Wread^{\ell})\,\Wwrite^{\ell}$. For $k = 0, \dots, L$ and a row $h \neq 0$, let $\mathcal B_{>k}(h)$ be the output of the network when its hidden state $h_k$ is set to $h$:
+\[
+\mathcal B_{>L}(h) = N_\varepsilon(h)\,D, \qquad \mathcal B_{>k-1}(h) = \mathcal B_{>k}\big(g_k(N_\varepsilon(h))\big), \qquad\text{so that}\quad F_\theta(x) = \mathcal B_{>0}(xE).
+\]
+$\mathcal B_{>k}$ depends on the weights of the blocks $k+1, \dots, L$ and on $D$. We write $\Der\mathcal B_{>k}(h)\,v$ for its derivative at $h$ along a row $v$, and $\Der_\theta\mathcal B_{>k}(h)\,\eta$ for its derivative at fixed $h$ along a direction $\eta$ of these weights. As $\mathcal B_{>k}(\lambda h) = \mathcal B_{>k}(h)$ for $\lambda > 0$,
+\begin{equation}\label{eq:e0radial}
+\Der\mathcal B_{>k}(h)\,h = 0 .
+\end{equation}
+We call $\theta$ \emph{regular} if
+\begin{itemize}[leftmargin=2.9em]
+\item[(R1)] $E$, $D$ and every $\Wwrite^{\ell}$ have rank $\dm$;
+\item[(R2)] for every $\ell$ and every $n \in \mathbb S$: $g_\ell(n) \neq 0$;
+\item[(R3)] for every $\ell$ there is an $n \in \mathbb S$ such that no row $v \neq 0$ with $\langle v, n\rangle = 0$ has $\Der g_\ell(n)\,v \in \R\,g_\ell(n)$.
+\end{itemize}
+By (R2), every $\mathcal B_{>k}$ is defined and real-analytic on all rows $h \neq 0$.
+
+\begin{lemma}[The derivative of $\mathcal B_{>k}$ has rank $\dm - 1$]\label{lem:e0tailrank}
+Let $\theta$ be regular. For every $k$ there is an open dense set $\mathcal U_k$ of rows $h \neq 0$, closed under multiplication by positive numbers, such that for $h \in \mathcal U_k$: $\Der\mathcal B_{>k}(h)\,v = 0$ only if $v \in \R\,h$.
+\end{lemma}
+
+\begin{proof}
+For a row $h \neq 0$, $\Der N_\varepsilon(h)\,v = \frac{\sqrt{\dm}}{\norm{h}}\big(v - \frac{\langle v, h\rangle}{\norm{h}^2}\,h\big)$, which vanishes exactly for $v \in \R\,h$. For $k = L$, $\Der\mathcal B_{>L}(h)\,v = \big(\Der N_\varepsilon(h)\,v\big)D$ and $D$ is injective on rows, so $\mathcal U_L$ is the set of all rows $h \neq 0$. Let $k < L$ and $g = g_{k+1}$. For $n \in \mathbb S$ and a row $v$,
+\[
+\Der\mathcal B_{>k}(n)\,v \;=\; \Der\mathcal B_{>k+1}\big(g(n)\big)\,\big(\Der g(n)\,v^\perp\big), \qquad v^\perp = v - \frac{\langle v, n\rangle}{\dm}\,n ,
+\]
+where $v^\perp$ is orthogonal to $n$ and vanishes exactly for $v \in \R\,n$. For $n \in \mathbb S$ consider the linear map $v \mapsto \Der g(n)\,v^\perp + \frac{\langle v, n\rangle}{\dm}\,g(n)$ of $\R^{1\times\dm}$. By (R2) it is injective exactly when $n$ is as in (R3), and its determinant is real-analytic in $n$. By (R3) the determinant does not vanish identically on the connected set $\mathbb S$, so the $n$ as in (R3) form an open dense subset of $\mathbb S$. On this subset the map $n \mapsto N_\varepsilon(g(n))$ from $\mathbb S$ to $\mathbb S$ has an injective derivative, so it is a local diffeomorphism, and the $n$ of the subset with $g(n) \in \mathcal U_{k+1}$ form an open dense subset of $\mathbb S$ again. For such $n$, $\Der\mathcal B_{>k}(n)\,v = 0$ gives $\Der g(n)\,v^\perp \in \R\,g(n)$, so $v^\perp = 0$ and $v \in \R\,n$. Let $\mathcal U_k$ be the set of the positive multiples of these $n$.
+\end{proof}
+
+\begin{lemma}[A direction at a write]\label{lem:e0atwrite}
+Let $\theta$ be regular, $0 \le k \le L$, and let $A$ be a matrix with $\dm$ columns and rank $\dm$. Let $\eta_A$ be a matrix of the size of $A$ and $\eta$ a direction of the weights of the blocks $k+1, \dots, L$ and of $D$. If
+\[
+\Der\mathcal B_{>k}(wA)\,(w\,\eta_A) + \Der_\theta\mathcal B_{>k}(wA)\,\eta \;=\; 0 \qquad\text{for all rows } w \text{ with } wA \neq 0,
+\]
+then $\eta_A = AZ$ for a $\dm\times\dm$ matrix $Z$, and
+\begin{equation}\label{eq:e0D}
+\Der\mathcal B_{>k}(h)\,(hZ) + \Der_\theta\mathcal B_{>k}(h)\,\eta \;=\; 0 \qquad\text{for all rows } h \neq 0 .
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Let $w_1A = 0$. Subtracting the hypothesis at $w$ and at $w + w_1$ gives $\Der\mathcal B_{>k}(wA)\,(w_1\eta_A) = 0$, so $w_1\eta_A \in \R\,wA$ when $wA \in \mathcal U_k$ (\cref{lem:e0tailrank}). As $\mathcal U_k$ is open and $\dm \ge 2$, $wA$ takes two linearly independent values in $\mathcal U_k$, so $w_1\eta_A = 0$. Let $A^+$ be a matrix with $A^+A = I$. For every row $w$, $(w - wAA^+)\,A = 0$, so $w\,\eta_A = wAA^+\eta_A$: $\eta_A = AZ$ with $Z = A^+\eta_A$. The hypothesis is now \eqref{eq:e0D} at $h = wA$, which takes every value.
+\end{proof}
+
+\smallskip
+\noindent\emph{Claim $(D_k)$}, for $k = 0, \dots, L$. Let $Z$ be a $\dm\times\dm$ matrix and $\eta$ a direction of the weights of the blocks $k+1, \dots, L$ and of $D$. If \eqref{eq:e0D} holds, then there are antisymmetric matrices $Y_k, \dots, Y_L$ and numbers $\beta_k, \dots, \beta_L$ with
+\begin{equation}\label{eq:e0Dconcl}
+Z = Y_k + \beta_k I, \qquad \eta = \Big(\big\{-Y_{\ell-1}\Wread^{\ell},\ \ \Wwrite^{\ell}(Y_\ell + \beta_\ell I)\big\}_{\ell=k+1}^{L},\ \ -Y_LD\Big).
+\end{equation}
+
+\smallskip
+Conversely, every pair \eqref{eq:e0Dconcl} satisfies \eqref{eq:e0D}: it is the derivative at $\tau = 0$ of the identity
+\[
+\mathcal B_{>k}\big(e^{\tau\beta_k}\,h\exp(\tau Y_k)\big) \;=\; \mathcal B_{>k}(h),
+\]
+in which the left side is taken at the weights moved by the symmetries with $Q_\ell = \exp(\tau Y_\ell)$ and $\lambda_\ell = e^{\tau\beta_\ell}$ for $\ell \ge k$.
+
+\begin{proposition}[The claim gives the rank]\label{prop:e0givesrank}
+Let $\theta$ be regular, and let $(D_0)$ hold at $\theta$. Then the directions $\eta \in \R^P$ with $\Der_\theta F(\theta, x)\,\eta = 0$ for all $x$ with $xE \neq 0$ are the directions $\eta^{Y,\beta}$ of \eqref{eq:e0eta}, and the Jacobian of the network has the rank \eqref{eq:e0upper} on some finite batch of such inputs.
+\end{proposition}
+
+\begin{proof}
+Let $\eta = (\eta_E, \eta')$ be such a direction, with $\eta_E$ its entry at $E$. As $F_\theta(x) = \mathcal B_{>0}(xE)$,
+\[
+\Der_\theta F(\theta, x)\,\eta \;=\; \Der\mathcal B_{>0}(xE)\,(x\,\eta_E) + \Der_\theta\mathcal B_{>0}(xE)\,\eta' .
+\]
+By \cref{lem:e0atwrite} with $A = E$, $\eta_E = EZ$ and \eqref{eq:e0D} holds for $k = 0$. By $(D_0)$, $\eta = \eta^{Y,\beta}$. The kernels of the Jacobian on finite batches are subspaces of $\R^P$ that can only shrink when the batch grows, so on some finite batch the kernel is the space of the $\eta^{Y,\beta}$, of dimension $(L+1)\,(\dm(\dm-1)/2 + 1)$ by (R1).
+\end{proof}
+
+\begin{lemma}[The readout]\label{lem:e0readout}
+If $D$ has rank $\dm$, then $(D_L)$ holds.
+\end{lemma}
+
+\begin{proof}
+Here \eqref{eq:e0D} is $\big(\Der N_\varepsilon(h)\,(hZ)\big)D + N_\varepsilon(h)\,\eta_D = 0$. Multiplying by $\norm{h}^3/\sqrt{\dm}$ gives
+\[
+\norm{h}^2\;h\,(ZD + \eta_D) \;=\; \langle hZ, h\rangle\;hD \qquad\text{for all rows } h .
+\]
+So $h\,(ZD + \eta_D) = \mu(h)\,hD$ with a number $\mu(h)$, for every $h \neq 0$. As $h \mapsto hD$ is injective and $\dm \ge 2$, comparing $h$, $h'$ and $h + h'$ for linearly independent $h, h'$ shows that $\mu$ is a constant $\beta$, so $ZD + \eta_D = \beta D$. Then $\langle hZ, h\rangle = \beta\norm{h}^2$ for all $h$, so the symmetric part of $Z$ is $\beta I$: $Z = Y_L + \beta I$ with $Y_L$ antisymmetric, and $\eta_D = \beta D - ZD = -Y_LD$.
+\end{proof}
+
+What remains is the step from $(D_{k+1})$ to $(D_k)$, at suitable parameters: \cref{lem:e0steptanh} for $\tanh$ and \cref{lem:e0stepgelu} for GELU.
+
+\para{RMSNorm at complex rows.} For $h \in \mathbb C^{1\times\dm}$ with $\operatorname{Re}\langle h, h\rangle > 0$ let
+\[
+N_\varepsilon(h) \;=\; \frac{\sqrt{\dm}\;h}{\sqrt{\langle h, h\rangle}},
+\]
+with the principal square root. It is holomorphic, $N_\varepsilon(\lambda h) = N_\varepsilon(h)$ for $\lambda > 0$, and
+\begin{equation}\label{eq:e0DN}
+\langle n, n\rangle = \dm \quad\Longrightarrow\quad N_\varepsilon(n) = n, \qquad \Der N_\varepsilon(n)\,v = v - \frac{\langle v, n\rangle}{\dm}\,n .
+\end{equation}
+For $\varkappa \in (0, 1]$ let
+\[
+\mathbb C_\varkappa \;=\; \big\{u + \mathrm iu' \ :\ u, u' \in \R^{1\times\dm},\ \norm{u'} < \varkappa\norm{u}\big\},
+\]
+an open cone in $\mathbb C^{1\times\dm}$ that contains every real row $h \neq 0$. On $\mathbb C_1$, $\operatorname{Re}\langle h, h\rangle = \norm{u}^2 - \norm{u'}^2 > 0$.
+
+\begin{lemma}[$\mathcal B_{>k}$ on a complex cone]\label{lem:e0cone}
+Let $\theta$ satisfy (R1) and (R2). For every $k$ there is a $\varkappa_k \in (0, 1]$ such that $\mathcal B_{>k}$, with its derivatives $\Der\mathcal B_{>k}$ and $\Der_\theta\mathcal B_{>k}$, extends to a holomorphic map on $\mathbb C_{\varkappa_k}$ with $\mathcal B_{>k}(\lambda h) = \mathcal B_{>k}(h)$ for $\lambda > 0$. The number $\varkappa_k$ depends only on the weights of the blocks $k+1, \dots, L$ and on $D$.
+\end{lemma}
+
+\begin{proof}
+$\mathcal B_{>L}(h) = N_\varepsilon(h)\,D$ is holomorphic on $\mathbb C_1$: $\varkappa_L = 1$. Let $k < L$. The map $g_{k+1}$ is holomorphic near $\mathbb S$ and maps the compact set $\mathbb S$ into the real rows $h \neq 0$, by (R2), hence into the open set $\mathbb C_{\varkappa_{k+1}}$. So there is a $\rho > 0$ such that $n \mapsto \mathcal B_{>k+1}(g_{k+1}(n))$ is holomorphic on the set of the $n \in \mathbb C^{1\times\dm}$ at distance less than $\rho$ from $\mathbb S$. On the compact set of the $u + \mathrm iu'$ with $\norm{u} = 1$ and $\norm{u'} \le \frac12$, $N_\varepsilon$ is uniformly continuous, and $N_\varepsilon(u) \in \mathbb S$. So there is a $\varkappa_k$ such that $N_\varepsilon$ maps $\mathbb C_{\varkappa_k}$ into the points at distance less than $\rho$ from $\mathbb S$, and $\mathcal B_{>k} = \big(\mathcal B_{>k+1}\circ g_{k+1}\big)\circ N_\varepsilon$ is holomorphic on $\mathbb C_{\varkappa_k}$. The weights enter holomorphically as well.
+\end{proof}
+
+\para{The path.} For orthonormal rows $\xi, \xi' \in \R^{1\times\dm}$ let $\nu = \xi + \mathrm i\xi'$, $\bar\nu = \xi - \mathrm i\xi'$ and
+\[
+n(t) \;=\; \frac{\sqrt{\dm}}{2}\,\Big(t\,\nu + \frac{1}{t}\,\bar\nu\Big), \qquad t \in \mathbb C\setminus\{0\}.
+\]
+As $\langle\nu, \nu\rangle = \langle\bar\nu, \bar\nu\rangle = 0$ and $\langle\nu, \bar\nu\rangle = 2$, we have $\langle n(t), n(t)\rangle = \dm$ for all $t$. For $\lvert t\rvert = 1$ the row $n(t)$ is real and runs through the great circle of $\xi$ and $\xi'$ in $\mathbb S$, with $n(1) = \sqrt{\dm}\;\xi$. For real $t \ge 1$,
+\begin{equation}\label{eq:e0path}
+n(t) \;=\; \sqrt{\dm}\,\Big(\frac{t + t^{-1}}{2}\;\xi + \mathrm i\,\frac{t - t^{-1}}{2}\;\xi'\Big),
+\end{equation}
+In the notation of the proof of \cref{lem:sphere}, this is the great circle of $\xi$ and $\xi'$ at the angle $\vartheta = \mathrm i\log t$.
+
+\para{The identity on the path.} Fix $k < L$ and write $W = \Wread^{k+1}$, with the columns $c_1, \dots, c_q$, $V = \Wwrite^{k+1}$, with the rows $a_1, \dots, a_q$, $\mathcal B = \mathcal B_{>k+1}$ and $\varkappa = \varkappa_{k+1}$. Let $Z$ and $\eta = (\eta_W, \eta_V, \eta')$ be as in $(D_k)$, where $\eta_W$ and $\eta_V$ are the entries of $\eta$ at $W$ and $V$ and $\eta'$ is the rest. For $n \in \mathbb C^{1\times\dm}$ and rows $\tilde w, \tilde w' \in \mathbb C^{1\times q}$ with $\tilde wV \in \mathbb C_\varkappa$ let
+\begin{align}
+\dot z(n) &= \Big(nZ - \frac{\langle nZ, n\rangle}{\dm}\,n\Big)\,W + n\,\eta_W \ \in \mathbb C^{1\times q}, \label{eq:e0zdot}\\
+\mathcal L(\tilde w, \tilde w'; n) &= \Der\mathcal B(\tilde wV)\,\Big(\big(\tilde w'\odot\dot z(n)\big)\,V + \tilde w\,\eta_V\Big) + \Der_\theta\mathcal B(\tilde wV)\,\eta' . \label{eq:e0L}
+\end{align}
+$\mathcal L$ is holomorphic in $\tilde w$, affine in $\tilde w'$ and polynomial in $n$. For $n \in \mathbb S$, the chain rule and \eqref{eq:e0DN} show that the left side of \eqref{eq:e0D} at $h = n$ is $\mathcal L\big(\sigma(nW), \sigma'(nW); n\big)$: $\tilde w = \sigma(nW)$ is the row of the outputs of the hidden units of block $k+1$, $\tilde w' = \sigma'(nW)$ the row of their derivatives, and $\dot z(n)$ the derivative of the row $nW$ that they read. Both sides of \eqref{eq:e0D} are homogeneous of degree $0$ in $h$, so \eqref{eq:e0D} is equivalent to
+\begin{equation}\label{eq:e0star}
+\mathcal L\big(\sigma(nW),\ \sigma'(nW);\ n\big) \;=\; 0 \qquad\text{for all } n \in \mathbb S .
+\end{equation}
+
+\begin{lemma}[Continuation]\label{lem:e0cont}
+Let \eqref{eq:e0star} hold, and let $\xi, \xi'$ be orthonormal. Suppose that for every real $t \ge 1$ the function $\sigma$ is holomorphic at every $n(t)\,c_j$ and $\sigma(n(t)W)\,V \in \mathbb C_\varkappa$. Then
+\[
+\mathcal L\big(\sigma(n(t)W),\ \sigma'(n(t)W);\ n(t)\big) \;=\; 0 \qquad\text{for all real } t \ge 1 .
+\]
+\end{lemma}
+
+\begin{proof}
+The left side is a holomorphic function of $t$ on an open set that contains $[1, \infty)$, hence on a connected open neighborhood of $[1, \infty)$. This neighborhood contains an arc of the unit circle around $t = 1$, on which $n(t) \in \mathbb S$ and the function vanishes by \eqref{eq:e0star}. So it vanishes on the whole neighborhood.
+\end{proof}
+
+\para{The step for $\tanh$.} Let $\sigma = \tanh$. Consider, for a block $\ell$ with $W = \Wread^{\ell}$, its columns $c_j$, $V = \Wwrite^{\ell}$ and $\varkappa_\ell$ of \cref{lem:e0cone}:
+\begin{itemize}[leftmargin=2.9em]
+\item[(S1)] any two rows of $V$ are linearly independent;
+\item[(S2)] the columns of $W$ are linearly independent over $\mathbb Q$;
+\item[(S3)] there are a unit row $\xi_0$ and a number $\rho \in (0, 1]$ such that every $\xi_0c_j \neq 0$ and, with $s_j$ the sign of $\xi_0c_j$ and $\bar s = (s_1, \dots, s_q)$: the rows $\tilde wV$ with $\lvert\tilde w_j - s_j\rvert \le \rho$ for all $j$ lie in $\mathbb C_{\varkappa_\ell}$, and $e^{-2\sqrt{\dm}\,\lvert\xi_0c_j\rvert} < \rho/3$ for every $j$.
+\end{itemize}
+(S3) asks for large reads: on the row $\sqrt{\dm}\,\xi_0$ every hidden unit of the block is close to saturation. It then stays so on the whole path \eqref{eq:e0path}, and the outputs of the block stay in a small set, on which the rest of the network is holomorphic.
+
+\begin{lemma}[Separation on the path]\label{lem:e0sep}
+Let $u_1, \dots, u_q > 0$ be linearly independent over $\mathbb Q$, let $u'_1, \dots, u'_q$ be real, and for $t \ge 1$ let
+\[
+\zeta_j(t) \;=\; \exp\Big(-\big(t + t^{-1}\big)\,u_j - \mathrm i\,\big(t - t^{-1}\big)\,u'_j\Big).
+\]
+Let $\rho_0 > \max_j e^{-2u_j}$, and let $\mathcal T_{-K}, \dots, \mathcal T_K$ be holomorphic maps from the polydisc $\{\zeta \in \mathbb C^q : \lvert\zeta_j\rvert < \rho_0\}$ to $\mathbb C^{1\times d_{\mathrm{out}}}$. If
+\[
+\sum_{i=-K}^{K} t^i\ \mathcal T_i\big(\zeta_1(t), \dots, \zeta_q(t)\big) \;=\; 0 \qquad\text{for all } t \ge 1,
+\]
+then $\mathcal T_i = 0$ for every $i$.
+\end{lemma}
+
+\begin{proof}
+This is the proof of \cref{lem:raysep}, with a phase and with negative powers. On the polydisc $\mathcal T_i(\zeta) = \sum_\alpha b_{i,\alpha}\,\zeta^\alpha$, over the multi-indices $\alpha$ of nonnegative integers, and the series converges absolutely at $\lvert\zeta_j\rvert = e^{-2u_j}$. Let $\mu_\alpha = \sum_j\alpha_ju_j$ and $p_\alpha(t) = \sum_i t^i\,b_{i,\alpha}$. Then $\lvert\zeta(t)^\alpha\rvert = e^{-(t + t^{-1})\mu_\alpha}$, and the hypothesis reads $\sum_\alpha p_\alpha(t)\,\zeta(t)^\alpha = 0$. The numbers $\mu_\alpha$ are pairwise different, and finitely many lie below any bound. Suppose that some $p_\alpha$ is not zero, let $\alpha^*$ be the one among these with the smallest $\mu_\alpha$, say $\mu^*$, and let $\gamma > 0$ be the distance from $\mu^*$ to the next larger $\mu_\alpha$. For $t \ge 1$, as $t + t^{-1} \ge 2$,
+\[
+\lvert p_{\alpha^*}(t)\rvert \;\le\; \sum_{\mu_\alpha > \mu^*}\lvert p_\alpha(t)\rvert\,e^{-(t + t^{-1})(\mu_\alpha - \mu^*)} \;\le\; t^K\,e^{-(t + t^{-1} - 2)\gamma}\,e^{2\mu^*}\sum_{i}\sum_\alpha\lvert b_{i,\alpha}\rvert\,e^{-2\mu_\alpha},
+\]
+which tends to $0$ faster than every power of $1/t$. But $p_{\alpha^*}(t) = \sum_{i=-K}^{K}t^i\,b_{i,\alpha^*}$ is not zero, so $\lvert p_{\alpha^*}(t)\rvert$ is at least a positive constant times $t^{-K}$ for large $t$, a contradiction.
+\end{proof}
+
+\begin{lemma}[A change of the reads moves the output]\label{lem:e0wedge}
+Let $\theta$ be regular with (S1) for block $k+1$, let $V = \Wwrite^{k+1}$ have the rows $a_1, \dots, a_q$, and let $b \in \mathbb C^{1\times q}$. If
+\[
+\Der\mathcal B_{>k+1}(\tilde wV)\,\Big(\big((1 - \tilde w^2)\odot b\big)\,V\Big) \;=\; 0
+\]
+for all $\tilde w$ in a nonempty open subset of $\R^{1\times q}$, where $1 - \tilde w^2$ is the row with the entries $1 - \tilde w_j^2$, then $b = 0$.
+\end{lemma}
+
+\begin{proof}
+At real $\tilde w$ the derivative is a real linear map, so the real and the imaginary part of $b$ satisfy the hypothesis: let $b$ be real. By \cref{lem:e0tailrank}, for $\tilde w$ in an open dense subset of the open set, the row $\sum_j b_j(1 - \tilde w_j^2)\,a_j$ is a multiple of the row $\sum_l\tilde w_l\,a_l$. So all $2\times2$ minors of these two rows vanish on an open set, hence as polynomials in $\tilde w$. Their part of degree $1$ in $\tilde w$ shows that $bV$ is a multiple of every $a_l$, so $bV = 0$ by (S1). The coefficient of $\tilde w_j^2\,\tilde w_l$ with $l \neq j$ shows that $b_ja_j$ is a multiple of $a_l$, so $b_j = 0$ by (S1).
+\end{proof}
+
+\begin{lemma}[The step for $\tanh$]\label{lem:e0steptanh}
+Let $\sigma = \tanh$, let $\theta$ be regular, and let block $k+1$ satisfy (S1) to (S3). Then $(D_{k+1})$ implies $(D_k)$.
+\end{lemma}
+
+\begin{proof}
+Let $Z$ and $\eta$ satisfy \eqref{eq:e0D} for $k$, so that \eqref{eq:e0star} holds, with the notation above. By (S3) there is an open set $\mathcal P$ of unit rows around $\xi_0$ such that $\xi c_j$ has the sign $s_j$ and $e^{-2\sqrt{\dm}\,\lvert\xi c_j\rvert} < \rho/3$ for every $\xi \in \mathcal P$ and every $j$. By (S2), for integers $\kappa_j$ that are not all zero, $\sum_j\kappa_j\,\xi c_j = \xi\sum_j\kappa_jc_j$ vanishes only for $\xi$ in a hyperplane. Let $\mathcal P' \subset \mathcal P$ be the dense set of the $\xi$ for which $\xi c_1, \dots, \xi c_q$ are linearly independent over $\mathbb Q$.
+
+\emph{The path.} Fix $\xi \in \mathcal P'$ and a unit row $\xi'$ orthogonal to $\xi$, and let $n(t)$ be the path \eqref{eq:e0path}. Let
+\[
+\zeta_j(t) \;=\; e^{-2s_j\,n(t)\,c_j} \;=\; \exp\Big(-\big(t + t^{-1}\big)\sqrt{\dm}\,\lvert\xi c_j\rvert - \mathrm i\,\big(t - t^{-1}\big)\sqrt{\dm}\,s_j\,\xi'c_j\Big),
+\]
+so that $\lvert\zeta_j(t)\rvert < \rho/3$ for $t \ge 1$, and
+\[
+\tanh\big(n(t)\,c_j\big) = s_j\,\frac{1 - \zeta_j(t)}{1 + \zeta_j(t)}, \qquad \tanh'\big(n(t)\,c_j\big) = 1 - \tanh^2\big(n(t)\,c_j\big).
+\]
+For $\zeta$ in the polydisc $\Delta = \{\lvert\zeta_j\rvert < \rho/3\}$ let $\tilde w(\zeta)$ be the row with the entries $s_j\frac{1 - \zeta_j}{1 + \zeta_j}$. As $\lvert\tilde w_j(\zeta) - s_j\rvert = \frac{2\lvert\zeta_j\rvert}{\lvert1 + \zeta_j\rvert} \le 3\lvert\zeta_j\rvert < \rho$, (S3) gives $\tilde w(\zeta)\,V \in \mathbb C_\varkappa$. The function $\tanh$ is holomorphic at $n(t)\,c_j$, as $\zeta_j(t) \neq -1$. So \cref{lem:e0cont} applies:
+\begin{equation}\label{eq:e0tanhpath}
+\mathcal L\big(\tilde w(\zeta(t)),\ 1 - \tilde w(\zeta(t))^2;\ n(t)\big) \;=\; 0 \qquad\text{for all } t \ge 1 .
+\end{equation}
+
+\emph{The powers of $t$.} By \eqref{eq:e0zdot}, $\dot z(n(t)) = t^3\dot z^{(3)} + t\,\dot z^{(1)} + t^{-1}\dot z^{(-1)} + t^{-3}\dot z^{(-3)}$ with rows $\dot z^{(i)} \in \mathbb C^{1\times q}$ that do not depend on $t$, and
+\begin{equation}\label{eq:e0powers}
+\begin{aligned}
+\dot z^{(3)} &= -\frac{\sqrt{\dm}}{8}\,\langle\nu Z, \nu\rangle\;\nu W, \\
+\dot z^{(1)} &= \frac{\sqrt{\dm}}{2}\,\Big(\nu\,(ZW + \eta_W) - \frac14\Big(\big(\langle\nu Z, \bar\nu\rangle + \langle\bar\nu Z, \nu\rangle\big)\,\nu + \langle\nu Z, \nu\rangle\,\bar\nu\Big)W\Big).
+\end{aligned}
+\end{equation}
+$\mathcal L$ is affine in $\dot z$, so \eqref{eq:e0tanhpath} reads $\sum_i t^i\,\mathcal T_i(\zeta(t)) = 0$ with the maps
+\begin{align*}
+\mathcal T_i(\zeta) &= \Der\mathcal B\big(\tilde w(\zeta)V\big)\,\Big(\big((1 - \tilde w(\zeta)^2)\odot\dot z^{(i)}\big)\,V\Big) \qquad (i = \pm1, \pm3),\\
+\mathcal T_0(\zeta) &= \Der\mathcal B\big(\tilde w(\zeta)V\big)\,\big(\tilde w(\zeta)\,\eta_V\big) + \Der_\theta\mathcal B\big(\tilde w(\zeta)V\big)\,\eta' ,
+\end{align*}
+which are holomorphic on $\Delta$. By \cref{lem:e0sep}, with $u_j = \sqrt{\dm}\,\lvert\xi c_j\rvert$ and $\rho_0 = \rho/3$, every $\mathcal T_i$ vanishes on $\Delta$. For real $\zeta \in \Delta$ the rows $\tilde w(\zeta)$ fill a neighborhood of $\bar s$ in $\R^{1\times q}$.
+
+\emph{(a) $\mathcal T_3 = 0$ gives $Z$.} Here $\dot z^{(3)}$ is the number $-\frac{\sqrt{\dm}}{8}\langle\nu Z, \nu\rangle$ times the row $\nu W$, which is not zero. By \cref{lem:e0wedge}, $\langle\nu Z, \nu\rangle = 0$. Its imaginary part is $\xi\,(Z + Z^\top)\,\xi'^\top = 0$. This holds for every unit row $\xi'$ orthogonal to $\xi$, so $\xi\,(Z + Z^\top)$ is a multiple of $\xi$, for every $\xi \in \mathcal P'$ and then, by continuity, for every $\xi$ in the open set $\mathcal P$. A matrix for which every row of an open set is an eigenvector is a multiple of the identity. So $Z + Z^\top = 2\beta_kI$, and $Z = Y_k + \beta_kI$ with $Y_k$ antisymmetric.
+
+\emph{(b) $\mathcal T_1 = 0$ gives $\eta_W$.} Now $\langle\nu Z, \nu\rangle = 0$ and $\langle\nu Z, \bar\nu\rangle + \langle\bar\nu Z, \nu\rangle = 2\beta_k\langle\nu, \bar\nu\rangle = 4\beta_k$, so by \eqref{eq:e0powers} $\dot z^{(1)} = \frac{\sqrt{\dm}}{2}\,\nu\,(Y_kW + \eta_W)$. By \cref{lem:e0wedge}, $\dot z^{(1)} = 0$, so $\xi\,(Y_kW + \eta_W) = 0$ for every $\xi \in \mathcal P'$, and $\eta_W = -Y_kW$.
+
+\emph{(c) $\mathcal T_0 = 0$ gives the rest.} $\Der\mathcal B(\tilde wV)\,(\tilde w\,\eta_V) + \Der_\theta\mathcal B(\tilde wV)\,\eta' = 0$ for real $\tilde w$ near $\bar s$. The left side is real-analytic on the rows $\tilde w \in \R^{1\times q}$ with $\tilde wV \neq 0$. These form a connected set, the complement of a subspace of codimension $\dm \ge 2$, so the identity holds on all of it. By \cref{lem:e0atwrite} with $A = V$, $\eta_V = VZ'$ and \eqref{eq:e0D} holds for $k+1$ with $Z'$ and $\eta'$. By $(D_{k+1})$, $Z' = Y_{k+1} + \beta_{k+1}I$ and $\eta'$ is as in \eqref{eq:e0Dconcl}. With (a) and (b) this is \eqref{eq:e0Dconcl} for $k$.
+\end{proof}
+
+\para{The step for GELU.} Let $\sigma(z) = \frac z2\big(1 + \operatorname{erf}(z/\sqrt2)\big)$, which is entire, and for $z \in \mathbb C$ let
+\[
+\varphi(z) = \frac{e^{-z^2/2}}{\sqrt{2\pi}}, \qquad \operatorname{mr}(z) \;=\; \sqrt{\frac{\pi}{2}}\;e^{z^2/2}\,\Big(1 - \operatorname{erf}\frac{z}{\sqrt2}\Big),
+\]
+the normal density and the Mills ratio.
+
+\begin{lemma}[The Mills ratio]\label{lem:e0mills}
+\stpart{lem:e0mills}{i}{} For all $z \in \mathbb C$: $\sigma(z) = z - \varphi(z)\,z\,\operatorname{mr}(z)$ and $\sigma'(z) = 1 - \varphi(z)\,\big(\operatorname{mr}(z) - z\big)$.\\
+\stpart{lem:e0mills}{ii}{} For $\operatorname{Re}z > 0$ and every integer $m \ge 0$, with $(-1)!! = 1$,
+\[
+\Big\lvert\,\operatorname{mr}(z) - \sum_{l=0}^{m-1}\frac{(-1)^l\,(2l-1)!!}{z^{2l+1}}\,\Big\rvert \;\le\; \frac{(2m-1)!!}{(\operatorname{Re}z)^{2m+1}} .
+\]
+\end{lemma}
+
+\begin{proof}
+(i) follows from $\varphi(z)\,\operatorname{mr}(z) = \frac12\big(1 - \operatorname{erf}(z/\sqrt2)\big)$ and $\sigma'(z) = \frac12\big(1 + \operatorname{erf}(z/\sqrt2)\big) + z\,\varphi(z)$. For (ii): for real $z$, $\operatorname{mr}(z) = e^{z^2/2}\int_z^\infty e^{-y^2/2}\,dy$, and the substitution $y = z + u$ gives $\operatorname{mr}(z) = \int_0^\infty e^{-zu - u^2/2}\,du$. Both sides are entire, so this holds for all $z$. For a number $y \ge 0$, $\big\lvert e^{-y} - \sum_{l<m}\frac{(-y)^l}{l!}\big\rvert \le \frac{y^m}{m!}$. With $y = u^2/2$, and with $\int_0^\infty e^{-zu}u^{2l}\,du = \frac{(2l)!}{z^{2l+1}}$ and $\frac{(2l)!}{2^l\,l!} = (2l-1)!!$, this gives (ii).
+\end{proof}
+
+We say that a map $\Theta$ on an interval $(t_0, \infty)$ is \emph{meromorphic at infinity} if $\Theta(t) = t^{l}\,\Theta_0(1/t)$ for an integer $l$ and a map $\Theta_0$ that is holomorphic near $0$. Such a map vanishes identically if it tends to $0$ faster than every power of $1/t$.
+
+\begin{lemma}[The Mills ratio on the path]\label{lem:e0nomero}
+Let $z(t) = \omega\,t + \omega'/t$ with $\omega, \omega' \in \mathbb C$ and $\operatorname{Re}\omega > 0$, and let $\Theta_1$ and $\Theta_2$ be meromorphic at infinity, with values in $\mathbb C^{1\times d_{\mathrm{out}}}$. If $\Theta_1(t)\,\operatorname{mr}(z(t)) + \Theta_2(t)$ tends to $0$ faster than every power of $1/t$ as $t \to +\infty$, then $\Theta_1 = 0$ and $\Theta_2 = 0$.
+\end{lemma}
+
+\begin{proof}
+Suppose that a component of $\Theta_1$ is not zero, and let $\Theta_1, \Theta_2$ stand for this component of both. Then $\operatorname{mr}(z(t)) = -\Theta_2(t)/\Theta_1(t) + O(t^{-m})$ for every $m$. For large $t$, $t = \frac{z}{2\omega}\big(1 + \sqrt{1 - 4\omega\omega'/z^2}\big)$ with $z = z(t)$, so $1/t$ is a convergent power series in $1/z$ without constant term. Hence $-\Theta_2/\Theta_1$ is, for large $t$, a convergent series in powers of $1/z$ with finitely many positive powers of $z$, and this series is an asymptotic expansion of $\operatorname{mr}(z)$ along the curve $z = z(t)$. On this curve $\operatorname{Re}z$ is at least a positive constant times $\lvert z\rvert$ for large $t$, so by \cpref{lem:e0mills}{ii} the series $\sum_l(-1)^l(2l-1)!!\,z^{-2l-1}$ is one as well. Asymptotic expansions are unique, so the two series have the same coefficients. But the numbers $(2l-1)!!$ grow faster than every geometric sequence, so the second series converges for no $z$, a contradiction. Hence $\Theta_1 = 0$, then $\Theta_2$ tends to $0$ faster than every power, and $\Theta_2 = 0$.
+\end{proof}
+
+Consider, for a block $\ell$ with $W = \Wread^{\ell}$, its columns $c_j$, $V = \Wwrite^{\ell}$, its rows $a_j$, and $\varkappa_\ell$ of \cref{lem:e0cone}:
+\begin{itemize}[leftmargin=2.9em]
+\item[(P1)] the columns of $W$ are pairwise different, and the matrix $WV$ is invertible;
+\item[(P2)] there is a unit row $\xi_0$ such that, for every unit row $\xi'$ orthogonal to $\xi_0$,
+\begin{gather*}
+\lvert\xi'c_j\rvert < \xi_0c_j \ \text{ for every } j, \qquad\qquad
+\norm{\xi'\,WV} < \frac{\varkappa_\ell}{2}\,\norm{\xi_0\,WV}, \\
+\sum_{j}e^{-\dm(\xi_0c_j)^2/2}\,\norm{a_j} \;<\; \frac{\varkappa_\ell\sqrt{\dm}}{8}\,\norm{\xi_0\,WV} .
+\end{gather*}
+\end{itemize}
+(P2) asks for reads that are large and close to a matrix of rank one: every column of $W$ is close to a positive multiple of $\xi_0^\top$. Then every hidden unit is close to linear on the whole path, the output of the block is close to $n(t)\,WV$, and its imaginary part stays small against its real part, so that the rest of the network is holomorphic along the path (\cref{lem:e0cone}).
+
+\begin{lemma}[The step for GELU]\label{lem:e0stepgelu}
+Let $\sigma$ be GELU, let $\theta$ be regular, and let block $k+1$ satisfy (P1) and (P2). Then $(D_{k+1})$ implies $(D_k)$.
+\end{lemma}
+
+\begin{proof}
+Let $Z$ and $\eta$ satisfy \eqref{eq:e0D} for $k$, so that \eqref{eq:e0star} holds, with the notation above. Both sides of every inequality of (P2), the left sides as suprema over $\xi'$, are continuous in $\xi_0$. So there is an open set $\mathcal P$ of unit rows around $\xi_0$ such that (P2) holds for every $\xi \in \mathcal P$ in the place of $\xi_0$.
+
+\emph{The path.} Fix $\xi \in \mathcal P$ and a unit row $\xi'$ orthogonal to $\xi$, let $n(t)$ be the path \eqref{eq:e0path}, and
+\[
+z_j(t) = n(t)\,c_j, \qquad r_j = (\xi c_j)^2 - (\xi'c_j)^2 > 0, \qquad \delta_j(t) = z_j - \sigma(z_j), \qquad \delta'_j(t) = 1 - \sigma'(z_j).
+\]
+Let $z(t), \delta(t), \delta'(t)$ be the rows with these entries. For $t \ge 1$, by \eqref{eq:e0path} and (P2),
+\begin{equation}\label{eq:e0zfacts}
+\begin{gathered}
+\operatorname{Re}z_j \ge \sqrt{\dm}\;\xi c_j > 0, \qquad \lvert\operatorname{Im}z_j\rvert \le \operatorname{Re}z_j, \\
+\operatorname{Re}\big(z_j^2\big) = \dm\,(\xi c_j)^2 + \frac{\dm}{4}\,\big(t - t^{-1}\big)^2\,r_j .
+\end{gathered}
+\end{equation}
+By \cref{lem:e0mills}, $\delta_j = \varphi(z_j)\,z_j\,\operatorname{mr}(z_j)$ and $\delta'_j = \varphi(z_j)\,\big(\operatorname{mr}(z_j) - z_j\big)$, with $\lvert\operatorname{mr}(z_j)\rvert \le 1/\operatorname{Re}z_j$ and $\lvert z_j\rvert \le \sqrt2\,\operatorname{Re}z_j$. So, with a constant $\kappa$,
+\begin{equation}\label{eq:e0deltabound}
+\lvert\delta_j(t)\rvert \;\le\; e^{-\dm(\xi c_j)^2/2}\;e^{-\frac{\dm}{8}(t - t^{-1})^2r_j}, \qquad \lvert\delta'_j(t)\rvert \;\le\; \kappa\,t\;e^{-\frac{\dm}{8}(t - t^{-1})^2r_j} .
+\end{equation}
+The real and the imaginary part of $n(t)\,WV$ are $\sqrt{\dm}\,\frac{t + t^{-1}}{2}\,\xi WV$ and $\sqrt{\dm}\,\frac{t - t^{-1}}{2}\,\xi'WV$. By (P2), the second is shorter than $\frac{\varkappa}{2}$ times the first, and by \eqref{eq:e0deltabound} $\norm{\delta(t)\,V} \le \sum_j\lvert\delta_j\rvert\,\norm{a_j}$ is at most $\frac{\varkappa}{8}$ times the norm of the first. Let $\varrho = \varkappa\sqrt{\dm}\,\norm{\xi WV}\big/\big(16\sum_j\norm{a_j}\big)$. For a row $\delta \in \mathbb C^{1\times q}$,
+\begin{equation}\label{eq:e0incone}
+\lvert\delta_j\rvert \le \varrho\,t \ \text{ for all } j, \ \text{ or } \delta = \delta(t) \qquad\Longrightarrow\qquad \big(z(t) - \delta\big)\,V = n(t)\,WV - \delta V \ \in \mathbb C_\varkappa,
+\end{equation}
+because then $\norm{\delta V}$ is at most $\frac{\varkappa}{8}$ times the norm of the real part of $n(t)\,WV$, and $\frac{\varkappa/2 + \varkappa/8}{1 - \varkappa/8} < \varkappa$. As $\sigma(z) = z - \delta(t)$ and $\sigma'(z) = 1 - \delta'(t)$ on the path, \cref{lem:e0cont} applies:
+\begin{equation}\label{eq:e0gelupath}
+\mathcal L\big(z(t) - \delta(t),\ 1 - \delta'(t);\ n(t)\big) \;=\; 0 \qquad\text{for all } t \ge 1 .
+\end{equation}
+
+\emph{The expansion.} For fixed $t$, by \eqref{eq:e0incone} the map $(\delta, \delta') \mapsto \mathcal L\big(z(t) - \delta, 1 - \delta'; n(t)\big)$ is holomorphic in the rows $\delta$ with $\lvert\delta_j\rvert \le \varrho\,t$ and affine in the row $\delta'$. We expand it in powers of $\delta$ and $\delta'$. Its value at $0$ and its first derivatives are
+\[
+\mathcal L_0(t) = \mathcal L\big(z(t), 1; n(t)\big), \qquad \mathcal L_j(t) = \frac{\partial\mathcal L}{\partial\tilde w_j}\big(z(t), 1; n(t)\big), \qquad \mathcal L'_j(t) = \frac{\partial\mathcal L}{\partial\tilde w'_j}\big(z(t), 1; n(t)\big),
+\]
+so that \eqref{eq:e0gelupath} is
+\begin{equation}\label{eq:e0expansion}
+\mathcal L_0(t) \;-\; \sum_j\Big[\mathcal L_j(t)\,\delta_j(t) + \mathcal L'_j(t)\,\delta'_j(t)\Big] \;+\; \big(\text{terms with two or more factors}\big) \;=\; 0 ,
+\end{equation}
+where the factors are entries of $\delta(t)$ and $\delta'(t)$. We use two facts about the coefficients. First, every coefficient is meromorphic at infinity. Indeed, it is built from derivatives of $\mathcal B$ at $z(t)\,V = n(t)\,WV$ and from polynomials in $n(t)$, and
+\[
+n(t)\,WV \;=\; \sqrt{\dm}\;\frac{t + t^{-1}}{2}\;\Big(\xi\,WV + \mathrm i\,\frac{1 - t^{-2}}{1 + t^{-2}}\;\xi'WV\Big),
+\]
+where the row in the bracket is holomorphic in $1/t$ near $0$, with values in $\mathbb C_{\varkappa/2}$, and a derivative of order $i$ of $\mathcal B$ is homogeneous of degree $-i$. Second, on the rows $u + \mathrm iu' \in \mathbb C_{3\varkappa/4}$ with $\norm{u} = 1$, $\Der\mathcal B$ and $\Der_\theta\mathcal B$ are bounded. So by Cauchy's estimates on the polydisc of \eqref{eq:e0incone}, the coefficient of a product of $i$ factors $\delta_j$ and of at most one factor $\delta'_j$ is at most a fixed power of $t$ times $(\varrho\,t)^{-i}$. With \eqref{eq:e0deltabound}, the series \eqref{eq:e0expansion} therefore converges absolutely for large $t$, and the sum of any set of its terms is at most a power of $t$ times $e^{-\frac{\dm}{8}(t - t^{-1})^2r}$, where $r$ is the smallest sum of the numbers $r_j$ of the factors of a term of the set.
+
+\emph{Step 1: the term without $\delta$ gives $\eta'$.} By \eqref{eq:e0expansion}, $\mathcal L_0(t)$ tends to $0$ faster than every power of $1/t$. It is meromorphic at infinity, so $\mathcal L_0(t) = 0$ for large $t$, and then for all $t \ge 1$, because it is holomorphic near $[1, \infty)$. At $t = 1$, where $n(t)$ is the row $n = \sqrt{\dm}\;\xi$, this reads, by \eqref{eq:e0L}, \eqref{eq:e0zdot} and \eqref{eq:e0radial},
+\[
+0 \;=\; \mathcal L\big(nW, 1; n\big) \;=\; \Der\mathcal B(n\,WV)\,\Big(n\,\big(Z\,WV + \eta_WV + W\eta_V\big)\Big) + \Der_\theta\mathcal B(n\,WV)\,\eta' .
+\]
+The right side is real-analytic and homogeneous of degree $0$ in the row $n \neq 0$, and it vanishes for $\xi$ in the open set $\mathcal P$, hence for all $n \neq 0$. With $h = n\,WV$, which takes every value by (P1), this is \eqref{eq:e0D} for $k+1$ with
+\begin{equation}\label{eq:e0Zprime}
+Z' = (WV)^{-1}\,\big(Z\,WV + \eta_WV + W\eta_V\big)
+\end{equation}
+and $\eta'$. By $(D_{k+1})$, $Z' = Y_{k+1} + \beta' I$ and $\eta'$ is as in \eqref{eq:e0Dconcl}, for antisymmetric $Y_{k+1}, \dots, Y_L$ and numbers $\beta', \beta_{k+2}, \dots, \beta_L$.
+
+\emph{Step 2: the slowest hidden unit gives $Z$.} On an open dense set of pairs $(\xi, \xi')$ the numbers $r_1, \dots, r_q$ are pairwise different: $r_i = r_j$ on an open set of pairs would make $c_ic_i^\top - c_jc_j^\top$ a multiple of the identity, which is impossible for $c_i \neq \pm c_j$, and $c_i \neq c_j$ by (P1), $c_i \neq -c_j$ by (P2). Take a hidden unit $j$ and a nonempty open set of pairs, with $\xi \in \mathcal P$, on which $r_j < r_i$ for all $i \neq j$, and let $\gamma = \min\big(r_j, \min_{i\neq j}(r_i - r_j)\big)$. By Step~1, all terms of \eqref{eq:e0expansion} other than the two of unit $j$ are, together, at most a power of $t$ times $e^{-\frac{\dm}{8}(t - t^{-1})^2(r_j + \gamma)}$. Dividing by $\varphi(z_j)$, whose absolute value is a constant times $e^{-\frac{\dm}{8}(t - t^{-1})^2r_j}$ by \eqref{eq:e0zfacts},
+\[
+\big(z_j\,\mathcal L_j + \mathcal L'_j\big)\,\operatorname{mr}(z_j) \;-\; z_j\,\mathcal L'_j \;\longrightarrow\; 0 \qquad\text{faster than every power of } 1/t .
+\]
+Here $z_j(t) = \frac{\sqrt{\dm}}{2}\big(t\,\nu c_j + \frac1t\,\bar\nu c_j\big)$ with $\operatorname{Re}(\nu c_j) = \xi c_j > 0$, and $z_j\mathcal L_j + \mathcal L'_j$ and $z_j\mathcal L'_j$ are meromorphic at infinity. By \cref{lem:e0nomero} both vanish, so
+\begin{equation}\label{eq:e0unitj}
+\mathcal L'_j(t) = 0 \quad\text{and}\quad \mathcal L_j(t) = 0 \qquad\text{for large } t, \text{ hence for all } t \ge 1 .
+\end{equation}
+By \eqref{eq:e0L}, with $\dot z_j$ the entry $j$ of $\dot z$,
+\[
+\mathcal L'_j(t) \;=\; \dot z_j\big(n(t)\big)\;\Der\mathcal B\big(n(t)\,WV\big)\,a_j .
+\]
+At $t = 1$ this is $\dot z_j(n)\,\Der\mathcal B(n\,WV)\,a_j = 0$ at $n = \sqrt{\dm}\,\xi$, for $\xi$ in an open set. By \cref{lem:e0tailrank}, $\Der\mathcal B(n\,WV)\,a_j \neq 0$ on an open dense set of $n$. So $\dot z_j(n) = 0$ on an open subset of $\mathbb S$, that is, by \eqref{eq:e0zdot},
+\[
+\norm{n}^2\;n\,\big(Zc_j + \eta_{c_j}\big) \;=\; \langle nZ, n\rangle\;nc_j
+\]
+on an open cone of rows $n$, hence for all $n$, where $\eta_{c_j}$ is column $j$ of $\eta_W$. For $n$ orthogonal to $c_j$ this gives $n\,(Zc_j + \eta_{c_j}) = 0$, so $Zc_j + \eta_{c_j} = \beta_kc_j$ for a number $\beta_k$, and then $\langle nZ, n\rangle = \beta_k\norm{n}^2$ for all $n$. So $Z = Y_k + \beta_kI$ with $Y_k$ antisymmetric.
+
+\emph{Step 3: subtracting a symmetry.} Let $\beta_{k+1} = \beta' - \beta_k$. The pair $Y_k + \beta_kI$ and $\big(-Y_kW,\ V(Y_{k+1} + \beta_{k+1}I),\ \eta'\big)$ is of the form \eqref{eq:e0Dconcl}, so it satisfies \eqref{eq:e0D} for $k$. Subtracting it from $Z$ and $\eta$ leaves the pair $0$ and $(\eta^\circ_W, \eta^\circ_V, 0)$ with
+\[
+\eta^\circ_W = \eta_W + Y_kW, \qquad \eta^\circ_V = \eta_V - V\,(Y_{k+1} + \beta_{k+1}I),
+\]
+which satisfies \eqref{eq:e0D} for $k$ as well, and by \eqref{eq:e0Zprime} and Step~1
+\begin{equation}\label{eq:e0balance}
+\eta^\circ_WV + W\eta^\circ_V \;=\; WV\,(Y_{k+1} + \beta'I) - \beta_k\,WV - WV\,(Y_{k+1} + \beta_{k+1}I) \;=\; 0 .
+\end{equation}
+For this pair, \eqref{eq:e0L} is $\mathcal L^\circ(\tilde w, \tilde w'; n) = \Der\mathcal B(\tilde wV)\,\big((\tilde w'\odot n\eta^\circ_W)\,V + \tilde w\,\eta^\circ_V\big)$. It remains to show $\eta^\circ_W = 0$ and $\eta^\circ_V = 0$.
+
+\emph{Step 4: the hidden units in the order of their rates.} Take a nonempty open set of pairs $(\xi, \xi')$, with $\xi \in \mathcal P$, on which $r_{j_1} < r_{j_2} < \dots < r_{j_q}$ for one order $j_1, \dots, j_q$ of the hidden units. We show by induction on $i$ that column $j_i$ of $\eta^\circ_W$ and row $j_i$ of $\eta^\circ_V$ vanish. Let this hold for the units $j_1, \dots, j_{i-1}$, and let $j = j_i$. If the rows $\delta$ and $\delta'$ vanish outside the entries $j_1, \dots, j_{i-1}$, then $(1 - \delta')\odot n\eta^\circ_W = n\eta^\circ_W$ and $(z - \delta)\,\eta^\circ_V = nW\eta^\circ_V$, so by \eqref{eq:e0balance}
+\[
+\mathcal L^\circ\big(z - \delta,\ 1 - \delta';\ n\big) \;=\; \Der\mathcal B\big((z - \delta)V\big)\,\Big(n\,\big(\eta^\circ_WV + W\eta^\circ_V\big)\Big) \;=\; 0 .
+\]
+So in the expansion \eqref{eq:e0expansion} of $\mathcal L^\circ$ every term has a factor $\delta_l(t)$ or $\delta'_l(t)$ of a unit $l$ other than $j_1, \dots, j_{i-1}$. Other than the two terms of unit $j$, such a term has a factor of a unit $j_{i'}$ with $i' > i$, or a factor of unit $j$ and a second factor. With $\gamma = \min(r_{j_1}, r_{j_{i+1}} - r_j)$, or $\gamma = r_{j_1}$ if $i = q$, we get \eqref{eq:e0unitj} as in Step~2: $\mathcal L^{\circ\prime}_j(t) = 0$ and $\mathcal L^\circ_j(t) = 0$ for $t \ge 1$. Here, by \eqref{eq:e0balance},
+\[
+\mathcal L^{\circ\prime}_j(t) = \big(n\,\eta^\circ_{c_j}\big)\;\Der\mathcal B(n\,WV)\,a_j, \qquad \mathcal L^\circ_j(t) = \Der\mathcal B(n\,WV)\,\eta^\circ_{a_j} \qquad\text{at } n = n(t),
+\]
+with $\eta^\circ_{c_j}$ column $j$ of $\eta^\circ_W$ and $\eta^\circ_{a_j}$ row $j$ of $\eta^\circ_V$. At $t = 1$, for $\xi$ in an open set and $n = \sqrt{\dm}\,\xi$: by \cref{lem:e0tailrank}, $n\,\eta^\circ_{c_j} = 0$, so $\eta^\circ_{c_j} = 0$, and $\eta^\circ_{a_j}$ is a multiple of $n\,WV$ for an open set of rows $n$, so $\eta^\circ_{a_j} = 0$.
+
+After $i = q$: $\eta_W = -Y_kW$ and $\eta_V = V\,(Y_{k+1} + \beta_{k+1}I)$. With Step~1 for $\eta'$ and Step~2 for $Z$ this is \eqref{eq:e0Dconcl} for $k$.
+\end{proof}
+
+\para{Parameters that satisfy all conditions.} We choose the blocks from the last to the first. Let $D$ and the blocks $\ell+1, \dots, L$ be chosen, regular and with (S1) to (S3) for $\tanh$, or (P1) and (P2) for GELU. This fixes $\varkappa_\ell$ (\cref{lem:e0cone}). We choose $(W, V) = (\Wread^{\ell}, \Wwrite^{\ell})$.
+
+\emph{Conditions that fail on a set of measure zero of pairs $(W, V)$.} (R1), (S1), (S2) and (P1) are of this kind; (S2) fails on countably many proper subspaces. (R2): the triples $(n, W, V)$ with $n \in \mathbb S$, $\sigma(nW) \neq 0$ and $\sigma(nW)\,V = 0$ form a manifold of dimension one less than that of the pairs $(W, V)$, so their projection to the pairs has measure zero; and $\sigma(nW) = 0$ only if $nW = 0$, which requires $W$ of rank less than $\dm$. (R3): the determinant in the proof of \cref{lem:e0tailrank} is real-analytic in $(n, W, V)$, so (R3) fails on a set of measure zero once it holds for one pair. It holds for $W = [\,I \mid 0\,]$ and $V$ with the rows of $I$ and zero rows, at any $n \in \mathbb S$ with positive entries $n_i$: there $g_\ell(n) = \sigma(n)$, and $\Der g_\ell(n)\,v = \mu\,g_\ell(n)$ gives $v_i = \mu\,\sigma(n_i)/\sigma'(n_i)$, so $0 = \langle v, n\rangle = \mu\sum_i n_i\,\sigma(n_i)/\sigma'(n_i)$ with a positive sum, hence $\mu = 0$ and $v = 0$.
+
+\emph{Conditions that hold on a nonempty open set of pairs.} (S3): take any $V$ and $W^\circ$, with the columns $c^\circ_j$, and a unit row $\xi_0$ with $\xi_0c^\circ_j \neq 0$ and $\bar sV \neq 0$ for the row $\bar s$ of the signs. As $\bar sV$ is a real nonzero row, there is a $\rho$ as in (S3). Then $W = \lambda W^\circ$ satisfies (S3) for large $\lambda > 0$, with strict inequalities and a compact set of rows $\tilde wV$ inside the open cone, so (S3) holds near $(W, V)$ as well. (P2): take a row $\alpha$ with positive entries, any $V$ with $\alpha V \neq 0$, and $W^\circ = \xi_0^\top\alpha$. For $W^\circ$ the left sides of the first two inequalities of (P2) vanish and $\xi_0c^\circ_j = \alpha_j > 0$, so these two inequalities hold for all $W = \lambda\,(W^\circ + W')$ with $\lambda > 0$ and $W'$ small. For fixed small $W'$, the third holds for large $\lambda$: its left side decreases like $e^{-\kappa\lambda^2}$ with a constant $\kappa > 0$, and its right side grows like $\lambda$. All three are strict, so (P2) holds on a nonempty open set of pairs.
+
+A nonempty open set minus a set of measure zero is not empty. So there are parameters $\theta^*$ that are regular and whose blocks all satisfy (S1) to (S3) for $\tanh$, or (P1) and (P2) for GELU.
+
+\begin{lemma}[The domain]\label{lem:e0domain}
+Let $X$ be a finite batch of nonzero inputs, and let $\mathcal O_X \subset \R^P$ be the set of parameters at which the hidden states $h_0, \dots, h_L$ of the skipless network are nonzero for every $x \in X$. Then $\mathcal O_X$ is open and connected, its complement has measure zero, and the outputs $F_X$ on the batch are real-analytic on $\mathcal O_X$.
+\end{lemma}
+
+\begin{proof}
+This is \cref{lem:domain} for skipless networks. Let $\mathcal O^0$ be the set of parameters with $xE \neq 0$ for all $x \in X$, and for $\ell \ge 1$ let $\mathcal O^\ell$ be the set of parameters in $\mathcal O^{\ell-1}$ with $h_\ell \neq 0$ for all $x \in X$. The complement of $\mathcal O^0$ is a finite union of subspaces of codimension $\dm \ge 2$. Let $\ell \ge 1$ and $x \in X$. On $\mathcal O^{\ell-1}$, $h_\ell = \tilde w_\ell\,\Wwrite^{\ell}$ with $\tilde w_\ell = \sigma\big(N_\varepsilon(h_{\ell-1})\,\Wread^{\ell}\big)$, and $h_{\ell-1}$ does not depend on the weights of block $\ell$. For $\tanh$ and GELU, $\sigma(z) = 0$ only at $z = 0$. So $\tilde w_\ell = 0$ exactly where $N_\varepsilon(h_{\ell-1})\,\Wread^{\ell} = 0$, a closed submanifold of $\mathcal O^{\ell-1}$ of codimension at least $\dm \ge 2$, because the derivative with respect to $\Wread^{\ell}$ is onto. Where $\tilde w_\ell \neq 0$, the derivative of $h_\ell$ with respect to $\Wwrite^{\ell}$ is onto $\R^{1\times\dm}$, so there the parameters with $h_\ell = 0$ form a closed submanifold of codimension $\dm \ge 2$. Removing finitely many closed submanifolds of codimension at least two, one after the other, from a connected open set leaves a connected open set and removes a set of measure zero.
+\end{proof}
+
+\begin{proof}[Proof of \cref{thm:epszeroskipless}]
+By \cref{lem:e0readout} and \cref{lem:e0steptanh} or \cref{lem:e0stepgelu}, Claim $(D_k)$ holds at $\theta^*$ for $k = L$, then for $k = L-1$, and so on down to $k = 0$. By \cref{prop:e0givesrank} there is a finite batch $X^*$, with $xE \neq 0$ for all its inputs, on which the Jacobian at $\theta^*$ has the rank \eqref{eq:e0upper}. By (R2), $\theta^* \in \mathcal O_{X^*}$. The sum of the squares of the minors of this size of the Jacobian of $F_{X^*}$ is real-analytic on the connected open set $\mathcal O_{X^*}$ and does not vanish at $\theta^*$, so its zero set has measure zero, and so has the complement of $\mathcal O_{X^*}$ (\cref{lem:e0domain}). Hence the rank on $X^*$ is at least \eqref{eq:e0upper} at almost every parameter. Where $E$ and every $\Wwrite^{\ell}$ have rank $\dm$, it is at most \eqref{eq:e0upper} on every batch. So at generic parameters the functional dimension is \eqref{eq:e0upper}, which is the equality condition with $\G = \CO(\dm)$ and $s = 0$, and the gain follows from \cref{thm:epszero}.
+\end{proof}
+
 \section{The one-block theorem}\label{app:onelayer}
 
 This appendix states and proves the general form of \cref{thm:oneblock}. With one block, the skipless and the residual network are
@@ -1616,7 +2022,7 @@ Let $\dm \ge 2$, let the input and output dimensions be at least $\dm$, let inpu
 \stpart{thm:onelayer}{v}{} Let the network be pre-RMSNorm with $\varepsilon = 0$, without biases, with a $\tanh$, GELU, SwiGLU, GeGLU or attention block. For generic parameters the residual network has functional dimension $P - \dm(\dm-1)/2 - 1 - s$, which is the equality condition with $\G = \CO(\dm)$, and the skip raises the functional dimension by at least $\dm(\dm-1)/2 + 1$, the dimension of $\CO(\dm)$.
 \end{theorem}
 
-In part (ii), for the skipless network we prove here only the bound $P - \dm(\dm-1) - s$ of \cpref{thm:count}{ii}, which our checks attain (\cref{app:checks}). For $\tanh$ blocks, and for GELU blocks with $\dhid \ge 2\dm$, \cref{thm:exactgain} shows that it is attained. With parts (ii) and (iii), a learned skip under RMSNorm with $\varepsilon > 0$ adds at least $\dm^2$ over no skip if the block has width at least $\dm$, as an identity skip does without normalization. Part (i) extends to a learned absolute position embedding, $h_0 = xE + E_{\mathrm{pos}}$, for an attention block without biases, with $P$ counting $E_{\mathrm{pos}}$, and to grouped-query attention (\emph{Extensions of part (i)} below). With rotary embeddings, the change of basis between the queries and the keys of a head shrinks to an abelian group of dimension $d_h$ \citep[Theorem~4.2]{tran2026equivalence}, which changes $s$; we do not treat this case.
+In part (ii), for the skipless network we prove here only the bound $P - \dm(\dm-1) - s$ of \cpref{thm:count}{ii}, which our checks attain (\cref{app:checks}). For $\tanh$ blocks, and for GELU blocks with $\dhid \ge 2\dm$, \cref{thm:exactgain} shows that it is attained. In part (v), for $\tanh$ blocks and for GELU blocks, the skip raises the functional dimension by exactly $\dm(\dm-1)/2 + 1$ (\cref{thm:epszeroskipless}). With parts (ii) and (iii), a learned skip under RMSNorm with $\varepsilon > 0$ adds at least $\dm^2$ over no skip if the block has width at least $\dm$, as an identity skip does without normalization. Part (i) extends to a learned absolute position embedding, $h_0 = xE + E_{\mathrm{pos}}$, for an attention block without biases, with $P$ counting $E_{\mathrm{pos}}$, and to grouped-query attention (\emph{Extensions of part (i)} below). With rotary embeddings, the change of basis between the queries and the keys of a head shrinks to an abelian group of dimension $d_h$ \citep[Theorem~4.2]{tran2026equivalence}, which changes $s$; we do not treat this case.
 
 \para{Notation and flat directions.} We write $F(\theta, x)$ for the output of the network at the parameters $\theta \in \R^P$ and the input $x$, and $\Der_\theta F(\theta, x)$ for the Fr\'echet derivative of $F(\cdot, x)$ at $\theta$, a linear map on $\R^P$. The derivative is written with an upright $\Der$ so that it is not confused with the readout matrix $D$ of the network. For a direction $\eta \in \R^P$, $\Der_\theta F(\theta, x)\,\eta$ is the derivative of $\tau \mapsto F(\theta + \tau\eta, x)$ at $\tau = 0$. We write $\eta_E$, $\eta_D$, $\eta_{\mathrm{read}}$, $\eta_{\mathrm{write}}, \dots$ for the entries of $\eta$ at the positions of $E$, $D$, $\Wread$, $\Wwrite, \dots$, and $\Der_\theta Q\,\eta$ for the derivative along $\eta$ of a matrix $Q$ that depends on the parameters; for instance $\Der_\theta M\,\eta = \eta_ED + E\eta_D$ for $M = ED$, by the product rule. Call $\eta$ \emph{flat} if $\Der_\theta F(\theta, x)\,\eta = 0$ for every input $x$, and let $\mathcal K(\theta)$ be the space of flat directions. For the ReLU-type activations, $F(\theta, x)$ is differentiable in $\theta$ at the inputs $x$ at which no hidden unit sits at its kink, which form an open set of full measure, and ``every input'' means every such input. With $\varepsilon = 0$, it also excludes the inputs at which a state that is normalized vanishes. For $\tanh$, GELU, SwiGLU, GeGLU and attention blocks, $\Der_\theta F(\theta, x)\,\eta$ is real-analytic in $x$, so a direction that is flat on an open set of inputs is flat on all inputs, and the theorem holds for inputs in any open set. For the ReLU-type blocks it does not: on a ball of inputs that meets no kink the network is a polynomial in $x$. For a batch of inputs $x_1, \dots, x_n$, the Jacobian of $\theta \mapsto (F(\theta, x_1), \dots, F(\theta, x_n))$ is the matrix of the linear map $\eta \mapsto (\Der_\theta F(\theta, x_1)\,\eta, \dots, \Der_\theta F(\theta, x_n)\,\eta)$; it has $P$ columns, and its kernel consists of the directions with $\Der_\theta F(\theta, x_k)\,\eta = 0$ for the inputs of the batch. Adding inputs can only shrink this kernel, and a decreasing chain of subspaces of $\R^P$ stops, so some finite batch has kernel exactly $\mathcal K(\theta)$. By rank--nullity, the functional dimension at $\theta$ is therefore
 \[
