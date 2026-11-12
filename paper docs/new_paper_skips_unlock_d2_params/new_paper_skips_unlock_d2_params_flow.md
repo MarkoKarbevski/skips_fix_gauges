@@ -38,13 +38,13 @@
 | 33 | Skipless networks: one change of basis per hidden state | para |  |  | \begin{example}[Choosing rows]\label{ex:rows} Let $\dm = 2$ and $\dhid |
 | 34 | Skipless networks: one change of basis per hidden state | para |  |  | Take an attention block $B_\ell$ of a skipless transformer with $Hd_h  |
 | 35 | Skipless networks: one change of basis per hidden state | float |  |  | \begin{figure}[t] \centering [a TikZ drawing, omitted here; the captio |
-| 36 | Learned skips: a telescoping change of basis | para |  |  | \subsection{Learned skips: a telescoping change of basis}\label{sec:le |
-| 37 | Learned skips: a telescoping change of basis | para |  |  | In \cref{sec:skipless} the change of basis at each hidden state was ch |
-| 38 | Learned skips: a telescoping change of basis | para |  |  | The skip $A_\ell$ multiplies $h_{\ell-1}$, and the result is added to  |
-| 39 | Learned skips: a telescoping change of basis | para | Lambda | Lambda | Let every $A_\ell$ be invertible. The new skip $G_{\ell-1}^{-1}A_\ell  |
-| 40 | Learned skips: a telescoping change of basis | statement |  |  | \begin{restatable}[Learned skips reduce to identity skips]{theorem}{th |
-| 41 | Learned skips: a telescoping change of basis | para |  |  | So the networks with invertible learned skips have $L\dm^2$ more param |
-| 42 | Learned skips: a telescoping change of basis | statement |  |  | \begin{remark}[The reduction is not unique]\label{rem:notunique} In a  |
+| 36 | Telescoping (generic) learned skips to identity skips | para |  |  | \subsection{Telescoping (generic) learned skips to identity skips}\lab |
+| 37 | Telescoping (generic) learned skips to identity skips | para |  |  | In \cref{sec:skipless} the change of basis at each hidden state was ch |
+| 38 | Telescoping (generic) learned skips to identity skips | para |  |  | The skip $A_\ell$ multiplies $h_{\ell-1}$, and the result is added to  |
+| 39 | Telescoping (generic) learned skips to identity skips | para | Lambda | Lambda | Let every $A_\ell$ be invertible, as it is at generic parameters. The  |
+| 40 | Telescoping (generic) learned skips to identity skips | statement |  |  | \begin{restatable}[Learned skips reduce to identity skips]{theorem}{th |
+| 41 | Telescoping (generic) learned skips to identity skips | para |  |  | So the networks with invertible learned skips have $L\dm^2$ more param |
+| 42 | Telescoping (generic) learned skips to identity skips | statement |  |  | \begin{remark}[The reduction is not unique]\label{rem:notunique} In a  |
 | 43 | Identity skips: one change of basis for the whole network | para |  |  | \subsection{Identity skips: one change of basis for the whole network} |
 | 44 | Identity skips: one change of basis for the whole network | para |  |  | \Cref{sec:learned} turned invertible learned skips into identity skips |
 | 45 | Identity skips: one change of basis for the whole network | para |  |  | A residual network keeps one change of basis, the same at all its hidd |
