@@ -84,8 +84,8 @@
 | 79 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for residual networks at any depth]{theore |
 | 80 | When the bounds are attained | para |  |  | \begin{corollary}[Residual networks are locally identifiable]\label{co |
 | 81 | When the bounds are attained | para |  |  | This is \cref{thm:resdepth} together with \cref{prop:localid}. Whether |
-| 82 | When the bounds are attained | para |  |  | \begin{corollary}[Attention blocks without embedding and readout: Conj |
-| 83 | When the bounds are attained | para |  |  | \citet{henry2026generic} proves this formula for one block without a s |
+| 82 | When the bounds are attained | para |  |  | \begin{corollary}[Attention-only transformers: Conjecture~2.4 of \cite |
+| 83 | When the bounds are attained | para |  |  | \citet{henry2026generic} proves that one attention block without a ski |
 | 84 | When the bounds are attained | statement |  |  | \begin{restatable}[Exact gain for $\tanh$ and GELU]{theorem}{thmExactG |
 | 85 | When the bounds are attained | para |  |  | By \cref{prop:localid}, the skipless networks of \cref{thm:exactgain}  |
 | 86 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
