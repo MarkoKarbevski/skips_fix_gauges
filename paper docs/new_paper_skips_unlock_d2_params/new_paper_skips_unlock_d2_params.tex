@@ -329,7 +329,7 @@ Take an attention block $B_\ell$ of a skipless transformer with $Hd_h = \dm$, so
 \label{fig:junctions}
 \end{figure}
 
-\subsection{Learned skips: a telescoping change of basis}\label{sec:learned}
+\subsection{Telescoping (generic) learned skips to identity skips}\label{sec:learned}
 
 In \cref{sec:skipless} the change of basis at each hidden state was chosen on its own. We now turn to networks with learned skips, $h_\ell = h_{\ell-1}A_\ell + B_\ell(h_{\ell-1})$. A change of basis acts on the skips as well. We first write this action out, and then choose the changes of basis so that every invertible skip becomes the identity (\cref{thm:learned}). This choice is no longer local: the change of basis at one hidden state is a product of all the later skips. Networks have no normalization here, and \cref{sec:norm} treats pre-RMSNorm.
 
@@ -339,7 +339,7 @@ h_\ell G_\ell \;=\; \big(h_{\ell-1}G_{\ell-1}\big)\,\big(G_{\ell-1}^{-1}A_\ell G
 \end{equation}
 So the maps \eqref{eq:cob} of \cref{def:cob}, together with $A_\ell \mapsto G_{\ell-1}^{-1}A_\ell G_\ell$ for every skip, preserve the function of the network: every hidden state $h_\ell$ becomes $h_\ell G_\ell$.
 
-Let every $A_\ell$ be invertible. The new skip $G_{\ell-1}^{-1}A_\ell G_\ell$ is the identity when $G_{\ell-1} = A_\ell G_\ell$. Take $G_L = I$, which leaves the readout unchanged, and go from the last block down to the first:
+Let every $A_\ell$ be invertible, as it is at generic parameters. The new skip $G_{\ell-1}^{-1}A_\ell G_\ell$ is the identity when $G_{\ell-1} = A_\ell G_\ell$. Take $G_L = I$, which leaves the readout unchanged, and go from the last block down to the first:
 \begin{equation}\label{eq:sweep}
 G_\ell \;=\; A_{\ell+1}A_{\ell+2}\cdots A_L \;=:\; \Lambda_\ell, \qquad\text{so that}\qquad A_\ell\Lambda_\ell = \Lambda_{\ell-1}.
 \end{equation}
