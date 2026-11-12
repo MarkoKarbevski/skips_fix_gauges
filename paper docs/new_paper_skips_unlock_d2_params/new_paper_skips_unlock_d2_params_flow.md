@@ -86,7 +86,7 @@
 | 81 | When the bounds are attained | para |  |  | This is \cref{thm:resdepth} together with \cref{prop:localid}. Whether |
 | 82 | When the bounds are attained | para |  |  | \begin{corollary}[Attention-only transformers: Conjecture~2.4 of \cite |
 | 83 | When the bounds are attained | para |  |  | \citet{henry2026generic} proves that one attention block without a ski |
-| 84 | When the bounds are attained | statement |  |  | \needspace{6\baselineskip} \begin{restatable}[Exact gain for $\tanh$ a |
+| 84 | When the bounds are attained | statement |  |  | \needspace{6\baselineskip} \begin{restatable}[Exact gain for $\tanh$,  |
 | 85 | When the bounds are attained | para |  |  | By \cref{prop:localid}, the skipless networks of \cref{thm:exactgain}  |
 | 86 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
 | 87 | When the bounds are attained | para |  |  | \para{RMSNorm with $\varepsilon = 0$.} The networks of \cref{sec:setup |
@@ -102,7 +102,7 @@
 | 97 | Numerical ranks at depth, and a conjecture | para |  |  | At depth we compute the rank of the Jacobian on a large batch of input |
 | 98 | Numerical ranks at depth, and a conjecture | float |  |  | \begin{table}[b] \centering\small \renewcommand{\arraystretch}{1.1} \b |
 | 99 | Numerical ranks at depth, and a conjecture | para |  |  | In two cases the measured rank stays below the upper bound. In skiples |
-| 100 | Numerical ranks at depth, and a conjecture | statement |  |  | \begin{conjecture}[Equality without skips]\label{conj:equality} With o |
+| 100 | Numerical ranks at depth, and a conjecture | statement |  |  | \begin{conjecture}[Equality without skips]\label{conj:equality} Withou |
 | 101 | Numerical ranks at depth, and a conjecture | para |  |  | The analogue of the conjecture is known for polynomial activations. \c |
 | 102 | Numerical ranks at depth, and a conjecture | para |  |  | \para{One-hot tokens.} With one-hot tokens under RMSNorm, the rows of  |
 | 103 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
