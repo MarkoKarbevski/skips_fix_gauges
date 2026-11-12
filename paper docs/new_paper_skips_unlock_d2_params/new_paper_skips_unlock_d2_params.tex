@@ -1068,42 +1068,85 @@ Let $\dm \ge 2$, let $E$ and $D$ have rank $\dm$, and let each block, in any ord
 \[
 \Wwrite^{\ell} \;\mapsto\; \tau\,\Wwrite^{\ell}, \qquad b^{\ell}_{\mathrm{write}} \;\mapsto\; \tau\,b^{\ell}_{\mathrm{write}} \qquad\text{for } \ell = 1, \dots, L,
 \]
-and all other weights unchanged. For all small $\tau \neq 0$, the residual network without biases has
+and all other weights unchanged. For all small $\tau \neq 0$, the residual network has
 \begin{align*}
-\operatorname{fd}(\theta_\tau) &= P - \dm^2 - s && \text{without normalization},\\
-\operatorname{fd}(\theta_\tau) &= P - \dm(\dm-1)/2 - s && \text{under pre-RMSNorm with } \varepsilon > 0 .
+\operatorname{fd}(\theta_\tau) &= P - \dm^2 - s && \text{no normalization, no biases},\\
+\operatorname{fd}(\theta_\tau) &= P - \dm(\dm-1)/2 - s && \text{pre-RMSNorm with } \varepsilon > 0, \text{ no biases},\\
+\operatorname{fd}(\theta_\tau) &= P - \dm^2 - (L+1)\dm - s && \text{MLP blocks with biases, no normalization},\\
+\operatorname{fd}(\theta_\tau) &= P - s && \text{no embedding, readout, biases or normalization}.
 \end{align*}
-Without normalization and attention blocks, biases lower the first value by $(L+1)\dm$. Without an embedding, a readout, biases and normalization, $\operatorname{fd}(\theta_\tau) = P - s$.
 \end{lemma}
 
 \begin{proof}
-Throughout the proof, $\Wwrite^{\ell}$ is the write of block $\ell$ at $\theta$, for an attention block its output projection, so that block $\ell$ has the write $\tau\,\Wwrite^{\ell}$ at $\theta_\tau$. Let $\Wread = [\,\Wread^{1} \mid \dots \mid \Wread^{L}\,]$ place the reads of the MLP blocks side by side, and let $\Wwrite$ stack their writes $\Wwrite^{1}, \dots, \Wwrite^{L}$, so that $n \mapsto f(n\Wread)\Wwrite$ is one wide block that holds all hidden units of the network, and let the heads of all attention blocks form one attention block. Divide the columns of the Jacobian that belong to the reads, for attention blocks the queries, keys and values, and to the read biases by $\tau$, which keeps its rank, and let $\tau \to 0$. On a batch of inputs the limit is a linear map $J_0$ on $\R^P$; as in \cref{app:onelayer}, a direction $\eta$ is flat if $J_0\,\eta = 0$ on every input. For analytic blocks $J_0\,\eta$ is real-analytic in the input, so a direction that is flat on an open set of inputs is flat on all inputs; the arguments below use rays and sequences of equal tokens, which need not lie in that set.
-
-\emph{MLP blocks without normalization.} The stream is $h_\ell = xE + b_E + O(\tau)$, so the output is
+Let $F_X(\theta) = (F_\theta(x))_{x \in X}$ be the outputs on a finite batch $X$, and let $J_\tau = \Der_\theta F_X(\theta_\tau)$ be its Jacobian at $\theta_\tau$. Let $S_\tau$ be the diagonal matrix on $\R^P$ with the entry $1/\tau$ at the coordinates of the reads $\Wread^{\ell}$ (for an attention block, of $W_Q$, $W_K$ and $W_V$) and of the read biases $b^{\ell}_{\mathrm{read}}$, and the entry $1$ at all other coordinates. Then
 \[
-y = xED + b_ED + b_D + \tau\sum_{\ell=1}^{L}\Big(f\big((xE + b_E)\Wread^{\ell} + b^{\ell}_{\mathrm{read}}\big)\Wwrite^{\ell} + b^{\ell}_{\mathrm{write}}\Big)D + O(\tau^2),
+\operatorname{rank} J_\tau \;=\; \operatorname{rank}(J_\tau S_\tau) \quad\text{for } \tau \neq 0, \qquad\text{and we let}\qquad J_0 \;=\; \lim_{\tau \to 0} J_\tau S_\tau ,
 \]
-with the write biases written as $\tau b^{\ell}_{\mathrm{write}}$. The derivatives with respect to $E$, $D$ and the biases of the embedding and the readout keep only the terms without $\tau$ in the limit. The derivative along a direction $\eta_{\mathrm{write}}$ of the writes $\tau\,\Wwrite^{\ell}$ is the term of order $\tau$ with $\eta_{\mathrm{write}}$ in place of $\tau\,\Wwrite$. The derivative along a direction $\eta_{\mathrm{read}}$ of the reads is of order $\tau$, and divided by $\tau$ it tends to the derivative of the term of order $\tau$. Hence $J_0\,\eta = \Der_\phi G(\phi, x)\,\psi$ for the one-block function $G$ of \cref{lem:unitid} at $M = ED$, $\gamma = b_ED + b_D$, the columns $c_i$ of $E\Wread$, the entries $\beta_i$ of $b_E\Wread + b_{\mathrm{read}}$ and the rows $a_i$ of $\Wwrite D$, in the direction $\psi$ with
+a limit that the expansions below show to exist. For a direction $\eta \in \R^P$, write $(J_0\eta)(x)$ for the part of $J_0\,\eta$ at the input $x$, which does not depend on the rest of the batch. As in \cref{app:onelayer}, $\eta$ is \emph{flat} if $(J_0\eta)(x) = 0$ for every input $x$.
+
+Let $\Wread = [\,\Wread^{1} \mid \dots \mid \Wread^{L}\,]$ place the reads of the MLP blocks side by side, and let $\Wwrite$ stack their writes $\Wwrite^{1}, \dots, \Wwrite^{L}$, all at $\theta$, so that $n \mapsto f(n\Wread)\Wwrite$ is one wide block that holds all hidden units of the network. Likewise, let the heads of all attention blocks form one attention block.
+
+\emph{MLP blocks without normalization.} At $\theta_\tau$ every hidden state is $h_\ell = xE + b_E + O(\tau)$, so the output is
+\[
+y = xED + b_ED + b_D + \tau\sum_{\ell=1}^{L}\Big(f\big((xE + b_E)\Wread^{\ell} + b^{\ell}_{\mathrm{read}}\big)\Wwrite^{\ell} + b^{\ell}_{\mathrm{write}}\Big)D + O(\tau^2).
+\]
+Let $c_i$ be the columns of $E\Wread$, $\beta_i$ the entries of $b_E\Wread + b_{\mathrm{read}}$ and $a_i$ the rows of $\Wwrite D$, so that unit $i$ has the pre-activation $z_i = xc_i + \beta_i$ and adds $\tau\,\sigma(z_i)\,a_i$ to $y$. Differentiating along $\eta$ and letting $\tau \to 0$,
+\[
+(J_0\eta)(x) \;=\; x\psi_M + \psi_\gamma + \sum_i \big[\sigma(z_i)\,\psi_{a_i} + \sigma'(z_i)\,(x\psi_{c_i} + \psi_{\beta_i})\,a_i\big],
+\]
+where $\psi_{c_i}$, $\psi_{\beta_i}$ and $\psi_{a_i}$ are the columns of $\psi_C$, the entries of $\psi_\beta$ and the rows of $\psi_A$, and
 \begin{gather*}
 \psi_M = \eta_ED + E\eta_D,\qquad \psi_\gamma = \eta_{b_E}D + b_E\eta_D + \eta_{b_D} + \textstyle\sum_\ell \eta_{b^{\ell}_{\mathrm{write}}}D,\\
-\psi_C = E\eta_{\mathrm{read}},\qquad \psi_\beta = b_E\eta_{\mathrm{read}} + \eta_{b_{\mathrm{read}}},\qquad \psi_A = \eta_{\mathrm{write}}D,
+\psi_C = E\eta_{\mathrm{read}},\qquad \psi_\beta = b_E\eta_{\mathrm{read}} + \eta_{b_{\mathrm{read}}},\qquad \psi_A = \eta_{\mathrm{write}}D.
 \end{gather*}
-where $\psi_C$, $\psi_\beta$ and $\psi_A$ collect the $\psi_{c_i}$, $\psi_{\beta_i}$ and $\psi_{a_i}$, and the values of the gated units enter as the gates do. At generic parameters the hypotheses of \cref{lem:unitid} hold, as for one block (\cref{app:onelayer}). For a flat $\eta$ the lemma gives $\psi_M = 0$, $\psi_\gamma = 0$ and a rescaling at every unit. As $E$ and $D$ have rank $\dm$, $\psi_M = 0$ gives $\eta_E = EX$ and $\eta_D = -XD$ for some $X \in \R^{\dm\times\dm}$; $\psi_C$ and $\psi_A$ make $\eta_{\mathrm{read}}$ and $\eta_{\mathrm{write}}$ a rescaling of the units, which fixes $\eta_{b_{\mathrm{read}}}$ through $\psi_\beta$; and $\psi_\gamma = 0$ fixes $\eta_{b_D}$ once $\eta_{b_E}$ and the $L$ write biases are chosen. So the flat directions form a space of dimension $\dm^2 + s$, and $\dm^2 + (L+1)\dm + s$ with biases. Without an embedding and a readout, $M = I$ is fixed, and only the rescalings are left.
+The terms $x\psi_M + \psi_\gamma$ come from the part of $y$ without $\tau$ and from the write biases $\tau\,b^{\ell}_{\mathrm{write}}$. The terms $\sigma(z_i)\,\psi_{a_i}$ come from the writes $\tau\,\Wwrite^{\ell}$. The terms with $\sigma'(z_i)$ come from the reads and the read biases: they are of order $\tau$, and $S_\tau$ divides them by $\tau$. For the gated blocks, the read of a unit has a gate and a value: $c_i$ and $\beta_i$ belong to the gate, and $e_i$, $\beta'_i$, $\psi_{e_i}$ and $\psi_{\beta'_i}$ are the same quantities for the value. By \eqref{eq:dotF},
+\[
+(J_0\eta)(x) \;=\; \Der_\phi G(\phi, x)\,\psi \qquad\text{at}\quad M = ED,\quad \gamma = b_ED + b_D,
+\]
+for the one-block function $G$ of \cref{lem:unitid}. At generic parameters the hypotheses of \cref{lem:unitid} hold for the units of all blocks together, as for one block (\cref{app:onelayer}). So for a flat $\eta$ the lemma gives $\psi_M = 0$, $\psi_\gamma = 0$ and a rescaling at every unit. As $E$ and $D$ have rank $\dm$, $\psi_M = 0$ gives $\eta_E = EX$ and $\eta_D = -XD$ for some $X \in \R^{\dm\times\dm}$. The rescalings determine $\eta_{\mathrm{read}}$ and $\eta_{\mathrm{write}}$ through $\psi_C$ and $\psi_A$, and then $\eta_{b_{\mathrm{read}}}$ through $\psi_\beta$. Finally $\psi_\gamma = 0$ determines $\eta_{b_D}$ once $\eta_{b_E}$ and the $\eta_{b^{\ell}_{\mathrm{write}}}$ are chosen. So the flat directions form a space of dimension $\dm^2 + s$ without biases, and $\dm^2 + (L+1)\dm + s$ with biases. Without an embedding and a readout, $M = I$ is fixed, so $\psi_M = 0$ for every direction, and the flat directions are the rescalings alone, of dimension $s$.
 
-\emph{Attention blocks without normalization.} Without biases, $y = xED + \tau\sum_\ell g_\ell(xE)D + O(\tau^2)$, where $g_\ell$ is block $\ell$ with the write $\Wwrite^{\ell}$. So $J_0\,\eta$ is the derivative of the residual network with one block that holds all heads and hidden units, in the direction with the entries $\psi_M$, $\psi_C$ and $\psi_A$ above and, for each head $i$,
+\emph{Attention blocks without normalization.} Without biases, $y = xED + \tau\sum_\ell g_\ell(xE)\,D + O(\tau^2)$, where $g_\ell$ is block $\ell$ at $\theta$. So $(J_0\eta)(x)$ is the derivative of the residual network with one block that holds all heads and all hidden units, in the direction with the entries $\psi_M$, $\psi_C$ and $\psi_A$ above and, for each head $i$,
 \[
 \psi_{B_i} = E\big(\eta_{Q,i}W_{K,i}^\top + W_{Q,i}\eta_{K,i}^\top\big)E^\top/\sqrt{d_h},\qquad \psi_{C_i} = E\big(\eta_{V,i}W_{O,i} + W_{V,i}\eta_{O,i}\big)D,
 \]
-at $B_i = EW_{Q,i}W_{K,i}^\top E^\top/\sqrt{d_h}$ and $C_i = EW_{V,i}W_{O,i}D$ as in \cref{app:onelayer}, where $W_{O,i}$ holds the rows of $\Wwrite^{\ell}$ that belong to head $i$ of block $\ell$. On inputs whose tokens all equal $x$, head $i$ gives every token $xC_i$, and its derivative is $x\psi_{C_i}$, since all its scores move alike. There the equation is that of the units with the linear part $M + \sum_iC_i$, and \cref{lem:unitid} gives a rescaling at every unit. The units then drop out on every input. On inputs whose tokens other than the second equal the first, head $i$ gives the second token the output of \cref{eq:twotok} with $k = 1$ if its block is causal and $k = T - 1$ otherwise; the constants $-\tfrac12\log k$ act as biases of the $\tanh$ units, which \cref{lem:unitid} allows, so Step~2 for attention blocks in \cref{app:onelayer} gives $\psi_M = 0$, $\psi_{B_i} = 0$ and $\psi_{C_i} = 0$. Cancelling $E$ on the left and $E^\top$ or $D$ on the right, the last two leave, as in Step~1 there, the directions of the changes of basis between the queries and keys and between the values and outputs of each head. So the flat directions form a space of dimension $\dm^2 + s$, and without an embedding and a readout of dimension $s$.
+at $B_i = EW_{Q,i}W_{K,i}^\top E^\top/\sqrt{d_h}$ and $C_i = EW_{V,i}W_{O,i}D$ as in \cref{app:onelayer}, where $W_{O,i}$ holds the rows of $\Wwrite^{\ell}$ that belong to head $i$ of block $\ell$.
 
-\emph{Under pre-RMSNorm.} The stream is $h_\ell = xE + O(\tau)$, every block reads $N_\varepsilon(xE) + O(\tau)$, and the output is
+First take an input whose tokens all equal $x$. Head $i$ then gives every token the output $xC_i$, whatever its scores are, so $\psi_{B_i}$ does not enter, and at every token
 \[
-y = N_\varepsilon(xE)D + \tau\,\Der N_\varepsilon(xE)\,\Big(\textstyle\sum_\ell g_\ell\big(N_\varepsilon(xE)\big)\Big)D + O(\tau^2),
+(J_0\eta)(x, \dots, x) \;=\; x\Big(\psi_M + \textstyle\sum_i \psi_{C_i}\Big) + \sum_j \big[\sigma(z_j)\,\psi_{a_j} + \sigma'(z_j)\,(x\psi_{c_j})\,a_j\big],
 \]
-with $N_\varepsilon$ applied to every token. So $J_0\,\eta = \Der N_\varepsilon(h)\,\big(x\eta_E + k(n)\big)D + N_\varepsilon(h)\eta_D$, with $h = xE$, $n = N_\varepsilon(h)$ and $k(n)$ the derivative of the wide block along $\eta$ at the input $n$. This is the equation of the proof of \cpref{thm:onelayer}{ii} with $h_1 = xE$ and $\Der_\theta h_1\,\eta = x\eta_E + k(n)$, and its Steps~1 to~5 go through, with $k(n)$ bounded in Step~2 since $n$ stays in the ball, and with the units handled first, through equal tokens, in Step~4. In Step~3 the direction $\eta^Y$ now has the entries $EY$ and $-YD$ at $E$ and $D$ and no others, as $\Der N_\varepsilon(h)\,(hY) = N_\varepsilon(h)Y$ for antisymmetric $Y$. So the flat directions are these, the rescalings of the units and the changes of basis inside the heads, a space of dimension $\dm(\dm-1)/2 + s$.
+where $i$ runs over the heads and $j$ over the hidden units. This is $\Der_\phi G(\phi, x)\,\psi$ with $M + \sum_i C_i$ in place of $M$, so for a flat $\eta$ \cref{lem:unitid} gives a rescaling at every unit. The terms of the units then vanish at every input: they act on each token separately, and they are the derivative along a rescaling, which does not change the function.
 
-In each case the kernel of $J_0$ shrinks as the batch grows and becomes stationary at the flat directions, so on some finite batch $J_0$ has rank $P$ minus this dimension. By lower semicontinuity the Jacobian of the residual network on this batch has at least this rank for all small $\tau \neq 0$. Its symmetries bound the rank by the same number, since they move the parameters in independent directions when $E$ has rank $\dm$ and the queries and values of every head have full column rank: the global change of basis (\cpref{thm:gaugefull}{iii}), the translations (\cref{lem:translations}), the rescalings of the units and the changes of basis inside the heads.
+Next take an input whose tokens other than the second all equal the first. Head $i$ gives the second token the output of \eqref{eq:twotok}, with $k = 1$ if its block is causal and $k = T - 1$ otherwise. The constants $-\tfrac12\log k$ act as biases of the $\tanh$ units, which \cref{lem:unitid} allows. So Step~2 for attention blocks in \cref{app:onelayer} gives $\psi_M = 0$, $\psi_{B_i} = 0$ and $\psi_{C_i} = 0$ for every head. As $E$ has full column rank and $D$ has full row rank, the last two are
+\[
+\eta_{Q,i}W_{K,i}^\top + W_{Q,i}\eta_{K,i}^\top = 0, \qquad \eta_{V,i}W_{O,i} + W_{V,i}\eta_{O,i} = 0,
+\]
+and, as in Step~1 there, their solutions are
+\[
+\eta_{Q,i} = W_{Q,i}\Gamma_i,\quad \eta_{K,i} = -W_{K,i}\Gamma_i^\top, \qquad \eta_{V,i} = W_{V,i}\Gamma'_i,\quad \eta_{O,i} = -\Gamma'_iW_{O,i},
+\]
+with $d_h\times d_h$ matrices $\Gamma_i$ and $\Gamma'_i$: the changes of basis inside head $i$. So the flat directions form a space of dimension $\dm^2 + s$, and of dimension $s$ without an embedding and a readout.
+
+\emph{Under pre-RMSNorm.} At $\theta_\tau$, $h_\ell = xE + O(\tau)$ and every block reads $N_\varepsilon(xE) + O(\tau)$, with $N_\varepsilon$ applied to every token. Let $g = \sum_\ell g_\ell$ be the wide block at $\theta$. The output is
+\[
+y = N_\varepsilon(xE)\,D + \tau\,\Der N_\varepsilon(xE)\,\Big(g\big(N_\varepsilon(xE)\big)\Big)\,D + O(\tau^2).
+\]
+So, with $h = xE$ and $n = N_\varepsilon(h)$,
+\[
+(J_0\eta)(x) \;=\; \Der N_\varepsilon(h)\,\big(x\eta_E + \Der_\theta g(n)\,\eta\big)\,D + N_\varepsilon(h)\,\eta_D ,
+\]
+where $\Der_\theta g(n)\,\eta$ is the derivative of the wide block at the input $n$ along the entries of $\eta$ at its reads and writes. This is the equation of the proof of \cpref{thm:onelayer}{ii} with $h_1 = xE$ and $\Der_\theta h_1\,\eta = x\eta_E + \Der_\theta g(n)\,\eta$, and its Steps~1 to~5 go through with three changes. In Step~2, $\Der_\theta g(n)\,\eta$ is bounded, since $\norm{n_t} < \sqrt{\dm}$ for every token $t$. In Step~3, the direction $\eta^Y$ has the entries $EY$ at $E$ and $-YD$ at $D$ and no others, since $\Der N_\varepsilon(h)\,(hY) = N_\varepsilon(h)\,Y$ for antisymmetric $Y$. In Step~4, the hidden units are handled first, on inputs with equal tokens, as above. So the flat directions are the $\eta^Y$, the rescalings of the units and the changes of basis inside the heads, a space of dimension $\dm(\dm-1)/2 + s$.
+
+\emph{The rank.} In each case let $m$ be the dimension of the space of flat directions. The kernel of $J_0$ decreases as the batch $X$ grows, and its intersection over all batches is the space of flat directions, so on some finite batch $\operatorname{rank} J_0 = P - m$. The rank is lower semicontinuous and $J_\tau S_\tau \to J_0$, so on this batch, for all small $\tau \neq 0$,
+\[
+\operatorname{rank} J_\tau \;=\; \operatorname{rank}(J_\tau S_\tau) \;\ge\; \operatorname{rank} J_0 \;=\; P - m .
+\]
+Conversely $\operatorname{rank} J_\tau \le P - m$ on every batch, since the symmetries of the residual network move $\theta_\tau$ in $m$ independent directions when $E$ has rank $\dm$ and the queries and values of every head have full column rank. These symmetries are the global change of basis (\cpref{thm:gaugefull}{iii}), the translations (\cref{lem:translations}), the rescalings of the units and the changes of basis inside the heads. So $\operatorname{fd}(\theta_\tau) = P - m$.
 \end{proof}
+
+\begin{remark*}[Open sets of inputs]
+For analytic blocks $(J_0\eta)(x)$ is real-analytic in the input $x$, so a direction with $(J_0\eta)(x) = 0$ on an open set of inputs is flat. The proof above uses rays and sequences of equal tokens, which need not lie in that set.
+\end{remark*}
 
 \Cref{thm:classes} is a case of the following theorem.
 \begin{theorem}[GELU and analytic networks at depth]\label{thm:depthgelu}
