@@ -252,7 +252,7 @@ An identity skip has no weights, and a change of basis leaves it in place.
 
 We start with networks that have neither skips nor normalization, where the symmetry is largest. We show on an example how one change of basis removes $\dm^2$ parameters, and then do the same at every hidden state (\cref{prop:skipless}).
 
-In a skipless network without normalization, the invariance \eqref{eq:invariance} holds at every hidden state, so every change of basis preserves the function (\cref{fig:junctions}b). A change of basis that turns a $\dm\times\dm$ submatrix of the weights into the identity removes $\dm^2$ parameters: the submatrix is no longer stored and requires no computation.
+In a skipless network without normalization, the invariance \eqref{eq:invariance} holds at every hidden state, so every change of basis preserves the function (\cref{fig:junctions}b). A change of basis that turns a $\dm\times\dm$ submatrix of the weights into the identity removes $\dm^2$ parameters: the submatrix no longer requires storage or computation.
 
 \begin{example*}[Choosing the submatrix]
 Take $1 \le \ell < L$ and write $\Wread^{\ell+1} = [\,W_1 \mid W_2\,]$, where $W_1$ holds the first $\dm$ columns. If $W_1$ is invertible, the change of basis $G = W_1$ at $h_\ell$ maps
