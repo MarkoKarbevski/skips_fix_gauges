@@ -162,8 +162,8 @@ Skipless networks have recently been trained to varying degrees of success. \cit
 \multicolumn{4}{@{}l}{\emph{Parameters explicitly removed without changing the function of the network, post-training}} \\
 \quad without skips & $(L+1)\dm^2$ & any & \rtag{Prop.}{prop:skipless}{} \\
 \quad\quad with pre-RMSNorm & $(L+1)\dm(\dm-1)/2$ & any & \rtag{Thm.}{thm:rmstri}{i} \\
-\quad learned skips & $L\dm^2$, every skip entry & any & \rtag{Thm.}{thm:learned}{} \\
-\quad\quad with pre-RMSNorm & $L\dm(\dm-1)/2$ & any & \rtag{Thm.}{thm:rmstri}{iv} \\
+\quad learned skips & $(L+1)\dm^2$ & any & \rtag{Rem.}{rem:notunique}{} \\
+\quad\quad with pre-RMSNorm & $(L+1)\dm(\dm-1)/2$ & any & \rtag{Rem.}{rem:rmsstart}{} \\
 \quad identity skips & $\dm^2$ & any & \rtag{Thm.}{thm:tie}{iii} \\
 \quad\quad with pre-RMSNorm & $\dm(\dm-1)/2$ & any & \rtag{Thm.}{thm:rmstri}{iii} \\
 \midrule
