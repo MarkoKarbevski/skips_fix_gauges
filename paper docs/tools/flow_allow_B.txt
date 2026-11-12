@@ -11,3 +11,4 @@ formula in the opening # the authors asked for d_model^2 in the first paragraph 
 d_model, the width # standard symbol for the model dimension; the authors: "already well defined" (10 November 2026); the abstract uses it, the introduction says it in words
 functional dimension # the abstract only names it, as the authors asked (10 November 2026); the introduction defines it at its first use in the body
 limit # plain mathematical word in the introduction (a limit of networks, there uniformly on bounded sets of inputs); Section 4.4 fixes the sense used in Theorem 4.9
+epsilon of RMSNorm # well known: the constant in the denominator of RMSNorm, written eps or epsilon everywhere; one row of Table 1 names it (epsilon = 0) before the Setup defines it
