@@ -14,7 +14,7 @@
 \usepackage{tikz}
 \usepackage{framed}
 \usepackage{needspace}
-\usetikzlibrary{positioning,arrows.meta,calc}
+\usetikzlibrary{positioning,arrows.meta,calc,matrix,fit}
 \usepackage[round,sort]{natbib}
 \renewcommand{\bibfont}{\small\raggedright}
 \renewcommand{\bibsection}{\section*{References}\addcontentsline{toc}{section}{References}}
@@ -267,7 +267,30 @@ Without normalization, in a skipless network, let $\dm$ columns of the read of $
 \end{restatable}
 \specialof{prop:normalform}{app:prf-normalform}
 
-Rows of the matrix $\Wwrite^{\ell}$ work too, or rows of $E$ if $\ell = 0$: if $\dm$ of them form an invertible matrix $W_1$, the change of basis $G = W_1^{-1}$ at $h_\ell$ turns them into $W_1G = I$. Take an attention block $B_\ell$ of a skipless transformer with $Hd_h = \dm$, so that $W_Q$ and $W_O$ are $\dm\times\dm$ matrices, invertible at generic parameters. The change of basis $G = W_Q$ at $h_{\ell-1}$ turns $W_Q$ into $W_Q^{-1}W_Q = I$, and the change of basis $G = W_O^{-1}$ at $h_\ell$ turns $W_O$ into $W_OW_O^{-1} = I$. Together they remove $2\dm^2$ parameters per layer. This is the reduction of \citet{graef2024tricks}, who sets $W_O$ and one of $W_Q$, $W_K$ and $W_V$ to the identity. By his count, it would remove $15$ percent of the weights of Mistral-7B if the model had no skip connections and no normalization. \Cref{prop:skipless} removes $\dm^2$ more, at the hidden state before the readout, and holds for every kind of block.
+Rows of the matrix $\Wwrite^{\ell}$ work too, or rows of $E$ if $\ell = 0$: if $\dm$ of them form an invertible matrix $W_1$, the change of basis $G = W_1^{-1}$ at $h_\ell$ turns them into $W_1G = I$.
+
+\begin{example*}[Choosing rows]
+Let $\dm = 2$ and $\dhid = 3$, and let $W_1$ consist of rows~1 and~3 of $\Wwrite^{\ell}$, outlined in red. The change of basis $G = W_1^{-1}$ at $h_\ell$ maps
+\[
+\Wwrite^{\ell} =
+\begin{tikzpicture}[baseline=(m.center)]
+\matrix (m) [matrix of math nodes, left delimiter={[}, right delimiter={]}, inner sep=1.5pt, column sep=5pt, row sep=2pt, nodes={minimum width=1.5em, minimum height=1.1em}] {2 & 1 \\ 0 & 3 \\ 1 & 1 \\};
+\node[draw=red, line width=0.7pt, rounded corners=1.5pt, inner sep=0pt, fit=(m-1-1)(m-1-2)] {};
+\node[draw=red, line width=0.7pt, rounded corners=1.5pt, inner sep=0pt, fit=(m-3-1)(m-3-2)] {};
+\end{tikzpicture}
+\quad\longmapsto\quad
+\Wwrite^{\ell}G =
+\begin{tikzpicture}[baseline=(m.center)]
+\matrix (m) [matrix of math nodes, left delimiter={[}, right delimiter={]}, inner sep=1.5pt, column sep=5pt, row sep=2pt, nodes={minimum width=1.5em, minimum height=1.1em}] {1 & 0 \\ -3 & 6 \\ 0 & 1 \\};
+\node[draw=red, line width=0.7pt, rounded corners=1.5pt, inner sep=0pt, fit=(m-1-1)(m-1-2)] {};
+\node[draw=red, line width=0.7pt, rounded corners=1.5pt, inner sep=0pt, fit=(m-3-1)(m-3-2)] {};
+\end{tikzpicture}
+, \qquad G = W_1^{-1} = \begin{bmatrix} 1 & -1 \\ -1 & 2 \end{bmatrix},
+\]
+and the next read $\Wread^{\ell+1}$ to $G^{-1}\Wread^{\ell+1} = W_1\Wread^{\ell+1}$. The two outlined rows now hold $\dm^2 = 4$ fixed entries, and the other row has changed.
+\end{example*}
+
+Take an attention block $B_\ell$ of a skipless transformer with $Hd_h = \dm$, so that $W_Q$ and $W_O$ are $\dm\times\dm$ matrices, invertible at generic parameters. The change of basis $G = W_Q$ at $h_{\ell-1}$ turns $W_Q$ into $W_Q^{-1}W_Q = I$, and the change of basis $G = W_O^{-1}$ at $h_\ell$ turns $W_O$ into $W_OW_O^{-1} = I$. Together they remove $2\dm^2$ parameters per layer. This is the reduction of \citet{graef2024tricks}, who sets $W_O$ and one of $W_Q$, $W_K$ and $W_V$ to the identity. By his count, it would remove $15$ percent of the weights of Mistral-7B if the model had no skip connections and no normalization. \Cref{prop:skipless} removes $\dm^2$ more, at the hidden state before the readout, and holds for every kind of block.
 
 \begin{figure}[t]
 \centering
