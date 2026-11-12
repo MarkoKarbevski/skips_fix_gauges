@@ -35,7 +35,7 @@
 | 30 | Skipless networks: one change of basis per hidden state | para | W_1, the chosen block | W_1, the chosen block | \begin{example*}[Choosing the submatrix] Take $1 \le \ell < L$ and wri |
 | 31 | Skipless networks: one change of basis per hidden state | statement |  |  | \begin{restatable}[Exact reduction without skips]{proposition}{propSki |
 | 32 | Skipless networks: one change of basis per hidden state | para |  |  | Rows of the matrix $\Wwrite^{\ell}$ work too, or rows of $E$ if $\ell  |
-| 33 | Skipless networks: one change of basis per hidden state | para |  |  | \begin{example*}[Choosing rows] Let $\dm = 2$ and $\dhid = 3$, and let |
+| 33 | Skipless networks: one change of basis per hidden state | para |  |  | \begin{example}[Choosing rows]\label{ex:rows} Let $\dm = 2$ and $\dhid |
 | 34 | Skipless networks: one change of basis per hidden state | para |  |  | Take an attention block $B_\ell$ of a skipless transformer with $Hd_h  |
 | 35 | Skipless networks: one change of basis per hidden state | float |  |  | \begin{figure}[t] \centering [a TikZ drawing, omitted here; the captio |
 | 36 | Residual blocks as skipless ones | para |  |  | \subsection{Residual blocks as skipless ones}\label{sec:learned} |
