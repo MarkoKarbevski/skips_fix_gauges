@@ -328,7 +328,7 @@ Rows of a write work too: if $\dm$ rows of the write into $h_\ell$ ($\Wwrite^{\e
 
 \subsection{Residual blocks as skipless ones}\label{sec:learned}
 
-In this subsection we embed blocks with learned skips into the form \eqref{eq:block}: the skip $A_\ell$ joins the read of its block, which becomes $[\,A_\ell \mid \Wread^{\ell}\,]$. The changes of basis of \cref{def:cob} then act on the skip as on any other read. When every $A_\ell$ is invertible, changes of basis chosen from the last block to the first turn every skip into the identity, and the network becomes a residual network (\cref{thm:learned}). Networks have no normalization here. Under RMSNorm a skip reads $h$ while its block reads $N_\varepsilon(h)$, and \cref{sec:norm} treats that case. A learned skip adds $hA$ to the output of a block, in place of $h$. It acts as $\dm$ more hidden units with the identity as activation, the read $A$ and the write $I$ (\cref{fig:junctions}a). We call them \emph{identity units} \citep[Section~4]{lin2018resnet}. Let the read of the block have $p$ columns and its write $q$ rows, so that $f$ maps $\R^{T\times p}$ to $\R^{T\times q}$. Define the fixed map of the wider block,
+In this subsection we embed blocks with learned skips into the form \eqref{eq:block}: the skip $A_\ell$ joins the read of its block, which becomes $[\,A_\ell \mid \Wread^{\ell}\,]$. The network is then a skipless network of wider blocks, and the reduction of \cref{sec:skipless} applies to it, with $A_\ell$ as the submatrix that becomes the identity. A second step merges two matrices that have no activation between them. When every $A_\ell$ is invertible, the two steps, repeated from the last block to the first, turn every skip into the identity, and the network becomes a residual network (\cref{thm:learned}). Networks have no normalization here. Under RMSNorm a skip reads $h$ while its block reads $N_\varepsilon(h)$, and \cref{sec:norm} treats that case. A learned skip adds $hA$ to the output of a block, in place of $h$. It acts as $\dm$ more hidden units with the identity as activation, the read $A$ and the write $I$ (\cref{fig:junctions}a). We call them \emph{identity units} \citep[Section~4]{lin2018resnet}. Let the read of the block have $p$ columns and its write $q$ rows, so that $f$ maps $\R^{T\times p}$ to $\R^{T\times q}$. Define the fixed map of the wider block,
 \[
 \tilde f : \R^{T\times\dm} \times \R^{T\times p} \to \R^{T\times(\dm+q)}, \qquad \tilde f\big([\,u \mid z\,]\big) = \big[\,u \mid f(z)\,\big],
 \]
@@ -336,15 +336,24 @@ which is the identity on the first $\dm$ columns and $f$ on the others. Then
 \begin{equation}\label{eq:mixed}
 hA + f(h\Wread)\,\Wwrite \;=\; \tilde f\big(h\,[\,A \mid \Wread\,]\big)\begin{bmatrix} I \\ \Wwrite \end{bmatrix}.
 \end{equation}
-We apply \cref{def:cob} to these wider blocks, with the reads and writes of \eqref{eq:mixed}. Under the changes of basis $G_{\ell-1}$ at $h_{\ell-1}$ and $G_\ell$ at $h_\ell$, the read of the identity units of block~$\ell$ becomes $G_{\ell-1}^{-1}A_\ell$ and their write becomes $G_\ell$. These units then add $h\,G_{\ell-1}^{-1}A_\ell\,G_\ell$ to the output of the block, so the block has a learned skip again, and the two changes of basis map it as
-\begin{equation}\label{eq:skipmap}
-A_\ell \;\mapsto\; G_{\ell-1}^{-1}\,A_\ell\,G_\ell.
-\end{equation}
-If $A_\ell$ is invertible, the choice $G_{\ell-1} = A_\ell G_\ell$ turns it into the identity. Start from $G_L = I$, which leaves the readout as it is, and make this choice for $\ell = L$, then $\ell = L-1$, down to $\ell = 1$. This gives, for every $\ell$ from $0$ to $L$,
+So a network with learned skips is a skipless network of these wider blocks, and the first $\dm$ columns of the read of block $\ell$ are $A_\ell$. Let every $A_\ell$ be invertible. Two steps turn the skips into the identity, one block at a time, starting from the last.
+
+\para{Step 1: the reduction of \cref{sec:skipless}.} This is the example of \cref{sec:skipless} with $W_1 = A_L$. The change of basis $G = A_L$ at $h_{L-1}$ maps the read of block $L$ and the write of block $L-1$ as
+\[
+[\,A_L \mid \Wread^{L}\,] \;\mapsto\; [\,I \mid A_L^{-1}\Wread^{L}\,], \qquad \begin{bmatrix} I \\ \Wwrite^{L-1} \end{bmatrix} \;\mapsto\; \begin{bmatrix} A_L \\ \Wwrite^{L-1}A_L \end{bmatrix}.
+\]
+The skip of block $L$ is now the identity.
+
+\para{Step 2: two matrices become one.} The identity units of block $L-1$ now have the read $A_{L-1}$ and the write $A_L$, with no activation between them. They add $h\,A_{L-1}A_L$ to the output of the block, exactly as identity units with the read $A_{L-1}A_L$ and the write $I$ do. So block $L-1$ has the learned skip $A_{L-1}A_L$.
+
+\para{Repeating the two steps.} Step~1 at $h_{L-2}$ uses the new skip $A_{L-1}A_L$ of block $L-1$, and Step~2 gives block $L-2$ the skip $A_{L-2}A_{L-1}A_L$. Continuing down to $h_0$, the change of basis at $h_\ell$ is
 \begin{equation}\label{eq:sweep}
 G_\ell \;=\; A_{\ell+1}A_{\ell+2}\cdots A_L \;=:\; \Lambda_\ell.
 \end{equation}
-Every skip becomes the identity, and the product of all the skips moves into the embedding, which becomes $E\,A_1\cdots A_L$.
+The write into $h_0$ is the embedding, which becomes $E\Lambda_0 = E\,A_1\cdots A_L$. Every skip is then the identity, and the readout is unchanged. In general, changes of basis $G_{\ell-1}$ at $h_{\ell-1}$ and $G_\ell$ at $h_\ell$ map the skip of block $\ell$ as
+\begin{equation}\label{eq:skipmap}
+A_\ell \;\mapsto\; G_{\ell-1}^{-1}\,A_\ell\,G_\ell.
+\end{equation}
 
 \begin{restatable}[Learned skips reduce to identity skips]{theorem}{thmLearned}\label{thm:learned}
 Without normalization, let every learned skip $A_\ell$ be invertible, and let $\Lambda_\ell = A_{\ell+1}\cdots A_L$, with $\Lambda_L = I$. The network with learned skips computes the same function as the residual network with the embedding $E\Lambda_0$, the reads $\Lambda_{\ell-1}^{-1}\Wread^{\ell}$, the writes $\Wwrite^{\ell}\Lambda_\ell$ and the readout $D$.
