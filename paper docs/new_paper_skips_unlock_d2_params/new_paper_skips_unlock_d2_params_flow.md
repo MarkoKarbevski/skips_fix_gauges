@@ -38,13 +38,13 @@
 | 33 | Skipless networks: one change of basis per hidden state | para |  |  | \begin{example}[Choosing rows]\label{ex:rows} Let $\dm = 2$ and $\dhid |
 | 34 | Skipless networks: one change of basis per hidden state | para |  |  | Take an attention block $B_\ell$ of a skipless transformer with $Hd_h  |
 | 35 | Skipless networks: one change of basis per hidden state | float |  |  | \begin{figure}[t] \centering [a TikZ drawing, omitted here; the captio |
-| 36 | Residual blocks as skipless ones | para |  |  | \subsection{Residual blocks as skipless ones}\label{sec:learned} |
-| 37 | Residual blocks as skipless ones | para | identity units | identity units | In this subsection we embed blocks with learned skips into the form \e |
-| 38 | Residual blocks as skipless ones | para |  |  | \para{Step 1: the reduction of \cref{sec:skipless}.} This is the examp |
-| 39 | Residual blocks as skipless ones | para |  |  | \para{Step 2: two matrices become one.} The identity units of block $L |
-| 40 | Residual blocks as skipless ones | para | Lambda | Lambda | \para{Repeating the two steps.} Step~1 at $h_{L-2}$ uses the new skip  |
-| 41 | Residual blocks as skipless ones | statement |  |  | \begin{restatable}[Learned skips reduce to identity skips]{theorem}{th |
-| 42 | Residual blocks as skipless ones | para |  |  | So the networks with invertible learned skips have $L\dm^2$ more param |
+| 36 | Learned skips: a telescoping change of basis | para |  |  | \subsection{Learned skips: a telescoping change of basis}\label{sec:le |
+| 37 | Learned skips: a telescoping change of basis | para |  |  | In \cref{sec:skipless} the change of basis at each hidden state was ch |
+| 38 | Learned skips: a telescoping change of basis | para |  |  | The skip $A_\ell$ multiplies $h_{\ell-1}$, and the result is added to  |
+| 39 | Learned skips: a telescoping change of basis | para | Lambda | Lambda | Let every $A_\ell$ be invertible. The new skip $G_{\ell-1}^{-1}A_\ell  |
+| 40 | Learned skips: a telescoping change of basis | statement |  |  | \begin{restatable}[Learned skips reduce to identity skips]{theorem}{th |
+| 41 | Learned skips: a telescoping change of basis | para |  |  | So the networks with invertible learned skips have $L\dm^2$ more param |
+| 42 | Learned skips: a telescoping change of basis | statement |  |  | \begin{remark}[The reduction is not unique]\label{rem:notunique} In a  |
 | 43 | Identity skips: one change of basis for the whole network | para |  |  | \subsection{Identity skips: one change of basis for the whole network} |
 | 44 | Identity skips: one change of basis for the whole network | para |  |  | \Cref{sec:learned} turned invertible learned skips into identity skips |
 | 45 | Identity skips: one change of basis for the whole network | para |  |  | A residual network keeps one change of basis, the same at all its hidd |
@@ -53,61 +53,60 @@
 | 48 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \subsection{RMSNorm and LayerNorm: orthogonal changes of basis}\label{ |
 | 49 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | Up to here the networks had no normalization. We now add pre-RMSNorm a |
 | 50 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | With pre-RMSNorm, the network with learned skips computes \begin{equat |
-| 51 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | A change of basis $G$ at $h$ turns $[\,h \mid N_\varepsilon(h)\,]$ int |
-| 52 | RMSNorm and LayerNorm: orthogonal changes of basis | statement |  |  | \begin{restatable}[Orthogonal changes of basis under RMSNorm]{theorem} |
-| 53 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{Learned skips under RMSNorm.} In \eqref{eq:prenorm} the skip $A_ |
-| 54 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{LayerNorm.} LayerNorm is RMSNorm after a projection that removes |
-| 55 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{Trained models.}\label{sec:trained} The reduction applies to tra |
-| 56 | Functional dimension with and without skips | para |  | redundancy | \section{Functional dimension with and without skips}\label{sec:gain}  |
-| 57 | Definition and a linear example | para |  |  | \subsection{Definition and a linear example}\label{sec:fd} |
-| 58 | Definition and a linear example | para |  |  | We first define the functional dimension and the redundancy, and compu |
-| 59 | Definition and a linear example | statement | F_theta, redundancy | F_theta | \begin{definition}[Functional dimension {\citep{grigsby2022functional} |
-| 60 | Definition and a linear example | para |  |  | A continuous symmetry adds to the redundancy: if a continuous family o |
-| 61 | Definition and a linear example | para |  |  | \begin{example}[Not all reductions are maximal]\label{ex:three} The li |
-| 62 | Definition and a linear example | para |  |  | \begin{example}[Fewer degrees of freedom than stored entries]\label{ex |
-| 63 | Upper bounds from the symmetries | para |  |  | \subsection{Upper bounds from the symmetries}\label{sec:count} |
-| 64 | Upper bounds from the symmetries | para |  |  | We now bound the functional dimension from above. A direction in which |
-| 65 | Upper bounds from the symmetries | para | s, symmetries inside, script G, symmetries inside blocks, symmetries inside the blocks | s, symmetries inside, script G, symmetries inside blocks, symmetries inside the blocks | Two kinds of symmetry bound the functional dimension. The changes of b |
-| 66 | Upper bounds from the symmetries | statement |  |  | \begin{restatable}[Upper bounds]{theorem}{thmUnlock}\label{thm:unlock} |
-| 67 | Upper bounds from the symmetries | statement | equality condition | equality condition | \begin{definition}[Equality condition]\label{def:equality} A network s |
-| 68 | Upper bounds from the symmetries | para |  |  | When the residual network satisfies it, each skip unlocks $\dim\G$ par |
-| 69 | Upper bounds from the symmetries | statement | identifiable up to its symmetries | identifiable up to its symmetries | \begin{definition}[Identifiability up to symmetries]\label{def:ident}  |
-| 70 | Upper bounds from the symmetries | para |  |  | \citet{vlacic2020affine} define identifiability up to an equivalence r |
-| 71 | Upper bounds from the symmetries | para |  |  | \para{Functional dimension and identifiability.} The equality conditio |
-| 72 | Upper bounds from the symmetries | statement |  |  | \begin{restatable}[The equality condition and local identifiability]{p |
-| 73 | Upper bounds from the symmetries | para |  |  | The proposition compares only parameters that are close to each other. |
-| 74 | Upper bounds from the symmetries | para |  |  | \para{The gain in a transformer.} Under the equality condition, a resi |
-| 75 | When the bounds are attained | para |  |  | \subsection{When the bounds are attained}\label{sec:onelayer} |
-| 76 | When the bounds are attained | para |  |  | The equality condition is a hypothesis, and it can fail (\cref{sec:mea |
-| 77 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for one block]{theorem}{thmOneBlock}\label |
-| 78 | When the bounds are attained | statement |  |  | \begin{remark*}[One attention block without a skip] For an attention b |
-| 79 | When the bounds are attained | para |  |  | At generic parameters, $\Xi_i$ and $\Psi_i$ are products of two factor |
-| 80 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for residual networks at any depth]{theore |
-| 81 | When the bounds are attained | para |  |  | \begin{corollary}[Residual networks are locally identifiable]\label{co |
-| 82 | When the bounds are attained | para |  |  | This is \cref{thm:resdepth} together with \cref{prop:localid}. Whether |
-| 83 | When the bounds are attained | para |  |  | \begin{corollary}[Attention blocks without embedding and readout]\labe |
-| 84 | When the bounds are attained | para |  |  | \citet{henry2026generic} proves this formula for one block without a s |
-| 85 | When the bounds are attained | statement |  |  | \begin{restatable}[Exact gain for $\tanh$ and GELU]{theorem}{thmExactG |
-| 86 | When the bounds are attained | para |  |  | By \cref{prop:localid}, the skipless networks of \cref{thm:exactgain}  |
-| 87 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
-| 88 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
-| 89 | Residual and skipless networks compute different functions | para |  |  | The gain in functional dimension says something about the functions th |
-| 90 | Residual and skipless networks compute different functions | statement | pointwise limit | pointwise limit | \begin{definition*}[Pointwise limit] Let $\mathcal X = \R^{T\times d_{ |
-| 91 | Residual and skipless networks compute different functions | para |  |  | If a sequence of networks of $\mathcal F$ converges to $F$ at every in |
-| 92 | Residual and skipless networks compute different functions | para | definable in an o-minimal structure | definable in an o-minimal structure | By \cref{def:fd,thm:resdepth}, the Jacobian of the residual network ha |
-| 93 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
-| 94 | Residual and skipless networks compute different functions | para |  |  | For GELU blocks without normalization, \citet{mijoski2026worth} show t |
-| 95 | Numerical ranks at depth, and a conjecture | para |  |  | \subsection{Numerical ranks at depth, and a conjecture}\label{sec:meas |
-| 96 | Numerical ranks at depth, and a conjecture | para |  |  | For skipless networks at depth, \cref{thm:exactgain} gives the equalit |
-| 97 | Numerical ranks at depth, and a conjecture | para |  |  | At depth we compute the rank of the Jacobian on a large batch of input |
-| 98 | Numerical ranks at depth, and a conjecture | float |  |  | \begin{table}[b] \centering\small \renewcommand{\arraystretch}{1.1} \b |
-| 99 | Numerical ranks at depth, and a conjecture | para |  |  | In two cases the measured rank stays below the upper bound. In skiples |
-| 100 | Numerical ranks at depth, and a conjecture | statement |  |  | \begin{conjecture}[Equality without skips]\label{conj:equality} With o |
-| 101 | Numerical ranks at depth, and a conjecture | para |  |  | The analogue of the conjecture is known for polynomial activations. \c |
-| 102 | Numerical ranks at depth, and a conjecture | para |  |  | \para{One-hot tokens.} With one-hot tokens under RMSNorm, the rows of  |
-| 103 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
-| 104 | Conclusion | para |  |  | Skip connections change how a network uses its parameters. Without ski |
-| 105 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth is open for the |
-| 106 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
-| 107 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
-| 108 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 51 | RMSNorm and LayerNorm: orthogonal changes of basis | statement |  |  | \begin{restatable}[Orthogonal changes of basis under RMSNorm]{theorem} |
+| 52 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{Learned skips under RMSNorm.} In \eqref{eq:prenorm} the skip $A_ |
+| 53 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{LayerNorm.} LayerNorm is RMSNorm after a projection that removes |
+| 54 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{Trained models.}\label{sec:trained} The reduction applies to tra |
+| 55 | Functional dimension with and without skips | para |  | redundancy | \section{Functional dimension with and without skips}\label{sec:gain}  |
+| 56 | Definition and a linear example | para |  |  | \subsection{Definition and a linear example}\label{sec:fd} |
+| 57 | Definition and a linear example | para |  |  | We first define the functional dimension and the redundancy, and compu |
+| 58 | Definition and a linear example | statement | F_theta, redundancy | F_theta | \begin{definition}[Functional dimension {\citep{grigsby2022functional} |
+| 59 | Definition and a linear example | para |  |  | A continuous symmetry adds to the redundancy: if a continuous family o |
+| 60 | Definition and a linear example | para |  |  | \begin{example}[Not all reductions are maximal]\label{ex:three} The li |
+| 61 | Definition and a linear example | para |  |  | \begin{example}[Fewer degrees of freedom than stored entries]\label{ex |
+| 62 | Upper bounds from the symmetries | para |  |  | \subsection{Upper bounds from the symmetries}\label{sec:count} |
+| 63 | Upper bounds from the symmetries | para |  |  | We now bound the functional dimension from above. A direction in which |
+| 64 | Upper bounds from the symmetries | para | s, symmetries inside, script G, symmetries inside blocks, symmetries inside the blocks | s, symmetries inside, script G, symmetries inside blocks, symmetries inside the blocks | Two kinds of symmetry bound the functional dimension. The changes of b |
+| 65 | Upper bounds from the symmetries | statement |  |  | \begin{restatable}[Upper bounds]{theorem}{thmUnlock}\label{thm:unlock} |
+| 66 | Upper bounds from the symmetries | statement | equality condition | equality condition | \begin{definition}[Equality condition]\label{def:equality} A network s |
+| 67 | Upper bounds from the symmetries | para |  |  | When the residual network satisfies it, each skip unlocks $\dim\G$ par |
+| 68 | Upper bounds from the symmetries | statement | identifiable up to its symmetries | identifiable up to its symmetries | \begin{definition}[Identifiability up to symmetries]\label{def:ident}  |
+| 69 | Upper bounds from the symmetries | para |  |  | \citet{vlacic2020affine} define identifiability up to an equivalence r |
+| 70 | Upper bounds from the symmetries | para |  |  | \para{Functional dimension and identifiability.} The equality conditio |
+| 71 | Upper bounds from the symmetries | statement |  |  | \begin{restatable}[The equality condition and local identifiability]{p |
+| 72 | Upper bounds from the symmetries | para |  |  | The proposition compares only parameters that are close to each other. |
+| 73 | Upper bounds from the symmetries | para |  |  | \para{The gain in a transformer.} Under the equality condition, a resi |
+| 74 | When the bounds are attained | para |  |  | \subsection{When the bounds are attained}\label{sec:onelayer} |
+| 75 | When the bounds are attained | para |  |  | The equality condition is a hypothesis, and it can fail (\cref{sec:mea |
+| 76 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for one block]{theorem}{thmOneBlock}\label |
+| 77 | When the bounds are attained | statement |  |  | \begin{remark*}[One attention block without a skip] For an attention b |
+| 78 | When the bounds are attained | para |  |  | At generic parameters, $\Xi_i$ and $\Psi_i$ are products of two factor |
+| 79 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for residual networks at any depth]{theore |
+| 80 | When the bounds are attained | para |  |  | \begin{corollary}[Residual networks are locally identifiable]\label{co |
+| 81 | When the bounds are attained | para |  |  | This is \cref{thm:resdepth} together with \cref{prop:localid}. Whether |
+| 82 | When the bounds are attained | para |  |  | \begin{corollary}[Attention blocks without embedding and readout]\labe |
+| 83 | When the bounds are attained | para |  |  | \citet{henry2026generic} proves this formula for one block without a s |
+| 84 | When the bounds are attained | statement |  |  | \begin{restatable}[Exact gain for $\tanh$ and GELU]{theorem}{thmExactG |
+| 85 | When the bounds are attained | para |  |  | By \cref{prop:localid}, the skipless networks of \cref{thm:exactgain}  |
+| 86 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
+| 87 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
+| 88 | Residual and skipless networks compute different functions | para |  |  | The gain in functional dimension says something about the functions th |
+| 89 | Residual and skipless networks compute different functions | statement | pointwise limit | pointwise limit | \begin{definition*}[Pointwise limit] Let $\mathcal X = \R^{T\times d_{ |
+| 90 | Residual and skipless networks compute different functions | para |  |  | If a sequence of networks of $\mathcal F$ converges to $F$ at every in |
+| 91 | Residual and skipless networks compute different functions | para | definable in an o-minimal structure | definable in an o-minimal structure | By \cref{def:fd,thm:resdepth}, the Jacobian of the residual network ha |
+| 92 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
+| 93 | Residual and skipless networks compute different functions | para |  |  | For GELU blocks without normalization, \citet{mijoski2026worth} show t |
+| 94 | Numerical ranks at depth, and a conjecture | para |  |  | \subsection{Numerical ranks at depth, and a conjecture}\label{sec:meas |
+| 95 | Numerical ranks at depth, and a conjecture | para |  |  | For skipless networks at depth, \cref{thm:exactgain} gives the equalit |
+| 96 | Numerical ranks at depth, and a conjecture | para |  |  | At depth we compute the rank of the Jacobian on a large batch of input |
+| 97 | Numerical ranks at depth, and a conjecture | float |  |  | \begin{table}[b] \centering\small \renewcommand{\arraystretch}{1.1} \b |
+| 98 | Numerical ranks at depth, and a conjecture | para |  |  | In two cases the measured rank stays below the upper bound. In skiples |
+| 99 | Numerical ranks at depth, and a conjecture | statement |  |  | \begin{conjecture}[Equality without skips]\label{conj:equality} With o |
+| 100 | Numerical ranks at depth, and a conjecture | para |  |  | The analogue of the conjecture is known for polynomial activations. \c |
+| 101 | Numerical ranks at depth, and a conjecture | para |  |  | \para{One-hot tokens.} With one-hot tokens under RMSNorm, the rows of  |
+| 102 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
+| 103 | Conclusion | para |  |  | Skip connections change how a network uses its parameters. Without ski |
+| 104 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth is open for the |
+| 105 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
+| 106 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
+| 107 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
