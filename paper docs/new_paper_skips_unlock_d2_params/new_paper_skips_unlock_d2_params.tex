@@ -1052,7 +1052,7 @@ The curve $\beta \mapsto (\sin\beta, \sin\sqrt2\,\beta)$ in $\R^2$ is the image 
 \end{remark}
 
 \begin{lemma}[A rank criterion]\label{lem:rankcrit}
-Let $F_\theta$, $\theta \in \R^P$, and $G_\eta$, $\eta \in \R^{P'}$, be the networks of two architectures, both maps from $\R^{T\times d_{\mathrm{in}}}$ to $\R^{T\times d_{\mathrm{out}}}$, such that for every input $x$ the output $F_\theta(x)$ is real-analytic in $\theta$ and $G_\eta(x)$ is real-analytic in $\eta$. Let a Lie group act smoothly on $\R^{P'}$ without changing $G_\eta$, with orbits of dimension at least $k$ at generic $\eta$. Suppose that at some $\theta_0$ the Jacobian of $\theta \mapsto (F_\theta(x))_{x \in X}$ has rank greater than $P' - k$ on some finite batch $X$.\\
+Let $\{F_\theta\}_{\theta \in \R^P}$ and $\{G_\eta\}_{\eta \in \R^{P'}}$ be two parametrized families of maps $\R^{T\times d_{\mathrm{in}}} \to \R^{T\times d_{\mathrm{out}}}$ such that, for every input $x$, $F_\theta(x)$ is real-analytic in $\theta$ and $G_\eta(x)$ is real-analytic in $\eta$. Let a Lie group act smoothly on $\R^{P'}$ without changing $G_\eta$, with orbits of dimension at least $k$ at generic $\eta$. Suppose that at some $\theta_0$ the Jacobian of $\theta \mapsto (F_\theta(x))_{x \in X}$ has rank greater than $P' - k$ on some finite batch $X$.\\
 \stpart{lem:rankcrit}{i}{} For almost every $\theta$, no $\eta$ satisfies $F_\theta = G_\eta$.\\
 \stpart{lem:rankcrit}{ii}{} If the outputs $G_\eta(x)$, $x \in X$, are definable functions of $\eta$, then for almost every $\theta$ there is a $\delta > 0$ such that every $\eta$ has $\norm{F_\theta(x) - G_\eta(x)} \ge \delta$ at some $x \in X$.
 \end{lemma}
