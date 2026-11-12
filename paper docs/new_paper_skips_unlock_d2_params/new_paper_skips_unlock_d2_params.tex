@@ -140,7 +140,7 @@ Skipless networks have recently been trained to varying degrees of success. \cit
 
 \subsection{Contributions}\label{sec:contributions}
 
-\para{Main result.} Residual networks attain the upper bound from the symmetries at any depth when their blocks are attention, $\tanh$, GELU, SwiGLU or GeGLU blocks (\cref{thm:resdepth}). These five kinds of block are real-analytic, and we call them \emph{analytic} blocks. The theorem holds at generic parameters, with or without pre-RMSNorm, within the scope of \cref{sec:setup}: in particular, for networks without biases and for continuous inputs, which excludes one-hot tokens. So, for each block, the parameters that a change of basis makes redundant in the skipless network move the function in the residual network. In this sense the skips unlock them (\cref{fig:gelu}). The skips raise the functional dimension by at least the number of these parameters, and by exactly that number when the skipless network attains its bound too. We prove that it does in three cases, all without normalization: networks of one block, of $\tanh$ blocks, and of GELU blocks with at least $2\dm$ hidden units (\cref{sec:onelayer}). For attention-only transformers with skip connections, the main result answers Conjecture~2.4 of \citet{henry2026generic}: the redundancy is that of the blocks, as conjectured, together with the one change of basis of the whole network (\cref{cor:henry}). The same holds with MLP blocks and under pre-RMSNorm.
+\para{Main result.} Residual networks attain the upper bound from the symmetries at any depth when their blocks are attention, $\tanh$, GELU, SwiGLU or GeGLU blocks (\cref{thm:resdepth}). These five kinds of block are real-analytic, and we call them \emph{analytic} blocks. The theorem holds at generic parameters, with or without pre-RMSNorm, within the scope of \cref{sec:setup}: in particular, for networks without biases and for continuous inputs, which excludes one-hot tokens. So, for each block, the parameters that a change of basis makes redundant in the skipless network move the function in the residual network. In this sense the skips unlock them (\cref{fig:gelu}). The skips raise the functional dimension by at least the number of these parameters, and by exactly that number when the skipless network attains its bound too. We prove that it does for networks of one block without normalization, and, at any depth and with or without pre-RMSNorm, for networks of $\tanh$ blocks and of GELU blocks with at least $2\dm$ hidden units (\cref{sec:onelayer}). For attention-only transformers with skip connections, the main result answers Conjecture~2.4 of \citet{henry2026generic}: the redundancy is that of the blocks, as conjectured, together with the one change of basis of the whole network (\cref{cor:henry}). The same holds with MLP blocks and under pre-RMSNorm.
 
 \begin{enumerate}[label=\arabic*.]
 \item \textit{Changes of basis, in one form for all blocks} (\cref{sec:reduce}). We write every block in one form, input weights followed by a fixed map and by output weights. In this form the change of basis is one symmetry for all blocks: it holds for MLP blocks and for attention blocks, with and without pre-RMSNorm, and it extends to blocks whose skip is a trainable matrix (item~3).
@@ -178,7 +178,9 @@ Skipless networks have recently been trained to varying degrees of success. \cit
 \quad\quad with pre-RMSNorm & at least $L\dm(\dm-1)/2$ & analytic & \rtag{Thm.}{thm:resdepth}{} \\
 \quad\quad\quad with $\varepsilon = 0$ & at least $L\dm(\dm-1)/2 + L$ & analytic & \rtag{Thm.}{thm:epszero}{} \\
 \quad $L \ge 2$ & exactly $L\dm^2$ & $\tanh$ & \rtag{Thm.}{thm:exactgain}{i} \\
+\quad\quad with pre-RMSNorm & exactly $L\dm(\dm-1)/2$ & $\tanh$ & \rtag{Thm.}{thm:exactgain}{i} \\
 \quad $L \ge 2$ & exactly $L\dm^2$ & GELU, $\dhid \ge 2\dm$ & \rtag{Thm.}{thm:exactgain}{ii} \\
+\quad\quad with pre-RMSNorm & exactly $L\dm(\dm-1)/2$ & GELU, $\dhid \ge 2\dm$ & \rtag{Thm.}{thm:exactgain}{ii} \\
 \midrule
 \multicolumn{4}{@{}l}{\emph{Residual networks that equal, or are limits of, skipless networks}} \\
 \quad same widths, any $L$ & measure zero & analytic & \rtag{Thm.}{thm:classes}{i} \\
@@ -514,20 +516,21 @@ Without normalization, consider a residual network of $L$ attention blocks at ge
 
 \citet{henry2026generic} proves that one attention block without a skip has $2\dm^2/H$ redundant dimensions, the changes of basis inside its $H$ heads, and conjectures that an attention-only transformer of $L$ blocks with skip connections has $L$ times as many (Corollary~2.3 and Conjecture~2.4 there). The corollary answers the conjecture. For the blocks alone the count is the conjectured one: $s$ is $L$ times the count for one block, and $P - s$ is the functional dimension stated there (ii). A transformer also has an embedding and a readout, and then the one change of basis of the whole network adds $\dm^2$ redundant dimensions (i). This is the symmetry that the product of the groups of the blocks leaves out (\cref{app:product}). \Cref{thm:resdepth} gives the same count with MLP blocks, and under pre-RMSNorm with $\dm(\dm-1)/2$ in place of $\dm^2$. The corollary gives the dimension of the set of parameters with the same function near generic parameters. Whether the symmetries reach all parameters with the same function, as Theorem~2.1 there shows for one block, is open.
 
+\needspace{6\baselineskip}
 \begin{restatable}[Exact gain for $\tanh$ and GELU]{theorem}{thmExactGain}\label{thm:exactgain}
-Without normalization, in the two cases below the skipless network satisfies the equality condition too, so the skips raise the functional dimension by exactly $L\dm^2$.\\
+With or without pre-RMSNorm, in the two cases below the skipless network satisfies the equality condition too, so the skips raise the functional dimension by exactly $L\dim\G$: by $L\dm^2$ without normalization, and by $L\dm(\dm-1)/2$ under RMSNorm.\\
 \stpart{thm:exactgain}{i}{} The blocks are $\tanh$ blocks.\\
 \stpart{thm:exactgain}{ii}{} The blocks are GELU blocks with $\dhid \ge 2\dm$.
 \end{restatable}
-\proofin{app:depth}
+\proofin{app:depth,app:rmsskipless}
 
-By \cref{prop:localid}, the skipless networks of \cref{thm:exactgain} are locally identifiable at generic parameters $\theta$. For $\tanh$ and GELU blocks $s = 0$, so every $\theta'$ near $\theta$ with the same function is obtained from $\theta$ by invertible matrices $G_0, \dots, G_L$ close to the identity, one per hidden state:
+By \cref{prop:localid}, the skipless networks of \cref{thm:exactgain} are locally identifiable at generic parameters $\theta$. For $\tanh$ and GELU blocks $s = 0$, so every $\theta'$ near $\theta$ with the same function is obtained from $\theta$ by matrices $G_0, \dots, G_L \in \G$ close to the identity, one per hidden state:
 \[
 E \mapsto EG_0, \qquad \Wread^{\ell} \mapsto G_{\ell-1}^{-1}\Wread^{\ell}, \qquad \Wwrite^{\ell} \mapsto \Wwrite^{\ell}G_\ell, \qquad D \mapsto G_L^{-1}D.
 \]
 In the residual network of \cref{cor:localid}, these matrices are all equal.
 
-\para{Proof sketches.} With one block, the parameters enter the function only through the products $ED$, $\Wwrite D$ and $E\Wread$. A factorization of a matrix of rank $\dm$ into two factors is unique up to a change of basis between them, so the skipless network keeps one change of basis at $h_0$ and one at $h_1$, and the term $xED$ of the skip ties them into one. At any depth, replace every $\Wwrite^{\ell}$ by $\tau\,\Wwrite^{\ell}$ with a small $\tau$. To first order in $\tau$, every block reads $h_0 = xE$, and the residual network computes $xED + \tau\sum_{\ell} B_\ell(xE)\,D$: the linear map $xED$ plus one wide block that holds all its hidden units and heads. This brings the one-block argument to every depth, and for analytic blocks a rank that is reached at one choice of weights is reached at almost all. For skipless $\tanh$ networks, the function determines the product of each write with the next read, up to permutations and sign flips \citep{fefferman1994}, and these products determine the weights up to the changes of basis. For skipless GELU networks, the proof starts from a residual network and absorbs each skip with $\dm$ more hidden units per block, so it reaches only blocks with $\dhid \ge 2\dm$.
+\para{Proof sketches.} With one block, the parameters enter the function only through the products $ED$, $\Wwrite D$ and $E\Wread$. A factorization of a matrix of rank $\dm$ into two factors is unique up to a change of basis between them, so the skipless network keeps one change of basis at $h_0$ and one at $h_1$, and the term $xED$ of the skip ties them into one. At any depth, replace every $\Wwrite^{\ell}$ by $\tau\,\Wwrite^{\ell}$ with a small $\tau$. To first order in $\tau$, every block reads $h_0 = xE$, and the residual network computes $xED + \tau\sum_{\ell} B_\ell(xE)\,D$: the linear map $xED$ plus one wide block that holds all its hidden units and heads. This brings the one-block argument to every depth, and for analytic blocks a rank that is reached at one choice of weights is reached at almost all. For skipless $\tanh$ networks, the function determines the product of each write with the next read, up to permutations and sign flips \citep{fefferman1994}, and these products determine the weights up to the changes of basis. For skipless GELU networks, the proof starts from a residual network and absorbs each skip with $\dm$ more hidden units per block, so it reaches only blocks with $\dhid \ge 2\dm$. For skipless networks under pre-RMSNorm, take small hidden states, where $N_\varepsilon(v) = v/\sqrt{\varepsilon} + O(\norm{v}^3)$. To first order the network is then the one without normalization, whose redundancy is the changes of basis at its hidden states. The orthogonal ones stay symmetries, and the others change the function at the next order, independently of each other and of all other directions (\cref{app:rmsskipless}).
 
 \para{RMSNorm with $\varepsilon = 0$.} The networks of \cref{sec:setup} have $\varepsilon > 0$. For $\varepsilon = 0$, RMSNorm keeps only the direction of a token, $N_\varepsilon(v) = \sqrt{\dm}\,v/\norm{v}$ for a row $v \neq 0$, so $N_\varepsilon(c\,hQ) = N_\varepsilon(h)\,Q$ for every number $c > 0$ and every orthogonal $Q$. Besides the symmetries inside its blocks, a residual network then has the symmetries
 \[
@@ -1253,8 +1256,8 @@ For small $\tau$, every hidden state at $\theta_\tau$ is $xE + O(\tau)$, so $\th
 
 \thmExactGain*
 
-\begin{proof}[Proof of \cref{thm:exactgain}]
-By \cref{thm:resdepth} the residual network satisfies the equality condition, so it remains to show it for the skipless network; the gain is then $L\dm^2$.
+\begin{proof}[Proof of \cref{thm:exactgain} without normalization]
+By \cref{thm:resdepth} the residual network satisfies the equality condition, so it remains to show it for the skipless network; the gain is then $L\dim\G$. We do this here without normalization, where $\dim\G = \dm^2$, and under pre-RMSNorm in \cref{app:rmsskipless}.
 
 \emph{Part (i), $\tanh$.} With read biases $b_\ell$ and write biases $c_\ell$, which may vanish, the skipless network computes
 \[
@@ -1355,6 +1358,243 @@ With skips, no unit of a ReLU$^2$ or ReGLU block with a nonzero read is dead. Su
 Whether almost every residual ReLU network whose blocks all satisfy $\norm{\Wread}\,\norm{\Wwrite} < 1$ has functional dimension $P - \dm^2 - s$ is open.
 
 
+\subsection{Skipless networks under pre-RMSNorm\texorpdfstring{ (Theorem~\ref*{thm:exactgain})}{}}\label{app:rmsskipless}
+
+This subsection proves \cref{thm:exactgain} under pre-RMSNorm, from its case without normalization (\cref{app:depth}). For a small row $v$, RMSNorm is linear to first order, $N_\varepsilon(v) = v/\sqrt{\varepsilon} + O(\norm{v}^3)$. So when the hidden states are small, the skipless pre-RMSNorm network is, to first order, the skipless network without normalization, and the kernel of the Jacobian of that network consists of the directions of the changes of basis at its $L+1$ hidden states. The orthogonal changes of basis are symmetries under RMSNorm as well. We show that the directions of the symmetric matrices change the function at the next order (\cref{lem:cobfirst}), independently of each other and of all other directions (\cref{lem:indeptanh} for $\tanh$, \cref{lem:indepgelu} for GELU). A count of ranks then gives the functional dimension (\cref{lem:rankpert,prop:rmsreduce}). The blocks are MLP blocks with the activation $\sigma$, without biases, and $\varepsilon > 0$. An MLP block acts on each token separately, so we take inputs with one token, $x \in \R^{1\times d_{\mathrm{in}}}$.
+
+\para{Small hidden states.} For parameters $\theta = \big(E,\ \{\Wread^{\ell},\ \Wwrite^{\ell}\}_{\ell=1}^{L},\ D\big)$ and a number $\lambda > 0$ let
+\begin{equation}\label{eq:thetalam}
+\theta_\lambda \;=\; \Big(\lambda\sqrt{\dm\varepsilon}\;E,\ \ \Big\{\frac{\Wread^{\ell}}{\lambda\sqrt{\dm}},\ \ \lambda\sqrt{\dm\varepsilon}\;\Wwrite^{\ell}\Big\}_{\ell=1}^{L},\ \ \frac{D}{\lambda\sqrt{\dm}}\Big).
+\end{equation}
+For every row $v$, $N_\varepsilon\big(\lambda\sqrt{\dm\varepsilon}\;v\big) = \lambda\sqrt{\dm}\;v\big/\sqrt{1 + \lambda^2\norm{v}^2}$. So the skipless pre-RMSNorm network at $\theta_\lambda$ has the hidden states $\lambda\sqrt{\dm\varepsilon}\;h^\lambda_\ell$ and the output $F^\lambda_\theta(x)$, where
+\begin{equation}\label{eq:Flam}
+h^\lambda_0 = xE, \qquad h^\lambda_\ell = \sigma\Big(\frac{h^\lambda_{\ell-1}\,\Wread^{\ell}}{\sqrt{1 + \lambda^2\norm{h^\lambda_{\ell-1}}^2}}\Big)\,\Wwrite^{\ell}, \qquad F^\lambda_\theta(x) = \frac{h^\lambda_L\,D}{\sqrt{1 + \lambda^2\norm{h^\lambda_L}^2}} .
+\end{equation}
+For $\lambda = 0$, \eqref{eq:Flam} is the skipless network without normalization, with the hidden states $h_\ell = h^0_\ell$. The output $F^\lambda_\theta(x)$ is real-analytic in $\lambda^2$, $\theta$ and $x$. The map $\theta \mapsto \theta_\lambda$ is linear and invertible, so on every finite batch $X$ the Jacobian of the pre-RMSNorm network at $\theta_\lambda$ has the rank of $\Der_\theta F^\lambda_X(\theta)$, where $F^\lambda_X(\theta)$ are the outputs of $F^\lambda_\theta$ on $X$.
+
+For $\ell = 0, \dots, L$ and a row $h \in \R^{1\times\dm}$, let $F_{>\ell}(h)$ be the output of $F^0_\theta$ when its hidden state $h_\ell$ is set to $h$:
+\[
+F_{>L}(h) = hD, \qquad F_{>\ell-1}(h) = F_{>\ell}\big(\sigma(h\Wread^{\ell})\,\Wwrite^{\ell}\big), \qquad\text{so that}\quad F^0_\theta(x) = F_{>0}(xE).
+\]
+We write $\Der F_{>\ell}(h)\,v$ for the derivative of $F_{>\ell}$ at $h$ along a row $v$, and $\Der_\theta F_{>\ell}(h)\,\eta$ for its derivative at fixed $h$ along a direction $\eta$ of the weights on which it depends. For invertible $\dm\times\dm$ matrices $G = (G_0, \dots, G_L)$ let
+\begin{equation}\label{eq:Gtheta}
+G\cdot\theta \;=\; \Big(EG_0,\ \big\{G_{\ell-1}^{-1}\Wread^{\ell},\ \Wwrite^{\ell}G_\ell\big\}_{\ell=1}^{L},\ G_L^{-1}D\Big),
+\end{equation}
+the parameters after the changes of basis $G_\ell$ at the hidden states $h_\ell$. For matrices $Y_0, \dots, Y_L \in \R^{\dm\times\dm}$ let
+\begin{equation}\label{eq:etaY}
+\eta^Y \;=\; \Big(EY_0,\ \big\{-Y_{\ell-1}\Wread^{\ell},\ \Wwrite^{\ell}Y_\ell\big\}_{\ell=1}^{L},\ -Y_LD\Big) \in \R^P ,
+\end{equation}
+the derivative of $G\cdot\theta$ at $\tau = 0$ for $G_\ell = \exp(\tau Y_\ell)$. For symmetric $Y_0, \dots, Y_L$ let
+\begin{equation}\label{eq:DeltaY}
+\Delta_Y(x) \;=\; \sum_{\ell=0}^{L}\ \big(h_\ell\,Y_\ell\,h_\ell^\top\big)\ \Der F_{>\ell}(h_\ell)\,h_\ell ,
+\end{equation}
+with $h_\ell$ the hidden states of $F^0_\theta$ at $x$. The first factor is a number, and $\Der F_{>\ell}(h_\ell)\,h_\ell$ is the derivative at $\mu = 1$ of the output when $h_\ell$ is replaced by $\mu\,h_\ell$.
+
+\begin{lemma}[A change of basis, to first order]\label{lem:cobfirst}
+Let $\theta \in \R^P$.\\
+\stpart{lem:cobfirst}{i}{} If every $Y_\ell$ is antisymmetric, then $\Der_\theta F^\lambda(\theta, x)\,\eta^Y = 0$ for every $\lambda \ge 0$ and every $x$.\\
+\stpart{lem:cobfirst}{ii}{} If every $Y_\ell$ is symmetric, then, uniformly for $x$ in a bounded set,
+\[
+\Der_\theta F^\lambda(\theta, x)\,\eta^Y \;=\; -\lambda^2\,\Delta_Y(x) + O(\lambda^4) \qquad (\lambda \to 0),
+\]
+and $\Der_\theta F^0(\theta, x)\,\eta^Y = 0$.
+\end{lemma}
+
+\begin{proof}
+Let $G_\ell = \exp(\tau Y_\ell)$, and define rows $\tilde h_0, \dots, \tilde h_L$ by
+\[
+\tilde h_0 = xE, \qquad \tilde h_\ell = \sigma\Big(\frac{\tilde h_{\ell-1}\,\Wread^{\ell}}{\sqrt{1 + \lambda^2\norm{\tilde h_{\ell-1}G_{\ell-1}}^2}}\Big)\,\Wwrite^{\ell}.
+\]
+By induction on $\ell$, the hidden states of \eqref{eq:Flam} at the parameters $G\cdot\theta$ of \eqref{eq:Gtheta} are $\tilde h_\ell G_\ell$: the first one is $xEG_0 = \tilde h_0G_0$, and if the state $\ell - 1$ is $\tilde h_{\ell-1}G_{\ell-1}$, block $\ell$ reads $\tilde h_{\ell-1}G_{\ell-1}\,G_{\ell-1}^{-1}\Wread^{\ell}$ divided by $\sqrt{1 + \lambda^2\norm{\tilde h_{\ell-1}G_{\ell-1}}^2}$ and writes $\tilde h_\ell G_\ell$. In the same way the output is $\tilde h_LD\big/\sqrt{1 + \lambda^2\norm{\tilde h_LG_L}^2}$. So $\tau$ enters only through the norms $\norm{\tilde h_\ell G_\ell}$. If $Y_\ell$ is antisymmetric, $G_\ell$ is orthogonal and $\norm{\tilde hG_\ell} = \norm{\tilde h}$ for every row $\tilde h$, so the output does not depend on $\tau$, which is (i). If $Y_\ell$ is symmetric, $\norm{\tilde hG_\ell}^2 = \norm{\tilde h}^2 + 2\tau\,\tilde hY_\ell\tilde h^\top + O(\tau^2)$, so
+\[
+\frac{1}{\sqrt{1 + \lambda^2\norm{\tilde hG_\ell}^2}} \;=\; \frac{\mu_\ell(\tau, \tilde h)}{\sqrt{1 + \lambda^2\norm{\tilde h}^2}}, \qquad \mu_\ell(\tau, \tilde h) \;=\; 1 - \tau\,\frac{\lambda^2\,\tilde hY_\ell\tilde h^\top}{1 + \lambda^2\norm{\tilde h}^2} + O(\tau^2).
+\]
+Hence the output is that of \eqref{eq:Flam} at $\theta$ when, for every $\ell$, the row that is read from the hidden state $\ell$ is multiplied by the number $\mu_\ell(\tau, \tilde h_\ell)$. As $\mu_\ell(0, \tilde h) = 1$ for every $\tilde h$, only the derivative of $\mu_\ell$ in $\tau$ enters at $\tau = 0$, where $\tilde h_\ell = h^\lambda_\ell$, and the chain rule gives
+\[
+\Der_\theta F^\lambda(\theta, x)\,\eta^Y \;=\; -\lambda^2\,\sum_{\ell=0}^{L}\ \frac{h^\lambda_\ell\,Y_\ell\,(h^\lambda_\ell)^\top}{1 + \lambda^2\norm{h^\lambda_\ell}^2}\ \ \partial_\ell F^\lambda_\theta(x),
+\]
+where $\partial_\ell F^\lambda_\theta(x)$ is the derivative at $\mu = 1$ of the output of \eqref{eq:Flam} when the row that is read from $h^\lambda_\ell$ is multiplied by $\mu$. The sum is real-analytic in $\lambda^2$, and at $\lambda = 0$ it is $\Delta_Y(x)$, since $h^0_\ell = h_\ell$ and $\partial_\ell F^0_\theta(x) = \Der F_{>\ell}(h_\ell)\,h_\ell$.
+\end{proof}
+
+\begin{lemma}[Rank after a perturbation]\label{lem:rankpert}
+Let $\mathcal J(t) = \mathcal J_0 + t\,\mathcal J_1 + O(t^2)$ be matrices, for $t \to 0$. Let $\mathcal W_0 \subseteq \ker\mathcal J_0$ be a subspace such that every $\eta \in \ker\mathcal J_0$ with $\mathcal J_1\eta \in \operatorname{Im}\mathcal J_0$ lies in $\mathcal W_0$. Then for all small $t \neq 0$,
+\[
+\operatorname{rank}\mathcal J(t) \;\ge\; \operatorname{rank}\mathcal J_0 + \dim\ker\mathcal J_0 - \dim\mathcal W_0 .
+\]
+\end{lemma}
+
+\begin{proof}
+Let $\mathcal W_1$ be a complement of $\mathcal W_0$ in $\ker\mathcal J_0$, and $\mathcal C$ a complement of $\ker\mathcal J_0$ in the domain. For $t \neq 0$, the linear map $\eta + \eta' \mapsto \mathcal J(t)\,\eta + \frac1t\,\mathcal J(t)\,\eta'$ on $\mathcal C \oplus \mathcal W_1$ has rank at most $\operatorname{rank}\mathcal J(t)$. As $\mathcal J_0\eta' = 0$, it tends to $\eta + \eta' \mapsto \mathcal J_0\eta + \mathcal J_1\eta'$ for $t \to 0$. This limit is injective: if $\mathcal J_0\eta + \mathcal J_1\eta' = 0$, then $\mathcal J_1\eta' \in \operatorname{Im}\mathcal J_0$, so $\eta' \in \mathcal W_0 \cap \mathcal W_1 = 0$, and then $\eta \in \mathcal C \cap \ker\mathcal J_0 = 0$. So the map is injective for small $t \neq 0$, and $\operatorname{rank}\mathcal J(t) \ge \dim\mathcal C + \dim\mathcal W_1$.
+\end{proof}
+
+\begin{proposition}[Reduction to the network without normalization]\label{prop:rmsreduce}
+Let $\theta$ be parameters at which $E$ and every $\Wwrite^{\ell}$ have rank $\dm$, and let $X$ be a finite batch such that
+\begin{itemize}[leftmargin=2.2em]
+\item[(a)] $\operatorname{rank}\Der_\theta F^0_X(\theta) = P - (L+1)\dm^2$, and
+\item[(b)] if symmetric matrices $Y_0, \dots, Y_L$ and a direction $\eta \in \R^P$ satisfy $\Delta_Y(x) = \Der_\theta F^0(\theta, x)\,\eta$ for all $x \in X$, then $Y_0 = \dots = Y_L = 0$.
+\end{itemize}
+Then for all small $\lambda > 0$ the Jacobian of the skipless pre-RMSNorm network at $\theta_\lambda$ has rank at least $P - (L+1)\dm(\dm-1)/2$ on $X$.
+\end{proposition}
+
+\begin{proof}
+Let $\mathcal J(t) = \Der_\theta F^{\sqrt t}_X(\theta)$, which is real-analytic in $t = \lambda^2$, with $\mathcal J_0 = \Der_\theta F^0_X(\theta)$. Every matrix is the sum of an antisymmetric and a symmetric one, and $\eta^Y$ is linear in $Y$, so by \cref{lem:cobfirst} every $\eta^Y$ of \eqref{eq:etaY} lies in $\ker\mathcal J_0$. The map $Y \mapsto \eta^Y$ is injective, since $EY_0 = 0$ and $\Wwrite^{\ell}Y_\ell = 0$ give $Y_0 = 0$ and $Y_\ell = 0$. So the directions $\eta^Y$ form a space of dimension $(L+1)\dm^2$, which by (a) is all of $\ker\mathcal J_0$. Let $\mathcal W_0$ be the space of the $\eta^Y$ with antisymmetric $Y_\ell$, of dimension $(L+1)\dm(\dm-1)/2$. By \cpref{lem:cobfirst}{i}, $\mathcal J(t)$ vanishes on $\mathcal W_0$ for every $t$, and so does $\mathcal J_1$. By \cpref{lem:cobfirst}{ii}, $\mathcal J_1\eta^Y$ is $-\Delta_Y$ on $X$ when the $Y_\ell$ are symmetric. Now let $\eta^Y \in \ker\mathcal J_0$ with $\mathcal J_1\eta^Y \in \operatorname{Im}\mathcal J_0$, and let $Y'_\ell$ be the symmetric part of $Y_\ell$. Then $\Delta_{Y'} = \Der_\theta F^0(\theta, \cdot)\,\eta$ on $X$ for some $\eta$, so $Y' = 0$ by (b), and $\eta^Y \in \mathcal W_0$. \Cref{lem:rankpert} gives
+\[
+\operatorname{rank}\mathcal J(t) \;\ge\; P - (L+1)\dm^2 + (L+1)\dm^2 - (L+1)\dm(\dm-1)/2
+\]
+for small $t > 0$, and $\mathcal J(t)$ has the rank of the Jacobian of the pre-RMSNorm network at $\theta_\lambda$ with $\lambda = \sqrt t$.
+\end{proof}
+
+What remains is condition (b): for symmetric $Y \neq 0$, the function $\Delta_Y$ is not a derivative of the network without normalization along its parameters. The next lemma prepares the case of $\tanh$.
+
+\begin{lemma}[Separation on a ray]\label{lem:raysep}
+Let $u_1, \dots, u_q$ be real numbers that are linearly independent over $\mathbb Q$, and let $\mathcal T_0, \dots, \mathcal T_K$ be real-analytic maps from $\R^{1\times q}$ to $\R^{1\times d_{\mathrm{out}}}$. If
+\[
+\sum_{i=0}^{K} t^i\ \mathcal T_i\big(\tanh(tu_1), \dots, \tanh(tu_q)\big) \;=\; 0 \qquad\text{for all } t > 0,
+\]
+then $\mathcal T_i = 0$ on $\R^{1\times q}$ for every $i$.
+\end{lemma}
+
+\begin{proof}
+No $u_j$ is zero. Let $s_j$ be the sign of $u_j$ and $\zeta_j(t) = e^{-2\lvert u_j\rvert t} \in (0, 1)$, so that $\tanh(tu_j) = s_j\,(1 - \zeta_j(t))/(1 + \zeta_j(t))$. The maps $\zeta \mapsto \mathcal T_i\big(s_1\frac{1 - \zeta_1}{1 + \zeta_1}, \dots, s_q\frac{1 - \zeta_q}{1 + \zeta_q}\big)$ are real-analytic near $\zeta = 0$, so for some $\rho \in (0, 1)$ they are sums of power series $\sum_\alpha b_{i,\alpha}\,\zeta^\alpha$, over the multi-indices $\alpha = (\alpha_1, \dots, \alpha_q)$ of nonnegative integers, that converge absolutely for $\lvert\zeta_j\rvert \le \rho$. Choose $t_0 \ge 1$ with $\zeta_j(t_0) \le \rho$ for all $j$. For $t \ge t_0$ the hypothesis reads
+\[
+\sum_\alpha p_\alpha(t)\,e^{-\mu_\alpha t} = 0, \qquad p_\alpha(t) = \sum_{i=0}^{K} t^i\,b_{i,\alpha}, \qquad \mu_\alpha = 2\sum_{j=1}^{q}\alpha_j\,\lvert u_j\rvert .
+\]
+The numbers $\mu_\alpha$ are distinct for distinct $\alpha$, because the $u_j$ are linearly independent over $\mathbb Q$, and only finitely many of them lie below any bound, because every $\lvert u_j\rvert > 0$. Suppose that some $p_\alpha$ is not zero, and among these let $\alpha^*$ have the smallest $\mu_\alpha$, say $\mu^*$. Let $\gamma > 0$ be the distance from $\mu^*$ to the next larger $\mu_\alpha$. For $t \ge t_0$,
+\[
+\lvert p_{\alpha^*}(t)\rvert \;\le\; \sum_{\mu_\alpha > \mu^*}\lvert p_\alpha(t)\rvert\,e^{-(\mu_\alpha - \mu^*)t}
+\;\le\; t^K\,e^{-\gamma(t - t_0)}\,e^{\mu^*t_0}\,\sum_{i=0}^{K}\sum_\alpha\lvert b_{i,\alpha}\rvert\,\zeta(t_0)^\alpha ,
+\]
+which tends to $0$ as $t \to \infty$. A polynomial that tends to $0$ is zero, a contradiction. So every $b_{i,\alpha} = 0$, and every $\mathcal T_i$ vanishes on the image of a neighborhood of $\zeta = 0$, which is a neighborhood of the row $(s_1, \dots, s_q)$. A real-analytic map on $\R^{1\times q}$ that vanishes on an open set vanishes everywhere.
+\end{proof}
+
+\begin{lemma}[Independence for $\tanh$]\label{lem:indeptanh}
+Let $\sigma = \tanh$, and let $\theta$ satisfy
+\begin{itemize}[leftmargin=2.9em]
+\item[(T1)] $E$, $D$ and every $\Wwrite^{\ell}$ have rank $\dm$;
+\item[(T2)] every $\dm\times\dm$ matrix $\Wread^{\ell}\Wwrite^{\ell}$ is invertible;
+\item[(T3)] for every $\ell$, the columns of $\Wread^{\ell}$ are linearly independent over $\mathbb Q$.
+\end{itemize}
+If symmetric matrices $Y_0, \dots, Y_L$ and a direction $\eta \in \R^P$ satisfy $\Delta_Y(x) = \Der_\theta F^0(\theta, x)\,\eta$ for all $x \in \R^{1\times d_{\mathrm{in}}}$, then $Y_0 = \dots = Y_L = 0$.
+\end{lemma}
+
+Conditions (T1) to (T3) hold outside a set of measure zero: (T3) fails only on countably many proper linear subspaces. The proof goes through the blocks one by one. On a ray, the outputs $\tanh(tu_j)$ of the hidden units of one block are linked only through $t$. \Cref{lem:raysep} removes this link, so the identity holds for every row of outputs of these hidden units, and what is left is the same statement for the blocks after it.
+
+\begin{proof}
+Write $\Wwrite^{0} = E$. For $k \in \{0, \dots, L\}$ and a row $w$ with as many entries as $\Wwrite^{k}$ has rows, let
+\[
+h_k = w\,\Wwrite^{k}, \qquad h_\ell = \tanh(h_{\ell-1}\Wread^{\ell})\,\Wwrite^{\ell} \quad (k < \ell \le L),
+\]
+the hidden states of the network without normalization from $h_k$ on. We prove, for $k = L, L-1, \dots, 0$:
+
+\smallskip
+\noindent\emph{Claim $(C_k)$.} Let $Y_k, \dots, Y_L$ be symmetric, let $Z$ be a matrix of the size of $\Wwrite^{k}$, and let $\eta$ be a direction of the weights of the blocks $k+1, \dots, L$ and of $D$. If for every row $w$
+\begin{equation}\label{eq:Ck}
+\sum_{\ell=k}^{L}\ \big(h_\ell Y_\ell h_\ell^\top\big)\,\Der F_{>\ell}(h_\ell)\,h_\ell \;=\; \Der F_{>k}(h_k)\,(wZ) + \Der_\theta F_{>k}(h_k)\,\eta ,
+\end{equation}
+then $Y_k = \dots = Y_L = 0$.
+
+\smallskip
+The lemma is $(C_0)$ with $w = x$ and $Z = \eta_E$, because $\Der_\theta F^0(\theta, x)\,\eta = \Der F_{>0}(xE)\,(x\eta_E) + \Der_\theta F_{>0}(xE)\,\eta$.
+
+\emph{$(C_L)$.} Here $F_{>L}(h) = hD$, and \eqref{eq:Ck} is $\big(h_LY_Lh_L^\top\big)\,h_LD = wZD + h_L\eta_D$ with $h_L = w\,\Wwrite^{L}$. The left side is homogeneous of degree $3$ in $w$ and the right side of degree $1$, so both vanish. Where $h_L \neq 0$ we have $h_LD \neq 0$ by (T1), so $h_LY_Lh_L^\top = 0$ for all $w$. As $\Wwrite^{L}$ has rank $\dm$, $h_L$ takes every value, and $Y_L = 0$.
+
+\emph{From $(C_{k+1})$ to $(C_k)$.} Let $W = \Wread^{k+1}$, with the columns $c_1, \dots, c_q$, and $V = \Wwrite^{k+1}$. For rows $\tilde w, v \in \R^{1\times q}$ let
+\[
+\mathcal D(\tilde w)\,v \;=\; \Der F_{>k+1}(\tilde wV)\,\Big(\big((1 - \tilde w^2)\odot v\big)\,V\Big),
+\]
+where $\odot$ is the entrywise product of two rows and $1 - \tilde w^2$ is the row with the entries $1 - \tilde w_j^2$. As $\tanh' = 1 - \tanh^2$, the chain rule gives $\Der F_{>k}(h)\,v' = \mathcal D(\tilde w)\,(v'W)$ for rows $h$ and $v'$, with $\tilde w = \tanh(hW)$ the row of the outputs of the hidden units of block $k+1$. Take $w = tn$ with a row $n$ and $t > 0$, and let $\bar h = n\,\Wwrite^{k}$ and $u = \bar hW$, with the entries $u_j = \bar hc_j$. Then $h_k = t\bar h$, $\tilde w = \tanh(tu)$ and $h_{k+1} = \tilde wV$, and the terms of \eqref{eq:Ck} are
+\begin{align*}
+\big(h_kY_kh_k^\top\big)\,\Der F_{>k}(h_k)\,h_k &= t^3\,\big(\bar hY_k\bar h^\top\big)\,\mathcal D(\tilde w)\,u,\\
+\Der F_{>k}(h_k)\,(wZ) &= t\,\mathcal D(\tilde w)\,(nZW),\\
+\Der_\theta F_{>k}(h_k)\,\eta &= t\,\mathcal D(\tilde w)\,(\bar h\,\eta_W) + \Der F_{>k+1}(\tilde wV)\,(\tilde w\,\eta_V) + \Der_\theta F_{>k+1}(\tilde wV)\,\eta' ,
+\end{align*}
+where $\eta_W$ and $\eta_V$ are the entries of $\eta$ at $\Wread^{k+1}$ and $\Wwrite^{k+1}$ and $\eta'$ is the rest of $\eta$. The terms of \eqref{eq:Ck} with $\ell \ge k+1$ depend on $w$ only through $h_{k+1} = \tilde wV$. So \eqref{eq:Ck} at $w = tn$ reads
+\[
+t^3\,\mathcal T_3(\tilde w) - t\,\mathcal T_1(\tilde w) - \mathcal T_0(\tilde w) = 0 \qquad\text{at } \tilde w = \big(\tanh(tu_1), \dots, \tanh(tu_q)\big),
+\]
+with maps that are defined and real-analytic for every row $\tilde w \in \R^{1\times q}$:
+\begin{align*}
+\mathcal T_3(\tilde w) &= \big(\bar hY_k\bar h^\top\big)\,\mathcal D(\tilde w)\,u, \qquad\qquad \mathcal T_1(\tilde w) = \mathcal D(\tilde w)\,(nZW + \bar h\,\eta_W),\\
+\mathcal T_0(\tilde w) &= \Der F_{>k+1}(h_{k+1})\,(\tilde w\,\eta_V) + \Der_\theta F_{>k+1}(h_{k+1})\,\eta' - \sum_{\ell=k+1}^{L}\big(h_\ell Y_\ell h_\ell^\top\big)\,\Der F_{>\ell}(h_\ell)\,h_\ell ,
+\end{align*}
+where $h_{k+1} = \tilde wV$ in the last line. By (T1) and (T3) the columns $\Wwrite^{k}c_j$ are linearly independent over $\mathbb Q$. For integers $\kappa_1, \dots, \kappa_q$, not all zero, $\sum_j\kappa_ju_j = n\,\Wwrite^{k}\sum_j\kappa_jc_j$ vanishes only for $n$ in a hyperplane. So for $n$ outside countably many hyperplanes the numbers $u_j$ are linearly independent over $\mathbb Q$, and \cref{lem:raysep} gives $\mathcal T_3 = \mathcal T_1 = \mathcal T_0 = 0$ on $\R^{1\times q}$.
+
+At $\tilde w = 0$ we get $\mathcal T_3(0) = \big(\bar hY_k\bar h^\top\big)\,\Der F_{>k+1}(0)\,(uV)$, with $uV = \bar h\,\Wread^{k+1}\Wwrite^{k+1}$. As $\tanh'(0) = 1$, $\Der F_{>k+1}(0)$ is the product of the matrices $\Wread^{\ell}\Wwrite^{\ell}$, $\ell > k+1$, and of $D$, which is injective on rows by (T1) and (T2). By (T2), $uV \neq 0$ when $\bar h \neq 0$. So $\bar hY_k\bar h^\top = 0$ for all $n$ outside countably many hyperplanes, hence for all $n$, and $Y_k = 0$ because $\bar h = n\,\Wwrite^{k}$ takes every value.
+
+Finally, $\mathcal T_0 = 0$ for every row $\tilde w$ is \eqref{eq:Ck} for $k+1$, with $\tilde w$ in the place of $w$, $\eta_V$ in the place of $Z$ and $\eta'$ in the place of $\eta$. By $(C_{k+1})$, $Y_{k+1} = \dots = Y_L = 0$.
+\end{proof}
+
+\para{The same blocks with ReLU.} For GELU blocks we compare each block with the block that has ReLU in place of GELU,
+\[
+\hat B_\ell(v) \;=\; \mathrm{ReLU}(v\,\Wread^{\ell})\,\Wwrite^{\ell}, \qquad v \in \R^{1\times\dm},
+\]
+which is piecewise linear, with $\hat B_\ell(tv) = t\,\hat B_\ell(v)$ for $t > 0$. Suppose that
+\begin{itemize}[leftmargin=2.9em]
+\item[(G1)] for every $\ell$ and all rows $v, v'$: $\ \norm{\hat B_\ell(v) - \hat B_\ell(v') - (v - v')} \le \frac12\norm{v - v'}$.
+\end{itemize}
+Then $\frac12\norm{v - v'} \le \norm{\hat B_\ell(v) - \hat B_\ell(v')}$, and for every row $w$ the map $v \mapsto w - \big(\hat B_\ell(v) - v\big)$ is a contraction, whose fixed point $v$ has $\hat B_\ell(v) = w$. So every $\hat B_\ell$ is a bijection of $\R^{1\times\dm}$, with $\hat B_\ell(v) \neq 0$ for $v \neq 0$. For a row $\hat h_0$ let $\hat h_\ell = \hat B_\ell(\hat h_{\ell-1})$. For $\ell < k$, the row $\hat h_\ell$ is then a piecewise linear function of $\hat h_{k-1}$.
+
+\begin{lemma}[Independence for GELU]\label{lem:indepgelu}
+Let $\sigma$ be GELU, and let $\theta$ satisfy (G1) and
+\begin{itemize}[leftmargin=2.9em]
+\item[(G2)] $E$ and $D$ have rank $\dm$, and every $\Wread^{\ell}\Wwrite^{\ell}$ is invertible;
+\item[(G3)] for every block $k$, every column $c_j$ of $\Wread^{k}$ is nonzero, and there is a row $v^*$ with $v^*c_j = 0$ and $v^*c_i \neq 0$ for the other columns $c_i$ of $\Wread^{k}$, such that every $\hat h_\ell$ with $\ell < k$, as a function of $\hat h_{k-1}$, is linear near $v^*$ and near $-v^*$.
+\end{itemize}
+If symmetric matrices $Y_0, \dots, Y_L$ and a direction $\eta \in \R^P$ satisfy $\Delta_Y(x) = \Der_\theta F^0(\theta, x)\,\eta$ for all $x \in \R^{1\times d_{\mathrm{in}}}$, then $Y_0 = \dots = Y_L = 0$.
+\end{lemma}
+
+The three conditions hold on a set of parameters of positive measure when every block has $\dhid \ge 2\dm$. At $\Wread^{\ell} = [\,I \mid -I \mid 0\,]$ and $\Wwrite^{\ell}$ with the rows of $I$, of $-I$ and zero rows, $\hat B_\ell(v) = \mathrm{ReLU}(v) - \mathrm{ReLU}(-v) = v$ and $\Wread^{\ell}\Wwrite^{\ell} = 2I$. As ReLU is $1$-Lipschitz, the smallest Lipschitz constant of $\hat B_\ell - \mathrm{id}$ depends continuously on the weights, so (G1) and (G2) hold on a nonempty open set. There, each $\hat h_\ell$ with $\ell < k$ is linear in $\hat h_{k-1}$ outside finitely many hyperplanes through $0$, which the blocks $1, \dots, k-1$ determine. A row $v^*$ as in (G3) exists when $c_j$ is not zero, is not a multiple of another column of $\Wread^{k}$, and $\{v : vc_j = 0\}$ is none of these hyperplanes. This excludes finitely many proper algebraic subsets of the matrices $\Wread^{k}$, so (G3) holds at almost all parameters of the open set.
+
+\begin{proof}
+\emph{Step 1: rays.} GELU is $\sigma(z) = \frac z2\big(1 + \operatorname{erf}(z/\sqrt2)\big)$. As $1 - \operatorname{erf}(z/\sqrt2) \le e^{-z^2/2}$ for $z \ge 0$, there is a number $\kappa$ with
+\begin{equation}\label{eq:gelufacts}
+\lvert\sigma(z) - \mathrm{ReLU}(z)\rvert \le \kappa, \qquad \lvert z\,\sigma'(z) - \mathrm{ReLU}(z)\rvert \le \kappa, \qquad \lvert\sigma'(z)\rvert \le \kappa \qquad\text{for all } z,
+\end{equation}
+and $\sigma'(z) \to 1$ for $z \to +\infty$, $\sigma'(z) \to 0$ for $z \to -\infty$. Fix a row $n$, let $\hat h_0 = nE$, and let $x = tn$ with $t \to \infty$. We claim that
+\begin{equation}\label{eq:geluasym}
+\begin{gathered}
+h_\ell(tn) = t\,\hat h_\ell + O(1), \qquad \Der F_{>\ell}\big(h_\ell(tn)\big)\,h_\ell(tn) = t\,\hat h_L\,D + o(t),\\
+\norm{\Der_\theta F^0(\theta, tn)\,\eta} = O(t).
+\end{gathered}
+\end{equation}
+The first follows by induction from \eqref{eq:gelufacts}: $h_\ell = \sigma(h_{\ell-1}\Wread^{\ell})\Wwrite^{\ell} = \mathrm{ReLU}(h_{\ell-1}\Wread^{\ell})\Wwrite^{\ell} + O(1)$. For the second, let $\dot h_\ell = h_\ell(tn)$ and $\dot h_j = \big(\sigma'(h_{j-1}\Wread^{j})\odot(\dot h_{j-1}\Wread^{j})\big)\,\Wwrite^{j}$ for $j > \ell$, so that $\Der F_{>\ell}(h_\ell)\,h_\ell = \dot h_LD$. If $\dot h_{j-1} = t\,\hat h_{j-1} + o(t)$, then for a hidden unit of block $j$ with the read column $c$ the entry $\sigma'(h_{j-1}c)\,(\dot h_{j-1}c)$ is $t\,\mathrm{ReLU}(\hat h_{j-1}c) + o(t)$: for $\hat h_{j-1}c > 0$ the factor $\sigma'$ tends to $1$, for $\hat h_{j-1}c < 0$ it tends to $0$, and for $\hat h_{j-1}c = 0$ it is bounded while $\dot h_{j-1}c = o(t)$. So $\dot h_j = t\,\hat h_j + o(t)$ for all $j \ge \ell$. The third holds because $\sigma'$ is bounded and $\lvert\sigma(z)\rvert \le \lvert z\rvert + \kappa$, so that every $\Der F_{>\ell}(h)$ is bounded uniformly in $h$ and every $h_\ell(tn)$ is $O(t)$. Dividing $\Delta_Y(tn) = \Der_\theta F^0(\theta, tn)\,\eta$ by $t^3$ and letting $t \to \infty$ gives, by \eqref{eq:geluasym},
+\[
+\Big(\sum_{\ell=0}^{L}\hat h_\ell\,Y_\ell\,\hat h_\ell^\top\Big)\ \hat h_L\,D \;=\; 0 \qquad\text{for every } n .
+\]
+By (G1) and (G2), $\hat h_LD \neq 0$ when $\hat h_0 \neq 0$, and $\hat h_0 = nE$ takes every value. So
+\begin{equation}\label{eq:Qrelu}
+\sum_{\ell=0}^{L}\hat h_\ell\,Y_\ell\,\hat h_\ell^\top \;=\; 0 \qquad\text{for all } \hat h_0 \in \R^{1\times\dm}, \quad\text{with } \hat h_\ell = \hat B_\ell(\hat h_{\ell-1}).
+\end{equation}
+
+\emph{Step 2: the two sides of a hyperplane.} We show $Y_k = 0$ for $k = L, L-1, \dots, 1$. Let $Y_\ell = 0$ for $\ell > k$. The maps $\hat B_1, \dots, \hat B_{k-1}$ are bijections, so $v = \hat h_{k-1}$ takes every value, and with $\hat h_\ell(v)$ for $\hat h_\ell$ as a function of $v$, \eqref{eq:Qrelu} reads
+\begin{equation}\label{eq:Qk}
+\sum_{\ell=0}^{k-1}\hat h_\ell(v)\,Y_\ell\,\hat h_\ell(v)^\top + \hat B_k(v)\,Y_k\,\hat B_k(v)^\top \;=\; 0 \qquad\text{for all } v \in \R^{1\times\dm}.
+\end{equation}
+Let $W = \Wread^{k}$, with the columns $c_i$, and $V = \Wwrite^{k}$, with the rows $a_i$. Fix a hidden unit $j$ and a row $v^*$ as in (G3). Near $v^*$ the first sum of \eqref{eq:Qk} is $v\,Y_{<k}\,v^\top$ with a symmetric matrix $Y_{<k}$, and
+\[
+\hat B_k(v) \;=\; v\,W I_{\mathcal A} V + \mathrm{ReLU}(vc_j)\,a_j ,
+\]
+where $\mathcal A = \{i \neq j : v^*c_i > 0\}$ and $I_{\mathcal A}$ is the diagonal matrix with the entries $1$ at the hidden units of $\mathcal A$ and $0$ elsewhere. On the side $vc_j < 0$, the left side of \eqref{eq:Qk} is a quadratic form that vanishes on an open set, and on the side $vc_j > 0$ as well:
+\[
+Y_{<k} + (WI_{\mathcal A}V)\,Y_k\,(WI_{\mathcal A}V)^\top = 0, \qquad Y_{<k} + (WI_{\mathcal A}V + c_ja_j)\,Y_k\,(WI_{\mathcal A}V + c_ja_j)^\top = 0 .
+\]
+Subtracting, $c_j\,\omega^\top + \omega\,c_j^\top = 0$ for the column $\omega = WI_{\mathcal A}V\,Y_ka_j^\top + \frac12\big(a_jY_ka_j^\top\big)c_j$. Applied to $c_j$, this shows that $\omega$ is a multiple of $c_j$, and then $c_jc_j^\top \neq 0$ gives $\omega = 0$:
+\begin{equation}\label{eq:side}
+W I_{\mathcal A} V\,Y_k\,a_j^\top \;=\; -\tfrac12\big(a_jY_ka_j^\top\big)\,c_j .
+\end{equation}
+Near $-v^*$ the same computation applies, with another matrix in the place of $Y_{<k}$ and with the set $\mathcal A' = \{i \neq j : v^*c_i < 0\}$ in the place of $\mathcal A$. Adding \eqref{eq:side} for $\mathcal A$ and for $\mathcal A'$, and using $WI_{\mathcal A}V + WI_{\mathcal A'}V = WV - c_ja_j$,
+\[
+WV\,Y_k\,a_j^\top - \big(a_jY_ka_j^\top\big)\,c_j \;=\; -\big(a_jY_ka_j^\top\big)\,c_j , \qquad\text{so}\quad WV\,Y_k\,a_j^\top = 0 .
+\]
+By (G2), $Y_ka_j^\top = 0$. This holds for every hidden unit $j$, and the rows $a_j$ span $\R^{1\times\dm}$, so $Y_k = 0$. After $k = 1$, \eqref{eq:Qrelu} is $\hat h_0\,Y_0\,\hat h_0^\top = 0$ for all $\hat h_0$, and $Y_0 = 0$.
+\end{proof}
+
+\begin{proof}[Proof of \cref{thm:exactgain} under pre-RMSNorm]
+Under RMSNorm $\G = \Ort(\dm)$, and $s = 0$ for $\tanh$ and GELU blocks, so at generic parameters the functional dimension of the skipless network is at most $P - (L+1)\dm(\dm-1)/2$ (\cref{thm:unlock}). For the reverse inequality, choose parameters $\theta$ at which the skipless network without normalization has functional dimension $P - (L+1)\dm^2$, and which satisfy (T1) to (T3) of \cref{lem:indeptanh} for $\tanh$ blocks, or (G1) to (G3) of \cref{lem:indepgelu} for GELU blocks. Such $\theta$ exist: by the case without normalization (\cref{app:depth}) the first condition fails only on a set of measure zero, like (T1) to (T3), and (G1) to (G3) hold on a set of positive measure. In both cases $E$ and every $\Wwrite^{\ell}$ have rank $\dm$.
+
+Let $X_0$ be a finite batch on which $\Der_\theta F^0_{X_0}(\theta)$ has rank $P - (L+1)\dm^2$. The symmetric matrices $Y_0, \dots, Y_L$ and directions $\eta$ with $\Delta_Y = \Der_\theta F^0(\theta, \cdot)\,\eta$ on a batch form a linear space, which can only shrink when the batch grows, so some finite batch $X_1$ gives the same space as all inputs together. On $X = X_0 \cup X_1$, condition (a) of \cref{prop:rmsreduce} holds, because the directions $\eta^Y$ keep the rank at most $P - (L+1)\dm^2$ on every batch, and condition (b) holds by \cref{lem:indeptanh} or \cref{lem:indepgelu}. So the Jacobian of the skipless pre-RMSNorm network has rank at least $P - (L+1)\dm(\dm-1)/2$ on $X$ at $\theta_\lambda$, for small $\lambda > 0$. For $\varepsilon > 0$ this network is real-analytic in its parameters, so its functional dimension at generic parameters is the largest rank that its Jacobian attains on any batch at any parameters. It is therefore $P - (L+1)\dm(\dm-1)/2$: the skipless network satisfies the equality condition, and by \cref{thm:resdepth} the skips raise the functional dimension by exactly $L\dm(\dm-1)/2$.
+\end{proof}
+
 \section{The one-block theorem}\label{app:onelayer}
 
 This appendix states and proves the general form of \cref{thm:oneblock}. With one block, the skipless and the residual network are
@@ -1376,7 +1616,7 @@ Let $\dm \ge 2$, let the input and output dimensions be at least $\dm$, let inpu
 \stpart{thm:onelayer}{v}{} Let the network be pre-RMSNorm with $\varepsilon = 0$, without biases, with a $\tanh$, GELU, SwiGLU, GeGLU or attention block. For generic parameters the residual network has functional dimension $P - \dm(\dm-1)/2 - 1 - s$, which is the equality condition with $\G = \CO(\dm)$, and the skip raises the functional dimension by at least $\dm(\dm-1)/2 + 1$, the dimension of $\CO(\dm)$.
 \end{theorem}
 
-In part (ii), for the skipless network we prove only the bound $P - \dm(\dm-1) - s$ of \cpref{thm:count}{ii}, which our checks attain (\cref{app:checks}). With parts (ii) and (iii), a learned skip under RMSNorm with $\varepsilon > 0$ adds at least $\dm^2$ over no skip if the block has width at least $\dm$, as an identity skip does without normalization. Part (i) extends to a learned absolute position embedding, $h_0 = xE + E_{\mathrm{pos}}$, for an attention block without biases, with $P$ counting $E_{\mathrm{pos}}$, and to grouped-query attention (\emph{Extensions of part (i)} below). With rotary embeddings, the change of basis between the queries and the keys of a head shrinks to an abelian group of dimension $d_h$ \citep[Theorem~4.2]{tran2026equivalence}, which changes $s$; we do not treat this case.
+In part (ii), for the skipless network we prove here only the bound $P - \dm(\dm-1) - s$ of \cpref{thm:count}{ii}, which our checks attain (\cref{app:checks}). For $\tanh$ blocks, and for GELU blocks with $\dhid \ge 2\dm$, \cref{thm:exactgain} shows that it is attained. With parts (ii) and (iii), a learned skip under RMSNorm with $\varepsilon > 0$ adds at least $\dm^2$ over no skip if the block has width at least $\dm$, as an identity skip does without normalization. Part (i) extends to a learned absolute position embedding, $h_0 = xE + E_{\mathrm{pos}}$, for an attention block without biases, with $P$ counting $E_{\mathrm{pos}}$, and to grouped-query attention (\emph{Extensions of part (i)} below). With rotary embeddings, the change of basis between the queries and the keys of a head shrinks to an abelian group of dimension $d_h$ \citep[Theorem~4.2]{tran2026equivalence}, which changes $s$; we do not treat this case.
 
 \para{Notation and flat directions.} We write $F(\theta, x)$ for the output of the network at the parameters $\theta \in \R^P$ and the input $x$, and $\Der_\theta F(\theta, x)$ for the Fr\'echet derivative of $F(\cdot, x)$ at $\theta$, a linear map on $\R^P$. The derivative is written with an upright $\Der$ so that it is not confused with the readout matrix $D$ of the network. For a direction $\eta \in \R^P$, $\Der_\theta F(\theta, x)\,\eta$ is the derivative of $\tau \mapsto F(\theta + \tau\eta, x)$ at $\tau = 0$. We write $\eta_E$, $\eta_D$, $\eta_{\mathrm{read}}$, $\eta_{\mathrm{write}}, \dots$ for the entries of $\eta$ at the positions of $E$, $D$, $\Wread$, $\Wwrite, \dots$, and $\Der_\theta Q\,\eta$ for the derivative along $\eta$ of a matrix $Q$ that depends on the parameters; for instance $\Der_\theta M\,\eta = \eta_ED + E\eta_D$ for $M = ED$, by the product rule. Call $\eta$ \emph{flat} if $\Der_\theta F(\theta, x)\,\eta = 0$ for every input $x$, and let $\mathcal K(\theta)$ be the space of flat directions. For the ReLU-type activations, $F(\theta, x)$ is differentiable in $\theta$ at the inputs $x$ at which no hidden unit sits at its kink, which form an open set of full measure, and ``every input'' means every such input. With $\varepsilon = 0$, it also excludes the inputs at which a state that is normalized vanishes. For $\tanh$, GELU, SwiGLU, GeGLU and attention blocks, $\Der_\theta F(\theta, x)\,\eta$ is real-analytic in $x$, so a direction that is flat on an open set of inputs is flat on all inputs, and the theorem holds for inputs in any open set. For the ReLU-type blocks it does not: on a ball of inputs that meets no kink the network is a polynomial in $x$. For a batch of inputs $x_1, \dots, x_n$, the Jacobian of $\theta \mapsto (F(\theta, x_1), \dots, F(\theta, x_n))$ is the matrix of the linear map $\eta \mapsto (\Der_\theta F(\theta, x_1)\,\eta, \dots, \Der_\theta F(\theta, x_n)\,\eta)$; it has $P$ columns, and its kernel consists of the directions with $\Der_\theta F(\theta, x_k)\,\eta = 0$ for the inputs of the batch. Adding inputs can only shrink this kernel, and a decreasing chain of subspaces of $\R^P$ stops, so some finite batch has kernel exactly $\mathcal K(\theta)$. By rank--nullity, the functional dimension at $\theta$ is therefore
 \[
