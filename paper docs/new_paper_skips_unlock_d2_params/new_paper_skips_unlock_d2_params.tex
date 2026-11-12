@@ -1064,11 +1064,15 @@ For (ii), let $S = G_X(\R^{P'})$, with closure $\bar S$. The image $\pi(S)$ of $
 \end{proof}
 
 \begin{lemma}[Small writes]\label{lem:smallwrites}
-Let $\dm \ge 2$, let $E$ and $D$ have rank $\dm$, and let each block, in any order and of any width, be an attention block with heads of width at most $\dm$, causal or not, on sequences of at least two tokens, or an MLP block, with all MLP blocks $\tanh$, all GELU, all SwiGLU or all GeGLU blocks. For generic parameters $\theta$ and a number $\tau$, let $\theta_\tau$ be the parameters $\theta$ with
+Let $\dm \ge 2$, let $E$ and $D$ have rank $\dm$, and let each block, in any order and of any width, be an attention block with heads of width at most $\dm$, causal or not, on sequences of at least two tokens, or an MLP block, with all MLP blocks $\tanh$, all GELU, all SwiGLU or all GeGLU blocks. For generic parameters
 \[
-\Wwrite^{\ell} \;\mapsto\; \tau\,\Wwrite^{\ell}, \qquad b^{\ell}_{\mathrm{write}} \;\mapsto\; \tau\,b^{\ell}_{\mathrm{write}} \qquad\text{for } \ell = 1, \dots, L,
+\theta \;=\; \Big(E,\ \big\{\Wread^{\ell},\ \Wwrite^{\ell}\big\}_{\ell=1}^{L},\ D\Big)
 \]
-and all other weights unchanged. For all small $\tau \neq 0$, the residual network has
+and a number $\tau$, let
+\[
+\theta_\tau \;=\; \Big(E,\ \big\{\Wread^{\ell},\ \tau\,\Wwrite^{\ell}\big\}_{\ell=1}^{L},\ D\Big).
+\]
+With biases, $\theta$ also holds $b_E$, $b^{\ell}_{\mathrm{read}}$, $b^{\ell}_{\mathrm{write}}$ and $b_D$, and $\theta_\tau$ holds $\tau\,b^{\ell}_{\mathrm{write}}$ in place of $b^{\ell}_{\mathrm{write}}$. For all small $\tau \neq 0$, the residual network has
 \begin{align*}
 \operatorname{fd}(\theta_\tau) &= P - \dm^2 - s && \text{no normalization, no biases},\\
 \operatorname{fd}(\theta_\tau) &= P - \dm(\dm-1)/2 - s && \text{pre-RMSNorm with } \varepsilon > 0, \text{ no biases},\\
