@@ -2,11 +2,11 @@
 
 | Unit | Section | Kind | Defines | First uses | Start |
 |---|---|---|---|---|---|
-| 0 | abstract | para |  | RMSNorm, d_model, the width, functional dimension, per block, pre-RMSNorm | \begin{abstract} Skip connections change the function class of an MLP  |
+| 0 | abstract | para |  | RMSNorm, d_model, the width, functional dimension, pre-RMSNorm, redundancy, residual | \begin{abstract} It was recently shown that skip connections change th |
 | 1 | abstract | float | L, the number of blocks, d_hidden, the number of hidden units | L, the number of blocks, d_hidden, the number of hidden units | \begin{figure}[!h] \centering \includegraphics[width=0.94\linewidth]{f |
 | 2 | Introduction | para |  |  | \section{Introduction}\label{sec:intro} |
-| 3 | Introduction | para | d_model, the width |  | Skip connections are a building block of almost every deep network tra |
-| 4 | Introduction | para |  | residual | Skipless networks have recently been trained to varying degrees of suc |
+| 3 | Introduction | para | d_model, the width | per block | Skip connections are a building block of almost every deep network tra |
+| 4 | Introduction | para |  |  | Skipless networks have recently been trained to varying degrees of suc |
 | 5 | Introduction | para |  | change of basis, readout / unembedding | \para{Where the degrees of freedom come from.} Without skips, the basi |
 | 6 | Introduction | para | functional dimension | generic | \para{Functional dimension.} By the degrees of freedom of a network we |
 | 7 | Contributions | para |  |  | \subsection{Contributions}\label{sec:contributions} |
@@ -57,7 +57,7 @@
 | 52 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{Learned skips under RMSNorm.} In \eqref{eq:prenorm} the skip $A_ |
 | 53 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{LayerNorm.} LayerNorm is RMSNorm after a projection that removes |
 | 54 | RMSNorm and LayerNorm: orthogonal changes of basis | para |  |  | \para{Trained models.}\label{sec:trained} The reduction applies to tra |
-| 55 | Functional dimension with and without skips | para |  | redundancy | \section{Functional dimension with and without skips}\label{sec:gain}  |
+| 55 | Functional dimension with and without skips | para |  |  | \section{Functional dimension with and without skips}\label{sec:gain}  |
 | 56 | Definition and a linear example | para |  |  | \subsection{Definition and a linear example}\label{sec:fd} |
 | 57 | Definition and a linear example | para |  |  | We first define the functional dimension and the redundancy, and compu |
 | 58 | Definition and a linear example | statement | F_theta, redundancy | F_theta | \begin{definition}[Functional dimension {\citep{grigsby2022functional} |
