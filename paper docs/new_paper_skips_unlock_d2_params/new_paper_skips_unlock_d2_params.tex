@@ -145,7 +145,7 @@ Skipless networks have recently been trained to varying degrees of success. \cit
 \begin{enumerate}[label=\arabic*.]
 \item \textit{Changes of basis, in one form for all blocks} (\cref{sec:reduce}). We write every block in one form, input weights followed by a fixed map and by output weights. In this form the change of basis is one symmetry for all blocks: it holds for MLP blocks and for attention blocks, with and without pre-RMSNorm, and it extends to blocks whose skip is a trainable matrix (item~3).
 \item \textit{The one change of basis that the skips leave} (\cref{sec:global,sec:norm}). We prove that changes of basis, one per hidden state, preserve the function of every residual network if and only if they are all equal and, under pre-RMSNorm, orthogonal (\cref{thm:tie,thm:rmstri}). The one change of basis that remains also changes the embedding, so it is not a product of the symmetries of the blocks that \citet{wang2025gauge} characterize (\cref{app:product}).
-\item \textit{Learned skips} (\cref{sec:learned}). A learned skip multiplies the hidden state by a trainable $\dm\times\dm$ matrix $A$ before adding it, and the usual skip, with $A = I$, is an \emph{identity skip}. Without normalization, a block with a learned skip is a wider block without a skip: the skip acts as $\dm$ more hidden units, with the identity as activation and $A$ as input weights. When every $A$ is invertible, changes of basis turn these input weights into the identity, so the network computes the same function as a residual network with $L\dm^2$ fewer parameters (\cref{thm:learned}). Under pre-RMSNorm, a network with orthogonal learned skips computes the same function as a residual network, and invertible learned skips can be made upper triangular (\cref{sec:norm}).
+\item \textit{Learned skips} (\cref{sec:learned}). A learned skip multiplies the hidden state by a trainable $\dm\times\dm$ matrix $A$ before adding it, and the usual skip, with $A = I$, is an \emph{identity skip}. A change of basis acts on a learned skip as well. Without normalization, when every $A$ is invertible, changes of basis that telescope along the network turn every learned skip into the identity, so the network computes the same function as a residual network with $L\dm^2$ fewer parameters (\cref{thm:learned}). Under pre-RMSNorm, a network with orthogonal learned skips computes the same function as a residual network, and invertible learned skips can be made upper triangular (\cref{sec:norm}).
 \item \textit{Measured ranks} (\cref{sec:measured}). We compute the rank of the Jacobian of the parameter-to-output map for MLPs and for small transformers of several blocks. It attains the bound in all cases but two, both without skips: pre-RMSNorm ReGLU networks, and one of eight ReLU networks.
 \item \textit{Function classes and limits} (\cref{sec:classes}). \citet{mijoski2026worth} show that, at generic parameters, a residual network of analytic blocks computes a function that no skipless network of such blocks computes, with one exception: a residual network of GELU blocks without normalization computes the same function as a skipless network with $\dm$ more hidden units per block. They also show that, without normalization, every skipless network is a limit of residual networks of the same widths. In the other direction, we show that almost no residual network is a limit of skipless networks of the same widths, for analytic blocks, with or without pre-RMSNorm (\cpref{thm:classes}{i}). The reason is the functional dimension: these skipless networks, together with their limits, form a family of functions of lower dimension than the residual networks. For GELU blocks without normalization, the same comparison shows that a skipless network of $L$ blocks needs at least $L\dm/2$ more hidden units in total to compute the function of a residual network of $L$ blocks at generic parameters (\cpref{thm:classes}{ii}). The construction of \citet{mijoski2026worth} uses $L\dm$ more.
 \item \textit{Local identifiability}. For analytic blocks, we show that a network attains its bound exactly when it is \emph{locally identifiable} at generic parameters: nearby parameters with the same function differ only by changes of basis and by symmetries of the blocks (\cref{prop:localid}). So the residual networks of the main result are locally identifiable (\cref{cor:localid}).
@@ -246,13 +246,13 @@ An identity skip has no weights, and a change of basis leaves it in place.
 
 \para{What is known.} This section builds on results that are known, in scattered and sometimes partial form. For MLPs, \citet{godfrey2022symmetries} show that the weights of two consecutive layers can be changed in this way by every matrix $A$ for which the activation $\sigma$ between them satisfies $\sigma \circ A = B \circ \sigma$ for some matrix $B$ (their Proposition~3.4). With the identity as activation this is every invertible matrix, and the symmetry is the invariance \eqref{eq:invariance}. \citet{zhao2023symmetries} show the same independently (their Proposition~C.1). They include activations that rescale a vector by a function of its norm, $\sigma(z) = f(\norm{z})\,z$, for which $A$ is orthogonal. RMSNorm is such an activation, applied to every token, with $f(r) = (r^2/\dm + \varepsilon)^{-1/2}$ (\cref{sec:norm}). They name model compression as a prospect of such symmetries, and stop short of using them to remove parameters. Such a removal is moreover exact, a free lunch: the network keeps its function. To our knowledge, \citet{graef2024tricks} is the first to remove parameters in this way, independently and without explicitly mentioning the symmetry framework. Moreover, the work is restricted to skipless transformers without normalization, and applies the reduction only to the attention blocks (\cref{sec:skipless}). For skipless networks of attention blocks with one head, \citet{henry2025lightning} state the symmetry between consecutive blocks and count the dimensions that it makes redundant. For residual networks, earlier work uses one change of basis for all hidden states (\cref{sec:related}).
 
-\para{What this section builds.} We use the symmetry to remove parameters from every block of \cref{sec:setup}, MLP blocks and attention blocks alike: a change of basis turns a $\dm\times\dm$ submatrix of the weights into the identity (\cref{sec:skipless}). The computation \eqref{eq:product} uses only the form \eqref{eq:block} of a block. For an attention block, $\Wread = [\,W_Q \mid W_K \mid W_V\,]$ and $\Wwrite = W_O$. A block together with its learned skip $A$ has the form \eqref{eq:block} as well, with the read $[\,A \mid \Wread\,]$, and changes of basis turn invertible learned skips into identity skips (\cref{sec:learned}). With identity skips, changes of basis preserve the function only when they are the same at all hidden states (\cref{sec:global}). Under pre-RMSNorm only orthogonal changes of basis preserve the function, and the submatrix becomes triangular in place of the identity (\cref{sec:norm}).
+\para{What this section builds.} We use the symmetry to remove parameters from every block of \cref{sec:setup}, MLP blocks and attention blocks alike: a change of basis turns a $\dm\times\dm$ submatrix of the weights into the identity (\cref{sec:skipless}). The computation \eqref{eq:product} uses only the form \eqref{eq:block} of a block. For an attention block, $\Wread = [\,W_Q \mid W_K \mid W_V\,]$ and $\Wwrite = W_O$. A change of basis also acts on a learned skip, and changes of basis that telescope along the network turn invertible learned skips into identity skips (\cref{sec:learned}). With identity skips, changes of basis preserve the function only when they are the same at all hidden states (\cref{sec:global}). Under pre-RMSNorm only orthogonal changes of basis preserve the function, and the submatrix becomes triangular in place of the identity (\cref{sec:norm}).
 
 \subsection{Skipless networks: one change of basis per hidden state}\label{sec:skipless}\label{sec:junctions}
 
 We start with networks that have neither skips nor normalization, where the symmetry is largest. We show on an example how one change of basis removes $\dm^2$ parameters, and then do the same at every hidden state (\cref{prop:skipless}).
 
-In a skipless network without normalization, the invariance \eqref{eq:invariance} holds at every hidden state, so every change of basis preserves the function (\cref{fig:junctions}b). A change of basis that turns a $\dm\times\dm$ submatrix of the weights into the identity removes $\dm^2$ parameters: the submatrix no longer requires storage or computation.
+In a skipless network without normalization, the invariance \eqref{eq:invariance} holds at every hidden state, so every change of basis preserves the function (\cref{fig:junctions}a). A change of basis that turns a $\dm\times\dm$ submatrix of the weights into the identity removes $\dm^2$ parameters: the submatrix no longer requires storage or computation.
 
 \begin{example*}[Choosing the submatrix]
 Take $1 \le \ell < L$ and write $\Wread^{\ell+1} = [\,W_1 \mid W_2\,]$, where $W_1$ holds the first $\dm$ columns. If $W_1$ is invertible, the change of basis $G = W_1$ at $h_\ell$ maps
@@ -303,29 +303,9 @@ Take an attention block $B_\ell$ of a skipless transformer with $Hd_h = \dm$, so
   sig/.style={circle,draw=black!70,fill=gray!12,minimum size=5.6mm,inner sep=0pt,font=\footnotesize},
   idedge/.style={blue!60!black,line width=0.45pt},
   branchedge/.style={gray!45,line width=0.3pt}]
-% (a) a block with a learned skip, as one wide block
-\node[panel] at (-4,40) {(a)};
-\foreach \i/\x in {1/4,2/11,3/18} {
-  \coordinate (in\i)  at (\x,8);
-  \coordinate (lin\i) at (\x,21);
-  \coordinate (out\i) at (\x,34);
-}
-\foreach \k/\x in {1/28,2/35,3/42,4/49} \coordinate (sg\k) at (\x,21);
-\foreach \i in {1,2,3} \foreach \k in {1,...,4} {\draw[branchedge] (in\i)--(sg\k); \draw[branchedge] (sg\k)--(out\i);}
-\foreach \i in {1,2,3} \foreach \j in {1,2,3} {\draw[idedge] (in\i)--(lin\j); \draw[idedge] (lin\j)--(out\i);}
-\foreach \i in {1,2,3} {\node[io] at (in\i) {}; \node[io] at (out\i) {}; \node[lin] at (lin\i) {$1$};}
-\foreach \k in {1,...,4} \node[sig] at (sg\k) {$\sigma$};
-\node[anchor=east,font=\small] at (1,8)  {$h_{\ell-1}$};
-\node[anchor=east,font=\small] at (1,34) {$h_{\ell}$};
-\node[lab] at (22.4,14) {$A$};
-\node[lab] at (22.4,28) {$I$};
-\node[font=\footnotesize,text=black!60] at (54.5,14) {$\Wread$};
-\node[font=\footnotesize,text=black!60] at (54.5,28) {$\Wwrite$};
-\node[align=center,font=\footnotesize] at (11,2) {identity units};
-\node[align=center,font=\footnotesize] at (38.5,2) {hidden units};
 % (b) a skipless network: a free change of basis at every hidden state
 \def\ox{76}
-\node[panel] at ({\ox-7},40) {(b)};
+\node[panel] at ({\ox-7},40) {(a)};
 \node[blk] (a0) at (\ox,36) {$E$};
 \node[blk] (a1) at ({\ox+12.5},36) {$B_1$};
 \node[blk] (a2) at ({\ox+25},36) {$B_2$};
@@ -334,7 +314,7 @@ Take an attention block $B_\ell$ of a skipless transformer with $Hd_h = \dm$, so
 \foreach \i/\j in {0/1,1/2,2/3,3/4} \draw[->] (a\i)--(a\j) node[midway,above,lab]{$G_{\i}$};
 \node[font=\footnotesize] at ({\ox+25},27.5) {without skips: one $G_\ell$ per hidden state};
 % (c) the residual network: one change of basis for all hidden states
-\node[panel] at ({\ox-7},17) {(c)};
+\node[panel] at ({\ox-7},17) {(b)};
 \node[blk] (b0) at (\ox,6) {$E$};
 \node[blk] (b1) at ({\ox+12.5},6) {$B_1$};
 \node[blk] (b2) at ({\ox+25},6) {$B_2$};
@@ -345,38 +325,25 @@ Take an attention block $B_\ell$ of a skipless transformer with $Hd_h = \dm$, so
 \node[lab] at ({\ox+25},16.3) {identity skips: one $G$ for all};
 \node[font=\footnotesize] at ({\ox+25},-0.5) {with skips};
 \end{tikzpicture}
-\caption{(a)~A learned skip $A$ acts as $\dm$ more hidden units, with the identity as activation and $A$ as read. (b)~Without skips, every hidden state has its own change of basis $G_\ell$. (c)~Identity skips carry each hidden state into the next, so one change of basis is left.}
+\caption{(a)~Without skips, every hidden state has its own change of basis $G_\ell$. (b)~Identity skips carry each hidden state into the next, so one change of basis is left.}
 \label{fig:junctions}
 \end{figure}
 
-\subsection{Residual blocks as skipless ones}\label{sec:learned}
+\subsection{Learned skips: a telescoping change of basis}\label{sec:learned}
 
-In this subsection we embed blocks with learned skips into the form \eqref{eq:block}: the skip $A_\ell$ joins the read of its block, which becomes $[\,A_\ell \mid \Wread^{\ell}\,]$. The network is then a skipless network of wider blocks, and the reduction of \cref{sec:skipless} applies to it, with $A_\ell$ as the submatrix that becomes the identity. A second step merges two matrices that have no activation between them. When every $A_\ell$ is invertible, the two steps, repeated from the last block to the first, turn every skip into the identity, and the network becomes a residual network (\cref{thm:learned}). Networks have no normalization here. Under RMSNorm a skip reads $h$ while its block reads $N_\varepsilon(h)$, and \cref{sec:norm} treats that case. A learned skip adds $hA$ to the output of a block, in place of $h$. It acts as $\dm$ more hidden units with the identity as activation, the read $A$ and the write $I$ (\cref{fig:junctions}a). We call them \emph{identity units} \citep[Section~4]{lin2018resnet}. Let the read of the block have $p$ columns and its write $q$ rows, so that $f$ maps $\R^{T\times p}$ to $\R^{T\times q}$. Define the fixed map of the wider block,
-\[
-\tilde f : \R^{T\times\dm} \times \R^{T\times p} \to \R^{T\times(\dm+q)}, \qquad \tilde f\big([\,u \mid z\,]\big) = \big[\,u \mid f(z)\,\big],
-\]
-which is the identity on the first $\dm$ columns and $f$ on the others. Then
-\begin{equation}\label{eq:mixed}
-hA + f(h\Wread)\,\Wwrite \;=\; \tilde f\big(h\,[\,A \mid \Wread\,]\big)\begin{bmatrix} I \\ \Wwrite \end{bmatrix}.
-\end{equation}
-So a network with learned skips is a skipless network of these wider blocks, and the first $\dm$ columns of the read of block $\ell$ are $A_\ell$. Let every $A_\ell$ be invertible. Two steps turn the skips into the identity, one block at a time, starting from the last.
+In \cref{sec:skipless} the change of basis at each hidden state was chosen on its own. We now turn to networks with learned skips, $h_\ell = h_{\ell-1}A_\ell + B_\ell(h_{\ell-1})$. A change of basis acts on the skips as well. We first write this action out, and then choose the changes of basis so that every invertible skip becomes the identity (\cref{thm:learned}). This choice is no longer local: the change of basis at one hidden state is a product of all the later skips. Networks have no normalization here, and \cref{sec:norm} treats pre-RMSNorm.
 
-\para{Step 1: the reduction of \cref{sec:skipless}.} This is the example of \cref{sec:skipless} with $W_1 = A_L$. The change of basis $G = A_L$ at $h_{L-1}$ maps the read of block $L$ and the write of block $L-1$ as
-\[
-[\,A_L \mid \Wread^{L}\,] \;\mapsto\; [\,I \mid A_L^{-1}\Wread^{L}\,], \qquad \begin{bmatrix} I \\ \Wwrite^{L-1} \end{bmatrix} \;\mapsto\; \begin{bmatrix} A_L \\ \Wwrite^{L-1}A_L \end{bmatrix}.
-\]
-The skip of block $L$ is now the identity.
-
-\para{Step 2: two matrices become one.} The identity units of block $L-1$ now have the read $A_{L-1}$ and the write $A_L$, with no activation between them. They add $h\,A_{L-1}A_L$ to the output of the block, exactly as identity units with the read $A_{L-1}A_L$ and the write $I$ do. So block $L-1$ has the learned skip $A_{L-1}A_L$.
-
-\para{Repeating the two steps.} Step~1 at $h_{L-2}$ uses the new skip $A_{L-1}A_L$ of block $L-1$, and Step~2 gives block $L-2$ the skip $A_{L-2}A_{L-1}A_L$. Continuing down to $h_0$, the change of basis at $h_\ell$ is
-\begin{equation}\label{eq:sweep}
-G_\ell \;=\; A_{\ell+1}A_{\ell+2}\cdots A_L \;=:\; \Lambda_\ell.
-\end{equation}
-The write into $h_0$ is the embedding, which becomes $E\Lambda_0 = E\,A_1\cdots A_L$. Every skip is then the identity, and the readout is unchanged. In general, changes of basis $G_{\ell-1}$ at $h_{\ell-1}$ and $G_\ell$ at $h_\ell$ map the skip of block $\ell$ as
+The skip $A_\ell$ multiplies $h_{\ell-1}$, and the result is added to $h_\ell$, so $A_\ell$ is at once a read of $h_{\ell-1}$ and a write into $h_\ell$. With changes of basis $G_{\ell-1}$ at $h_{\ell-1}$ and $G_\ell$ at $h_\ell$,
 \begin{equation}\label{eq:skipmap}
-A_\ell \;\mapsto\; G_{\ell-1}^{-1}\,A_\ell\,G_\ell.
+h_\ell G_\ell \;=\; \big(h_{\ell-1}G_{\ell-1}\big)\,\big(G_{\ell-1}^{-1}A_\ell G_\ell\big) \;+\; f_\ell\Big(\big(h_{\ell-1}G_{\ell-1}\big)\,G_{\ell-1}^{-1}\Wread^{\ell}\Big)\,\Wwrite^{\ell}G_\ell .
 \end{equation}
+So the maps \eqref{eq:cob} of \cref{def:cob}, together with $A_\ell \mapsto G_{\ell-1}^{-1}A_\ell G_\ell$ for every skip, preserve the function of the network: every hidden state $h_\ell$ becomes $h_\ell G_\ell$.
+
+Let every $A_\ell$ be invertible. The new skip $G_{\ell-1}^{-1}A_\ell G_\ell$ is the identity when $G_{\ell-1} = A_\ell G_\ell$. Take $G_L = I$, which leaves the readout unchanged, and go from the last block down to the first:
+\begin{equation}\label{eq:sweep}
+G_\ell \;=\; A_{\ell+1}A_{\ell+2}\cdots A_L \;=:\; \Lambda_\ell, \qquad\text{so that}\qquad A_\ell\Lambda_\ell = \Lambda_{\ell-1}.
+\end{equation}
+The products telescope: with $G_\ell = \Lambda_\ell$ at every hidden state, the skip of block $\ell$ becomes $\Lambda_{\ell-1}^{-1}A_\ell\Lambda_\ell = I$. The embedding becomes $E\Lambda_0 = E\,A_1\cdots A_L$.
 
 \begin{restatable}[Learned skips reduce to identity skips]{theorem}{thmLearned}\label{thm:learned}
 Without normalization, let every learned skip $A_\ell$ be invertible, and let $\Lambda_\ell = A_{\ell+1}\cdots A_L$, with $\Lambda_L = I$. The network with learned skips computes the same function as the residual network with the embedding $E\Lambda_0$, the reads $\Lambda_{\ell-1}^{-1}\Wread^{\ell}$, the writes $\Wwrite^{\ell}\Lambda_\ell$ and the readout $D$.
@@ -384,6 +351,10 @@ Without normalization, let every learned skip $A_\ell$ be invertible, and let $\
 \specialof{thm:gaugefull}{app:prf-gauge}
 
 So the networks with invertible learned skips have $L\dm^2$ more parameters than the residual networks and compute exactly the same functions, with the same functional dimension (\cpref{thm:gaugefull}{ii}). The theorem does not cover the skipless networks, which are the networks with learned skips $A_\ell = 0$ for every $\ell$.
+
+\begin{remark}[The reduction is not unique]\label{rem:notunique}
+In a network with learned skips, the changes of basis can also be chosen as in \cref{sec:skipless}, each on its own: at every hidden state $h_\ell$, a submatrix of $\Wread^{\ell+1}$ or of $\Wwrite^{\ell}$ becomes the identity, or one of $D$ or of $E$ at the two ends. The skips then stay learned, as $G_{\ell-1}^{-1}A_\ell G_\ell$. This removes $(L+1)\dm^2$ parameters, as many as \cref{thm:learned} removes together with the one change of basis that a residual network keeps (\cref{sec:global}). \Cref{rem:locallearned} writes it out.
+\end{remark}
 
 \subsection{Identity skips: one change of basis for the whole network}\label{sec:global}\label{sec:gaugefix}
 
@@ -413,17 +384,11 @@ With pre-RMSNorm, the network with learned skips computes
 \begin{equation}\label{eq:prenorm}
 h_\ell = h_{\ell-1}A_\ell + B_\ell\big(N_\varepsilon(h_{\ell-1})\big), \qquad y = N_\varepsilon(h_L)\,D.
 \end{equation}
-The skip reads $h_{\ell-1}$ and the block reads $N_\varepsilon(h_{\ell-1})$. In the notation of \eqref{eq:mixed}, with the same map $\tilde f$, a block together with its skip is
-\begin{equation}\label{eq:prenormblock}
-hA + f\big(N_\varepsilon(h)\,\Wread\big)\,\Wwrite \;=\; \tilde f\left(\big[\,h \mid N_\varepsilon(h)\,\big]\begin{bmatrix} A & 0 \\ 0 & \Wread \end{bmatrix}\right)\begin{bmatrix} I \\ \Wwrite \end{bmatrix}.
-\end{equation}
-The block reads the hidden state through the fixed map $h \mapsto [\,h \mid N_\varepsilon(h)\,]$, and its read is block diagonal. Without normalization this map is $h \mapsto [\,h \mid h\,]$, and \eqref{eq:prenormblock} is \eqref{eq:mixed}.
-
-A change of basis $G$ at $h$ turns $[\,h \mid N_\varepsilon(h)\,]$ into $[\,hG \mid N_\varepsilon(hG)\,]$. For an orthogonal $Q$, $N_\varepsilon(hQ) = N_\varepsilon(h)Q$, since $Q$ preserves the norm of every row, so
+The skip reads $h_{\ell-1}$ itself and the block reads $N_\varepsilon(h_{\ell-1})$. A change of basis $G$ at $h_{\ell-1}$ turns these into $h_{\ell-1}G$ and $N_\varepsilon(h_{\ell-1}G)$. For an orthogonal $Q$,
 \[
-\big[\,hQ \mid N_\varepsilon(hQ)\,\big] \;=\; \big[\,h \mid N_\varepsilon(h)\,\big]\begin{bmatrix} Q & 0 \\ 0 & Q \end{bmatrix},
+N_\varepsilon(hQ) \;=\; N_\varepsilon(h)\,Q ,
 \]
-and the read undoes $Q$ by $A \mapsto Q^\top A$ and $\Wread \mapsto Q^\top\Wread$. For any other invertible $G$, no matrix $M$ satisfies $N_\varepsilon(hG) = N_\varepsilon(h)M$ for all $h$, since $\varepsilon > 0$ (\cref{lem:rms}), so a read can undo no other change of basis. So every hidden state of a skipless network, or of one with learned skips, keeps an orthogonal change of basis, $\dm(\dm-1)/2$ dimensions. It cannot turn a submatrix into the identity, but a QR factorization makes it triangular.
+since $Q$ preserves the norm of every row, so $Q$ is undone by $A_\ell \mapsto Q^\top A_\ell$ and $\Wread^{\ell} \mapsto Q^\top\Wread^{\ell}$. For an invertible $G$ that is not orthogonal, $N_\varepsilon(hG) = N_\varepsilon(h)M$ fails for every matrix $M$ at some $h$, since $\varepsilon > 0$ (\cref{lem:rms}). So $\Wread^{\ell}$ can compensate only orthogonal changes of basis. Every hidden state of a skipless network, or of one with learned skips, therefore keeps an orthogonal change of basis, $\dm(\dm-1)/2$ dimensions. It cannot turn a submatrix into the identity, but a QR factorization makes it triangular.
 
 \begin{restatable}[Orthogonal changes of basis under RMSNorm]{theorem}{thmRMSTri}\label{thm:rmstri}
 Consider pre-RMSNorm networks.\\
@@ -653,9 +618,56 @@ The notebook that reproduces the numbers, tables and figures of this paper (\cre
 \appendix
 \section{Proofs}\label{app:proofs}
 
-Throughout, the tokens of a hidden state are its rows; where every block acts on each token separately, as MLP blocks do, it suffices to take one token, $T = 1$, so that $h \in \R^{1\times\dm}$ is a row vector. Biases, when present, enter as $B_\ell(h) = f_\ell(h\Wread^{\ell} + b^{\ell}_{\mathrm{read}})\Wwrite^{\ell} + b^{\ell}_{\mathrm{write}}$, with row vectors $b$ added to every token. Each subsection recalls the results of the main text named in its title, explains what the proof does, and then proves them; auxiliary results are stated where they are first used. Here a \emph{mixed block} is a block with $\dm$ identity units with trainable read $U_\ell$ and write $V_\ell$; in \cref{eq:mixed}, $U_\ell = A_\ell$ and $V_\ell = I$. Further, $\G$ is $\GL(\dm)$ without normalization, $\Ort(\dm)$ under RMSNorm with $\varepsilon > 0$, and $\CO(\dm)$, the positive multiples of orthogonal matrices, under RMSNorm with $\varepsilon = 0$. The one-block theorem, \cref{thm:onelayer}, is proved in \cref{app:onelayer}.
+Throughout, the tokens of a hidden state are its rows; where every block acts on each token separately, as MLP blocks do, it suffices to take one token, $T = 1$, so that $h \in \R^{1\times\dm}$ is a row vector. Biases, when present, enter as $B_\ell(h) = f_\ell(h\Wread^{\ell} + b^{\ell}_{\mathrm{read}})\Wwrite^{\ell} + b^{\ell}_{\mathrm{write}}$, with row vectors $b$ added to every token. Each subsection recalls the results of the main text named in its title, explains what the proof does, and then proves them; auxiliary results are stated where they are first used. Mixed blocks, which hold a learned skip as $\dm$ more hidden units, are defined in \cref{app:prf-junction}. Further, $\G$ is $\GL(\dm)$ without normalization, $\Ort(\dm)$ under RMSNorm with $\varepsilon > 0$, and $\CO(\dm)$, the positive multiples of orthogonal matrices, under RMSNorm with $\varepsilon = 0$. The one-block theorem, \cref{thm:onelayer}, is proved in \cref{app:onelayer}.
 
 \subsection{Changes of basis at junctions}\label{app:prf-junction}
+
+\para{Mixed blocks.} A learned skip adds $hA$ to the output of a block, in place of $h$. It acts as $\dm$ more hidden units with the identity as activation, the read $A$ and the write $I$. We call them \emph{identity units} \citep[Section~4]{lin2018resnet}. A \emph{mixed block} is a block with $\dm$ identity units whose read $U$ and write $V$ are both trainable $\dm\times\dm$ matrices (\cref{fig:mixed}). Let the read of the block have $p$ columns and its write $q$ rows, so that $f$ maps $\R^{T\times p}$ to $\R^{T\times q}$, and define the fixed map
+\[
+\tilde f : \R^{T\times\dm} \times \R^{T\times p} \to \R^{T\times(\dm+q)}, \qquad \tilde f\big([\,u \mid z\,]\big) = \big[\,u \mid f(z)\,\big],
+\]
+which is the identity on the first $\dm$ columns and $f$ on the others. The mixed block computes
+\begin{equation}\label{eq:mixed}
+hUV + f(h\Wread)\,\Wwrite \;=\; \tilde f\big(h\,[\,U \mid \Wread\,]\big)\begin{bmatrix} V \\ \Wwrite \end{bmatrix}.
+\end{equation}
+So it has the form \eqref{eq:block}, with the read $[\,U \mid \Wread\,]$ and the write that stacks $V$ on $\Wwrite$, and it is a block with the learned skip $A = UV$. A network with learned skips $A_\ell$ is the network of mixed blocks with $U_\ell = A_\ell$ and $V_\ell = I$. Under pre-RMSNorm the skip reads $h$ and the block reads $N_\varepsilon(h)$, and the mixed block computes
+\begin{equation}\label{eq:prenormblock}
+hUV + f\big(N_\varepsilon(h)\,\Wread\big)\,\Wwrite \;=\; \tilde f\left(\big[\,h \mid N_\varepsilon(h)\,\big]\begin{bmatrix} U & 0 \\ 0 & \Wread \end{bmatrix}\right)\begin{bmatrix} V \\ \Wwrite \end{bmatrix}.
+\end{equation}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[x=0.9mm,y=0.88mm,>=Stealth,
+  blk/.style={draw,rounded corners,minimum width=7.5mm,minimum height=5.5mm,font=\small},
+  lab/.style={font=\footnotesize,text=blue!45!black},
+  panel/.style={font=\small\bfseries},
+  io/.style={circle,fill=black,inner sep=0pt,minimum size=1.8mm},
+  lin/.style={circle,draw=blue!60!black,fill=blue!8,minimum size=5.6mm,inner sep=0pt,font=\footnotesize},
+  sig/.style={circle,draw=black!70,fill=gray!12,minimum size=5.6mm,inner sep=0pt,font=\footnotesize},
+  idedge/.style={blue!60!black,line width=0.45pt},
+  branchedge/.style={gray!45,line width=0.3pt}]
+\foreach \i/\x in {1/4,2/11,3/18} {
+  \coordinate (in\i)  at (\x,8);
+  \coordinate (lin\i) at (\x,21);
+  \coordinate (out\i) at (\x,34);
+}
+\foreach \k/\x in {1/28,2/35,3/42,4/49} \coordinate (sg\k) at (\x,21);
+\foreach \i in {1,2,3} \foreach \k in {1,...,4} {\draw[branchedge] (in\i)--(sg\k); \draw[branchedge] (sg\k)--(out\i);}
+\foreach \i in {1,2,3} \foreach \j in {1,2,3} {\draw[idedge] (in\i)--(lin\j); \draw[idedge] (lin\j)--(out\i);}
+\foreach \i in {1,2,3} {\node[io] at (in\i) {}; \node[io] at (out\i) {}; \node[lin] at (lin\i) {$1$};}
+\foreach \k in {1,...,4} \node[sig] at (sg\k) {$\sigma$};
+\node[anchor=east,font=\small] at (1,8)  {$h_{\ell-1}$};
+\node[anchor=east,font=\small] at (1,34) {$h_{\ell}$};
+\node[lab] at (22.4,14) {$U$};
+\node[lab] at (22.4,28) {$V$};
+\node[font=\footnotesize,text=black!60] at (54.5,14) {$\Wread$};
+\node[font=\footnotesize,text=black!60] at (54.5,28) {$\Wwrite$};
+\node[align=center,font=\footnotesize] at (11,2) {identity units};
+\node[align=center,font=\footnotesize] at (38.5,2) {hidden units};
+\end{tikzpicture}
+\caption{A mixed block: $\dm$ identity units with the read $U$ and the write $V$, beside the hidden units of the block. A learned skip $A$ is the case $U = A$, $V = I$.}
+\label{fig:mixed}
+\end{figure}
 
 The main text uses changes of basis at hidden states (\cref{sec:skipless,sec:learned}); the proofs also use them at the identity units of a mixed block. A \emph{junction} is a place where one linear map feeds the next: a hidden state, or the identity units of a mixed block. The following proposition states both kinds of change of basis, for skipless networks and networks of mixed blocks.
 \begin{proposition}[Junctions]\label{prop:junction}
@@ -822,6 +834,23 @@ The following proposition is the general form of \cref{prop:skipless}. Let $W_1$
 \begin{proof}[Proof of \cref{prop:normalform}]
 By \cref{prop:junction}, a change of basis $G \in \G$ at $h_\ell$ preserves the function and replaces every read $W$ of $h_\ell$ by $G^{-1}W$ and every write $W$ into $h_\ell$ by $WG$. So the columns of a read that form $W_1$ become $G^{-1}W_1$, and the rows of a write that form $W_1$ become $W_1G$. Without normalization $\G = \GL(\dm)$, and $G = W_1$ for a read, or $G = W_1^{-1}$ for a write, turns $W_1$ into $I$. Under RMSNorm with $\varepsilon > 0$, $\G = \Ort(\dm)$ (\cref{lem:rms}). For a read, let $W_1 = QT$ be a QR factorization, with $T$ upper triangular; $G = Q$ gives $Q^\top W_1 = T$. For a write, let $W_1^\top = QT$ be a QR factorization; then $W_1 = T^\top Q^\top$, and $G = Q$ gives $W_1Q = T^\top$, which is lower triangular. The identity fixes all $\dm^2$ entries of $W_1$, and the triangular form fixes the $\dm(\dm-1)/2$ entries on one side of its diagonal. The change of basis at $h_\ell$ touches only the writes into $h_\ell$ and the reads of $h_\ell$, and a matrix is touched on each side by one hidden state only (\cpref{prop:junction}{iii}), so the reductions at all hidden states can be made together, one submatrix per hidden state. In a residual network, one change of basis $G \in \G$ applied at every hidden state preserves the function (\cpref{thm:gaugefull}{iii}); it replaces every read $W$ by $G^{-1}W$ and every write $W$ by $WG$, and leaves the identity skips unchanged, since $G^{-1}IG = I$. The same choice of $G$ then turns one submatrix $W_1$, of any one read or write, into the identity or into a triangular matrix.
 \end{proof}
+
+\begin{remark}[Learned skips: the local reduction]\label{rem:locallearned}
+\Cref{thm:learned} is not the only reduction of a network with learned skips. Write the skip of block $\ell$ as a product of two matrices,
+\[
+A_\ell \;=\; A^{\mathrm{read}}_\ell A^{\mathrm{write}}_\ell, \qquad\text{at first with}\quad A^{\mathrm{read}}_\ell = A_\ell,\quad A^{\mathrm{write}}_\ell = I .
+\]
+These are the matrices $U_\ell$ and $V_\ell$ of a mixed block \eqref{eq:mixed}, which has the read $[\,A^{\mathrm{read}}_\ell \mid \Wread^{\ell}\,]$ and the write that stacks $A^{\mathrm{write}}_\ell$ on $\Wwrite^{\ell}$. Changes of basis $G_0, \dots, G_L$ at the hidden states preserve the function (\cpref{prop:junction}{ii}) and map, for every block $\ell$,
+\[
+\big[\,A^{\mathrm{read}}_\ell \mid \Wread^{\ell}\,\big] \;\mapsto\; G_{\ell-1}^{-1}\big[\,A^{\mathrm{read}}_\ell \mid \Wread^{\ell}\,\big], \qquad
+\begin{bmatrix} A^{\mathrm{write}}_\ell \\ \Wwrite^{\ell} \end{bmatrix} \;\mapsto\; \begin{bmatrix} A^{\mathrm{write}}_\ell \\ \Wwrite^{\ell} \end{bmatrix} G_\ell .
+\]
+Choose each $G_\ell$ on its own, as in \cpref{prop:normalform}{i}, so that $\dm$ columns of $\Wread^{\ell+1}$ (of $D$ if $\ell = L$) or $\dm$ rows of $\Wwrite^{\ell}$ (of $E$ if $\ell = 0$) become the identity. The two matrices of the identity units have no activation between them, and they merge into one:
+\[
+\big(G_{\ell-1}^{-1}A^{\mathrm{read}}_\ell\big)\big(A^{\mathrm{write}}_\ell G_\ell\big) \;=\; G_{\ell-1}^{-1}A_\ell\,G_\ell .
+\]
+The result is a network with the learned skips $G_{\ell-1}^{-1}A_\ell G_\ell$ in which a $\dm\times\dm$ submatrix of $\Wread$ or $\Wwrite$ is the identity at every hidden state. It has $(L+1)\dm^2$ fewer parameters, as many as \cref{thm:learned} and \cpref{thm:tie}{iii} remove together.
+\end{remark}
 
 
 We recall \cref{prop:skipless} from \cref{sec:skipless}.
