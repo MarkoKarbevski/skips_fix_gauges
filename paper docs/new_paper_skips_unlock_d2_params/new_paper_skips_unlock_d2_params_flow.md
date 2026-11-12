@@ -34,7 +34,7 @@
 | 29 | Skipless networks: one change of basis per hidden state | para |  |  | In a skipless network without normalization, the invariance \eqref{eq: |
 | 30 | Skipless networks: one change of basis per hidden state | para | W_1, the chosen block | W_1, the chosen block | \begin{example*}[Choosing the submatrix] Take $1 \le \ell < L$ and wri |
 | 31 | Skipless networks: one change of basis per hidden state | statement |  |  | \begin{restatable}[Exact reduction without skips]{proposition}{propSki |
-| 32 | Skipless networks: one change of basis per hidden state | para |  |  | Rows of a write work too: if $\dm$ rows of the write into $h_\ell$ ($\ |
+| 32 | Skipless networks: one change of basis per hidden state | para |  |  | Rows of the matrix $\Wwrite^{\ell}$ work too, or rows of $E$ if $\ell  |
 | 33 | Skipless networks: one change of basis per hidden state | float |  |  | \begin{figure}[t] \centering [a TikZ drawing, omitted here; the captio |
 | 34 | Residual blocks as skipless ones | para |  |  | \subsection{Residual blocks as skipless ones}\label{sec:learned} |
 | 35 | Residual blocks as skipless ones | para | identity units | identity units | In this subsection we embed blocks with learned skips into the form \e |
