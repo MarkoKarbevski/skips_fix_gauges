@@ -520,6 +520,12 @@ Without normalization, in the two cases below the skipless network satisfies the
 \end{restatable}
 \proofin{app:depth}
 
+By \cref{prop:localid}, the skipless networks of \cref{thm:exactgain} are locally identifiable at generic parameters $\theta$. For $\tanh$ and GELU blocks $s = 0$, so every $\theta'$ near $\theta$ with the same function is obtained from $\theta$ by invertible matrices $G_0, \dots, G_L$ close to the identity, one per hidden state:
+\[
+E \mapsto EG_0, \qquad \Wread^{\ell} \mapsto G_{\ell-1}^{-1}\Wread^{\ell}, \qquad \Wwrite^{\ell} \mapsto \Wwrite^{\ell}G_\ell, \qquad D \mapsto G_L^{-1}D.
+\]
+In the residual network of \cref{cor:localid}, these matrices are all equal.
+
 \para{Proof sketches.} With one block, the parameters enter the function only through the products $ED$, $\Wwrite D$ and $E\Wread$. A factorization of a matrix of rank $\dm$ into two factors is unique up to a change of basis between them, so the skipless network keeps one change of basis at $h_0$ and one at $h_1$, and the term $xED$ of the skip ties them into one. At any depth, multiply the writes by a small $\tau$: to first order in $\tau$ every block reads the embedding $xE$, and the residual network is the linear map $xED$ plus one wide block that holds all its hidden units and heads. This brings the one-block argument to every depth, and for analytic blocks a rank that is reached at one choice of weights is reached at almost all. For skipless $\tanh$ networks, the function determines the product of each write with the next read, up to permutations and sign flips \citep{fefferman1994}, and these products determine the weights up to the changes of basis. For skipless GELU networks, the proof starts from a residual network and absorbs each skip with $\dm$ more hidden units per block, so it reaches only blocks with $\dhid \ge 2\dm$.
 
 \subsection{Residual and skipless networks compute different functions}\label{sec:classes}
