@@ -2,12 +2,12 @@
 
 | Unit | Section | Kind | Defines | First uses | Start |
 |---|---|---|---|---|---|
-| 0 | abstract | para |  | RMSNorm, change of basis, d_model, the width, functional dimension, per block, pre-RMSNorm, readout / unembedding | \begin{abstract} Skip connections change the function class of an MLP  |
+| 0 | abstract | para |  | RMSNorm, d_model, the width, functional dimension, per block, pre-RMSNorm | \begin{abstract} Skip connections change the function class of an MLP  |
 | 1 | abstract | float | L, the number of blocks, d_hidden, the number of hidden units | L, the number of blocks, d_hidden, the number of hidden units | \begin{figure}[!h] \centering \includegraphics[width=0.94\linewidth]{f |
 | 2 | Introduction | para |  |  | \section{Introduction}\label{sec:intro} |
 | 3 | Introduction | para | d_model, the width |  | Skip connections are a building block of almost every deep network tra |
 | 4 | Introduction | para |  | residual | Skipless networks have recently been trained to varying degrees of suc |
-| 5 | Introduction | para |  |  | \para{Where the degrees of freedom come from.} Without skips, the basi |
+| 5 | Introduction | para |  | change of basis, readout / unembedding | \para{Where the degrees of freedom come from.} Without skips, the basi |
 | 6 | Introduction | para | functional dimension | generic | \para{Functional dimension.} By the degrees of freedom of a network we |
 | 7 | Contributions | para |  |  | \subsection{Contributions}\label{sec:contributions} |
 | 8 | Contributions | para | analytic blocks |  | \para{Main result.} Residual networks attain the upper bound from the  |
