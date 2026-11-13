@@ -66,13 +66,12 @@
 | 61 | Any depth | para |  |  | For $\varepsilon = 0$ we state no such corollary, since \cref{prop:loc |
 | 62 | Any depth | para | B_{>k} | B_{>k} | \para{Outline of the proof.} The proof removes one block at a time. An |
 | 63 | Any depth | para |  |  | In the step from $k+1$ to $k$, the identity is written in the input $n |
-| 64 | What is open, and where the count fails | para |  |  | \section{What is open, and where the count fails}\label{sec:open}\labe |
-| 65 | What is open, and where the count fails | para |  |  | \Cref{thm:skiplessbound} leaves cases open, and for some kinds of bloc |
-| 66 | What is open, and where the count fails | statement |  |  | \begin{conjecture}[GELU blocks without normalization]\label{conj:equal |
-| 67 | What is open, and where the count fails | para |  |  | \para{Attention blocks.} For attention blocks the count is proved for  |
-| 68 | What is open, and where the count fails | para |  |  | \para{Where the count fails.} For ReLU, ReLU$^2$ and ReGLU blocks, the |
-| 69 | Discussion | para |  |  | \section{Discussion}\label{sec:conclusion} |
-| 70 | Discussion | para |  |  | A change of basis at every hidden state removes $\dm^2$ parameters fro |
-| 71 | Discussion | para |  |  | \para{Skip connections.} Most networks in use add the input of a block |
-| 72 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
-| 73 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 64 | Discussion | para |  |  | \section{Discussion}\label{sec:conclusion}\label{sec:open}\label{sec:m |
+| 65 | Discussion | para |  |  | A change of basis at every hidden state removes $\dm^2$ parameters fro |
+| 66 | Discussion | para |  |  | \para{What is open.} For the four kinds of block of \cref{thm:skipless |
+| 67 | Discussion | statement |  |  | \begin{conjecture}[GELU blocks without normalization]\label{conj:equal |
+| 68 | Discussion | para |  |  | For attention blocks the count is proved for one block (\cref{thm:oneb |
+| 69 | Discussion | para |  |  | \para{Where the count fails.} For ReLU, ReLU$^2$ and ReGLU blocks, the |
+| 70 | Discussion | para |  |  | \para{Skip connections.} Most networks in use add the input of a block |
+| 71 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
+| 72 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
