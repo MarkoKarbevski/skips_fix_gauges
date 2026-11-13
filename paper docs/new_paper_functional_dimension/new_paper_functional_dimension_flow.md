@@ -6,29 +6,29 @@
 | 1 | Introduction | para |  |  | \section{Introduction}\label{sec:intro} |
 | 2 | Introduction | para | functional dimension |  | Which parameters of a neural network does the function that it compute |
 | 3 | Introduction | para | block, d_model, the model dimension | block | We study the networks whose layers have the form of the layers of a tr |
-| 4 | Introduction | para |  |  | This symmetry is known, and its use to remove parameters has barely be |
-| 5 | Results | para |  |  | \subsection{Results}\label{sec:results} |
-| 6 | Results | para | L, the number of blocks | L, the number of blocks, change of basis | \para{An exact reduction.} At each of the $L+1$ hidden states of a net |
-| 7 | Results | para | P, the number of parameters, generic, locally identifiable, s, symmetries inside, script G, symmetries inside the blocks | P, the number of parameters, generic, s, symmetries inside, script G, symmetries inside the blocks | \para{Main result.} Whether more can be removed is a question on the f |
-| 8 | Results | para |  | ReLU squared | \para{One block.} For a network of one block without normalization, we |
-| 9 | Results | para |  |  | \para{What is open, and where the count fails.} At depth, the count is |
-| 10 | Results | para |  |  | \para{Idea of the proof.} A direction of the parameters along which th |
-| 11 | Results | float | gated block | epsilon of RMSNorm, gated block | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1}\se |
-| 12 | Related work | para |  |  | \subsection{Related work}\label{sec:related} |
-| 13 | Related work | para |  |  | \Cref{sec:reduce} states what is known on the change of basis as a sym |
-| 14 | Related work | para |  |  | \para{Identifiability.} The theorems of \citet{sussmann1992} and \cite |
-| 15 | Related work | para |  |  | \para{Dimension counts.} \citet{grigsby2022functional} bound the funct |
-| 16 | Setup | para |  |  | \section{Setup}\label{sec:setup} |
-| 17 | Setup | para |  |  | This section fixes the networks. We write every block, MLP or attentio |
-| 18 | Setup | para | H and d_h, ReLU squared, T, number of tokens, Wread, Wwrite, d_hidden, the number of hidden units, g, the map of a block, h, a hidden state, read / write (nouns) | H and d_h, T, number of tokens, Wread, Wwrite, d_hidden, the number of hidden units, g, the map of a block, h, a hidden state, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
-| 19 | Setup | para | E and D, F_theta, N(h), readout | E and D, F_theta, N(h), readout | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
-| 20 | Setup | para | RMSNorm, epsilon of RMSNorm, pre-RMSNorm |  | \para{Normalization.} RMSNorm with the constant $\varepsilon \ge 0$ is |
-| 21 | Setup | para |  |  | \para{Scope.} Networks have no biases, and their inputs range over all |
-| 22 | Changes of basis, and the parameters that they remove | para |  |  | \section{Changes of basis, and the parameters that they remove}\label{ |
-| 23 | Changes of basis, and the parameters that they remove | para |  |  | A symmetry is a map of the parameters that leaves the function $F_\the |
-| 24 | Changes of basis, and the parameters that they remove | para | G, a change of basis | G, a change of basis | Take the first two blocks of a network without normalization. The firs |
-| 25 | Changes of basis, and the parameters that they remove | statement | change of basis |  | \begin{definition}[Change of basis]\label{def:cob} The writes into the |
-| 26 | Changes of basis, and the parameters that they remove | para |  |  | \para{What is known.} This section builds on results that are known, i |
+| 4 | Introduction | para |  |  | For one hidden layer without activation, \citet{albertini1993uniquenes |
+| 5 | Introduction | para |  |  | To our knowledge, \citet{graef2024tricks} is the first to remove param |
+| 6 | Results | para |  |  | \subsection{Results}\label{sec:results} |
+| 7 | Results | para | L, the number of blocks | L, the number of blocks, change of basis | \para{An exact reduction.} At each of the $L+1$ hidden states of a net |
+| 8 | Results | para | P, the number of parameters, generic, locally identifiable, s, symmetries inside, script G, symmetries inside the blocks | P, the number of parameters, generic, s, symmetries inside, script G, symmetries inside the blocks | \para{Main result.} Whether more can be removed is a question on the f |
+| 9 | Results | para |  | ReLU squared | \para{One block.} For a network of one block without normalization, we |
+| 10 | Results | para |  |  | \para{What is open, and where the count fails.} At depth, the count is |
+| 11 | Results | para |  |  | \para{Idea of the proof.} A direction of the parameters along which th |
+| 12 | Results | float | gated block | epsilon of RMSNorm, gated block | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1}\se |
+| 13 | Related work | para |  |  | \subsection{Related work}\label{sec:related} |
+| 14 | Related work | para |  |  | The works on the change of basis are named above. Here we name those o |
+| 15 | Related work | para |  |  | \para{Identifiability.} The theorems of \citet{sussmann1992} and \cite |
+| 16 | Related work | para |  |  | \para{Dimension counts.} \citet{grigsby2022functional} bound the funct |
+| 17 | Setup | para |  |  | \section{Setup}\label{sec:setup} |
+| 18 | Setup | para |  |  | This section fixes the networks. We write every block, MLP or attentio |
+| 19 | Setup | para | H and d_h, ReLU squared, T, number of tokens, Wread, Wwrite, d_hidden, the number of hidden units, g, the map of a block, h, a hidden state, read / write (nouns) | H and d_h, T, number of tokens, Wread, Wwrite, d_hidden, the number of hidden units, g, the map of a block, h, a hidden state, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
+| 20 | Setup | para | E and D, F_theta, N(h), readout | E and D, F_theta, N(h), readout | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
+| 21 | Setup | para | RMSNorm, epsilon of RMSNorm, pre-RMSNorm |  | \para{Normalization.} RMSNorm with the constant $\varepsilon \ge 0$ is |
+| 22 | Setup | para |  |  | \para{Scope.} Networks have no biases, and their inputs range over all |
+| 23 | Changes of basis, and the parameters that they remove | para |  |  | \section{Changes of basis, and the parameters that they remove}\label{ |
+| 24 | Changes of basis, and the parameters that they remove | para |  |  | A symmetry is a map of the parameters that leaves the function $F_\the |
+| 25 | Changes of basis, and the parameters that they remove | para | G, a change of basis | G, a change of basis | Take the first two blocks of a network without normalization. The firs |
+| 26 | Changes of basis, and the parameters that they remove | statement | change of basis |  | \begin{definition}[Change of basis]\label{def:cob} The writes into the |
 | 27 | Changes of basis, and the parameters that they remove | para |  |  | \para{Pre-RMSNorm.} Under pre-RMSNorm a block reads $N_\varepsilon(h)$ |
 | 28 | Changes of basis, and the parameters that they remove | statement |  |  | \begin{restatable}[Changes of basis preserve the function]{proposition |
 | 29 | Changes of basis, and the parameters that they remove | para | W_1, the chosen submatrix | W_1, the chosen submatrix | \para{Removing parameters.} A change of basis that turns a $\dm\times\ |
@@ -56,7 +56,7 @@
 | 51 | One block | para |  |  | \para{Step 1: factorizations.} The parameters enter only through $C$ a |
 | 52 | One block | para |  |  | \para{Step 2: hidden units.} It remains to show that, to first order,  |
 | 53 | One block | statement |  |  | \begin{restatable}[One block]{theorem}{thmOneBlock}\label{thm:oneblock |
-| 54 | One block | para |  |  | Three cases of the theorem also follow from earlier work. For a $\tanh |
+| 54 | One block | para |  |  | Four cases of the theorem also follow from earlier work. For a $\tanh$ |
 | 55 | Any depth | para |  |  | \section{Any depth}\label{sec:depth}\label{sec:proof} |
 | 56 | Any depth | para |  |  | With several blocks, the two factorizations of \cref{sec:oneblock} are |
 | 57 | Any depth | statement |  |  | \begin{restatable}[The bound is attained at any depth]{theorem}{thmSki |
