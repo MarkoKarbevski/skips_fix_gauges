@@ -56,7 +56,7 @@
 | 51 | One block | para |  |  | \para{Step 1: factorizations.} The parameters enter only through $C$ a |
 | 52 | One block | para |  |  | \para{Step 2: hidden units.} It remains to show that, to first order,  |
 | 53 | One block | statement |  |  | \begin{restatable}[One block]{theorem}{thmOneBlock}\label{thm:oneblock |
-| 54 | One block | para |  |  | Two cases of the theorem also follow from earlier work. For a $\tanh$  |
+| 54 | One block | para |  |  | Three cases of the theorem also follow from earlier work. For a $\tanh |
 | 55 | Any depth | para |  |  | \section{Any depth}\label{sec:depth}\label{sec:proof} |
 | 56 | Any depth | para |  |  | With several blocks, the two factorizations of \cref{sec:oneblock} are |
 | 57 | Any depth | statement |  |  | \begin{restatable}[The bound is attained at any depth]{theorem}{thmSki |
