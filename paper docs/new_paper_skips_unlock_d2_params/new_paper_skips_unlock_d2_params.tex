@@ -527,7 +527,7 @@ With or without pre-RMSNorm, in the three cases below the skipless network satis
 \stpart{thm:exactgain}{ii}{} The blocks are GELU blocks, with $\dhid \ge 2\dm$ if there is no normalization.\\
 \stpart{thm:exactgain}{iii}{} The blocks are SwiGLU blocks, or GeGLU blocks.
 \end{restatable}
-\proofin{app:depth,app:rmsskipless,app:gatedskipless}
+\proofin{app:depth,app:rmsskipless}
 
 By \cref{prop:localid}, the skipless networks of \cref{thm:exactgain} are locally identifiable at generic parameters $\theta$. For $\tanh$ and GELU blocks $s = 0$, so every $\theta'$ near $\theta$ with the same function is obtained from $\theta$ by matrices $G_0, \dots, G_L \in \G$ close to the identity, one per hidden state:
 \[
@@ -535,7 +535,7 @@ E \mapsto EG_0, \qquad \Wread^{\ell} \mapsto G_{\ell-1}^{-1}\Wread^{\ell}, \qqua
 \]
 In the residual network of \cref{cor:localid}, these matrices are all equal. For SwiGLU and GeGLU blocks, the rescalings of the value of each hidden unit come in addition (\cref{sec:count}).
 
-\para{Proof sketches.} With one block, the parameters enter the function only through the products $ED$, $\Wwrite D$ and $E\Wread$. A factorization of a matrix of rank $\dm$ into two factors is unique up to a change of basis between them, so the skipless network keeps one change of basis at $h_0$ and one at $h_1$, and the term $xED$ of the skip ties them into one. At any depth, replace every $\Wwrite^{\ell}$ by $\tau\,\Wwrite^{\ell}$ with a small $\tau$. To first order in $\tau$, every block reads $h_0 = xE$, and the residual network computes $xED + \tau\sum_{\ell} B_\ell(xE)\,D$: the linear map $xED$ plus one wide block that holds all its hidden units and heads. This brings the one-block argument to every depth, and for analytic blocks a rank that is reached at one choice of weights is reached at almost all. For skipless $\tanh$, SwiGLU and GeGLU networks, and for skipless GELU networks under pre-RMSNorm, take a direction of the parameters along which the function does not change. It gives an identity in the input of the first block, which extends to every row by analyticity, and we follow this input to infinity along a ray. There the hidden units of a $\tanh$ block saturate at different exponential rates, and the hidden units of a GELU block and the gates of a SwiGLU or GeGLU block differ from linear or vanishing ones by small terms of different rates. This separates the hidden units of the block: the direction acts on the weights of the block as a symmetry does, and what is left is the same statement for the network after this block (\cref{app:rmsskipless,app:gatedskipless}). Without normalization, a SwiGLU or GeGLU block is quadratic along the ray, so the inputs of the later blocks grow faster than its own and their small terms are negligible. A GELU block is linear along the ray, the small terms of all blocks are of the same order, and this argument does not apply to it. For skipless $\tanh$ networks without normalization, the equality condition also follows from the theorem of \citet{fefferman1994}, by which the function determines the product of each write with the next read, up to permutations and sign flips. For skipless GELU networks without normalization, the proof starts from a residual network and absorbs each skip with $\dm$ more hidden units per block, so it reaches only blocks with $\dhid \ge 2\dm$.
+\para{Proof sketches.} With one block, the parameters enter the function only through the products $ED$, $\Wwrite D$ and $E\Wread$. A factorization of a matrix of rank $\dm$ into two factors is unique up to a change of basis between them, so the skipless network keeps one change of basis at $h_0$ and one at $h_1$, and the term $xED$ of the skip ties them into one. At any depth, replace every $\Wwrite^{\ell}$ by $\tau\,\Wwrite^{\ell}$ with a small $\tau$. To first order in $\tau$, every block reads $h_0 = xE$, and the residual network computes $xED + \tau\sum_{\ell} B_\ell(xE)\,D$: the linear map $xED$ plus one wide block that holds all its hidden units and heads. This brings the one-block argument to every depth, and for analytic blocks a rank that is reached at one choice of weights is reached at almost all. For skipless $\tanh$, SwiGLU and GeGLU networks, and for skipless GELU networks under pre-RMSNorm, take a direction of the parameters along which the function does not change. It gives an identity in the input of the first block, which extends to every row by analyticity, and we follow this input to infinity along a ray. There the hidden units of a $\tanh$ block saturate at different exponential rates, and the hidden units of a GELU block and the gates of a SwiGLU or GeGLU block differ from linear or vanishing ones by small terms of different rates. This separates the hidden units of the block: the direction acts on the weights of the block as a symmetry does, and what is left is the same statement for the network after this block (\cref{app:rmsskipless}). Without normalization, a SwiGLU or GeGLU block is quadratic along the ray, so the inputs of the later blocks grow faster than its own and their small terms are negligible. A GELU block is linear along the ray, the small terms of all blocks are of the same order, and this argument does not apply to it. For skipless $\tanh$ networks without normalization, the equality condition also follows from the theorem of \citet{fefferman1994}, by which the function determines the product of each write with the next read, up to permutations and sign flips. For skipless GELU networks without normalization, the proof starts from a residual network and absorbs each skip with $\dm$ more hidden units per block, so it reaches only blocks with $\dhid \ge 2\dm$.
 
 \para{RMSNorm with $\varepsilon = 0$.} The networks of \cref{sec:setup} have $\varepsilon > 0$. For $\varepsilon = 0$, RMSNorm keeps only the direction of a token, $N_\varepsilon(v) = \sqrt{\dm}\,v/\norm{v}$ for a row $v \neq 0$, so $N_\varepsilon(c\,hQ) = N_\varepsilon(h)\,Q$ for every number $c > 0$ and every orthogonal $Q$. Besides the symmetries inside its blocks, a residual network then has the symmetries
 \[
@@ -1264,7 +1264,7 @@ For $\tanh$ blocks and for GELU blocks, the skipless network satisfies the equal
 \thmExactGain*
 
 \begin{proof}
-By \cref{thm:resdepth} the residual network satisfies the equality condition, so it remains to show it for the skipless network; the gain is then $L\dim\G$. For $\tanh$ blocks, with or without pre-RMSNorm, and for GELU blocks under pre-RMSNorm, this is \cref{thm:skiplessbound} (\cref{app:rmsskipless}). For SwiGLU and GeGLU blocks it is \cref{thm:gatedskipless} (\cref{app:gatedskipless}). What is left is part (ii) without normalization, where $\dim\G = \dm^2$.
+By \cref{thm:resdepth} the residual network satisfies the equality condition, so it remains to show it for the skipless network; the gain is then $L\dim\G$. For $\tanh$, SwiGLU and GeGLU blocks, with or without pre-RMSNorm, and for GELU blocks under pre-RMSNorm, this is \cref{thm:skiplessbound} (\cref{app:rmsskipless}). What is left is part (ii) without normalization, where $\dim\G = \dm^2$.
 
 Let block $\ell$ have $d_{\mathrm{hidden},\ell} \ge 2\dm$ hidden units, and take a residual network with blocks of $d_{\mathrm{hidden},\ell} - \dm$ hidden units at the parameters $\theta_\tau$ of \cref{lem:smallwrites}, in which every $\Wwrite^{\ell}$ is replaced by $\tau\,\Wwrite^{\ell}$. Since $\sigma(z) - \sigma(-z) = z$, each of its blocks equals a block without skip with $\dm$ more hidden units: for $\dm$ hidden units $i$ whose reads $w_i$ form an invertible matrix, add the row $\gamma_i$ of its inverse to the write of unit $i$, and add a hidden unit with the read $-w_i$ and the write $-\gamma_i$. This construction is smooth in the residual parameters near these, where the chosen reads stay invertible, and gives a skipless network that computes the residual one. By the chain rule, the columns of the skipless Jacobian therefore span those of the residual Jacobian, which, with the read columns divided by $\tau$, tend to the limit $J_0$ of \cref{lem:smallwrites}, of rank $P_R - \dm^2$ on some finite batch, where $P_R = P - 2L\dm^2$ counts the parameters of the residual network. As $\sigma(z) - \sigma(-z) = z$ gives $\sigma'(-z) = 1 - \sigma'(z)$, and every block is the identity at $\tau = 0$, the reads of the added units give the further columns
 \[
@@ -1369,15 +1369,16 @@ Whether almost every residual ReLU network whose blocks all satisfy $\norm{\Wrea
 
 \subsection{Skipless networks that attain their bound\texorpdfstring{ (Theorem~\ref*{thm:exactgain})}{}}\label{app:rmsskipless}\label{app:epszeroskipless}\label{app:skiplessbound}
 
-This subsection proves that skipless networks of $\tanh$ blocks, and of GELU blocks under pre-RMSNorm, satisfy the equality condition (\cref{thm:skiplessbound}). This gives \cpref{thm:exactgain}{i}, \cpref{thm:exactgain}{ii} under pre-RMSNorm, and the exact gain for $\varepsilon = 0$, which \cref{thm:epszero} gives only as a lower bound. We show that the function changes along every direction of the parameters that is not a direction of the symmetries, by removing the blocks one at a time (Claim~$(D_k)$ below). A direction along which the function does not change gives an identity in the input of a block, and we follow this input to infinity. On the way, the hidden units of a $\tanh$ block saturate at different exponential rates, which separates them (\cref{lem:raysep}), and the hidden units of a GELU block differ from linear ones by Gaussian terms of different rates. Without normalization and for $\varepsilon > 0$, the inputs of a block fill an open set of rows, so the identity holds at every real row, and the way to infinity is a ray (\cref{lem:sbsteptanh,lem:sbstepgelu}). For $\varepsilon = 0$ the inputs of a block lie on a sphere, and we follow a great circle of the sphere to complex angles, as in the proof of \cref{lem:sphere} (\cref{lem:e0steptanh,lem:e0stepgelu}). The blocks are MLP blocks with the activation $\sigma$, without biases. An MLP block acts on each token separately, so we take inputs with one token, $x \in \R^{1\times d_{\mathrm{in}}}$.
+This subsection proves that skipless networks of $\tanh$, SwiGLU or GeGLU blocks, and of GELU blocks under pre-RMSNorm, satisfy the equality condition (\cref{thm:skiplessbound}). This gives \cpref{thm:exactgain}{i}, \cpref{thm:exactgain}{ii} under pre-RMSNorm, \cpref{thm:exactgain}{iii}, and the exact gain for $\varepsilon = 0$, which \cref{thm:epszero} gives only as a lower bound. We show that the function changes along every direction of the parameters that is not a direction of the symmetries, by removing the blocks one at a time (Claim~$(D_k)$ below). A direction along which the function does not change gives an identity in the input of a block, and we follow this input to infinity. On the way, the hidden units of a $\tanh$ block saturate at different exponential rates, which separates them (\cref{lem:raysep}), and the hidden units of a GELU block and the gates of a SwiGLU or GeGLU block differ from linear or vanishing ones by small terms of different rates. Without normalization and for $\varepsilon > 0$, the inputs of a block fill an open set of rows, so the identity holds at every real row, and the way to infinity is a ray (\cref{lem:sbsteptanh,lem:gtstep}). For $\varepsilon = 0$ the inputs of a block lie on a sphere, and we follow a great circle of the sphere to complex angles, as in the proof of \cref{lem:sphere} (\cref{lem:e0steptanh,lem:e0stepgelu}). The blocks are MLP blocks without biases, with the activation $\sigma$ or, in a SwiGLU or GeGLU block, the gate $\sigma$. An MLP block acts on each token separately, so we take inputs with one token, $x \in \R^{1\times d_{\mathrm{in}}}$.
 
 \begin{theorem}[Skipless networks that attain their bound]\label{thm:skiplessbound}\label{thm:epszeroskipless}
-Let $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm \ge 2$, and consider skipless networks without biases whose blocks are all $\tanh$ blocks or all GELU blocks, of width at least $\dm$. In the following cases the functional dimension at generic parameters is $P - (L+1)\dim\G$, which is the equality condition, so the skips raise the functional dimension by exactly $L\dim\G$.\\
+Let $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm \ge 2$, and consider skipless networks without biases whose blocks are all of one kind, $\tanh$, GELU, SwiGLU or GeGLU, of width at least $\dm$. Let $s$ be the dimension of the symmetries inside the blocks (\cref{sec:count}): $s = 0$ for $\tanh$ and GELU blocks, and $s$ is the number of hidden units of the network for SwiGLU and GeGLU blocks. In the following cases the functional dimension at generic parameters is $P - (L+1)\dim\G - s$, which is the equality condition, so the skips raise the functional dimension by exactly $L\dim\G$.\\
 \stpart{thm:skiplessbound}{i}{} $\tanh$ blocks: without normalization, where $\G = \GL(\dm)$; under pre-RMSNorm with $\varepsilon > 0$, where $\G = \Ort(\dm)$; and under pre-RMSNorm with $\varepsilon = 0$, where $\G = \CO(\dm)$ and $\dim\G = \dm(\dm-1)/2 + 1$.\\
-\stpart{thm:skiplessbound}{ii}{} GELU blocks: under pre-RMSNorm with $\varepsilon > 0$, and under pre-RMSNorm with $\varepsilon = 0$.
+\stpart{thm:skiplessbound}{ii}{} GELU blocks: under pre-RMSNorm with $\varepsilon > 0$, and under pre-RMSNorm with $\varepsilon = 0$.\\
+\stpart{thm:skiplessbound}{iii}{} SwiGLU blocks, and GeGLU blocks: without normalization, and under pre-RMSNorm with $\varepsilon > 0$.
 \end{theorem}
 
-For GELU blocks the theorem needs no condition $\dhid \ge 2\dm$. It does not cover GELU blocks without normalization, which \cref{app:depth} treats by another argument, for $\dhid \ge 2\dm$. On a ray, a GELU hidden unit differs from a linear one by a Gaussian term. Under RMSNorm the later blocks read a normalized row, which stays bounded along the ray, so these terms come from one block at a time. Without normalization the inputs of the later blocks grow along the ray, their hidden units add Gaussian terms of their own, and the block cannot be removed on its own.
+For GELU blocks the theorem needs no condition $\dhid \ge 2\dm$. It does not cover GELU blocks without normalization, which \cref{app:depth} treats by another argument, for $\dhid \ge 2\dm$. On a ray, a GELU hidden unit and the gate of a SwiGLU or GeGLU hidden unit differ from linear or vanishing ones by small terms, and the step from one block to the next is an induction over all products of these terms (\cref{lem:gtstep}). Under RMSNorm the later blocks read a normalized row, which stays bounded along the ray, so the small terms come from one block at a time. Without normalization the inputs of the later blocks grow along the ray, and their hidden units add small terms of their own. A SwiGLU or GeGLU block is quadratic along the ray up to its small terms, so the inputs of the later blocks grow like the square of its own input. Their small terms are then of a smaller order, and the network after the block can be replaced by a polynomial map (\cref{lem:gtfar}). A GELU block is linear along the ray, the small terms of all blocks are of the same order, and the block cannot be removed on its own. For GELU, SwiGLU and GeGLU blocks we prove the claim at one explicit choice of parameters (\cref{lem:gtstar}), and the theorem follows by analyticity.
 
 \para{The three cases.} We write (n) for the case without normalization, (+) for pre-RMSNorm with $\varepsilon > 0$, and (0) for pre-RMSNorm with $\varepsilon = 0$. Let $N$ be the map that a block applies to a hidden state before it reads it: the identity in the case (n), and $N_\varepsilon$ in the cases (+) and (0). The table gives $N$, the set of its values, which are the inputs of the blocks, the group $\G$ of the changes of basis, and its Lie algebra $\mathfrak g$: the set of the matrices $Z$ with $\exp(\tau Z) \in \G$ for all numbers $\tau$.
 \begin{center}\small
@@ -1393,7 +1394,14 @@ Case & $N(h)$ & Values of $N$ & $\G$ & $\mathfrak g$ \\
 \end{center}
 In the last row $Y$ is antisymmetric and $\beta$ is a number, and $\mathbb S$ is the set of the rows $n \in \R^{1\times\dm}$ with $\norm{n}^2 = \dm$.
 
-\para{Symmetries.} The skipless network computes $h_0 = xE$, $h_\ell = \sigma\big(N(h_{\ell-1})\,\Wread^{\ell}\big)\,\Wwrite^{\ell}$ and $F_\theta(x) = N(h_L)\,D$; in the case (0), at the inputs $x$ for which no $h_\ell$ vanishes. For $G \in \G$ let $\widehat G = G$ in the cases (n) and (+), and $\widehat G = Q$ for $G = \lambda Q$ in the case (0), with a number $\lambda > 0$ and an orthogonal $Q$. Then $N(hG) = N(h)\,\widehat G$ in all three cases. So for $G_0, \dots, G_L \in \G$ the parameters
+\para{Blocks.} For two rows of the same length, $\odot$ is their entrywise product. Let block $\ell$ have $q_\ell$ hidden units, and let $a_1, \dots, a_{q_\ell}$ be the rows of its write $\Wwrite^{\ell} \in \R^{q_\ell\times\dm}$. A $\tanh$ or GELU block has the activation $\sigma$, and its read $\Wread^{\ell} \in \R^{\dm\times q_\ell}$ has the columns $c_1, \dots, c_{q_\ell}$. A SwiGLU or GeGLU block, a \emph{gated} block, has the read $\Wread^{\ell} = [\,W_g^{\ell} \mid W_v^{\ell}\,]$, where $W_g^{\ell} \in \R^{\dm\times q_\ell}$ holds the gate columns $c_1, \dots, c_{q_\ell}$ and $W_v^{\ell} \in \R^{\dm\times q_\ell}$ the value columns $e_1, \dots, e_{q_\ell}$. Its gate $\sigma$ is GELU in a GeGLU block and SiLU, $\sigma(z) = z/(1 + e^{-z})$, in a SwiGLU block. Block $\ell$ maps its input $n$ to
+\begin{align*}
+g_\ell(n) \;&=\; \sigma(n\,\Wread^{\ell})\,\Wwrite^{\ell} \;=\; \sum_{j=1}^{q_\ell}\sigma(nc_j)\,a_j && \text{for a $\tanh$ or GELU block,}\\
+g_\ell(n) \;&=\; \big(\sigma(n\,W_g^{\ell})\odot n\,W_v^{\ell}\big)\,\Wwrite^{\ell} \;=\; \sum_{j=1}^{q_\ell}\sigma(nc_j)\,(ne_j)\,a_j && \text{for a gated block.}
+\end{align*}
+We treat gated blocks in the cases (n) and (+) only.
+
+\para{Symmetries.} The skipless network computes $h_0 = xE$, $h_\ell = g_\ell\big(N(h_{\ell-1})\big)$ and $F_\theta(x) = N(h_L)\,D$; in the case (0), at the inputs $x$ for which no $h_\ell$ vanishes. For $G \in \G$ let $\widehat G = G$ in the cases (n) and (+), and $\widehat G = Q$ for $G = \lambda Q$ in the case (0), with a number $\lambda > 0$ and an orthogonal $Q$. Then $N(hG) = N(h)\,\widehat G$ in all three cases. So for $G_0, \dots, G_L \in \G$ the parameters
 \[
 \Big(EG_0,\ \ \big\{\widehat G_{\ell-1}^{-1}\Wread^{\ell},\ \ \Wwrite^{\ell}G_\ell\big\}_{\ell=1}^{L},\ \ \widehat G_L^{-1}D\Big)
 \]
@@ -1401,12 +1409,24 @@ give the same function, with the hidden states $h_\ell G_\ell$: one matrix of $\
 \begin{equation}\label{eq:e0eta}
 \eta^{Z} \;=\; \Big(EZ_0,\ \ \big\{-\widehat Z_{\ell-1}\Wread^{\ell},\ \ \Wwrite^{\ell}Z_\ell\big\}_{\ell=1}^{L},\ \ -\widehat Z_LD\Big) \in \R^P ,
 \end{equation}
-the derivative of these parameters at $\tau = 0$ for $G_\ell = \exp(\tau Z_\ell)$. So $\Der_\theta F(\theta, x)\,\eta^{Z} = 0$ at every input at which $F_\theta$ is defined. When $E$ and every $\Wwrite^{\ell}$ have rank $\dm$, the map $(Z_0, \dots, Z_L) \mapsto \eta^{Z}$ is injective, so on every batch the Jacobian has rank at most
+the derivative of these parameters at $\tau = 0$ for $G_\ell = \exp(\tau Z_\ell)$. So $\Der_\theta F(\theta, x)\,\eta^{Z} = 0$ at every input at which $F_\theta$ is defined. When $E$ and every $\Wwrite^{\ell}$ have rank $\dm$, the map $(Z_0, \dots, Z_L) \mapsto \eta^{Z}$ is injective.
+
+A gated block has, in addition, one rescaling per hidden unit. For diagonal matrices $\Delta_1, \dots, \Delta_L$, with $\Delta_\ell$ of size $q_\ell$, the parameters
+\[
+\Big(EG_0,\ \ \big\{G_{\ell-1}^{-1}W_g^{\ell},\ \ G_{\ell-1}^{-1}W_v^{\ell}\,e^{-\Delta_\ell},\ \ e^{\Delta_\ell}\,\Wwrite^{\ell}G_\ell\big\}_{\ell=1}^{L},\ \ G_L^{-1}D\Big)
+\]
+give the same function as well: the diagonal matrix $e^{\Delta_\ell}$ multiplies the write row of every hidden unit of block $\ell$ by a positive number and divides its value column by the same number. For $Z_0, \dots, Z_L \in \mathfrak g$ let
+\begin{equation}\label{eq:gteta}
+\eta^{Z,\Delta} \;=\; \Big(EZ_0,\ \big\{-Z_{\ell-1}W_g^{\ell},\ -Z_{\ell-1}W_v^{\ell} - W_v^{\ell}\Delta_\ell,\ \Delta_\ell\Wwrite^{\ell} + \Wwrite^{\ell}Z_\ell\big\}_{\ell=1}^{L},\ -Z_LD\Big) \in \R^P ,
+\end{equation}
+the derivative of these parameters at $\tau = 0$ for $G_\ell = \exp(\tau Z_\ell)$ and with $\tau\Delta_\ell$ in the place of $\Delta_\ell$. So $\Der_\theta F(\theta, x)\,\eta^{Z,\Delta} = 0$ at every input $x$. When $E$ and every $\Wwrite^{\ell}$ have rank $\dm$ and no value column vanishes, $\eta^{Z,\Delta} = 0$ only if every $Z_\ell$ and every $\Delta_\ell$ vanishes: $EZ_0 = 0$ gives $Z_0 = 0$, then $W_v^{1}\Delta_1 = 0$ gives $\Delta_1 = 0$, then $\Wwrite^{1}Z_1 = 0$ gives $Z_1 = 0$, and so on.
+
+Let $s = 0$ for $\tanh$ and GELU blocks and $s = q_1 + \dots + q_L$ for gated blocks. Under these conditions the directions of the symmetries form a space of dimension $(L+1)\dim\G + s$, so on every batch the Jacobian has rank at most
 \begin{equation}\label{eq:e0upper}
-P - (L+1)\dim\G .
+P - (L+1)\dim\G - s .
 \end{equation}
 
-\para{Notation.} For rows $u, v$, real or complex, $\langle u, v\rangle = uv^\top$, without complex conjugation, and for two rows of the same length $\odot$ is their entrywise product. Block $\ell$ maps its input $n$ to $g_\ell(n) = \sigma(n\,\Wread^{\ell})\,\Wwrite^{\ell}$. For $k = 0, \dots, L$ and a row $h$, with $h \neq 0$ in the case (0), let $\mathcal B_{>k}(h)$ be the output of the network when its hidden state $h_k$ is set to $h$:
+\para{Notation.} For rows $u, v$, real or complex, $\langle u, v\rangle = uv^\top$, without complex conjugation. For $k = 0, \dots, L$ and a row $h$, with $h \neq 0$ in the case (0), let $\mathcal B_{>k}(h)$ be the output of the network when its hidden state $h_k$ is set to $h$:
 \[
 \mathcal B_{>L}(h) = N(h)\,D, \qquad \mathcal B_{>k-1}(h) = \mathcal B_{>k}\big(g_k(N(h))\big), \qquad\text{so that}\quad F_\theta(x) = \mathcal B_{>0}(xE).
 \]
@@ -1460,7 +1480,7 @@ Let $w_1A = 0$. Subtracting the hypothesis at $w$ and at $w + w_1$ gives $\Der\m
 \end{proof}
 
 \smallskip
-\noindent\emph{Claim $(D_k)$}, for $k = 0, \dots, L$. Let $Z$ be a $\dm\times\dm$ matrix and $\eta$ a direction of the weights of the blocks $k+1, \dots, L$ and of $D$. If \eqref{eq:e0D} holds, then $Z \in \mathfrak g$, and with $Z_k = Z$ there are $Z_{k+1}, \dots, Z_L \in \mathfrak g$ such that
+\noindent\emph{Claim $(D_k)$}, for $k = 0, \dots, L$. Let $Z$ be a $\dm\times\dm$ matrix and $\eta$ a direction of the weights of the blocks $k+1, \dots, L$ and of $D$. If \eqref{eq:e0D} holds, then $Z \in \mathfrak g$, and with $Z_k = Z$ there are $Z_{k+1}, \dots, Z_L \in \mathfrak g$ such that, for $\tanh$ and GELU blocks,
 \begin{equation}\label{eq:sbDconcl}
 \eta \;=\; \Big(\big\{-\widehat Z_{\ell-1}\Wread^{\ell},\ \ \Wwrite^{\ell}Z_\ell\big\}_{\ell=k+1}^{L},\ \ -\widehat Z_LD\Big).
 \end{equation}
@@ -1468,16 +1488,20 @@ In the case (0), with $Z_\ell = Y_\ell + \beta_\ell I$ for antisymmetric matrice
 \begin{equation}\label{eq:e0Dconcl}
 Z = Y_k + \beta_k I, \qquad \eta = \Big(\big\{-Y_{\ell-1}\Wread^{\ell},\ \ \Wwrite^{\ell}(Y_\ell + \beta_\ell I)\big\}_{\ell=k+1}^{L},\ \ -Y_LD\Big).
 \end{equation}
+For gated blocks there are, in addition, diagonal matrices $\Delta_{k+1}, \dots, \Delta_L$, with $\Delta_\ell$ of size $q_\ell$, such that
+\begin{equation}\label{eq:gtDconcl}
+\eta \;=\; \Big(\big\{-Z_{\ell-1}W_g^{\ell},\ \ -Z_{\ell-1}W_v^{\ell} - W_v^{\ell}\Delta_\ell,\ \ \Delta_\ell\Wwrite^{\ell} + \Wwrite^{\ell}Z_\ell\big\}_{\ell=k+1}^{L},\ \ -Z_LD\Big).
+\end{equation}
 
 \smallskip
-Conversely, every $Z = Z_k \in \mathfrak g$ and $\eta$ of the form \eqref{eq:sbDconcl} satisfy \eqref{eq:e0D}: it is the derivative at $\tau = 0$ of the identity
+Conversely, every $Z = Z_k \in \mathfrak g$ and $\eta$ of the form \eqref{eq:sbDconcl}, or \eqref{eq:gtDconcl} for gated blocks, satisfy \eqref{eq:e0D}: it is the derivative at $\tau = 0$ of the identity
 \[
 \mathcal B_{>k}\big(h\exp(\tau Z_k)\big) \;=\; \mathcal B_{>k}(h),
 \]
-in which the left side is taken at the weights moved by the symmetries with $G_\ell = \exp(\tau Z_\ell)$ for $\ell \ge k$.
+in which the left side is taken at the weights moved by the symmetries with $G_\ell = \exp(\tau Z_\ell)$ for $\ell \ge k$, and for gated blocks with $\tau\Delta_\ell$ in the place of $\Delta_\ell$.
 
 \begin{proposition}[The claim gives the rank]\label{prop:e0givesrank}
-Let $\theta$ be regular, and let $(D_0)$ hold at $\theta$. Then the directions $\eta \in \R^P$ with $\Der_\theta F(\theta, x)\,\eta = 0$ for all $x$, with $xE \neq 0$ in the case (0), are the directions $\eta^{Z}$ of \eqref{eq:e0eta}, and the Jacobian of the network has the rank \eqref{eq:e0upper} on some finite batch of such inputs.
+Let $\theta$ be regular, with no vanishing value column if the blocks are gated, and let $(D_0)$ hold at $\theta$. Then the directions $\eta \in \R^P$ with $\Der_\theta F(\theta, x)\,\eta = 0$ for all $x$, with $xE \neq 0$ in the case (0), are the directions $\eta^{Z}$ of \eqref{eq:e0eta}, or $\eta^{Z,\Delta}$ of \eqref{eq:gteta} for gated blocks, and the Jacobian of the network has the rank \eqref{eq:e0upper} on some finite batch of such inputs.
 \end{proposition}
 
 \begin{proof}
@@ -1485,7 +1509,7 @@ Let $\eta = (\eta_E, \eta')$ be such a direction, with $\eta_E$ its entry at $E$
 \[
 \Der_\theta F(\theta, x)\,\eta \;=\; \Der\mathcal B_{>0}(xE)\,(x\,\eta_E) + \Der_\theta\mathcal B_{>0}(xE)\,\eta' .
 \]
-By \cref{lem:e0atwrite} with $A = E$, $\eta_E = EZ$ and \eqref{eq:e0D} holds for $k = 0$. By $(D_0)$, $\eta = \eta^{Z}$ for some $Z_0, \dots, Z_L \in \mathfrak g$ with $Z_0 = Z$. The kernels of the Jacobian on finite batches are subspaces of $\R^P$ that can only shrink when the batch grows, so on some finite batch the kernel is the space of the $\eta^{Z}$, of dimension $(L+1)\dim\G$ by (R1).
+By \cref{lem:e0atwrite} with $A = E$, $\eta_E = EZ$ and \eqref{eq:e0D} holds for $k = 0$. By $(D_0)$, $\eta = \eta^{Z}$ for some $Z_0, \dots, Z_L \in \mathfrak g$ with $Z_0 = Z$, or $\eta = \eta^{Z,\Delta}$ for gated blocks. The kernels of the Jacobian on finite batches are subspaces of $\R^P$ that can only shrink when the batch grows, so on some finite batch the kernel is the space of the directions of the symmetries, which has dimension $(L+1)\dim\G + s$ by the hypotheses on $\theta$.
 \end{proof}
 
 \begin{lemma}[The readout]\label{lem:e0readout}
@@ -1504,9 +1528,9 @@ If $D$ has rank $\dm$, then $(D_L)$ holds.
 So $h\,(ZD + \eta_D) = \mu(h)\,hD$ with a number $\mu(h)$, for every $h \neq 0$. As $h \mapsto hD$ is injective and $\dm \ge 2$, comparing $h$, $h'$ and $h + h'$ for linearly independent $h, h'$ shows that $\mu$ is a constant $\beta$, so $ZD + \eta_D = \beta D$. Then $\langle hZ, h\rangle = \beta\norm{h}^2$ for all $h$, so the symmetric part of $Z$ is $\beta I$: $Z = Y_L + \beta I$ with $Y_L$ antisymmetric, and $\eta_D = \beta D - ZD = -Y_LD$.
 \end{proof}
 
-What remains is the step from $(D_{k+1})$ to $(D_k)$. In the cases (n) and (+) we prove it at almost all parameters (\cref{lem:sbsteptanh} for $\tanh$, \cref{lem:sbstepgelu} for GELU in the case (+)), and in the case (0) at suitable parameters (\cref{lem:e0steptanh,lem:e0stepgelu}).
+What remains is the step from $(D_{k+1})$ to $(D_k)$. For $\tanh$ blocks in the cases (n) and (+) we prove it at almost all parameters (\cref{lem:sbsteptanh}). For GELU blocks in the case (+) and for gated blocks we prove it at explicit parameters (\cref{lem:gtstep,lem:gtstar}), and in the case (0) at suitable parameters (\cref{lem:e0steptanh,lem:e0stepgelu}).
 
-\para{The identity for one block.} Fix $k < L$ and write $W = \Wread^{k+1}$, with the columns $c_1, \dots, c_q$, $V = \Wwrite^{k+1}$, with the rows $a_1, \dots, a_q$, and $\mathcal B = \mathcal B_{>k+1}$. Let $Z$ and $\eta = (\eta_W, \eta_V, \eta')$ be as in $(D_k)$, where $\eta_W$ and $\eta_V$ are the entries of $\eta$ at $W$ and $V$ and $\eta'$ is the rest. For rows $n$, $\tilde w$ and $\tilde w'$ let
+\para{The identity for one block.} Fix $k < L$, let block $k+1$ be a $\tanh$ or GELU block, and write $W = \Wread^{k+1}$, with the columns $c_1, \dots, c_q$, $V = \Wwrite^{k+1}$, with the rows $a_1, \dots, a_q$, and $\mathcal B = \mathcal B_{>k+1}$. Let $Z$ and $\eta = (\eta_W, \eta_V, \eta')$ be as in $(D_k)$, where $\eta_W$ and $\eta_V$ are the entries of $\eta$ at $W$ and $V$ and $\eta'$ is the rest. For rows $n$, $\tilde w$ and $\tilde w'$ let
 \begin{align}
 \dot z(n) &= \begin{cases} nZ\,W + n\,\eta_W & \text{in the case (n),}\\[3pt] \Big(nZ - \dfrac{\langle nZ, n\rangle}{\dm}\,n\Big)\,W + n\,\eta_W & \text{in the cases (+) and (0),}\end{cases} \label{eq:e0zdot}\\[2pt]
 \mathcal L(\tilde w, \tilde w'; n) &= \Der\mathcal B(\tilde wV)\,\Big(\big(\tilde w'\odot\dot z(n)\big)\,V + \tilde w\,\eta_V\Big) + \Der_\theta\mathcal B(\tilde wV)\,\eta' . \label{eq:e0L}
@@ -1617,18 +1641,19 @@ Let $z(t) = \omega\,t + \omega'/t$ with $\omega, \omega' \in \mathbb C$ and $\op
 Suppose that a component of $\Theta_1$ is not zero, and let $\Theta_1, \Theta_2$ stand for this component of both. Then $\operatorname{mr}(z(t)) = -\Theta_2(t)/\Theta_1(t) + O(t^{-m})$ for every $m$. For large $t$, $t = \frac{z}{2\omega}\big(1 + \sqrt{1 - 4\omega\omega'/z^2}\big)$ with $z = z(t)$, so $1/t$ is a convergent power series in $1/z$ without constant term. Hence $-\Theta_2/\Theta_1$ is, for large $t$, a convergent series in powers of $1/z$ with finitely many positive powers of $z$, and this series is an asymptotic expansion of $\operatorname{mr}(z)$ along the curve $z = z(t)$. On this curve $\operatorname{Re}z$ is at least a positive constant times $\lvert z\rvert$ for large $t$, so by \cpref{lem:e0mills}{ii} the series $\sum_l(-1)^l(2l-1)!!\,z^{-2l-1}$ is one as well. Asymptotic expansions are unique, so the two series have the same coefficients. But the numbers $(2l-1)!!$ grow faster than every geometric sequence, so the second series converges for no $z$, a contradiction. Hence $\Theta_1 = 0$, then $\Theta_2$ tends to $0$ faster than every power, and $\Theta_2 = 0$.
 \end{proof}
 
-\para{A GELU hidden unit on a ray.} Let $\delta(y) = \varphi(y)\,y\,\operatorname{mr}(y)$ and $\delta'(y) = \varphi(y)\,\big(\operatorname{mr}(y) - y\big)$. As $\sigma(z) - \sigma(-z) = z$ and $\sigma'(z) + \sigma'(-z) = 1$, \cpref{lem:e0mills}{i} gives, for every real number $y > 0$,
+\para{A gate on a ray.} GELU and SiLU both satisfy $\sigma(z) - \sigma(-z) = z$, and so $\sigma'(z) + \sigma'(-z) = 1$. Let $\delta(y) = y - \sigma(y)$, with the derivative $\delta'(y) = 1 - \sigma'(y)$. For every real number $y > 0$,
 \begin{equation}\label{eq:sbunit}
-\sigma(y) = y - \delta(y), \qquad \sigma(-y) = -\delta(y), \qquad \sigma'(y) = 1 - \delta'(y), \qquad \sigma'(-y) = \delta'(y),
+\sigma(y) = y - \delta(y), \qquad \sigma(-y) = -\delta(y), \qquad \sigma'(y) = 1 - \delta'(y), \qquad \sigma'(-y) = \delta'(y) .
 \end{equation}
-and \cpref{lem:e0mills}{ii} with $m = 0$ gives $0 < \delta(y) \le \varphi(y)$ and $\lvert\delta'(y)\rvert \le \varphi(y)\,(y + 1/y)$. So on a ray a hidden unit differs from a linear or a vanishing one by a Gaussian term.
-
-Consider, for a block $\ell$ with $W = \Wread^{\ell}$, its columns $c_j$, $V = \Wwrite^{\ell}$ and its rows $a_j$:
-\begin{itemize}[leftmargin=2.9em]
-\item[(Q1)] no $c_j$ and no $a_j$ vanishes, and $c_i \neq \pm c_j$ for all $i \neq j$;
-\item[(Q2)] there is a row $\xi_0$ such that $\xi_0c_j \neq 0$ for every $j$ and the $\dm\times\dm$ matrix $W I_{\mathcal A} V$ is invertible. Here $\mathcal A = \{j : \xi_0c_j > 0\}$ is the set of the hidden units that are active on $\xi_0$, and $I_{\mathcal A}$ is the diagonal matrix with the entries $1$ at the hidden units of $\mathcal A$ and $0$ elsewhere.
-\end{itemize}
-(Q2) holds for almost all pairs $(W, V)$, at every width $\dhid \ge \dm$: when $\dm$ columns of $W$ are linearly independent, some row $\xi_0$ has $\xi_0c_j > 0$ for these columns and $\xi_0c_j \neq 0$ for the others, and then $W I_{\mathcal A} V$ is invertible for almost every $V$. (Q2) gives (R3) for the block in the case (+): $\Der g_\ell(t\,\xi_0)$ tends to the map $v \mapsto v\,W I_{\mathcal A} V$ as $t \to \infty$.
+By \cpref{lem:e0mills}{i}, for GELU $\delta(y) = \varphi(y)\,y\,\operatorname{mr}(y)$ and $\delta'(y) = \varphi(y)\,\big(\operatorname{mr}(y) - y\big)$, and for SiLU
+\[
+\delta(y) = \frac{y}{1 + e^{y}}, \qquad \delta'(y) = \frac{1 + e^{y} - y\,e^{y}}{(1 + e^{y})^2} .
+\]
+Let $p = 2$ for GELU and $p = 1$ for SiLU. For every real number $y \ge 2$,
+\begin{equation}\label{eq:gtdelta}
+\tfrac16\,e^{-y^p/p} \;\le\; \delta(y) \;\le\; y\,e^{-y^p/p}, \qquad \lvert\delta'(y)\rvert \;\le\; 4\,y\,\delta(y) .
+\end{equation}
+For GELU, \cpref{lem:e0mills}{ii} gives $\operatorname{mr}(y) \le 1/y$ and $\lvert\operatorname{mr}(y) - 1/y\rvert \le 1/y^3$, so $\frac34 \le y\operatorname{mr}(y) \le 1$ and $\lvert\operatorname{mr}(y) - y\rvert \le 2y$. For SiLU, $\frac12\,y\,e^{-y} \le \delta(y) \le y\,e^{-y}$ and $\lvert\delta'(y)\rvert \le (2 + y)\,e^{-y}$. So on a ray a GELU hidden unit, and the gate of a hidden unit of a gated block, differ from a linear or a vanishing one by the small term $\delta$.
 
 \begin{lemma}[The rest of the network on a ray]\label{lem:sbcoeff}
 In the case (+), let $k \le L$, let $h^\circ \neq 0$ be a row, let $v_1, \dots, v_i$ be rows, and let $\eta$ be a direction of the weights of the blocks $k+1, \dots, L$ and of $D$. With $\Der^i$ the derivative of order $i$ in $h$, the maps
@@ -1646,93 +1671,205 @@ N_\varepsilon\big(t\,(h^\circ + u)\big) \;=\; \frac{h^\circ + u}{\sqrt{\norm{h^\
 and the right side is a real-analytic function of $(1/t, u)$ near $(0, 0)$, also at $1/t = 0$, because $h^\circ \neq 0$. So $\mathcal B_{>k}\big(t\,(h^\circ + u)\big)$ is a real-analytic function of $(1/t, u)$ near $(0, 0)$. It extends to a holomorphic and bounded function on a complex neighborhood of $(0, 0)$, which gives $\varrho$ and $t_0$. A derivative of order $i$ in $v = t\,u$ at $v = 0$ is $t^{-i}$ times the derivative of order $i$ in $u$ at $u = 0$. The weights enter analytically as well, which gives the same for $\Der_\theta\mathcal B_{>k}(\cdot)\,\eta$.
 \end{proof}
 
-\begin{lemma}[The step for GELU on rays]\label{lem:sbstepgelu}
-Let $\sigma$ be GELU, in the case (+), let $\theta$ be regular, and let block $k+1$ satisfy (Q1) and (Q2). Then $(D_{k+1})$ implies $(D_k)$.
+\para{GELU and gated blocks in one form.} The rest of the treatment of rays is for GELU, SwiGLU and GeGLU blocks. A GELU block has the form of a GeGLU block in which the value $ne_j$ of every hidden unit is replaced by the number $1$. So in a GELU block let $W_g^{\ell} = \Wread^{\ell}$, and call $c_1, \dots, c_{q_\ell}$ its gate columns. For a row $n$ let $\iota^{\ell}(n) \in \R^{1\times q_\ell}$ be the row of the values of its hidden units:
+\begin{gather*}
+\iota^{\ell}(n) = n\,W_v^{\ell} \ \text{ in a gated block}, \qquad\qquad \iota^{\ell}(n) = (1, \dots, 1) \ \text{ in a GELU block},\\
+g_\ell(n) \;=\; \big(\sigma(n\,W_g^{\ell})\odot\iota^{\ell}(n)\big)\,\Wwrite^{\ell} \ \text{ in both.}
+\end{gather*}
+Let $m = 2$ for gated blocks and $m = 1$ for GELU blocks, so that $\iota^{\ell}(\lambda n) = \lambda^{m-1}\,\iota^{\ell}(n)$ for every number $\lambda > 0$. The exponent $p$ of \eqref{eq:gtdelta} is $2$ for GELU and GeGLU blocks and $1$ for SwiGLU blocks.
+
+\para{Cones and good parameters.} A \emph{cone} is a set of rows that contains $\lambda h$ for each of its rows $h$ and every number $\lambda > 0$. Let $\mathcal C_0, \dots, \mathcal C_L$ be open convex cones in $\R^{1\times\dm}$ that do not contain $0$, one for each hidden state. We call $\theta$ \emph{good} for these cones if (R1) holds and every block $\ell$, with its gate columns $c_j$, its write rows $a_j$ and the entries $\iota_j(n)$ of $\iota^{\ell}(n)$, satisfies:
+\begin{itemize}[leftmargin=2.9em]
+\item[(K1)] $nc_j \neq 0$ for every $n \in \mathcal C_{\ell-1}$ and every $j$. So every gate has one sign on $\mathcal C_{\ell-1}$. Let $\mathcal A_\ell$ be the set of the hidden units $j$ with $nc_j > 0$ on $\mathcal C_{\ell-1}$, the \emph{active} ones, and let
+\[
+g^\circ_\ell(n) \;=\; \sum_{j\in\mathcal A_\ell}(nc_j)\,\iota_j(n)\,a_j
+\]
+be the block with its gates \emph{frozen}. It is a linear map for a GELU block and a quadratic map for a gated block: $g^\circ_\ell(\lambda n) = \lambda^m\,g^\circ_\ell(n)$.
+\item[(K2)] $g^\circ_\ell(n) \in \mathcal C_\ell$ for every $n \in \mathcal C_{\ell-1}$, and $\Der g^\circ_\ell(n)$ is invertible at some row $n$.
+\item[(K3)] No $a_j$ vanishes, and in a gated block no value column $e_j$ vanishes. For GELU and GeGLU blocks the matrices $c_1c_1^\top, \dots, c_{q_\ell}c_{q_\ell}^\top$ are linearly independent over $\mathbb Q$, and for SwiGLU blocks the columns $c_1, \dots, c_{q_\ell}$ are.
+\end{itemize}
+The determinant of $\Der g^\circ_\ell(n)$ is a polynomial in $n$, so by (K2) $g^\circ_\ell$ is a local diffeomorphism on an open dense set of rows. A good $\theta$ is regular. Indeed, take $\xi \in \mathcal C_{\ell-1}$ with $\Der g^\circ_\ell(\xi)$ invertible. For a row $v$, by \eqref{eq:sbunit} and \eqref{eq:gtdelta}, in a gated block
+\begin{align*}
+\frac1t\,\Der g_\ell(t\,\xi)\,v \;&=\; \sum_j\Big[\sigma'(t\,\xi c_j)\,(vc_j)\,(\xi e_j) + \frac{\sigma(t\,\xi c_j)}{t}\,(ve_j)\Big]\,a_j \\
+&\longrightarrow\; \sum_{j\in\mathcal A_\ell}\Big[(vc_j)\,(\xi e_j) + (\xi c_j)\,(ve_j)\Big]\,a_j \;=\; \Der g^\circ_\ell(\xi)\,v \qquad\text{as } t \to \infty ,
+\end{align*}
+and in a GELU block $\Der g_\ell(t\,\xi)\,v = \sum_j\sigma'(t\,\xi c_j)\,(vc_j)\,a_j$ tends to $\sum_{j\in\mathcal A_\ell}(vc_j)\,a_j = \Der g^\circ_\ell(\xi)\,v$. So $\Der g_\ell(t\,\xi)$ is invertible for large $t$, which is (R3).
+
+\para{The frozen network.} In the case (n), for gated blocks and a good $\theta$, let $\mathcal B^\circ_{>k}$ be the network after $h_k$ with the gates of all its blocks frozen:
+\[
+\mathcal B^\circ_{>L}(h) = hD, \qquad \mathcal B^\circ_{>k-1}(h) = \mathcal B^\circ_{>k}\big(g^\circ_k(h)\big).
+\]
+It is a polynomial map of $h$ and of the weights. \Cref{lem:e0tailrank,lem:e0atwrite} hold for $\mathcal B^\circ_{>k}$ in the place of $\mathcal B_{>k}$, with an open dense set $\mathcal U^\circ_k$ of rows and with the same proofs, in which $g^\circ_{k+1}$ takes the place of $g_{k+1}$.
+
+\para{The identity for one GELU or gated block.} Fix $k < L$ and write $W_g = W_g^{k+1}$, with the columns $c_1, \dots, c_q$, $V = \Wwrite^{k+1}$, with the rows $a_1, \dots, a_q$, $\iota = \iota^{k+1}$ and $\mathcal B = \mathcal B_{>k+1}$, and in a gated block $W_v = W_v^{k+1}$, with the columns $e_1, \dots, e_q$. Let $Z$ and $\eta = (\eta_g, \eta_v, \eta_V, \eta')$ be as in $(D_k)$, where $\eta_g$, $\eta_v$ and $\eta_V$ are the entries of $\eta$ at $W_g$, $W_v$ and $V$ and $\eta'$ is the rest; in a GELU block there is no $\eta_v$. For a row $n$ let $\tilde n = nZ$ in the case (n) and $\tilde n = nZ - \frac{\langle nZ, n\rangle}{\dm}\,n$ in the case (+). For rows $n$ and $\tilde w, \tilde w' \in \R^{1\times q}$ let
+\begin{align}
+\dot z^g(n) &= \tilde n\,W_g + n\,\eta_g, \qquad\qquad \dot z^v(n) = \begin{cases} \tilde n\,W_v + n\,\eta_v & \text{in a gated block,}\\ 0 & \text{in a GELU block,}\end{cases} \label{eq:gtzdot}\\[3pt]
+\mathcal L(\tilde w, \tilde w'; n) &= \Der\mathcal B\big(\hat wV\big)\,\Big(\big(\tilde w'\odot\dot z^g(n)\odot\iota(n) + \tilde w\odot\dot z^v(n)\big)\,V + \hat w\,\eta_V\Big) + \Der_\theta\mathcal B\big(\hat wV\big)\,\eta' , \label{eq:gtL}
+\end{align}
+where $\hat w = \tilde w\odot\iota(n)$, and $\dot z^g_j(n)$ and $\dot z^v_j(n)$ are the entries of the rows \eqref{eq:gtzdot}. Here $\tilde w$ stands for the row $\sigma(nW_g)$ of the gates, $\tilde w'$ for the row $\sigma'(nW_g)$ of their derivatives, and $\hat w$ for the row of the outputs of the hidden units, and $\dot z^g(n)$ and $\dot z^v(n)$ are the derivatives of the rows $nW_g$ and $\iota(n)$. In a GELU block $\hat w = \tilde w$, and these are the maps \eqref{eq:e0zdot} and \eqref{eq:e0L}. By the chain rule and \eqref{eq:sbDN}, the left side of \eqref{eq:e0D} at $h$ is $\mathcal L\big(\sigma(nW_g), \sigma'(nW_g); n\big)$ at $n = N(h)$. As in \cref{lem:sballrows}, \eqref{eq:e0D} for $k$ therefore holds if and only if
+\begin{equation}\label{eq:gtstarall}
+\mathcal L\big(\sigma(nW_g),\ \sigma'(nW_g);\ n\big) \;=\; 0 \qquad\text{for every row } n \in \R^{1\times\dm} .
+\end{equation}
+We use two properties of $\mathcal L$. The row $\tilde w'$ enters only through the terms $\tilde w'_j\,\dot z^g_j(n)\,\iota_j(n)\,a_j$, so
+\begin{equation}\label{eq:gtLprime}
+\frac{\partial\mathcal L}{\partial\tilde w'_j}(\tilde w, \tilde w'; n) \;=\; \dot z^g_j(n)\;\iota_j(n)\;\Der\mathcal B\big(\hat wV\big)\,a_j .
+\end{equation}
+And in a gated block $\dot z^g$ and $\dot z^v$ are odd in $n$, while $\hat w$ does not change when $\tilde w$ and $n$ both change their sign, so
+\begin{equation}\label{eq:gtparity}
+\mathcal L(-\tilde w, \tilde w'; -n) \;=\; \mathcal L(\tilde w, \tilde w'; n) \qquad\text{in a gated block.}
+\end{equation}
+
+\begin{lemma}[The network after $h_k$ far out in its cone]\label{lem:gtfar}
+In the case (n), for gated blocks, let $\theta$ be good, $k \le L$, $h^\circ \in \mathcal C_k$, and let $\eta$ be a direction of the weights of the blocks $k+1, \dots, L$ and of $D$. There are numbers $\varrho, \kappa, t_0 > 0$ such that, for $t \ge t_0$, the maps $u \mapsto \mathcal B_{>k}\big(t\,(h^\circ + u)\big)$ and $u \mapsto \Der_\theta\mathcal B_{>k}\big(t\,(h^\circ + u)\big)\,\eta$ extend to holomorphic maps on the rows $u \in \mathbb C^{1\times\dm}$ with $\lvert u_j\rvert \le \varrho$ for all $j$, and for these $u$, at $h = t\,(h^\circ + u)$,
+\[
+\norm{\mathcal B_{>k}(h) - \mathcal B^\circ_{>k}(h)} \;\le\; e^{-\kappa t^p}, \qquad \norm{\Der_\theta\mathcal B_{>k}(h)\,\eta - \Der_\theta\mathcal B^\circ_{>k}(h)\,\eta} \;\le\; e^{-\kappa t^p} .
+\]
 \end{lemma}
 
 \begin{proof}
-Let $Z$ and $\eta$ satisfy \eqref{eq:e0D} for $k$, so that \eqref{eq:sbstarall} holds, with the notation above. Let $\xi_0$ and $\mathcal A$ be as in (Q2), let $s_j$ be the sign of $\xi_0c_j$ and $\bar s = (s_1, \dots, s_q)$, and let $1_{\mathcal A}$ be the row with the entries $1$ at the hidden units of $\mathcal A$ and $0$ elsewhere. Let $\mathcal P$ be the open set of the unit rows $\xi$ such that every $\xi c_j$ has the sign $s_j$.
+\emph{One gate.} Let $z \in \mathbb C$ with $\operatorname{Re}z \ge 2$ and $\lvert\operatorname{Im}z\rvert \le \frac12\operatorname{Re}z$, so that $\operatorname{Re}(z^2) \ge \frac34(\operatorname{Re}z)^2$ and $\lvert z\rvert \le 2\operatorname{Re}z$. For GELU, by \cref{lem:e0mills}, $\sigma(z) - z = -\varphi(z)\,z\operatorname{mr}(z)$ and $\lvert z\operatorname{mr}(z)\rvert \le \lvert z\rvert/\operatorname{Re}z \le 2$, so $\lvert\sigma(z) - z\rvert \le e^{-\frac38(\operatorname{Re}z)^2}$. For SiLU, $\sigma(z) - z = -z/(1 + e^{z})$ and $\lvert 1 + e^{z}\rvert \ge \frac12\,e^{\operatorname{Re}z}$, so $\lvert\sigma(z) - z\rvert \le 4\operatorname{Re}z\;e^{-\operatorname{Re}z}$. Both gates are holomorphic at $z$ and at $-z$, and $\sigma(-z) = \sigma(z) - z$. So there is a number $\kappa_1 > 0$ such that, for large $\operatorname{Re}z$,
+\begin{equation}\label{eq:gtgate}
+\lvert\sigma(z) - z\rvert \;\le\; e^{-\kappa_1(\operatorname{Re}z)^p} \qquad\text{and}\qquad \lvert\sigma(-z)\rvert \;\le\; e^{-\kappa_1(\operatorname{Re}z)^p} .
+\end{equation}
 
-\emph{The ray.} Fix $\xi \in \mathcal P$, and let $n = t\,\xi$ with $t > 0$. Let
+\emph{The first bound, by induction on $L - k$.} We prove it at the weights $\theta + \tau\eta$ as well, for all complex numbers $\tau$ with $\lvert\tau\rvert \le \tau_0$ and a small $\tau_0 > 0$, where the hidden units whose gates are frozen are those of $\theta$. For $k = L$, $\mathcal B_{>L}(h) = hD = \mathcal B^\circ_{>L}(h)$. Let the bound hold for some $k \ge 1$, and let $h^\circ \in \mathcal C_{k-1}$. By (K1), $h^\circ c_j \neq 0$ for the gate columns $c_j$ of block $k$ at $\theta$. Let $\varrho$ and $\tau_0$ be small, and let $h = t\,(h^\circ + u)$. For every $j$, with $c_j$ taken at the weights $\theta + \tau\eta$, the number $z = hc_j$ or $z = -hc_j$ with the sign of $h^\circ c_j$ satisfies $\operatorname{Re}z \ge \frac t2\,\lvert h^\circ c_j\rvert$ and $\lvert\operatorname{Im}z\rvert \le \frac12\operatorname{Re}z$. By \eqref{eq:gtgate}, $g_k$ is holomorphic at these $h$, and
 \[
-r_j = (\xi c_j)^2, \qquad \delta_j(t) = \delta\big(t\,\lvert\xi c_j\rvert\big), \qquad \delta'_j(t) = \delta'\big(t\,\lvert\xi c_j\rvert\big),
+\norm{g_k(h) - g^\circ_k(h)} \;\le\; e^{-\kappa_2t^p}, \qquad g^\circ_k(h) \;=\; t^2\,\big(g^\circ_k(h^\circ) + u'\big),
 \]
-and let $\delta(t)$ and $\delta'(t)$ be the rows with these entries. By the bounds after \eqref{eq:sbunit}, with a constant $\kappa$, for $t \ge 1$
-\begin{equation}\label{eq:sbdeltabound}
-\lvert\delta_j(t)\rvert \;\le\; e^{-t^2r_j/2}, \qquad \lvert\delta'_j(t)\rvert \;\le\; \kappa\,t\;e^{-t^2r_j/2} .
-\end{equation}
-By \eqref{eq:sbunit}, $\sigma(nW) = n\,W I_{\mathcal A} - \delta(t)$ and $\sigma'(nW) = 1_{\mathcal A} - \bar s\odot\delta'(t)$. So \eqref{eq:sbstarall} at $n = t\,\xi$ is
-\begin{equation}\label{eq:sbgeluray}
-\mathcal L\big(n\,W I_{\mathcal A} - \delta(t),\ \ 1_{\mathcal A} - \bar s\odot\delta'(t);\ \ n\big) \;=\; 0 \qquad\text{for all } t > 0 .
-\end{equation}
+with a number $\kappa_2 > 0$, where $g_k$ and $g^\circ_k$ are taken at the weights $\theta + \tau\eta$ and $g^\circ_k(h^\circ)$ at $\theta$, and where the entries of the row $u'$ are as small as we like when $\varrho$ and $\tau_0$ are small. So $g_k(h)$ is $t^2\,\big(g^\circ_k(h^\circ) + u''\big)$ with a row $u''$ of the same kind. By (K2), $g^\circ_k(h^\circ) \in \mathcal C_k$. So the bound for $k$, at the row $g^\circ_k(h^\circ)$ and with $t^2$ in the place of $t$, gives $\norm{\mathcal B_{>k}(g_k(h)) - \mathcal B^\circ_{>k}(g_k(h))} \le e^{-\kappa t^{2p}}$. The derivative of the polynomial map $\mathcal B^\circ_{>k}$ is at most a fixed power of $t$ at the rows $t^2\,(g^\circ_k(h^\circ) + u')$, so $\norm{\mathcal B^\circ_{>k}(g_k(h)) - \mathcal B^\circ_{>k}(g^\circ_k(h))}$ is at most a fixed power of $t$ times $e^{-\kappa_2t^p}$. As $\mathcal B_{>k-1} = \mathcal B_{>k}\circ g_k$ and $\mathcal B^\circ_{>k-1} = \mathcal B^\circ_{>k}\circ g^\circ_k$, this gives the bound for $k - 1$, with a smaller $\kappa$.
 
-\emph{The expansion.} For fixed $t$, the map $(\delta, \delta') \mapsto \mathcal L\big(n\,W I_{\mathcal A} - \delta,\ 1_{\mathcal A} - \bar s\odot\delta';\ n\big)$ is real-analytic in the row $\delta$ and affine in the row $\delta'$. We expand it in powers of $\delta$ and $\delta'$. Its value at $0$ and its first derivatives are
+\emph{The second bound.} At $h = t\,(h^\circ + u)$ the difference of $\mathcal B_{>k}(h)$ and $\mathcal B^\circ_{>k}(h)$ at the weights $\theta + \tau\eta$ is holomorphic in $\tau$ for $\lvert\tau\rvert \le \tau_0$ and at most $e^{-\kappa t^p}$. By Cauchy's estimate its derivative at $\tau = 0$, which is $\Der_\theta\mathcal B_{>k}(h)\,\eta - \Der_\theta\mathcal B^\circ_{>k}(h)\,\eta$, is at most $e^{-\kappa t^p}/\tau_0$.
+\end{proof}
+
+\begin{lemma}[The step for GELU and gated blocks on rays]\label{lem:gtstep}
+Let the blocks be GELU blocks in the case (+), or gated blocks in the case (n) or (+). Let $\theta$ be good for the cones $\mathcal C_0, \dots, \mathcal C_L$, and let $k < L$. Then $(D_{k+1})$ implies $(D_k)$.
+\end{lemma}
+
+\begin{proof}
+Let $Z$ and $\eta$ satisfy \eqref{eq:e0D} for $k$, so that \eqref{eq:gtstarall} holds, with the notation above. Let $\mathcal A = \mathcal A_{k+1}$ and $g^\circ = g^\circ_{k+1}$. Let $s_j$ be the sign of $nc_j$ on $\mathcal C_k$ and $\bar s = (s_1, \dots, s_q)$, let $I_{\mathcal A}$ be the diagonal matrix with the entries $1$ at the hidden units of $\mathcal A$ and $0$ elsewhere, and $1_{\mathcal A}$ the row with these entries. Let
 \[
-\mathcal L_0(t) = \mathcal L\big(n\,W I_{\mathcal A}, 1_{\mathcal A}; n\big), \quad\ \mathcal L_j(t) = \frac{\partial\mathcal L}{\partial\tilde w_j}\big(n\,W I_{\mathcal A}, 1_{\mathcal A}; n\big), \quad\ \mathcal L'_j(t) = \frac{\partial\mathcal L}{\partial\tilde w'_j}\big(n\,W I_{\mathcal A}, 1_{\mathcal A}; n\big),
+\mathcal B^\infty = \mathcal B_{>k+1} \ \text{ in the case (+)}, \qquad \mathcal B^\infty = \mathcal B^\circ_{>k+1} \ \text{ in the case (n)},
 \]
-so that \eqref{eq:sbgeluray} is
-\begin{equation}\label{eq:sbexpansion}
-\mathcal L_0(t) \;-\; \sum_j\Big[\mathcal L_j(t)\,\delta_j(t) + s_j\,\mathcal L'_j(t)\,\delta'_j(t)\Big] \;+\; \big(\text{terms with two or more factors}\big) \;=\; 0 ,
-\end{equation}
-where the factors are entries of $\delta(t)$ and $\delta'(t)$. We use two facts about the coefficients, both from \cref{lem:sbcoeff} for $\mathcal B = \mathcal B_{>k+1}$ and the row $h^\circ = \xi\,W I_{\mathcal A} V$, which is not zero by (Q2). First, every coefficient is meromorphic at infinity: it is built from derivatives of $\mathcal B$ and of $\Der_\theta\mathcal B(\cdot)\,\eta'$ at $n\,W I_{\mathcal A} V = t\,h^\circ$ and from polynomials in $t$. Second, $(n\,W I_{\mathcal A} - \delta)\,V = t\,(h^\circ + u)$ with $u = -\delta V/t$. So there is a number $\varrho' > 0$ such that, for $t \ge t_0$, the expanded map is holomorphic in the rows $\delta \in \mathbb C^{1\times q}$ with $\lvert\delta_j\rvert \le \varrho'\,t$ for all $j$, and at most a fixed power of $t$ there; the first derivative of a bounded holomorphic map is bounded on a smaller polydisc. By Cauchy's estimates, the coefficient of a product of $i$ factors $\delta_j$ and of at most one factor $\delta'_j$ is then at most a fixed power of $t$ times $(\varrho'\,t)^{-i}$. With \eqref{eq:sbdeltabound}, the series \eqref{eq:sbexpansion} therefore converges absolutely for large $t$, and the sum of any set of its terms is at most a power of $t$ times $e^{-t^2r/2}$, where $r$ is the smallest sum of the numbers $r_j$ of the factors of a term of the set.
+and let $\mathcal L^\infty$ be \eqref{eq:gtL} with $\mathcal B^\infty$ in the place of $\mathcal B$. It is real-analytic in $(\tilde w, \tilde w', n)$ on all rows, a polynomial in the case (n), and it satisfies \eqref{eq:gtLprime}, and \eqref{eq:gtparity} in a gated block, with $\mathcal B^\infty$. \Cref{lem:e0tailrank,lem:e0atwrite} hold for $\mathcal B^\infty$, and we write $\mathcal U^\infty$ for its open dense set $\mathcal U_{k+1}$ or $\mathcal U^\circ_{k+1}$.
 
-\emph{Step 1: the term without $\delta$.} By \eqref{eq:sbexpansion}, $\mathcal L_0(t)$ tends to $0$ faster than every power of $1/t$. It is meromorphic at infinity, so $\mathcal L_0(t) = 0$ for large $t$, and then for all $t > 0$, because it is real-analytic in $t$. By \eqref{eq:e0L}, for every row $n$ of the open cone of the rows $t\,\xi$ with $\xi \in \mathcal P$ and $t > 0$,
-\begin{equation}\label{eq:sborder0}
-\Der\mathcal B(n\,W I_{\mathcal A} V)\,\Big(\dot z(n)\,I_{\mathcal A} V + n\,W I_{\mathcal A}\,\eta_V\Big) + \Der_\theta\mathcal B(n\,W I_{\mathcal A} V)\,\eta' \;=\; 0 .
+\emph{The ray.} Let $\xi \in \mathcal C_k$ and $n = t\,\xi$ with $t > 0$. Let
+\[
+r_j = \lvert\xi c_j\rvert^p, \qquad \delta_j(t) = \delta\big(t\,\lvert\xi c_j\rvert\big), \qquad \delta'_j(t) = \delta'\big(t\,\lvert\xi c_j\rvert\big),
+\]
+and let $\delta(t)$ and $\delta'(t)$ be the rows with these entries. By \eqref{eq:gtdelta}, with a constant $\kappa$, for large $t$
+\begin{equation}\label{eq:gtsizes}
+\tfrac16\,e^{-r_jt^p/p} \;\le\; \delta_j(t) \;\le\; \kappa\,t\;e^{-r_jt^p/p}, \qquad \lvert\delta'_j(t)\rvert \;\le\; \kappa\,t\;\delta_j(t) .
+\end{equation}
+By \eqref{eq:sbunit}, $\sigma(nW_g) = n\,W_gI_{\mathcal A} - \delta(t)$ and $\sigma'(nW_g) = 1_{\mathcal A} - \bar s\odot\delta'(t)$. So \eqref{eq:gtstarall} at $n = t\,\xi$ is
+\begin{equation}\label{eq:gtray}
+\mathcal L\big(t\,\xi W_gI_{\mathcal A} - \delta(t),\ \ 1_{\mathcal A} - \bar s\odot\delta'(t);\ \ t\,\xi\big) \;=\; 0 \qquad\text{for all } t > 0 .
+\end{equation}
+Without the small terms the hidden units of the block give the row $t\,\xi W_gI_{\mathcal A}\odot\iota(t\,\xi)$, and the block gives $g^\circ(t\,\xi) = t^m\,h^\circ$ with $h^\circ = g^\circ(\xi)$, which lies in $\mathcal C_{k+1}$ by (K2), so $h^\circ \neq 0$. With a row $\delta$ in the place of $\delta(t)$ the block gives $t^m\,(h^\circ + u)$ with $u = -\frac1t\,\big(\delta\odot\iota(\xi)\big)\,V$.
+
+\emph{The expansion.} For a multi-index $\alpha = (\alpha_1, \dots, \alpha_q)$ of nonnegative integers let $\delta^\alpha = \prod_j\delta_j^{\alpha_j}$, $\lvert\alpha\rvert = \sum_j\alpha_j$, $\alpha! = \prod_j\alpha_j!$ and $r_\alpha = \sum_j\alpha_jr_j$, and let $1_j$ be the multi-index with the entry $1$ at $j$ and $0$ elsewhere. Let
+\[
+\mathcal L_\alpha(t) = \frac{1}{\alpha!}\,\frac{\partial^{\lvert\alpha\rvert}\mathcal L^\infty}{\partial\tilde w^\alpha}, \qquad \mathcal L'_{\alpha,i}(t) = \frac{1}{\alpha!}\,\frac{\partial^{\lvert\alpha\rvert}}{\partial\tilde w^\alpha}\,\frac{\partial\mathcal L^\infty}{\partial\tilde w'_i}, \qquad\text{both at } \big(t\,\xi W_gI_{\mathcal A},\ 1_{\mathcal A};\ t\,\xi\big).
+\]
+We write $\mathcal L_j = \mathcal L_{1_j}$ and $\mathcal L'_j = \mathcal L'_{0,j}$. As $\mathcal L^\infty$ is real-analytic in $\tilde w$ and affine in $\tilde w'$,
+\begin{equation}\label{eq:gtseries}
+\mathcal L^\infty\big(t\,\xi W_gI_{\mathcal A} - \delta,\ \ 1_{\mathcal A} - \bar s\odot\delta';\ \ t\,\xi\big) \;=\; \sum_\alpha(-1)^{\lvert\alpha\rvert}\,\delta^\alpha\,\Big[\mathcal L_\alpha(t) - \sum_{i=1}^{q}s_i\,\mathcal L'_{\alpha,i}(t)\,\delta'_i\Big]
+\end{equation}
+for small rows $\delta$ and all rows $\delta'$. By \eqref{eq:gtsizes}, at $\delta = \delta(t)$ and $\delta' = \delta'(t)$ the term of $\delta^\alpha$ is of the order of $e^{-r_\alpha t^p/p}$, up to powers of $t$, and the term of $\delta^\alpha\delta'_i$ of the order of $e^{-(r_\alpha + r_i)t^p/p}$. We call $r_\alpha$ and $r_\alpha + r_i$ the \emph{exponents} of these terms. We use three facts.
+\begin{itemize}[leftmargin=2.2em]
+\item[(a)] Every $\mathcal L_\alpha$ and $\mathcal L'_{\alpha,i}$ is a real-analytic function of $t \in \R$ that is meromorphic at infinity. In the case (n) it is a polynomial in $t$. In the case (+) it is built from derivatives of $\mathcal B$ and of $\Der_\theta\mathcal B(\cdot)\,\eta'$ at $t^m\,h^\circ$ and from polynomials in $t$, so this is \cref{lem:sbcoeff} with $t^m$ in the place of $t$.
+\item[(b)] At $\delta = \delta(t)$ and $\delta' = \delta'(t)$, the left side of \eqref{eq:gtseries} vanishes in the case (+), by \eqref{eq:gtray}. In the case (n), where the blocks are gated and $m = 2$, it is at most $e^{-\kappa' t^{2p}}$ for large $t$, with a number $\kappa' > 0$. Indeed, by \cref{lem:gtfar} for $k+1$, at the row $h^\circ$ and with $t^2$ in the place of $t$, the maps $\mathcal B - \mathcal B^\infty$ and $\Der_\theta\mathcal B(\cdot)\,\eta' - \Der_\theta\mathcal B^\infty(\cdot)\,\eta'$ are holomorphic and at most $e^{-2\kappa' t^{2p}}$ at the rows $t^2\,(h^\circ + u)$ with $\lvert u_j\rvert \le \varrho$, and by Cauchy's estimate so is the derivative of the first, for large $t$, where $\lvert u_j\rvert \le \varrho/2$. At $\delta = \delta(t)$ the block gives such a row, with $u \to 0$, and the rows to which these derivatives are applied in \eqref{eq:gtL} are at most a fixed power of $t$. So $\mathcal L$ and $\mathcal L^\infty$ differ at the point of \eqref{eq:gtray} by at most a fixed power of $t$ times $e^{-2\kappa' t^{2p}}$, and $\mathcal L$ vanishes there.
+\item[(c)] For large $t$ the series \eqref{eq:gtseries} converges absolutely at $\delta(t)$, $\delta'(t)$, and the sum of any set of its terms is at most a fixed power of $t$ times $e^{-rt^p/p}$, where $r$ is the smallest exponent of a term of the set. In the case (n) the series is a finite sum with coefficients that are polynomials in $t$, and this follows from \eqref{eq:gtsizes}. In the case (+), by \cref{lem:sbcoeff} with $t^m$ in the place of $t$, the maps $u \mapsto \mathcal B\big(t^m(h^\circ + u)\big)$ and $u \mapsto \Der_\theta\mathcal B\big(t^m(h^\circ + u)\big)\,\eta'$ are holomorphic and bounded on the rows $u$ with $\lvert u_j\rvert \le \varrho$, uniformly in $t \ge t_0$, and by Cauchy's estimate so is the derivative of the first where $\lvert u_j\rvert \le \varrho/2$. With a row $\delta$ in the place of $\delta(t)$ the block gives $t^m\,(h^\circ + u)$, and there is a number $\varrho' > 0$ such that $\lvert u_j\rvert \le \varrho/2$ for the rows $\delta \in \mathbb C^{1\times q}$ with $\lvert\delta_j\rvert \le \varrho'\,t$ for all $j$. So the left side of \eqref{eq:gtseries}, which is affine in $\delta'$, is holomorphic in these rows $\delta$, and there its value at $\delta' = 0$ and its coefficients of the entries of $\delta'$ are at most a fixed power of $t$. By Cauchy's estimates, $\mathcal L_\alpha(t)$ and $\mathcal L'_{\alpha,i}(t)$ are at most a fixed power of $t$ times $(\varrho'\,t)^{-\lvert\alpha\rvert}$. With \eqref{eq:gtsizes}, a term with the exponent $r'$ is then at most a fixed power of $t$ times $(\kappa/\varrho')^{\lvert\alpha\rvert}\,e^{-r't^p/p}$. As $r' \ge \lvert\alpha\rvert\,\min_jr_j$, the terms with large $\lvert\alpha\rvert$ are bounded by a geometric series.
+\end{itemize}
+
+\emph{A generic ray.} We now take $\xi \in \mathcal C_k$ such that
+\begin{itemize}[leftmargin=2.2em]
+\item[(i)] the numbers $r_1, \dots, r_q$ are linearly independent over $\mathbb Q$;
+\item[(ii)] $\iota_j(\xi) \neq 0$ for every $j$;
+\item[(iii)] $g^\circ(\xi) \in \mathcal U^\infty$.
+\end{itemize}
+These $\xi$ are dense in $\mathcal C_k$. For (i): if integers $\kappa_1, \dots, \kappa_q$ are not all zero, $\sum_j\kappa_jr_j$ is $\xi\big(\sum_j\kappa_jc_jc_j^\top\big)\xi^\top$ for GELU and GeGLU blocks and $\xi\sum_j\kappa_js_jc_j$ for SwiGLU blocks, and by (K3) it vanishes only for $\xi$ on a quadric, or in a hyperplane. For (ii): in a gated block $\iota_j(\xi) = \xi e_j$, and $e_j \neq 0$ by (K3). For (iii): $g^\circ$ is a local diffeomorphism on an open dense set of rows, and $\mathcal U^\infty$ is open and dense. By (i), different multi-indices have different exponents $r_\alpha$, and only finitely many exponents lie below any bound.
+
+\emph{The induction.} We show that, for every multi-index $\alpha$,
+\begin{equation}\label{eq:gtclaim}
+\mathcal L_\alpha(t) = 0 \quad\text{and}\quad \mathcal L'_{\alpha - 1_i,\,i}(t) = 0 \ \text{ for every } i \text{ with } \alpha_i \ge 1, \qquad\text{for all } t \in \R,
+\end{equation}
+by induction on the exponent $r_\alpha$. These are the coefficients of the terms of \eqref{eq:gtseries} with the exponent $r_\alpha$. Let \eqref{eq:gtclaim} hold for all multi-indices with a smaller exponent, and let $r^+ > r_\alpha$ be the next exponent. In \eqref{eq:gtseries} at $\delta(t)$, $\delta'(t)$, the terms with a smaller exponent vanish, and by (c) the terms with a larger exponent add up to at most a fixed power of $t$ times $e^{-r^+t^p/p}$. By (b), so do the terms with the exponent $r_\alpha$, which are
+\[
+(-1)^{\lvert\alpha\rvert}\,\delta(t)^\alpha\,\Big[\mathcal L_\alpha(t) + \sum_{i:\,\alpha_i\ge1}s_i\,\mathcal L'_{\alpha - 1_i,\,i}(t)\;\frac{\delta'_i(t)}{\delta_i(t)}\Big] .
+\]
+By \eqref{eq:gtsizes}, $\delta(t)^\alpha \ge 6^{-\lvert\alpha\rvert}\,e^{-r_\alpha t^p/p}$. So
+\begin{equation}\label{eq:gtlevel}
+\mathcal L_\alpha(t) \;+\; \sum_{i:\,\alpha_i\ge1}s_i\,\mathcal L'_{\alpha - 1_i,\,i}(t)\;\frac{\delta'_i(t)}{\delta_i(t)} \;\longrightarrow\; 0 \qquad\text{faster than every power of } 1/t .
 \end{equation}
 
-\emph{Step 2: the slowest hidden unit gives $Z$.} By (Q1), $r_i = r_j$ for $i \neq j$ only when $\xi\,(c_i - c_j) = 0$ or $\xi\,(c_i + c_j) = 0$, so the numbers $r_1, \dots, r_q$ are pairwise different for $\xi$ outside finitely many hyperplanes. Take a hidden unit $j$ and a nonempty open subset of $\mathcal P$ on which $r_j < r_i$ for all $i \neq j$, and let $\gamma = \min\big(r_j, \min_{i\neq j}(r_i - r_j)\big)$. By Step~1, all terms of \eqref{eq:sbexpansion} other than the two of unit $j$ are, together, at most a power of $t$ times $e^{-t^2(r_j + \gamma)/2}$. With $y = t\,\lvert\xi c_j\rvert$, the two terms of unit $j$ are $-\varphi(y)$ times $\big(y\,\mathcal L_j + s_j\mathcal L'_j\big)\operatorname{mr}(y) - s_j\,y\,\mathcal L'_j$, and $\varphi(y)$ is a constant times $e^{-t^2r_j/2}$. So
+\emph{No small factor, $\alpha = 0$.} \eqref{eq:gtlevel} is $\mathcal L_0(t) \to 0$, and by (a) $\mathcal L_0 = 0$.
+
+\emph{One small factor, $\alpha = 1_j$.} With $y = t\,\lvert\xi c_j\rvert$, \eqref{eq:gtlevel} is $\mathcal L_j + s_j\,\mathcal L'_j\,\delta'(y)/\delta(y) \to 0$.
+
+For GELU and GeGLU blocks, $\delta'(y)/\delta(y) = \big(\operatorname{mr}(y) - y\big)/\big(y\operatorname{mr}(y)\big)$ and $y\operatorname{mr}(y) \le 1$, so
 \[
 \big(y\,\mathcal L_j + s_j\,\mathcal L'_j\big)\,\operatorname{mr}(y) \;-\; s_j\,y\,\mathcal L'_j \;\longrightarrow\; 0 \qquad\text{faster than every power of } 1/t .
 \]
-Here $y\,\mathcal L_j + s_j\mathcal L'_j$ and $y\,\mathcal L'_j$ are meromorphic at infinity. By \cref{lem:e0nomero} with $z(t) = \lvert\xi c_j\rvert\,t$, both vanish, so
-\begin{equation}\label{eq:sbunitj}
-\mathcal L'_j(t) = 0 \quad\text{and}\quad \mathcal L_j(t) = 0 \qquad\text{for large } t, \text{ hence for all } t > 0 .
+By (a), the maps $y\,\mathcal L_j + s_j\mathcal L'_j$ and $y\,\mathcal L'_j$ are meromorphic at infinity. By \cref{lem:e0nomero} with $z(t) = \lvert\xi c_j\rvert\,t$ both vanish, so $\mathcal L'_j = 0$ and $\mathcal L_j = 0$.
+
+For SwiGLU blocks, $y\,\delta'(y)/\delta(y) = 1 - y + \delta(y)$, and $\delta(y)$ tends to $0$ faster than every power of $1/t$, so
+\[
+f(t) \;=\; \lvert\xi c_j\rvert\,t\;\mathcal L_j(t) + s_j\,\big(1 - \lvert\xi c_j\rvert\,t\big)\,\mathcal L'_j(t)
+\]
+tends to $0$ faster than every power of $1/t$ as $t \to +\infty$. By (a), $f$ is meromorphic at infinity, so $f(t) = 0$ for large $t$, and then for all $t \in \R$, because $f$ is real-analytic on $\R$. By \eqref{eq:gtparity}, $\mathcal L_j$ is odd in $t$ and $\mathcal L'_j$ is even. So $0 = f(t) - f(-t) = -2\,s_j\,\lvert\xi c_j\rvert\,t\;\mathcal L'_j(t)$: $\mathcal L'_j = 0$, and then $\mathcal L_j = 0$.
+
+For all three kinds of block, by \eqref{eq:gtLprime}, $\mathcal L'_j(t) = \dot z^g_j(t\,\xi)\;\iota_j(t\,\xi)\;\Der\mathcal B^\infty(t^m\,h^\circ)\,a_j$. By (iii), (K3) and \cref{lem:e0tailrank}, $\Der\mathcal B^\infty(h^\circ)\,a_j \neq 0$, so the last factor, which is real-analytic in $t$, vanishes only at isolated $t$. By (ii), $\iota_j(t\,\xi) = t^{m-1}\,\iota_j(\xi) \neq 0$ for $t > 0$. So
+\begin{equation}\label{eq:gtzg}
+\dot z^g_j(t\,\xi) = 0 \qquad\text{for all } t > 0 .
 \end{equation}
-By \eqref{eq:e0L}, with $\dot z_j$ the entry $j$ of $\dot z$,
-\[
-\mathcal L'_j(t) \;=\; \dot z_j(n)\;\Der\mathcal B(n\,W I_{\mathcal A} V)\,a_j \qquad\text{at } n = t\,\xi .
-\]
-By \cref{lem:e0tailrank} and (Q1), $\Der\mathcal B(n\,W I_{\mathcal A} V)\,a_j \neq 0$ on an open dense set of rows $n$. So $\dot z_j(n) = 0$ on an open cone of rows $n$, hence as a polynomial in $n$: by \eqref{eq:e0zdot},
-\[
-n\,\big(Zc_j + \eta_{c_j}\big) \;-\; \frac{\langle nZ, n\rangle}{\dm}\;nc_j \;=\; 0 \qquad\text{for all rows } n,
-\]
-where $\eta_{c_j}$ is column $j$ of $\eta_W$. Its part of degree $3$ gives $\langle nZ, n\rangle = 0$ for all $n$, as $c_j \neq 0$. So $Z$ is antisymmetric: $Z \in \mathfrak g$ and $\widehat Z = Z$.
 
-\emph{Step 3: the claim for the next block.} With $\langle nZ, n\rangle = 0$, \eqref{eq:sborder0} reads
-\[
-\Der\mathcal B(n\,W I_{\mathcal A} V)\,\Big(n\,\big(Z\,W I_{\mathcal A} V + \eta_W I_{\mathcal A} V + W I_{\mathcal A}\,\eta_V\big)\Big) + \Der_\theta\mathcal B(n\,W I_{\mathcal A} V)\,\eta' \;=\; 0
-\]
-on an open cone of rows $n$. The left side is real-analytic in $n$, so this holds for all rows $n$. With $h = n\,W I_{\mathcal A} V$, which takes every value by (Q2), it is \eqref{eq:e0D} for $k+1$ with
-\begin{equation}\label{eq:sbZprime}
-Z' = (W I_{\mathcal A} V)^{-1}\,\big(Z\,W I_{\mathcal A} V + \eta_W I_{\mathcal A} V + W I_{\mathcal A}\,\eta_V\big)
+\emph{Two or more small factors, $\lvert\alpha\rvert \ge 2$.} Let $\alpha_i \ge 1$. Then $r_i < r_\alpha$, so \eqref{eq:gtzg} holds for the hidden unit $i$, and by \eqref{eq:gtLprime} the derivative of $\mathcal L^\infty(\tilde w, \tilde w'; t\,\xi)$ in $\tilde w'_i$ vanishes for all rows $\tilde w$. So $\mathcal L'_{\alpha - 1_i,\,i} = 0$. Then \eqref{eq:gtlevel} is $\mathcal L_\alpha(t) \to 0$, and by (a) $\mathcal L_\alpha = 0$. This ends the induction.
+
+\emph{What the induction gives.} For this $\xi$ and every $t > 0$, all coefficients of the expansion of $(\tilde w, \tilde w') \mapsto \mathcal L^\infty(\tilde w, \tilde w'; t\,\xi)$ at $(t\,\xi W_gI_{\mathcal A}, 1_{\mathcal A})$ vanish, so this real-analytic map vanishes. The rows $t\,\xi$ of this kind are dense in $\mathcal C_k$. So, with \eqref{eq:gtzg}, for all $n \in \mathcal C_k$ and all rows $\tilde w \in \R^{1\times q}$, with $\hat w = \tilde w\odot\iota(n)$,
+\begin{equation}\label{eq:gtall}
+\dot z^g(n) = 0, \qquad \Der\mathcal B^\infty(\hat wV)\,\Big(\big(\tilde w\odot\dot z^v(n)\big)\,V + \hat w\,\eta_V\Big) + \Der_\theta\mathcal B^\infty(\hat wV)\,\eta' = 0 .
 \end{equation}
-and $\eta'$. By $(D_{k+1})$, $Z'$ is antisymmetric and $\eta'$ is of the form \eqref{eq:sbDconcl} with $Z_{k+1} = Z'$.
 
-\emph{Step 4: subtracting a symmetry.} The pair $Z$ and $\big(-ZW,\ VZ',\ \eta'\big)$ is of the form \eqref{eq:sbDconcl}, so it satisfies \eqref{eq:e0D} for $k$. Subtracting it from $Z$ and $\eta$ leaves the pair $0$ and $(\eta^\circ_W, \eta^\circ_V, 0)$ with
+\emph{Step 1: the gates.} By \eqref{eq:gtzdot}, $\dot z^g(n)$ is a polynomial in $n$ that vanishes on the open set $\mathcal C_k$, so it vanishes for all $n$. In the case (n) this is $n\,(ZW_g + \eta_g) = 0$, so $\eta_g = -ZW_g$, and $\mathfrak g$ contains every $Z$. In the case (+) its part of degree $3$ is $\langle nZ, n\rangle\,nW_g = 0$, so $Z$ is antisymmetric, as $W_g \neq 0$, and its part of degree $1$ gives $\eta_g = -ZW_g$. In both cases $Z \in \mathfrak g$, and in a gated block $\dot z^v(n) = n\,(ZW_v + \eta_v)$.
+
+\emph{Step 2: the values and the write.} In a gated block, fix $n \in \mathcal C_k$ with $ne_j \neq 0$ for every $j$, and let $\Delta(n)$ be the diagonal matrix with the entries $-\dot z^v_j(n)/(ne_j)$, so that $\tilde w\odot\dot z^v(n) = -\hat w\,\Delta(n)$. In a GELU block, fix $n \in \mathcal C_k$ and let $\Delta(n) = 0$. The row $\hat w$ takes every value in $\R^{1\times q}$, and \eqref{eq:gtall} reads
 \[
-\eta^\circ_W = \eta_W + ZW, \qquad \eta^\circ_V = \eta_V - VZ',
+\Der\mathcal B^\infty(\hat wV)\,\Big(\hat w\,\big(\eta_V - \Delta(n)\,V\big)\Big) + \Der_\theta\mathcal B^\infty(\hat wV)\,\eta' = 0 \qquad\text{for all rows } \hat w .
 \]
-which satisfies \eqref{eq:e0D} for $k$ as well, and by \eqref{eq:sbZprime}
-\begin{equation}\label{eq:sbbalance}
-\eta^\circ_W\,I_{\mathcal A} V + W I_{\mathcal A}\,\eta^\circ_V \;=\; 0 .
+By \cref{lem:e0atwrite} for $\mathcal B^\infty$, with $A = V$, there is a matrix $Z'(n)$ with
+\begin{equation}\label{eq:gtZprime}
+\eta_V - \Delta(n)\,V = V\,Z'(n), \qquad \Der\mathcal B^\infty(h)\,\big(hZ'(n)\big) + \Der_\theta\mathcal B^\infty(h)\,\eta' = 0 \quad\text{for all rows } h .
 \end{equation}
-For this pair, \eqref{eq:e0L} is $\mathcal L^\circ(\tilde w, \tilde w'; n) = \Der\mathcal B(\tilde wV)\,\big((\tilde w'\odot n\eta^\circ_W)\,V + \tilde w\,\eta^\circ_V\big)$. It remains to show $\eta^\circ_W = 0$ and $\eta^\circ_V = 0$.
+For two such rows $n$ and $n_1$, subtracting gives $\Der\mathcal B^\infty(h)\,\big(h\,(Z'(n) - Z'(n_1))\big) = 0$ for all $h$, so $Z'(n) = Z'(n_1)$ by \cref{lem:e0tailrank}. Let $Z'$ be this matrix. Then $\Delta(n)\,V = \eta_V - VZ'$ does not depend on $n$, and no row of $V$ vanishes, so $\Delta(n)$ is one diagonal matrix $\Delta_{k+1}$ for all these $n$, with $\Delta_{k+1} = 0$ in a GELU block. So $\eta_V = \Delta_{k+1}V + VZ'$. In a gated block, $\dot z^v(n) = -n\,W_v\Delta_{k+1}$ on an open set of rows $n$, that is, $n\,(ZW_v + \eta_v + W_v\Delta_{k+1}) = 0$: $\eta_v = -ZW_v - W_v\Delta_{k+1}$.
 
-\emph{Step 5: the hidden units in the order of their rates.} Take a nonempty open subset of $\mathcal P$ on which $r_{j_1} < r_{j_2} < \dots < r_{j_q}$ for one order $j_1, \dots, j_q$ of the hidden units, active or not. We show by induction on $i$ that column $j_i$ of $\eta^\circ_W$ and row $j_i$ of $\eta^\circ_V$ vanish. Let this hold for the units $j_1, \dots, j_{i-1}$, and let $j = j_i$. If the rows $\delta$ and $\delta'$ vanish outside the entries $j_1, \dots, j_{i-1}$, then $(1_{\mathcal A} - \bar s\odot\delta')\odot n\eta^\circ_W = n\,\eta^\circ_W I_{\mathcal A}$ and $(n\,W I_{\mathcal A} - \delta)\,\eta^\circ_V = n\,W I_{\mathcal A}\,\eta^\circ_V$, so by \eqref{eq:sbbalance}
-\[
-\mathcal L^\circ\big(n\,W I_{\mathcal A} - \delta,\ 1_{\mathcal A} - \bar s\odot\delta';\ n\big) \;=\; \Der\mathcal B\big((n\,W I_{\mathcal A} - \delta)\,V\big)\,\Big(n\,\big(\eta^\circ_W I_{\mathcal A} V + W I_{\mathcal A}\,\eta^\circ_V\big)\Big) \;=\; 0 .
-\]
-So in the expansion \eqref{eq:sbexpansion} of $\mathcal L^\circ$ every term has a factor $\delta_l(t)$ or $\delta'_l(t)$ of a unit $l$ other than $j_1, \dots, j_{i-1}$. Other than the two terms of unit $j$, such a term has a factor of a unit $j_{i'}$ with $i' > i$, or a factor of unit $j$ and a second factor. With $\gamma = \min(r_{j_1}, r_{j_{i+1}} - r_j)$, or $\gamma = r_{j_1}$ if $i = q$, we get \eqref{eq:sbunitj} as in Step~2: $\mathcal L^{\circ\prime}_j(t) = 0$ and $\mathcal L^\circ_j(t) = 0$ for all $t > 0$. Here, by \eqref{eq:sbbalance},
-\[
-\mathcal L^{\circ\prime}_j(t) = \big(n\,\eta^\circ_{c_j}\big)\;\Der\mathcal B(n\,W I_{\mathcal A} V)\,a_j, \qquad \mathcal L^\circ_j(t) = \Der\mathcal B(n\,W I_{\mathcal A} V)\,\eta^\circ_{a_j} \qquad\text{at } n = t\,\xi,
-\]
-with $\eta^\circ_{c_j}$ column $j$ of $\eta^\circ_W$ and $\eta^\circ_{a_j}$ row $j$ of $\eta^\circ_V$. By \cref{lem:e0tailrank}, on an open cone of rows $n$ this gives $n\,\eta^\circ_{c_j} = 0$, so $\eta^\circ_{c_j} = 0$, and $\eta^\circ_{a_j} = 0$.
+\emph{Step 3: the rest.} In the case (+), $\mathcal B^\infty = \mathcal B_{>k+1}$, and the second part of \eqref{eq:gtZprime} is \eqref{eq:e0D} for $k+1$, with $Z'$ and $\eta'$. By $(D_{k+1})$, $Z' \in \mathfrak g$ and $\eta'$ is of the form \eqref{eq:gtDconcl}, or \eqref{eq:sbDconcl} for GELU blocks, with $Z_{k+1} = Z'$. With Steps~1 and~2 this is \eqref{eq:gtDconcl}, or \eqref{eq:sbDconcl}, for $k$.
 
-After $i = q$: $\eta_W = -ZW$ and $\eta_V = VZ'$. With Steps~2 and~3 this is \eqref{eq:sbDconcl} for $k$.
+In the case (n), where the blocks are gated, \eqref{eq:gtZprime} is an identity for the frozen network. The frozen network does not change along some directions along which the network does, for example along every direction of the weights of a hidden unit that is not active, so \eqref{eq:gtZprime} does not determine $\eta'$. Let $\eta^\flat$ be the direction \eqref{eq:gtDconcl} for $k$ with $Z_k = Z$, with $\Delta_{k+1}$ as in Step~2, with $Z_{k+1} = Z'$, and with $Z_\ell = 0$ and $\Delta_\ell = 0$ for all later $\ell$; here $\mathfrak g$ contains every matrix. By the converse of the claim, $Z$ and $\eta^\flat$ satisfy \eqref{eq:e0D} for $k$, and so do $Z$ and $\eta$. So the matrix $0$ and the direction $\eta - \eta^\flat$ satisfy it. By Steps~1 and~2, $\eta - \eta^\flat$ vanishes at the weights of block $k+1$. Let $\eta''$ be its entries at the later weights. Then \eqref{eq:e0D} for $k$ reads
+\[
+\Der_\theta\mathcal B_{>k+1}\big(g_{k+1}(h)\big)\,\eta'' = 0 \qquad\text{for all rows } h .
+\]
+By (R3) the values of $g_{k+1}$ contain an open set, and the left side is real-analytic, so $\Der_\theta\mathcal B_{>k+1}(h)\,\eta'' = 0$ for all rows $h$. This is \eqref{eq:e0D} for $k+1$ with the matrix $0$. By $(D_{k+1})$, $\eta''$ is of the form \eqref{eq:gtDconcl} for $k+1$ with $Z_{k+1} = 0$. So $\eta = \eta^\flat + \eta''$ is of the form \eqref{eq:gtDconcl} for $k$.
 \end{proof}
 
-\para{The great circle: $\varepsilon = 0$.} The rest of this subsection treats the case (0), in which the identity \eqref{eq:e0star} holds only on the sphere $\mathbb S$. We continue it along a great circle of $\mathbb S$ to complex angles, on which the inputs of the hidden units go to infinity.
+\para{The parameters $\theta^\dagger$.} Let $\mathbf 1$ be the column of $\dm$ ones. Choose numbers $\mu_1, \mu_2, \dots > 0$ such that $1, \mu_1, \mu_2, \dots$ are linearly independent over $\mathbb Q$, for SwiGLU blocks, or such that $\mu_1^2, \mu_2^2, \dots$ are, for GELU and GeGLU blocks. Almost every choice of finitely many numbers is of this kind. Let $\theta^\dagger$ be the parameters with
+\[
+E = \begin{bmatrix} I \\ 0 \end{bmatrix} \in \R^{d_{\mathrm{in}}\times\dm}, \qquad D = \begin{bmatrix} I & 0 \end{bmatrix} \in \R^{\dm\times d_{\mathrm{out}}},
+\]
+and, in every block $\ell$, with $q = q_\ell$ hidden units,
+\[
+W_g^{\ell} = \big[\,I \;\big|\; {-\mu_1\mathbf 1} \;\big|\; \cdots \;\big|\; {-\mu_{q-\dm}\mathbf 1}\,\big], \qquad \Wwrite^{\ell} = \begin{bmatrix} I \\ \mathbf 1^\top \\[-3pt] \vdots \\ \mathbf 1^\top \end{bmatrix}, \qquad W_v^{\ell} = \big[\,\mathbf 1 \;\big|\; \cdots \;\big|\; \mathbf 1\,\big] ,
+\]
+where only a gated block has $W_v^{\ell}$. So the gate column $c_j$ is column $j$ of $I$ for $j \le \dm$ and $c_j = -\mu_{j-\dm}\,\mathbf 1$ for $j > \dm$, the write row $a_j$ is row $j$ of $I$ for $j \le \dm$ and $a_j = \mathbf 1^\top$ for $j > \dm$, and in a gated block every value column is $e_j = \mathbf 1$. Let $\R^{1\times\dm}_{>0}$ be the positive orthant, the set of the rows $n$ with $n_i > 0$ for every $i$. It is an open convex cone that does not contain $0$.
+
+\begin{lemma}[$\theta^\dagger$ is good]\label{lem:gtstar}
+$\theta^\dagger$ is good for the cones $\mathcal C_0 = \dots = \mathcal C_L = \R^{1\times\dm}_{>0}$. For every block, $\mathcal A_\ell = \{1, \dots, \dm\}$, and $g^\circ_\ell(n) = n$ for a GELU block and $g^\circ_\ell(n) = (n\mathbf 1)\,n$ for a gated block, where $n\mathbf 1 = n_1 + \dots + n_{\dm}$.
+\end{lemma}
+
+\begin{proof}
+(R1): $E$, $D$ and every $\Wwrite^{\ell}$ contain the identity matrix. (K1): for $n \in \R^{1\times\dm}_{>0}$, $nc_j = n_j > 0$ for $j \le \dm$ and $nc_j = -\mu_{j-\dm}\,n\mathbf 1 < 0$ for $j > \dm$. So $\mathcal A_\ell = \{1, \dots, \dm\}$, and $g^\circ_\ell(n) = \sum_{j\le\dm}n_j\,\iota_j(n)\,a_j$ is $n$ for a GELU block and $(n\mathbf 1)\,n$ for a gated block, where $\iota_j(n) = n\mathbf 1$. (K2): $g^\circ_\ell(n)$ is a positive multiple of $n$. Its derivative is the identity for a GELU block, and for a gated block the map $v \mapsto (n\mathbf 1)\,v + (v\mathbf 1)\,n$, with the determinant $2\,(n\mathbf 1)^{\dm} \neq 0$. (K3): no $a_j$ and no $e_j$ vanishes. For SwiGLU blocks, $\sum_j\kappa_jc_j = 0$ with integers $\kappa_j$ says that $\kappa_j = \sum_{i>\dm}\kappa_i\,\mu_{i-\dm}$ for every $j \le \dm$, so every $\kappa_j$ vanishes, by the choice of the $\mu_i$. For GELU and GeGLU blocks, the entries of $\sum_j\kappa_jc_jc_j^\top = 0$ off the diagonal, which exist because $\dm \ge 2$, give $\sum_{i>\dm}\kappa_i\,\mu_{i-\dm}^2 = 0$, so $\kappa_i = 0$ for $i > \dm$, and then the diagonal gives $\kappa_j = 0$ for $j \le \dm$.
+\end{proof}
+
+\para{The great circle: $\varepsilon = 0$.} We now treat the case (0), for $\tanh$ and GELU blocks. The identity \eqref{eq:e0star} then holds only on the sphere $\mathbb S$. We continue it along a great circle of $\mathbb S$ to complex angles, on which the inputs of the hidden units go to infinity.
 
 \para{RMSNorm at complex rows.} For $h \in \mathbb C^{1\times\dm}$ with $\operatorname{Re}\langle h, h\rangle > 0$ let
 \[
@@ -1985,262 +2122,13 @@ This is \cref{lem:domain} for skipless networks. Let $\mathcal O^0$ be the set o
 \end{proof}
 
 \begin{proof}[Proof of \cref{thm:skiplessbound}]
-\emph{The cases (n) and (+).} Let $\theta$ satisfy (R1) and, for $\tanh$ blocks: every $\Wread^{\ell}\Wwrite^{\ell}$ is invertible, and every block satisfies (T1) and (T2); for GELU blocks: every block satisfies (Q1) and (Q2). These conditions fail only on a set of measure zero; (T2) fails on countably many proper linear subspaces. Such $\theta$ are regular: for $\tanh$, $\Der g_\ell(0)$ is the map $v \mapsto v\,\Wread^{\ell}\Wwrite^{\ell}$, and for GELU, (Q2) gives (R3). By \cref{lem:e0readout} and \cref{lem:sbsteptanh} or \cref{lem:sbstepgelu}, Claim $(D_k)$ holds at $\theta$ for $k = L$, then for $k = L-1$, and so on down to $k = 0$. By \cref{prop:e0givesrank}, the Jacobian at $\theta$ has the rank \eqref{eq:e0upper} on some finite batch, and by (R1) it has at most this rank on every batch. So the functional dimension is \eqref{eq:e0upper} at almost every $\theta$.
+\emph{$\tanh$ blocks in the cases (n) and (+).} Let $\theta$ satisfy (R1), let every block satisfy (T1) and (T2), and let every $\Wread^{\ell}\Wwrite^{\ell}$ be invertible. These conditions fail only on a set of measure zero; (T2) fails on countably many proper linear subspaces. Such $\theta$ are regular: $\Der g_\ell(0)$ is the map $v \mapsto v\,\Wread^{\ell}\Wwrite^{\ell}$. By \cref{lem:e0readout} and \cref{lem:sbsteptanh}, Claim $(D_k)$ holds at $\theta$ for $k = L$, then for $k = L-1$, and so on down to $k = 0$. By \cref{prop:e0givesrank}, the Jacobian at $\theta$ has the rank \eqref{eq:e0upper} on some finite batch, and by (R1) it has at most this rank on every batch. So the functional dimension is \eqref{eq:e0upper} at almost every $\theta$.
+
+\emph{GELU blocks in the case (+), and gated blocks in the cases (n) and (+).} By \cref{lem:gtstar}, $\theta^\dagger$ is good, so it is regular, and no value column vanishes. $(D_L)$ holds at $\theta^\dagger$ (\cref{lem:e0readout}), and by \cref{lem:gtstep}, applied for $k = L-1$, then for $k = L-2$, and so on down to $k = 0$, so does $(D_0)$. By \cref{prop:e0givesrank}, the Jacobian at $\theta^\dagger$ has the rank \eqref{eq:e0upper} on some finite batch $X$. In the cases (n) and (+) the outputs on $X$ are real-analytic in $\theta \in \R^P$, and so are the minors of the Jacobian. A minor of the size \eqref{eq:e0upper} does not vanish at $\theta^\dagger$, so it vanishes only on a set of measure zero. At generic parameters the Jacobian on $X$ therefore has at least the rank \eqref{eq:e0upper}, and it has at most this rank on every batch, because $E$ and every $\Wwrite^{\ell}$ have rank $\dm$ and, in gated blocks, no value column vanishes. So the functional dimension is \eqref{eq:e0upper}.
 
 \emph{The case (0).} By \cref{lem:e0readout} and \cref{lem:e0steptanh} or \cref{lem:e0stepgelu}, Claim $(D_k)$ holds at $\theta^*$ for $k = L$, then for $k = L-1$, and so on down to $k = 0$. By \cref{prop:e0givesrank} there is a finite batch $X^*$, with $xE \neq 0$ for all its inputs, on which the Jacobian at $\theta^*$ has the rank \eqref{eq:e0upper}. By (R2), $\theta^* \in \mathcal O_{X^*}$. The sum of the squares of the minors of this size of the Jacobian of $F_{X^*}$ is real-analytic on the connected open set $\mathcal O_{X^*}$ and does not vanish at $\theta^*$, so its zero set has measure zero, and so has the complement of $\mathcal O_{X^*}$ (\cref{lem:e0domain}). Hence the rank on $X^*$ is at least \eqref{eq:e0upper} at almost every parameter. Where $E$ and every $\Wwrite^{\ell}$ have rank $\dm$, it is at most \eqref{eq:e0upper} on every batch. So at generic parameters the functional dimension is \eqref{eq:e0upper}.
 
-\emph{The gain.} For $\tanh$ and GELU blocks $s = 0$, so \eqref{eq:e0upper} is the bound of \cref{thm:unlock} for the skipless network, with $\G = \CO(\dm)$ in the case (0). The residual network attains its own bound, $P - \dim\G$ (\cref{thm:resdepth}, and \cref{thm:epszero} in the case (0)). The difference is $L\dim\G$.
-\end{proof}
-
-\subsection{Skipless networks of gated blocks\texorpdfstring{ (Theorem~\ref*{thm:exactgain})}{}}\label{app:gatedskipless}
-
-\Cref{app:skiplessbound} removes the blocks of a skipless network one at a time, for $\tanh$ and GELU blocks. This subsection does the same for SwiGLU and GeGLU blocks, without normalization and under pre-RMSNorm with $\varepsilon > 0$ (\cref{thm:gatedskipless}), which gives \cpref{thm:exactgain}{iii}. Two things change. A gated block has symmetries of its own, one rescaling per hidden unit, and the claim that removes a block now includes them (Claim~$(D^\Delta_k)$ below). And on a ray a gated block is quadratic up to small terms, where a GELU block is linear. Without normalization the inputs of the later blocks therefore grow like the square of the input of the block, their own small terms are of a smaller order, and the network after the block can be replaced by a polynomial map (\cref{lem:gtfar}). The step from one block to the next is an induction over all products of the small terms of the block (\cref{lem:gtstep}). We prove the claim at one explicit choice of parameters (\cref{lem:gtstar}), and the theorem follows by analyticity. We keep the cases (n) and (+), the map $N$, the group $\G$, its Lie algebra $\mathfrak g$ and the notation of \cref{app:skiplessbound}, and inputs with one token.
-
-\begin{theorem}[Skipless networks of gated blocks]\label{thm:gatedskipless}
-Let $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm \ge 2$, and consider skipless networks without biases whose blocks are all SwiGLU blocks or all GeGLU blocks, with at least $\dm$ hidden units each. Let $s$ be the number of hidden units of the network. Without normalization, where $\G = \GL(\dm)$, and under pre-RMSNorm with $\varepsilon > 0$, where $\G = \Ort(\dm)$, the functional dimension at generic parameters is $P - (L+1)\dim\G - s$. This is the equality condition, so the skips raise the functional dimension by exactly $L\dim\G$.
-\end{theorem}
-
-Here $s$ is the dimension of the symmetries inside the blocks, one rescaling per hidden unit (\cref{sec:count}). The theorem does not treat $\varepsilon = 0$.
-
-\para{Gated blocks.} Let block $\ell$ have $q_\ell$ hidden units. Its read is $\Wread^{\ell} = [\,W_g^{\ell} \mid W_v^{\ell}\,]$, where $W_g^{\ell} \in \R^{\dm\times q_\ell}$ holds the gate columns $c_1, \dots, c_{q_\ell}$ and $W_v^{\ell} \in \R^{\dm\times q_\ell}$ the value columns $e_1, \dots, e_{q_\ell}$, and its write $\Wwrite^{\ell} \in \R^{q_\ell\times\dm}$ has the rows $a_1, \dots, a_{q_\ell}$. The gate $\sigma$ is GELU in a GeGLU block and SiLU, $\sigma(z) = z/(1 + e^{-z})$, in a SwiGLU block. Block $\ell$ maps its input $n$ to
-\[
-g_\ell(n) \;=\; \big(\sigma(n\,W_g^{\ell})\odot n\,W_v^{\ell}\big)\,\Wwrite^{\ell} \;=\; \sum_{j=1}^{q_\ell}\sigma(nc_j)\,(ne_j)\,a_j ,
-\]
-and the network computes $h_0 = xE$, $h_\ell = g_\ell\big(N(h_{\ell-1})\big)$ and $F_\theta(x) = N(h_L)\,D$. With these maps $g_\ell$, let $\mathcal B_{>k}$ be defined as in \cref{app:skiplessbound}, and call $\theta$ regular if (R1) and (R3) hold. \Cref{lem:e0tailrank,lem:e0atwrite,lem:sbcoeff} hold for gated blocks as well: their proofs use only (R1), (R3) and that the blocks are real-analytic.
-
-\para{Symmetries.} For $G_0, \dots, G_L \in \G$ and diagonal matrices $\Delta_1, \dots, \Delta_L$, with $\Delta_\ell$ of size $q_\ell$, the parameters
-\[
-\Big(EG_0,\ \ \big\{G_{\ell-1}^{-1}W_g^{\ell},\ \ G_{\ell-1}^{-1}W_v^{\ell}\,e^{-\Delta_\ell},\ \ e^{\Delta_\ell}\,\Wwrite^{\ell}G_\ell\big\}_{\ell=1}^{L},\ \ G_L^{-1}D\Big)
-\]
-give the same function, with the hidden states $h_\ell G_\ell$: the diagonal matrix $e^{\Delta_\ell}$ multiplies the write row of every hidden unit of block $\ell$ by a positive number and divides its value column by the same number. For $Z_0, \dots, Z_L \in \mathfrak g$ let
-\begin{equation}\label{eq:gteta}
-\eta^{Z,\Delta} \;=\; \Big(EZ_0,\ \big\{-Z_{\ell-1}W_g^{\ell},\ -Z_{\ell-1}W_v^{\ell} - W_v^{\ell}\Delta_\ell,\ \Delta_\ell\Wwrite^{\ell} + \Wwrite^{\ell}Z_\ell\big\}_{\ell=1}^{L},\ -Z_LD\Big) \in \R^P ,
-\end{equation}
-the derivative of these parameters at $\tau = 0$ for $G_\ell = \exp(\tau Z_\ell)$ and with $\tau\Delta_\ell$ in the place of $\Delta_\ell$. So $\Der_\theta F(\theta, x)\,\eta^{Z,\Delta} = 0$ at every input $x$. When $E$ and every $\Wwrite^{\ell}$ have rank $\dm$ and no value column vanishes, $\eta^{Z,\Delta} = 0$ only if every $Z_\ell$ and every $\Delta_\ell$ vanishes: $EZ_0 = 0$ gives $Z_0 = 0$, then $W_v^{1}\Delta_1 = 0$ gives $\Delta_1 = 0$, then $\Wwrite^{1}Z_1 = 0$ gives $Z_1 = 0$, and so on. So on every batch the Jacobian has rank at most
-\begin{equation}\label{eq:gtupper}
-P - (L+1)\dim\G - s .
-\end{equation}
-
-\smallskip
-\noindent\emph{Claim $(D^\Delta_k)$}, for $k = 0, \dots, L$. Let $Z$ be a $\dm\times\dm$ matrix and $\eta$ a direction of the weights of the blocks $k+1, \dots, L$ and of $D$. If \eqref{eq:e0D} holds, then $Z \in \mathfrak g$, and with $Z_k = Z$ there are $Z_{k+1}, \dots, Z_L \in \mathfrak g$ and diagonal matrices $\Delta_{k+1}, \dots, \Delta_L$ such that
-\begin{equation}\label{eq:gtDconcl}
-\eta \;=\; \Big(\big\{-Z_{\ell-1}W_g^{\ell},\ \ -Z_{\ell-1}W_v^{\ell} - W_v^{\ell}\Delta_\ell,\ \ \Delta_\ell\Wwrite^{\ell} + \Wwrite^{\ell}Z_\ell\big\}_{\ell=k+1}^{L},\ \ -Z_LD\Big).
-\end{equation}
-
-\smallskip
-This is Claim~$(D_k)$ of \cref{app:skiplessbound} with the rescalings. Conversely, every $Z = Z_k \in \mathfrak g$ and $\eta$ of the form \eqref{eq:gtDconcl} satisfy \eqref{eq:e0D}, as there. For $k = L$ no block is left and the two claims agree, so $(D^\Delta_L)$ holds when $D$ has rank $\dm$ (\cref{lem:e0readout}).
-
-\begin{proposition}[The claim gives the rank, for gated blocks]\label{prop:gtgivesrank}
-Let $\theta$ be regular, let no value column vanish, and let $(D^\Delta_0)$ hold at $\theta$. Then the directions $\eta \in \R^P$ with $\Der_\theta F(\theta, x)\,\eta = 0$ for all $x$ are the directions $\eta^{Z,\Delta}$ of \eqref{eq:gteta}, and the Jacobian of the network has the rank \eqref{eq:gtupper} on some finite batch.
-\end{proposition}
-
-\begin{proof}
-As for \cref{prop:e0givesrank}: by \cref{lem:e0atwrite} with $A = E$, the entry of $\eta$ at $E$ is $EZ$ for a matrix $Z$, and \eqref{eq:e0D} holds for $k = 0$. By $(D^\Delta_0)$, $\eta = \eta^{Z,\Delta}$ with $Z_0 = Z$. So on some finite batch the kernel of the Jacobian is the space of the $\eta^{Z,\Delta}$, of dimension $(L+1)\dim\G + s$.
-\end{proof}
-
-\para{A gate on a ray.} GELU and SiLU both satisfy $\sigma(z) - \sigma(-z) = z$. So \eqref{eq:sbunit} holds for both gates, with $\delta(y) = y - \sigma(y)$ and its derivative $\delta'$. For GELU these are the maps before \eqref{eq:sbunit}, and for SiLU
-\[
-\delta(y) = \frac{y}{1 + e^{y}}, \qquad \delta'(y) = \frac{1 + e^{y} - y\,e^{y}}{(1 + e^{y})^2} .
-\]
-Let $p = 2$ for GeGLU and $p = 1$ for SwiGLU. For every real number $y \ge 2$,
-\begin{equation}\label{eq:gtdelta}
-\tfrac16\,e^{-y^p/p} \;\le\; \delta(y) \;\le\; y\,e^{-y^p/p}, \qquad \lvert\delta'(y)\rvert \;\le\; 4\,y\,\delta(y) .
-\end{equation}
-For GELU this follows from \cpref{lem:e0mills}{ii} with $m = 0$ and $m = 1$, which give $\frac34 \le y\operatorname{mr}(y) \le 1$ and $\lvert\operatorname{mr}(y) - y\rvert \le 2y$. For SiLU, $\frac12\,y\,e^{-y} \le \delta(y) \le y\,e^{-y}$ and $\lvert\delta'(y)\rvert \le (2 + y)\,e^{-y}$.
-
-\para{Cones and good parameters.} A \emph{cone} is a set of rows that contains $\lambda h$ for each of its rows $h$ and every number $\lambda > 0$. Let $\mathcal C_0, \dots, \mathcal C_L$ be open convex cones in $\R^{1\times\dm}$ that do not contain $0$, one for each hidden state. We call $\theta$ \emph{good} for these cones if (R1) holds and every block $\ell$, with its columns $c_j$, $e_j$ and its rows $a_j$, satisfies:
-\begin{itemize}[leftmargin=2.9em]
-\item[(K1)] $nc_j \neq 0$ for every $n \in \mathcal C_{\ell-1}$ and every $j$. So every gate has one sign on $\mathcal C_{\ell-1}$. Let $\mathcal A_\ell$ be the set of the hidden units $j$ with $nc_j > 0$ on $\mathcal C_{\ell-1}$, the \emph{active} ones, and let
-\[
-g^\circ_\ell(n) \;=\; \sum_{j\in\mathcal A_\ell}(nc_j)\,(ne_j)\,a_j
-\]
-be the block with its gates \emph{frozen}: a quadratic map, $g^\circ_\ell(\lambda n) = \lambda^2\,g^\circ_\ell(n)$.
-\item[(K2)] $g^\circ_\ell(n) \in \mathcal C_\ell$ for every $n \in \mathcal C_{\ell-1}$, and $\Der g^\circ_\ell(n)$ is invertible at some row $n$.
-\item[(K3)] No $e_j$ and no $a_j$ vanishes. For GeGLU the matrices $c_1c_1^\top, \dots, c_{q_\ell}c_{q_\ell}^\top$ are linearly independent over $\mathbb Q$, and for SwiGLU the columns $c_1, \dots, c_{q_\ell}$ are.
-\end{itemize}
-The determinant of $\Der g^\circ_\ell(n)$ is a polynomial in $n$, so by (K2) $g^\circ_\ell$ is a local diffeomorphism on an open dense set of rows. A good $\theta$ is regular. Indeed, take $\xi \in \mathcal C_{\ell-1}$ with $\Der g^\circ_\ell(\xi)$ invertible. For a row $v$, by \eqref{eq:sbunit} and \eqref{eq:gtdelta},
-\begin{align*}
-\frac1t\,\Der g_\ell(t\,\xi)\,v \;&=\; \sum_j\Big[\sigma'(t\,\xi c_j)\,(vc_j)\,(\xi e_j) + \frac{\sigma(t\,\xi c_j)}{t}\,(ve_j)\Big]\,a_j \\
-&\longrightarrow\; \sum_{j\in\mathcal A_\ell}\Big[(vc_j)\,(\xi e_j) + (\xi c_j)\,(ve_j)\Big]\,a_j \;=\; \Der g^\circ_\ell(\xi)\,v \qquad\text{as } t \to \infty ,
-\end{align*}
-so $\Der g_\ell(t\,\xi)$ is invertible for large $t$, which is (R3).
-
-\para{The frozen network.} In the case (n), for a good $\theta$, let $\mathcal B^\circ_{>k}$ be the network after $h_k$ with the gates of all its blocks frozen:
-\[
-\mathcal B^\circ_{>L}(h) = hD, \qquad \mathcal B^\circ_{>k-1}(h) = \mathcal B^\circ_{>k}\big(g^\circ_k(h)\big).
-\]
-It is a polynomial map of $h$ and of the weights. \Cref{lem:e0tailrank,lem:e0atwrite} hold for $\mathcal B^\circ_{>k}$ in the place of $\mathcal B_{>k}$, with an open dense set $\mathcal U^\circ_k$ of rows and with the same proofs, in which $g^\circ_{k+1}$ takes the place of $g_{k+1}$.
-
-\para{The identity for one gated block.} Fix $k < L$ and write $W_g = W_g^{k+1}$, with the columns $c_1, \dots, c_q$, $W_v = W_v^{k+1}$, with the columns $e_1, \dots, e_q$, $V = \Wwrite^{k+1}$, with the rows $a_1, \dots, a_q$, and $\mathcal B = \mathcal B_{>k+1}$. Let $Z$ and $\eta = (\eta_g, \eta_v, \eta_V, \eta')$ be as in $(D^\Delta_k)$, where $\eta_g$, $\eta_v$ and $\eta_V$ are the entries of $\eta$ at $W_g$, $W_v$ and $V$ and $\eta'$ is the rest. For a row $n$ let $\tilde n = nZ$ in the case (n) and $\tilde n = nZ - \frac{\langle nZ, n\rangle}{\dm}\,n$ in the case (+). For a gated block the maps \eqref{eq:e0zdot} and \eqref{eq:e0L} become, for rows $n$ and $\tilde w, \tilde w' \in \R^{1\times q}$,
-\begin{align}
-\dot z^g(n) &= \tilde n\,W_g + n\,\eta_g, \qquad\qquad \dot z^v(n) = \tilde n\,W_v + n\,\eta_v, \label{eq:gtzdot}\\[3pt]
-\mathcal L(\tilde w, \tilde w'; n) &= \Der\mathcal B\big(\hat wV\big)\,\Big(\big(\tilde w'\odot\dot z^g(n)\odot nW_v + \tilde w\odot\dot z^v(n)\big)\,V + \hat w\,\eta_V\Big) + \Der_\theta\mathcal B\big(\hat wV\big)\,\eta' , \label{eq:gtL}
-\end{align}
-where $\hat w = \tilde w\odot nW_v$, and $\dot z^g_j(n)$ and $\dot z^v_j(n)$ are the entries of the rows \eqref{eq:gtzdot}. Here $\tilde w$ stands for the row $\sigma(nW_g)$ of the gates, $\tilde w'$ for the row $\sigma'(nW_g)$ of their derivatives, and $\hat w$ for the row of the outputs of the hidden units, and $\dot z^g(n)$ and $\dot z^v(n)$ are the derivatives of the rows $nW_g$ and $nW_v$ that the block reads. By the chain rule and \eqref{eq:sbDN}, the left side of \eqref{eq:e0D} at $h$ is $\mathcal L\big(\sigma(nW_g), \sigma'(nW_g); n\big)$ at $n = N(h)$. As in \cref{lem:sballrows}, \eqref{eq:e0D} for $k$ therefore holds if and only if
-\begin{equation}\label{eq:gtstarall}
-\mathcal L\big(\sigma(nW_g),\ \sigma'(nW_g);\ n\big) \;=\; 0 \qquad\text{for every row } n \in \R^{1\times\dm} .
-\end{equation}
-We use two properties of $\mathcal L$. The row $\tilde w'$ enters only through the terms $\tilde w'_j\,\dot z^g_j(n)\,(ne_j)\,a_j$, so
-\begin{equation}\label{eq:gtLprime}
-\frac{\partial\mathcal L}{\partial\tilde w'_j}(\tilde w, \tilde w'; n) \;=\; \dot z^g_j(n)\;(ne_j)\;\Der\mathcal B\big(\hat wV\big)\,a_j .
-\end{equation}
-And $\dot z^g$ and $\dot z^v$ are odd in $n$, while $\hat w$ does not change when $\tilde w$ and $n$ both change their sign, so
-\begin{equation}\label{eq:gtparity}
-\mathcal L(-\tilde w, \tilde w'; -n) \;=\; \mathcal L(\tilde w, \tilde w'; n) .
-\end{equation}
-
-\begin{lemma}[The network after $h_k$ far out in its cone]\label{lem:gtfar}
-In the case (n), let $\theta$ be good, $k \le L$, $h^\circ \in \mathcal C_k$, and let $\eta$ be a direction of the weights of the blocks $k+1, \dots, L$ and of $D$. There are numbers $\varrho, \kappa, t_0 > 0$ such that, for $t \ge t_0$, the maps $u \mapsto \mathcal B_{>k}\big(t\,(h^\circ + u)\big)$ and $u \mapsto \Der_\theta\mathcal B_{>k}\big(t\,(h^\circ + u)\big)\,\eta$ extend to holomorphic maps on the rows $u \in \mathbb C^{1\times\dm}$ with $\lvert u_j\rvert \le \varrho$ for all $j$, and for these $u$, at $h = t\,(h^\circ + u)$,
-\[
-\norm{\mathcal B_{>k}(h) - \mathcal B^\circ_{>k}(h)} \;\le\; e^{-\kappa t^p}, \qquad \norm{\Der_\theta\mathcal B_{>k}(h)\,\eta - \Der_\theta\mathcal B^\circ_{>k}(h)\,\eta} \;\le\; e^{-\kappa t^p} .
-\]
-\end{lemma}
-
-\begin{proof}
-\emph{One gate.} Let $z \in \mathbb C$ with $\operatorname{Re}z \ge 2$ and $\lvert\operatorname{Im}z\rvert \le \frac12\operatorname{Re}z$, so that $\operatorname{Re}(z^2) \ge \frac34(\operatorname{Re}z)^2$ and $\lvert z\rvert \le 2\operatorname{Re}z$. For GELU, by \cref{lem:e0mills}, $\sigma(z) - z = -\varphi(z)\,z\operatorname{mr}(z)$ and $\lvert z\operatorname{mr}(z)\rvert \le \lvert z\rvert/\operatorname{Re}z \le 2$, so $\lvert\sigma(z) - z\rvert \le e^{-\frac38(\operatorname{Re}z)^2}$. For SiLU, $\sigma(z) - z = -z/(1 + e^{z})$ and $\lvert 1 + e^{z}\rvert \ge \frac12\,e^{\operatorname{Re}z}$, so $\lvert\sigma(z) - z\rvert \le 4\operatorname{Re}z\;e^{-\operatorname{Re}z}$. Both gates are holomorphic at $z$ and at $-z$, and $\sigma(-z) = \sigma(z) - z$. So there is a number $\kappa_1 > 0$ such that, for large $\operatorname{Re}z$,
-\begin{equation}\label{eq:gtgate}
-\lvert\sigma(z) - z\rvert \;\le\; e^{-\kappa_1(\operatorname{Re}z)^p} \qquad\text{and}\qquad \lvert\sigma(-z)\rvert \;\le\; e^{-\kappa_1(\operatorname{Re}z)^p} .
-\end{equation}
-
-\emph{The first bound, by induction on $L - k$.} We prove it at the weights $\theta + \tau\eta$ as well, for all complex numbers $\tau$ with $\lvert\tau\rvert \le \tau_0$ and a small $\tau_0 > 0$, where the hidden units whose gates are frozen are those of $\theta$. For $k = L$, $\mathcal B_{>L}(h) = hD = \mathcal B^\circ_{>L}(h)$. Let the bound hold for some $k \ge 1$, and let $h^\circ \in \mathcal C_{k-1}$. By (K1), $h^\circ c_j \neq 0$ for the gate columns $c_j$ of block $k$ at $\theta$. Let $\varrho$ and $\tau_0$ be small, and let $h = t\,(h^\circ + u)$. For every $j$, with $c_j$ taken at the weights $\theta + \tau\eta$, the number $z = hc_j$ or $z = -hc_j$ with the sign of $h^\circ c_j$ satisfies $\operatorname{Re}z \ge \frac t2\,\lvert h^\circ c_j\rvert$ and $\lvert\operatorname{Im}z\rvert \le \frac12\operatorname{Re}z$. By \eqref{eq:gtgate}, $g_k$ is holomorphic at these $h$, and
-\[
-\norm{g_k(h) - g^\circ_k(h)} \;\le\; e^{-\kappa_2t^p}, \qquad g^\circ_k(h) \;=\; t^2\,\big(g^\circ_k(h^\circ) + u'\big),
-\]
-with a number $\kappa_2 > 0$, where $g_k$ and $g^\circ_k$ are taken at the weights $\theta + \tau\eta$ and $g^\circ_k(h^\circ)$ at $\theta$, and where the entries of the row $u'$ are as small as we like when $\varrho$ and $\tau_0$ are small. So $g_k(h)$ is $t^2\,\big(g^\circ_k(h^\circ) + u''\big)$ with a row $u''$ of the same kind. By (K2), $g^\circ_k(h^\circ) \in \mathcal C_k$. So the bound for $k$, at the row $g^\circ_k(h^\circ)$ and with $t^2$ in the place of $t$, gives $\norm{\mathcal B_{>k}(g_k(h)) - \mathcal B^\circ_{>k}(g_k(h))} \le e^{-\kappa t^{2p}}$. The derivative of the polynomial map $\mathcal B^\circ_{>k}$ is at most a fixed power of $t$ at the rows $t^2\,(g^\circ_k(h^\circ) + u')$, so $\norm{\mathcal B^\circ_{>k}(g_k(h)) - \mathcal B^\circ_{>k}(g^\circ_k(h))}$ is at most a fixed power of $t$ times $e^{-\kappa_2t^p}$. As $\mathcal B_{>k-1} = \mathcal B_{>k}\circ g_k$ and $\mathcal B^\circ_{>k-1} = \mathcal B^\circ_{>k}\circ g^\circ_k$, this gives the bound for $k - 1$, with a smaller $\kappa$.
-
-\emph{The second bound.} At $h = t\,(h^\circ + u)$ the difference of $\mathcal B_{>k}(h)$ and $\mathcal B^\circ_{>k}(h)$ at the weights $\theta + \tau\eta$ is holomorphic in $\tau$ for $\lvert\tau\rvert \le \tau_0$ and at most $e^{-\kappa t^p}$. By Cauchy's estimate its derivative at $\tau = 0$, which is $\Der_\theta\mathcal B_{>k}(h)\,\eta - \Der_\theta\mathcal B^\circ_{>k}(h)\,\eta$, is at most $e^{-\kappa t^p}/\tau_0$.
-\end{proof}
-
-\begin{lemma}[The step for gated blocks on rays]\label{lem:gtstep}
-In the case (n) or (+), let $\theta$ be good for the cones $\mathcal C_0, \dots, \mathcal C_L$, and let $k < L$. Then $(D^\Delta_{k+1})$ implies $(D^\Delta_k)$.
-\end{lemma}
-
-\begin{proof}
-Let $Z$ and $\eta$ satisfy \eqref{eq:e0D} for $k$, so that \eqref{eq:gtstarall} holds, with the notation above. Let $\mathcal A = \mathcal A_{k+1}$ and $g^\circ = g^\circ_{k+1}$. Let $s_j$ be the sign of $nc_j$ on $\mathcal C_k$ and $\bar s = (s_1, \dots, s_q)$, let $I_{\mathcal A}$ be the diagonal matrix with the entries $1$ at the hidden units of $\mathcal A$ and $0$ elsewhere, and $1_{\mathcal A}$ the row with these entries. Let
-\[
-\mathcal B^\infty = \mathcal B_{>k+1} \ \text{ in the case (+)}, \qquad \mathcal B^\infty = \mathcal B^\circ_{>k+1} \ \text{ in the case (n)},
-\]
-and let $\mathcal L^\infty$ be \eqref{eq:gtL} with $\mathcal B^\infty$ in the place of $\mathcal B$. It is real-analytic in $(\tilde w, \tilde w', n)$ on all rows, a polynomial in the case (n), and it satisfies \eqref{eq:gtLprime} and \eqref{eq:gtparity} with $\mathcal B^\infty$. \Cref{lem:e0tailrank,lem:e0atwrite} hold for $\mathcal B^\infty$, and we write $\mathcal U^\infty$ for its open dense set $\mathcal U_{k+1}$ or $\mathcal U^\circ_{k+1}$.
-
-\emph{The ray.} Let $\xi \in \mathcal C_k$ and $n = t\,\xi$ with $t > 0$. Let
-\[
-r_j = \lvert\xi c_j\rvert^p, \qquad \delta_j(t) = \delta\big(t\,\lvert\xi c_j\rvert\big), \qquad \delta'_j(t) = \delta'\big(t\,\lvert\xi c_j\rvert\big),
-\]
-and let $\delta(t)$ and $\delta'(t)$ be the rows with these entries. By \eqref{eq:gtdelta}, with a constant $\kappa$, for large $t$
-\begin{equation}\label{eq:gtsizes}
-\tfrac16\,e^{-r_jt^p/p} \;\le\; \delta_j(t) \;\le\; \kappa\,t\;e^{-r_jt^p/p}, \qquad \lvert\delta'_j(t)\rvert \;\le\; \kappa\,t\;\delta_j(t) .
-\end{equation}
-By \eqref{eq:sbunit}, $\sigma(nW_g) = n\,W_gI_{\mathcal A} - \delta(t)$ and $\sigma'(nW_g) = 1_{\mathcal A} - \bar s\odot\delta'(t)$. So \eqref{eq:gtstarall} at $n = t\,\xi$ is
-\begin{equation}\label{eq:gtray}
-\mathcal L\big(t\,\xi W_gI_{\mathcal A} - \delta(t),\ \ 1_{\mathcal A} - \bar s\odot\delta'(t);\ \ t\,\xi\big) \;=\; 0 \qquad\text{for all } t > 0 .
-\end{equation}
-Without the small terms the hidden units of the block give the row $(t\,\xi W_gI_{\mathcal A}\odot t\,\xi W_v)$, and the block gives $g^\circ(t\,\xi) = t^2\,h^\circ$ with $h^\circ = g^\circ(\xi)$, which lies in $\mathcal C_{k+1}$ by (K2), so $h^\circ \neq 0$. With a row $\delta$ in the place of $\delta(t)$ the block gives $t^2\,(h^\circ + u)$ with $u = -\frac1t\,(\delta\odot\xi W_v)\,V$.
-
-\emph{The expansion.} For a multi-index $\alpha = (\alpha_1, \dots, \alpha_q)$ of nonnegative integers let $\delta^\alpha = \prod_j\delta_j^{\alpha_j}$, $\lvert\alpha\rvert = \sum_j\alpha_j$, $\alpha! = \prod_j\alpha_j!$ and $r_\alpha = \sum_j\alpha_jr_j$, and let $1_j$ be the multi-index with the entry $1$ at $j$ and $0$ elsewhere. Let
-\[
-\mathcal L_\alpha(t) = \frac{1}{\alpha!}\,\frac{\partial^{\lvert\alpha\rvert}\mathcal L^\infty}{\partial\tilde w^\alpha}, \qquad \mathcal L'_{\alpha,i}(t) = \frac{1}{\alpha!}\,\frac{\partial^{\lvert\alpha\rvert}}{\partial\tilde w^\alpha}\,\frac{\partial\mathcal L^\infty}{\partial\tilde w'_i}, \qquad\text{both at } \big(t\,\xi W_gI_{\mathcal A},\ 1_{\mathcal A};\ t\,\xi\big).
-\]
-For $\alpha = 0$ and $\alpha = 1_j$ these are the maps $\mathcal L_0$, $\mathcal L_j = \mathcal L_{1_j}$ and $\mathcal L'_j = \mathcal L'_{0,j}$ of the proof of \cref{lem:sbstepgelu}. As $\mathcal L^\infty$ is real-analytic in $\tilde w$ and affine in $\tilde w'$,
-\begin{equation}\label{eq:gtseries}
-\mathcal L^\infty\big(t\,\xi W_gI_{\mathcal A} - \delta,\ \ 1_{\mathcal A} - \bar s\odot\delta';\ \ t\,\xi\big) \;=\; \sum_\alpha(-1)^{\lvert\alpha\rvert}\,\delta^\alpha\,\Big[\mathcal L_\alpha(t) - \sum_{i=1}^{q}s_i\,\mathcal L'_{\alpha,i}(t)\,\delta'_i\Big]
-\end{equation}
-for small rows $\delta$ and all rows $\delta'$. By \eqref{eq:gtsizes}, at $\delta = \delta(t)$ and $\delta' = \delta'(t)$ the term of $\delta^\alpha$ is of the order of $e^{-r_\alpha t^p/p}$, up to powers of $t$, and the term of $\delta^\alpha\delta'_i$ of the order of $e^{-(r_\alpha + r_i)t^p/p}$. We call $r_\alpha$ and $r_\alpha + r_i$ the \emph{exponents} of these terms. We use three facts.
-\begin{itemize}[leftmargin=2.2em]
-\item[(a)] Every $\mathcal L_\alpha$ and $\mathcal L'_{\alpha,i}$ is a real-analytic function of $t \in \R$ that is meromorphic at infinity. In the case (n) it is a polynomial in $t$. In the case (+) it is built from derivatives of $\mathcal B$ and of $\Der_\theta\mathcal B(\cdot)\,\eta'$ at $t^2\,h^\circ$ and from polynomials in $t$, so this is \cref{lem:sbcoeff} with $t^2$ in the place of $t$.
-\item[(b)] At $\delta = \delta(t)$ and $\delta' = \delta'(t)$, the left side of \eqref{eq:gtseries} vanishes in the case (+), by \eqref{eq:gtray}. In the case (n) it is at most $e^{-\kappa' t^{2p}}$ for large $t$, with a number $\kappa' > 0$. Indeed, by \cref{lem:gtfar} for $k+1$, at the row $h^\circ$ and with $t^2$ in the place of $t$, the maps $\mathcal B - \mathcal B^\infty$ and $\Der_\theta\mathcal B(\cdot)\,\eta' - \Der_\theta\mathcal B^\infty(\cdot)\,\eta'$ are holomorphic and at most $e^{-2\kappa' t^{2p}}$ at the rows $t^2\,(h^\circ + u)$ with $\lvert u_j\rvert \le \varrho$, and by Cauchy's estimate so is the derivative of the first, for large $t$, where $\lvert u_j\rvert \le \varrho/2$. At $\delta = \delta(t)$ the block gives such a row, with $u \to 0$, and the rows to which these derivatives are applied in \eqref{eq:gtL} are at most a fixed power of $t$. So $\mathcal L$ and $\mathcal L^\infty$ differ at the point of \eqref{eq:gtray} by at most a fixed power of $t$ times $e^{-2\kappa' t^{2p}}$, and $\mathcal L$ vanishes there.
-\item[(c)] For large $t$ the series \eqref{eq:gtseries} converges absolutely at $\delta(t)$, $\delta'(t)$, and the sum of any set of its terms is at most a fixed power of $t$ times $e^{-rt^p/p}$, where $r$ is the smallest exponent of a term of the set. In the case (n) the series is a finite sum with coefficients that are polynomials in $t$, and this follows from \eqref{eq:gtsizes}. In the case (+) it follows as in the proof of \cref{lem:sbstepgelu}: by \cref{lem:sbcoeff} with $t^2$ in the place of $t$, there is a number $\varrho' > 0$ such that the left side of \eqref{eq:gtseries} is holomorphic in the rows $\delta \in \mathbb C^{1\times q}$ with $\lvert\delta_j\rvert \le \varrho'\,t$ for all $j$, and at most a fixed power of $t$ there. By Cauchy's estimates, $\mathcal L_\alpha(t)$ and $\mathcal L'_{\alpha,i}(t)$ are at most a fixed power of $t$ times $(\varrho'\,t)^{-\lvert\alpha\rvert}$. With \eqref{eq:gtsizes}, a term with the exponent $r'$ is then at most a fixed power of $t$ times $(\kappa/\varrho')^{\lvert\alpha\rvert}\,e^{-r't^p/p}$. As $r' \ge \lvert\alpha\rvert\,\min_jr_j$, the terms with large $\lvert\alpha\rvert$ are bounded by a geometric series.
-\end{itemize}
-
-\emph{A generic ray.} We now take $\xi \in \mathcal C_k$ such that
-\begin{itemize}[leftmargin=2.2em]
-\item[(i)] the numbers $r_1, \dots, r_q$ are linearly independent over $\mathbb Q$;
-\item[(ii)] $\xi e_j \neq 0$ for every $j$;
-\item[(iii)] $g^\circ(\xi) \in \mathcal U^\infty$.
-\end{itemize}
-These $\xi$ are dense in $\mathcal C_k$. For (i): if integers $\kappa_1, \dots, \kappa_q$ are not all zero, $\sum_j\kappa_jr_j$ is $\xi\big(\sum_j\kappa_jc_jc_j^\top\big)\xi^\top$ for GeGLU and $\xi\sum_j\kappa_js_jc_j$ for SwiGLU, and by (K3) it vanishes only for $\xi$ on a quadric, or in a hyperplane. For (iii): $g^\circ$ is a local diffeomorphism on an open dense set of rows, and $\mathcal U^\infty$ is open and dense. By (i), different multi-indices have different exponents $r_\alpha$, and only finitely many exponents lie below any bound.
-
-\emph{The induction.} We show that, for every multi-index $\alpha$,
-\begin{equation}\label{eq:gtclaim}
-\mathcal L_\alpha(t) = 0 \quad\text{and}\quad \mathcal L'_{\alpha - 1_i,\,i}(t) = 0 \ \text{ for every } i \text{ with } \alpha_i \ge 1, \qquad\text{for all } t \in \R,
-\end{equation}
-by induction on the exponent $r_\alpha$. These are the coefficients of the terms of \eqref{eq:gtseries} with the exponent $r_\alpha$. Let \eqref{eq:gtclaim} hold for all multi-indices with a smaller exponent, and let $r^+ > r_\alpha$ be the next exponent. In \eqref{eq:gtseries} at $\delta(t)$, $\delta'(t)$, the terms with a smaller exponent vanish, and by (c) the terms with a larger exponent add up to at most a fixed power of $t$ times $e^{-r^+t^p/p}$. By (b), so do the terms with the exponent $r_\alpha$, which are
-\[
-(-1)^{\lvert\alpha\rvert}\,\delta(t)^\alpha\,\Big[\mathcal L_\alpha(t) + \sum_{i:\,\alpha_i\ge1}s_i\,\mathcal L'_{\alpha - 1_i,\,i}(t)\;\frac{\delta'_i(t)}{\delta_i(t)}\Big] .
-\]
-By \eqref{eq:gtsizes}, $\delta(t)^\alpha \ge 6^{-\lvert\alpha\rvert}\,e^{-r_\alpha t^p/p}$. So
-\begin{equation}\label{eq:gtlevel}
-\mathcal L_\alpha(t) \;+\; \sum_{i:\,\alpha_i\ge1}s_i\,\mathcal L'_{\alpha - 1_i,\,i}(t)\;\frac{\delta'_i(t)}{\delta_i(t)} \;\longrightarrow\; 0 \qquad\text{faster than every power of } 1/t .
-\end{equation}
-
-\emph{No small factor, $\alpha = 0$.} \eqref{eq:gtlevel} is $\mathcal L_0(t) \to 0$, and by (a) $\mathcal L_0 = 0$.
-
-\emph{One small factor, $\alpha = 1_j$.} With $y = t\,\lvert\xi c_j\rvert$, \eqref{eq:gtlevel} is $\mathcal L_j + s_j\,\mathcal L'_j\,\delta'(y)/\delta(y) \to 0$.
-
-For GeGLU, $\delta'(y)/\delta(y) = \big(\operatorname{mr}(y) - y\big)/\big(y\operatorname{mr}(y)\big)$ and $y\operatorname{mr}(y) \le 1$, so
-\[
-\big(y\,\mathcal L_j + s_j\,\mathcal L'_j\big)\,\operatorname{mr}(y) \;-\; s_j\,y\,\mathcal L'_j \;\longrightarrow\; 0 \qquad\text{faster than every power of } 1/t ,
-\]
-as in Step~2 of the proof of \cref{lem:sbstepgelu}. By (a) and \cref{lem:e0nomero} with $z(t) = \lvert\xi c_j\rvert\,t$, both $y\,\mathcal L_j + s_j\mathcal L'_j$ and $y\,\mathcal L'_j$ vanish, so $\mathcal L'_j = 0$ and $\mathcal L_j = 0$.
-
-For SwiGLU, $y\,\delta'(y)/\delta(y) = 1 - y + \delta(y)$, and $\delta(y)$ tends to $0$ faster than every power of $1/t$, so
-\[
-f(t) \;=\; \lvert\xi c_j\rvert\,t\;\mathcal L_j(t) + s_j\,\big(1 - \lvert\xi c_j\rvert\,t\big)\,\mathcal L'_j(t)
-\]
-tends to $0$ faster than every power of $1/t$ as $t \to +\infty$. By (a), $f$ is meromorphic at infinity, so $f(t) = 0$ for large $t$, and then for all $t \in \R$, because $f$ is real-analytic on $\R$. By \eqref{eq:gtparity}, $\mathcal L_j$ is odd in $t$ and $\mathcal L'_j$ is even. So $0 = f(t) - f(-t) = -2\,s_j\,\lvert\xi c_j\rvert\,t\;\mathcal L'_j(t)$: $\mathcal L'_j = 0$, and then $\mathcal L_j = 0$.
-
-In both cases, by \eqref{eq:gtLprime}, $\mathcal L'_j(t) = \dot z^g_j(t\,\xi)\;(t\,\xi e_j)\;\Der\mathcal B^\infty(t^2\,h^\circ)\,a_j$. By (iii), (K3) and \cref{lem:e0tailrank}, $\Der\mathcal B^\infty(h^\circ)\,a_j \neq 0$, so the last factor, which is real-analytic in $t$, vanishes only at isolated $t$. By (ii), $\xi e_j \neq 0$. So
-\begin{equation}\label{eq:gtzg}
-\dot z^g_j(t\,\xi) = 0 \qquad\text{for all } t > 0 .
-\end{equation}
-
-\emph{Two or more small factors, $\lvert\alpha\rvert \ge 2$.} Let $\alpha_i \ge 1$. Then $r_i < r_\alpha$, so \eqref{eq:gtzg} holds for the hidden unit $i$, and by \eqref{eq:gtLprime} the derivative of $\mathcal L^\infty(\tilde w, \tilde w'; t\,\xi)$ in $\tilde w'_i$ vanishes for all rows $\tilde w$. So $\mathcal L'_{\alpha - 1_i,\,i} = 0$. Then \eqref{eq:gtlevel} is $\mathcal L_\alpha(t) \to 0$, and by (a) $\mathcal L_\alpha = 0$. This ends the induction.
-
-\emph{What the induction gives.} For this $\xi$ and every $t > 0$, all coefficients of the expansion of $(\tilde w, \tilde w') \mapsto \mathcal L^\infty(\tilde w, \tilde w'; t\,\xi)$ at $(t\,\xi W_gI_{\mathcal A}, 1_{\mathcal A})$ vanish, so this real-analytic map vanishes. The rows $t\,\xi$ of this kind are dense in $\mathcal C_k$. So, with \eqref{eq:gtzg}, for all $n \in \mathcal C_k$ and all rows $\tilde w \in \R^{1\times q}$, with $\hat w = \tilde w\odot nW_v$,
-\begin{equation}\label{eq:gtall}
-\dot z^g(n) = 0, \qquad \Der\mathcal B^\infty(\hat wV)\,\Big(\big(\tilde w\odot\dot z^v(n)\big)\,V + \hat w\,\eta_V\Big) + \Der_\theta\mathcal B^\infty(\hat wV)\,\eta' = 0 .
-\end{equation}
-
-\emph{Step 1: the gates.} By \eqref{eq:gtzdot}, $\dot z^g(n)$ is a polynomial in $n$ that vanishes on the open set $\mathcal C_k$, so it vanishes for all $n$. In the case (n) this is $n\,(ZW_g + \eta_g) = 0$, so $\eta_g = -ZW_g$, and $\mathfrak g$ contains every $Z$. In the case (+) its part of degree $3$ is $\langle nZ, n\rangle\,nW_g = 0$, so $Z$ is antisymmetric, as $W_g \neq 0$, and its part of degree $1$ gives $\eta_g = -ZW_g$. In both cases $Z \in \mathfrak g$ and $\dot z^v(n) = n\,(ZW_v + \eta_v)$.
-
-\emph{Step 2: the values and the write.} Fix $n \in \mathcal C_k$ with $ne_j \neq 0$ for every $j$, and let $\Delta(n)$ be the diagonal matrix with the entries $-\dot z^v_j(n)/(ne_j)$, so that $\tilde w\odot\dot z^v(n) = -\hat w\,\Delta(n)$. The row $\hat w$ takes every value in $\R^{1\times q}$, and \eqref{eq:gtall} reads
-\[
-\Der\mathcal B^\infty(\hat wV)\,\Big(\hat w\,\big(\eta_V - \Delta(n)\,V\big)\Big) + \Der_\theta\mathcal B^\infty(\hat wV)\,\eta' = 0 \qquad\text{for all rows } \hat w .
-\]
-By \cref{lem:e0atwrite} for $\mathcal B^\infty$, with $A = V$, there is a matrix $Z'(n)$ with
-\begin{equation}\label{eq:gtZprime}
-\eta_V - \Delta(n)\,V = V\,Z'(n), \qquad \Der\mathcal B^\infty(h)\,\big(hZ'(n)\big) + \Der_\theta\mathcal B^\infty(h)\,\eta' = 0 \quad\text{for all rows } h .
-\end{equation}
-For two such rows $n$ and $n_1$, subtracting gives $\Der\mathcal B^\infty(h)\,\big(h\,(Z'(n) - Z'(n_1))\big) = 0$ for all $h$, so $Z'(n) = Z'(n_1)$ by \cref{lem:e0tailrank}. Let $Z'$ be this matrix. Then $\Delta(n)\,V = \eta_V - VZ'$ does not depend on $n$, and no row of $V$ vanishes, so $\Delta(n)$ is one diagonal matrix $\Delta_{k+1}$ for all these $n$. So $\eta_V = \Delta_{k+1}V + VZ'$, and $\dot z^v(n) = -n\,W_v\Delta_{k+1}$ on an open set of rows $n$, that is, $n\,(ZW_v + \eta_v + W_v\Delta_{k+1}) = 0$: $\eta_v = -ZW_v - W_v\Delta_{k+1}$.
-
-\emph{Step 3: the rest.} In the case (+), $\mathcal B^\infty = \mathcal B_{>k+1}$, and the second part of \eqref{eq:gtZprime} is \eqref{eq:e0D} for $k+1$, with $Z'$ and $\eta'$. By $(D^\Delta_{k+1})$, $Z' \in \mathfrak g$ and $\eta'$ is of the form \eqref{eq:gtDconcl} with $Z_{k+1} = Z'$. With Steps~1 and~2 this is \eqref{eq:gtDconcl} for $k$.
-
-In the case (n), \eqref{eq:gtZprime} is an identity for the frozen network. The frozen network does not change along some directions along which the network does, for example along every direction of the weights of a hidden unit that is not active, so \eqref{eq:gtZprime} does not determine $\eta'$. Let $\eta^\flat$ be the direction \eqref{eq:gtDconcl} for $k$ with $Z_k = Z$, with $\Delta_{k+1}$ as in Step~2, with $Z_{k+1} = Z'$, and with $Z_\ell = 0$ and $\Delta_\ell = 0$ for all later $\ell$; here $\mathfrak g$ contains every matrix. By the converse of the claim, $Z$ and $\eta^\flat$ satisfy \eqref{eq:e0D} for $k$, and so do $Z$ and $\eta$. So the matrix $0$ and the direction $\eta - \eta^\flat$ satisfy it. By Steps~1 and~2, $\eta - \eta^\flat$ vanishes at the weights of block $k+1$. Let $\eta''$ be its entries at the later weights. Then \eqref{eq:e0D} for $k$ reads
-\[
-\Der_\theta\mathcal B_{>k+1}\big(g_{k+1}(h)\big)\,\eta'' = 0 \qquad\text{for all rows } h .
-\]
-By (R3) the values of $g_{k+1}$ contain an open set, and the left side is real-analytic, so $\Der_\theta\mathcal B_{>k+1}(h)\,\eta'' = 0$ for all rows $h$. This is \eqref{eq:e0D} for $k+1$ with the matrix $0$. By $(D^\Delta_{k+1})$, $\eta''$ is of the form \eqref{eq:gtDconcl} for $k+1$ with $Z_{k+1} = 0$. So $\eta = \eta^\flat + \eta''$ is of the form \eqref{eq:gtDconcl} for $k$.
-\end{proof}
-
-\para{The parameters $\theta^*$.} Let $\mathbf 1$ be the column of $\dm$ ones. Choose numbers $\mu_1, \mu_2, \dots > 0$ such that $1, \mu_1, \mu_2, \dots$ are linearly independent over $\mathbb Q$, for SwiGLU, or such that $\mu_1^2, \mu_2^2, \dots$ are, for GeGLU. Almost every choice of finitely many numbers is of this kind. Let $\theta^*$ be the parameters with
-\[
-E = \begin{bmatrix} I \\ 0 \end{bmatrix} \in \R^{d_{\mathrm{in}}\times\dm}, \qquad D = \begin{bmatrix} I & 0 \end{bmatrix} \in \R^{\dm\times d_{\mathrm{out}}},
-\]
-and, in every block $\ell$, with $q = q_\ell$ hidden units,
-\[
-W_g^{\ell} = \big[\,I \;\big|\; {-\mu_1\mathbf 1} \;\big|\; \cdots \;\big|\; {-\mu_{q-\dm}\mathbf 1}\,\big], \qquad W_v^{\ell} = \big[\,\mathbf 1 \;\big|\; \cdots \;\big|\; \mathbf 1\,\big], \qquad \Wwrite^{\ell} = \begin{bmatrix} I \\ \mathbf 1^\top \\[-3pt] \vdots \\ \mathbf 1^\top \end{bmatrix} .
-\]
-So the gate column $c_j$ is column $j$ of $I$ for $j \le \dm$ and $c_j = -\mu_{j-\dm}\,\mathbf 1$ for $j > \dm$, every value column is $e_j = \mathbf 1$, and the write row $a_j$ is row $j$ of $I$ for $j \le \dm$ and $a_j = \mathbf 1^\top$ for $j > \dm$. Let $\R^{1\times\dm}_{>0}$ be the positive orthant, the set of the rows $n$ with $n_i > 0$ for every $i$. It is an open convex cone that does not contain $0$.
-
-\begin{lemma}[$\theta^*$ is good]\label{lem:gtstar}
-$\theta^*$ is good for the cones $\mathcal C_0 = \dots = \mathcal C_L = \R^{1\times\dm}_{>0}$. For every block, $\mathcal A_\ell = \{1, \dots, \dm\}$ and $g^\circ_\ell(n) = (n\mathbf 1)\,n$, where $n\mathbf 1 = n_1 + \dots + n_{\dm}$.
-\end{lemma}
-
-\begin{proof}
-(R1): $E$, $D$ and every $\Wwrite^{\ell}$ contain the identity matrix. (K1): for $n \in \R^{1\times\dm}_{>0}$, $nc_j = n_j > 0$ for $j \le \dm$ and $nc_j = -\mu_{j-\dm}\,n\mathbf 1 < 0$ for $j > \dm$. So $\mathcal A_\ell = \{1, \dots, \dm\}$, and $g^\circ_\ell(n) = \sum_{j\le\dm}n_j\,(n\mathbf 1)\,a_j = (n\mathbf 1)\,n$. (K2): $g^\circ_\ell(n)$ is a positive multiple of $n$, and its derivative $v \mapsto (n\mathbf 1)\,v + (v\mathbf 1)\,n$ has the determinant $2\,(n\mathbf 1)^{\dm} \neq 0$. (K3): no $e_j$ and no $a_j$ vanishes. For SwiGLU, $\sum_j\kappa_jc_j = 0$ with integers $\kappa_j$ says that $\kappa_j = \sum_{i>\dm}\kappa_i\,\mu_{i-\dm}$ for every $j \le \dm$, so every $\kappa_j$ vanishes, by the choice of the $\mu_i$. For GeGLU, the entries of $\sum_j\kappa_jc_jc_j^\top = 0$ off the diagonal, which exist because $\dm \ge 2$, give $\sum_{i>\dm}\kappa_i\,\mu_{i-\dm}^2 = 0$, so $\kappa_i = 0$ for $i > \dm$, and then the diagonal gives $\kappa_j = 0$ for $j \le \dm$.
-\end{proof}
-
-\begin{proof}[Proof of \cref{thm:gatedskipless}]
-By \cref{lem:gtstar}, $\theta^*$ is good, so it is regular and no value column vanishes. $(D^\Delta_L)$ holds at $\theta^*$ (\cref{lem:e0readout}), and by \cref{lem:gtstep}, applied for $k = L-1$, then for $k = L-2$, and so on down to $k = 0$, so does $(D^\Delta_0)$. By \cref{prop:gtgivesrank}, the Jacobian at $\theta^*$ has the rank \eqref{eq:gtupper} on some finite batch $X$. In the cases (n) and (+) the outputs on $X$ are real-analytic in $\theta \in \R^P$, and so are the minors of the Jacobian. A minor of the size \eqref{eq:gtupper} does not vanish at $\theta^*$, so it vanishes only on a set of measure zero. At generic parameters the Jacobian on $X$ therefore has at least the rank \eqref{eq:gtupper}, and it has at most this rank on every batch, because $E$ and every $\Wwrite^{\ell}$ have rank $\dm$ and no value column vanishes. So the functional dimension is \eqref{eq:gtupper}, which is the bound of \cref{thm:unlock} for the skipless network. The residual network attains its own bound, $P - \dim\G - s$ with the same $s$ (\cref{thm:resdepth}). The difference is $L\dim\G$.
+\emph{The gain.} The number \eqref{eq:e0upper} is the bound of \cref{thm:unlock} for the skipless network, with $\G = \CO(\dm)$ in the case (0). The residual network attains its own bound, $P - \dim\G - s$ with the same $s$ (\cref{thm:resdepth}, and \cref{thm:epszero} in the case (0)). The difference is $L\dim\G$.
 \end{proof}
 
 \section{The one-block theorem}\label{app:onelayer}
