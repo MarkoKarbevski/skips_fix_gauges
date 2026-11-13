@@ -11,10 +11,12 @@ for f in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD rebase-merge rebase-apply; do
 done
 cd "$root/paper docs" || exit 0
 fail=0
-for k in A B; do
+for k in A B C D; do
   case $k in
     A) f=new_paper_absorb_skip/new_paper_absorb_skip.tex ;;
     B) f=new_paper_skips_unlock_d2_params/new_paper_skips_unlock_d2_params.tex ;;
+    C) f=new_paper_skips_at_least/new_paper_skips_at_least.tex ;;
+    D) f=new_paper_skips_exactly/new_paper_skips_exactly.tex ;;
   esac
   if git diff --cached --name-only | grep -qF "paper docs/$f"; then
     if ! res=$(python3 tools/check_flow.py "$f" tools/glossary_$k.py tools/flow_allow_$k.txt); then
