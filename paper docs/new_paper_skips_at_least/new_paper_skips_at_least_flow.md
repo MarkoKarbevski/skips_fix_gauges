@@ -66,7 +66,7 @@
 | 61 | When the bounds are attained | para |  |  | \subsection{When the bounds are attained}\label{sec:onelayer} |
 | 62 | When the bounds are attained | para |  |  | The equality condition is a hypothesis, and it can fail (\cref{sec:mea |
 | 63 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for one block]{theorem}{thmOneBlock}\label |
-| 64 | When the bounds are attained | para |  |  | For an attention block without a skip, the equality condition of \cpre |
+| 64 | When the bounds are attained | para |  |  | For three kinds of block without a skip, the equality condition of \cp |
 | 65 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for residual networks at any depth]{theore |
 | 66 | When the bounds are attained | para |  |  | \begin{corollary}[Residual networks are locally identifiable]\label{co |
 | 67 | When the bounds are attained | para |  |  | This is \cref{thm:resdepth} together with \cref{prop:localid}. Whether |
