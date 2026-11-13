@@ -16,7 +16,7 @@
 | 11 | Results | float | gated block | epsilon of RMSNorm, gated block | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1}\se |
 | 12 | Related work | para |  |  | \subsection{Related work}\label{sec:related} |
 | 13 | Related work | para |  |  | \Cref{sec:reduce} states what is known on the change of basis as a sym |
-| 14 | Related work | para |  |  | \para{Identifiability.} For $\tanh$ networks the function determines t |
+| 14 | Related work | para |  |  | \para{Identifiability.} The theorems of \citet{sussmann1992} and \cite |
 | 15 | Related work | para |  |  | \para{Dimension counts.} \citet{grigsby2022functional} bound the funct |
 | 16 | Setup | para |  |  | \section{Setup}\label{sec:setup} |
 | 17 | Setup | para |  |  | This section fixes the networks. We write every block, MLP or attentio |
@@ -56,7 +56,7 @@
 | 51 | One block | para |  |  | \para{Step 1: factorizations.} The parameters enter only through $C$ a |
 | 52 | One block | para |  |  | \para{Step 2: hidden units.} It remains to show that, to first order,  |
 | 53 | One block | statement |  |  | \begin{restatable}[One block]{theorem}{thmOneBlock}\label{thm:oneblock |
-| 54 | One block | para |  |  | For an attention block, the theorem also follows from Theorem~3.9 of \ |
+| 54 | One block | para |  |  | Two cases of the theorem also follow from earlier work. For a $\tanh$  |
 | 55 | Any depth | para |  |  | \section{Any depth}\label{sec:depth}\label{sec:proof} |
 | 56 | Any depth | para |  |  | With several blocks, the two factorizations of \cref{sec:oneblock} are |
 | 57 | Any depth | statement |  |  | \begin{restatable}[The bound is attained at any depth]{theorem}{thmSki |
