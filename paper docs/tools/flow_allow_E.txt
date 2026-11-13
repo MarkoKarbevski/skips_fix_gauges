@@ -2,11 +2,11 @@
 change of basis # well known from linear algebra; the abstract and the introduction say the operation on the weights in words, and Section 3 defines it
 RMSNorm # well known to ML theory researchers; the abstract and the introduction name it, and the Setup defines it
 pre-RMSNorm # well known: RMSNorm before each block and the readout (pre-norm); the Setup defines the cases
-formula in the opening # tanh, the name of an activation, is typeset in math mode; the first paragraph has no formula
+formula in the opening # tanh and ReLU^2, names of activations, are typeset in math mode; the first paragraph has no other formula
 d_model, the model dimension # standard symbol; the abstract uses it for the groups GL and O, and the introduction says it in words at its first use in the body
 functional dimension # the abstract defines it in its first sentence, in words; the pattern looks for the definition of the introduction
 locally identifiable # the abstract only names it; the introduction defines it at its first use in the body
 epsilon of RMSNorm # well known: the constant in the denominator of RMSNorm; the caption of Table 1 names the case epsilon = 0 before the Setup defines it
 gated block # Table 1 uses the word in two rows and its caption defines it; the Setup defines it in full
-ReLU squared # the introduction names ReLU^2 beside ReLU; the Setup says that it is the square of ReLU
+ReLU squared # the introduction names it in words at its first use (the square of ReLU, ReLU^2); the Setup says it again
 redundancy # a plain word in the abstract and the introduction (the symmetries are the only redundancy); Definition 4.1 gives it a formula

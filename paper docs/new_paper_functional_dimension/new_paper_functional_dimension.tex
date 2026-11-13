@@ -110,13 +110,15 @@ The functional dimension of a neural network is the number of independent direct
 
 \section{Introduction}\label{sec:intro}
 
-Which parameters of a neural network does the function that it computes determine? For $\tanh$ networks the answer is classical: the function determines the weights up to permutations and sign flips of the hidden units, for irreducible networks with one hidden layer \citep{sussmann1992} and, under conditions that almost all weights satisfy, at any depth \citep{fefferman1994}. The layers of current networks have continuous symmetries as well, and every continuous symmetry lowers the \emph{functional dimension} of the network, the number of independent directions in which its parameters change its function \citep{grigsby2022functional}. So a count of symmetries bounds the functional dimension from above. It does not always give its value: ReLU networks lose more dimensions than their symmetries account for, on sets of parameters of positive measure \citep{grigsby2023hidden}.
+Which parameters of a neural network does the function that it computes determine? For $\tanh$ networks the answer is classical: the function determines the weights up to permutations and sign flips of the hidden units, for irreducible networks with one hidden layer \citep{sussmann1992} and, under conditions that almost all weights satisfy, at any depth \citep{fefferman1994}. The layers of current networks have continuous symmetries as well, and every continuous symmetry lowers the \emph{functional dimension} of the network, the number of independent directions in which its parameters change its function \citep{grigsby2022functional}. So a count of symmetries bounds the functional dimension from above. It does not always give its value: ReLU networks lose more dimensions than their symmetries account for, on sets of parameters of positive measure \citep{grigsby2023hidden}. In current networks, SwiGLU, GeGLU and GELU have largely replaced ReLU \citep{liu2022convnet,touvron2023llama,jiang2023mistral,gemma2024,karpathy2023nanogpt}. That said, the square of ReLU, ReLU$^2$ \citep{so2021primer}, has also been used recently \citep{jordan2024modded,nvidia2025nemotron3}.
 
 We study the networks whose layers have the form of the layers of a transformer: input weights, a fixed nonlinear map, and output weights. We call such a layer a \emph{block}. In a network that composes blocks, two weight matrices meet between two blocks, with a hidden state of dimension $\dm$ between them. The output weights of one block can then be multiplied by an invertible matrix and the input weights of the next block by its inverse \citep{godfrey2022symmetries,zhao2023symmetries}, which makes $\dm^2$ parameters redundant at every hidden state.
 
 For one hidden layer without activation, \citet{albertini1993uniqueness} note that the two weight matrices are determined only up to an invertible matrix between them. For recurrent networks, \citet[Section~4]{albertini1993form} determine the invertible matrices that commute with an activation applied to every coordinate, and show that they act on the weights without changing the function. For MLPs, \citet{godfrey2022symmetries} show that the weights of two consecutive layers can be changed in this way by every matrix $A$ for which the activation $\sigma$ between them satisfies $\sigma \circ A = B \circ \sigma$ for some matrix $B$ (their Proposition~3.4). With the identity as activation this is every invertible matrix. They use these symmetries to compare the hidden states of trained networks, by stitching two networks and by measures of similarity, and they do not remove parameters with them. \citet{zhao2023symmetries} show the same independently (their Proposition~C.1). They include activations that rescale a vector by a function of its norm, $\sigma(z) = f(\norm{z})\,z$, for which $A$ is orthogonal. RMSNorm is such an activation, applied to every token. They name model compression as a prospect of such symmetries, and stop short of using them to remove parameters. Such a removal is moreover exact, a free lunch: the network keeps its function.
 
-To our knowledge, \citet{graef2024tricks} is the first to remove parameters in this way, independently and without explicitly mentioning the symmetry framework. Moreover, the work is restricted to skipless transformers without normalization, and applies the reduction only to the attention blocks. We apply the reduction to every block, with and without normalization. Deep networks that compose such blocks directly, without skip connections, have recently been trained to varying degrees of success \citep{he2023shortcuts,he2024simplifying,ji2025always,ji2026cutting}, and the reduction applies to them: in the ViT-B of \citet{ji2026cutting} it removes $8.5$ percent of the parameters. We then ask whether anything more can be removed, that is, whether these symmetries are the only redundancy.
+To our knowledge, \citet{graef2024tricks} is the first to remove parameters in this way, independently and without explicitly mentioning the symmetry framework. Moreover, the work is restricted to skipless transformers without normalization, and applies the reduction only to the attention blocks. We apply the reduction to every block, with and without normalization.
+
+Deep networks that compose such blocks directly, without skip connections, have recently been trained to varying degrees of success \citep{he2023shortcuts,he2024simplifying,ji2025always}. Most notably (and recently), the ViT-B that \citet{ji2026cutting} train without skip connections outperforms the ViT-B with skip connections on ImageNet-1k, at the same parameter budget. Their explanation is that a skip connection keeps bringing the information of early layers back into later ones, which disrupts the hierarchy of features that depth should build. The reduction applies to these networks: in this ViT-B it removes $8.5$ percent of the parameters. We then ask whether anything more can be removed, that is, whether these symmetries are the only redundancy.
 
 \subsection{Results}\label{sec:results}
 
@@ -321,7 +323,7 @@ Four cases of the theorem also follow from earlier work. For a $\tanh$ block, it
 
 \section{Any depth}\label{sec:depth}\label{sec:proof}
 
-With several blocks, the two factorizations of \cref{sec:oneblock} are not enough: the blocks have to be told apart inside their composition. We state the result, and then present its proof, which removes one block at a time. \Cref{sec:claim} reduces the count to one step, from the network after block $k+1$ to the network after block $k$, and \cref{sec:raystanh,sec:raysgelu,sec:circle} make this step.
+With several blocks, the two factorizations of \cref{sec:oneblock} are not enough: the blocks have to be told apart inside their composition. We state the result and outline its proof.
 
 \begin{restatable}[The bound is attained at any depth]{theorem}{thmSkipless}\label{thm:skiplessbound}\label{thm:epszeroskipless}
 Let $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm \ge 2$, and consider networks without biases whose blocks are all of one kind, $\tanh$, GELU, SwiGLU or GeGLU, each with at least $\dm$ hidden units. In the following cases the functional dimension at generic parameters is
@@ -343,86 +345,13 @@ Without normalization or under pre-RMSNorm with $\varepsilon > 0$, in the cases 
 
 For $\varepsilon = 0$ we state no such corollary, since \cref{prop:localid} is stated for $\varepsilon > 0$.
 
-\subsection{One claim for every hidden state}\label{sec:claim}
-
-An MLP block acts on each token separately, so in this section inputs have one token: a hidden state is a row $h \in \R^{1\times\dm}$, and the input of a block is a row $n = N(h)$. Let $\mathfrak g$ be the Lie algebra of $\G$, the set of the matrices $Z$ with $\exp(\tau Z) \in \G$ for all numbers $\tau$: all $\dm\times\dm$ matrices in the case (n), the antisymmetric ones in the case (+), and the matrices $Y + \beta I$ with $Y$ antisymmetric and $\beta$ a number in the case (0).
-
-For $k = 0, \dots, L$ and a row $h$, let $\mathcal B_{>k}(h)$ be the output of the network when its hidden state $h_k$ is set to $h$:
+\para{Outline of the proof.} The proof removes one block at a time. An MLP block acts on each token separately, so we take inputs of one token, and a hidden state is a row $h$. For $k = 0, \dots, L$ let $\mathcal B_{>k}(h)$ be the output of the network when its hidden state $h_k$ is set to $h$, so that $F_\theta(x) = \mathcal B_{>0}(xE)$. Take matrices $Z_k, \dots, Z_L$ with $\exp(\tau Z_\ell) \in \G$ for all numbers $\tau$. The changes of basis $G_\ell = \exp(\tau Z_\ell)$ of \cref{prop:cob} at the hidden states $h_k, \dots, h_L$ move $h_k$ in the direction $h_kZ_k$ and the weights of the later blocks and of $D$ in a direction $\eta$, and they do not change the output. To first order in $\tau$, with $Z = Z_k$,
 \[
-\mathcal B_{>L}(h) = N(h)\,D, \qquad \mathcal B_{>k-1}(h) = \mathcal B_{>k}\big(g_k(N(h))\big), \qquad\text{so that}\quad F_\theta(x) = \mathcal B_{>0}(xE).
+\Der\mathcal B_{>k}(h)\,(hZ) + \Der_\theta\mathcal B_{>k}(h)\,\eta \;=\; 0 \qquad\text{for all rows } h ,
 \]
-Let $\Der\mathcal B_{>k}(h)\,v$ be its derivative at $h$ along a row $v$, and $\Der_\theta\mathcal B_{>k}(h)\,\eta$ its derivative along a direction $\eta$ of the weights on which it depends, those of the blocks $k+1, \dots, L$ and of $D$. For $Z_k, \dots, Z_L \in \mathfrak g$, the changes of basis $G_\ell = \exp(\tau Z_\ell)$ of \cref{prop:cob} change the hidden state $h_k$ into $h_k\exp(\tau Z_k)$ and move the later weights along a direction $\eta$, and they do not change the output. To first order in $\tau$, with $Z = Z_k$,
-\begin{equation}\label{eq:mainD}
-\Der\mathcal B_{>k}(h)\,(hZ) + \Der_\theta\mathcal B_{>k}(h)\,\eta \;=\; 0 \qquad\text{for all rows } h .
-\end{equation}
-The claim is the converse.
+where $\Der$ is the derivative in $h$ and $\Der_\theta$ the derivative in the weights. We prove the converse, by induction from $k = L$ down to $k = 0$: every matrix $Z$ and every direction $\eta$ that satisfy this identity come from such changes of basis and, for gated blocks, from the rescalings inside the blocks. For $k = L$ this is linear algebra at the readout, and for $k = 0$ it gives the theorem.
 
-\smallskip
-\noindent\emph{Claim $(D_k)$}, for $\tanh$ and GELU blocks in the cases (n) and (+). If a $\dm\times\dm$ matrix $Z$ and a direction $\eta$ of the weights of the blocks $k+1, \dots, L$ and of $D$ satisfy \eqref{eq:mainD}, then $Z \in \mathfrak g$, and with $Z_k = Z$ there are $Z_{k+1}, \dots, Z_L \in \mathfrak g$ such that
-\[
-\eta \;=\; \Big(\big\{-Z_{\ell-1}\Wread^{\ell},\ \ \Wwrite^{\ell}Z_\ell\big\}_{\ell=k+1}^{L},\ \ -Z_LD\Big).
-\]
-\smallskip
-
-\Cref{app:claim} states the claim in all cases: for gated blocks $\eta$ also holds the directions of the rescalings, and in the case (0) only the antisymmetric part of $Z_{\ell-1}$ acts on $\Wread^{\ell}$.
-
-The claim $(D_L)$ concerns the readout alone and is linear algebra (\cref{lem:e0readout}). The claim $(D_0)$ gives the theorem. If a direction $\eta \in \R^P$ has $\Der_\theta F(\theta, x)\,\eta = 0$ at every input $x$, then its entry at $E$ is $EZ$ for a matrix $Z$, which satisfies \eqref{eq:mainD} for $k = 0$ with the rest of $\eta$ (\cref{lem:e0atwrite}). By $(D_0)$, $\eta$ is then a direction of the changes of basis of \cref{prop:cob}, and the Jacobian has the rank of the bound on some finite batch (\cref{prop:e0givesrank}). So the proof is the step from $(D_{k+1})$ to $(D_k)$.
-
-\para{The identity for one block.} Let block $k+1$ be a $\tanh$ or GELU block with $q$ hidden units, with the read $W$, whose columns are $c_1, \dots, c_q$, and the write $V$, in the case (n), and write $\mathcal B = \mathcal B_{>k+1}$ and $\eta = (\eta_W, \eta_V, \eta')$, where $\eta_W$ and $\eta_V$ are the entries of $\eta$ at $W$ and $V$. By the chain rule, \eqref{eq:mainD} at the row $n$ reads
-\begin{equation}\label{eq:mainL}
-\Der\mathcal B\big(\tilde wV\big)\,\Big(\big(\tilde w'\odot n\,(ZW + \eta_W)\big)\,V + \tilde w\,\eta_V\Big) + \Der_\theta\mathcal B\big(\tilde wV\big)\,\eta' \;=\; 0 ,
-\end{equation}
-where $\tilde w = \sigma(nW)$ is the row of the outputs of the hidden units of the block, $\tilde w' = \sigma'(nW)$ the row of their derivatives, and $\odot$ the entrywise product of two rows. In the case (+) the block reads $n = N_\varepsilon(h)$, the derivative of $N_\varepsilon$ adds one term to $n\,(ZW + \eta_W)$, and the identity holds for the rows $n$ of the open ball $\norm{n}^2 < \dm$. Its left side is real-analytic in $n$, so the identity holds at every row $n \in \R^{1\times\dm}$ (\cref{lem:sballrows}). This is what lets us follow $n$ to infinity.
-
-\subsection{\texorpdfstring{$\tanh$}{tanh} blocks on a ray}\label{sec:raystanh}
-
-Take $n = t\,\xi$ with a row $\xi$, and let $t \to \infty$. With $u_j = \xi c_j$, hidden unit $j$ outputs
-\[
-\tanh(t\,u_j) \;=\; \pm\,\frac{1 - \zeta_j(t)}{1 + \zeta_j(t)}, \qquad \zeta_j(t) = e^{-2\lvert u_j\rvert t},
-\]
-with the sign of $u_j$: it saturates at the exponential rate $2\lvert u_j\rvert$. When the numbers $u_j$ are linearly independent over $\mathbb Q$, the hidden units can be told apart.
-
-\begin{restatable}[Separation on a ray]{lemma}{lemRaySep}\label{lem:raysep}
-Let $u_1, \dots, u_q$ be real numbers that are linearly independent over $\mathbb Q$, and let $\mathcal T_0, \dots, \mathcal T_K$ be real-analytic maps from $\R^{1\times q}$ to $\R^{1\times d_{\mathrm{out}}}$. If
-\[
-\sum_{i=0}^{K} t^i\ \mathcal T_i\big(\tanh(tu_1), \dots, \tanh(tu_q)\big) \;=\; 0 \qquad\text{for all } t > 0,
-\]
-then $\mathcal T_i = 0$ on $\R^{1\times q}$ for every $i$.
-\end{restatable}
-
-In the proof, every $\mathcal T_i$ is expanded in powers of $\zeta_1, \dots, \zeta_q$. The monomials decay at pairwise different rates, because the $u_j$ are linearly independent over $\mathbb Q$, so the slowest term that is left must vanish. This is the argument by which \citet[Lemma~3.1]{sussmann1992} proves that $\tanh$ hidden units with different arguments are linearly independent, applied here to analytic maps of their outputs.
-
-For $\sigma = \tanh$ we have $\sigma' = 1 - \sigma^2$, so the left side of \eqref{eq:mainL} at $n = t\,\xi$ is $t\,\mathcal T_1(\tilde w) + \mathcal T_0(\tilde w)$ at $\tilde w = \tanh(t\,\xi W)$, with
-\[
-\mathcal T_1(\tilde w) = \Der\mathcal B(\tilde wV)\,\Big(\big((1 - \tilde w^2)\odot\xi\,(ZW + \eta_W)\big)\,V\Big), \qquad \mathcal T_0(\tilde w) = \Der\mathcal B(\tilde wV)\,(\tilde w\,\eta_V) + \Der_\theta\mathcal B(\tilde wV)\,\eta' .
-\]
-By the lemma both maps vanish at every row $\tilde w \in \R^{1\times q}$: the outputs of the hidden units have become free variables. From $\mathcal T_1 = 0$ we get $\eta_W = -ZW$, since $\Der\mathcal B$ is injective at the rows of an open dense set (\cref{lem:e0tailrank}) and no row of $V$ vanishes. From $\mathcal T_0 = 0$ we get $\eta_V = VZ'$ for a matrix $Z'$ that satisfies \eqref{eq:mainD} for $k+1$ with $\eta'$ (\cref{lem:e0atwrite}), and $(D_{k+1})$ gives the rest. In the case (+) there is one more term, $t^3\,\mathcal T_3(\tilde w)$, and $\mathcal T_3 = 0$ says that $Z$ is antisymmetric (\cref{lem:sbsteptanh}). The step needs that no row of $V$ vanishes and that the columns of $W$ are linearly independent over $\mathbb Q$, which holds for almost all weights.
-
-\subsection{GELU and gated blocks on a ray}\label{sec:raysgelu}
-
-GELU and SiLU, the gate of a SwiGLU block, do not saturate. Both satisfy $\sigma(z) - \sigma(-z) = z$, so with $\delta(y) = y - \sigma(y)$ we have, for every $y > 0$,
-\[
-\sigma(y) = y - \delta(y), \qquad \sigma(-y) = -\delta(y),
-\]
-and $\delta$ is small: for $y \ge 2$,
-\[
-\tfrac16\,e^{-y^p/p} \;\le\; \delta(y) \;\le\; y\,e^{-y^p/p}, \qquad p = 2 \text{ for GELU}, \quad p = 1 \text{ for SiLU} .
-\]
-So on a ray a GELU hidden unit, and the gate of a hidden unit of a SwiGLU or GeGLU block, differ from a linear or a vanishing one by a small term, whose rate depends on the hidden unit through $\lvert\xi c_j\rvert$. A GELU block has the form of a GeGLU block in which the value of every hidden unit is the number $1$, and we treat the three kinds of block together (\cref{lem:gtstep}).
-
-The identity for one block is expanded in the products of these small terms and of their derivatives, and the products are removed in the order of their rates. The term without a small factor is the identity for the block with its gates \emph{frozen}: every hidden unit that is active on the ray is linear in a GELU block and quadratic in a gated block, and the others vanish. A term with one small factor belongs to one hidden unit. For GELU and GeGLU its coefficient holds the Mills ratio of the normal distribution, which agrees with no function that is meromorphic at infinity (\cref{lem:e0nomero}), and for SwiGLU a parity argument takes the place of this lemma. The terms with two or more small factors follow by induction. At the end the direction does not move what the gates read, and the identity holds with free variables in the place of the outputs of the hidden units, as for $\tanh$.
-
-\para{The later blocks.} The coefficients of the expansion come from the network after the block. Under RMSNorm the later blocks read a normalized row, which stays bounded along the ray, and the coefficients are meromorphic at infinity (\cref{lem:sbcoeff}). Without normalization the inputs of the later blocks grow along the ray, and their hidden units add small terms of their own. A SwiGLU or GeGLU block is quadratic along the ray up to its small terms, so the inputs of the later blocks grow like the square of its own input. Their small terms are then of a smaller order, and the network after the block can be replaced by a polynomial map (\cref{lem:gtfar}). A GELU block is linear along the ray, the small terms of all blocks are of the same order, and the block cannot be removed on its own. This is why \cpref{thm:skiplessbound}{ii} has no case without normalization.
-
-\para{The parameters.} For $\tanh$ blocks the step holds at almost every $\theta$. For GELU and gated blocks we prove the claim at one explicit choice of parameters $\theta^\dagger$, at which every hidden state stays in the positive orthant and the frozen blocks are explicit (\cref{lem:gtstar}). At $\theta^\dagger$ the Jacobian then has the rank of the bound on some finite batch. The network is analytic in $\theta$, so the Jacobian has this rank on the same batch at generic parameters.
-
-\subsection{The case \texorpdfstring{$\varepsilon = 0$}{of no regularization}: a great circle}\label{sec:circle}
-
-For $\varepsilon = 0$ the inputs of a block lie on the sphere $\norm{n}^2 = \dm$, and the identity for one block holds only there. A ray leaves the sphere, so we follow a great circle and continue it to complex angles. For orthonormal rows $\xi, \xi'$ let $\nu = \xi + \mathrm i\xi'$ and
-\[
-n(t) \;=\; \frac{\sqrt{\dm}}{2}\,\Big(t\,\nu + \frac{1}{t}\,\bar\nu\Big), \qquad t \in \mathbb C\setminus\{0\}.
-\]
-Then $n(t)\,n(t)^\top = \dm$ for all $t$, without complex conjugation. For $\lvert t\rvert = 1$ the row $n(t)$ is real and runs through the great circle of $\xi$ and $\xi'$, and for real $t \to \infty$ it is a complex row that grows like $t$. The network after the block extends to a holomorphic map on a complex cone around the real rows, so the identity continues along the path, and there the hidden units of a $\tanh$ or GELU block separate as on a ray (\cref{app:circle}).
+In the step from $k+1$ to $k$, the identity is written in the input $n$ of block $k+1$. By analyticity it holds at every row $n$, and we take $n = t\,\xi$ with a row $\xi$ and let $t \to \infty$. As in \cref{sec:results}, on this ray the hidden units of a $\tanh$ block saturate at different exponential rates, and the hidden units of a GELU block and the gates of a SwiGLU or GeGLU block differ from linear or vanishing ones by small terms of different rates. The rates tell the hidden units apart, so the identity holds with free variables in the place of their outputs. It then splits into a statement on the weights of block $k+1$ and the identity for $k+1$. Without normalization the inputs of the later blocks grow along the ray, and their hidden units add small terms of their own. A SwiGLU or GeGLU block is quadratic along the ray up to its small terms, so the small terms of the later blocks are of a smaller order than its own. A GELU block is linear along the ray, the small terms of all blocks are of the same order, and the block cannot be removed on its own. This is why \cpref{thm:skiplessbound}{ii} has no case without normalization. For GELU and gated blocks the step is made at one explicit choice of parameters, and analyticity in $\theta$ carries the rank to generic parameters. For $\varepsilon = 0$ the inputs of a block lie on a sphere, which a ray leaves, and we follow a great circle instead, continued to complex angles. \Cref{app:outline} gives this outline in full, and the rest of \cref{app:skiplessbound} the proofs.
 
 \section{What is open, and where the count fails}\label{sec:open}\label{sec:measured}
 
@@ -814,7 +743,92 @@ We recall the theorem.
 
 \thmSkipless*
 
-\Cref{app:notation} fixes the notation of the proof. \Cref{app:claim} states Claim~$(D_k)$ and reduces the theorem to the step from $(D_{k+1})$ to $(D_k)$. \Cref{app:raystanh,app:raysgelu} make this step on rays, in the cases (n) and (+), and \cref{app:circle} on a great circle, in the case (0). \Cref{app:proofmain} puts the parts together. Gated blocks are treated in the cases (n) and (+) only.
+\Cref{app:outline} outlines the proof. \Cref{app:notation} fixes its notation. \Cref{app:claim} states Claim~$(D_k)$ and reduces the theorem to the step from $(D_{k+1})$ to $(D_k)$. \Cref{app:raystanh,app:raysgelu} make this step on rays, in the cases (n) and (+), and \cref{app:circle} on a great circle, in the case (0). \Cref{app:proofmain} puts the parts together. Gated blocks are treated in the cases (n) and (+) only.
+
+\subsection{Outline of the proof}\label{app:outline}
+
+The proof removes one block at a time. This subsection presents it in outline: the claim that is proved at every hidden state, the step for $\tanh$ blocks on a ray, the step for GELU and gated blocks, and the case $\varepsilon = 0$. The subsections after it give the proofs.
+
+\subsubsection*{One claim for every hidden state}
+
+An MLP block acts on each token separately, so in this appendix inputs have one token: a hidden state is a row $h \in \R^{1\times\dm}$, and the input of a block is a row $n = N(h)$. Let $\mathfrak g$ be the Lie algebra of $\G$, the set of the matrices $Z$ with $\exp(\tau Z) \in \G$ for all numbers $\tau$: all $\dm\times\dm$ matrices in the case (n), the antisymmetric ones in the case (+), and the matrices $Y + \beta I$ with $Y$ antisymmetric and $\beta$ a number in the case (0).
+
+For $k = 0, \dots, L$ and a row $h$, let $\mathcal B_{>k}(h)$ be the output of the network when its hidden state $h_k$ is set to $h$:
+\[
+\mathcal B_{>L}(h) = N(h)\,D, \qquad \mathcal B_{>k-1}(h) = \mathcal B_{>k}\big(g_k(N(h))\big), \qquad\text{so that}\quad F_\theta(x) = \mathcal B_{>0}(xE).
+\]
+Let $\Der\mathcal B_{>k}(h)\,v$ be its derivative at $h$ along a row $v$, and $\Der_\theta\mathcal B_{>k}(h)\,\eta$ its derivative along a direction $\eta$ of the weights on which it depends, those of the blocks $k+1, \dots, L$ and of $D$. For $Z_k, \dots, Z_L \in \mathfrak g$, the changes of basis $G_\ell = \exp(\tau Z_\ell)$ of \cref{prop:cob} change the hidden state $h_k$ into $h_k\exp(\tau Z_k)$ and move the later weights along a direction $\eta$, and they do not change the output. To first order in $\tau$, with $Z = Z_k$,
+\begin{equation}\label{eq:mainD}
+\Der\mathcal B_{>k}(h)\,(hZ) + \Der_\theta\mathcal B_{>k}(h)\,\eta \;=\; 0 \qquad\text{for all rows } h .
+\end{equation}
+The claim is the converse.
+
+\smallskip
+\noindent\emph{Claim $(D_k)$}, for $\tanh$ and GELU blocks in the cases (n) and (+). If a $\dm\times\dm$ matrix $Z$ and a direction $\eta$ of the weights of the blocks $k+1, \dots, L$ and of $D$ satisfy \eqref{eq:mainD}, then $Z \in \mathfrak g$, and with $Z_k = Z$ there are $Z_{k+1}, \dots, Z_L \in \mathfrak g$ such that
+\[
+\eta \;=\; \Big(\big\{-Z_{\ell-1}\Wread^{\ell},\ \ \Wwrite^{\ell}Z_\ell\big\}_{\ell=k+1}^{L},\ \ -Z_LD\Big).
+\]
+\smallskip
+
+\Cref{app:claim} states the claim in all cases: for gated blocks $\eta$ also holds the directions of the rescalings, and in the case (0) only the antisymmetric part of $Z_{\ell-1}$ acts on $\Wread^{\ell}$.
+
+The claim $(D_L)$ concerns the readout alone and is linear algebra (\cref{lem:e0readout}). The claim $(D_0)$ gives the theorem. If a direction $\eta \in \R^P$ has $\Der_\theta F(\theta, x)\,\eta = 0$ at every input $x$, then its entry at $E$ is $EZ$ for a matrix $Z$, which satisfies \eqref{eq:mainD} for $k = 0$ with the rest of $\eta$ (\cref{lem:e0atwrite}). By $(D_0)$, $\eta$ is then a direction of the changes of basis of \cref{prop:cob}, and the Jacobian has the rank of the bound on some finite batch (\cref{prop:e0givesrank}). So the proof is the step from $(D_{k+1})$ to $(D_k)$.
+
+\para{The identity for one block.} Let block $k+1$ be a $\tanh$ or GELU block with $q$ hidden units, with the read $W$, whose columns are $c_1, \dots, c_q$, and the write $V$, in the case (n), and write $\mathcal B = \mathcal B_{>k+1}$ and $\eta = (\eta_W, \eta_V, \eta')$, where $\eta_W$ and $\eta_V$ are the entries of $\eta$ at $W$ and $V$. By the chain rule, \eqref{eq:mainD} at the row $n$ reads
+\begin{equation}\label{eq:mainL}
+\Der\mathcal B\big(\tilde wV\big)\,\Big(\big(\tilde w'\odot n\,(ZW + \eta_W)\big)\,V + \tilde w\,\eta_V\Big) + \Der_\theta\mathcal B\big(\tilde wV\big)\,\eta' \;=\; 0 ,
+\end{equation}
+where $\tilde w = \sigma(nW)$ is the row of the outputs of the hidden units of the block, $\tilde w' = \sigma'(nW)$ the row of their derivatives, and $\odot$ the entrywise product of two rows. In the case (+) the block reads $n = N_\varepsilon(h)$, the derivative of $N_\varepsilon$ adds one term to $n\,(ZW + \eta_W)$, and the identity holds for the rows $n$ of the open ball $\norm{n}^2 < \dm$. Its left side is real-analytic in $n$, so the identity holds at every row $n \in \R^{1\times\dm}$ (\cref{lem:sballrows}). This is what lets us follow $n$ to infinity.
+
+\subsubsection*{\texorpdfstring{$\tanh$}{tanh} blocks on a ray}
+
+Take $n = t\,\xi$ with a row $\xi$, and let $t \to \infty$. With $u_j = \xi c_j$, hidden unit $j$ outputs
+\[
+\tanh(t\,u_j) \;=\; \pm\,\frac{1 - \zeta_j(t)}{1 + \zeta_j(t)}, \qquad \zeta_j(t) = e^{-2\lvert u_j\rvert t},
+\]
+with the sign of $u_j$: it saturates at the exponential rate $2\lvert u_j\rvert$. When the numbers $u_j$ are linearly independent over $\mathbb Q$, the hidden units can be told apart.
+
+\begin{restatable}[Separation on a ray]{lemma}{lemRaySep}\label{lem:raysep}
+Let $u_1, \dots, u_q$ be real numbers that are linearly independent over $\mathbb Q$, and let $\mathcal T_0, \dots, \mathcal T_K$ be real-analytic maps from $\R^{1\times q}$ to $\R^{1\times d_{\mathrm{out}}}$. If
+\[
+\sum_{i=0}^{K} t^i\ \mathcal T_i\big(\tanh(tu_1), \dots, \tanh(tu_q)\big) \;=\; 0 \qquad\text{for all } t > 0,
+\]
+then $\mathcal T_i = 0$ on $\R^{1\times q}$ for every $i$.
+\end{restatable}
+
+In the proof, every $\mathcal T_i$ is expanded in powers of $\zeta_1, \dots, \zeta_q$. The monomials decay at pairwise different rates, because the $u_j$ are linearly independent over $\mathbb Q$, so the slowest term that is left must vanish. This is the argument by which \citet[Lemma~3.1]{sussmann1992} proves that $\tanh$ hidden units with different arguments are linearly independent, applied here to analytic maps of their outputs.
+
+For $\sigma = \tanh$ we have $\sigma' = 1 - \sigma^2$, so the left side of \eqref{eq:mainL} at $n = t\,\xi$ is $t\,\mathcal T_1(\tilde w) + \mathcal T_0(\tilde w)$ at $\tilde w = \tanh(t\,\xi W)$, with
+\[
+\mathcal T_1(\tilde w) = \Der\mathcal B(\tilde wV)\,\Big(\big((1 - \tilde w^2)\odot\xi\,(ZW + \eta_W)\big)\,V\Big), \qquad \mathcal T_0(\tilde w) = \Der\mathcal B(\tilde wV)\,(\tilde w\,\eta_V) + \Der_\theta\mathcal B(\tilde wV)\,\eta' .
+\]
+By the lemma both maps vanish at every row $\tilde w \in \R^{1\times q}$: the outputs of the hidden units have become free variables. From $\mathcal T_1 = 0$ we get $\eta_W = -ZW$, since $\Der\mathcal B$ is injective at the rows of an open dense set (\cref{lem:e0tailrank}) and no row of $V$ vanishes. From $\mathcal T_0 = 0$ we get $\eta_V = VZ'$ for a matrix $Z'$ that satisfies \eqref{eq:mainD} for $k+1$ with $\eta'$ (\cref{lem:e0atwrite}), and $(D_{k+1})$ gives the rest. In the case (+) there is one more term, $t^3\,\mathcal T_3(\tilde w)$, and $\mathcal T_3 = 0$ says that $Z$ is antisymmetric (\cref{lem:sbsteptanh}). The step needs that no row of $V$ vanishes and that the columns of $W$ are linearly independent over $\mathbb Q$, which holds for almost all weights.
+
+\subsubsection*{GELU and gated blocks on a ray}
+
+GELU and SiLU, the gate of a SwiGLU block, do not saturate. Both satisfy $\sigma(z) - \sigma(-z) = z$, so with $\delta(y) = y - \sigma(y)$ we have, for every $y > 0$,
+\[
+\sigma(y) = y - \delta(y), \qquad \sigma(-y) = -\delta(y),
+\]
+and $\delta$ is small: for $y \ge 2$,
+\[
+\tfrac16\,e^{-y^p/p} \;\le\; \delta(y) \;\le\; y\,e^{-y^p/p}, \qquad p = 2 \text{ for GELU}, \quad p = 1 \text{ for SiLU} .
+\]
+So on a ray a GELU hidden unit, and the gate of a hidden unit of a SwiGLU or GeGLU block, differ from a linear or a vanishing one by a small term, whose rate depends on the hidden unit through $\lvert\xi c_j\rvert$. A GELU block has the form of a GeGLU block in which the value of every hidden unit is the number $1$, and we treat the three kinds of block together (\cref{lem:gtstep}).
+
+The identity for one block is expanded in the products of these small terms and of their derivatives, and the products are removed in the order of their rates. The term without a small factor is the identity for the block with its gates \emph{frozen}: every hidden unit that is active on the ray is linear in a GELU block and quadratic in a gated block, and the others vanish. A term with one small factor belongs to one hidden unit. For GELU and GeGLU its coefficient holds the Mills ratio of the normal distribution, which agrees with no function that is meromorphic at infinity (\cref{lem:e0nomero}), and for SwiGLU a parity argument takes the place of this lemma. The terms with two or more small factors follow by induction. At the end the direction does not move what the gates read, and the identity holds with free variables in the place of the outputs of the hidden units, as for $\tanh$.
+
+\para{The later blocks.} The coefficients of the expansion come from the network after the block. Under RMSNorm the later blocks read a normalized row, which stays bounded along the ray, and the coefficients are meromorphic at infinity (\cref{lem:sbcoeff}). Without normalization the inputs of the later blocks grow along the ray, and their hidden units add small terms of their own. A SwiGLU or GeGLU block is quadratic along the ray up to its small terms, so the inputs of the later blocks grow like the square of its own input. Their small terms are then of a smaller order, and the network after the block can be replaced by a polynomial map (\cref{lem:gtfar}). A GELU block is linear along the ray, the small terms of all blocks are of the same order, and the block cannot be removed on its own. This is why \cpref{thm:skiplessbound}{ii} has no case without normalization.
+
+\para{The parameters.} For $\tanh$ blocks the step holds at almost every $\theta$. For GELU and gated blocks we prove the claim at one explicit choice of parameters $\theta^\dagger$, at which every hidden state stays in the positive orthant and the frozen blocks are explicit (\cref{lem:gtstar}). At $\theta^\dagger$ the Jacobian then has the rank of the bound on some finite batch. The network is analytic in $\theta$, so the Jacobian has this rank on the same batch at generic parameters.
+
+\subsubsection*{The case $\varepsilon = 0$: a great circle}
+
+For $\varepsilon = 0$ the inputs of a block lie on the sphere $\norm{n}^2 = \dm$, and the identity for one block holds only there. A ray leaves the sphere, so we follow a great circle and continue it to complex angles. For orthonormal rows $\xi, \xi'$ let $\nu = \xi + \mathrm i\xi'$ and
+\[
+n(t) \;=\; \frac{\sqrt{\dm}}{2}\,\Big(t\,\nu + \frac{1}{t}\,\bar\nu\Big), \qquad t \in \mathbb C\setminus\{0\}.
+\]
+Then $n(t)\,n(t)^\top = \dm$ for all $t$, without complex conjugation. For $\lvert t\rvert = 1$ the row $n(t)$ is real and runs through the great circle of $\xi$ and $\xi'$, and for real $t \to \infty$ it is a complex row that grows like $t$. The network after the block extends to a holomorphic map on a complex cone around the real rows, so the identity continues along the path, and there the hidden units of a $\tanh$ or GELU block separate as on a ray (\cref{app:circle}).
 
 \subsection{Notation: blocks, the three cases, symmetries}\label{app:notation}
 
@@ -996,11 +1010,9 @@ In the case (0) the identity holds only on the sphere $\mathbb S$, which contain
 
 \subsection{Rays: \texorpdfstring{$\tanh$}{tanh} blocks}\label{app:raystanh}
 
-\para{Rays: no normalization, and $\varepsilon > 0$.} In the cases (n) and (+) we take $n = t\,\xi$ in \eqref{eq:sbstarall}, with a row $\xi$, and let $t \to \infty$. The next lemma separates the hidden units of a $\tanh$ block.
+\para{Rays: no normalization, and $\varepsilon > 0$.} In the cases (n) and (+) we take $n = t\,\xi$ in \eqref{eq:sbstarall}, with a row $\xi$, and let $t \to \infty$. \Cref{lem:raysep} separates the hidden units of a $\tanh$ block.
 
-\lemRaySep*
-
-\begin{proof}
+\begin{proof}[Proof of \cref{lem:raysep}]
 No $u_j$ is zero. Let $s_j$ be the sign of $u_j$ and $\zeta_j(t) = e^{-2\lvert u_j\rvert t} \in (0, 1)$, so that $\tanh(tu_j) = s_j\,(1 - \zeta_j(t))/(1 + \zeta_j(t))$. The maps $\zeta \mapsto \mathcal T_i\big(s_1\frac{1 - \zeta_1}{1 + \zeta_1}, \dots, s_q\frac{1 - \zeta_q}{1 + \zeta_q}\big)$ are real-analytic near $\zeta = 0$, so for some $\rho \in (0, 1)$ they are sums of power series $\sum_\alpha b_{i,\alpha}\,\zeta^\alpha$, over the multi-indices $\alpha = (\alpha_1, \dots, \alpha_q)$ of nonnegative integers, that converge absolutely for $\lvert\zeta_j\rvert \le \rho$. Choose $t_0 \ge 1$ with $\zeta_j(t_0) \le \rho$ for all $j$. For $t \ge t_0$ the hypothesis reads
 \[
 \sum_\alpha p_\alpha(t)\,e^{-\mu_\alpha t} = 0, \qquad p_\alpha(t) = \sum_{i=0}^{K} t^i\,b_{i,\alpha}, \qquad \mu_\alpha = 2\sum_{j=1}^{q}\alpha_j\,\lvert u_j\rvert .
