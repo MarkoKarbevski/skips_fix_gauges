@@ -154,27 +154,40 @@ where $s$ is the dimension of the symmetries that the blocks have of their own, 
 
 \begin{table}[t]
 \centering\small
-\renewcommand{\arraystretch}{1.1}\setlength{\tabcolsep}{3.4pt}
+\renewcommand{\arraystretch}{1.1}\setlength{\tabcolsep}{4pt}
 \newcommand{\rtag}[3]{\if\relax\detokenize{#3}\relax\hyperref[#2]{#1~\ref*{#2}}\else\hyperref[#2:#3]{#1~\ref*{#2}(#3)}\fi}
-\begin{tabular}{@{}lllll@{}}
+\begin{tabular}{@{}llll@{}}
 \toprule
-\textbf{Proven} & \textbf{No normalization} & \textbf{Pre-RMSNorm} & \textbf{Blocks} & \textbf{Result} \\
+\textbf{Proven} & \textbf{Value} & \textbf{Blocks} & \textbf{Result} \\
 \midrule
-\multicolumn{5}{@{}l}{\emph{Parameters explicitly removed without changing the function of the network, post-training}} \\
-\quad without skips & $(L+1)\dm^2$ & $(L+1)\dm(\dm-1)/2$ & any & \rtag{Prop.}{prop:skipless}{} \\
-\quad learned skips & $(L+1)\dm^2$ & $(L+1)\dm(\dm-1)/2$ & any & \rtag{Rem.}{rem:locallearned}{}, \hyperref[rem:rmsstart]{\ref*{rem:rmsstart}} \\
-\quad identity skips & $\dm^2$ & $\dm(\dm-1)/2$ & any & \rtag{Thm.}{thm:tie}{iii} \\
+\multicolumn{4}{@{}l}{\emph{Parameters explicitly removed without changing the function of the network, post-training}} \\
+\quad without skips & $(L+1)\dm^2$ & any & \rtag{Prop.}{prop:skipless}{i} \\
+\quad\quad with pre-RMSNorm & $(L+1)\dm(\dm-1)/2$ & any & \rtag{Prop.}{prop:skipless}{ii} \\
+\quad learned skips & $(L+1)\dm^2$ & any & \rtag{Rem.}{rem:locallearned}{} \\
+\quad\quad with pre-RMSNorm & $(L+1)\dm(\dm-1)/2$ & any & \rtag{Rem.}{rem:rmsstart}{} \\
+\quad identity skips & $\dm^2$ & any & \rtag{Thm.}{thm:tie}{iii} \\
+\quad\quad with pre-RMSNorm & $\dm(\dm-1)/2$ & any & \rtag{Thm.}{thm:tie}{iii} \\
 \midrule
-\multicolumn{5}{@{}l}{\emph{Dimensions of symmetry removed by the skips}} \\
-\quad any $L$ & $L\dm^2$ & $L\dm(\dm-1)/2$ & any & \rtag{Thm.}{thm:tie}{ii} \\
+\multicolumn{4}{@{}l}{\emph{Dimensions of symmetry removed by the skips}} \\
+\quad any $L$ & $L\dm^2$ & any & \rtag{Thm.}{thm:tie}{ii} \\
+\quad\quad with pre-RMSNorm & $L\dm(\dm-1)/2$ & any & \rtag{Thm.}{thm:tie}{ii} \\
 \midrule
-\multicolumn{5}{@{}l}{\emph{Functional dimension added by the skips}} \\
-\quad $L = 1$ & exactly $\dm^2$ & at least $\dm(\dm-1)/2$ & any & \rtag{Thm.}{thm:oneblock}{} \\
-\quad $L \ge 2$ & at least $L\dm^2$ & at least $L\dm(\dm-1)/2$ & analytic & \rtag{Thm.}{thm:resdepth}{} \\
+\multicolumn{4}{@{}l}{\emph{Functional dimension, for $P$ parameters and symmetries of dimension $s$ inside the blocks}} \\
+\quad identity skips & exactly $P - \dm^2 - s$ & analytic & \rtag{Thm.}{thm:resdepth}{} \\
+\quad\quad with pre-RMSNorm & exactly $P - \dm(\dm-1)/2 - s$ & analytic & \rtag{Thm.}{thm:resdepth}{} \\
+\quad without skips & at most $P - (L+1)\dm^2 - s$ & any & \rtag{Thm.}{thm:unlock}{} \\
+\quad\quad with pre-RMSNorm & at most $P - (L+1)\dm(\dm-1)/2 - s$ & any & \rtag{Thm.}{thm:unlock}{} \\
 \midrule
-\multicolumn{5}{@{}l}{\emph{Residual networks that equal, or are limits of, skipless networks}} \\
-\quad same widths, any $L$ & measure zero & measure zero & analytic & \rtag{Thm.}{thm:classes}{i} \\
-\quad wider by $< L\dm/2$ & measure zero & & GELU & \rtag{Thm.}{thm:classes}{ii} \\
+\multicolumn{4}{@{}l}{\emph{Functional dimension added by the skips}} \\
+\quad $L = 1$ & exactly $\dm^2$ & any & \rtag{Thm.}{thm:oneblock}{i} \\
+\quad\quad with pre-RMSNorm & at least $\dm(\dm-1)/2$ & any & \rtag{Thm.}{thm:oneblock}{ii} \\
+\quad $L \ge 2$ & at least $L\dm^2$ & analytic & \rtag{Thm.}{thm:resdepth}{} \\
+\quad\quad with pre-RMSNorm & at least $L\dm(\dm-1)/2$ & analytic & \rtag{Thm.}{thm:resdepth}{} \\
+\midrule
+\multicolumn{4}{@{}l}{\emph{Residual networks that equal, or are limits of, skipless networks}} \\
+\quad same widths, any $L$ & measure zero & analytic & \rtag{Thm.}{thm:classes}{i} \\
+\quad\quad with pre-RMSNorm & measure zero & analytic & \rtag{Thm.}{thm:classes}{i} \\
+\quad wider by $< L\dm/2$ & measure zero & GELU & \rtag{Thm.}{thm:classes}{ii} \\
 \bottomrule
 \end{tabular}
 \caption{Summary of the results, for networks of $L$ blocks at generic parameters (scope in \cref{sec:setup}). ``Analytic'' blocks are attention, $\tanh$, GELU, SwiGLU and GeGLU blocks. ``Any'' block is an analytic block or a ReLU, ReGLU or ReLU$^2$ (the square of ReLU) block.}
