@@ -1,0 +1,15 @@
+# Terms accepted without a definition before first use, case by case (paper F).
+residual # well known: residual networks
+change of basis # well known from linear algebra; Section 3.1 defines the map on the weights
+redundancy # plain English in the abstract; Section 4.1 defines it precisely
+generic # standard mathematical term in Table 1's caption; the Setup defines it
+per block # plain in the abstract; the Setup says what a block is in a transformer
+RMSNorm # well known to ML theory researchers; the abstract and the introduction name it, and the Setup defines it
+pre-RMSNorm # well known: RMSNorm before each block and the readout (pre-norm); the Setup defines it
+readout / unembedding # well known: the last linear layer of a network; the Setup defines D
+formula in the opening # the authors asked for d_model^2 in the first paragraph (10 November 2026); d_model is defined in the same sentence
+d_model, the width # standard symbol for the model dimension; the authors: "already well defined" (10 November 2026); the abstract uses it, the introduction says it in words
+functional dimension # the abstract only names it, as the authors asked (10 November 2026); the introduction defines it at its first use in the body
+limit # plain mathematical word in the introduction (a limit of networks, there uniformly on bounded sets of inputs); Section 4.4 fixes the sense used in Theorem 4.9
+epsilon of RMSNorm # well known: the constant in the denominator of RMSNorm, written eps or epsilon everywhere; one row of Table 1 names it (epsilon = 0) before the Setup defines it
+gated block # Table 1 uses the word in one row and its caption defines it; the Setup defines it in full
