@@ -110,7 +110,7 @@ The functional dimension of a neural network is the number of independent direct
 
 \section{Introduction}\label{sec:intro}
 
-Which parameters of a neural network does the function that it computes determine? For $\tanh$ networks the answer is classical: under conditions on the weights, the function determines all of them, up to permutations and sign flips of the hidden units \citep{sussmann1992,fefferman1994}. The layers of current networks have continuous symmetries as well, and every continuous symmetry lowers the \emph{functional dimension} of the network, the number of independent directions in which its parameters change its function \citep{grigsby2022functional}. So a count of symmetries bounds the functional dimension from above. It does not always give its value: ReLU networks lose more dimensions than their symmetries account for, on sets of parameters of positive measure \citep{grigsby2023hidden}.
+Which parameters of a neural network does the function that it computes determine? For $\tanh$ networks the answer is classical: the function determines the weights up to permutations and sign flips of the hidden units, for irreducible networks with one hidden layer \citep{sussmann1992} and, under conditions that almost all weights satisfy, at any depth \citep{fefferman1994}. The layers of current networks have continuous symmetries as well, and every continuous symmetry lowers the \emph{functional dimension} of the network, the number of independent directions in which its parameters change its function \citep{grigsby2022functional}. So a count of symmetries bounds the functional dimension from above. It does not always give its value: ReLU networks lose more dimensions than their symmetries account for, on sets of parameters of positive measure \citep{grigsby2023hidden}.
 
 We study the networks whose layers have the form of the layers of a transformer: input weights, a fixed nonlinear map, and output weights. We call such a layer a \emph{block}. In a network that composes blocks, two weight matrices meet between two blocks, with a hidden state of dimension $\dm$ between them. The output weights of one block can then be multiplied by an invertible matrix and the input weights of the next block by its inverse \citep{godfrey2022symmetries,zhao2023symmetries}, which makes $\dm^2$ parameters redundant at every hidden state.
 
@@ -124,13 +124,13 @@ This symmetry is known, and its use to remove parameters has barely been explore
 \[
 P - (L+1)\dim\G - s
 \]
-for $\tanh$, GELU, SwiGLU and GeGLU blocks, with one case left open, GELU blocks without normalization (\cref{thm:skiplessbound}, \cref{tab:cases}). These four kinds of block are real-analytic, and they are the family of the title. So after the reduction no redundancy is left in a network of $\tanh$ or GELU blocks, and in a SwiGLU or GeGLU network only the rescalings. Equivalently, the networks are \emph{locally identifiable} up to their symmetries: nearby parameters with the same function differ only by changes of basis at the hidden states and by rescalings inside the blocks (\cref{cor:skiplesslocalid}).
+for $\tanh$, GELU, SwiGLU and GeGLU blocks, with one case left open, GELU blocks without normalization (\cref{thm:skiplessbound}, \cref{tab:cases}). For $\tanh$ blocks without normalization, the count also follows from the theorem of \citet{fefferman1994} (\cref{rem:fefferman}). These four kinds of block are real-analytic, and they are the family of the title. So after the reduction no redundancy is left in a network of $\tanh$ or GELU blocks, and in a SwiGLU or GeGLU network only the rescalings. Equivalently, the networks are \emph{locally identifiable} up to their symmetries: nearby parameters with the same function differ only by changes of basis at the hidden states and by rescalings inside the blocks (\cref{cor:skiplesslocalid}).
 
-\para{One block.} For a network of one block without normalization, we prove the same count, $P - 2\dm^2 - s$, for every kind of block that we consider: the four above, attention, and ReLU, ReLU$^2$ and ReGLU blocks (\cref{thm:oneblock}).
+\para{One block.} For a network of one block without normalization, we prove the same count, $P - 2\dm^2 - s$, for every kind of block that we consider: the four above, attention, and ReLU, ReLU$^2$ and ReGLU blocks (\cref{thm:oneblock}). For a $\tanh$ block and for an attention block, the count also follows from earlier theorems (\cref{sec:oneblock}).
 
 \para{What is open, and where the count fails.} At depth, the count is open for GELU blocks without normalization, which we state as a conjecture, and for attention blocks (\cref{sec:open}). For ReLU, ReLU$^2$ and ReGLU blocks at depth, the count fails on an open set of weights.
 
-\para{Idea of the proof.} A direction of the parameters along which the function does not change gives an identity in the input of the first block. By analyticity the identity holds at every input, and we follow the input to infinity along a ray. There the hidden units of a $\tanh$ block saturate at different exponential rates, and the hidden units of a GELU block and the gates of a SwiGLU or GeGLU block differ from linear or vanishing ones by small terms of different rates. A sum of terms with different rates vanishes only if every term does. Term by term, the direction then acts on the weights of the block as a symmetry does, and what is left is the same statement for the network after this block.
+\para{Idea of the proof.} A direction of the parameters along which the function does not change gives an identity in the input of the first block. By analyticity the identity holds at every input, and we follow the input to infinity along a ray, as \citet{sussmann1992} does for $\tanh$ networks with one hidden layer. There the hidden units of a $\tanh$ block saturate at different exponential rates, and the hidden units of a GELU block and the gates of a SwiGLU or GeGLU block differ from linear or vanishing ones by small terms of different rates. A sum of terms with different rates vanishes only if every term does. Term by term, the direction then acts on the weights of the block as a symmetry does, and what is left is the same statement for the network after this block.
 
 \begin{table}[t]
 \centering\small
@@ -160,7 +160,7 @@ for $\tanh$, GELU, SwiGLU and GeGLU blocks, with one case left open, GELU blocks
 
 \Cref{sec:reduce} states what is known on the change of basis as a symmetry and on its use to remove parameters. Here we name the works on the two questions to which the functional dimension belongs.
 
-\para{Identifiability.} For $\tanh$ networks the function determines the weights up to permutations and sign flips \citep{sussmann1992,fefferman1994}, and \citet{vlacic2019identifiability} prove the same up to permutations, at any depth and connectivity, for a family of sigmoidal nonlinearities that they construct. For ReLU networks, \citet{stock2021embedding} and \citet{bonapellissier2022local} study identifiability up to permutations and rescalings of the hidden units, also locally. In these networks one weight matrix stands between two nonlinearities, and no continuous symmetry acts between two layers. In ours two matrices meet in a hidden state of dimension $\dm$, with or without a normalization between them. For attention, \citet{henry2025lightning} treat networks of this kind without softmax at any depth, and \citet{henry2026generic} one block with softmax. Our statements are local, and they hold for the four kinds of MLP block at any depth.
+\para{Identifiability.} The theorems of \citet{sussmann1992} and \citet{fefferman1994} for $\tanh$ networks are global: the function determines the weights up to a finite group of symmetries. \citet{vlacic2019identifiability} prove the same up to permutations, at any depth and connectivity, for a family of sigmoidal nonlinearities that they construct. For ReLU networks, \citet{stock2021embedding} and \citet{bonapellissier2022local} study identifiability up to permutations and rescalings of the hidden units, also locally. In these networks one weight matrix stands between two nonlinearities, and no continuous symmetry acts between two layers. In ours two matrices meet in a hidden state of dimension $\dm$, with or without a normalization between them. Without normalization, a network of $\tanh$ blocks is a $\tanh$ network of the first kind, whose weight matrices are products of two factors, and for it our counts follow from the two theorems (\cref{rem:sussmann,rem:fefferman}). For attention, \citet{henry2025lightning} treat networks of this kind without softmax at any depth, and \citet{henry2026generic} one block with softmax. Our statements are local. They hold for the four kinds of MLP block at any depth, also with a normalization between the two matrices.
 
 \para{Dimension counts.} \citet{grigsby2022functional} bound the functional dimension of ReLU networks by their rescaling symmetries, and \citet{grigsby2023hidden} show that it falls below this bound on sets of positive measure. For polynomial networks it is the dimension of the functional variety \citep{kileel2019expressive}, and \citet[Theorem~4.1]{shahverdi2026razor} prove that an MLP whose activation is a generic polynomial of large enough degree has as many dimensions of functions as weights. Such an MLP is a network of our kind in which the two matrices between two layers are one, so this is the analogue of \cref{thm:skiplessbound} for polynomial activations.
 
@@ -310,14 +310,14 @@ x \mapsto f(xC)\,A .
 \[
 \sum_i \Big[\sigma(xc_i)\,\psi_{a_i} + \sigma'(xc_i)\,(x\psi_{c_i})\,a_i\Big] \;=\; 0 \qquad\text{for all } x .
 \]
-For $\tanh$ and GELU this forces $\psi_{c_i} = 0$ and $\psi_{a_i} = 0$ for every $i$. For the other kinds of MLP block the corresponding identity forces a rescaling of each hidden unit, such as $\psi_{c_i} = \lambda_ic_i$ and $\psi_{a_i} = -\lambda_ia_i$ for ReLU (\cref{lem:unitid}). The proof isolates one hidden unit at a time: by its kink for ReLU, ReLU$^2$ and ReGLU, and for the other activations by the rate at which it approaches its limit along a ray $x = t\,n$, $t \to \infty$. For an attention block, inputs with two different tokens turn every head into a $\tanh$ hidden unit, and the same lemma applies.
+For $\tanh$ and GELU this forces $\psi_{c_i} = 0$ and $\psi_{a_i} = 0$ for every $i$. For the other kinds of MLP block the corresponding identity forces a rescaling of each hidden unit, such as $\psi_{c_i} = \lambda_ic_i$ and $\psi_{a_i} = -\lambda_ia_i$ for ReLU (\cref{lem:unitid}). The proof isolates one hidden unit at a time: by its kink for ReLU, ReLU$^2$ and ReGLU, and for the other activations by the rate at which it approaches its limit along a ray $x = t\,n$, $t \to \infty$. For $\tanh$ this is the argument of \citet{sussmann1992}. For an attention block, inputs with two different tokens turn every head into a $\tanh$ hidden unit, and the same lemma applies.
 
 \begin{restatable}[One block]{theorem}{thmOneBlock}\label{thm:oneblock}
 Let $L = 1$, without normalization, with a $\tanh$, GELU, ReLU, ReLU$^2$, ReGLU, SwiGLU, GeGLU or attention block. At generic parameters the functional dimension is $P - 2\dm^2 - s$, so the network satisfies the equality condition.
 \end{restatable}
 \specialof{thm:onelayer}{app:onelayer}
 
-For an attention block, the theorem also follows from Theorem~3.9 of \citet{henry2025lightning}, for one head, and from Theorem~2.1 of \citet{henry2026generic}, for several heads and sequences of at least three tokens (\cref{rem:oneattn}). The proof of \cref{thm:oneblock} does not use these theorems.
+Two cases of the theorem also follow from earlier work. For a $\tanh$ block, it follows from the theorem of \citet{sussmann1992} on networks with one hidden layer (\cref{rem:sussmann}). For an attention block, it follows from Theorem~3.9 of \citet{henry2025lightning}, for one head, and from Theorem~2.1 of \citet{henry2026generic}, for several heads and sequences of at least three tokens (\cref{rem:oneattn}). The proof of \cref{thm:oneblock} does not use these theorems.
 
 \section{Any depth}\label{sec:depth}\label{sec:proof}
 
@@ -335,7 +335,7 @@ so the network satisfies the equality condition.\\
 \end{restatable}
 \proofin{app:skiplessbound}
 
-Here $s = 0$ for $\tanh$ and GELU blocks, and $s$ is the number of hidden units of the network for SwiGLU and GeGLU blocks. With \cref{prop:localid}, the theorem gives local identifiability.
+Here $s = 0$ for $\tanh$ and GELU blocks, and $s$ is the number of hidden units of the network for SwiGLU and GeGLU blocks. For $\tanh$ blocks without normalization, this also follows from the theorem of \citet{fefferman1994} on $\tanh$ networks of any depth, together with the uniqueness of a factorization (\cref{rem:fefferman}). That theorem does not apply when a normalization stands between the two matrices. With \cref{prop:localid}, \cref{thm:skiplessbound} gives local identifiability.
 
 \begin{corollary}[Local identifiability]\label{cor:skiplesslocalid}
 Without normalization or under pre-RMSNorm with $\varepsilon > 0$, in the cases of \cref{thm:skiplessbound}, let $\theta$ be generic parameters. Every $\theta'$ near $\theta$ with the same function is obtained from $\theta$ by matrices $G_0, \dots, G_L \in \G$ close to the identity, one per hidden state, as in \cref{prop:cob}, and for SwiGLU and GeGLU blocks by a rescaling of the value of each hidden unit, close to $1$.
@@ -390,7 +390,7 @@ Let $u_1, \dots, u_q$ be real numbers that are linearly independent over $\mathb
 then $\mathcal T_i = 0$ on $\R^{1\times q}$ for every $i$.
 \end{restatable}
 
-In the proof, every $\mathcal T_i$ is expanded in powers of $\zeta_1, \dots, \zeta_q$. The monomials decay at pairwise different rates, because the $u_j$ are linearly independent over $\mathbb Q$, so the slowest term that is left must vanish.
+In the proof, every $\mathcal T_i$ is expanded in powers of $\zeta_1, \dots, \zeta_q$. The monomials decay at pairwise different rates, because the $u_j$ are linearly independent over $\mathbb Q$, so the slowest term that is left must vanish. This is the argument by which \citet[Lemma~3.1]{sussmann1992} proves that $\tanh$ hidden units with different arguments are linearly independent, applied here to analytic maps of their outputs.
 
 For $\sigma = \tanh$ we have $\sigma' = 1 - \sigma^2$, so the left side of \eqref{eq:mainL} at $n = t\,\xi$ is $t\,\mathcal T_1(\tilde w) + \mathcal T_0(\tilde w)$ at $\tilde w = \tanh(t\,\xi W)$, with
 \[
@@ -704,7 +704,7 @@ with $s$ the sign of $u_j$ and $\lvert z_j\rvert = \lvert u_j\rvert t + s\beta_j
 \end{proof}
 \end{nested}
 
-The lemma is stated with a linear term $xM$, a constant $\gamma$ and biases $\beta_i$ and $\beta'_i$, which cost nothing in its proof. For the MLP blocks of this paper they all vanish, and the attention blocks below use them. The directions left by the lemma are those of the rescalings of the hidden units (\cref{app:prf-count}).
+The lemma is stated with a linear term $xM$, a constant $\gamma$ and biases $\beta_i$ and $\beta'_i$, which cost nothing in its proof. For the MLP blocks of this paper they all vanish, and the attention blocks below use them. For $\tanh$, the proof on rays follows that of Lemma~3.1 of \citet{sussmann1992}. The directions left by the lemma are those of the rescalings of the hidden units (\cref{app:prf-count}).
 
 \para{Step 3: counting.} Let $\eta$ be flat. The network depends on $\theta$ only through the columns and rows $c_i$, $e_i$ and $a_i$ of $C$ and $A$, and $F(\theta, x)$ is the function $G(\phi, x)$ of \cref{lem:unitid} with $M = 0$, $\gamma = 0$ and all biases zero. By the chain rule, the direction $\psi$ that holds the derivatives of the $c_i$, $e_i$ and $a_i$ along $\eta$, and zeros at $M$, $\gamma$ and the biases, satisfies $\Der_\phi G(\phi, x)\,\psi = \Der_\theta F(\theta, x)\,\eta = 0$ for all $x$. By \cref{lem:unitid} there are numbers $\lambda_i$ and $\alpha_i$ such that
 \[
@@ -752,6 +752,22 @@ These are the directions of the changes of basis $I + \tau X$ at $h_0$ and $I + 
 \begin{proof}[Proof of \cref{thm:oneblock}]
 Within the scope of \cref{sec:setup}, it is \cref{thm:onelayer}: the functional dimension is the bound of \cref{thm:unlock} for $L = 1$ without normalization.
 \end{proof}
+
+\begin{remark}[One $\tanh$ block, from the theorem of Sussmann]\label{rem:sussmann}
+For a $\tanh$ block, \cref{thm:oneblock} also follows from Theorem~2.1 of \citet{sussmann1992}. That theorem concerns networks with one hidden layer of $\tanh$ hidden units and one output,
+\[
+x \;\mapsto\; \tanh\Big(\gamma + \sum_{j}\alpha_j\,\tanh(xc_j + \beta_j)\Big),
+\]
+with numbers $\alpha_j$, $\beta_j$ and $\gamma$. It calls such a network irreducible if no $\alpha_j$ and no $c_j$ vanishes and $(c_i, \beta_i) \neq \pm(c_j, \beta_j)$ for $i \neq j$. It says that two irreducible networks with the same function have the same number of hidden units, and differ by a permutation of the hidden units and by sign flips $(c_j, \beta_j, \alpha_j) \mapsto (-c_j, -\beta_j, -\alpha_j)$.
+
+The outer $\tanh$ is injective. So each of the $d_{\mathrm{out}}$ outputs of the network $x \mapsto \sum_i \tanh(xc_i)\,a_i$ of this appendix is the function of such a network, with $\beta_i = 0$, $\gamma = 0$ and with $\alpha_i$ an entry of $a_i$. At generic parameters these networks are irreducible, and so are those of all nearby parameters. So nearby parameters with the same function have the same columns $c_i$ and rows $a_i$, up to a permutation and sign flips of the hidden units, which are the identity for parameters that are close enough. They then have the same $C = E\Wread$ and $A = \Wwrite D$. A matrix of rank $\dm$ has only one factorization into two factors of rank $\dm$, up to an invertible matrix between them, so the parameters with the same $C$ and $A$ are
+\[
+EG_0, \qquad G_0^{-1}\Wread, \qquad \Wwrite G_1, \qquad G_1^{-1}D,
+\]
+with invertible $\dm\times\dm$ matrices $G_0$ and $G_1$. So the network is locally identifiable up to its symmetries at generic parameters, which is the equality condition (\cref{prop:localid}).
+
+The proof of that theorem restricts the hidden units to a ray $t \mapsto t\,x$ and separates them by the exponential rates at which they approach their limits. The proof of \cref{lem:unitid} for $\tanh$ and \cref{lem:raysep} use this argument. \Cref{lem:unitid} is the statement for the derivative of the network, with a linear term, which the attention blocks need, and for the other activations.
+\end{remark}
 
 \begin{remark}[One attention block, from earlier work]\label{rem:oneattn}
 For an attention block, \cref{thm:oneblock} also follows from earlier work: from Theorem~3.9 of \citet{henry2025lightning} for one head, and from Theorem~2.1 of \citet{henry2026generic} for several heads and sequences of at least three tokens. With $B_i$ and $C_i$ as above, the network gives token $t$ the output $y_t = \sum_{i=1}^{H}\sum_{s=1}^{T} a^{(i)}_{ts}\,x_sC_i$, where $(a^{(i)}_{t1}, \dots, a^{(i)}_{tT})$ is the softmax of the scores $(x_tB_ix_1^\top, \dots, x_tB_ix_T^\top)$. The two theorems say that the map $x \mapsto y$ determines the pairs $(B_i, C_i)$, up to the order of the heads: the first for one head and all matrices $B_1$ and $C_1 \neq 0$ of these sizes, the second at generic parameters. The second is stated for $d_{\mathrm{in}} = d_{\mathrm{out}}$, and padding $B_i$ and $C_i$ with zeros reduces the other cases to it.
@@ -1525,6 +1541,18 @@ Let $\mathcal O^0$ be the set of parameters with $xE \neq 0$ for all $x \in X$, 
 
 \emph{The case (0).} By \cref{lem:e0readout} and \cref{lem:e0steptanh} or \cref{lem:e0stepgelu}, Claim $(D_k)$ holds at $\theta^*$ for $k = L$, then for $k = L-1$, and so on down to $k = 0$. By \cref{prop:e0givesrank} there is a finite batch $X^*$, with $xE \neq 0$ for all its inputs, on which the Jacobian at $\theta^*$ has the rank \eqref{eq:e0upper}. By (R2), $\theta^* \in \mathcal O_{X^*}$. The sum of the squares of the minors of this size of the Jacobian of $F_{X^*}$ is real-analytic on the connected open set $\mathcal O_{X^*}$ and does not vanish at $\theta^*$, so its zero set has measure zero, and so has the complement of $\mathcal O_{X^*}$ (\cref{lem:e0domain}). Hence the rank on $X^*$ is at least \eqref{eq:e0upper} at almost every parameter. Where $E$ and every $\Wwrite^{\ell}$ have rank $\dm$, it is at most \eqref{eq:e0upper} on every batch. So at generic parameters the functional dimension is \eqref{eq:e0upper}.
 \end{proof}
+
+\begin{remark}[$\tanh$ blocks without normalization, from the theorem of Fefferman]\label{rem:fefferman}
+In the case (n), \cpref{thm:skiplessbound}{i} also follows from Theorem~I.B.9 of \citet{fefferman1994}. Without normalization, a network of $\tanh$ blocks computes
+\[
+x^0 = x,\qquad x^\ell = \tanh\big(x^{\ell-1}A_\ell\big)\ \ (1 \le \ell \le L),\qquad y = x^LA_{L+1},
+\]
+with $A_1 = E\Wread^{1}$, $A_\ell = \Wwrite^{\ell-1}\Wread^{\ell}$ for $2 \le \ell \le L$, and $A_{L+1} = \Wwrite^{L}D$. This is a $\tanh$ network of the kind of that paper, with one weight matrix between two layers and with all thresholds equal to zero. That paper takes $\sigma(z) = \tanh(z/2)$ and applies $\sigma$ to the output as well. As $\sigma$ is injective, two of our networks have the same output exactly when the nets of that paper with the hidden layers $x^\ell = \sigma(2x^{\ell-1}A_\ell)$ and the output layer $\sigma(x^LA_{L+1})$ do, and then so do, for every input coordinate and every output, the nets with one input and one output that keep only these.
+
+Theorem~I.B.9 (pages 517 and 518 there) is stated for nets with one input and one output. Its hypotheses are that every weight is nonzero, and that the ratio of the weights that one node sends to two nodes of the next layer, which has $q$ nodes, is never, in absolute value, a fraction $p/r$ with integers $p$ and $1 \le r \le 100\,q^2$. It puts no condition on the thresholds: the condition on the thresholds in the introduction of that paper serves to select one net among isomorphic ones (Lemma~I.A.18 there). Its conclusion is that two such nets with the same output agree up to permutations and sign flips of the nodes of each hidden layer.
+
+At generic parameters of our network, the entries of the matrices $A_\ell$ satisfy these hypotheses, and so do those of all nearby parameters. So nearby parameters with the same function have matrices $A_\ell$ that agree up to permutations and sign flips of the hidden units, which are the identity for parameters that are close enough. A matrix of rank $\dm$ has only one factorization into two factors of rank $\dm$, up to an invertible matrix between them. So the parameters with the same matrices $A_1, \dots, A_{L+1}$ are those of \cref{prop:cob}, with invertible matrices $G_0, \dots, G_L$. Hence the network is locally identifiable up to its symmetries at generic parameters, which is the equality condition (\cref{prop:localid}). The proof of \cref{thm:skiplessbound} does not use this theorem. Under normalization, $\Wwrite^{\ell-1}$ and $\Wread^{\ell}$ no longer enter through their product, and that theorem does not apply.
+\end{remark}
 
 \section{Inactive hidden units: where the count fails}\label{app:dead}
 
