@@ -176,7 +176,7 @@ SwiGLU, GeGLU & \tref{Thm.}{thm:skiplessbound}{iii} & \tref{Thm.}{thm:skiplessbo
 \para{Three steps.} We remove the blocks one at a time, from the first to the last.
 \begin{enumerate}[leftmargin=1.8em]
 \item A direction of the parameters along which the function does not change gives an identity in the input of a block. Without normalization, and under pre-RMSNorm with $\varepsilon > 0$, these inputs fill an open set, so by analyticity the identity holds at every row.
-\item We follow this input to infinity along a ray. The hidden units of a $\tanh$ block saturate at different exponential rates. The hidden units of a GELU block and the gates of a SwiGLU or GeGLU block differ from linear or vanishing ones by small terms of different rates. A sum of terms with different rates vanishes only if every term does.
+\item We follow this input to infinity along a ray, as \citet{sussmann1992} does for $\tanh$ networks with one hidden layer. The hidden units of a $\tanh$ block saturate at different exponential rates. The hidden units of a GELU block and the gates of a SwiGLU or GeGLU block differ from linear or vanishing ones by small terms of different rates. A sum of terms with different rates vanishes only if every term does.
 \item Term by term, the direction acts on the weights of the block as a symmetry does. What is left is the same statement for the network after this block.
 \end{enumerate}
 A GELU block is linear along the ray, up to its small terms. Without normalization the small terms of all blocks are then of the same order, and the block cannot be removed on its own, which is why \cref{thm:skiplessbound} leaves this case out (\cref{sec:raysgelu}). The wide blocks of \cref{prop:widegelu} come from the construction of \citet{mijoski2026worth}, which absorbs a skip into $\dm$ more hidden units. For $\varepsilon = 0$ the inputs of a block lie on a sphere, and the ray becomes a great circle at complex angles (\cref{sec:circle}).
@@ -359,7 +359,7 @@ Let $u_1, \dots, u_q$ be real numbers that are linearly independent over $\mathb
 then $\mathcal T_i = 0$ on $\R^{1\times q}$ for every $i$.
 \end{restatable}
 
-In the proof, every $\mathcal T_i$ is expanded in powers of $\zeta_1, \dots, \zeta_q$. The monomials decay at pairwise different rates, because the $u_j$ are linearly independent over $\mathbb Q$, so the slowest term that is left must vanish.
+In the proof, every $\mathcal T_i$ is expanded in powers of $\zeta_1, \dots, \zeta_q$. The monomials decay at pairwise different rates, because the $u_j$ are linearly independent over $\mathbb Q$, so the slowest term that is left must vanish. This is the argument by which \citet[Lemma~3.1]{sussmann1992} proves that $\tanh$ hidden units with different arguments are linearly independent, applied here to analytic maps of their outputs.
 
 For $\sigma = \tanh$ we have $\sigma' = 1 - \sigma^2$, so the left side of \eqref{eq:mainL} at $n = t\,\xi$ is $t\,\mathcal T_1(\tilde w) + \mathcal T_0(\tilde w)$ at $\tilde w = \tanh(t\,\xi W)$, with
 \[
