@@ -1,0 +1,11 @@
+# Terms accepted without a definition before first use, case by case (paper D).
+residual # well known: residual networks
+change of basis # well known from linear algebra; the Setup writes the map on the weights
+RMSNorm # well known to ML theory researchers; the abstract and the introduction name it, and the Setup defines it
+pre-RMSNorm # well known: RMSNorm before each block and the readout (pre-norm); the Setup defines the three cases
+formula in the opening # d_model^2 in the first paragraph, as in the first paper; d_model is defined in the same sentence
+d_model, the width # standard symbol for the model dimension; the abstract uses it, the introduction says it in words
+functional dimension # the abstract only names it, as in the first paper; the introduction defines it at its first use in the body
+locally identifiable # the abstract only names it; the introduction defines it at its first use in the body
+epsilon of RMSNorm # well known: the constant in the denominator of RMSNorm; the introduction and Table 1 name the case epsilon = 0 before the Setup defines it
+script G # the abstract writes the groups GL and O by their usual names; the introduction defines the group of one hidden state

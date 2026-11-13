@@ -1,0 +1,32 @@
+# Terms and symbols of paper D, the "exactly" paper: (name, pattern of a use, pattern of the defining sentence).
+TERMS = [
+    ('d_model, the width', r'\\dm', r'\$\\dm\$ is the model dimension'),
+    ('read / write (nouns)', r'(?i)\b(the|a|each|its|every) (read|write)s?\b', r'the \\emph\{read\}'),
+    ('functional dimension', r'(?i)functional dimension', r'(?i)functional dimension\}?, the number of'),
+    ('equality condition', r'(?i)equality condition', r'\\emph\{equality condition\}'),
+    ('locally identifiable', r'(?i)locally identifiable|local identifiability', r'\\emph\{locally identifiable\}'),
+    ('change of basis', r'(?i)changes? of basis', r'(?i)\\emph\{change of basis\}'),
+    ('pre-RMSNorm', r'(?i)pre-RMSNorm', r'\\emph\{pre-RMSNorm\}'),
+    ('RMSNorm', r'RMSNorm', r'RMSNorm is the map'),
+    ('epsilon of RMSNorm', r'\\varepsilon', r'with a constant \$\\varepsilon \\ge 0\$'),
+    ('generic', r'(?i)\bgeneric', r'(?i)\\emph\{generic\}|generic parameters, that is, for almost all weights'),
+    ('symmetries inside blocks', r'(?i)symmetries inside', r'\\emph\{symmetries inside'),
+    ('gated block', r'(?i)\bgated\b', r'(?i)a \\emph\{gated\} block'),
+    ('skipless / residual network', r'(?i)\bskipless\b', r'(?i)network without skips|\\emph\{skipless\}'),
+]
+SYMBOLS = [
+    ('L, the number of blocks', r'\$L\b|\(L\+1\)|L\\dm|L\\dim', r'(?i)\$L\$ (MLP )?blocks'),
+    ('P, the number of parameters', r'\$P\b|P - ', r'(?i)with \$P\$ parameters'),
+    ('E and D', r'xE\b|\$E\$|\$D\$|h_LD', r'embedding \$E'),
+    ('h, a hidden state', r'h_\\ell|\$h\b', r'A hidden state is a row \$h'),
+    ('Wread, Wwrite', r'\\Wread|\\Wwrite', r'the \\emph\{read\} \$\\Wread|output weights \$\\Wwrite'),
+    ('N(h)', r'N\(h', r'applies a map \$N\$'),
+    ('script G', r'\\G\b', r'Let \$\\G\$ be the group'),
+    ('s, symmetries inside', r'- s\$|\$s = 0|- s\b', r'let \$s\$ be the number of'),
+    ('F_theta', r'F_\\theta', r'to \$F_\\theta\(x\)\$ through'),
+    ('d_hidden, the number of hidden units', r'\\dhid', r'with \$\\dhid \\ge \\dm\$ hidden units|where \[KM\] write \$\\dhid\$'),
+    ('q, the number of hidden units of a block', r'q_\\ell', r'is \$q_\\ell\$, where'),
+    ('g, the map of a block', r'g_\\ell', r'the map of block \$\\ell\$ is \$g_\\ell\$'),
+    ('Lie algebra g', r'\\mathfrak g', r'its Lie algebra \$\\mathfrak g\$'),
+    ('B_{>k}', r'\\mathcal B_\{>', r'let \$\\mathcal B_\{>k\}\(h\)\$ be the output'),
+]
