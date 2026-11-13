@@ -81,33 +81,34 @@
 | 76 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for one block]{theorem}{thmOneBlock}\label |
 | 77 | When the bounds are attained | statement |  |  | \begin{remark*}[One attention block without a skip] For an attention b |
 | 78 | When the bounds are attained | para |  |  | At generic parameters, $\Xi_i$ and $\Psi_i$ are products of two factor |
-| 79 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for residual networks at any depth]{theore |
-| 80 | When the bounds are attained | para |  |  | \begin{corollary}[Residual networks are locally identifiable]\label{co |
-| 81 | When the bounds are attained | para |  |  | This is \cref{thm:resdepth} together with \cref{prop:localid}. Whether |
-| 82 | When the bounds are attained | para |  |  | \begin{corollary}[Attention-only transformers: Conjecture~2.4 of \cite |
-| 83 | When the bounds are attained | para |  |  | \citet{henry2026generic} proves that one attention block without a ski |
-| 84 | When the bounds are attained | statement |  |  | \needspace{6\baselineskip} \begin{restatable}[Exact gain for $\tanh$,  |
-| 85 | When the bounds are attained | para |  |  | By \cref{prop:localid}, the skipless networks of \cref{thm:exactgain}  |
-| 86 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
-| 87 | When the bounds are attained | para |  |  | \para{RMSNorm with $\varepsilon = 0$.} The networks of \cref{sec:setup |
-| 88 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
-| 89 | Residual and skipless networks compute different functions | para |  |  | The gain in functional dimension says something about the functions th |
-| 90 | Residual and skipless networks compute different functions | statement | pointwise limit | pointwise limit | \begin{definition*}[Pointwise limit] Let $\mathcal X = \R^{T\times d_{ |
-| 91 | Residual and skipless networks compute different functions | para |  |  | If a sequence of networks of $\mathcal F$ converges to $F$ at every in |
-| 92 | Residual and skipless networks compute different functions | para | definable in an o-minimal structure | definable in an o-minimal structure | By \cref{def:fd,thm:resdepth}, the Jacobian of the residual network ha |
-| 93 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
-| 94 | Residual and skipless networks compute different functions | para |  |  | For GELU blocks without normalization, \citet{mijoski2026worth} show t |
-| 95 | Numerical ranks at depth, and a conjecture | para |  |  | \subsection{Numerical ranks at depth, and a conjecture}\label{sec:meas |
-| 96 | Numerical ranks at depth, and a conjecture | para |  |  | For skipless networks at depth, \cref{thm:exactgain} gives the equalit |
-| 97 | Numerical ranks at depth, and a conjecture | para |  |  | At depth we compute the rank of the Jacobian on a large batch of input |
-| 98 | Numerical ranks at depth, and a conjecture | float |  |  | \begin{table}[b] \centering\small \renewcommand{\arraystretch}{1.1} \b |
-| 99 | Numerical ranks at depth, and a conjecture | para |  |  | In two cases the measured rank stays below the upper bound. In skiples |
-| 100 | Numerical ranks at depth, and a conjecture | statement |  |  | \begin{conjecture}[Equality without skips]\label{conj:equality} Withou |
-| 101 | Numerical ranks at depth, and a conjecture | para |  |  | The analogue of the conjecture is known for polynomial activations. \c |
-| 102 | Numerical ranks at depth, and a conjecture | para |  |  | \para{One-hot tokens.} With one-hot tokens under RMSNorm, the rows of  |
-| 103 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
-| 104 | Conclusion | para |  |  | Skip connections change how a network uses its parameters. Without ski |
-| 105 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth is open for the |
-| 106 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
-| 107 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
-| 108 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 79 | When the bounds are attained | para |  |  | For a $\tanh$ block and for a ReLU block without a skip, the equality  |
+| 80 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for residual networks at any depth]{theore |
+| 81 | When the bounds are attained | para |  |  | \begin{corollary}[Residual networks are locally identifiable]\label{co |
+| 82 | When the bounds are attained | para |  |  | This is \cref{thm:resdepth} together with \cref{prop:localid}. Whether |
+| 83 | When the bounds are attained | para |  |  | \begin{corollary}[Attention-only transformers: Conjecture~2.4 of \cite |
+| 84 | When the bounds are attained | para |  |  | \citet{henry2026generic} proves that one attention block without a ski |
+| 85 | When the bounds are attained | statement |  |  | \needspace{6\baselineskip} \begin{restatable}[Exact gain for $\tanh$,  |
+| 86 | When the bounds are attained | para |  |  | By \cref{prop:localid}, the skipless networks of \cref{thm:exactgain}  |
+| 87 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
+| 88 | When the bounds are attained | para |  |  | \para{RMSNorm with $\varepsilon = 0$.} The networks of \cref{sec:setup |
+| 89 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
+| 90 | Residual and skipless networks compute different functions | para |  |  | The gain in functional dimension says something about the functions th |
+| 91 | Residual and skipless networks compute different functions | statement | pointwise limit | pointwise limit | \begin{definition*}[Pointwise limit] Let $\mathcal X = \R^{T\times d_{ |
+| 92 | Residual and skipless networks compute different functions | para |  |  | If a sequence of networks of $\mathcal F$ converges to $F$ at every in |
+| 93 | Residual and skipless networks compute different functions | para | definable in an o-minimal structure | definable in an o-minimal structure | By \cref{def:fd,thm:resdepth}, the Jacobian of the residual network ha |
+| 94 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
+| 95 | Residual and skipless networks compute different functions | para |  |  | For GELU blocks without normalization, \citet{mijoski2026worth} show t |
+| 96 | Numerical ranks at depth, and a conjecture | para |  |  | \subsection{Numerical ranks at depth, and a conjecture}\label{sec:meas |
+| 97 | Numerical ranks at depth, and a conjecture | para |  |  | For skipless networks at depth, \cref{thm:exactgain} gives the equalit |
+| 98 | Numerical ranks at depth, and a conjecture | para |  |  | At depth we compute the rank of the Jacobian on a large batch of input |
+| 99 | Numerical ranks at depth, and a conjecture | float |  |  | \begin{table}[b] \centering\small \renewcommand{\arraystretch}{1.1} \b |
+| 100 | Numerical ranks at depth, and a conjecture | para |  |  | In two cases the measured rank stays below the upper bound. In skiples |
+| 101 | Numerical ranks at depth, and a conjecture | statement |  |  | \begin{conjecture}[Equality without skips]\label{conj:equality} Withou |
+| 102 | Numerical ranks at depth, and a conjecture | para |  |  | The analogue of the conjecture is known for polynomial activations. \c |
+| 103 | Numerical ranks at depth, and a conjecture | para |  |  | \para{One-hot tokens.} With one-hot tokens under RMSNorm, the rows of  |
+| 104 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
+| 105 | Conclusion | para |  |  | Skip connections change how a network uses its parameters. Without ski |
+| 106 | Conclusion | para |  |  | \para{Open questions.} The equality condition at depth is open for the |
+| 107 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
+| 108 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
+| 109 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
