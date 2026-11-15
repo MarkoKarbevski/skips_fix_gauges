@@ -13,7 +13,7 @@
 | 8 | Results | para | L, the number of blocks | L, the number of blocks, change of basis | \para{An exact reduction.} At each of the $L+1$ hidden states of a net |
 | 9 | Results | para | P, the number of parameters, generic, locally identifiable, s, symmetries inside, script G, symmetries inside the blocks | P, the number of parameters, generic, s, symmetries inside, script G, symmetries inside the blocks | \para{Main result.} Whether more can be removed is a question on the f |
 | 10 | Results | para |  |  | \para{One block.} For a network of one block without normalization, we |
-| 11 | Results | para |  |  | \para{What is open, and where the count fails.} At depth, the count is |
+| 11 | Results | para |  |  | \para{What is open, and where the count fails.} At depth, we do not pr |
 | 12 | Results | float | gated block | epsilon of RMSNorm, gated block | \begin{table}[t] \centering\small \renewcommand{\arraystretch}{1.1}\se |
 | 13 | Related work | para |  |  | \subsection{Related work}\label{sec:related} |
 | 14 | Related work | para |  |  | The works on the change of basis are named above. Here we name those o |
@@ -70,7 +70,7 @@
 | 65 | Discussion | para |  |  | A change of basis at every hidden state removes $\dm^2$ parameters fro |
 | 66 | Discussion | para |  |  | \para{What is open.} For the four kinds of block of \cref{thm:skipless |
 | 67 | Discussion | statement |  |  | \begin{conjecture}[GELU blocks without normalization]\label{conj:equal |
-| 68 | Discussion | para |  |  | For attention blocks the count is proved for one block (\cref{thm:oneb |
+| 68 | Discussion | para |  |  | For attention blocks we prove the count for one block (\cref{thm:onebl |
 | 69 | Discussion | para |  |  | \para{Where the count fails.} For ReLU, ReLU$^2$ and ReGLU blocks, the |
 | 70 | Discussion | para |  |  | \para{Skip connections.} Most networks in use add the input of a block |
 | 71 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
