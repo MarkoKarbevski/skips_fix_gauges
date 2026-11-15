@@ -27,6 +27,7 @@ SYMBOLS = [
     ('H and d_h', r'Hd_h|d_h|\$H\$', r'(?i)\$H\$ heads'),
     ('T, number of tokens', r'T\\times|T \\ge', r'the \$T\$ tokens'),
     ('N(h)', r'N\(h|N\(xE', r'normalized state \$N\(h\)\$'),
+    ('chi, the map before the read', r'\\chi', r'a fixed map \$\\chi\$ before the read'),
     ('t and u, a ray', r'tu\b|t\\,uM|\$t\$', r'\$x = tu\$ with'),
     ('w_i and hat w_i, read and write of a unit', r'w_i\b|\\hat w_i', r'Let unit \$i\$ have read \$w_i\$'),
     ('S, a set of units', r'\[\{:\},S\]|set \$S\$', r'For a set \$S\$ of units'),
