@@ -18,7 +18,7 @@
 | 13 | Related work | para |  |  | \subsection{Related work}\label{sec:related} |
 | 14 | Related work | para |  |  | We name the works closest to ours, and \cref{app:related} discusses th |
 | 15 | Setup | para |  |  | \section{Setup}\label{sec:setup} This section fixes the networks that  |
-| 16 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, T, number of tokens, gated block, h, a hidden state, read / write (nouns) | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, T, number of tokens, h, a hidden state, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
+| 16 | Setup | para | B, the map of a block, B_theta, Wread, Wwrite, theta, H and d_h, T, number of tokens, chi, the map before the read, gated block, h, a hidden state, read / write (nouns) | B_theta, Wread, Wwrite, theta, H and d_h, T, number of tokens, chi, the map before the read, h, a hidden state, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
 | 17 | Setup | para | A_l, a learned skip, E and D, F_theta, generic, per block, readout / unembedding, residual | A_l, a learned skip, E and D, F_theta | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
 | 18 | Setup | para | epsilon of RMSNorm, pre-RMSNorm, under rmsnorm | epsilon of RMSNorm, under rmsnorm | \para{Normalization.} RMSNorm with the constant $\varepsilon > 0$ is t |
 | 19 | Setup | para |  |  | \para{Scope.} Networks have no biases, and their inputs range over all |
@@ -30,7 +30,7 @@
 | 25 | Motivation: the skipless reduction, applied to learned skips | para |  |  | For one hidden layer without activation, \citet{albertini1993uniquenes |
 | 26 | Motivation: the skipless reduction, applied to learned skips | para | W_1, the chosen block | W_1, the chosen block | Without normalization, let $\dm$ columns $W_1$ of the read of $h_\ell$ |
 | 27 | Motivation: the skipless reduction, applied to learned skips | para | script G | script G | Under pre-RMSNorm the reads see $N_\varepsilon(h_\ell)$, and they can  |
-| 28 | Motivation: the skipless reduction, applied to learned skips | para |  |  | We set out to do the same with learned skips, $h_\ell = h_{\ell-1}A_\e |
+| 28 | Motivation: the skipless reduction, applied to learned skips | para |  | B, the map of a block | We set out to do the same with learned skips, $h_\ell = h_{\ell-1}A_\e |
 | 29 | Motivation: the skipless reduction, applied to learned skips | para | Lambda | Lambda | Let every $A_\ell$ be invertible, as it is at generic parameters, and  |
 | 30 | Telescoping (generic) learned skips to identity skips | para |  |  | \subsection{Telescoping (generic) learned skips to identity skips}\lab |
 | 31 | Telescoping (generic) learned skips to identity skips | para |  |  | The sweep of \cref{sec:motivation} gives part (i) of the following the |
