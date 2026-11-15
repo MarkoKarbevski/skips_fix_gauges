@@ -172,23 +172,23 @@ The works on the change of basis are named above. Here we name those on the two 
 
 This section fixes the networks. We write every block, MLP or attention, in one form, compose blocks into networks, add normalization, and state the scope of the results.
 
-\para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whose rows are the $T$ tokens of a sequence. A block reads it with a trainable matrix $\Wread$, the \emph{read}, applies a fixed map $f$, and writes the result with a trainable matrix $\Wwrite$, the \emph{write}:
+\para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whose rows are the $T$ tokens of a sequence. A block first applies a fixed map $\chi$ to it, the identity or a normalization (below). It reads the result with a trainable matrix $\Wread$, the \emph{read}, applies a fixed map $f$, and writes with a trainable matrix $\Wwrite$, the \emph{write}, so that it maps $h$ to $g(\chi(h))$, where
 \begin{equation}\label{eq:block}
-g(h) = f(h\Wread)\,\Wwrite.
+g(n) = f(n\Wread)\,\Wwrite.
 \end{equation}
 In an MLP block with $\dhid$ hidden units, its width, the read is a $\dm\times\dhid$ matrix, the write is a $\dhid\times\dm$ matrix, and $f$ applies an activation to every hidden unit of every token: $\tanh$, GELU, ReLU, or its square, ReLU$^2$. Gated blocks are MLP blocks as well. In a gated block the read is $\Wread = [\,W_g \mid W_v\,]$, two $\dm\times\dhid$ matrices that give each token a gate $z_i$ and a value $w_i$ for each hidden unit, and $f$ maps them to $\sigma(z_i)\,w_i$, with $\sigma$ the ReLU in ReGLU, SiLU in SwiGLU and GELU in GeGLU \citep{shazeer2020glu}. In an attention block with $H$ heads of width $d_h$, the read is $\Wread = [\,W_Q \mid W_K \mid W_V\,]$, the query, key and value matrices of all heads, $f$ is the attention map, and the write is the output projection $\Wwrite = W_O$.
 
-\para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathrm{in}}\times\dm}$, then $L$ blocks $g_1, \dots, g_L$, then a linear readout $D \in \R^{\dm\times d_{\mathrm{out}}}$. Block $\ell$ has the read $\Wread^{\ell}$, the fixed map $f_\ell$ and the write $\Wwrite^{\ell}$. Before a block or the readout reads a hidden state, it applies a map $N$ to it: the identity, or a normalization. The network maps an input $x \in \R^{T\times d_{\mathrm{in}}}$ to an output $y$ through the hidden states $h_0, \dots, h_L$:
+\para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathrm{in}}\times\dm}$, then $L$ blocks $g_1, \dots, g_L$, then a linear readout $D \in \R^{\dm\times d_{\mathrm{out}}}$. Block $\ell$ has the read $\Wread^{\ell}$, the fixed map $f_\ell$ and the write $\Wwrite^{\ell}$, and the readout applies the same map $\chi$ as the blocks. The network maps an input $x \in \R^{T\times d_{\mathrm{in}}}$ to an output $y$ through the hidden states $h_0, \dots, h_L$:
 \begin{equation}\label{eq:nets}
-h_0 = xE, \qquad h_\ell = g_\ell\big(N(h_{\ell-1})\big) \quad (1 \le \ell \le L), \qquad y = N(h_L)\,D .
+h_0 = xE, \qquad h_\ell = g_\ell\big(\chi(h_{\ell-1})\big) \quad (1 \le \ell \le L), \qquad y = \chi(h_L)\,D .
 \end{equation}
-We write $F_\theta$ for the function $x \mapsto y$, where $\theta = (E, \Wread^{1}, \Wwrite^{1}, \dots, \Wread^{L}, \Wwrite^{L}, D) \in \R^P$ holds the parameters. A statement holds at \emph{generic} parameters if it holds outside a set of Lebesgue measure zero, so with probability one for weights drawn from a density. A transformer layer has two blocks, its attention and MLP sub-layers, so a transformer of $12$ layers has $L = 24$.
+We write $F_\theta$ for the function $x \mapsto y$, where $\theta = (E, \Wread^{1}, \Wwrite^{1}, \dots, \Wread^{L}, \Wwrite^{L}, D) \in \R^P$ holds the parameters, so that $F_\theta = D \circ \chi \circ g_L \circ \chi \circ \dots \circ g_1 \circ \chi \circ E$, where $E$ and $D$ stand for the maps $x \mapsto xE$ and $h \mapsto hD$. A statement holds at \emph{generic} parameters if it holds outside a set of Lebesgue measure zero, so with probability one for weights drawn from a density. A transformer layer has two blocks, its attention and MLP sub-layers, so a transformer of $12$ layers has $L = 24$.
 
 \para{Normalization.} RMSNorm with the constant $\varepsilon \ge 0$ is the map $N_\varepsilon$ that acts on every row $v \in \R^{\dm}$ of a hidden state $h$ as
 \[
 N_\varepsilon(v) \;=\; \frac{v}{\sqrt{\dfrac{\norm{v}^2}{\dm} + \varepsilon}} ,
 \]
-so that $N_\varepsilon(h)$ is the matrix of the normalized rows. The constant $\varepsilon$ is fixed and is not a parameter. We treat three cases, and name them for later use. In the case (n) there is no normalization, and $N$ is the identity. In the case (+), \emph{pre-RMSNorm} with $\varepsilon > 0$, $N = N_\varepsilon$. In the case (0), pre-RMSNorm with $\varepsilon = 0$, RMSNorm keeps only the direction of a row, $N_\varepsilon(v) = \sqrt{\dm}\,v/\norm{v}$ for $v \neq 0$, and a network is defined at the inputs for which no row of a hidden state vanishes. Below, ``under pre-RMSNorm'' means in the case (+), and the case (0) is named where it is meant. A learned gain $\operatorname{diag}(\gamma)$ after $N_\varepsilon$ is absorbed in the read that follows it, $\Wread \mapsto \operatorname{diag}(\gamma)\,\Wread$.
+so that $N_\varepsilon(h)$ is the matrix of the normalized rows. The constant $\varepsilon$ is fixed and is not a parameter. We treat three cases, and name them for later use. In the case (n) there is no normalization, and $\chi$ is the identity. In the case (+), \emph{pre-RMSNorm} with $\varepsilon > 0$, $\chi = N_\varepsilon$. In the case (0), pre-RMSNorm with $\varepsilon = 0$, $\chi = N_\varepsilon$ keeps only the direction of a row, $N_\varepsilon(v) = \sqrt{\dm}\,v/\norm{v}$ for $v \neq 0$, and a network is defined at the inputs for which no row of a hidden state vanishes. Below, ``under pre-RMSNorm'' means in the case (+), and the case (0) is named where it is meant. A learned gain $\operatorname{diag}(\gamma)$ after $N_\varepsilon$ is absorbed in the read that follows it, $\Wread \mapsto \operatorname{diag}(\gamma)\,\Wread$.
 
 \para{Scope.} Networks have no biases, and their inputs range over all of $\R^{T\times d_{\mathrm{in}}}$. Every MLP block has $\dhid \ge \dm$, and all blocks of a network are of one kind. The heads of an attention block have total width $Hd_h = \dm$, and attention blocks act on sequences of at least two tokens. The input and the output satisfy $d_{\mathrm{in}}, d_{\mathrm{out}} \ge \dm \ge 2$. The reduction of \cref{sec:reduce} needs none of this: it holds for any inputs, one-hot tokens included, for blocks of different kinds, and with biases.
 
@@ -409,7 +409,7 @@ Let $h_\ell$ be the hidden states at $\theta$, and $h'_\ell$ those at the new pa
 \[
 h'_{\ell-1}\,G_{\ell-1}^{-1}\Wread^{\ell} \;=\; h_{\ell-1}\Wread^{\ell} ,
 \]
-as at $\theta$, and it writes $h'_\ell = f_\ell(h_{\ell-1}\Wread^{\ell})\,\Wwrite^{\ell}G_\ell = h_\ell G_\ell$. Under pre-RMSNorm, $G_{\ell-1} = Q$ is orthogonal and the block reads $N_\varepsilon(h_{\ell-1}Q)\,Q^\top\Wread^{\ell} = N_\varepsilon(h_{\ell-1})\,\Wread^{\ell}$, by \cref{lem:rms}. For $\varepsilon = 0$ and $G_{\ell-1} = cQ$, it reads $N_\varepsilon(h_{\ell-1}\,cQ)\,Q^\top\Wread^{\ell} = N_\varepsilon(h_{\ell-1})\,\Wread^{\ell}$, by the same lemma. So $h'_\ell = h_\ell G_\ell$ for every $\ell$, and the readout computes $N(h_LG_L)\,G_L^{-1}D = N(h_L)\,D$, with $Q_L^\top$ in the place of $G_L^{-1}$ for $\varepsilon = 0$.
+as at $\theta$, and it writes $h'_\ell = f_\ell(h_{\ell-1}\Wread^{\ell})\,\Wwrite^{\ell}G_\ell = h_\ell G_\ell$. Under pre-RMSNorm, $G_{\ell-1} = Q$ is orthogonal and the block reads $N_\varepsilon(h_{\ell-1}Q)\,Q^\top\Wread^{\ell} = N_\varepsilon(h_{\ell-1})\,\Wread^{\ell}$, by \cref{lem:rms}. For $\varepsilon = 0$ and $G_{\ell-1} = cQ$, it reads $N_\varepsilon(h_{\ell-1}\,cQ)\,Q^\top\Wread^{\ell} = N_\varepsilon(h_{\ell-1})\,\Wread^{\ell}$, by the same lemma. So $h'_\ell = h_\ell G_\ell$ for every $\ell$, and the readout computes $\chi(h_LG_L)\,G_L^{-1}D = \chi(h_L)\,D$, with $Q_L^\top$ in the place of $G_L^{-1}$ for $\varepsilon = 0$.
 \end{proof}
 
 The change of basis at $h_\ell$ changes only the writes into $h_\ell$ and the reads of $h_\ell$. So the changes of basis at different hidden states commute, and each weight matrix of the network is multiplied on each side by the change of basis at one hidden state only.
@@ -747,11 +747,11 @@ The proof removes one block at a time. This subsection presents it in outline: t
 
 \subsubsection*{One claim for every hidden state}
 
-An MLP block acts on each token separately, so in this appendix inputs have one token: a hidden state is a row $h \in \R^{1\times\dm}$, and the input of a block is a row $n = N(h)$. Let $\mathfrak g$ be the Lie algebra of $\G$, the set of the matrices $Z$ with $\exp(\tau Z) \in \G$ for all numbers $\tau$: all $\dm\times\dm$ matrices in the case (n), the antisymmetric ones in the case (+), and the matrices $Y + \beta I$ with $Y$ antisymmetric and $\beta$ a number in the case (0).
+An MLP block acts on each token separately, so in this appendix inputs have one token: a hidden state is a row $h \in \R^{1\times\dm}$, and the input of a block is a row $n = \chi(h)$. Let $\mathfrak g$ be the Lie algebra of $\G$, the set of the matrices $Z$ with $\exp(\tau Z) \in \G$ for all numbers $\tau$: all $\dm\times\dm$ matrices in the case (n), the antisymmetric ones in the case (+), and the matrices $Y + \beta I$ with $Y$ antisymmetric and $\beta$ a number in the case (0).
 
 For $k = 0, \dots, L$ and a row $h$, let $\mathcal B_{>k}(h)$ be the output of the network when its hidden state $h_k$ is set to $h$:
 \[
-\mathcal B_{>L}(h) = N(h)\,D, \qquad \mathcal B_{>k-1}(h) = \mathcal B_{>k}\big(g_k(N(h))\big), \qquad\text{so that}\quad F_\theta(x) = \mathcal B_{>0}(xE).
+\mathcal B_{>L}(h) = \chi(h)\,D, \qquad \mathcal B_{>k-1}(h) = \mathcal B_{>k}\big(g_k(\chi(h))\big), \qquad\text{so that}\quad F_\theta(x) = \mathcal B_{>0}(xE).
 \]
 Let $\Der\mathcal B_{>k}(h)\,v$ be its derivative at $h$ along a row $v$, and $\Der_\theta\mathcal B_{>k}(h)\,\eta$ its derivative along a direction $\eta$ of the weights on which it depends, those of the blocks $k+1, \dots, L$ and of $D$. For $Z_k, \dots, Z_L \in \mathfrak g$, the changes of basis $G_\ell = \exp(\tau Z_\ell)$ of \cref{prop:cob} change the hidden state $h_k$ into $h_k\exp(\tau Z_k)$ and move the later weights along a direction $\eta$, and they do not change the output. To first order in $\tau$, with $Z = Z_k$,
 \begin{equation}\label{eq:mainD}
@@ -834,11 +834,11 @@ g_\ell(n) \;&=\; \sigma(n\,\Wread^{\ell})\,\Wwrite^{\ell} \;=\; \sum_{j=1}^{q_\e
 g_\ell(n) \;&=\; \big(\sigma(n\,W_g^{\ell})\odot n\,W_v^{\ell}\big)\,\Wwrite^{\ell} \;=\; \sum_{j=1}^{q_\ell}\sigma(nc_j)\,(ne_j)\,a_j && \text{for a gated block.}
 \end{align*}
 
-\para{The three cases.} The three cases (n), (+) and (0) are those of \cref{sec:setup}. For a row $h$, the table gives $N$, the set of its values, which are the inputs of the blocks, the group $\G$ of the changes of basis, and its Lie algebra $\mathfrak g$: the set of the matrices $Z$ with $\exp(\tau Z) \in \G$ for all numbers $\tau$.
+\para{The three cases.} The three cases (n), (+) and (0) are those of \cref{sec:setup}. For a row $h$, the table gives $\chi$, the set of its values, which are the inputs of the blocks, the group $\G$ of the changes of basis, and its Lie algebra $\mathfrak g$: the set of the matrices $Z$ with $\exp(\tau Z) \in \G$ for all numbers $\tau$.
 \begin{center}\small
 \begin{tabular}{@{}lllll@{}}
 \toprule
-Case & $N(h)$ & Values of $N$ & $\G$ & $\mathfrak g$ \\
+Case & $\chi(h)$ & Values of $\chi$ & $\G$ & $\mathfrak g$ \\
 \midrule
 (n) & $h$ & all rows $n \in \R^{1\times\dm}$ & $\GL(\dm)$ & all matrices $Z$ \\[2pt]
 (+) & $h\,\big(\norm{h}^2/\dm + \varepsilon\big)^{-1/2}$ & the ball $\norm{n}^2 < \dm$ & $\Ort(\dm)$ & antisymmetric $Z$ \\[2pt]
@@ -848,7 +848,7 @@ Case & $N(h)$ & Values of $N$ & $\G$ & $\mathfrak g$ \\
 \end{center}
 In the last row $Y$ is antisymmetric and $\beta$ is a number, and $\mathbb S$ is the set of the rows $n \in \R^{1\times\dm}$ with $\norm{n}^2 = \dm$. In the case (0) a network is defined at the inputs $x$ for which no hidden state vanishes.
 
-\para{Symmetries.} We write $F_\theta(x)$ for the output of the network at the input $x \in \R^{1\times d_{\mathrm{in}}}$, and $\Der_\theta F(\theta, x)\,\eta$ for its derivative along a direction $\eta \in \R^P$ of the parameters. The changes of basis of \cref{prop:cob} take the following form. For $G \in \G$ let $\widehat G = G$ in the cases (n) and (+), and $\widehat G = Q$ for $G = \lambda Q$ in the case (0), with a number $\lambda > 0$ and an orthogonal $Q$. Then $N(hG) = N(h)\,\widehat G$ in all three cases. So for $G_0, \dots, G_L \in \G$ the parameters
+\para{Symmetries.} We write $F_\theta(x)$ for the output of the network at the input $x \in \R^{1\times d_{\mathrm{in}}}$, and $\Der_\theta F(\theta, x)\,\eta$ for its derivative along a direction $\eta \in \R^P$ of the parameters. The changes of basis of \cref{prop:cob} take the following form. For $G \in \G$ let $\widehat G = G$ in the cases (n) and (+), and $\widehat G = Q$ for $G = \lambda Q$ in the case (0), with a number $\lambda > 0$ and an orthogonal $Q$. Then $\chi(hG) = \chi(h)\,\widehat G$ in all three cases. So for $G_0, \dots, G_L \in \G$ the parameters
 \[
 \Big(EG_0,\ \ \big\{\widehat G_{\ell-1}^{-1}\Wread^{\ell},\ \ \Wwrite^{\ell}G_\ell\big\}_{\ell=1}^{L},\ \ \widehat G_L^{-1}D\Big)
 \]
@@ -878,11 +878,11 @@ In the cases (n) and (+) this is the bound of \cref{thm:unlock}, and in the case
 
 \para{Notation.} For rows $u, v$, real or complex, $\langle u, v\rangle = uv^\top$, without complex conjugation. For $k = 0, \dots, L$ and a row $h$, with $h \neq 0$ in the case (0), let $\mathcal B_{>k}(h)$ be the output of the network when its hidden state $h_k$ is set to $h$:
 \[
-\mathcal B_{>L}(h) = N(h)\,D, \qquad \mathcal B_{>k-1}(h) = \mathcal B_{>k}\big(g_k(N(h))\big), \qquad\text{so that}\quad F_\theta(x) = \mathcal B_{>0}(xE).
+\mathcal B_{>L}(h) = \chi(h)\,D, \qquad \mathcal B_{>k-1}(h) = \mathcal B_{>k}\big(g_k(\chi(h))\big), \qquad\text{so that}\quad F_\theta(x) = \mathcal B_{>0}(xE).
 \]
-$\mathcal B_{>k}$ depends on the weights of the blocks $k+1, \dots, L$ and on $D$. We write $\Der\mathcal B_{>k}(h)\,v$ for its derivative at $h$ along a row $v$, and $\Der_\theta\mathcal B_{>k}(h)\,\eta$ for its derivative at fixed $h$ along a direction $\eta$ of these weights. In the cases (+) and (0), for a $\dm\times\dm$ matrix $Z$ and $n = N(h)$,
+$\mathcal B_{>k}$ depends on the weights of the blocks $k+1, \dots, L$ and on $D$. We write $\Der\mathcal B_{>k}(h)\,v$ for its derivative at $h$ along a row $v$, and $\Der_\theta\mathcal B_{>k}(h)\,\eta$ for its derivative at fixed $h$ along a direction $\eta$ of these weights. In the cases (+) and (0), for a $\dm\times\dm$ matrix $Z$ and $n = \chi(h)$,
 \begin{equation}\label{eq:sbDN}
-\Der N(h)\,(hZ) \;=\; nZ - \frac{\langle nZ, n\rangle}{\dm}\,n .
+\Der\chi(h)\,(hZ) \;=\; nZ - \frac{\langle nZ, n\rangle}{\dm}\,n .
 \end{equation}
 In the case (0), $\mathcal B_{>k}(\lambda h) = \mathcal B_{>k}(h)$ for $\lambda > 0$, so
 \begin{equation}\label{eq:e0radial}
@@ -901,9 +901,9 @@ Let $\theta$ be regular. For every $k$ there is an open dense set $\mathcal U_k$
 \end{lemma}
 
 \begin{proof}
-\emph{The cases (n) and (+).} $N$ is the identity, or a diffeomorphism of $\R^{1\times\dm}$ onto the ball of the rows $n$ with $\norm{n}^2 < \dm$, with the inverse $n \mapsto \sqrt{\varepsilon}\;n\,\big(1 - \norm{n}^2/\dm\big)^{-1/2}$. So $\Der N(h)$ is invertible at every $h$. As $D$ is injective on rows, $\Der\mathcal B_{>L}(h)\,v = \big(\Der N(h)\,v\big)D$ vanishes only for $v = 0$: $\mathcal U_L$ is the set of all rows. Let $k < L$. The determinant of $\Der g_{k+1}(n)$ is real-analytic in $n$ and does not vanish identically, by (R3). So $g_{k+1}$ is a local diffeomorphism on an open dense set of rows $n$, and $g_{k+1}\circ N$ on an open dense set of rows $h$. Let $\mathcal U_k$ be the set of the $h$ of this set with $g_{k+1}(N(h)) \in \mathcal U_{k+1}$. It is open and dense, and for $h \in \mathcal U_k$,
+\emph{The cases (n) and (+).} $\chi$ is the identity, or a diffeomorphism of $\R^{1\times\dm}$ onto the ball of the rows $n$ with $\norm{n}^2 < \dm$, with the inverse $n \mapsto \sqrt{\varepsilon}\;n\,\big(1 - \norm{n}^2/\dm\big)^{-1/2}$. So $\Der\chi(h)$ is invertible at every $h$. As $D$ is injective on rows, $\Der\mathcal B_{>L}(h)\,v = \big(\Der\chi(h)\,v\big)D$ vanishes only for $v = 0$: $\mathcal U_L$ is the set of all rows. Let $k < L$. The determinant of $\Der g_{k+1}(n)$ is real-analytic in $n$ and does not vanish identically, by (R3). So $g_{k+1}$ is a local diffeomorphism on an open dense set of rows $n$, and $g_{k+1}\circ\chi$ on an open dense set of rows $h$. Let $\mathcal U_k$ be the set of the $h$ of this set with $g_{k+1}(\chi(h)) \in \mathcal U_{k+1}$. It is open and dense, and for $h \in \mathcal U_k$,
 \[
-\Der\mathcal B_{>k}(h)\,v \;=\; \Der\mathcal B_{>k+1}\big(g_{k+1}(N(h))\big)\,\Big(\Der\big(g_{k+1}\circ N\big)(h)\,v\Big)
+\Der\mathcal B_{>k}(h)\,v \;=\; \Der\mathcal B_{>k+1}\big(g_{k+1}(\chi(h))\big)\,\Big(\Der\big(g_{k+1}\circ\chi\big)(h)\,v\Big)
 \]
 vanishes only for $v = 0$.
 
@@ -985,9 +985,9 @@ What remains is the step from $(D_{k+1})$ to $(D_k)$. For $\tanh$ blocks in the 
 \dot z(n) &= \begin{cases} nZ\,W + n\,\eta_W & \text{in the case (n),}\\[3pt] \Big(nZ - \dfrac{\langle nZ, n\rangle}{\dm}\,n\Big)\,W + n\,\eta_W & \text{in the cases (+) and (0),}\end{cases} \label{eq:e0zdot}\\[2pt]
 \mathcal L(\tilde w, \tilde w'; n) &= \Der\mathcal B(\tilde wV)\,\Big(\big(\tilde w'\odot\dot z(n)\big)\,V + \tilde w\,\eta_V\Big) + \Der_\theta\mathcal B(\tilde wV)\,\eta' . \label{eq:e0L}
 \end{align}
-By the chain rule and \eqref{eq:sbDN}, the left side of \eqref{eq:e0D} at $h$ is $\mathcal L\big(\sigma(nW), \sigma'(nW); n\big)$ at $n = N(h)$: $\tilde w = \sigma(nW)$ is the row of the outputs of the hidden units of block $k+1$, $\tilde w' = \sigma'(nW)$ the row of their derivatives, and $\dot z(n)$ the derivative of the row $nW$ that they read. So \eqref{eq:e0D} for $k$ is equivalent to
+By the chain rule and \eqref{eq:sbDN}, the left side of \eqref{eq:e0D} at $h$ is $\mathcal L\big(\sigma(nW), \sigma'(nW); n\big)$ at $n = \chi(h)$: $\tilde w = \sigma(nW)$ is the row of the outputs of the hidden units of block $k+1$, $\tilde w' = \sigma'(nW)$ the row of their derivatives, and $\dot z(n)$ the derivative of the row $nW$ that they read. So \eqref{eq:e0D} for $k$ is equivalent to
 \begin{equation}\label{eq:e0star}
-\mathcal L\big(\sigma(nW),\ \sigma'(nW);\ n\big) \;=\; 0 \qquad\text{for all values } n \text{ of } N,
+\mathcal L\big(\sigma(nW),\ \sigma'(nW);\ n\big) \;=\; 0 \qquad\text{for all values } n \text{ of } \chi,
 \end{equation}
 that is, for all rows $n$ in the case (n), for the rows $n$ with $\norm{n}^2 < \dm$ in the case (+), and for $n \in \mathbb S$ in the case (0).
 
@@ -1152,7 +1152,7 @@ It is a polynomial map of $h$ and of the weights. \Cref{lem:e0tailrank,lem:e0atw
 \dot z^g(n) &= \tilde n\,W_g + n\,\eta_g, \qquad\qquad \dot z^v(n) = \begin{cases} \tilde n\,W_v + n\,\eta_v & \text{in a gated block,}\\ 0 & \text{in a GELU block,}\end{cases} \label{eq:gtzdot}\\[3pt]
 \mathcal L(\tilde w, \tilde w'; n) &= \Der\mathcal B\big(\hat wV\big)\,\Big(\big(\tilde w'\odot\dot z^g(n)\odot\iota(n) + \tilde w\odot\dot z^v(n)\big)\,V + \hat w\,\eta_V\Big) + \Der_\theta\mathcal B\big(\hat wV\big)\,\eta' , \label{eq:gtL}
 \end{align}
-where $\hat w = \tilde w\odot\iota(n)$, and $\dot z^g_j(n)$ and $\dot z^v_j(n)$ are the entries of the rows \eqref{eq:gtzdot}. Here $\tilde w$ stands for the row $\sigma(nW_g)$ of the gates, $\tilde w'$ for the row $\sigma'(nW_g)$ of their derivatives, and $\hat w$ for the row of the outputs of the hidden units, and $\dot z^g(n)$ and $\dot z^v(n)$ are the derivatives of the rows $nW_g$ and $\iota(n)$. In a GELU block $\hat w = \tilde w$, and these are the maps \eqref{eq:e0zdot} and \eqref{eq:e0L}. By the chain rule and \eqref{eq:sbDN}, the left side of \eqref{eq:e0D} at $h$ is $\mathcal L\big(\sigma(nW_g), \sigma'(nW_g); n\big)$ at $n = N(h)$. As in \cref{lem:sballrows}, \eqref{eq:e0D} for $k$ therefore holds if and only if
+where $\hat w = \tilde w\odot\iota(n)$, and $\dot z^g_j(n)$ and $\dot z^v_j(n)$ are the entries of the rows \eqref{eq:gtzdot}. Here $\tilde w$ stands for the row $\sigma(nW_g)$ of the gates, $\tilde w'$ for the row $\sigma'(nW_g)$ of their derivatives, and $\hat w$ for the row of the outputs of the hidden units, and $\dot z^g(n)$ and $\dot z^v(n)$ are the derivatives of the rows $nW_g$ and $\iota(n)$. In a GELU block $\hat w = \tilde w$, and these are the maps \eqref{eq:e0zdot} and \eqref{eq:e0L}. By the chain rule and \eqref{eq:sbDN}, the left side of \eqref{eq:e0D} at $h$ is $\mathcal L\big(\sigma(nW_g), \sigma'(nW_g); n\big)$ at $n = \chi(h)$. As in \cref{lem:sballrows}, \eqref{eq:e0D} for $k$ therefore holds if and only if
 \begin{equation}\label{eq:gtstarall}
 \mathcal L\big(\sigma(nW_g),\ \sigma'(nW_g);\ n\big) \;=\; 0 \qquad\text{for every row } n \in \R^{1\times\dm} .
 \end{equation}
@@ -1660,7 +1660,7 @@ The networks of this paper have no skip connections. Most networks in use have t
 \[
 hA + f(h\Wread)\,\Wwrite \;=\; \tilde f\Big(h\,\big[\,A^{\mathrm{read}} \mid \Wread\,\big]\Big)\begin{bmatrix} A^{\mathrm{write}} \\ \Wwrite \end{bmatrix}.
 \]
-The changes of basis of \cref{def:cob} act on these reads and writes as on any others. At the hidden state $h_\ell$, which block $\ell$ writes and block $\ell+1$ reads,
+Under pre-RMSNorm the skip reads $h$ and the block reads $N_\varepsilon(h)$, and the same holds with the map $\chi(h) = [\,h \mid N_\varepsilon(h)\,]$ in the place of $h$ and the block-diagonal read with the blocks $A^{\mathrm{read}}$ and $\Wread$. The changes of basis of \cref{def:cob} act on these reads and writes as on any others. At the hidden state $h_\ell$, which block $\ell$ writes and block $\ell+1$ reads,
 \[
 A^{\mathrm{write}}_\ell \mapsto A^{\mathrm{write}}_\ell\,G_\ell, \qquad A^{\mathrm{read}}_{\ell+1} \mapsto G_\ell^{-1}A^{\mathrm{read}}_{\ell+1}, \qquad\text{so that}\qquad A_\ell \mapsto G_{\ell-1}^{-1}\,A_\ell\,G_\ell .
 \]

@@ -21,8 +21,8 @@
 | 16 | Related work | para |  |  | \para{Dimension counts.} \citet{grigsby2022functional} bound the funct |
 | 17 | Setup | para |  |  | \section{Setup}\label{sec:setup} |
 | 18 | Setup | para |  |  | This section fixes the networks. We write every block, MLP or attentio |
-| 19 | Setup | para | H and d_h, ReLU squared, T, number of tokens, Wread, Wwrite, d_hidden, the number of hidden units, g, the map of a block, h, a hidden state, read / write (nouns) | H and d_h, T, number of tokens, Wread, Wwrite, d_hidden, the number of hidden units, g, the map of a block, h, a hidden state, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
-| 20 | Setup | para | E and D, F_theta, N(h), readout | E and D, F_theta, N(h), readout | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
+| 19 | Setup | para | H and d_h, ReLU squared, T, number of tokens, Wread, Wwrite, chi, the map before the read, d_hidden, the number of hidden units, g, the map of a block, h, a hidden state, read / write (nouns) | H and d_h, T, number of tokens, Wread, Wwrite, chi, the map before the read, d_hidden, the number of hidden units, h, a hidden state, read / write (nouns) | \para{Blocks.} A hidden state is a matrix $h \in \R^{T\times\dm}$ whos |
+| 20 | Setup | para | E and D, F_theta, readout | E and D, F_theta, g, the map of a block, readout | \para{Networks.} A network has a linear embedding $E \in \R^{d_{\mathr |
 | 21 | Setup | para | RMSNorm, epsilon of RMSNorm, pre-RMSNorm |  | \para{Normalization.} RMSNorm with the constant $\varepsilon \ge 0$ is |
 | 22 | Setup | para |  |  | \para{Scope.} Networks have no biases, and their inputs range over all |
 | 23 | Changes of basis, and the parameters that they remove | para |  |  | \section{Changes of basis, and the parameters that they remove}\label{ |

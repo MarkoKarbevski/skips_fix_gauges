@@ -17,7 +17,7 @@ TERMS = [
     ('readout', r'(?i)readout', r'linear readout \$D'),
 ]
 SYMBOLS = [
-    ('g, the map of a block', r'g\(h\)|g_\\ell|g_k', r'g\(h\) = f\(h\\Wread\)'),
+    ('g, the map of a block', r'g\(h\)|g_\\ell|g_k', r'g\(n\) = f\(n\\Wread\)'),
     ('G, a change of basis', r'WG\b|G\^\{-1\}W|matrix \$G\$', r'(?i)every invertible \$\\dm\\times\\dm\$ matrix \$G\$'),
     ('W_1, the chosen submatrix', r'W_1(?![W_0-9])', r'form an invertible matrix \$W_1\$|where \$W_1\$ holds the first'),
     ('L, the number of blocks', r'\$L\b|\(L\+1\)|L\\dm|L\\dim', r'(?i)\$L\$ (MLP )?blocks'),
@@ -25,7 +25,7 @@ SYMBOLS = [
     ('E and D', r'xE\b|\$E\$|\$D\$|\)\\,D\b', r'embedding \$E'),
     ('h, a hidden state', r'h_\\ell|\$h\b', r'A hidden state is a matrix \$h'),
     ('Wread, Wwrite', r'\\Wread|\\Wwrite', r'the \\emph\{read\}'),
-    ('N(h)', r'N\(h', r'applies a map \$N\$'),
+    ('chi, the map before the read', r'\\chi', r'applies a fixed map \$\\chi\$'),
     ('script G', r'\\G\b', r'Let \$\\G\$ be the group'),
     ('s, symmetries inside', r'- s\$|\$s = 0|- s\b', r'let \$s\$ be the dimension of the symmetries'),
     ('F_theta', r'F_\\theta', r'We write \$F_\\theta\$ for the function'),
