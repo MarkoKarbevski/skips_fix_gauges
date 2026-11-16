@@ -411,6 +411,10 @@ Let $F$ be a skipless network whose blocks are locally Lipschitz.\\
 
 \para{Under RMSNorm.} With $\varepsilon = 0$, RMSNorm ignores the size of the hidden states, so only the writes grow. With $\varepsilon > 0$ the construction fails, since on a hidden state of size $t^{\ell}$ RMSNorm acts as RMSNorm with $\varepsilon/t^{2\ell}$. Whether skipless networks are limits of residual networks in that case is open.
 
+\begin{remark}[Without an embedding and a readout]\label{rem:noreadout}
+The construction does not change the embedding, and its readout $t^{-L}D$ absorbs the factor $t^{L}$ by which the last hidden state outgrows that of $F$. For networks with $E = D = I$, so that $d_{\mathrm{in}} = d_{\mathrm{out}} = \dm$, the same construction makes $F$ the limit of $t^{-L}$ times residual networks. \Cpref{prop:limits}{ii} holds also for $E = D = I$, since its construction changes neither.
+\end{remark}
+
 \section{Related work}\label{sec:related}
 
 \para{Expressivity of residual networks.} \citet{lin2018resnet} show that residual ReLU networks with one hidden unit per block are universal approximators, which skipless ReLU networks with at most $d_{\mathrm{in}}$ units per layer are not (\cref{app:universal}). In their count, the identity map of a skip takes $\dm$ hidden units. For blocks without biases and with at least $\dm$ units, \cpref{thm:relugelu}{ii} shows that this count of $\dm$ units is exact for almost every ReLU or GELU block, and \cref{thm:homgated} that no count works for ReLU$^2$, gated and $\tanh$ blocks. With biases, as in their blocks, the count stays exact for almost every ReLU or GELU block with at least $\dm$ units (\cref{thm:biascount} in \cref{app:biases}). \citet{hardt2017identity} show that deep linear residual networks have no spurious local optima, and that residual ReLU networks can fit any finite sample once they have more parameters than samples. These results concern approximation, optimization or finite samples; ours concern exact equality of functions, block by block and activation by activation.
