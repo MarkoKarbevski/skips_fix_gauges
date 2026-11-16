@@ -75,12 +75,13 @@
 | 70 | Skipless networks are limits of residual networks | statement | F, the function of a network | F, the function of a network | \begin{restatable}[Skipless networks as limits of residual networks]{p |
 | 71 | Skipless networks are limits of residual networks | para |  |  | \para{Idea of the proof.} The proof scales the reads of block $\ell$ b |
 | 72 | Skipless networks are limits of residual networks | para |  |  | \para{Under RMSNorm.} With $\varepsilon = 0$, RMSNorm ignores the size |
-| 73 | Related work | para |  |  | \section{Related work}\label{sec:related} |
-| 74 | Related work | para |  |  | \para{Expressivity of residual networks.} \citet{lin2018resnet} show t |
-| 75 | Related work | para |  |  | \para{Identifiability.} For $\tanh$ networks, the function determines  |
-| 76 | Related work | para |  |  | \para{Training without skips.} Skipless networks have been trained in  |
-| 77 | Conclusion | para |  |  | \section{Conclusion}\label{sec:conclusion} |
-| 78 | Conclusion | para |  |  | Without normalization or biases, a trained residual ReLU or GELU netwo |
-| 79 | Conclusion | para |  |  | \para{Open questions.} \begin{enumerate}[label=(\arabic*)] \item Netwo |
-| 80 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
-| 81 | Use of AI | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 73 | Skipless networks are limits of residual networks | statement |  |  | \begin{remark}[Without an embedding and a readout]\label{rem:noreadout |
+| 74 | Related work | para |  |  | \section{Related work}\label{sec:related} |
+| 75 | Related work | para |  |  | \para{Expressivity of residual networks.} \citet{lin2018resnet} show t |
+| 76 | Related work | para |  |  | \para{Identifiability.} For $\tanh$ networks, the function determines  |
+| 77 | Related work | para |  |  | \para{Training without skips.} Skipless networks have been trained in  |
+| 78 | Conclusion | para |  |  | \section{Conclusion}\label{sec:conclusion} |
+| 79 | Conclusion | para |  |  | Without normalization or biases, a trained residual ReLU or GELU netwo |
+| 80 | Conclusion | para |  |  | \para{Open questions.} \begin{enumerate}[label=(\arabic*)] \item Netwo |
+| 81 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
+| 82 | Use of AI | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
