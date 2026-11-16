@@ -415,6 +415,17 @@ Let $F$ be a skipless network whose blocks are locally Lipschitz.\\
 The construction does not change the embedding, and its readout $t^{-L}D$ absorbs the factor $t^{L}$ by which the last hidden state outgrows that of $F$. For networks with $E = D = I$, so that $d_{\mathrm{in}} = d_{\mathrm{out}} = \dm$, the same construction makes $F$ the limit of $t^{-L}$ times residual networks. \Cpref{prop:limits}{ii} holds also for $E = D = I$, since its construction changes neither.
 \end{remark}
 
+\para{Skipless ReLU and GELU networks.} For ReLU and GELU, almost every skipless network even equals a residual network of the same widths. In a network with \emph{learned skips}, the skip of block $\ell$ is the map $h \mapsto hA_\ell$ of a learned matrix $A_\ell \in \R^{\dm\times\dm}$.
+
+\begin{restatable}[Skipless ReLU and GELU networks are residual networks]{proposition}{propSkiplessRes}\label{prop:skiplessres}
+Let $\sigma$ satisfy $\sigma(z) - \sigma(-z) = cz$ for a constant $c \neq 0$, as ReLU and GELU do with $c = 1$. Without normalization, for almost every choice of weights, a skipless network $F$ of vanilla $\sigma$ blocks equals\\
+\stpart{prop:skiplessres}{i}{} a network with invertible learned skips and the same embedding, readout, $\dm$ and widths;\\
+\stpart{prop:skiplessres}{ii}{} a residual network with the same readout, $\dm$ and widths.
+\end{restatable}
+\proofin{app:prf-skiplessres}
+
+Let block $\ell$ of $F$ have the read $\Wread^{\ell}$ and the write $\Wwrite^{\ell}$. Flipping the reads of a set $S_\ell$ of $\dm$ of its units, as in \cref{sec:relugelu}, writes the block as $h \mapsto h\,(cK_\ell) + B'_\ell(h)$, with $K_\ell = \Wread^{\ell}[{:},S_\ell]\,\Wwrite^{\ell}[S_\ell,{:}]$ and $B'_\ell$ the block with the flipped reads. For almost every choice of weights $K_\ell$ is invertible, which gives (i). Theorem~3.2(i) of \citet{karbevski2026unlock} turns invertible learned skips into identity skips, with the embedding $c^LEK_1\cdots K_L$, which gives (ii). When the first block of $F$ has fewer than $2\dm$ units, the residual networks of (ii) lie in the set of measure zero that \cref{thm:relufirst} excludes. Under pre-RMSNorm the flip gives the term $c\,N(h)K_\ell$, which is not a skip, since a skip carries $h$ itself.
+
 \section{Related work}\label{sec:related}
 
 \para{Expressivity of residual networks.} \citet{lin2018resnet} show that residual ReLU networks with one hidden unit per block are universal approximators, which skipless ReLU networks with at most $d_{\mathrm{in}}$ units per layer are not (\cref{app:universal}). In their count, the identity map of a skip takes $\dm$ hidden units. For blocks without biases and with at least $\dm$ units, \cpref{thm:relugelu}{ii} shows that this count of $\dm$ units is exact for almost every ReLU or GELU block, and \cref{thm:homgated} that no count works for ReLU$^2$, gated and $\tanh$ blocks. With biases, as in their blocks, the count stays exact for almost every ReLU or GELU block with at least $\dm$ units (\cref{thm:biascount} in \cref{app:biases}). \citet{hardt2017identity} show that deep linear residual networks have no spurious local optima, and that residual ReLU networks can fit any finite sample once they have more parameters than samples. These results concern approximation, optimization or finite samples; ours concern exact equality of functions, block by block and activation by activation.
@@ -859,6 +870,22 @@ as long as no row of $s_{\ell-1} + r_{\ell-1}$ vanishes. The maps $B_\ell$ are L
 \begin{remark}[The rate]\label{rem:limitrate}
 The proofs give the rate $1/t$. Without normalization, for every bounded set $\mathcal X$ of inputs there is $C$ such that $\norm{F_t(X) - F(X)} \le C/t$ for all $X \in \mathcal X$ and $t \ge 1$. Under pre-RMSNorm with $\varepsilon = 0$, the same holds for all $t \ge t_0$, for every compact set $\mathcal X$ of inputs at which $F$ is defined, with $t_0$ depending on $\mathcal X$. The constants depend on $\mathcal X$ and on $F$.
 \end{remark}
+
+\subsection{Skipless ReLU and GELU networks are residual networks\texorpdfstring{ (Proposition~\ref*{prop:skiplessres})}{}}\label{app:prf-skiplessres}
+
+\propSkiplessRes*
+
+\begin{proof}
+Let block $\ell$ of $F$ have the read $\Wread^{\ell}$, with columns $w_i$, and the write $\Wwrite^{\ell}$, with rows $\hat w_i$. It has at least $\dm$ units (\cref{sec:setup}). Fix a set $S_\ell$ of $\dm$ of them, and let $K_\ell = \Wread^{\ell}[{:},S_\ell]\,\Wwrite^{\ell}[S_\ell,{:}]$. Its determinant $\det\Wread^{\ell}[{:},S_\ell]\cdot\det\Wwrite^{\ell}[S_\ell,{:}]$ is a polynomial in the weights that is not identically zero, so $K_\ell$ is invertible for almost every choice of weights. The entries of $EK_1\cdots K_LD$ are polynomials in the weights, not all identically zero, so $EK_1\cdots K_LD \neq 0$ for almost every choice of weights as well.
+
+Let $B'_\ell$ be block $\ell$ with the read $w_i$ replaced by $-w_i$ for every $i \in S_\ell$. Since $\sigma(z) = \sigma(-z) + cz$, unit $i \in S_\ell$ computes $\sigma(xw_i)\,\hat w_i = \sigma(-xw_i)\,\hat w_i + c\,(xw_i)\,\hat w_i$ on a token $x$, so
+\[
+B_\ell(h) = hA_\ell + B'_\ell(h), \qquad A_\ell = cK_\ell.
+\]
+The hidden states $s_0 = XE$ and $s_\ell = B_\ell(s_{\ell-1})$ of $F$ therefore satisfy $s_\ell = s_{\ell-1}A_\ell + B'_\ell(s_{\ell-1})$. They are the hidden states of the network with the embedding $E$, the blocks $B'_\ell$, the invertible learned skips $A_\ell$ and the readout $D$, and this network equals $F$, which proves (i).
+
+For (ii), let $A_{>\ell} = A_{\ell+1}\cdots A_L$, with $A_{>L} = I$. By \citet[Theorem~3.2(i)]{karbevski2026unlock}, the network of (i) equals the residual network with the embedding $EA_{>0}$, the blocks $h \mapsto B'_\ell\big(hA_{>\ell-1}^{-1}\big)A_{>\ell}$ and the readout $D$: the states $g_\ell = s_\ell A_{>\ell}$ satisfy $g_0 = XEA_{>0}$, $g_\ell = g_{\ell-1} + B'_\ell\big(g_{\ell-1}A_{>\ell-1}^{-1}\big)A_{>\ell}$ and $g_L = s_L$. Block $\ell$ of this network has the read $A_{>\ell-1}^{-1}$ times that of $B'_\ell$ and the write of $B'_\ell$ times $A_{>\ell}$, so the widths are those of $F$. Its embedding is $EA_{>0} = c^LEK_1\cdots K_L$, and $EA_{>0}D \neq 0$.
+\end{proof}
 
 % ===== appendix/b_onelayer.tex =====
 
