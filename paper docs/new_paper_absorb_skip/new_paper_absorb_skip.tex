@@ -150,7 +150,7 @@ These answers are for blocks without biases, as in many current language models 
 \hline
 \textbf{Proven} & \textbf{ReLU} & \textbf{GELU} & $\boldsymbol{\tanh}$ & \cell{\textbf{ReLU$\boldsymbol{^2}$,}\\ \textbf{ReGLU}} & \cell{\textbf{SwiGLU,}\\ \textbf{GeGLU}} & \textbf{Attention} \\
 \hline
-\multicolumn{7}{|l|}{\emph{Can a skipless network equal a residual one? Without normalization:}} \\
+\multicolumn{7}{|l|}{\emph{Given a residual network, can a skipless network equal it? Without normalization:}} \\
 \hline
 one block, same width & \multicolumn{2}{c|}{\res{measure zero}{Thm.}{thm:relugelu}{i}} & \multicolumn{3}{c|}{\res{never}{Thm.}{thm:homgated}{}} & \res{never}{Thm.}{thm:attention}{} \\
 \hline
@@ -168,16 +168,20 @@ networks, $\varepsilon > 0$ & \multicolumn{3}{c|}{\res{measure zero, at any widt
 \hline
 networks, $\varepsilon = 0$ & \multicolumn{6}{c|}{\res{measure zero, at any width}{Thm.}{thm:rmsnet}{}} \\
 \hline
-\multicolumn{7}{|l|}{\emph{Is every skipless network a limit of residual ones of the same widths?}} \\
+\multicolumn{7}{|l|}{\emph{Given a skipless network, does a residual network of the same widths equal it, or approach it?}} \\
 \hline
-without normalization & \multicolumn{6}{c|}{\res{yes}{Prop.}{prop:limits}{i}} \\
+\lcell{equal, without normalization;\\ residual network with\\ its own embedding} & \multicolumn{2}{c|}{\cell{for almost all weights,\\ with the same readout\\ \rtag{Prop.}{prop:skiplessres}{ii}}} & \res{never}{Thm.}{thm:homgatednet}{ii} & \multicolumn{2}{c|}{\res{never}{Thm.}{thm:homgatednet}{i}} & \cell{never with no mask or\\ more tokens than blocks\\ \rtag{Thm.}{thm:attnnet}{i}; else unknown} \\
 \hline
-with pre-RMSNorm, $\varepsilon = 0$ & \multicolumn{6}{c|}{\res{yes}{Prop.}{prop:limits}{ii}} \\
+\lcell{equal, without normalization;\\ the same embedding and\\ readout, or $E = D = I$} & \multicolumn{2}{c|}{\cell{one block: measure zero \rtag{Thm.}{thm:relugelu}{i};\\ deeper: unknown; with invertible learned\\ skips: for almost all weights \rtag{Prop.}{prop:skiplessres}{i}}} & \res{never}{Thm.}{thm:homgatednet}{ii} & \multicolumn{2}{c|}{\res{never}{Thm.}{thm:homgatednet}{i}} & \cell{never with no mask or\\ more tokens than blocks\\ \rtag{Thm.}{thm:attnnet}{i}; else unknown} \\
 \hline
-with pre-RMSNorm, $\varepsilon > 0$ & \multicolumn{6}{c|}{unknown} \\
+limit, without normalization & \multicolumn{6}{c|}{\cell{yes, keeping the embedding \rtag{Prop.}{prop:limits}{i}; with $E = D = I$, as the limit of $t^{-L}$ times residual networks \rtag{Rem.}{rem:noreadout}{}}} \\
+\hline
+\lcell{limit, with pre-RMSNorm,\\ $\varepsilon = 0$} & \multicolumn{6}{c|}{\res{yes, keeping the embedding and the readout}{Prop.}{prop:limits}{ii}} \\
+\hline
+\lcell{limit, with pre-RMSNorm,\\ $\varepsilon > 0$} & \multicolumn{6}{c|}{unknown} \\
 \hline
 \end{tabular}}
-\caption{Never: for no weights of the residual network. Measure zero: only for a null set of its weights, so with probability zero for random weights. Exactly $\dm$ more: for almost every block, $\dm$ more hidden units suffice and fewer do not. Companion: \citet{karbevski2026unlock}. No biases. Scope in \cref{sec:setup}.}
+\caption{Never: for no weights. Measure zero: only for a null set of weights of the given network, so with probability zero for random weights. Exactly $\dm$ more: for almost every block, $\dm$ more hidden units suffice and fewer do not. Companion: \citet{karbevski2026unlock}. No biases. Scope in \cref{sec:setup}.}
 \label{tab:results}
 \end{table}
 
