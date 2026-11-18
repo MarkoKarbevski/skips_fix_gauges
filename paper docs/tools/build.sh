@@ -1,6 +1,6 @@
 #!/bin/bash
 # Compile paper A, B, C, D, E and/or F, copy the PDFs next to their sources, and run the define-before-use check.
-# A: the absorb paper. B: the merged unlock paper. C: the "at least" paper. D: the "exactly" paper.
+# A: the absorb paper. B: the merged unlock paper. C: the "at least" paper. D: the "exactly" paper (B, C and D are in archive/).
 # E: the paper on the functional dimension. F: the paper on what the skips add.
 # Usage: tools/build.sh [A|B|C|D|E|F|all]   (PAPER_BUILD_DIR sets where LaTeX writes its build files)
 # Exit 1 if LaTeX fails, a reference is undefined, or the check flags a use before definition.
@@ -22,9 +22,9 @@ build() {
 }
 case ${1:-all} in
   A|all) build A new_paper_absorb_skip new_paper_absorb_skip ;;&
-  B|all) build B new_paper_skips_unlock_d2_params new_paper_skips_unlock_d2_params ;;&
-  C|all) build C new_paper_skips_at_least new_paper_skips_at_least ;;&
-  D|all) [ -f new_paper_skips_exactly/new_paper_skips_exactly.tex ] && build D new_paper_skips_exactly new_paper_skips_exactly ;;&
+  B|all) build B archive/new_paper_skips_unlock_d2_params new_paper_skips_unlock_d2_params ;;&
+  C|all) build C archive/new_paper_skips_at_least new_paper_skips_at_least ;;&
+  D|all) [ -f archive/new_paper_skips_exactly/new_paper_skips_exactly.tex ] && build D archive/new_paper_skips_exactly new_paper_skips_exactly ;;&
   E|all) [ -f new_paper_functional_dimension/new_paper_functional_dimension.tex ] && build E new_paper_functional_dimension new_paper_functional_dimension ;;&
   F|all) [ -f new_paper_skips_gain/new_paper_skips_gain.tex ] && build F new_paper_skips_gain new_paper_skips_gain ;;
 esac

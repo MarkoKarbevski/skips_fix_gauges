@@ -5,7 +5,7 @@ This repository holds two companion papers on what a skip connection changes, th
 | Paper | Authors | Folder |
 |---|---|---|
 | **Can an MLP Absorb Its Skip Connection Exactly?** | Antonij Mijoski, Marko Karbevski | `paper docs/new_paper_absorb_skip/` |
-| **Skip Connections Unlock d_model² Parameters per Layer** | Marko Karbevski, Antonij Mijoski | `paper docs/new_paper_skips_unlock_d2_params/` |
+| **Skip Connections Unlock d_model² Parameters per Layer** | Marko Karbevski, Antonij Mijoski | `paper docs/archive/new_paper_skips_unlock_d2_params/` |
 
 Each folder holds the PDF, its LaTeX source and `refs.bib`; the second also holds `figs/`.
 
@@ -18,10 +18,10 @@ Both papers grew out of a longer note, *A Note on Residual Networks: Skip Connec
 ## Contents
 
     paper docs/new_paper_absorb_skip/             the first paper
-    paper docs/new_paper_skips_unlock_d2_params/  the second paper
+    paper docs/archive/new_paper_skips_unlock_d2_params/  the second paper
     paper docs/tools/                             build script and define-before-use check for the two papers
-    paper docs/new_main.tex, main.tex             the longer note and an older version of it
-    paper docs/refs.bib, paper docs/figs/         bibliography and figures of the longer note
+    paper docs/archive/new_main.tex, main.tex     the longer note and an older version of it
+    paper docs/archive/refs.bib, archive/figs/    bibliography and figures of the longer note
     skip-connections-gauge-fixes-.pdf             the longer note
     experiments.ipynb   the notebook, with its outputs
     data/               saved results of the notebook's two long experiments
@@ -78,7 +78,7 @@ The two long experiments save what their figures and table need in `data/`:
 
 With `RECOMPUTE = False`, the default in the setup cell, Sections 10 and 13 draw the figures and the table from these files in seconds, computing only what a file lacks. With `RECOMPUTE = True`, or when a file is missing, they rerun the experiments and save the files again.
 
-Run from the repository root, Section 10 writes Figure 3 to `figs/spectra.pdf`, the same figure with ε = 10⁻² to `figs/spectra_eps1e-2.pdf`, and Figure 1 to `figs/spectra_gelu.pdf`. The copies that the paper includes are in `paper docs/new_paper_skips_unlock_d2_params/figs/`.
+Run from the repository root, Section 10 writes Figure 3 to `figs/spectra.pdf`, the same figure with ε = 10⁻² to `figs/spectra_eps1e-2.pdf`, and Figure 1 to `figs/spectra_gelu.pdf`. The copies that the paper includes are in `paper docs/archive/new_paper_skips_unlock_d2_params/figs/`.
 
 ## Notebook sections
 

@@ -1,9 +1,9 @@
-"""Concatenate the figures in paper docs/figs/large into one PDF, all_large_figures.pdf, with a bookmark per figure.
+"""Concatenate the figures in paper docs/archive/figs/large into one PDF, all_large_figures.pdf, with a bookmark per figure.
 The separate PDFs stay as they are. Run from the repository root: python large_runs/combine_figs.py"""
 import os
 from pypdf import PdfReader, PdfWriter
 
-FIGS = os.path.join("paper docs", "figs", "large")
+FIGS = os.path.join("paper docs", "archive", "figs", "large")
 ACTS = [("relu", "ReLU"), ("gelu", "GELU"), ("tanh", "tanh"), ("relu2", "ReLU^2"), ("reglu", "ReGLU"),
         ("swiglu", "SwiGLU"), ("geglu", "GeGLU")]
 ORDER = ([(f"spectra_depth_{a}.pdf", f"Depths 2, 4, 8: {n}") for a, n in ACTS]
