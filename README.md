@@ -12,7 +12,7 @@ Each folder holds the PDF, its LaTeX source and `refs.bib`; the third also holds
 
 **Can an MLP Absorb Its Skip Connection Exactly?** A block absorbs its skip if the block with its skip computes the same function as a skipless block of the same kind that is at least as wide. For blocks without biases, the answer depends on the activation. Almost every ReLU or GELU block at least as wide as the model dimension `d_model` absorbs its skip with exactly `d_model` more hidden units. Squared-ReLU, gated (ReGLU, SwiGLU, GeGLU), tanh and attention blocks never do, however wide. Without normalization, no residual squared-ReLU, gated or tanh network equals a skipless one, and under RMSNorm almost no residual network does. Yet without normalization every skipless network is a limit of residual ones. The paper is theory; its one numerical check is Section 14 of the notebook.
 
-**On the Functional Dimension of a Family of Analytic Neural Networks.** The functional dimension of a network is the number of independent directions in which its parameters change the function that it computes. The paper studies deep networks in which every layer has input weights, a fixed nonlinear map and output weights, as the layers of a transformer have. Between two such layers, the output weights of the first can be multiplied by an invertible matrix and the input weights of the second by its inverse. With this symmetry, `d_model²` parameters per layer are removed without changing the function, or about `d_model² / 2` under pre-RMSNorm. For tanh, SwiGLU and GeGLU layers, and for GELU layers under pre-RMSNorm, the paper proves that nothing more can be removed, at any depth. The scripts for its numerical ranks (its Appendices F and G) are not in this repository yet.
+**On the Functional Dimension of a Family of Analytic Neural Networks.** The functional dimension of a network is the number of independent directions in which its parameters change the function that it computes. The paper studies deep networks in which every layer has input weights, a fixed nonlinear map and output weights, as the layers of a transformer have. Between two such layers, the output weights of the first can be multiplied by an invertible matrix and the input weights of the second by its inverse. With this symmetry, `d_model²` parameters per layer are removed without changing the function, or about `d_model² / 2` under pre-RMSNorm. For tanh, SwiGLU and GeGLU layers, and for GELU layers under pre-RMSNorm, the paper proves that nothing more can be removed, at any depth. The folder `functional_dimension/` holds the two scripts that compute its numbers.
 
 **Skip Connections Unlock at Least d_model² Parameters per Layer.** The paper computes the functional dimension of networks with skip connections. In a residual transformer of any depth with analytic layers such as attention, GELU or SwiGLU, the only redundancy consists of the symmetries inside the layers and a single change of basis of the whole network. A network without skip connections has such a change of basis at every hidden state, hence one more per layer. So skip connections unlock at least `d_model²` functional dimensions per layer, or about `d_model² / 2` under pre-RMSNorm, and exactly this many where the count without skip connections is known to be exact, as for tanh, SwiGLU and GeGLU layers. The notebook and the folders `data/` and `trained/` reproduce the numbers, tables and figures of this paper.
 
@@ -28,6 +28,7 @@ The folder `paper docs/archive/` holds the texts from which the three papers wer
     paper docs/tools/                             build script and define-before-use check for the papers
     paper docs/archive/                           the earlier versions, with the bibliography and figures of the longer note
     skip-connections-gauge-fixes-.pdf             the longer note
+    functional_dimension/   the two scripts of the second paper
     experiments.ipynb   the notebook, with its outputs
     data/               saved results of the notebook's two long experiments
     trained/            small networks trained on four datasets, and the ranks of their Jacobians
@@ -47,6 +48,13 @@ The letters are A for the first paper, E for the second and F for the third; B, 
 The check is `check_flow.py`. It splits the main text into reading units and looks for the terms and symbols listed in the glossary of the paper (`glossary_A.py` to `glossary_F.py`). A term that readers know may be accepted, with a reason, in `flow_allow_A.txt` to `flow_allow_F.txt`. The check also writes the flow graph of each paper next to it (`*_flow.md`): what each unit defines and what it uses first.
 
 Two more tools sit in the same folder. `make_chunks.py` writes one file per reading unit, for a review that reads the text strictly in order. `pre-commit` is a Git hook that runs the check on a staged paper; install it with `cp "paper docs/tools/pre-commit" .git/hooks/pre-commit`.
+
+## Scripts of the second paper
+
+    python3 functional_dimension/ranks.py             # about 30 seconds
+    python3 functional_dimension/global_rotation.py   # a few seconds
+
+`ranks.py` computes the table of Appendix F of the second paper: the rank of the Jacobian of 106 networks without skip connections (tanh, GELU, SwiGLU and GeGLU blocks, without normalization and under pre-RMSNorm with ε = 0.1 and ε = 0, and attention blocks of one to three layers), against the bound of the paper. It prints, for every network, the bound, the rank and the gap of the spectrum at the rank, and then the 15 rows of the table. `global_rotation.py` computes the numbers of Appendix G: in a pre-LayerNorm transformer of three layers, one rotation of the whole stream changes the outputs by about 10⁻¹⁴, and by about 19 when one layer is left out. Both run on a CPU in double precision, in the environment of the notebook below (PyTorch, NumPy and SciPy).
 
 ## Running the notebook
 
