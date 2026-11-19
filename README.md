@@ -2,11 +2,11 @@
 
 This repository holds three companion papers on what a skip connection changes, the code that reproduces their numbers, and the data that the code saves.
 
-| Paper | Authors | Folder |
-|---|---|---|
-| **Can an MLP Absorb Its Skip Connection Exactly?** | Antonij Mijoski, Marko Karbevski | `paper docs/new_paper_absorb_skip/` |
-| **On the Functional Dimension of a Family of Analytic Neural Networks** | Marko Karbevski | `paper docs/new_paper_functional_dimension/` |
-| **Skip Connections Unlock at Least d_model² Parameters per Layer** | Marko Karbevski, Antonij Mijoski | `paper docs/new_paper_skips_gain/` |
+| Paper | Authors | Main result | Folder |
+|---|---|---|---|
+| **Can an MLP Absorb Its Skip Connection Exactly?** | Antonij Mijoski, Marko Karbevski | Almost every ReLU or GELU block absorbs its skip with exactly `d_model` more hidden units; squared-ReLU, gated, tanh and attention blocks never do. | `paper docs/new_paper_absorb_skip/` |
+| **On the Functional Dimension of a Family of Analytic Neural Networks** | Marko Karbevski | Without skips, `d_model²` parameters per layer can be removed without changing the function, and for tanh, SwiGLU and GeGLU layers nothing more. | `paper docs/new_paper_functional_dimension/` |
+| **Skip Connections Unlock at Least d_model² Parameters per Layer** | Marko Karbevski, Antonij Mijoski | A residual network keeps one change of basis where a skipless one has one per hidden state, so skips unlock at least `d_model²` functional dimensions per layer. | `paper docs/new_paper_skips_gain/` |
 
 Each folder holds the PDF, its LaTeX source and `refs.bib`; the third also holds `figs/`.
 
