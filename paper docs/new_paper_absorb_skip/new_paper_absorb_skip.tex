@@ -178,7 +178,7 @@ limit, without normalization & \multicolumn{6}{c|}{\cell{yes, keeping the embedd
 \hline
 \lcell{limit, with pre-RMSNorm,\\ $\varepsilon = 0$} & \multicolumn{6}{c|}{\res{yes, keeping the embedding and the readout}{Prop.}{prop:limits}{ii}} \\
 \hline
-\lcell{limit, with pre-RMSNorm,\\ $\varepsilon > 0$} & \multicolumn{6}{c|}{unknown} \\
+\lcell{limit, with pre-RMSNorm,\\ $\varepsilon > 0$} & \multicolumn{6}{c|}{unknown; yes with a learned scale before each normalization \rtag{Rem.}{rem:scale}{}} \\
 \hline
 \end{tabular}}
 \caption{Never: for no weights. Measure zero: only for a null set of weights of the given network, so with probability zero for random weights. Exactly $\dm$ more: for almost every block, $\dm$ more hidden units suffice and fewer do not. Companion: \citet{karbevski2026unlock}. No biases. Scope in \cref{sec:setup}.}
@@ -415,6 +415,10 @@ Let $F$ be a skipless network whose blocks are locally Lipschitz.\\
 
 \para{Under RMSNorm.} With $\varepsilon = 0$, RMSNorm ignores the size of the hidden states, so only the writes grow. With $\varepsilon > 0$ the construction fails, since on a hidden state of size $t^{\ell}$ RMSNorm acts as RMSNorm with $\varepsilon/t^{2\ell}$.
 
+\begin{remark}[A minimal change makes every skipless network a limit of residual networks]\label{rem:scale}
+Give the normalization that reads $h_\ell$ a learned scale $\mu_\ell > 0$ at its entry, so that it computes $N(\mu_\ell h_\ell)$, which is RMSNorm with $\varepsilon/\mu_\ell^2$ in the place of $\varepsilon$. Under pre-RMSNorm with $\varepsilon > 0$, every skipless network $F$ whose blocks are locally Lipschitz is then a limit of such residual networks, with blocks of the same kinds and widths, uniformly on bounded sets of inputs. The residual networks keep the embedding, the reads and the readout of $F$. In block $\ell$ they have the writes $\Wwrite \mapsto t^\ell\Wwrite$, and their scales are $\mu_\ell = t^{-\ell}$: the scale returns the hidden state, of size $t^\ell$, to that of $F$ up to $O(1/t)$ (\cref{app:prf-limits}). With such scales the limits hold in all three cases: without normalization, and under pre-RMSNorm with $\varepsilon = 0$ and with $\varepsilon > 0$.
+\end{remark}
+
 \begin{remark}[Without an embedding and a readout]\label{rem:noreadout}
 The construction does not change the embedding, and its readout $t^{-L}D$ absorbs the factor $t^{L}$ by which the last hidden state outgrows that of $F$. For networks with $E = D = I$, so that $d_{\mathrm{in}} = d_{\mathrm{out}} = \dm$, the same construction makes $F$ the limit of $t^{-L}$ times residual networks. \Cpref{prop:limits}{ii} holds also for $E = D = I$, since its construction changes neither.
 \end{remark}
@@ -446,7 +450,7 @@ Without normalization or biases, a trained residual ReLU or GELU network whose r
 \begin{enumerate}[label=(\arabic*)]
 \item Networks of attention blocks under pre-RMSNorm with $\varepsilon > 0$ and a causal mask, with at most one more token than blocks. Without normalization some of them are equal (\cpref{thm:attnnet}{iii}); under RMSNorm equality fails for almost all weights, and whether it ever holds is open.
 \item How many extra units ReLU and GELU networks need, without normalization, when the blocks are wider than $\dm$, have reads of rank below $\dm$, or are not injective. In particular, are $L\dm$ extra units needed when every block is injective and wider than $\dm$?
-\item Skipless networks as limits of residual networks under RMSNorm with $\varepsilon > 0$.
+\item Skipless networks as limits of residual networks under RMSNorm with $\varepsilon > 0$, without the scales of \cref{rem:scale}.
 \item Approximation: how many units a skip is worth at a given error on bounded inputs, and whether residual networks are limits of skipless ones.
 \end{enumerate}
 
@@ -874,6 +878,15 @@ as long as no row of $s_{\ell-1} + r_{\ell-1}$ vanishes. The maps $B_\ell$ are L
 \begin{remark}[The rate]\label{rem:limitrate}
 The proofs give the rate $1/t$. Without normalization, for every bounded set $\mathcal X$ of inputs there is $C$ such that $\norm{F_t(X) - F(X)} \le C/t$ for all $X \in \mathcal X$ and $t \ge 1$. Under pre-RMSNorm with $\varepsilon = 0$, the same holds for all $t \ge t_0$, for every compact set $\mathcal X$ of inputs at which $F$ is defined, with $t_0$ depending on $\mathcal X$. The constants depend on $\mathcal X$ and on $F$.
 \end{remark}
+
+\begin{proof}[Proof of \cref{rem:scale}]
+Let $\varepsilon > 0$. Then $N$ is defined on all hidden states, its image is bounded, and $\norm{N(y') - N(y)} \le \norm{y' - y}/\sqrt{\varepsilon}$, since the derivative of $v \mapsto v/\sqrt{\norm{v}^2/\dm + \varepsilon}$ has norm at most $1/\sqrt{\varepsilon}$. The hidden states of $F$ are $s_0 = XE$ and $s_\ell = B_\ell(N(s_{\ell-1}))$, and $F(X) = N(s_L)D$. Let $F_t$ be the residual network with the embedding, the reads and the readout of $F$, the writes $t^\ell\Wwrite^{\ell}$, and the scale $\mu_\ell = t^{-\ell}$ at the normalization that reads $h_\ell$, for $\ell = 0, \dots, L$. Its hidden states are $h_0 = s_0$ and
+\begin{align*}
+h_\ell \;&=\; h_{\ell-1} + t^\ell B_\ell\big(N(t^{1-\ell}h_{\ell-1})\big) \;=\; t^\ell(s_\ell + r_\ell),\\
+r_\ell \;&=\; B_\ell\big(N(s_{\ell-1} + r_{\ell-1})\big) - B_\ell\big(N(s_{\ell-1})\big) + t^{-1}(s_{\ell-1} + r_{\ell-1}),
+\end{align*}
+with $r_0 = 0$, by induction on $\ell$. Let $\mathcal X$ be a bounded set of inputs. The maps $B_\ell$ are Lipschitz on the bounded image of $N$, with some constants $\mathrm{Lip}_\ell$, and $\bar s_\ell = \sup_{X \in \mathcal X}\norm{s_\ell}$ is finite. So $\norm{r_\ell} \le \mathrm{Lip}_\ell\norm{r_{\ell-1}}/\sqrt{\varepsilon} + t^{-1}(\bar s_{\ell-1} + \norm{r_{\ell-1}})$, and induction gives $\norm{r_\ell} \le C_\ell/t$ for $t \ge 1$, with $C_0 = 0$ and $C_\ell = (\mathrm{Lip}_\ell/\sqrt{\varepsilon} + 1)\,C_{\ell-1} + \bar s_{\ell-1}$. Finally $F_t(X) = N(t^{-L}h_L)D = N(s_L + r_L)D$, so $\norm{F_t(X) - F(X)} \le \norm{D}\,C_L/(\sqrt{\varepsilon}\,t)$ for all $X \in \mathcal X$ and $t \ge 1$.
+\end{proof}
 
 \subsection{Skipless ReLU and GELU networks are residual networks\texorpdfstring{ (Proposition~\ref*{prop:skiplessres})}{}}\label{app:prf-skiplessres}
 

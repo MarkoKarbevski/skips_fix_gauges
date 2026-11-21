@@ -75,16 +75,17 @@
 | 70 | Skipless networks are limits of residual networks | statement | F, the function of a network | F, the function of a network | \begin{restatable}[Skipless networks as limits of residual networks]{p |
 | 71 | Skipless networks are limits of residual networks | para |  |  | \para{Idea of the proof.} The proof scales the reads of block $\ell$ b |
 | 72 | Skipless networks are limits of residual networks | para |  |  | \para{Under RMSNorm.} With $\varepsilon = 0$, RMSNorm ignores the size |
-| 73 | Skipless networks are limits of residual networks | statement |  |  | \begin{remark}[Without an embedding and a readout]\label{rem:noreadout |
-| 74 | Skipless networks are limits of residual networks | para | learned skips | learned skips | \para{Skipless ReLU and GELU networks.} For ReLU and GELU, almost ever |
-| 75 | Skipless networks are limits of residual networks | statement |  |  | \begin{restatable}[Skipless ReLU and GELU networks are residual networ |
-| 76 | Skipless networks are limits of residual networks | para |  |  | Let block $\ell$ of $F$ have the read $\Wread^{\ell}$ and the write $\ |
-| 77 | Related work | para |  |  | \section{Related work}\label{sec:related} |
-| 78 | Related work | para |  |  | \para{Expressivity of residual networks.} \citet{lin2018resnet} show t |
-| 79 | Related work | para |  |  | \para{Identifiability.} For $\tanh$ networks, the function determines  |
-| 80 | Related work | para |  |  | \para{Training without skips.} Skipless networks have been trained in  |
-| 81 | Conclusion | para |  |  | \section{Conclusion}\label{sec:conclusion} |
-| 82 | Conclusion | para |  |  | Without normalization or biases, a trained residual ReLU or GELU netwo |
-| 83 | Conclusion | para |  |  | \para{Open questions.} \begin{enumerate}[label=(\arabic*)] \item Netwo |
-| 84 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
-| 85 | Use of AI | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 73 | Skipless networks are limits of residual networks | statement |  |  | \begin{remark}[A minimal change makes every skipless network a limit o |
+| 74 | Skipless networks are limits of residual networks | statement |  |  | \begin{remark}[Without an embedding and a readout]\label{rem:noreadout |
+| 75 | Skipless networks are limits of residual networks | para | learned skips | learned skips | \para{Skipless ReLU and GELU networks.} For ReLU and GELU, almost ever |
+| 76 | Skipless networks are limits of residual networks | statement |  |  | \begin{restatable}[Skipless ReLU and GELU networks are residual networ |
+| 77 | Skipless networks are limits of residual networks | para |  |  | Let block $\ell$ of $F$ have the read $\Wread^{\ell}$ and the write $\ |
+| 78 | Related work | para |  |  | \section{Related work}\label{sec:related} |
+| 79 | Related work | para |  |  | \para{Expressivity of residual networks.} \citet{lin2018resnet} show t |
+| 80 | Related work | para |  |  | \para{Identifiability.} For $\tanh$ networks, the function determines  |
+| 81 | Related work | para |  |  | \para{Training without skips.} Skipless networks have been trained in  |
+| 82 | Conclusion | para |  |  | \section{Conclusion}\label{sec:conclusion} |
+| 83 | Conclusion | para |  |  | Without normalization or biases, a trained residual ReLU or GELU netwo |
+| 84 | Conclusion | para |  |  | \para{Open questions.} \begin{enumerate}[label=(\arabic*)] \item Netwo |
+| 85 | Use of AI | para |  |  | \section*{Use of AI} \addcontentsline{toc}{section}{Use of AI} The con |
+| 86 | Use of AI | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
