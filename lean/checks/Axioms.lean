@@ -44,3 +44,13 @@ import SkipsLean
 #print axioms Skips.finrank_antisymmetric
 #print axioms Skips.funDim_add_le_skipless_rmsNorm
 #print axioms Skips.funDim_add_le_residual_rmsNorm
+-- Generic parameters and the one-block theorem
+#print axioms Skips.volume_zeroSet_of_analytic_pi
+#print axioms Skips.measure_zeroSet_of_analytic
+#print axioms Skips.ae_isUnit_det_submatrix
+#print axioms Skips.ae_rank_E_write
+#print axioms Skips.ae_funDim_add_le_skipless
+#print axioms Skips.ae_funDim_add_le_skipless_rmsNorm
+#print axioms Skips.ae_funDim_add_le_residual
+#print axioms Skips.ae_funDim_add_le_residual_rmsNorm
+#print axioms Skips.tanh_units_flat_eq_zero
