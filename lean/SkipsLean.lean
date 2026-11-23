@@ -29,3 +29,4 @@ import SkipsLean.OneBlock.GELU
 import SkipsLean.OneBlock.UnitsGeGLU
 import SkipsLean.OneBlock.GeGLU
 import SkipsLean.Generic.Gated
+import SkipsLean.Residual.OneChangeOfBasis

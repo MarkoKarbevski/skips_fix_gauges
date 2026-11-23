@@ -106,3 +106,10 @@ import SkipsLean
 #print axioms Skips.ae_value_ne_zero
 #print axioms Skips.ae_funDim_add_le_skipless_gated
 #print axioms Skips.ae_funDim_add_le_skipless_gated_rmsNorm
+-- Skips paper, Section 3: one change of basis for a residual network (converse); RQ and learned skips
+#print axioms Skips.cob_eq_of_eval_cob_residual
+#print axioms Skips.eval_cob_residual_iff
+#print axioms Skips.cob_eq_orthogonal_of_eval_cob_residual_rmsNorm
+#print axioms Skips.eval_cob_residual_rmsNorm_iff
+#print axioms Skips.exists_orthogonal_mul_upperTriangular
+#print axioms Skips.exists_cob_learned_upperTriangular
