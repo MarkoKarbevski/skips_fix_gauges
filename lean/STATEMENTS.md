@@ -31,8 +31,9 @@ Differences from the paper, on purpose:
 
 ## Results
 
-Status: *open* (statement compiles, proof not written), *in work*, *proved* (compiled, no `sorry`,
-standard axioms only).
+Status: *defined* (a definition), *in work* (statement compiles, proof not finished), *proved*
+(compiled, no `sorry`, standard axioms only). The branch `main` holds only what is proved; statements
+in work are on the branch `lean-wip`.
 
 ### Dimension paper
 
@@ -54,12 +55,31 @@ standard axioms only).
 | D Lemma A.1, "⇒", `ε = 0`: then `M` is orthogonal and `G = cM`, `c > 0` | `conformal_of_rmsRow_zero_vecMul` | `Basic/RMSNormConverse.lean` | proved |
 | D Proposition A.3 (i), its two facts: `Z² = Z`, rows `vZ` have mean zero | `centering_mul_centering`, `sum_vecMul_centering`, `vecMul_centering_of_sum_eq_zero` | `Basic/LayerNorm.lean` | proved |
 | D Proposition A.3 (ii), the identity `N_ε(yŪᵀ) = sqrt(d/(d−1)) N'(y)Ūᵀ` (stated for any number `m` of orthonormal columns) | `rmsRow_vecMul_transpose_of_orthonormal` | `Basic/LayerNorm.lean` | proved |
+| D parameters `θ ∈ ℝ^P` as a vector space; `P` is its dimension | `Params` with `AddCommGroup`, `Module ℝ`, a norm; `Module.finrank ℝ (Params A dIn dOut)` | `Dimension/Space.lean` | defined |
+| D Definition 4.1: outputs on a batch, rank of the Jacobian, functional dimension, redundancy | `evalBatch`, `jacobianRank`, `funDim`, `redundancy` | `Dimension/Functional.lean` | defined |
+| D Appendix C: flat directions `K(θ)` | `flat` | `Dimension/Functional.lean` | defined |
+| differentiable `f_ℓ` and `χ` give `θ ↦ F_θ(x)` differentiable | `differentiable_eval` | `Dimension/Functional.lean` | in work |
+| the maximum of Definition 4.1 is attained on a finite batch | `exists_jacobianRank_eq_funDim`, `jacobianRank_le_funDim`, `jacobianRank_le_finrank` | `Dimension/Functional.lean` | in work |
+| D Appendix C: `fd(θ) = P − dim K(θ)` | `funDim_add_finrank_flat` | `Dimension/Functional.lean` | in work |
+| D Section 4: a direction in which a symmetry moves `θ` is flat | `mem_flat_of_hasDerivAt`, `funDim_add_finrank_le_of_le_flat` | `Dimension/Functional.lean` | in work |
+| the direction `(E X_0, −X_{ℓ−1} W_read^ℓ, W_write^ℓ X_ℓ, −X_L D)` of the changes of basis | `cobDir` | `Dimension/UpperBound.lean` | defined |
+| D Lemma B.1, for the changes of basis: `E` and the writes of rank `d` ⇒ the direction determines `X` | `cobDir_injective` | `Dimension/UpperBound.lean` | in work |
+| D Theorem 4.3, without normalization, changes of basis only: `fd ≤ P − (L+1)d²` | `cobDir_mem_flat_skipless`, `funDim_add_le_skipless` | `Dimension/UpperBound.lean` | in work |
+| D Theorem 4.3, under pre-RMSNorm (`ε > 0`), changes of basis only: `fd ≤ P − (L+1)d(d−1)/2` | `differentiable_rmsNorm`, `cobDir_mem_flat_skipless_rmsNorm`, `finrank_antisymmetric`, `funDim_add_le_skipless_rmsNorm` | `Dimension/UpperBoundRMSNorm.lean` | in work |
 
 Notes for the authors on these statements:
 - Proposition 3.3 is stated in the paper for one hidden state, with the remark that the reductions
   at all hidden states can be made together. The Lean statements are the simultaneous form.
 - `exists_cob_reads_upperTriangular` does not assume that the chosen columns are invertible: a QR
   factorization exists for every square matrix. The paper assumes it.
+- Theorem 4.3 is stated under the conditions that its proof uses (`E` and every write have rank
+  `d`, the maps `f_ℓ` are differentiable) and not yet "at generic parameters". It counts the
+  changes of basis only, without the number `s` of the symmetries inside the blocks, which depend
+  on the kind of block. For tanh and GELU blocks, where `s = 0`, this is the bound of the paper.
+- The Jacobian needs a norm on the parameters and on the outputs. Matrices carry the elementwise
+  norm; on finite-dimensional spaces the derivative does not depend on the norm. The derivative of
+  a map that is not differentiable is `0` in Mathlib, so the statements on the functional
+  dimension assume that `θ ↦ F_θ(x)` is differentiable at `θ`.
 - Proposition A.3 is not stated for whole networks: it needs gains and biases, which the network
   definition does not have yet. Only the computations of its proof are stated.
 - "At generic parameters every hidden state has such columns" and "removes `(L+1) dim G`
@@ -76,6 +96,8 @@ Notes for the authors on these statements:
 | S Theorem 3.3 (i), "if", under pre-RMSNorm | `eval_cob_residual_rmsNorm` | `Residual/LearnedSkips.lean` | proved |
 | S Theorem 3.3 (iii), without normalization | `exists_cob_residual_read_eq_one`, `exists_cob_residual_D_eq_one` | `Residual/LearnedSkips.lean` | proved |
 | S Theorem 3.3 (iii), under pre-RMSNorm, read of a block | `exists_cob_residual_read_upperTriangular` | `Residual/LearnedSkips.lean` | proved |
+| S the upper bound for residual networks, changes of basis only: `fd ≤ P − d²` | `cobDir_const_mem_flat_residual`, `funDim_add_le_residual` | `Dimension/UpperBound.lean` | in work |
+| S the same under pre-RMSNorm (`ε > 0`): `fd ≤ P − d(d−1)/2` | `funDim_add_le_residual_rmsNorm` | `Dimension/UpperBoundRMSNorm.lean` | in work |
 
 Not stated yet from Section 3 of the skips paper: Theorem 3.2 (ii), second sentence (invertible
 skips made upper triangular under pre-RMSNorm); Theorem 3.3 (i), "only if"; Theorem 3.3 (ii), the

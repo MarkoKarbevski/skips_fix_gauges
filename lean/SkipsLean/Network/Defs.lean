@@ -26,13 +26,14 @@ structure Arch (T d : Type*) (L : ℕ) where
   r : Fin L → Type
   /-- index type of the rows of the write of block `ℓ` -/
   w : Fin L → Type
+  [fr : ∀ ℓ, Fintype (r ℓ)]
   [fw : ∀ ℓ, Fintype (w ℓ)]
   /-- the fixed map of block `ℓ`: an activation on every hidden unit, a gate, or attention -/
   f : ∀ ℓ, Matrix T (r ℓ) ℝ → Matrix T (w ℓ) ℝ
   /-- the fixed map applied before every read and before the readout -/
   χ : Matrix T d ℝ → Matrix T d ℝ
 
-attribute [instance] Arch.fw
+attribute [instance] Arch.fr Arch.fw
 
 variable {T d dIn dOut : Type*} {L : ℕ} [Fintype d] [Fintype dIn]
 
