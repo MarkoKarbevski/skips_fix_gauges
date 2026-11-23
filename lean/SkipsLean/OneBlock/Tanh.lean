@@ -179,7 +179,7 @@ private theorem Am_line (θ η : Params (Arch.mlp (T := T) (d := d) Real.tanh id
     Matrix.mul_smul, Matrix.smul_mul, smul_add, smul_smul]
   abel
 
-omit [Fintype T] [Nonempty T] [DecidableEq d] in
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dOut] in
 /-- Helper: the entries of `F_{θ + τ η}(x)` as functions of `τ`. -/
 private theorem eval_line_apply
     (θ η : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut)
@@ -257,12 +257,55 @@ theorem flat_le_range_cobDir_tanh (hθ : OneBlockGeneric θ) (η : Params _ dIn 
   exact (keeps_products_iff_mem_range_cobDir θ η hθ.rank_E hθ.rank_D hθ.rank_read
     hθ.rank_write).1 ⟨hC, hA⟩
 
+/-- Helper: `X ↦ cobDir θ X` is linear (as the helper `cobDirLin` of `Dimension/UpperBound.lean`,
+which is private there). -/
+private noncomputable def cobDirLin
+    (θ : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut) :
+    (Fin 2 → Matrix d d ℝ) →ₗ[ℝ] Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut where
+  toFun := cobDir θ
+  map_add' X Y := by
+    apply Params.ext' <;> intros <;>
+      simp only [cobDir, Params.add_E, Params.add_read, Params.add_write, Params.add_D,
+        Pi.add_apply, Matrix.mul_add, Matrix.add_mul, neg_add]
+  map_smul' c X := by
+    apply Params.ext' <;> intros <;>
+      simp only [cobDir, Params.smul_E, Params.smul_read, Params.smul_write, Params.smul_D,
+        Pi.smul_apply, Matrix.mul_smul, Matrix.smul_mul, smul_neg, RingHom.id_apply]
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the pairs `(X, Y)` of `d × d` matrices form a space of dimension `2 d²`. -/
+private theorem finrank_cobDomain_two :
+    Module.finrank ℝ (Fin 2 → Matrix d d ℝ) = 2 * Fintype.card d ^ 2 := by
+  rw [Module.finrank_pi_fintype, Module.finrank_matrix]
+  simp [sq]
+
 /-- **Theorem 5.1 for a `tanh` block, under the conditions of its proof:** the functional
 dimension is `P - 2 d²`. -/
 theorem funDim_tanh_oneBlock (hθ : OneBlockGeneric θ) :
     funDim (Arch.mlp Real.tanh id hid) 0 θ + 2 * Fintype.card d ^ 2
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut) := by
-  sorry
+  have hdiff : ∀ x : Matrix T dIn ℝ, DifferentiableAt ℝ
+      (fun θ' : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut =>
+        eval (Arch.mlp Real.tanh id hid) 0 θ' x) θ := fun x =>
+    (differentiable_eval (A := Arch.mlp (T := T) (d := d) Real.tanh id hid) (S := 0)
+      differentiable_f_tanh differentiable_id x).differentiableAt
+  -- the flat directions are exactly the directions `cobDir θ X` of the two changes of basis:
+  -- `⊆` is the previous theorem, `⊇` holds since changes of basis are symmetries
+  have hflat : flat (Arch.mlp Real.tanh id hid) 0 θ = LinearMap.range (cobDirLin θ) := by
+    apply le_antisymm
+    · intro η hη
+      obtain ⟨X, rfl⟩ := flat_le_range_cobDir_tanh θ hθ η hη
+      exact LinearMap.mem_range.2 ⟨X, rfl⟩
+    · rintro _ ⟨X, rfl⟩
+      exact cobDir_mem_flat_skipless θ rfl differentiable_f_tanh X
+  -- `X ↦ cobDir θ X` is injective (Lemma B.1): `K(θ)` has dimension `2 d²`
+  have hinj : Function.Injective (cobDirLin θ) :=
+    cobDir_injective θ hθ.rank_E fun ℓ => by
+      obtain rfl := Subsingleton.elim ℓ 0
+      exact hθ.rank_write
+  -- `fd(θ) = P - dim K(θ)` (Appendix C)
+  have h := funDim_add_finrank_flat θ hdiff
+  rwa [hflat, LinearMap.finrank_range_of_inj hinj, finrank_cobDomain_two] at h
 
 /-- The conditions hold at generic parameters, when `d_in, d_out, d_hidden ≥ d ≥ 2`. -/
 theorem ae_oneBlockGeneric
