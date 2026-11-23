@@ -438,13 +438,177 @@ theorem funDim_swiglu_oneBlock (hθ : OneBlockGenericGated θ) :
   have h := funDim_add_finrank_flat θ hdiff
   rwa [hflat, LinearMap.finrank_range_of_inj hinj, finrank_dirDomain] at h
 
+/-! ### Helpers: generic parameters -/
+
+/-- Helper: a matrix with `d` rows and an invertible `d × d` submatrix has rank `d`. -/
+private theorem rank_eq_card_of_isUnit_det {n : Type*} [Fintype n] (M : Matrix d n ℝ) (c : d ↪ n)
+    (h : IsUnit (M.submatrix id c).det) : M.rank = Fintype.card d := by
+  have h1 := Matrix.rank_of_isUnit _ ((Matrix.isUnit_iff_isUnit_det _).2 h)
+  have h2 := M.rank_submatrix_le id c
+  have h3 := M.rank_le_card_height
+  omega
+
+/-- Helper: a linear functional on a finite-dimensional space is analytic. -/
+private theorem analyticOnNhd_linear {P : Type*} [NormedAddCommGroup P] [NormedSpace ℝ P]
+    [FiniteDimensional ℝ P] (l : P →ₗ[ℝ] ℝ) : AnalyticOnNhd ℝ l Set.univ := by
+  rw [← LinearMap.coe_toContinuousLinearMap' l]
+  exact (LinearMap.toContinuousLinearMap l).analyticOnNhd _
+
+/-- Helper: an entry of the product of two linear matrix-valued maps is analytic (it is a
+polynomial of degree two). -/
+private theorem analyticOnNhd_mul_apply {P m n p : Type*} [NormedAddCommGroup P]
+    [NormedSpace ℝ P] [FiniteDimensional ℝ P] [Fintype n] (F : P →ₗ[ℝ] Matrix m n ℝ)
+    (G : P →ₗ[ℝ] Matrix n p ℝ) (i : m) (j : p) :
+    AnalyticOnNhd ℝ (fun y => (F y * G y) i j) Set.univ := by
+  simp only [Matrix.mul_apply]
+  exact Finset.analyticOnNhd_fun_sum _ fun k _ =>
+    (analyticOnNhd_linear ((Matrix.entryLinearMap ℝ ℝ i k).comp F)).mul
+      (analyticOnNhd_linear ((Matrix.entryLinearMap ℝ ℝ k j).comp G))
+
+/-- Helper: an analytic function that is not identically zero is nonzero almost everywhere. -/
+private theorem ae_ne_zero_of_analytic {P : Type*} [NormedAddCommGroup P] [NormedSpace ℝ P]
+    [FiniteDimensional ℝ P] [MeasurableSpace P] [BorelSpace P] (μ : Measure P)
+    [μ.IsAddHaarMeasure] {g : P → ℝ} (hg : AnalyticOnNhd ℝ g Set.univ) (hne : ∃ y, g y ≠ 0) :
+    ∀ᵐ y ∂μ, g y ≠ 0 := by
+  rw [ae_iff]
+  simpa only [ne_eq, not_not] using measure_zeroSet_of_analytic μ hg hne
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the embedding, as a linear map of the parameters. -/
+private def linE : Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut →ₗ[ℝ]
+    Matrix dIn d ℝ where
+  toFun θ := θ.E
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+/-- Helper: the read of the block, as a linear map of the parameters. -/
+private def linRead : Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut →ₗ[ℝ]
+    Matrix d ((Arch.gated (T := T) (d := d) silu id hid).r 0) ℝ where
+  toFun θ := θ.read 0
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+/-- Helper: the write of the block, as a linear map of the parameters. -/
+private def linWrite : Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut →ₗ[ℝ]
+    Matrix ((Arch.gated (T := T) (d := d) silu id hid).w 0) d ℝ where
+  toFun θ := θ.write 0
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+/-- Helper: the readout, as a linear map of the parameters. -/
+private def linD : Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut →ₗ[ℝ]
+    Matrix d dOut ℝ where
+  toFun θ := θ.D
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+omit [DecidableEq d] in
+/-- Helper: a sum of `card d` ones is not zero. -/
+private theorem sum_one_ne_zero (hd : 2 ≤ Fintype.card d) : ∑ _k : d, (1 : ℝ) * 1 ≠ 0 := by
+  simp only [mul_one, Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+  have : (0 : ℝ) < Fintype.card d := by exact_mod_cast (show 0 < Fintype.card d by omega)
+  linarith
+
+/-- Helper: with `E` whose row `a` is `e_{k₁}` for `a = a₁` and `e_{k₂}` otherwise, and `W` whose
+row `k` is `e_i` for `k = k₁` and `e_j` otherwise, the minor `C_{a₁ i} C_{a₂ j} - C_{a₁ j} C_{a₂ i}`
+of `C = E W` is `1`. -/
+private theorem minor_witness {m n q : Type*} [Fintype n] [DecidableEq m] [DecidableEq n]
+    [DecidableEq q] {a₁ a₂ : m} {k₁ k₂ : n} {i j : q} (ha : a₁ ≠ a₂) (hk : k₁ ≠ k₂)
+    (hij : i ≠ j) :
+    ∃ (E : Matrix m n ℝ) (W : Matrix n q ℝ),
+      (E * W) a₁ i * (E * W) a₂ j - (E * W) a₁ j * (E * W) a₂ i ≠ 0 := by
+  let W : Matrix n q ℝ := Matrix.of fun k l => if l = (if k = k₁ then i else j) then 1 else 0
+  let E : Matrix m n ℝ := Matrix.of fun a k => if k = (if a = a₁ then k₁ else k₂) then 1 else 0
+  -- row `a` of `C = E W` is row `k₁` or `k₂` of `W`
+  have hEW : ∀ a l, (E * W) a l = W (if a = a₁ then k₁ else k₂) l := by
+    intro a l
+    simp only [E, Matrix.mul_apply, Matrix.of_apply, ite_mul, one_mul, zero_mul,
+      Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte]
+  refine ⟨E, W, ?_⟩
+  rw [hEW, hEW, hEW, hEW]
+  simp only [W, Matrix.of_apply, ↓reduceIte, ha.symm, hk.symm, hij, hij.symm, mul_one, mul_zero,
+    sub_zero, ne_eq, one_ne_zero, not_false_eq_true]
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper: an entry of `C = E W_read` is an analytic function of the parameters. -/
+private theorem analytic_C (a : dIn) (j : hid 0 ⊕ hid 0) :
+    AnalyticOnNhd ℝ (fun θ : Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut =>
+      (θ.E * θ.read 0) a j) Set.univ := by
+  have h := analyticOnNhd_mul_apply
+    (linE (T := T) (d := d) (hid := hid) (dIn := dIn) (dOut := dOut)) linRead a j
+  exact h
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper: an entry of `A = W_write D` is an analytic function of the parameters. -/
+private theorem analytic_A (i : hid 0) (o : dOut) :
+    AnalyticOnNhd ℝ (fun θ : Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut =>
+      (θ.write 0 * θ.D) i o) Set.univ := by
+  have h := analyticOnNhd_mul_apply
+    (linWrite (T := T) (d := d) (hid := hid) (dIn := dIn) (dOut := dOut)) linD i o
+  exact h
+
 /-- The conditions hold at generic parameters, when `d_in, d_out, d_hidden ≥ d ≥ 2`. -/
 theorem ae_oneBlockGenericGated
     (μ : Measure (Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut))
     [μ.IsAddHaarMeasure] (hd : 2 ≤ Fintype.card d) (hdIn : Fintype.card d ≤ Fintype.card dIn)
     (hdOut : Fintype.card d ≤ Fintype.card dOut) (hhid : Fintype.card d ≤ Fintype.card (hid 0)) :
     ∀ᵐ θ ∂μ, OneBlockGenericGated θ := by
-  sorry
+  classical
+  -- two distinct coordinates of `h`, two distinct input coordinates, one output coordinate
+  obtain ⟨k₁, k₂, hk⟩ := Fintype.exists_pair_of_one_lt_card (show 1 < Fintype.card d by omega)
+  obtain ⟨a₁, a₂, ha⟩ := Fintype.exists_pair_of_one_lt_card (show 1 < Fintype.card dIn by omega)
+  obtain ⟨o₀⟩ : Nonempty dOut := Fintype.card_pos_iff.1 (by omega)
+  obtain ⟨cD⟩ := Function.Embedding.nonempty_of_card_le hdOut
+  obtain ⟨cR⟩ := Function.Embedding.nonempty_of_card_le hhid
+  -- the parameters with all entries `1`
+  let θ₁ : Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut :=
+    ⟨Matrix.of fun _ _ => 1, fun _ => Matrix.of fun _ _ => 1, fun _ => Matrix.of fun _ _ => 1,
+      Matrix.of fun _ _ => 1⟩
+  -- the ranks: `E` and the write (`Generic/Params.lean`), `D` and the read (invertible minors;
+  -- for the read, `d` of its gate columns)
+  have h1 := ae_rank_E_write μ hdIn (fun ℓ => by obtain rfl := Subsingleton.elim ℓ 0; exact hhid)
+  have h2 := ae_isUnit_det_submatrix μ
+  -- the rows of `A = W_write D` are nonzero: their entries at `o₀` are
+  have h3 : ∀ᵐ θ ∂μ, ∀ i : hid 0, (θ.write 0 * θ.D) i o₀ ≠ 0 := by
+    refine ae_all_iff.2 fun i => ?_
+    exact ae_ne_zero_of_analytic μ (analytic_A i o₀) ⟨θ₁, sum_one_ne_zero hd⟩
+  -- the gate and value columns of `C = E W_read` are nonzero: their entries at `a₁` are
+  have h4 : ∀ᵐ θ ∂μ, ∀ j : hid 0 ⊕ hid 0, (θ.E * θ.read 0) a₁ j ≠ 0 := by
+    refine ae_all_iff.2 fun j => ?_
+    exact ae_ne_zero_of_analytic μ (analytic_C a₁ j) ⟨θ₁, sum_one_ne_zero hd⟩
+  -- two gate columns of `C` are not collinear: a `2 × 2` minor does not vanish
+  have h5 : ∀ᵐ θ ∂μ, ∀ i j : hid 0, i ≠ j →
+      (θ.E * θ.read 0) a₁ (Sum.inl i) * (θ.E * θ.read 0) a₂ (Sum.inl j)
+        - (θ.E * θ.read 0) a₁ (Sum.inl j) * (θ.E * θ.read 0) a₂ (Sum.inl i) ≠ 0 := by
+    refine ae_all_iff.2 fun i => ae_all_iff.2 fun j => ?_
+    by_cases hij : i = j
+    · exact Filter.Eventually.of_forall fun _ h => absurd hij h
+    · obtain ⟨E₀, W₀, hEW⟩ := minor_witness (q := hid 0 ⊕ hid 0) ha hk
+        (Sum.inl_injective.ne hij)
+      let θ₀ : Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut :=
+        ⟨E₀, fun ℓ => Fin.cases W₀ (fun l => l.elim0) ℓ, 0, 0⟩
+      have hg : AnalyticOnNhd ℝ
+          (fun θ : Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut =>
+            (θ.E * θ.read 0) a₁ (Sum.inl i) * (θ.E * θ.read 0) a₂ (Sum.inl j)
+              - (θ.E * θ.read 0) a₁ (Sum.inl j) * (θ.E * θ.read 0) a₂ (Sum.inl i)) Set.univ :=
+        ((analytic_C a₁ (Sum.inl i)).mul (analytic_C a₂ (Sum.inl j))).sub
+          ((analytic_C a₁ (Sum.inl j)).mul (analytic_C a₂ (Sum.inl i)))
+      exact (ae_ne_zero_of_analytic μ hg ⟨θ₀, hEW⟩).mono fun _ h _ => h
+  filter_upwards [h1, h2, h3, h4, h5] with θ h1 h2 h3 h4 h5
+  refine ⟨h1.1, rank_eq_card_of_isUnit_det θ.D cD (h2.2.1 cD),
+    rank_eq_card_of_isUnit_det (θ.read 0) (cR.trans Function.Embedding.inl)
+      (h2.1 0 (cR.trans Function.Embedding.inl)), h1.2 0,
+    fun i hi => h3 i (congrFun hi o₀), fun i hi => h4 (Sum.inl i) (congrFun hi a₁), ?_,
+    fun i hi => h4 (Sum.inr i) (congrFun hi a₁)⟩
+  -- if `c_i = r c_j`, the minor of the gate columns `i`, `j` vanishes
+  intro i j hij r hr
+  have e1 : (θ.E * θ.read 0) a₁ (Sum.inl i) = r * (θ.E * θ.read 0) a₁ (Sum.inl j) :=
+    congrFun hr a₁
+  have e2 : (θ.E * θ.read 0) a₂ (Sum.inl i) = r * (θ.E * θ.read 0) a₂ (Sum.inl j) :=
+    congrFun hr a₂
+  apply h5 i j hij
+  rw [e1, e2]
+  ring
 
 /-- **Theorem 5.1 for a SwiGLU block:** with one block, without normalization and without biases,
 with `d_in, d_out, d_hidden ≥ d ≥ 2`, the functional dimension is `P - 2 d² - d_hidden` at generic
@@ -455,7 +619,7 @@ theorem ae_funDim_swiglu_oneBlock
     (hdOut : Fintype.card d ≤ Fintype.card dOut) (hhid : Fintype.card d ≤ Fintype.card (hid 0)) :
     ∀ᵐ θ ∂μ, funDim (Arch.gated silu id hid) 0 θ
         + (2 * Fintype.card d ^ 2 + Fintype.card (hid 0))
-      = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut) := by
-  sorry
+      = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut) :=
+  (ae_oneBlockGenericGated μ hd hdIn hdOut hhid).mono fun θ hθ => funDim_swiglu_oneBlock θ hθ
 
 end Skips
