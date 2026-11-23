@@ -225,6 +225,18 @@ theorem finrank_antisymmetric :
   exact Fintype.card_congr
     (((Equiv.prodCongr e e).trans (Equiv.prodComm _ _)).subtypeEquiv fun p => Iff.rfl)
 
+/-- The direction `cobDir θ X` is linear in `X`. -/
+private noncomputable def cobDirLin : (Fin (L + 1) → Matrix d d ℝ) →ₗ[ℝ] Params A dIn dOut where
+  toFun := cobDir θ
+  map_add' X Y := by
+    refine Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_ <;>
+      simp only [cobDir, Params.add_E, Params.add_read, Params.add_write, Params.add_D,
+        Pi.add_apply, Matrix.mul_add, Matrix.add_mul, neg_add]
+  map_smul' c X := by
+    refine Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_ <;>
+      simp only [cobDir, Params.smul_E, Params.smul_read, Params.smul_write, Params.smul_D,
+        Pi.smul_apply, Matrix.mul_smul, Matrix.smul_mul, smul_neg, RingHom.id_apply]
+
 /-- **Theorem 4.3, under pre-RMSNorm, for the changes of basis.** If `E` and every write have
 rank `d`, the functional dimension of a network without skip connections is at most
 `P - (L + 1) d (d - 1) / 2`. -/
@@ -233,7 +245,31 @@ theorem funDim_add_le_skipless_rmsNorm {ε : ℝ} (hε : 0 < ε) (hA : A.χ = rm
     (hE : θ.E.rank = Fintype.card d) (hw : ∀ ℓ, (θ.write ℓ).rank = Fintype.card d) :
     funDim A 0 θ + (L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2)
       ≤ Module.finrank ℝ (Params A dIn dOut) := by
-  sorry
+  have hdiff : ∀ x : Matrix T dIn ℝ,
+      DifferentiableAt ℝ (fun θ' : Params A dIn dOut => eval A 0 θ' x) θ := fun x =>
+    (differentiable_eval hf (by rw [hA]; exact differentiable_rmsNorm hε) x).differentiableAt
+  -- The directions `cobDir θ X`, `X_ℓ` antisymmetric, are the range of a linear map `Φ`.
+  let Φ : (Fin (L + 1) → antisymmetric d) →ₗ[ℝ] Params A dIn dOut :=
+    (cobDirLin θ).comp (LinearMap.compLeft (antisymmetric d).subtype (Fin (L + 1)))
+  -- `Φ` is injective (Lemma B.1).
+  have hΦ : Function.Injective Φ := by
+    intro X Y h
+    have h' : cobDir θ (fun ℓ => (X ℓ : Matrix d d ℝ))
+        = cobDir θ (fun ℓ => (Y ℓ : Matrix d d ℝ)) := h
+    exact funext fun ℓ => Subtype.ext (congrFun (cobDir_injective θ hE hw h') ℓ)
+  -- These directions are flat.
+  have hV : LinearMap.range Φ ≤ flat A 0 θ := by
+    intro v hv
+    obtain ⟨X, rfl⟩ := LinearMap.mem_range.1 hv
+    exact cobDir_mem_flat_skipless_rmsNorm θ hε hA hf (fun ℓ => (X ℓ : Matrix d d ℝ))
+      fun ℓ => (X ℓ).2
+  -- They span a space of dimension `(L + 1) d (d - 1) / 2`.
+  have hdim : Module.finrank ℝ (LinearMap.range Φ)
+      = (L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2) := by
+    rw [LinearMap.finrank_range_of_inj hΦ, Module.finrank_pi_fintype, finrank_antisymmetric,
+      Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]
+  rw [← hdim]
+  exact funDim_add_finrank_le_of_le_flat θ hdiff _ hV
 
 /-- **Skips paper, the upper bound for residual networks under pre-RMSNorm, for the one change of
 basis.** If `E` has rank `d`, the functional dimension of a residual network is at most
