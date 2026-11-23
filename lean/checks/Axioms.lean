@@ -78,3 +78,25 @@ import SkipsLean
 #print axioms Skips.le_one_sub_gaussCdf
 #print axioms Skips.hasDerivAt_gelu
 #print axioms Skips.gelu_sub_gelu_neg
+-- The one-block theorem for general activations; GELU and GeGLU
+#print axioms Skips.flat_le_range_cobDir_mlp
+#print axioms Skips.funDim_mlp_oneBlock
+#print axioms Skips.ae_funDim_mlp_oneBlock
+#print axioms Skips.tanh_unitsRigid
+#print axioms Skips.flat_le_cobDir_add_rescaleDir_gated
+#print axioms Skips.funDim_gated_oneBlock
+#print axioms Skips.ae_funDim_gated_oneBlock
+#print axioms Skips.silu_gatedUnitsRescale
+#print axioms Skips.gelu_expansion_pos
+#print axioms Skips.gelu_expansion_neg
+#print axioms Skips.geluDeriv_expansion_pos
+#print axioms Skips.geluDeriv_expansion_neg
+#print axioms Skips.gelu_units_flat_eq_zero
+#print axioms Skips.flat_le_range_cobDir_gelu
+#print axioms Skips.funDim_gelu_oneBlock
+#print axioms Skips.ae_funDim_gelu_oneBlock
+#print axioms Skips.gelu_gated_units_flat_of_value_ne_zero
+#print axioms Skips.gelu_gated_units_flat
+#print axioms Skips.flat_le_cobDir_add_rescaleDir_geglu
+#print axioms Skips.funDim_geglu_oneBlock
+#print axioms Skips.ae_funDim_geglu_oneBlock
