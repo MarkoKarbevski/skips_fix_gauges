@@ -271,6 +271,39 @@ theorem funDim_add_le_skipless_rmsNorm {ε : ℝ} (hε : 0 < ε) (hA : A.χ = rm
   rw [← hdim]
   exact funDim_add_finrank_le_of_le_flat θ hdiff _ hV
 
+/-- A matrix `M` of full column rank can be cancelled on the left: `M X = M Y` gives `X = Y`. -/
+private theorem mul_left_cancel_of_rank {m : Type*} [Fintype m] {M : Matrix m d ℝ}
+    (hM : M.rank = Fintype.card d) {X Y : Matrix d d ℝ} (h : M * X = M * Y) : X = Y := by
+  -- `v ↦ v M` is onto, so some `B` has `B M = 1`.
+  obtain ⟨B, hB⟩ : ∃ B : Matrix d m ℝ, B * M = 1 := by
+    have hs := (Matrix.vecMul_surjective_iff_rank_eq_card (M := M)).2 hM
+    choose v hv using fun i : d => hs (Pi.single i 1)
+    have hv' : ∀ i, v i ᵥ* M = Pi.single i 1 := hv
+    refine ⟨Matrix.of v, ?_⟩
+    ext i j
+    rw [Matrix.mul_apply_eq_vecMul, show (Matrix.of v) i = v i from rfl, hv',
+      Matrix.one_eq_pi_single]
+  calc X = B * M * X := by rw [hB, Matrix.one_mul]
+    _ = B * M * Y := by rw [Matrix.mul_assoc, h, ← Matrix.mul_assoc]
+    _ = Y := by rw [hB, Matrix.one_mul]
+
+/-- Under pre-RMSNorm with `ε > 0`, in a residual network, the direction of one antisymmetric `X`
+at all hidden states is flat. -/
+private theorem cobDir_const_mem_flat_residual_rmsNorm {ε : ℝ} (hε : 0 < ε)
+    (hA : A.χ = rmsNorm ε) (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ)) (X : Matrix d d ℝ)
+    (hX : Xᵀ = -X) :
+    cobDir θ (fun _ => X) ∈ flat A 1 θ := by
+  have hdiff : ∀ x : Matrix T dIn ℝ,
+      DifferentiableAt ℝ (fun θ' : Params A dIn dOut => eval A 1 θ' x) θ := fun x =>
+    (differentiable_eval hf (by rw [hA]; exact differentiable_rmsNorm hε) x).differentiableAt
+  -- The same orthogonal change of basis `exp (τ X)` at all hidden states keeps the function of a
+  -- residual network (Theorem 3.3 (i) under pre-RMSNorm).
+  refine mem_flat_of_hasDerivAt θ hdiff
+    (fun τ => θ.cob (fun _ => expGL X τ) (fun _ => expGL X τ)) (cobDir θ fun _ => X)
+    (hasDerivAt_cob_expGL θ fun _ => X) (cob_expGL_zero θ fun _ => X) ?_
+  exact Filter.Eventually.of_forall fun τ x =>
+    eval_cob_residual_rmsNorm θ x ε hA (expGL X τ) (expGL_mem_orthogonalGroup hX τ)
+
 /-- **Skips paper, the upper bound for residual networks under pre-RMSNorm, for the one change of
 basis.** If `E` has rank `d`, the functional dimension of a residual network is at most
 `P - d (d - 1) / 2`. -/
@@ -278,6 +311,28 @@ theorem funDim_add_le_residual_rmsNorm {ε : ℝ} (hε : 0 < ε) (hA : A.χ = rm
     (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ)) (hE : θ.E.rank = Fintype.card d) :
     funDim A 1 θ + Fintype.card d * (Fintype.card d - 1) / 2
       ≤ Module.finrank ℝ (Params A dIn dOut) := by
-  sorry
+  have hdiff : ∀ x : Matrix T dIn ℝ,
+      DifferentiableAt ℝ (fun θ' : Params A dIn dOut => eval A 1 θ' x) θ := fun x =>
+    (differentiable_eval hf (by rw [hA]; exact differentiable_rmsNorm hε) x).differentiableAt
+  -- The directions `cobDir θ (fun _ => X)`, `X` antisymmetric, are the range of a linear map `Φ`.
+  let Φ : antisymmetric d →ₗ[ℝ] Params A dIn dOut :=
+    (cobDirLin θ).comp (LinearMap.pi fun _ => (antisymmetric d).subtype)
+  -- `Φ` is injective: its `E` component is `E X`, and `E` has rank `d`.
+  have hΦ : Function.Injective Φ := by
+    intro X Y h
+    have h' : cobDir θ (fun _ => (X : Matrix d d ℝ))
+        = cobDir θ (fun _ => (Y : Matrix d d ℝ)) := h
+    exact Subtype.ext (mul_left_cancel_of_rank hE (congrArg Params.E h'))
+  -- These directions are flat.
+  have hV : LinearMap.range Φ ≤ flat A 1 θ := by
+    intro v hv
+    obtain ⟨X, rfl⟩ := LinearMap.mem_range.1 hv
+    exact cobDir_const_mem_flat_residual_rmsNorm θ hε hA hf X X.2
+  -- They span a space of dimension `d (d - 1) / 2`.
+  have hdim : Module.finrank ℝ (LinearMap.range Φ)
+      = Fintype.card d * (Fintype.card d - 1) / 2 := by
+    rw [LinearMap.finrank_range_of_inj hΦ, finrank_antisymmetric]
+  rw [← hdim]
+  exact funDim_add_finrank_le_of_le_flat θ hdiff _ hV
 
 end Skips
