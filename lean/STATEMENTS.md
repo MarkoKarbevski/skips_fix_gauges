@@ -141,6 +141,9 @@ Notes for the authors on these statements:
 | S the upper bound for residual networks, changes of basis only: `fd ≤ P − d²` | `cobDir_const_mem_flat_residual`, `funDim_add_le_residual` | `Dimension/UpperBound.lean` | proved |
 | S the same under pre-RMSNorm (`ε > 0`): `fd ≤ P − d(d−1)/2` | `funDim_add_le_residual_rmsNorm` | `Dimension/UpperBoundRMSNorm.lean` | proved |
 | S the upper bounds for residual networks at generic parameters | `ae_funDim_add_le_residual`, `ae_funDim_add_le_residual_rmsNorm` | `Generic/Params.lean` | proved |
+| S Theorem 3.3 (i), "only if", without normalization: if every block is nonzero for some value of its parameters and `G_0, …, G_L` preserve the function of the residual network for all values of the parameters, then `G_0 = ⋯ = G_L`; and the equivalence | `cob_eq_of_eval_cob_residual`, `eval_cob_residual_iff` | `Residual/OneChangeOfBasis.lean` | in work |
+| S Theorem 3.3 (i), "only if", under pre-RMSNorm (`ε > 0`): the same, and the common matrix is orthogonal; and the equivalence | `cob_eq_orthogonal_of_eval_cob_residual_rmsNorm`, `eval_cob_residual_rmsNorm_iff` | `Residual/OneChangeOfBasis.lean` | in work |
+| S Theorem 3.2 (ii), second sentence: under pre-RMSNorm, orthogonal `Q_0 = I, Q_1, …, Q_L` make every `Q_{ℓ−1}ᵀ A_ℓ Q_ℓ` upper triangular and preserve the function (RQ factorization) | `exists_orthogonal_mul_upperTriangular`, `exists_cob_learned_upperTriangular` | `Residual/OneChangeOfBasis.lean` | in work |
 
 Not stated yet from Section 3 of the skips paper: Theorem 3.2 (ii), second sentence (invertible
 skips made upper triangular under pre-RMSNorm); Theorem 3.3 (i), "only if"; Theorem 3.3 (ii), the
