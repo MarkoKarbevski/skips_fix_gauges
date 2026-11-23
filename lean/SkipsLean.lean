@@ -19,3 +19,4 @@ import SkipsLean.OneBlock.Tanh
 import SkipsLean.OneBlock.UnitsSwiGLU
 import SkipsLean.Dimension.Rescaling
 import SkipsLean.OneBlock.SwiGLU
+import SkipsLean.Activations.Gaussian

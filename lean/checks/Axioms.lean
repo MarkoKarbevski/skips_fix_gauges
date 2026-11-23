@@ -70,3 +70,11 @@ import SkipsLean
 #print axioms Skips.ae_oneBlockGenericGated
 #print axioms Skips.ae_funDim_swiglu_oneBlock
 #print axioms Skips.silu_gated_units_flat_of_value_ne_zero
+-- The normal distribution function and GELU
+#print axioms Skips.hasDerivAt_gaussCdf
+#print axioms Skips.gaussCdf_neg
+#print axioms Skips.tendsto_gaussCdf_atTop
+#print axioms Skips.one_sub_gaussCdf_le
+#print axioms Skips.le_one_sub_gaussCdf
+#print axioms Skips.hasDerivAt_gelu
+#print axioms Skips.gelu_sub_gelu_neg
