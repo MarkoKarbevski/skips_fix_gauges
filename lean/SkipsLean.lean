@@ -10,3 +10,4 @@ import SkipsLean.Dimension.Space
 import SkipsLean.Dimension.Functional
 import SkipsLean.Dimension.UpperBound
 import SkipsLean.Dimension.UpperBoundRMSNorm
+import SkipsLean.Generic.AnalyticZeroSet
