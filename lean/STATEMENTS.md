@@ -72,6 +72,11 @@ in work are on the branch `lean-wip`.
 | D Theorem 4.3 at generic parameters, changes of basis only, without normalization and under pre-RMSNorm | `ae_funDim_add_le_skipless`, `ae_funDim_add_le_skipless_rmsNorm` | `Generic/Params.lean` | proved |
 | D Lemma C.3 for tanh, with the linear term, the constant and the biases | `tanh_units_flat_eq_zero` | `OneBlock/UnitsTanh.lean` | proved |
 | D Lemma C.3 for SwiGLU (gate SiLU), with the linear term, the constant and the biases: a flat direction only rescales the value of each hidden unit | `silu`, `siluDeriv`, `hasDerivAt_silu`, `silu_gated_units_flat` | `OneBlock/UnitsSwiGLU.lean` | proved |
+| a network of gated blocks (Section 2, "Blocks"): read `[W_g | W_v]`, `f = σ(gate)·value` | `Arch.gated σ χ hid` | `Network/Blocks.lean` | defined |
+| D Appendix B: the rescaling `(e_i, a_i) ↦ (e_i/λ, λ a_i)` of a gated hidden unit preserves the function; its direction | `eval_rescale`, `rescaleDir`, `rescaleDir_mem_flat` | `Dimension/Rescaling.lean` | in work |
+| D Lemma B.1 for gated blocks: the changes of basis and the rescalings move `θ` in independent directions | `cobDir_add_rescaleDir_injective` | `Dimension/Rescaling.lean` | in work |
+| D Theorem 4.3 for gated blocks, without normalization: `fd ≤ P − (L+1)d² − s`, `s` the number of hidden units | `funDim_add_le_skipless_gated` | `Dimension/Rescaling.lean` | in work |
+| D Theorem 5.1 / C.1 for a SwiGLU block: `fd = P − 2d² − d_hidden`, under the conditions of the proof and at generic parameters | `OneBlockGenericGated`, `flat_le_cobDir_add_rescaleDir_swiglu`, `funDim_swiglu_oneBlock`, `ae_oneBlockGenericGated`, `ae_funDim_swiglu_oneBlock` | `OneBlock/SwiGLU.lean` | in work |
 | an MLP network with activation `σ` (Section 2, "Blocks") | `Arch.mlp σ χ hid` | `Network/Blocks.lean` | defined |
 | D Lemma C.2: the directions that keep `C = E W_read` and `A = W_write D` are those of two changes of basis | `keeps_products_iff_mem_range_cobDir` | `OneBlock/Factorization.lean` | proved |
 | the conditions of the proof of Theorem C.1 (ranks `d`; rows of `A` nonzero; columns of `C` nonzero and pairwise non-collinear) | `OneBlockGeneric` | `OneBlock/Tanh.lean` | defined |
@@ -86,6 +91,9 @@ Notes for the authors on these statements:
 - "At generic parameters" is written `∀ᵐ θ ∂μ` for an arbitrary additive Haar measure `μ` on the
   parameter space: a Lebesgue measure of that space, without a choice of coordinates. Any two
   differ by a positive constant, so they have the same sets of measure zero.
+- Lemma C.3 for SwiGLU is stated with the hypothesis "(e_i, β'_i) not proportional to (c_i, β_i)"
+  as in the paper, but its Lean proof does not use it: for SwiGLU only `e_i ≠ 0` is needed. The
+  conditions of the one-block theorem for SwiGLU (`OneBlockGenericGated`) therefore leave it out.
 - Theorem 4.3 is stated under the conditions that its proof uses (`E` and every write have rank
   `d`, the maps `f_ℓ` are differentiable) and not yet "at generic parameters". It counts the
   changes of basis only, without the number `s` of the symmetries inside the blocks, which depend
