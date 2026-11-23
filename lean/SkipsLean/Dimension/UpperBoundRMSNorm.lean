@@ -1,4 +1,5 @@
 import SkipsLean.Dimension.UpperBound
+import SkipsLean.Residual.LearnedSkips
 
 /-!
 # The upper bound from the changes of basis, under pre-RMSNorm
@@ -173,10 +174,56 @@ def antisymmetric (d : Type*) [Fintype d] : Submodule ℝ (Matrix d d ℝ) where
     simp only [Set.mem_ofPred_eq] at hX ⊢
     rw [Matrix.transpose_smul, hX, smul_neg]
 
+omit [DecidableEq d] in
+/-- An antisymmetric matrix is determined by its entries above the diagonal (for a linear order
+on `d`), and these can be chosen freely. -/
+private def antisymmetricEquiv [LinearOrder d] :
+    antisymmetric d ≃ₗ[ℝ] ({p : d × d // p.1 < p.2} → ℝ) where
+  toFun X p := (X : Matrix d d ℝ) p.1.1 p.1.2
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+  invFun f := ⟨Matrix.of fun i j =>
+      if h : i < j then f ⟨(i, j), h⟩ else if h' : j < i then -f ⟨(j, i), h'⟩ else 0, by
+    -- the matrix built from `f` is antisymmetric
+    change Matrix.transpose _ = -_
+    ext i j
+    simp only [transpose_apply, of_apply, Matrix.neg_apply]
+    rcases lt_trichotomy i j with h | rfl | h
+    · rw [dite_eq_right (not_lt.2 h.le), dite_eq_left h, dite_eq_left h]
+    · rw [dite_eq_right (lt_irrefl i), dite_eq_right (lt_irrefl i), neg_zero]
+    · rw [dite_eq_left h, dite_eq_right (not_lt.2 h.le), dite_eq_left h, neg_neg]⟩
+  left_inv X := by
+    obtain ⟨X, hX⟩ := X
+    -- the entries of an antisymmetric matrix: `X j i = -X i j`, so `X i i = 0`
+    have hX' : ∀ i j, X j i = -X i j := fun i j => by
+      have h := congrFun (congrFun (show Xᵀ = -X from hX) i) j
+      rwa [transpose_apply, Matrix.neg_apply] at h
+    apply Subtype.ext
+    ext i j
+    simp only [of_apply]
+    rcases lt_trichotomy i j with h | rfl | h
+    · rw [dite_eq_left h]
+    · rw [dite_eq_right (lt_irrefl i), dite_eq_right (lt_irrefl i)]
+      have := hX' i i
+      linarith
+    · rw [dite_eq_right (not_lt.2 h.le), dite_eq_left h, hX' j i]
+  right_inv f := by
+    funext p
+    simp only [of_apply]
+    rw [dite_eq_left p.2]
+
 /-- The antisymmetric `d × d` matrices form a space of dimension `d (d - 1) / 2`. -/
 theorem finrank_antisymmetric :
     Module.finrank ℝ (antisymmetric d) = Fintype.card d * (Fintype.card d - 1) / 2 := by
-  sorry
+  -- Order `d` through a numbering `e : d ≃ Fin n`.
+  let e := Fintype.equivFin d
+  let _ : LinearOrder d := LinearOrder.lift' e e.injective
+  -- An antisymmetric matrix is a free choice of its entries above the diagonal.
+  rw [antisymmetricEquiv.finrank_eq, Module.finrank_pi, ← card_below_diagonal,
+    ← Fintype.card_subtype]
+  -- The pairs `i < j` of `d` are, through `e` and a swap, the pairs below the diagonal of `Fin n`.
+  exact Fintype.card_congr
+    (((Equiv.prodCongr e e).trans (Equiv.prodComm _ _)).subtypeEquiv fun p => Iff.rfl)
 
 /-- **Theorem 4.3, under pre-RMSNorm, for the changes of basis.** If `E` and every write have
 rank `d`, the functional dimension of a network without skip connections is at most
