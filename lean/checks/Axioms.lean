@@ -54,3 +54,8 @@ import SkipsLean
 #print axioms Skips.ae_funDim_add_le_residual
 #print axioms Skips.ae_funDim_add_le_residual_rmsNorm
 #print axioms Skips.tanh_units_flat_eq_zero
+#print axioms Skips.keeps_products_iff_mem_range_cobDir
+#print axioms Skips.flat_le_range_cobDir_tanh
+#print axioms Skips.funDim_tanh_oneBlock
+#print axioms Skips.ae_oneBlockGeneric
+#print axioms Skips.ae_funDim_tanh_oneBlock
