@@ -73,9 +73,9 @@ in work are on the branch `lean-wip`.
 | D Lemma C.3 for tanh, with the linear term, the constant and the biases | `tanh_units_flat_eq_zero` | `OneBlock/UnitsTanh.lean` | proved |
 | D Lemma C.3 for SwiGLU (gate SiLU), with the linear term, the constant and the biases: a flat direction only rescales the value of each hidden unit | `silu`, `siluDeriv`, `hasDerivAt_silu`, `silu_gated_units_flat` (the paper's form), `silu_gated_units_flat_of_value_ne_zero` (without the hypothesis on proportionality) | `OneBlock/UnitsSwiGLU.lean` | proved |
 | a network of gated blocks (Section 2, "Blocks"): read `[W_g | W_v]`, `f = σ(gate)·value` | `Arch.gated σ χ hid` | `Network/Blocks.lean` | defined |
-| D Appendix B: the rescaling `(e_i, a_i) ↦ (e_i/λ, λ a_i)` of a gated hidden unit preserves the function; its direction | `eval_rescale`, `rescaleDir`, `rescaleDir_mem_flat` | `Dimension/Rescaling.lean` | in work |
-| D Lemma B.1 for gated blocks: the changes of basis and the rescalings move `θ` in independent directions | `cobDir_add_rescaleDir_injective` | `Dimension/Rescaling.lean` | in work |
-| D Theorem 4.3 for gated blocks, without normalization: `fd ≤ P − (L+1)d² − s`, `s` the number of hidden units | `funDim_add_le_skipless_gated` | `Dimension/Rescaling.lean` | in work |
+| D Appendix B: the rescaling `(e_i, a_i) ↦ (e_i/λ, λ a_i)` of a gated hidden unit preserves the function; its direction | `eval_rescale`, `rescaleDir`, `rescaleDir_mem_flat` | `Dimension/Rescaling.lean` | proved |
+| D Lemma B.1 for gated blocks: the changes of basis and the rescalings move `θ` in independent directions | `cobDir_add_rescaleDir_injective` | `Dimension/Rescaling.lean` | proved |
+| D Theorem 4.3 for gated blocks, without normalization: `fd ≤ P − (L+1)d² − s`, `s` the number of hidden units | `funDim_add_le_skipless_gated` | `Dimension/Rescaling.lean` | proved |
 | D Theorem 5.1 / C.1 for a SwiGLU block: `fd = P − 2d² − d_hidden`, under the conditions of the proof and at generic parameters | `OneBlockGenericGated`, `flat_le_cobDir_add_rescaleDir_swiglu`, `funDim_swiglu_oneBlock`, `ae_oneBlockGenericGated`, `ae_funDim_swiglu_oneBlock` | `OneBlock/SwiGLU.lean` | in work |
 | an MLP network with activation `σ` (Section 2, "Blocks") | `Arch.mlp σ χ hid` | `Network/Blocks.lean` | defined |
 | D Lemma C.2: the directions that keep `C = E W_read` and `A = W_write D` are those of two changes of basis | `keeps_products_iff_mem_range_cobDir` | `OneBlock/Factorization.lean` | proved |
