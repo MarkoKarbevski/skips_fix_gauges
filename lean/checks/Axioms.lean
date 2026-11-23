@@ -59,3 +59,5 @@ import SkipsLean
 #print axioms Skips.funDim_tanh_oneBlock
 #print axioms Skips.ae_oneBlockGeneric
 #print axioms Skips.ae_funDim_tanh_oneBlock
+#print axioms Skips.hasDerivAt_silu
+#print axioms Skips.silu_gated_units_flat
