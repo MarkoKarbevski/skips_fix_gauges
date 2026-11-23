@@ -167,6 +167,27 @@ theorem rescaleDir_mem_flat (hσ : Differentiable ℝ σ) (α : ∀ ℓ, hid ℓ
   show Real.exp (τ * -(α ℓ i)) * θ.read ℓ k (Sum.inr i) = _
   rw [mul_neg, Real.exp_neg]
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (the private `mul_left_cancel_of_rank` of `UpperBound.lean`): a matrix `M` of rank equal
+to its number of columns cancels on the left, `M X = M Y → X = Y` (its kernel is `0` by
+rank–nullity). -/
+private theorem cancel_left_of_rank {m n k : Type*} [Fintype n] (M : Matrix m n ℝ)
+    (hM : M.rank = Fintype.card n) {X Y : Matrix n k ℝ} (h : M * X = M * Y) : X = Y := by
+  -- `v ↦ M v` is injective: `rank M + dim ker M = card n`
+  have hinj : Function.Injective M.mulVecLin := by
+    rw [← LinearMap.ker_eq_bot, ← Submodule.finrank_eq_zero]
+    have := LinearMap.finrank_range_add_finrank_ker M.mulVecLin
+    rw [Module.finrank_fintype_fun_eq_card] at this
+    rw [Matrix.rank] at hM
+    omega
+  -- compare `X` and `Y` column by column
+  ext i j
+  have hcol : M.mulVecLin (fun l => X l j) = M.mulVecLin (fun l => Y l j) := by
+    funext p
+    have := congrFun (congrFun h p) j
+    simpa [Matrix.mul_apply, Matrix.mulVec, dotProduct] using this
+  exact congrFun (hinj hcol) i
+
 /-- **Lemma B.1 for gated blocks.** If `E` and every write have rank `d` and no value column of a
 read vanishes, the direction `cobDir θ X + rescaleDir θ α` determines `X` and `α`. -/
 theorem cobDir_add_rescaleDir_injective (hE : θ.E.rank = Fintype.card d)
@@ -174,7 +195,41 @@ theorem cobDir_add_rescaleDir_injective (hE : θ.E.rank = Fintype.card d)
     (hv : ∀ ℓ i, (fun k => θ.read ℓ k (Sum.inr i)) ≠ 0) :
     Function.Injective fun p : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) =>
       cobDir θ p.1 + rescaleDir θ p.2 := by
-  sorry
+  rintro ⟨X, α⟩ ⟨X', α'⟩ h
+  -- the embedding component: `E X_0 = E X'_0` (the rescalings leave `E` alone), and `E` has
+  -- rank `d`
+  have h0 : θ.E * X 0 = θ.E * X' 0 := by
+    have hE0 := congrArg Params.E h
+    change θ.E * X 0 + 0 = θ.E * X' 0 + 0 at hE0
+    rwa [add_zero, add_zero] at hE0
+  have hX0 : X 0 = X' 0 := cancel_left_of_rank θ.E hE h0
+  -- block `ℓ`: if `X_{ℓ-1} = X'_{ℓ-1}`, then `α_ℓ = α'_ℓ` and `X_ℓ = X'_ℓ`
+  have key : ∀ ℓ : Fin L, X ℓ.castSucc = X' ℓ.castSucc → α ℓ = α' ℓ ∧ X ℓ.succ = X' ℓ.succ := by
+    intro ℓ hℓ
+    -- the value column `e_i` of hidden unit `i` moves by `-X_{ℓ-1} e_i - α_i e_i`, and the first
+    -- terms agree; an entry `k` with `e_i k ≠ 0` gives `α_i = α'_i`
+    have hα : α ℓ = α' ℓ := by
+      funext i
+      obtain ⟨k, hk⟩ := Function.ne_iff.mp (hv ℓ i)
+      have hr := congrFun (congrFun (congrArg (fun η => η.read ℓ) h) k) (Sum.inr i)
+      change -(X ℓ.castSucc * θ.read ℓ) k (Sum.inr i) + -(α ℓ i) * θ.read ℓ k (Sum.inr i) =
+        -(X' ℓ.castSucc * θ.read ℓ) k (Sum.inr i) + -(α' ℓ i) * θ.read ℓ k (Sum.inr i) at hr
+      rw [hℓ, add_right_inj] at hr
+      exact neg_inj.mp (mul_right_cancel₀ hk hr)
+    refine ⟨hα, ?_⟩
+    -- the write moves by `W X_ℓ + diag(α_ℓ) W`; the diagonal terms agree, and `W` has rank `d`
+    have hw' := congrArg (fun η => η.write ℓ) h
+    change θ.write ℓ * X ℓ.succ + Matrix.of (fun i k => α ℓ i * θ.write ℓ i k) =
+      θ.write ℓ * X' ℓ.succ + Matrix.of (fun i k => α' ℓ i * θ.write ℓ i k) at hw'
+    rw [hα, add_left_inj] at hw'
+    exact cancel_left_of_rank (θ.write ℓ) (hw ℓ) hw'
+  -- by induction along the network, `X = X'`; then `α = α'`
+  have hX : ∀ ℓ : Fin (L + 1), X ℓ = X' ℓ := by
+    intro ℓ
+    induction ℓ using Fin.induction with
+    | zero => exact hX0
+    | succ ℓ ih => exact (key ℓ ih).2
+  exact Prod.ext (funext hX) (funext fun ℓ => (key ℓ (hX ℓ.castSucc)).1)
 
 /-- **Theorem 4.3 for gated blocks, without normalization,** under the conditions of its proof:
 the functional dimension is at most `P - (L + 1) d² - s`, with `s` the number of hidden units of
