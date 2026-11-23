@@ -605,15 +605,17 @@ private lemma unit_rescale {n k q : Type*} [Fintype n] [Fintype k] [Fintype q]
     linear_combination this
   exact ⟨hψe, hψβ', hψa⟩
 
-/-- **Lemma C.3 for SwiGLU.** Rows are indexed by `n` (the coordinates of an input `x`), hidden
-units by `q`, and the coordinates of the output by `k`. -/
-theorem silu_gated_units_flat {n k q : Type*} [Fintype n] [Fintype k] [Fintype q]
+/-- **Lemma C.3 for SwiGLU, in the form that its proof gives:** the hypothesis of the paper that
+`(e_i, β'_i)` is not proportional to `(c_i, β_i)` is not needed, only `e_i ≠ 0`. Rows are indexed by
+`n` (the coordinates of an input `x`), hidden units by `q`, and the coordinates of the output by
+`k`. -/
+theorem silu_gated_units_flat_of_value_ne_zero {n k q : Type*} [Fintype n] [Fintype k] [Fintype q]
     (c : q → n → ℝ) (β : q → ℝ) (e : q → n → ℝ) (β' : q → ℝ) (a : q → k → ℝ)
     (ψM : Matrix n k ℝ) (ψγ : k → ℝ) (ψc : q → n → ℝ) (ψβ : q → ℝ) (ψe : q → n → ℝ)
     (ψβ' : q → ℝ) (ψa : q → k → ℝ)
     (ha : ∀ i, a i ≠ 0) (hc : ∀ i, c i ≠ 0)
     (hcol : ∀ i j, i ≠ j → ∀ r : ℝ, c i ≠ r • c j)
-    (he : ∀ i, e i ≠ 0) (hec : ∀ i, ∀ r : ℝ, (e i, β' i) ≠ r • (c i, β i))
+    (he : ∀ i, e i ≠ 0)
     (h : ∀ x : n → ℝ,
       x ᵥ* ψM + ψγ + ∑ i,
         ((silu (x ⬝ᵥ c i + β i) * (x ⬝ᵥ e i + β' i)) • ψa i
@@ -640,5 +642,24 @@ theorem silu_gated_units_flat {n k q : Type*} [Fintype n] [Fintype k] [Fintype q
   refine ⟨?_, hγ, funext hψc, funext hψβ, α, hα⟩
   ext m o
   simpa [hγ] using congrFun (hlin (Pi.single m 1)) o
+
+/-- **Lemma C.3 for SwiGLU, as the paper states it,** with the hypothesis that `(e_i, β'_i)` is not
+proportional to `(c_i, β_i)`. Rows are indexed by `n` (the coordinates of an input `x`), hidden
+units by `q`, and the coordinates of the output by `k`. -/
+theorem silu_gated_units_flat {n k q : Type*} [Fintype n] [Fintype k] [Fintype q]
+    (c : q → n → ℝ) (β : q → ℝ) (e : q → n → ℝ) (β' : q → ℝ) (a : q → k → ℝ)
+    (ψM : Matrix n k ℝ) (ψγ : k → ℝ) (ψc : q → n → ℝ) (ψβ : q → ℝ) (ψe : q → n → ℝ)
+    (ψβ' : q → ℝ) (ψa : q → k → ℝ)
+    (ha : ∀ i, a i ≠ 0) (hc : ∀ i, c i ≠ 0)
+    (hcol : ∀ i j, i ≠ j → ∀ r : ℝ, c i ≠ r • c j)
+    (he : ∀ i, e i ≠ 0) (_hec : ∀ i, ∀ r : ℝ, (e i, β' i) ≠ r • (c i, β i))
+    (h : ∀ x : n → ℝ,
+      x ᵥ* ψM + ψγ + ∑ i,
+        ((silu (x ⬝ᵥ c i + β i) * (x ⬝ᵥ e i + β' i)) • ψa i
+          + (siluDeriv (x ⬝ᵥ c i + β i) * (x ⬝ᵥ ψc i + ψβ i) * (x ⬝ᵥ e i + β' i)) • a i
+          + (silu (x ⬝ᵥ c i + β i) * (x ⬝ᵥ ψe i + ψβ' i)) • a i) = 0) :
+    ψM = 0 ∧ ψγ = 0 ∧ ψc = 0 ∧ ψβ = 0 ∧
+      ∃ α : q → ℝ, ∀ i, ψe i = -(α i) • e i ∧ ψβ' i = -(α i) * β' i ∧ ψa i = α i • a i :=
+  silu_gated_units_flat_of_value_ne_zero c β e β' a ψM ψγ ψc ψβ ψe ψβ' ψa ha hc hcol he h
 
 end Skips

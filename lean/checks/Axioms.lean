@@ -69,3 +69,4 @@ import SkipsLean
 #print axioms Skips.funDim_swiglu_oneBlock
 #print axioms Skips.ae_oneBlockGenericGated
 #print axioms Skips.ae_funDim_swiglu_oneBlock
+#print axioms Skips.silu_gated_units_flat_of_value_ne_zero
