@@ -100,3 +100,9 @@ import SkipsLean
 #print axioms Skips.flat_le_cobDir_add_rescaleDir_geglu
 #print axioms Skips.funDim_geglu_oneBlock
 #print axioms Skips.ae_funDim_geglu_oneBlock
+-- Theorem 4.3 with the rescalings of gated blocks: under pre-RMSNorm, and at generic parameters
+#print axioms Skips.rescaleDir_mem_flat_of_differentiable
+#print axioms Skips.funDim_add_le_skipless_gated_rmsNorm
+#print axioms Skips.ae_value_ne_zero
+#print axioms Skips.ae_funDim_add_le_skipless_gated
+#print axioms Skips.ae_funDim_add_le_skipless_gated_rmsNorm
