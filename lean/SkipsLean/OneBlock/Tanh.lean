@@ -159,7 +159,7 @@ omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype
 /-- Helper: the line `τ ↦ θ + τ η` passes through `θ` at `τ = 0`. -/
 private theorem line_zero (θ η : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut) :
     θ = θ + (0 : ℝ) • η := by
-  apply Params.ext' <;> intros <;> simp
+  apply Params.ext' <;> intros <;> simp only [zero_smul, add_zero]
 
 omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: along the line, `C(τ) = C + τ ∂C + τ² η_E η_read`. -/
@@ -277,7 +277,8 @@ omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 private theorem finrank_cobDomain_two :
     Module.finrank ℝ (Fin 2 → Matrix d d ℝ) = 2 * Fintype.card d ^ 2 := by
   rw [Module.finrank_pi_fintype, Module.finrank_matrix]
-  simp [sq]
+  simp only [Module.finrank_self, mul_one, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+    smul_eq_mul, sq]
 
 /-- **Theorem 5.1 for a `tanh` block, under the conditions of its proof:** the functional
 dimension is `P - 2 d²`. -/
@@ -391,10 +392,12 @@ private theorem minor_witness {m n q : Type*} [Fintype n] [DecidableEq m] [Decid
   -- row `a` of `C = E W` is row `k₁` or `k₂` of `W`
   have hEW : ∀ a l, (E * W) a l = W (if a = a₁ then k₁ else k₂) l := by
     intro a l
-    simp [E, Matrix.mul_apply]
+    simp only [E, Matrix.mul_apply, Matrix.of_apply, ite_mul, one_mul, zero_mul,
+      Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte]
   refine ⟨E, W, ?_⟩
   rw [hEW, hEW, hEW, hEW]
-  simp [W, ha.symm, hk.symm, hij, hij.symm]
+  simp only [W, Matrix.of_apply, ↓reduceIte, ha.symm, hk.symm, hij, hij.symm, mul_one, mul_zero,
+    sub_zero, ne_eq, one_ne_zero, not_false_eq_true]
 
 omit [Fintype T] [Nonempty T] [DecidableEq d] in
 /-- Helper: an entry of `C = E W_read` is an analytic function of the parameters. -/
