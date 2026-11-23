@@ -231,6 +231,59 @@ theorem cobDir_add_rescaleDir_injective (hE : θ.E.rank = Fintype.card d)
     | succ ℓ ih => exact (key ℓ ih).2
   exact Prod.ext (funext hX) (funext fun ℓ => (key ℓ (hX ℓ.castSucc)).1)
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Helper (the private `cobDirLin` of `UpperBound.lean`): `X ↦ cobDir θ X` is linear. -/
+private noncomputable def cobDirLin :
+    (Fin (L + 1) → Matrix d d ℝ) →ₗ[ℝ] Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut where
+  toFun := cobDir θ
+  map_add' X Y := by
+    apply Params.ext' <;> intros <;>
+      simp only [cobDir, Params.add_E, Params.add_read, Params.add_write, Params.add_D,
+        Pi.add_apply, Matrix.mul_add, Matrix.add_mul, neg_add]
+  map_smul' c X := by
+    apply Params.ext' <;> intros <;>
+      simp only [cobDir, Params.smul_E, Params.smul_read, Params.smul_write, Params.smul_D,
+        Pi.smul_apply, Matrix.mul_smul, Matrix.smul_mul, smul_neg, RingHom.id_apply]
+
+/-- Helper: `α ↦ rescaleDir θ α` is linear. -/
+private noncomputable def rescaleDirLin :
+    (∀ ℓ, hid ℓ → ℝ) →ₗ[ℝ] Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut where
+  toFun := rescaleDir θ
+  map_add' α β := by
+    apply Params.ext'
+    · simp [rescaleDir]
+    · intro ℓ
+      ext k j
+      cases j with
+      | inl i => simp [rescaleDir]
+      | inr i =>
+        simp only [rescaleDir, Pi.add_apply, Params.add_read, Matrix.add_apply, Matrix.of_apply,
+          Sum.elim_inr]
+        ring
+    · intro ℓ
+      ext i k
+      simp [rescaleDir, add_mul]
+    · simp [rescaleDir]
+  map_smul' c α := by
+    apply Params.ext'
+    · simp [rescaleDir]
+    · intro ℓ
+      ext k j
+      cases j <;> simp [rescaleDir, mul_assoc]
+    · intro ℓ
+      ext i k
+      simp [rescaleDir, mul_assoc]
+    · simp [rescaleDir]
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the pairs `(X, α)` form a space of dimension `(L + 1) d² + s`. -/
+private theorem finrank_dirDomain :
+    Module.finrank ℝ ((Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ)) =
+      (L + 1) * Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ) := by
+  rw [Module.finrank_prod, Module.finrank_pi_fintype, Module.finrank_matrix,
+    Module.finrank_pi_fintype]
+  simp [sq, Module.finrank_fintype_fun_eq_card]
+
 /-- **Theorem 4.3 for gated blocks, without normalization,** under the conditions of its proof:
 the functional dimension is at most `P - (L + 1) d² - s`, with `s` the number of hidden units of
 the network. -/
@@ -239,6 +292,24 @@ theorem funDim_add_le_skipless_gated (hσ : Differentiable ℝ σ)
     (hv : ∀ ℓ i, (fun k => θ.read ℓ k (Sum.inr i)) ≠ 0) :
     funDim (Arch.gated σ id hid) 0 θ + ((L + 1) * Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
       ≤ Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  have hdiff : ∀ x, DifferentiableAt ℝ
+      (fun θ' : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut =>
+        eval (Arch.gated σ id hid) 0 θ' x) θ :=
+    fun x => (differentiable_eval (differentiable_gated hσ) differentiable_id x).differentiableAt
+  -- the linear map `(X, α) ↦ cobDir θ X + rescaleDir θ α`
+  let Φ := (cobDirLin θ).coprod (rescaleDirLin θ)
+  -- its directions are flat, since both summands are
+  have hV : LinearMap.range Φ ≤ flat (Arch.gated σ id hid) 0 θ := by
+    rintro _ ⟨p, rfl⟩
+    rw [LinearMap.coprod_apply]
+    exact Submodule.add_mem _ (cobDir_mem_flat_skipless θ rfl (differentiable_gated hσ) p.1)
+      (rescaleDir_mem_flat θ hσ p.2)
+  -- it is injective (Lemma B.1), so its range has dimension `(L + 1) d² + s`
+  have hinj : Function.Injective Φ := by
+    intro p q hpq
+    rw [LinearMap.coprod_apply, LinearMap.coprod_apply] at hpq
+    exact cobDir_add_rescaleDir_injective θ hE hw hv hpq
+  have h := funDim_add_finrank_le_of_le_flat θ hdiff _ hV
+  rwa [LinearMap.finrank_range_of_inj hinj, finrank_dirDomain] at h
 
 end Skips
