@@ -16,3 +16,4 @@ import SkipsLean.Generic.Params
 import SkipsLean.Network.Blocks
 import SkipsLean.OneBlock.Factorization
 import SkipsLean.OneBlock.Tanh
+import SkipsLean.OneBlock.UnitsSwiGLU
