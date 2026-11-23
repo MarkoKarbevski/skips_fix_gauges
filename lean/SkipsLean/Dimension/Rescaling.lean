@@ -50,7 +50,38 @@ theorem eval_rescale (c : ∀ ℓ, hid ℓ → ℝ) (hc : ∀ ℓ i, c ℓ i ≠
     (hw : ∀ ℓ i k, θ'.write ℓ i k = c ℓ i * θ.write ℓ i k)
     (S : Fin L → Matrix d d ℝ) (x : Matrix T dIn ℝ) :
     eval (Arch.gated σ id hid) S θ' x = eval (Arch.gated σ id hid) S θ x := by
-  sorry
+  -- the hidden states of `θ'` and `θ` agree, by induction along the network
+  have hh : ∀ ℓ : Fin (L + 1),
+      hidden (Arch.gated σ id hid) S θ' x ℓ = hidden (Arch.gated σ id hid) S θ x ℓ := by
+    intro ℓ
+    induction ℓ using Fin.induction with
+    | zero => rw [hidden_zero, hidden_zero, hE]
+    | succ ℓ ih =>
+      -- the stream term `h S_ℓ` is the same; compare the outputs of block `ℓ`
+      rw [hidden_succ, hidden_succ, ih]
+      congr 1
+      set h := hidden (Arch.gated σ id hid) S θ x ℓ.castSucc
+      -- the gates are the same, and the values are divided by `c ℓ i`
+      have hz : ∀ t i, (h * θ'.read ℓ) t (Sum.inl i) = (h * θ.read ℓ) t (Sum.inl i) := by
+        intro t i
+        simp only [Matrix.mul_apply, hg]
+      have hu : ∀ t i,
+          (h * θ'.read ℓ) t (Sum.inr i) = (c ℓ i)⁻¹ * (h * θ.read ℓ) t (Sum.inr i) := by
+        intro t i
+        rw [Matrix.mul_apply, Matrix.mul_apply, Finset.mul_sum]
+        refine Finset.sum_congr rfl fun j _ => ?_
+        rw [hv]
+        ring
+      -- so hidden unit `i` contributes `σ(z_i) (w_i / c) (c a_i) = σ(z_i) w_i a_i`
+      ext t k
+      rw [Matrix.mul_apply, Matrix.mul_apply]
+      refine Finset.sum_congr rfl fun i _ => ?_
+      show σ ((h * θ'.read ℓ) t (Sum.inl i)) * (h * θ'.read ℓ) t (Sum.inr i) * θ'.write ℓ i k =
+        σ ((h * θ.read ℓ) t (Sum.inl i)) * (h * θ.read ℓ) t (Sum.inr i) * θ.write ℓ i k
+      rw [hz, hu, hw]
+      field_simp [hc ℓ i]
+  -- hence the outputs agree
+  rw [eval, eval, hh, hD]
 
 /-- The directions of the rescalings are flat. -/
 theorem rescaleDir_mem_flat (hσ : Differentiable ℝ σ) (α : ∀ ℓ, hid ℓ → ℝ) :
