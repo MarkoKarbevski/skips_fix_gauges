@@ -25,7 +25,24 @@ variable (θ : Params A dIn dOut)
 /-- RMSNorm with `ε > 0` is differentiable. -/
 theorem differentiable_rmsNorm {ε : ℝ} (hε : 0 < ε) :
     Differentiable ℝ (rmsNorm ε : Matrix T d ℝ → Matrix T d ℝ) := by
-  sorry
+  -- With the elementwise norm, a matrix-valued map is differentiable if every entry is.
+  refine differentiable_pi.2 fun t => differentiable_pi.2 fun i => ?_
+  intro h
+  -- The quantity under the root, `‖h t‖² / d + ε`, is differentiable and at least `ε > 0`.
+  have hq : Differentiable ℝ
+      fun h : Matrix T d ℝ => (h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε := by
+    simp only [dotProduct]
+    fun_prop
+  have hpos : 0 < (h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε := by
+    have : 0 ≤ (h t ⬝ᵥ h t) / (Fintype.card d : ℝ) :=
+      div_nonneg (Finset.sum_nonneg fun j _ => mul_self_nonneg (h t j)) (Nat.cast_nonneg _)
+    linarith
+  have hent : Differentiable ℝ fun h : Matrix T d ℝ => h t i :=
+    differentiable_pi.1 (differentiable_pi.1 differentiable_id t) i
+  -- The entry `(t, i)` is `(sqrt (‖h t‖² / d + ε))⁻¹ * h t i`.
+  show DifferentiableAt ℝ (fun h : Matrix T d ℝ =>
+    (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε))⁻¹ * h t i) h
+  exact (((hq h).sqrt hpos.ne').inv (Real.sqrt_pos.2 hpos).ne').mul (hent h)
 
 /-- Under pre-RMSNorm with `ε > 0` and without skip connections, the directions `cobDir θ X` with
 antisymmetric `X_ℓ` are flat. -/
