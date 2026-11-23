@@ -13,3 +13,6 @@ import SkipsLean.Dimension.UpperBoundRMSNorm
 import SkipsLean.Generic.AnalyticZeroSet
 import SkipsLean.OneBlock.UnitsTanh
 import SkipsLean.Generic.Params
+import SkipsLean.Network.Blocks
+import SkipsLean.OneBlock.Factorization
+import SkipsLean.OneBlock.Tanh
