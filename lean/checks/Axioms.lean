@@ -61,3 +61,11 @@ import SkipsLean
 #print axioms Skips.ae_funDim_tanh_oneBlock
 #print axioms Skips.hasDerivAt_silu
 #print axioms Skips.silu_gated_units_flat
+#print axioms Skips.eval_rescale
+#print axioms Skips.rescaleDir_mem_flat
+#print axioms Skips.cobDir_add_rescaleDir_injective
+#print axioms Skips.funDim_add_le_skipless_gated
+#print axioms Skips.flat_le_cobDir_add_rescaleDir_swiglu
+#print axioms Skips.funDim_swiglu_oneBlock
+#print axioms Skips.ae_oneBlockGenericGated
+#print axioms Skips.ae_funDim_swiglu_oneBlock
