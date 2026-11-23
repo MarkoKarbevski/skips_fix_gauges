@@ -21,6 +21,16 @@ at Least d_model² Parameters per Layer". It is work in progress.
 | `Symmetry/Normalized.lean` | the same under pre-RMSNorm |
 | `Symmetry/Reduction.lean` | the exact reduction: a `d × d` submatrix per hidden state becomes the identity, or upper triangular under pre-RMSNorm |
 | `Residual/LearnedSkips.lean` | invertible learned skips reduce to identity skips; the one change of basis of a residual network |
+| `Network/Blocks.lean` | MLP networks with a given activation |
+| `Dimension/Space.lean` | the parameters as a finite-dimensional normed vector space |
+| `Dimension/Functional.lean` | functional dimension, redundancy, flat directions; `fd(θ) = P − dim K(θ)` |
+| `Dimension/UpperBound.lean` | the upper bound from the changes of basis: `fd ≤ P − (L+1)d²` without skip connections, `fd ≤ P − d²` with identity skips |
+| `Dimension/UpperBoundRMSNorm.lean` | the same under pre-RMSNorm: `P − (L+1)d(d−1)/2` and `P − d(d−1)/2` |
+| `Generic/AnalyticZeroSet.lean` | a real-analytic function that is not identically zero vanishes on a set of measure zero |
+| `Generic/Params.lean` | statements at generic parameters: invertible submatrices, full ranks, the upper bounds for almost all parameters |
+| `OneBlock/Factorization.lean` | the directions that keep `E W_read` and `W_write D` are those of two changes of basis |
+| `OneBlock/UnitsTanh.lean` | a flat direction of tanh hidden units vanishes |
+| `OneBlock/Tanh.lean` | one tanh block: the functional dimension is `P − 2d²` at generic parameters |
 
 ## Building
 
