@@ -129,15 +129,16 @@ private lemma measure_zeroSet_of_analytic_aux {E : Type*} [NormedAddCommGroup E]
 measure zero. -/
 theorem volume_zeroSet_of_analytic_pi {ι : Type*} [Fintype ι] {f : (ι → ℝ) → ℝ}
     (hf : AnalyticOnNhd ℝ f Set.univ) (hne : ∃ x, f x ≠ 0) :
-    volume {x : ι → ℝ | f x = 0} = 0 := by
-  sorry
+    volume {x : ι → ℝ | f x = 0} = 0 :=
+  -- `volume` on `ℝ^ι` is an additive Haar measure
+  measure_zeroSet_of_analytic_aux volume hf hne
 
 /-- The same on any finite-dimensional real normed space, for any additive Haar measure (any
 Lebesgue measure of the space). -/
 theorem measure_zeroSet_of_analytic {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
     [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] (μ : Measure E)
     [μ.IsAddHaarMeasure] {f : E → ℝ} (hf : AnalyticOnNhd ℝ f Set.univ) (hne : ∃ x, f x ≠ 0) :
-    μ {x : E | f x = 0} = 0 := by
-  sorry
+    μ {x : E | f x = 0} = 0 :=
+  measure_zeroSet_of_analytic_aux μ hf hne
 
 end Skips
