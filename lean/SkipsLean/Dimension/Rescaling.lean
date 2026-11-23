@@ -1,5 +1,6 @@
 import SkipsLean.Network.Blocks
 import SkipsLean.Dimension.UpperBound
+import SkipsLean.Dimension.UpperBoundRMSNorm
 
 /-!
 # Gated blocks: the rescalings inside the blocks, and the upper bound with them
@@ -26,33 +27,34 @@ open scoped Matrix.Norms.Elementwise
 
 variable {T d dIn dOut : Type*} {L : ℕ} [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn]
   [Fintype dOut]
-variable {σ : ℝ → ℝ} {hid : Fin L → Type} [∀ ℓ, Fintype (hid ℓ)]
+variable {σ : ℝ → ℝ} {χ : Matrix T d ℝ → Matrix T d ℝ} {hid : Fin L → Type}
+  [∀ ℓ, Fintype (hid ℓ)]
 
 /-- The direction of the rescalings of the values of the hidden units of a gated network: the
 rescaling `λ = e^{τ α ℓ i}` of hidden unit `i` of block `ℓ`, to first order in `τ`. -/
-def rescaleDir (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
-    (α : ∀ ℓ, hid ℓ → ℝ) : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut where
+def rescaleDir (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut)
+    (α : ∀ ℓ, hid ℓ → ℝ) : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut where
   E := 0
   read ℓ := Matrix.of fun k j => Sum.elim (fun _ => 0) (fun i => -(α ℓ i) * θ.read ℓ k (Sum.inr i)) j
   write ℓ := Matrix.of fun i k => α ℓ i * θ.write ℓ i k
   D := 0
 
-variable (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+variable (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut)
 
 /-- The rescalings of the values preserve the function: with every value column of the read of
 block `ℓ` divided by `c ℓ i ≠ 0` and the write row of the same hidden unit multiplied by `c ℓ i`,
 the network computes the same function. -/
 theorem eval_rescale (c : ∀ ℓ, hid ℓ → ℝ) (hc : ∀ ℓ i, c ℓ i ≠ 0)
-    (θ' : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (θ' : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut)
     (hE : θ'.E = θ.E) (hD : θ'.D = θ.D)
     (hg : ∀ ℓ k i, θ'.read ℓ k (Sum.inl i) = θ.read ℓ k (Sum.inl i))
     (hv : ∀ ℓ k i, θ'.read ℓ k (Sum.inr i) = (c ℓ i)⁻¹ * θ.read ℓ k (Sum.inr i))
     (hw : ∀ ℓ i k, θ'.write ℓ i k = c ℓ i * θ.write ℓ i k)
     (S : Fin L → Matrix d d ℝ) (x : Matrix T dIn ℝ) :
-    eval (Arch.gated σ id hid) S θ' x = eval (Arch.gated σ id hid) S θ x := by
+    eval (Arch.gated σ χ hid) S θ' x = eval (Arch.gated σ χ hid) S θ x := by
   -- the hidden states of `θ'` and `θ` agree, by induction along the network
   have hh : ∀ ℓ : Fin (L + 1),
-      hidden (Arch.gated σ id hid) S θ' x ℓ = hidden (Arch.gated σ id hid) S θ x ℓ := by
+      hidden (Arch.gated σ χ hid) S θ' x ℓ = hidden (Arch.gated σ χ hid) S θ x ℓ := by
     intro ℓ
     induction ℓ using Fin.induction with
     | zero => rw [hidden_zero, hidden_zero, hE]
@@ -60,7 +62,7 @@ theorem eval_rescale (c : ∀ ℓ, hid ℓ → ℝ) (hc : ∀ ℓ i, c ℓ i ≠
       -- the stream term `h S_ℓ` is the same; compare the outputs of block `ℓ`
       rw [hidden_succ, hidden_succ, ih]
       congr 1
-      set h := hidden (Arch.gated σ id hid) S θ x ℓ.castSucc
+      set h := χ (hidden (Arch.gated σ χ hid) S θ x ℓ.castSucc)
       -- the gates are the same, and the values are divided by `c ℓ i`
       have hz : ∀ t i, (h * θ'.read ℓ) t (Sum.inl i) = (h * θ.read ℓ) t (Sum.inl i) := by
         intro t i
@@ -92,7 +94,7 @@ private theorem hasDerivAt_exp_mul_const (a b : ℝ) :
 omit [Fintype d] [DecidableEq d] in
 /-- Helper: the map of a gated block is differentiable if the gate activation is. -/
 private theorem differentiable_gated (hσ : Differentiable ℝ σ) (ℓ : Fin L) :
-    Differentiable ℝ ((Arch.gated (T := T) (d := d) σ id hid).f ℓ) := by
+    Differentiable ℝ ((Arch.gated (T := T) (d := d) σ χ hid).f ℓ) := by
   -- every entry of a matrix is a differentiable (linear) function of the matrix
   have he : ∀ t j, Differentiable ℝ fun M : Matrix T (hid ℓ ⊕ hid ℓ) ℝ => M t j :=
     fun t j => differentiable_pi.1 (differentiable_pi.1 differentiable_id t) j
@@ -103,7 +105,7 @@ private theorem differentiable_gated (hσ : Differentiable ℝ σ) (ℓ : Fin L)
 /-- Helper: the curve of the rescalings `λ = e^{τ α ℓ i}`: the value column of hidden unit `i` of
 block `ℓ` is multiplied by `e^{-τ α ℓ i}`, its write row by `e^{τ α ℓ i}`. -/
 private noncomputable def rescaleCurve (α : ∀ ℓ, hid ℓ → ℝ) (τ : ℝ) :
-    Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut where
+    Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut where
   E := θ.E
   read ℓ := Matrix.of fun k j => Sum.elim (fun i => θ.read ℓ k (Sum.inl i))
     (fun i => Real.exp (τ * -(α ℓ i)) * θ.read ℓ k (Sum.inr i)) j
@@ -145,17 +147,19 @@ private theorem hasDerivAt_rescaleCurve (α : ∀ ℓ, hid ℓ → ℝ) :
       exact hasDerivAt_const (0 : ℝ) θ.D
   -- back from the tuples of components to the parameters
   exact (LinearMap.toContinuousLinearMap
-    (Params.linearEquivProd (A := Arch.gated (T := T) (d := d) σ id hid) (dIn := dIn)
+    (Params.linearEquivProd (A := Arch.gated (T := T) (d := d) σ χ hid) (dIn := dIn)
       (dOut := dOut)).symm.toLinearMap).hasFDerivAt.comp_hasDerivAt 0 hprod
 
-/-- The directions of the rescalings are flat. -/
-theorem rescaleDir_mem_flat (hσ : Differentiable ℝ σ) (α : ∀ ℓ, hid ℓ → ℝ) :
-    rescaleDir θ α ∈ flat (Arch.gated σ id hid) 0 θ := by
+/-- The directions of the rescalings are flat, for every differentiable map `χ` before the reads
+(the identity, or RMSNorm with `ε > 0`). -/
+theorem rescaleDir_mem_flat_of_differentiable (hσ : Differentiable ℝ σ)
+    (hχ : Differentiable ℝ χ) (α : ∀ ℓ, hid ℓ → ℝ) :
+    rescaleDir θ α ∈ flat (Arch.gated σ χ hid) 0 θ := by
   -- `θ' ↦ F_θ'(x)` is differentiable
   have hdiff : ∀ x, DifferentiableAt ℝ
-      (fun θ' : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut =>
-        eval (Arch.gated σ id hid) 0 θ' x) θ :=
-    fun x => (differentiable_eval (differentiable_gated hσ) differentiable_id x).differentiableAt
+      (fun θ' : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut =>
+        eval (Arch.gated σ χ hid) 0 θ' x) θ :=
+    fun x => (differentiable_eval (differentiable_gated hσ) hχ x).differentiableAt
   -- the curve passes through `θ` with velocity `rescaleDir θ α`, and at every `τ` it is the
   -- rescaling `λ = e^{τ α ℓ i}`, which preserves the function
   refine mem_flat_of_hasDerivAt θ hdiff (rescaleCurve θ α) (rescaleDir θ α)
@@ -166,6 +170,12 @@ theorem rescaleDir_mem_flat (hσ : Differentiable ℝ σ) (α : ∀ ℓ, hid ℓ
   -- the value columns: `e^{-τ α} = (e^{τ α})⁻¹`
   show Real.exp (τ * -(α ℓ i)) * θ.read ℓ k (Sum.inr i) = _
   rw [mul_neg, Real.exp_neg]
+
+/-- The directions of the rescalings are flat, without normalization. -/
+theorem rescaleDir_mem_flat (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (hσ : Differentiable ℝ σ) (α : ∀ ℓ, hid ℓ → ℝ) :
+    rescaleDir θ α ∈ flat (Arch.gated σ id hid) 0 θ :=
+  rescaleDir_mem_flat_of_differentiable θ hσ differentiable_id α
 
 omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper (the private `mul_left_cancel_of_rank` of `UpperBound.lean`): a matrix `M` of rank equal
@@ -234,7 +244,7 @@ theorem cobDir_add_rescaleDir_injective (hE : θ.E.rank = Fintype.card d)
 omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- Helper (the private `cobDirLin` of `UpperBound.lean`): `X ↦ cobDir θ X` is linear. -/
 private noncomputable def cobDirLin :
-    (Fin (L + 1) → Matrix d d ℝ) →ₗ[ℝ] Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut where
+    (Fin (L + 1) → Matrix d d ℝ) →ₗ[ℝ] Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut where
   toFun := cobDir θ
   map_add' X Y := by
     apply Params.ext' <;> intros <;>
@@ -247,7 +257,7 @@ private noncomputable def cobDirLin :
 
 /-- Helper: `α ↦ rescaleDir θ α` is linear. -/
 private noncomputable def rescaleDirLin :
-    (∀ ℓ, hid ℓ → ℝ) →ₗ[ℝ] Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut where
+    (∀ ℓ, hid ℓ → ℝ) →ₗ[ℝ] Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut where
   toFun := rescaleDir θ
   map_add' α β := by
     apply Params.ext'
@@ -287,7 +297,8 @@ private theorem finrank_dirDomain :
 /-- **Theorem 4.3 for gated blocks, without normalization,** under the conditions of its proof:
 the functional dimension is at most `P - (L + 1) d² - s`, with `s` the number of hidden units of
 the network. -/
-theorem funDim_add_le_skipless_gated (hσ : Differentiable ℝ σ)
+theorem funDim_add_le_skipless_gated
+    (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) (hσ : Differentiable ℝ σ)
     (hE : θ.E.rank = Fintype.card d) (hw : ∀ ℓ, (θ.write ℓ).rank = Fintype.card d)
     (hv : ∀ ℓ i, (fun k => θ.read ℓ k (Sum.inr i)) ≠ 0) :
     funDim (Arch.gated σ id hid) 0 θ + ((L + 1) * Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
@@ -311,5 +322,21 @@ theorem funDim_add_le_skipless_gated (hσ : Differentiable ℝ σ)
     exact cobDir_add_rescaleDir_injective θ hE hw hv hpq
   have h := funDim_add_finrank_le_of_le_flat θ hdiff _ hV
   rwa [LinearMap.finrank_range_of_inj hinj, finrank_dirDomain] at h
+
+/-- **Theorem 4.3 for gated blocks under pre-RMSNorm** (`ε > 0`), under the conditions of its
+proof: the functional dimension is at most `P - (L + 1) d (d - 1) / 2 - s`, with `s` the number of
+hidden units of the network. The changes of basis are orthogonal, so their directions are
+`cobDir θ X` with antisymmetric `X_ℓ`; the rescalings act inside the blocks and are the same as
+without normalization. -/
+theorem funDim_add_le_skipless_gated_rmsNorm {ε : ℝ} (hε : 0 < ε)
+    (θ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
+    (hσ : Differentiable ℝ σ)
+    (hE : θ.E.rank = Fintype.card d) (hw : ∀ ℓ, (θ.write ℓ).rank = Fintype.card d)
+    (hv : ∀ ℓ i, (fun k => θ.read ℓ k (Sum.inr i)) ≠ 0) :
+    funDim (Arch.gated σ (rmsNorm ε) hid) 0 θ
+        + ((L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2) + ∑ ℓ, Fintype.card (hid ℓ))
+      ≤ Module.finrank ℝ
+        (Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) := by
+  sorry
 
 end Skips
