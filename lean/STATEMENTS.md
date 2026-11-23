@@ -73,9 +73,9 @@ in work are on the branch `lean-wip`.
 | D Lemma C.3 for tanh, with the linear term, the constant and the biases | `tanh_units_flat_eq_zero` | `OneBlock/UnitsTanh.lean` | proved |
 | D Lemma C.3 for SwiGLU (gate SiLU), with the linear term, the constant and the biases: a flat direction only rescales the value of each hidden unit | `silu`, `siluDeriv`, `hasDerivAt_silu`, `silu_gated_units_flat` (the paper's form), `silu_gated_units_flat_of_value_ne_zero` (without the hypothesis on proportionality) | `OneBlock/UnitsSwiGLU.lean` | proved |
 | the normal density `φ`, the distribution function `Φ = 1/2 + ∫₀^z φ`, GELU `z Φ(z)` | `gaussPdf`, `gaussCdf`, `gelu` | `Activations/Gaussian.lean` | defined |
-| `Φ' = φ`, `φ' = −zφ`, `Φ(−z) = 1 − Φ(z)`, `0 < Φ < 1`, the limits of `Φ` at `±∞` | `hasDerivAt_gaussCdf`, `hasDerivAt_gaussPdf`, `gaussCdf_neg`, `gaussCdf_pos`, `gaussCdf_lt_one`, `tendsto_gaussCdf_atTop`, `tendsto_gaussCdf_atBot` | `Activations/Gaussian.lean` | in work |
-| D proof of Lemma C.3 for GELU: `φ(z)(1/z − 1/z³) ≤ 1 − Φ(z) ≤ φ(z)/z` for `z > 0` | `le_one_sub_gaussCdf`, `one_sub_gaussCdf_le` | `Activations/Gaussian.lean` | in work |
-| GELU: `σ'(z) = Φ(z) + zφ(z)`, and `σ(z) − σ(−z) = z` (D Appendix D.1) | `hasDerivAt_gelu`, `gelu_sub_gelu_neg` | `Activations/Gaussian.lean` | in work |
+| `Φ' = φ`, `φ' = −zφ`, `Φ(−z) = 1 − Φ(z)`, `0 < Φ < 1`, the limits of `Φ` at `±∞` | `hasDerivAt_gaussCdf`, `hasDerivAt_gaussPdf`, `gaussCdf_neg`, `gaussCdf_pos`, `gaussCdf_lt_one`, `tendsto_gaussCdf_atTop`, `tendsto_gaussCdf_atBot` | `Activations/Gaussian.lean` | proved |
+| D proof of Lemma C.3 for GELU: `φ(z)(1/z − 1/z³) ≤ 1 − Φ(z) ≤ φ(z)/z` for `z > 0` | `le_one_sub_gaussCdf`, `one_sub_gaussCdf_le` | `Activations/Gaussian.lean` | proved |
+| GELU: `σ'(z) = Φ(z) + zφ(z)`, and `σ(z) − σ(−z) = z` (D Appendix D.1) | `hasDerivAt_gelu`, `gelu_sub_gelu_neg` | `Activations/Gaussian.lean` | proved |
 | a network of gated blocks (Section 2, "Blocks"): read `[W_g | W_v]`, `f = σ(gate)·value` | `Arch.gated σ χ hid` | `Network/Blocks.lean` | defined |
 | D Appendix B: the rescaling `(e_i, a_i) ↦ (e_i/λ, λ a_i)` of a gated hidden unit preserves the function; its direction | `eval_rescale`, `rescaleDir`, `rescaleDir_mem_flat` | `Dimension/Rescaling.lean` | proved |
 | D Lemma B.1 for gated blocks: the changes of basis and the rescalings move `θ` in independent directions | `cobDir_add_rescaleDir_injective` | `Dimension/Rescaling.lean` | proved |
