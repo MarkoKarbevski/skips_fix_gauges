@@ -30,6 +30,7 @@ at Least d_model² Parameters per Layer". It is work in progress.
 | `Generic/Params.lean` | statements at generic parameters: invertible submatrices, full ranks, the upper bounds for almost all parameters |
 | `OneBlock/Factorization.lean` | the directions that keep `E W_read` and `W_write D` are those of two changes of basis |
 | `OneBlock/UnitsTanh.lean` | a flat direction of tanh hidden units vanishes |
+| `OneBlock/UnitsSwiGLU.lean` | a flat direction of SwiGLU hidden units only rescales their values |
 | `OneBlock/Tanh.lean` | one tanh block: the functional dimension is `P − 2d²` at generic parameters |
 
 ## Building
