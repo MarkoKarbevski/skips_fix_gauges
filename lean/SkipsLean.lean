@@ -6,3 +6,7 @@ import SkipsLean.Symmetry.Reduction
 import SkipsLean.Residual.LearnedSkips
 import SkipsLean.Basic.RMSNormConverse
 import SkipsLean.Basic.LayerNorm
+import SkipsLean.Dimension.Space
+import SkipsLean.Dimension.Functional
+import SkipsLean.Dimension.UpperBound
+import SkipsLean.Dimension.UpperBoundRMSNorm

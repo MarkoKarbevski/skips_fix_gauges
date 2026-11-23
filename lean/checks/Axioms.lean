@@ -31,3 +31,16 @@ import SkipsLean
 #print axioms Skips.exists_cob_residual_read_eq_one
 #print axioms Skips.exists_cob_residual_D_eq_one
 #print axioms Skips.exists_cob_residual_read_upperTriangular
+-- Functional dimension and the upper bound
+#print axioms Skips.differentiable_eval
+#print axioms Skips.exists_jacobianRank_eq_funDim
+#print axioms Skips.funDim_add_finrank_flat
+#print axioms Skips.funDim_add_finrank_le_of_le_flat
+#print axioms Skips.mem_flat_of_hasDerivAt
+#print axioms Skips.cobDir_injective
+#print axioms Skips.funDim_add_le_skipless
+#print axioms Skips.funDim_add_le_residual
+#print axioms Skips.differentiable_rmsNorm
+#print axioms Skips.finrank_antisymmetric
+#print axioms Skips.funDim_add_le_skipless_rmsNorm
+#print axioms Skips.funDim_add_le_residual_rmsNorm
