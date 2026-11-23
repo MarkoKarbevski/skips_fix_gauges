@@ -351,6 +351,260 @@ private lemma ray_coeffs {q : Type*} [Fintype q] [DecidableEq q]
     simp only [Pj]
     ring)
 
+/-- Strict inequalities `u_j < |u_i|` (`i ≠ j`) persist under a small perturbation `u + ε d`. -/
+private lemma eventually_lt_abs {q : Type*} [Finite q] (u d : q → ℝ) (j : q)
+    (h : ∀ i, i ≠ j → u j < |u i|) :
+    ∀ᶠ ε in 𝓝 (0 : ℝ), ∀ i, i ≠ j → u j + ε * d j < |u i + ε * d i| := by
+  refine Filter.eventually_all.2 fun i => ?_
+  by_cases hi : i = j
+  · exact Filter.Eventually.of_forall fun _ h' => absurd hi h'
+  · have : ∀ᶠ ε in 𝓝 (0 : ℝ), u j + ε * d j < |u i + ε * d i| :=
+      ContinuousAt.eventually_lt (by fun_prop) (by fun_prop) (by simpa using h i hi)
+    exact this.mono fun _ h' _ => h'
+
+/-- The good directions for unit `j` (`0 < ν c_j < |ν c_i|` for `i ≠ j`) form an open set: from a
+good `ν`, the direction `ν + ε e` is good for all small `ε`. -/
+private lemma eventually_good {n q : Type*} [Fintype n] [Finite q] (c : q → n → ℝ) (j : q)
+    (ν e : n → ℝ) (hν : 0 < ν ⬝ᵥ c j ∧ ∀ i, i ≠ j → ν ⬝ᵥ c j < |ν ⬝ᵥ c i|) :
+    ∀ᶠ ε in 𝓝 (0 : ℝ), 0 < (ν + ε • e) ⬝ᵥ c j ∧
+      ∀ i, i ≠ j → (ν + ε • e) ⬝ᵥ c j < |(ν + ε • e) ⬝ᵥ c i| := by
+  have h1 : ∀ᶠ ε in 𝓝 (0 : ℝ), 0 < ν ⬝ᵥ c j + ε * (e ⬝ᵥ c j) :=
+    ContinuousAt.eventually_lt (f := fun _ => (0 : ℝ)) (by fun_prop) (by fun_prop)
+      (by simpa using hν.1)
+  have h2 := eventually_lt_abs (fun i => ν ⬝ᵥ c i) (fun i => e ⬝ᵥ c i) j hν.2
+  filter_upwards [h1, h2] with ε h1 h2
+  simp only [add_dotProduct, smul_dotProduct, smul_eq_mul]
+  exact ⟨h1, h2⟩
+
+/-- **A good direction exists** for every unit `j`: a `ν` with `0 < ν c_j < |ν c_i|` for all
+`i ≠ j`. First a `ν₀` with `ν₀ c_j = 0` and `ν₀ c_i ≠ 0` for `i ≠ j` (a real vector space is not
+a finite union of proper subspaces), then `ν = ν₀ + δ c_j` for a small `δ > 0`. -/
+private lemma exists_good {n q : Type*} [Fintype n] [Fintype q] (c : q → n → ℝ)
+    (hc : ∀ i, c i ≠ 0) (hcol : ∀ i j, i ≠ j → ∀ r : ℝ, c i ≠ r • c j) (j : q) :
+    ∃ ν : n → ℝ, 0 < ν ⬝ᵥ c j ∧ ∀ i, i ≠ j → ν ⬝ᵥ c j < |ν ⬝ᵥ c i| := by
+  have hjj : 0 < c j ⬝ᵥ c j :=
+    lt_of_le_of_ne (Finset.sum_nonneg fun m _ => mul_self_nonneg (c j m))
+      (Ne.symm (dotProduct_self_eq_zero.not.2 (hc j)))
+  -- `r i`: the component of `c i` orthogonal to `c j`; it is nonzero for `i ≠ j`
+  set r : q → n → ℝ := fun i => c i - ((c j ⬝ᵥ c i) / (c j ⬝ᵥ c j)) • c j with hr_def
+  have hr : ∀ i, i ≠ j → r i ≠ 0 := fun i hi h0 =>
+    hcol i j hi _ (sub_eq_zero.1 h0)
+  -- the kernels of `ν ↦ ν r_i` are proper subspaces, so some `ν` avoids all of them
+  let K : {i // i ≠ j} → Submodule ℝ (n → ℝ) := fun i =>
+    { carrier := {ν | ν ⬝ᵥ r i = 0}
+      add_mem' := fun {x y} hx hy => by
+        simp only [Set.mem_ofPred_eq] at hx hy ⊢; rw [add_dotProduct, hx, hy, add_zero]
+      zero_mem' := by simp
+      smul_mem' := fun s x hx => by
+        simp only [Set.mem_ofPred_eq] at hx ⊢; rw [smul_dotProduct, hx, smul_zero] }
+  obtain ⟨ν, hν⟩ : ∃ ν : n → ℝ, ∀ i, i ≠ j → ν ⬝ᵥ r i ≠ 0 := by
+    by_contra hcon
+    push Not at hcon
+    obtain ⟨i, hi⟩ := Subspace.exists_eq_top_of_iUnion_eq_univ (p := K) (by
+      ext ν
+      simp only [Set.mem_iUnion, Set.mem_univ, iff_true]
+      obtain ⟨i, hij, h0⟩ := hcon ν
+      exact ⟨⟨i, hij⟩, h0⟩)
+    have hmem : r i ∈ K i := hi ▸ Submodule.mem_top
+    exact hr i.1 i.2 (dotProduct_self_eq_zero.1 hmem)
+  -- `ν₀ = ν - (ν c_j / c_j c_j) c_j` lies on the hyperplane `ν₀ c_j = 0`, and `ν₀ c_i = ν r_i`
+  set ν₀ := ν - ((ν ⬝ᵥ c j) / (c j ⬝ᵥ c j)) • c j with hν₀
+  have h0j : ν₀ ⬝ᵥ c j = 0 := by
+    rw [hν₀, sub_dotProduct, smul_dotProduct, smul_eq_mul]
+    field_simp
+    ring
+  have h0i : ∀ i, i ≠ j → 0 < |ν₀ ⬝ᵥ c i| := fun i hi => by
+    refine abs_pos.2 ?_
+    have : ν₀ ⬝ᵥ c i = ν ⬝ᵥ r i := by
+      rw [hν₀, hr_def]
+      simp only [sub_dotProduct, dotProduct_sub, smul_dotProduct, dotProduct_smul, smul_eq_mul]
+      ring
+    rw [this]; exact hν i hi
+  -- move a little to the side of `c_j`
+  have hev := eventually_lt_abs (fun i => ν₀ ⬝ᵥ c i) (fun i => c j ⬝ᵥ c i) j
+    (fun i hi => by simpa only [h0j] using h0i i hi)
+  obtain ⟨δ, hδ, hδ0⟩ :=
+    ((hev.filter_mono nhdsWithin_le_nhds).and (eventually_mem_nhdsWithin (s := Set.Ioi 0))).exists
+  refine ⟨ν₀ + δ • c j, ?_, fun i hi => ?_⟩
+  · rw [add_dotProduct, smul_dotProduct, smul_eq_mul, h0j, zero_add]
+    exact mul_pos hδ0 hjj
+  · simpa only [add_dotProduct, smul_dotProduct, smul_eq_mul] using hδ i hi
+
+/-- A good direction `ν` for unit `j` (`0 < ν c_j < |ν c_i|` for `i ≠ j`) with `ν e ≠ 0` exists
+when `e ≠ 0`: move a good direction a little along `e` if needed. -/
+private lemma exists_good_ne {n q : Type*} [Fintype n] [Fintype q] (c : q → n → ℝ) (e : n → ℝ)
+    (hc : ∀ i, c i ≠ 0) (hcol : ∀ i j, i ≠ j → ∀ r : ℝ, c i ≠ r • c j) (he : e ≠ 0) (j : q) :
+    ∃ ν : n → ℝ, (0 < ν ⬝ᵥ c j ∧ ∀ i, i ≠ j → ν ⬝ᵥ c j < |ν ⬝ᵥ c i|) ∧ ν ⬝ᵥ e ≠ 0 := by
+  obtain ⟨ν, hν⟩ := exists_good c hc hcol j
+  by_cases hνe : ν ⬝ᵥ e = 0
+  · obtain ⟨ε, hε, hε0⟩ := (((eventually_good c j ν e hν).filter_mono nhdsWithin_le_nhds).and
+      (eventually_mem_nhdsWithin (s := Set.Ioi 0))).exists
+    refine ⟨ν + ε • e, hε, ?_⟩
+    rw [add_dotProduct, smul_dotProduct, hνe, zero_add, smul_eq_mul]
+    exact mul_ne_zero (ne_of_gt hε0) (dotProduct_self_eq_zero.not.2 he)
+  · exact ⟨ν, hν, hνe⟩
+
+/-- **A vector orthogonal to all good directions vanishes.** If `ν r = 0` for every `ν` with
+`0 < ν c_j < |ν c_i|` (`i ≠ j`) and `ν e ≠ 0`, then `r = 0`: such directions form a nonempty open
+set, and `ν + ε r` is one of them for a small `ε > 0`. -/
+private lemma eq_zero_of_good {n q : Type*} [Fintype n] [Fintype q] (c : q → n → ℝ) (e : n → ℝ)
+    (hc : ∀ i, c i ≠ 0) (hcol : ∀ i j, i ≠ j → ∀ r : ℝ, c i ≠ r • c j) (he : e ≠ 0) (j : q)
+    (r : n → ℝ)
+    (hr : ∀ ν : n → ℝ, (0 < ν ⬝ᵥ c j ∧ ∀ i, i ≠ j → ν ⬝ᵥ c j < |ν ⬝ᵥ c i|) → ν ⬝ᵥ e ≠ 0 →
+      ν ⬝ᵥ r = 0) :
+    r = 0 := by
+  obtain ⟨ν, hν, hνe⟩ := exists_good_ne c e hc hcol he j
+  have hne : ∀ᶠ ε in 𝓝 (0 : ℝ), (ν + ε • r) ⬝ᵥ e ≠ 0 := by
+    have : ∀ᶠ ε in 𝓝 (0 : ℝ), ν ⬝ᵥ e + ε * (r ⬝ᵥ e) ≠ 0 :=
+      ContinuousAt.eventually_ne (by fun_prop) (by simpa using hνe)
+    refine this.mono fun ε hε => ?_
+    rwa [add_dotProduct, smul_dotProduct, smul_eq_mul]
+  obtain ⟨ε, ⟨hε, hεe⟩, hε0⟩ := ((((eventually_good c j ν r hν).and hne).filter_mono
+    nhdsWithin_le_nhds).and (eventually_mem_nhdsWithin (s := Set.Ioi 0))).exists
+  have e2 := hr _ hε hεe
+  rw [add_dotProduct, smul_dotProduct, hr ν hν hνe, zero_add, smul_eq_mul] at e2
+  exact dotProduct_self_eq_zero.1 ((mul_eq_zero.1 e2).resolve_left (ne_of_gt hε0))
+
+/-- **The identity along a ray** `x = t ν`, in the output coordinate `o`, in the form of
+`ray_coeffs`: unit `i` contributes `σ(z_i) (t F₁ + F₀) + σ'(z_i) (t² G₂ + t G₁ + G₀)`. -/
+private lemma ray_identity {n k q : Type*} [Fintype n] [Fintype k] [Fintype q]
+    (c : q → n → ℝ) (β : q → ℝ) (e : q → n → ℝ) (β' : q → ℝ) (a : q → k → ℝ)
+    (ψM : Matrix n k ℝ) (ψγ : k → ℝ) (ψc : q → n → ℝ) (ψβ : q → ℝ) (ψe : q → n → ℝ)
+    (ψβ' : q → ℝ) (ψa : q → k → ℝ)
+    (h : ∀ x : n → ℝ,
+      x ᵥ* ψM + ψγ + ∑ i,
+        ((silu (x ⬝ᵥ c i + β i) * (x ⬝ᵥ e i + β' i)) • ψa i
+          + (siluDeriv (x ⬝ᵥ c i + β i) * (x ⬝ᵥ ψc i + ψβ i) * (x ⬝ᵥ e i + β' i)) • a i
+          + (silu (x ⬝ᵥ c i + β i) * (x ⬝ᵥ ψe i + ψβ' i)) • a i) = 0)
+    (ν : n → ℝ) (o : k) (t : ℝ) :
+    t * (ν ᵥ* ψM) o + ψγ o + ∑ i, (silu (t * (ν ⬝ᵥ c i) + β i)
+        * (t * ((ν ⬝ᵥ e i) * ψa i o + (ν ⬝ᵥ ψe i) * a i o) + (β' i * ψa i o + ψβ' i * a i o))
+      + siluDeriv (t * (ν ⬝ᵥ c i) + β i)
+        * (t ^ 2 * ((ν ⬝ᵥ ψc i) * (ν ⬝ᵥ e i) * a i o)
+          + t * (((ν ⬝ᵥ ψc i) * β' i + ψβ i * (ν ⬝ᵥ e i)) * a i o)
+          + ψβ i * β' i * a i o)) = 0 := by
+  have := congrFun (h (t • ν)) o
+  simp only [Pi.add_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, smul_vecMul,
+    smul_dotProduct, Pi.zero_apply] at this
+  rw [← this]
+  congr 1
+  exact Finset.sum_congr rfl fun i _ => by ring
+
+/-- **The coefficients of one unit.** Along a good direction `ν` for unit `j`, the ray lemma at
+`x = t ν` (sign `+`) and at `x = -t ν` (sign `-`) gives, in every output coordinate `o`:
+`t³`: `(ν ψ_{c_j}) (ν e_j) a_j = 0`; `t²` (both signs): `(ν e_j) ψ_{a_j} + (ν ψ_{e_j}) a_j = 0` and
+`((ν ψ_{c_j}) β'_j + ψ_{β_j} (ν e_j)) a_j = 0`; `t`: `β'_j ψ_{a_j} + ψ_{β'_j} a_j = ψ_{β_j} β'_j a_j`. -/
+private lemma unit_coeffs {n k q : Type*} [Fintype n] [Fintype k] [Fintype q]
+    (c : q → n → ℝ) (β : q → ℝ) (e : q → n → ℝ) (β' : q → ℝ) (a : q → k → ℝ)
+    (ψM : Matrix n k ℝ) (ψγ : k → ℝ) (ψc : q → n → ℝ) (ψβ : q → ℝ) (ψe : q → n → ℝ)
+    (ψβ' : q → ℝ) (ψa : q → k → ℝ)
+    (h : ∀ x : n → ℝ,
+      x ᵥ* ψM + ψγ + ∑ i,
+        ((silu (x ⬝ᵥ c i + β i) * (x ⬝ᵥ e i + β' i)) • ψa i
+          + (siluDeriv (x ⬝ᵥ c i + β i) * (x ⬝ᵥ ψc i + ψβ i) * (x ⬝ᵥ e i + β' i)) • a i
+          + (silu (x ⬝ᵥ c i + β i) * (x ⬝ᵥ ψe i + ψβ' i)) • a i) = 0)
+    (j : q) (ν : n → ℝ) (hν : 0 < ν ⬝ᵥ c j ∧ ∀ i, i ≠ j → ν ⬝ᵥ c j < |ν ⬝ᵥ c i|) (o : k) :
+    (ν ⬝ᵥ ψc j) * (ν ⬝ᵥ e j) * a j o = 0 ∧
+      (ν ⬝ᵥ e j) * ψa j o + (ν ⬝ᵥ ψe j) * a j o = 0 ∧
+      ((ν ⬝ᵥ ψc j) * β' j + ψβ j * (ν ⬝ᵥ e j)) * a j o = 0 ∧
+      β' j * ψa j o + ψβ' j * a j o = ψβ j * β' j * a j o := by
+  classical
+  have hu := hν.1
+  have hk : ∀ i, i ≠ j → |ν ⬝ᵥ c j| < |ν ⬝ᵥ c i| := fun i hi => by
+    rw [abs_of_pos hu]; exact hν.2 i hi
+  -- the ray `x = t ν`: sign `+`
+  obtain ⟨p3, p2, p1, -⟩ := ray_coeffs (fun i => ν ⬝ᵥ c i) β
+    (fun i => (ν ⬝ᵥ e i) * ψa i o + (ν ⬝ᵥ ψe i) * a i o) (fun i => β' i * ψa i o + ψβ' i * a i o)
+    (fun i => (ν ⬝ᵥ ψc i) * (ν ⬝ᵥ e i) * a i o)
+    (fun i => ((ν ⬝ᵥ ψc i) * β' i + ψβ i * (ν ⬝ᵥ e i)) * a i o) (fun i => ψβ i * β' i * a i o)
+    ((ν ᵥ* ψM) o) (ψγ o) 1 j (Or.inl ⟨rfl, hu⟩) hk
+    (ray_identity c β e β' a ψM ψγ ψc ψβ ψe ψβ' ψa h ν o)
+  -- the ray `x = -t ν`: sign `-`
+  obtain ⟨-, m2, -, -⟩ := ray_coeffs (fun i => (-ν) ⬝ᵥ c i) β
+    (fun i => ((-ν) ⬝ᵥ e i) * ψa i o + ((-ν) ⬝ᵥ ψe i) * a i o)
+    (fun i => β' i * ψa i o + ψβ' i * a i o)
+    (fun i => ((-ν) ⬝ᵥ ψc i) * ((-ν) ⬝ᵥ e i) * a i o)
+    (fun i => (((-ν) ⬝ᵥ ψc i) * β' i + ψβ i * ((-ν) ⬝ᵥ e i)) * a i o)
+    (fun i => ψβ i * β' i * a i o)
+    (((-ν) ᵥ* ψM) o) (ψγ o) (-1) j (Or.inr ⟨rfl, by rw [neg_dotProduct]; linarith⟩)
+    (fun i hi => by simp only [neg_dotProduct, abs_neg]; exact hk i hi)
+    (ray_identity c β e β' a ψM ψγ ψc ψβ ψe ψβ' ψa h (-ν) o)
+  simp only [neg_dotProduct] at m2
+  -- `t³`
+  have h3 : (ν ⬝ᵥ ψc j) * (ν ⬝ᵥ e j) * a j o = 0 := by
+    rw [one_mul] at p3
+    exact (mul_eq_zero.1 p3).resolve_left hu.ne'
+  -- `t²`, both signs: `u F₁ = 0` and `u G₁ = 0`
+  have h2a : (ν ⬝ᵥ c j) * ((ν ⬝ᵥ e j) * ψa j o + (ν ⬝ᵥ ψe j) * a j o) = 0 := by
+    linear_combination (-1 / 2 : ℝ) * p2 + (-1 / 2 : ℝ) * m2 - h3
+  have h2b : (ν ⬝ᵥ c j) * (((ν ⬝ᵥ ψc j) * β' j + ψβ j * (ν ⬝ᵥ e j)) * a j o) = 0 := by
+    linear_combination (1 / 2 : ℝ) * p2 - (1 / 2 : ℝ) * m2 - β j * h3
+  have hF1 := (mul_eq_zero.1 h2a).resolve_left hu.ne'
+  have hG1 := (mul_eq_zero.1 h2b).resolve_left hu.ne'
+  -- `t`
+  have h1 : (ν ⬝ᵥ c j) * (ψβ j * β' j * a j o - (β' j * ψa j o + ψβ' j * a j o)) = 0 := by
+    linear_combination p1 + β j * hF1 - (1 * β j - 1) * hG1
+  exact ⟨h3, hF1, hG1, (sub_eq_zero.1 ((mul_eq_zero.1 h1).resolve_left hu.ne')).symm⟩
+
+/-- **One unit only rescales its value.** For every unit `j`: `ψ_{c_j} = 0`, `ψ_{β_j} = 0`, and
+`(ψ_{e_j}, ψ_{β'_j}, ψ_{a_j}) = (-α e_j, -α β'_j, α a_j)` for a number `α`. -/
+private lemma unit_rescale {n k q : Type*} [Fintype n] [Fintype k] [Fintype q]
+    (c : q → n → ℝ) (β : q → ℝ) (e : q → n → ℝ) (β' : q → ℝ) (a : q → k → ℝ)
+    (ψM : Matrix n k ℝ) (ψγ : k → ℝ) (ψc : q → n → ℝ) (ψβ : q → ℝ) (ψe : q → n → ℝ)
+    (ψβ' : q → ℝ) (ψa : q → k → ℝ)
+    (ha : ∀ i, a i ≠ 0) (hc : ∀ i, c i ≠ 0)
+    (hcol : ∀ i j, i ≠ j → ∀ r : ℝ, c i ≠ r • c j) (he : ∀ i, e i ≠ 0)
+    (h : ∀ x : n → ℝ,
+      x ᵥ* ψM + ψγ + ∑ i,
+        ((silu (x ⬝ᵥ c i + β i) * (x ⬝ᵥ e i + β' i)) • ψa i
+          + (siluDeriv (x ⬝ᵥ c i + β i) * (x ⬝ᵥ ψc i + ψβ i) * (x ⬝ᵥ e i + β' i)) • a i
+          + (silu (x ⬝ᵥ c i + β i) * (x ⬝ᵥ ψe i + ψβ' i)) • a i) = 0)
+    (j : q) :
+    ψc j = 0 ∧ ψβ j = 0 ∧
+      ∃ α : ℝ, ψe j = -α • e j ∧ ψβ' j = -α * β' j ∧ ψa j = α • a j := by
+  have hU := fun ν hν o => unit_coeffs c β e β' a ψM ψγ ψc ψβ ψe ψβ' ψa h j ν hν o
+  obtain ⟨o₀, ho₀⟩ := Function.ne_iff.1 (ha j)
+  obtain ⟨m₀, hm₀⟩ := Function.ne_iff.1 (he j)
+  rw [Pi.zero_apply] at ho₀ hm₀
+  obtain ⟨ν₀, hν₀, hν₀e⟩ := exists_good_ne c (e j) hc hcol (he j) j
+  -- `t³`: `ν ψ_{c_j} = 0` for every good `ν` with `ν e_j ≠ 0`, so `ψ_{c_j} = 0`
+  have hψc : ψc j = 0 := eq_zero_of_good c (e j) hc hcol (he j) j (ψc j) fun ν hν hνe =>
+    (mul_eq_zero.1 ((mul_eq_zero.1 (hU ν hν o₀).1).resolve_right ho₀)).resolve_right hνe
+  -- `t²`, the two signs: `ψ_{β_j} (ν e_j) a_j = 0`, so `ψ_{β_j} = 0`
+  have hψβ : ψβ j = 0 := by
+    have := (hU ν₀ hν₀ o₀).2.2.1
+    rw [hψc, dotProduct_zero, zero_mul, zero_add] at this
+    exact (mul_eq_zero.1 ((mul_eq_zero.1 this).resolve_right ho₀)).resolve_right hν₀e
+  -- `t²`: `a_j(o) ψ_{e_j} + ψ_{a_j}(o) e_j` is orthogonal to all good directions, so it vanishes
+  have hr : ∀ o, a j o • ψe j + ψa j o • e j = 0 := fun o =>
+    eq_zero_of_good c (e j) hc hcol (he j) j _ fun ν hν hνe => by
+      rw [dotProduct_add, dotProduct_smul, dotProduct_smul, smul_eq_mul, smul_eq_mul]
+      linear_combination (hU ν hν o).2.1
+  -- `α = ψ_{a_j}(o₀) / a_j(o₀)`
+  refine ⟨hψc, hψβ, ψa j o₀ / a j o₀, ?_⟩
+  have hψe : ψe j = -(ψa j o₀ / a j o₀) • e j := funext fun m => by
+    have := congrFun (hr o₀) m
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul, Pi.zero_apply] at this
+    have h2 : ψe j m = -(ψa j o₀ * e j m) / a j o₀ := by
+      rw [eq_div_iff ho₀]; linear_combination this
+    simp only [Pi.smul_apply, smul_eq_mul, h2]
+    ring
+  have hψa : ψa j = (ψa j o₀ / a j o₀) • a j := funext fun o => by
+    have := congrFun (hr o) m₀
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul, Pi.zero_apply] at this
+    rw [hψe] at this
+    simp only [Pi.smul_apply, smul_eq_mul] at this
+    have h2 : e j m₀ * (ψa j o - ψa j o₀ / a j o₀ * a j o) = 0 := by linear_combination this
+    simp only [Pi.smul_apply, smul_eq_mul]
+    exact sub_eq_zero.1 ((mul_eq_zero.1 h2).resolve_left hm₀)
+  -- `t`: `β'_j ψ_{a_j} + ψ_{β'_j} a_j = 0`, so `ψ_{β'_j} = -α β'_j`
+  have hψβ' : ψβ' j = -(ψa j o₀ / a j o₀) * β' j := by
+    have := (hU ν₀ hν₀ o₀).2.2.2
+    rw [hψβ] at this
+    rw [show -(ψa j o₀ / a j o₀) * β' j = -(β' j * ψa j o₀) / a j o₀ by ring, eq_div_iff ho₀]
+    linear_combination this
+  exact ⟨hψe, hψβ', hψa⟩
+
 /-- **Lemma C.3 for SwiGLU.** Rows are indexed by `n` (the coordinates of an input `x`), hidden
 units by `q`, and the coordinates of the output by `k`. -/
 theorem silu_gated_units_flat {n k q : Type*} [Fintype n] [Fintype k] [Fintype q]
@@ -367,6 +621,24 @@ theorem silu_gated_units_flat {n k q : Type*} [Fintype n] [Fintype k] [Fintype q
           + (silu (x ⬝ᵥ c i + β i) * (x ⬝ᵥ ψe i + ψβ' i)) • a i) = 0) :
     ψM = 0 ∧ ψγ = 0 ∧ ψc = 0 ∧ ψβ = 0 ∧
       ∃ α : q → ℝ, ∀ i, ψe i = -(α i) • e i ∧ ψβ' i = -(α i) * β' i ∧ ψa i = α i • a i := by
-  sorry
+  classical
+  -- every unit only rescales its value
+  choose hψc hψβ α hα using
+    unit_rescale c β e β' a ψM ψγ ψc ψβ ψe ψβ' ψa ha hc hcol he h
+  -- so every unit term vanishes, and what is left is `x ψ_M + ψ_γ = 0` for all `x`
+  have hlin : ∀ x : n → ℝ, x ᵥ* ψM + ψγ = 0 := fun x => by
+    have hz : ∀ i, (silu (x ⬝ᵥ c i + β i) * (x ⬝ᵥ e i + β' i)) • ψa i
+        + (siluDeriv (x ⬝ᵥ c i + β i) * (x ⬝ᵥ ψc i + ψβ i) * (x ⬝ᵥ e i + β' i)) • a i
+        + (silu (x ⬝ᵥ c i + β i) * (x ⬝ᵥ ψe i + ψβ' i)) • a i = 0 := fun i => by
+      rw [(hα i).1, (hα i).2.1, (hα i).2.2, hψc i, hψβ i, dotProduct_zero, dotProduct_smul,
+        smul_smul, ← add_smul, ← add_smul, smul_eq_mul]
+      refine (congrArg (· • a i) ?_).trans (zero_smul ℝ (a i))
+      ring
+    have := h x
+    rwa [Finset.sum_congr rfl fun i _ => hz i, Finset.sum_const_zero, add_zero] at this
+  have hγ : ψγ = 0 := by simpa using hlin 0
+  refine ⟨?_, hγ, funext hψc, funext hψβ, α, hα⟩
+  ext m o
+  simpa [hγ] using congrFun (hlin (Pi.single m 1)) o
 
 end Skips
