@@ -1,0 +1,6 @@
+.lake/
+scratch/
+# working notes of the proving runs, kept out of the repository
+AGENTS.md
+PROGRESS.md
+ERRORS.md

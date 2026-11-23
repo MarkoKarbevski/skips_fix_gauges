@@ -29,6 +29,7 @@ The folder `paper docs/archive/` holds the texts from which the three papers wer
     paper docs/archive/                           the earlier versions, with the bibliography and figures of the longer note
     skip-connections-gauge-fixes-.pdf             the longer note
     functional_dimension/   the two scripts of the second paper
+    lean/                   a Lean 4 formalization of statements of the second and third papers, in progress, with its own README
     experiments.ipynb   the notebook, with its outputs
     data/               saved results of the notebook's two long experiments
     trained/            small networks trained on four datasets, and the ranks of their Jacobians
