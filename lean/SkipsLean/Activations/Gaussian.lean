@@ -44,7 +44,7 @@ theorem hasDerivAt_gaussPdf (z : ℝ) : HasDerivAt gaussPdf (-z * gaussPdf z) z 
   convert h1.exp.div_const (Real.sqrt (2 * Real.pi)) using 1
   ring
 
-private theorem continuous_gaussPdf : Continuous gaussPdf := by
+theorem continuous_gaussPdf : Continuous gaussPdf := by
   unfold gaussPdf
   fun_prop
 
@@ -65,19 +65,19 @@ theorem gaussCdf_neg (z : ℝ) : gaussCdf (-z) = 1 - gaussCdf z := by
   rw [gaussCdf, gaussCdf, h]
   ring
 
-private theorem gaussPdf_eq :
+theorem gaussPdf_eq :
     gaussPdf = fun t => Real.exp (-(1 / 2) * t ^ 2) / Real.sqrt (2 * Real.pi) := by
   funext t
   rw [gaussPdf]
   congr 2
   ring
 
-private theorem integrable_gaussPdf : MeasureTheory.Integrable gaussPdf := by
+theorem integrable_gaussPdf : MeasureTheory.Integrable gaussPdf := by
   rw [gaussPdf_eq]
   exact (integrable_exp_neg_mul_sq (by norm_num)).div_const _
 
 /-- `∫₀^∞ φ = 1/2`, from `∫₀^∞ e^{-b t²} = √(π/b)/2` with `b = 1/2`. -/
-private theorem integral_gaussPdf_Ioi : ∫ t in Set.Ioi (0 : ℝ), gaussPdf t = 1 / 2 := by
+theorem integral_gaussPdf_Ioi : ∫ t in Set.Ioi (0 : ℝ), gaussPdf t = 1 / 2 := by
   rw [gaussPdf_eq, MeasureTheory.integral_div, integral_gaussian_Ioi,
     show Real.pi / (1 / 2) = 2 * Real.pi by ring]
   have hs : 0 < Real.sqrt (2 * Real.pi) := Real.sqrt_pos.2 (by positivity)
@@ -99,7 +99,7 @@ theorem tendsto_gaussCdf_atBot : Tendsto gaussCdf atBot (𝓝 0) := by
   simp only [Function.comp_apply, gaussCdf_neg, sub_sub_cancel]
 
 /-- `Φ` is strictly increasing, since `Φ' = φ > 0`. -/
-private theorem strictMono_gaussCdf : StrictMono gaussCdf :=
+theorem strictMono_gaussCdf : StrictMono gaussCdf :=
   strictMono_of_hasDerivAt_pos hasDerivAt_gaussCdf gaussPdf_pos
 
 theorem gaussCdf_pos (z : ℝ) : 0 < gaussCdf z := by
@@ -112,7 +112,7 @@ theorem gaussCdf_lt_one (z : ℝ) : gaussCdf z < 1 := by
   exact lt_of_lt_of_le (strictMono_gaussCdf (by linarith))
     (strictMono_gaussCdf.monotone.ge_of_tendsto tendsto_gaussCdf_atTop (z + 1))
 
-private theorem tendsto_gaussPdf_atTop : Tendsto gaussPdf atTop (𝓝 0) := by
+theorem tendsto_gaussPdf_atTop : Tendsto gaussPdf atTop (𝓝 0) := by
   have h1 : Tendsto (fun y : ℝ => -y ^ 2 / 2) atTop atBot :=
     (tendsto_neg_atTop_atBot.comp (tendsto_pow_atTop two_ne_zero)).atBot_div_const (by norm_num)
   have h2 := (Real.tendsto_exp_atBot.comp h1).div_const (Real.sqrt (2 * Real.pi))
@@ -183,6 +183,9 @@ theorem le_one_sub_gaussCdf {z : ℝ} (hz : 0 < z) :
     rwa [sub_self, mul_zero, sub_zero] at h2
   have := nonneg_of_antitoneOn_of_tendsto hanti hlim hz
   linarith
+
+/-- The derivative of GELU, `σ'(z) = Φ(z) + z φ(z)` (`hasDerivAt_gelu`). -/
+noncomputable def geluDeriv (z : ℝ) : ℝ := gaussCdf z + z * gaussPdf z
 
 /-- The derivative of GELU: `σ'(z) = Φ(z) + z φ(z)`. -/
 theorem hasDerivAt_gelu (z : ℝ) : HasDerivAt gelu (gaussCdf z + z * gaussPdf z) z := by

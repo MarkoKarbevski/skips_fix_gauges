@@ -20,3 +20,11 @@ import SkipsLean.OneBlock.UnitsSwiGLU
 import SkipsLean.Dimension.Rescaling
 import SkipsLean.OneBlock.SwiGLU
 import SkipsLean.Activations.Gaussian
+import SkipsLean.Activations.GeluExpansion
+import SkipsLean.OneBlock.Common
+import SkipsLean.OneBlock.Mlp
+import SkipsLean.OneBlock.Gated
+import SkipsLean.OneBlock.UnitsGELU
+import SkipsLean.OneBlock.GELU
+import SkipsLean.OneBlock.UnitsGeGLU
+import SkipsLean.OneBlock.GeGLU
