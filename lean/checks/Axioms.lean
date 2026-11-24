@@ -272,3 +272,190 @@ import SkipsLean
 #print axioms Skips.exists_ne_residual_skipless_reluSq_rmsNorm
 #print axioms Skips.exists_ne_residual_skipless_reglu
 #print axioms Skips.exists_ne_residual_skipless_reglu_rmsNorm
+
+-- ReLU and ReLU² blocks: Theorem 4.3 with the rescalings, Theorem 5.1
+#print axioms Skips.flat_le_flatOn
+#print axioms Skips.mem_flat_of_hasDerivAt'
+#print axioms Skips.funDim_add_finrank_flat'
+#print axioms Skips.funDim_add_finrank_le_of_le_flat'
+#print axioms Skips.exists_jacobianRank_add_finrank_flatOn
+#print axioms Skips.cobDir_mem_flat_skipless'
+#print axioms Skips.funDim_add_le_skipless'
+#print axioms Skips.cobDir_mem_flat_skipless_rmsNorm'
+#print axioms Skips.funDim_add_le_skipless_rmsNorm'
+#print axioms Skips.relu_homogeneous
+#print axioms Skips.reluSq_homogeneous
+#print axioms Skips.eval_rescale_mlp
+#print axioms Skips.rescaleDirMlp_mem_flat
+#print axioms Skips.cobDir_add_rescaleDirMlp_injective
+#print axioms Skips.funDim_add_le_skipless_mlp_rescale
+#print axioms Skips.funDim_add_le_skipless_mlp_rescale_rmsNorm
+#print axioms Skips.ae_read_col_ne_zero
+#print axioms Skips.ae_funDim_add_le_skipless_relu
+#print axioms Skips.ae_funDim_add_le_skipless_reluSq
+#print axioms Skips.ae_funDim_add_le_skipless_relu_rmsNorm
+#print axioms Skips.ae_funDim_add_le_skipless_reluSq_rmsNorm
+#print axioms Skips.relu_unitsRescale
+#print axioms Skips.reluSq_unitsRescale
+#print axioms Skips.differentiableAt_eval_of_mem_noKink
+#print axioms Skips.flatOn_noKink_le_mlp_rescale
+#print axioms Skips.funDim_mlp_oneBlock_rescale
+#print axioms Skips.exists_jacobianRank_mlp_oneBlock_rescale
+#print axioms Skips.ae_funDim_relu_oneBlock
+#print axioms Skips.ae_exists_jacobianRank_relu_oneBlock
+#print axioms Skips.ae_funDim_reluSq_oneBlock
+#print axioms Skips.ae_exists_jacobianRank_reluSq_oneBlock
+
+-- ReGLU blocks: the rescaling of the gates, Theorem 4.3 with both rescalings
+#print axioms Skips.rescaleDir_mem_flat'
+#print axioms Skips.eval_rescale_gate
+#print axioms Skips.rescaleDirGate_mem_flat
+#print axioms Skips.cobDir_add_rescaleDir_add_rescaleDirGate_injective
+#print axioms Skips.funDim_add_le_skipless_gated_gate
+#print axioms Skips.funDim_add_le_skipless_gated_gate_rmsNorm
+#print axioms Skips.ae_gate_ne_zero
+#print axioms Skips.ae_funDim_add_le_skipless_reglu
+#print axioms Skips.ae_funDim_add_le_skipless_reglu_rmsNorm
+
+-- Absorb paper, Theorem 4.5: the first block needs 2d hidden units
+#print axioms Skips.ae_firstBlockGeneric
+#print axioms Skips.exists_ne_skipless_of_first_card_lt_relu
+#print axioms Skips.ae_ne_skipless_of_first_card_lt_relu
+#print axioms Skips.tendsto_eval_gelu_ray
+#print axioms Skips.exists_ne_skipless_of_first_card_lt_gelu
+#print axioms Skips.ae_ne_skipless_of_first_card_lt_gelu
+
+-- Skips paper: Theorem 4.2 with identity skips and the term s; Theorem 4.6 (i) for ReLU and ReLU² blocks
+#print axioms Skips.cobDir_const_mem_flat_residual'
+#print axioms Skips.cobDir_const_mem_flat_residual_rmsNorm'
+#print axioms Skips.funDim_add_le_residual'
+#print axioms Skips.funDim_add_le_residual_rmsNorm'
+#print axioms Skips.funDim_add_le_residual_gated
+#print axioms Skips.funDim_add_le_residual_gated_rmsNorm
+#print axioms Skips.ae_funDim_add_le_residual_gated
+#print axioms Skips.ae_funDim_add_le_residual_gated_rmsNorm
+#print axioms Skips.funDim_add_le_residual_mlp_rescale
+#print axioms Skips.funDim_add_le_residual_mlp_rescale_rmsNorm
+#print axioms Skips.ae_funDim_add_le_residual_mlp_rescale
+#print axioms Skips.ae_funDim_add_le_residual_mlp_rescale_rmsNorm
+#print axioms Skips.funDim_add_le_residual_gated_gate
+#print axioms Skips.funDim_add_le_residual_gated_gate_rmsNorm
+#print axioms Skips.ae_funDim_add_le_residual_gated_gate
+#print axioms Skips.ae_funDim_add_le_residual_gated_gate_rmsNorm
+#print axioms Skips.differentiableAt_eval_residual_of_mem_noKink
+#print axioms Skips.flatOn_noKink_le_mlp_rescale_residual
+#print axioms Skips.funDim_mlp_oneBlock_rescale_residual
+#print axioms Skips.exists_jacobianRank_mlp_oneBlock_rescale_residual
+#print axioms Skips.ae_funDim_relu_oneBlock_residual
+#print axioms Skips.ae_exists_jacobianRank_relu_oneBlock_residual
+#print axioms Skips.ae_funDim_relu_oneBlock_residual_eq_add
+#print axioms Skips.ae_funDim_reluSq_oneBlock_residual
+#print axioms Skips.ae_exists_jacobianRank_reluSq_oneBlock_residual
+#print axioms Skips.ae_funDim_reluSq_oneBlock_residual_eq_add
+
+-- Public helper theorems of the files above that were not listed before
+-- Absorb/FewerUnits.lean
+#print axioms Skips.exists_ne_zero_forall_dotProduct_eq_zero
+-- Absorb/Limits.lean
+#print axioms Skips.norm_mul_norm_inv_smul_sub_le
+#print axioms Skips.norm_mul_norm_rmsRow_zero_sub_le
+#print axioms Skips.rmsNorm_zero_smul
+#print axioms Skips.norm_rmsNorm_zero_sub_le
+#print axioms Skips.norm_rmsNorm_zero_le
+#print axioms Skips.norm_mul_le_card
+#print axioms Skips.lipschitzWith_mul_right
+-- Absorb/SameWidth.lean
+#print axioms Skips.exists_dotProduct_eq_zero_and_ne_zero
+#print axioms Skips.write_eq_sum_of_abs_eq
+-- Activations/Gaussian.lean
+#print axioms Skips.gaussPdf_pos
+#print axioms Skips.gaussPdf_neg
+#print axioms Skips.hasDerivAt_gaussPdf
+#print axioms Skips.continuous_gaussPdf
+#print axioms Skips.gaussPdf_eq
+#print axioms Skips.integrable_gaussPdf
+#print axioms Skips.integral_gaussPdf_Ioi
+#print axioms Skips.tendsto_gaussCdf_atBot
+#print axioms Skips.strictMono_gaussCdf
+#print axioms Skips.gaussCdf_pos
+#print axioms Skips.gaussCdf_lt_one
+#print axioms Skips.tendsto_gaussPdf_atTop
+-- Basic/RMSNorm.lean
+#print axioms Skips.dotProduct_vecMul_orthogonal
+#print axioms Skips.rmsRow_vecMul_orthogonal
+-- Depth/StepTanhRMS.lean
+#print axioms Skips.differentiable_suffix_prod_of_differentiable
+-- Depth/Suffix.lean
+#print axioms Skips.suffix_last
+#print axioms Skips.suffix_castSucc
+#print axioms Skips.fderiv_suffix_last
+#print axioms Skips.fderiv_params_suffix_last
+#print axioms Skips.suffix_last_eq_mul
+#print axioms Skips.suffix_castSucc_eq_comp
+#print axioms Skips.analyticOnNhd_block
+#print axioms Skips.analyticOnNhd_suffix
+#print axioms Skips.fderiv_suffix_castSucc
+#print axioms Skips.differentiable_suffix_prod
+#print axioms Skips.differentiable_params_suffix
+#print axioms Skips.differentiable_suffix
+#print axioms Skips.fderiv_eval_eq_fderiv_suffix
+-- Depth/SuffixRMS.lean
+#print axioms Skips.analyticOnNhd_matrix_mul
+#print axioms Skips.fderiv_rmsNorm_apply
+#print axioms Skips.injective_fderiv_rmsNorm
+#print axioms Skips.isOpenMap_rmsNorm
+#print axioms Skips.isOpen_dense_preimage_rmsNorm
+#print axioms Skips.fderiv_suffix_last_of_differentiable
+#print axioms Skips.fderiv_params_suffix_last_eq_mul
+#print axioms Skips.suffix_castSucc_eq_comp_block
+#print axioms Skips.analyticOnNhd_block_comp
+#print axioms Skips.fderiv_suffix_castSucc_of_analytic
+#print axioms Skips.fderiv_eval_eq_fderiv_suffix_of_analytic
+#print axioms Skips.fderiv_eval_eq_fderiv_suffix_rmsNorm
+-- Dimension/Functional.lean
+#print axioms Skips.jacobianRank_le_finrank
+#print axioms Skips.jacobianRank_le_funDim
+-- Dimension/UpperBound.lean
+#print axioms Skips.cobDir_mem_flat_skipless
+#print axioms Skips.cobDir_const_mem_flat_residual
+-- Dimension/UpperBoundRMSNorm.lean
+#print axioms Skips.cobDir_mem_flat_skipless_rmsNorm
+-- Network/Analytic.lean
+#print axioms Skips.analyticOnNhd_matrix_entry
+-- OneBlock/Common.lean
+#print axioms Skips.cobDirLin_apply
+#print axioms Skips.finrank_cobDomain
+#print axioms Skips.analyticOnNhd_linear
+#print axioms Skips.analyticOnNhd_mul_apply
+#print axioms Skips.ae_ne_zero_of_analytic
+#print axioms Skips.analyticOnNhd_E_mul_read
+#print axioms Skips.analyticOnNhd_write_mul_D
+#print axioms Skips.rank_eq_card_of_isUnit_det
+#print axioms Skips.sum_one_mul_one_ne_zero
+#print axioms Skips.exists_minor_ne_zero
+#print axioms Skips.hasDerivAt_quad
+#print axioms Skips.hasDerivAt_eval_line
+#print axioms Skips.differentiable_f_mlp
+#print axioms Skips.differentiable_f_gated
+-- OneBlock/GELU.lean
+#print axioms Skips.gelu_unitsRigid
+-- OneBlock/GeGLU.lean
+#print axioms Skips.gelu_gatedUnitsRescale
+-- OneBlock/Tanh.lean
+#print axioms Skips.hasDerivAt_tanh
+-- Symmetry/Normalized.lean
+#print axioms Skips.coe_inv_of_mem_orthogonalGroup
+-- OneBlock/ReGLU.lean
+#print axioms Skips.ae_oneBlockGenericReGLU
+#print axioms Skips.differentiableAt_eval_of_mem_noKinkGate
+#print axioms Skips.flatOn_noKinkGate_le_reglu
+#print axioms Skips.funDim_reglu_oneBlock
+#print axioms Skips.exists_jacobianRank_reglu_oneBlock
+#print axioms Skips.ae_funDim_reglu_oneBlock
+#print axioms Skips.ae_exists_jacobianRank_reglu_oneBlock
+#print axioms Skips.flatOn_noKinkGate_le_reglu_residual
+#print axioms Skips.funDim_reglu_oneBlock_residual
+#print axioms Skips.exists_jacobianRank_reglu_oneBlock_residual
+#print axioms Skips.ae_funDim_reglu_oneBlock_residual
+#print axioms Skips.ae_exists_jacobianRank_reglu_oneBlock_residual
+#print axioms Skips.ae_funDim_reglu_oneBlock_residual_eq_add

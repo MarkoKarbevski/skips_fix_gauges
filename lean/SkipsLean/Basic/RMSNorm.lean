@@ -1,4 +1,4 @@
-import Mathlib
+import SkipsLean.Imports
 
 /-!
 # RMSNorm on rows

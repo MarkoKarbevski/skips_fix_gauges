@@ -382,4 +382,19 @@ theorem funDim_add_le_skipless_gated_rmsNorm {ε : ℝ} (hε : 0 < ε)
   have h := funDim_add_finrank_le_of_le_flat θ hdiff _ hV
   rwa [LinearMap.finrank_range_of_inj hinj, hdim] at h
 
+/-- The directions of the rescalings of the values are flat for every gate activation `σ`, every
+map `χ` before the reads and all stream matrices, with no hypothesis of differentiability (the
+gate of a ReGLU block is not differentiable at `0`). -/
+theorem rescaleDir_mem_flat' (S : Fin L → Matrix d d ℝ) (α : ∀ ℓ, hid ℓ → ℝ) :
+    rescaleDir θ α ∈ flat (Arch.gated σ χ hid) S θ := by
+  -- the curve of `rescaleDir_mem_flat_stream`, with `mem_flat_of_hasDerivAt'`
+  refine mem_flat_of_hasDerivAt' θ (rescaleCurve θ α) (rescaleDir θ α)
+    (hasDerivAt_rescaleCurve θ α) (rescaleCurve_zero θ α)
+    (Filter.Eventually.of_forall fun τ x => ?_)
+  refine eval_rescale θ (fun ℓ i => Real.exp (τ * α ℓ i)) (fun _ _ => Real.exp_ne_zero _)
+    (rescaleCurve θ α τ) rfl rfl (fun _ _ _ => rfl) (fun ℓ k i => ?_) (fun _ _ _ => rfl) S x
+  -- the value columns: `e^{-τ α} = (e^{τ α})⁻¹`
+  show Real.exp (τ * -(α ℓ i)) * θ.read ℓ k (Sum.inr i) = _
+  rw [mul_neg, Real.exp_neg]
+
 end Skips

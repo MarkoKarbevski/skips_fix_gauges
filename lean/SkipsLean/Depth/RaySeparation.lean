@@ -1,4 +1,4 @@
-import Mathlib
+import SkipsLean.Imports
 
 /-!
 # Separation on a ray

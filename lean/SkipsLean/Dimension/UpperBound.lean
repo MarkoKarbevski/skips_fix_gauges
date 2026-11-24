@@ -241,4 +241,34 @@ theorem funDim_add_le_residual (hA : A.χ = id) (hf : ∀ ℓ, Differentiable �
   rwa [LinearMap.finrank_range_of_inj hinj, Module.finrank_matrix, Module.finrank_self,
     mul_one, ← sq] at h
 
+/-! ### Without a hypothesis of differentiability on the blocks
+
+The same statements for arbitrary maps `f_ℓ` (ReLU blocks are not differentiable at the kinks),
+from `mem_flat_of_hasDerivAt'` and `funDim_add_finrank_le_of_le_flat'`. -/
+
+/-- Without normalization and without skip connections, every direction `cobDir θ X` is flat, for
+arbitrary maps `f_ℓ`. -/
+theorem cobDir_mem_flat_skipless' (hA : A.χ = id) (X : Fin (L + 1) → Matrix d d ℝ) :
+    cobDir θ X ∈ flat A 0 θ :=
+  -- the curve `τ ↦ θ.cob (exp (τ X))`, as in `cobDir_mem_flat_skipless`
+  mem_flat_of_hasDerivAt' θ
+    (fun τ => θ.cob (fun ℓ => expGL (X ℓ) τ) (fun ℓ => expGL (X ℓ) τ)) (cobDir θ X)
+    (hasDerivAt_cob_expGL θ X) (cob_expGL_zero θ X)
+    (Filter.Eventually.of_forall fun τ x => eval_cob_skipless θ _ x hA)
+
+/-- **Theorem 4.3, without normalization, for the changes of basis, for arbitrary maps `f_ℓ`.**
+If `E` and every write have rank `d`, the functional dimension of a network without skip
+connections is at most `P - (L + 1) d²`. -/
+theorem funDim_add_le_skipless' (hA : A.χ = id)
+    (hE : θ.E.rank = Fintype.card d) (hw : ∀ ℓ, (θ.write ℓ).rank = Fintype.card d) :
+    funDim A 0 θ + (L + 1) * Fintype.card d ^ 2 ≤ Module.finrank ℝ (Params A dIn dOut) := by
+  -- the directions `cobDir θ X` form a subspace of flat directions
+  have hV : LinearMap.range (cobDirLin θ) ≤ flat A 0 θ := by
+    rintro _ ⟨X, rfl⟩
+    exact cobDir_mem_flat_skipless' θ hA X
+  have h := funDim_add_finrank_le_of_le_flat' θ _ hV
+  -- of dimension `(L + 1) d²`, since `X ↦ cobDir θ X` is injective (Lemma B.1)
+  rwa [LinearMap.finrank_range_of_inj (f := cobDirLin θ) (cobDir_injective θ hE hw),
+    finrank_cobDomain] at h
+
 end Skips
