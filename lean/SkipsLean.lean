@@ -218,3 +218,8 @@ import SkipsLean.Residual.DifferentClassesAttention
 import SkipsLean.Residual.BlocksAlone
 import SkipsLean.Residual.BlocksAloneAttention
 import SkipsLean.Residual.LocallyUniform
+import SkipsLean.Network.Transformer
+import SkipsLean.Symmetry.InsideBlocks
+import SkipsLean.Symmetry.InsideBlocksSum
+import SkipsLean.Symmetry.InsideBlocksKinds
+import SkipsLean.Dimension.UpperBoundTransformer

@@ -41,6 +41,7 @@ abbrev Arch.sum (A B : Arch T d L) : Arch T d L where
 
 variable [Fintype T] [Fintype d] (A B : Arch T d L)
 
+omit [Fintype T] in
 /-- **The block of the sum is the sum of the blocks:** on a hidden state `h`, with the read
 `R = [R_A | R_B]` and the write `W` (the rows of `W_A` above those of `W_B`), block `ℓ` of
 `A.sum B` gives `f_ℓ^A (h R_A) W_A + f_ℓ^B (h R_B) W_B`. -/
@@ -60,6 +61,7 @@ theorem f_sum_mul (ℓ : Fin L) (h : Matrix T d ℝ) (R : Matrix d (A.r ℓ ⊕ 
   simp only [Matrix.mul_apply, Fintype.sum_sum_type, Matrix.of_apply, Sum.elim_inl,
     Sum.elim_inr, Matrix.add_apply, Matrix.submatrix_apply, id]
 
+omit [Fintype T] in
 /-- **A block without a second part is a block of `A`:** if block `ℓ` of `B` has no write row
 (for an MLP block: no hidden unit), block `ℓ` of `A.sum B` is block `ℓ` of `A`. -/
 theorem f_sum_mul_of_isEmpty_right (ℓ : Fin L) [IsEmpty (B.w ℓ)] (h : Matrix T d ℝ)
@@ -70,6 +72,7 @@ theorem f_sum_mul_of_isEmpty_right (ℓ : Fin L) [IsEmpty (B.w ℓ)] (h : Matrix
   have h0 : W.submatrix Sum.inr id = 0 := Matrix.ext fun j _ => isEmptyElim j
   rw [f_sum_mul, h0, Matrix.mul_zero, add_zero]
 
+omit [Fintype T] in
 /-- **A block without a first part is a block of `B`:** if block `ℓ` of `A` has no write row (for
 an attention block: no head), block `ℓ` of `A.sum B` is block `ℓ` of `B`. -/
 theorem f_sum_mul_of_isEmpty_left (ℓ : Fin L) [IsEmpty (A.w ℓ)] (h : Matrix T d ℝ)
@@ -131,6 +134,7 @@ private theorem locallyLipschitz_submatrix_sum {m n₁ n₂ : Type*} [Fintype m]
     LocallyLipschitz (fun M : Matrix m n₂ ℝ => M.submatrix id c) :=
   locallyLipschitz_matrix_of_forall_sum fun t k => locallyLipschitz_entry_sum t (c k)
 
+omit [Fintype d] in
 /-- The map of a block of the sum is real-analytic if the maps of the two blocks are. -/
 theorem analyticOnNhd_f_sum {ℓ : Fin L} (hA : AnalyticOnNhd ℝ (A.f ℓ) Set.univ)
     (hB : AnalyticOnNhd ℝ (B.f ℓ) Set.univ) : AnalyticOnNhd ℝ ((A.sum B).f ℓ) Set.univ := by
@@ -147,6 +151,7 @@ theorem analyticOnNhd_f_sum {ℓ : Fin L} (hA : AnalyticOnNhd ℝ (A.f ℓ) Set.
   | inl a => exact (analyticOnNhd_matrix_entry t a).comp hA' (Set.mapsTo_univ _ _)
   | inr b => exact (analyticOnNhd_matrix_entry t b).comp hB' (Set.mapsTo_univ _ _)
 
+omit [Fintype d] in
 /-- The map of a block of the sum is differentiable if the maps of the two blocks are. -/
 theorem differentiable_f_sum {ℓ : Fin L} (hA : Differentiable ℝ (A.f ℓ))
     (hB : Differentiable ℝ (B.f ℓ)) : Differentiable ℝ ((A.sum B).f ℓ) := by
@@ -161,6 +166,7 @@ theorem differentiable_f_sum {ℓ : Fin L} (hA : Differentiable ℝ (A.f ℓ))
   | inl a => exact differentiable_pi.1 (differentiable_pi.1 hA' t) a
   | inr b => exact differentiable_pi.1 (differentiable_pi.1 hB' t) b
 
+omit [Fintype d] in
 /-- The map of a block of the sum is continuous if the maps of the two blocks are. -/
 theorem continuous_f_sum {ℓ : Fin L} (hA : Continuous (A.f ℓ)) (hB : Continuous (B.f ℓ)) :
     Continuous ((A.sum B).f ℓ) := by
@@ -177,6 +183,7 @@ theorem continuous_f_sum {ℓ : Fin L} (hA : Continuous (A.f ℓ)) (hB : Continu
   | inl a => exact (continuous_apply a).comp ((continuous_apply t).comp hA')
   | inr b => exact (continuous_apply b).comp ((continuous_apply t).comp hB')
 
+omit [Fintype d] in
 /-- The map of a block of the sum is locally Lipschitz if the maps of the two blocks are. -/
 theorem locallyLipschitz_f_sum {ℓ : Fin L} (hA : LocallyLipschitz (A.f ℓ))
     (hB : LocallyLipschitz (B.f ℓ)) : LocallyLipschitz ((A.sum B).f ℓ) := by

@@ -120,6 +120,7 @@ private theorem f_attention_entry_const_rat (χ : Matrix T d ℝ → Matrix T d 
   show ∑ s', attnWeights sees _ t s' * M s' (i, Sum.inr (Sum.inr k)) = v
   simp only [hv, ← Finset.sum_mul, attnWeights_sum_rat _ t ⟨s, hts⟩, one_mul]
 
+omit [DecidableEq d] in
 /-- For a network of attention blocks in which some block has a head of positive width, and a
 token `t` that sees a token `s`: for almost every choice of weights, some block has a nonzero
 output at some normalized state (a value column `c ≠ 0` of the read and the state with all rows
@@ -186,6 +187,7 @@ theorem ae_not_dense_eq_skipless_rmsNorm_zero_attention
 
 /-! ### Transformers: attention blocks and MLP blocks -/
 
+omit [DecidableEq d] in
 /-- For a network of attention blocks and MLP blocks whose activation is nonzero on the positive
 reals, in which some block has a hidden unit: for almost every choice of weights, some block has a
 nonzero output at some normalized state. -/
@@ -254,6 +256,7 @@ theorem ae_not_dense_eq_skipless_rmsNorm_zero_attention_mlp [Nonempty T]
 
 /-! ### Transformers: attention blocks and gated blocks -/
 
+omit [DecidableEq d] in
 /-- For a network of attention blocks and gated blocks whose gate is nonzero on the positive
 reals, in which some block has a hidden unit: for almost every choice of weights, some block has a
 nonzero output at some normalized state. -/
