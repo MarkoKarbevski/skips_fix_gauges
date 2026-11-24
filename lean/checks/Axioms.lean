@@ -1560,7 +1560,6 @@ import SkipsLean
 #print axioms Skips.ae_not_reluSq_absorbB_of_card_lt
 #print axioms Skips.ae_reluSq_absorbB_add_card
 #print axioms Skips.exists_antisymm_scale_of_flatOn_residual_rmsNorm_zero
-#print axioms Skips.is
 #print axioms Skips.finrank_le_funDimOn_residual_rmsNorm_zero
 #print axioms Skips.funDimOn_add_le_skipless_rmsNorm_zero
 #print axioms Skips.funDimOn_skipless_add_le_funDimOn_residual_rmsNorm_zero

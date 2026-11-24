@@ -18,11 +18,11 @@ of these directions and `V_θ`, and the residual network has functional dimensio
 
 "Notation and flat directions" (Appendix B): with `ε = 0`, "every input" excludes the inputs at
 which a row of a hidden state that is normalized vanishes. Lean's `funDim` uses every input, also
-an input with a zero row, at which Lean's `rmsNorm 0` is `0`. So the functional dimension of the
-theorem is stated here as the largest rank of the Jacobian over the finite batches of inputs of a
-set (`funDimOn`): for the residual network the inputs at which no row of `h_0` and of `h_1`
-vanishes (`residualZeroDomain`), for the skipless network the inputs at which no row of `h_0` and
-of the output `h_1` of the block vanishes (`skiplessZeroDomain`).
+an input with a zero row, at which Lean's `rmsNorm 0` is `0`. So the functional dimension of
+Theorem B.1 (v) is stated here as the largest rank of the Jacobian over the finite batches of
+inputs of a set (`funDimOn`): for the residual network the inputs at which no row of `h_0` and of
+`h_1` vanishes (`residualZeroDomain`), for the skipless network the inputs at which no row of
+`h_0` and of the output `h_1` of the block vanishes (`skiplessZeroDomain`).
 
 Here, at one parameter `θ`, for a fixed map `f` of the block that is analytic, under the
 conditions of the proof: `V_θ` (`blockFlatSphere`); the residual network has functional dimension
