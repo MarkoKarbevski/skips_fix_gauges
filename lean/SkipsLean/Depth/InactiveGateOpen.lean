@@ -92,6 +92,80 @@ private theorem gateInactive_of_igo (ℓ : Fin L) (j : hid ℓ.succ)
   rw [gate_eq_igo]
   exact h _
 
+omit [Fintype T] [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper (step 2): an entry of a read is a continuous function of the parameters (a linear
+functional on a finite-dimensional space). -/
+private theorem continuous_read_igo (m : Fin (L + 1)) (a : d) (c : hid m ⊕ hid m) :
+    Continuous fun θ : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut =>
+      θ.read m a c :=
+  ((Matrix.entryLinearMap ℝ ℝ a c).comp
+    (Params.linRead (A := Arch.gated (T := T) (d := d) relu id hid) (dIn := dIn) (dOut := dOut)
+      m)).continuous_of_finiteDimensional
+
+omit [Fintype T] [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper (step 2): an entry of a write is a continuous function of the parameters. -/
+private theorem continuous_write_igo (m : Fin (L + 1)) (k : hid m) (a : d) :
+    Continuous fun θ : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut =>
+      θ.write m k a :=
+  ((Matrix.entryLinearMap ℝ ℝ k a).comp
+    (Params.linWrite (A := Arch.gated (T := T) (d := d) relu id hid) (dIn := dIn) (dOut := dOut)
+      m)).continuous_of_finiteDimensional
+
+/-- Helper: ReLU is continuous. -/
+private theorem continuous_relu_igo : Continuous relu :=
+  continuous_id.max continuous_const
+
+omit [Fintype T] [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper (step 2): the gate of hidden unit `k` is continuous in the parameters and the row. -/
+private theorem continuous_gate_igo (m : Fin (L + 1)) (k : hid m) :
+    Continuous fun p : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut × (d → ℝ) =>
+      gate_igo m k p.1 p.2 :=
+  continuous_finsetSum _ fun b _ =>
+    ((continuous_apply b).comp continuous_snd).mul
+      ((continuous_read_igo m b (Sum.inl k)).comp continuous_fst)
+
+omit [Fintype T] [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper (step 2): the value of hidden unit `k` is continuous in the parameters and the row. -/
+private theorem continuous_val_igo (m : Fin (L + 1)) (k : hid m) :
+    Continuous fun p : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut × (d → ℝ) =>
+      val_igo m k p.1 p.2 :=
+  continuous_finsetSum _ fun b _ =>
+    ((continuous_apply b).comp continuous_snd).mul
+      ((continuous_read_igo m b (Sum.inr k)).comp continuous_fst)
+
+omit [Fintype T] [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper (step 2): `a_k r` is continuous in the parameters. -/
+private theorem continuous_out_igo (ℓ : Fin L) (j : hid ℓ.succ) (k : hid ℓ.castSucc) :
+    Continuous fun θ : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut =>
+      out_igo ℓ j k θ :=
+  continuous_finsetSum _ fun a _ =>
+    (continuous_write_igo ℓ.castSucc k a).mul (continuous_read_igo ℓ.succ a (Sum.inl j))
+
+omit [Fintype T] [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper (step 2): `z` is continuous in the parameters and the row. -/
+private theorem continuous_Z_igo (ℓ : Fin L) (j : hid ℓ.succ) :
+    Continuous fun p : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut × (d → ℝ) =>
+      Z_igo ℓ j p.1 p.2 :=
+  continuous_finsetSum _ fun k _ =>
+    ((continuous_relu_igo.comp (continuous_gate_igo ℓ.castSucc k)).mul
+      (continuous_val_igo ℓ.castSucc k)).mul ((continuous_out_igo ℓ j k).comp continuous_fst)
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper (step 2): `z` is positively homogeneous of degree `2` in the row. -/
+private theorem Z_smul_igo (ℓ : Fin L) (j : hid ℓ.succ)
+    (θ : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut) (u : d → ℝ) {c : ℝ}
+    (hc : 0 ≤ c) : Z_igo ℓ j θ (c • u) = c ^ 2 * Z_igo ℓ j θ u := by
+  -- the gates and the values are linear in the row, and `ReLU (c z) = c ReLU z`
+  have hg : ∀ k, gate_igo ℓ.castSucc k θ (c • u) = c * gate_igo ℓ.castSucc k θ u := fun k => by
+    simp only [gate_igo, Pi.smul_apply, smul_eq_mul, Finset.mul_sum, mul_assoc]
+  have hv : ∀ k, val_igo ℓ.castSucc k θ (c • u) = c * val_igo ℓ.castSucc k θ u := fun k => by
+    simp only [val_igo, Pi.smul_apply, smul_eq_mul, Finset.mul_sum, mul_assoc]
+  have hr : ∀ z, relu (c * z) = c * relu z := fun z => by
+    simp only [relu]
+    rw [mul_max_of_nonneg _ _ hc, mul_zero]
+  simp only [Z_igo, hg, hv, hr, Finset.mul_sum]
+  exact Finset.sum_congr rfl fun k _ => by ring
+
 /-- **Proof of Proposition E.1, ReGLU:** for `d ≥ 1` and at least `d` hidden units in block
 `ℓ.castSucc`, there is a nonempty open set of weights on which the gate of hidden unit `j` of the
 next block `ℓ.succ` is closed at every input. -/
