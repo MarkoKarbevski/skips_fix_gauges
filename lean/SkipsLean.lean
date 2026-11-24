@@ -187,3 +187,4 @@ import SkipsLean.Absorb.InjectiveBlocks
 import SkipsLean.Dimension.RankCriterionOn
 import SkipsLean.Absorb.PatternMaps
 import SkipsLean.Absorb.FullNetworks
+import SkipsLean.Residual.FoldingDim

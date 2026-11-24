@@ -986,3 +986,4 @@ import SkipsLean
 #print axioms Skips.eventually_eventually_funDim_smallWrites_reglu
 #print axioms Skips.ae_exists_eventually_jacobianRank_smallWrites_reglu
 #print axioms Skips.exists_isOpen_funDim_smallWrites_reglu
+#print axioms Skips.exists_isOpen_folds_funDim_add_le_relu

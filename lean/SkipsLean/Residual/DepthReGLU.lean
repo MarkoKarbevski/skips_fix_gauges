@@ -28,9 +28,9 @@ all inputs (`T × d_in` matrices):
   column of the same hidden unit. They hold at generic parameters.
 * `noKinkGateAll θ`: the inputs at which no limit pre-activation of a gate, an entry of a gate
   column of `x E W_read^ℓ`, vanishes.
-* The kernel of `J_0` at these inputs: `η_E = E X`, `η_D = −X D`, and the reads and the writes
-  of `η` are those of a rescaling of the values plus a rescaling of the gates, a space of
-  dimension `d² + s`.
+* A direction `η` in the kernel of `J_0` at these inputs has `η_E = E X`, `η_D = −X D`, and its
+  reads and writes are those of a rescaling of the values plus a rescaling of the gates: it lies
+  in a space of dimension at most `d² + s`.
 * The first sentence: a finite batch in `noKinkGateAll θ` such that for all small `τ ≠ 0` no gate
   pre-activation on the batch vanishes at `θ_τ` and the Jacobian on the batch at `θ_τ` has rank
   `P − d² − s`; hence `funDim (θ_τ) = P − d² − s`.
