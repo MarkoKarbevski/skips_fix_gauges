@@ -358,7 +358,213 @@ theorem attnHeads_identifiable (sees : T → T → Prop) [DecidableRel sees]
     (M : Matrix d d ℝ) (U : Set (Matrix T d ℝ)) (hU : IsOpen U) (hne : U.Nonempty)
     (h0 : ∀ h ∈ U, h * M + ∑ k, attnWeights sees (h * Γ k * hᵀ) * h * C k = 0) :
     M = 0 ∧ ∀ k, C k = 0 := by
-  sorry
+  classical
+  obtain ⟨t₀, ht₀⟩ := hsees
+  -- analytic continuation: the identity holds for every `h`
+  have hall := identity_all_ahi sees Γ C M U hU hne h0
+  -- the moving token `s₂ ≠ t₀`, and a third token `s₁` (here `T ≥ 3` is used)
+  obtain ⟨s₂, hs₂⟩ := Fintype.exists_ne_of_one_lt_card (by omega) t₀
+  obtain ⟨s₁, hs₁₀, hs₁₂⟩ : ∃ s₁, s₁ ≠ t₀ ∧ s₁ ≠ s₂ := by
+    by_contra hcon
+    have hsub : (Finset.univ : Finset T) ⊆ {t₀, s₂} := fun s _ => by
+      by_cases h1 : s = t₀
+      · exact Finset.mem_insert.2 (Or.inl h1)
+      · refine Finset.mem_insert.2 (Or.inr (Finset.mem_singleton.2 ?_))
+        by_contra h2
+        exact hcon ⟨s, h1, h2⟩
+    have h3 := (Finset.card_le_card hsub).trans Finset.card_le_two
+    rw [Finset.card_univ] at h3
+    omega
+  -- **Step 1 (poles and residues).** Rows `x` at `t₀`, `t v` at `s₂`, `0` elsewhere: if
+  -- `b_k = x Γ_k vᵀ > 0` is larger than every other `b_j` with `C_j ≠ 0`, then `v C_k = 0`.
+  have hpole : ∀ (x v : d → ℝ) (k : Fin m), 0 < (x ᵥ* Γ k) ⬝ᵥ v →
+      (∀ j, j ≠ k → C j ≠ 0 → (x ᵥ* Γ j) ⬝ᵥ v < (x ᵥ* Γ k) ⬝ᵥ v) → v ᵥ* C k = 0 := by
+    intro x v k hbk hmax
+    by_cases hCk : C k = 0
+    · rw [hCk, Matrix.vecMul_zero]
+    funext c
+    set r : T → d → ℝ := fun s => if s = t₀ then x else 0 with hr
+    set hm : ℝ → Matrix T d ℝ := fun t => Matrix.of fun s => if s = s₂ then t • v else r s
+      with hhm
+    have hm₀ : ∀ t, hm t t₀ = x := fun t => by
+      show (if t₀ = s₂ then t • v else r t₀) = x
+      simp only [hs₂.symm, ite_false, hr, ite_true]
+    have hm₂ : ∀ t, hm t s₂ = t • v := fun t => by
+      show (if s₂ = s₂ then t • v else r s₂) = t • v
+      simp only [ite_true]
+    have hmr : ∀ t s, s ≠ s₂ → hm t s = r s := fun t s hs => by
+      show (if s = s₂ then t • v else r s) = r s
+      simp only [hs, ite_false]
+    set S := Finset.univ.filter fun j => C j ≠ 0 with hS
+    set Z : Fin m → ℝ := fun j => ∑ s ∈ Finset.univ.erase s₂, Real.exp ((x ᵥ* Γ j) ⬝ᵥ r s)
+      with hZdef
+    set A : Fin m → d → ℝ := fun j =>
+      ∑ s ∈ Finset.univ.erase s₂, Real.exp ((x ᵥ* Γ j) ⬝ᵥ r s) • r s with hAdef
+    -- row `t₀`, column `c` of the identity at `hm t`
+    have hrow : ∀ t : ℝ, (x ᵥ* M) c + ∑ j ∈ S,
+        (Real.exp ((x ᵥ* Γ j) ⬝ᵥ v * t) * t * (v ᵥ* C j) c + (A j ᵥ* C j) c)
+          / (Real.exp ((x ᵥ* Γ j) ⬝ᵥ v * t) + Z j) = 0 := by
+      intro t
+      have h1 := congrFun (congrFun (hall (hm t)) t₀) c
+      have hM' : (hm t * M) t₀ c = (x ᵥ* M) c := by
+        rw [Matrix.mul_apply_eq_vecMul, hm₀]
+      -- the heads with `C_j = 0` vanish
+      have hsub : ∑ j ∈ S, (attnWeights sees (hm t * Γ j * (hm t)ᵀ) * hm t * C j) t₀ c
+          = ∑ j, (attnWeights sees (hm t * Γ j * (hm t)ᵀ) * hm t * C j) t₀ c := by
+        refine Finset.sum_subset (Finset.filter_subset _ _) fun j _ hj => ?_
+        have hCj : C j = 0 := by
+          by_contra hCj
+          exact hj (Finset.mem_filter.2 ⟨Finset.mem_univ _, hCj⟩)
+        rw [hCj, Matrix.mul_zero]
+        rfl
+      -- each head, by the split row formula
+      have hhead : ∀ j, (attnWeights sees (hm t * Γ j * (hm t)ᵀ) * hm t * C j) t₀ c
+          = (Real.exp ((x ᵥ* Γ j) ⬝ᵥ v * t) * t * (v ᵥ* C j) c + (A j ᵥ* C j) c)
+            / (Real.exp ((x ᵥ* Γ j) ⬝ᵥ v * t) + Z j) := by
+        intro j
+        have hZ' : ∑ s ∈ Finset.univ.erase s₂, Real.exp ((hm t t₀ ᵥ* Γ j) ⬝ᵥ hm t s) = Z j :=
+          Finset.sum_congr rfl fun s hs => by rw [hm₀, hmr t s (Finset.ne_of_mem_erase hs)]
+        have hA' : ∑ s ∈ Finset.univ.erase s₂,
+            Real.exp ((hm t t₀ ᵥ* Γ j) ⬝ᵥ hm t s) • hm t s = A j :=
+          Finset.sum_congr rfl fun s hs => by rw [hm₀, hmr t s (Finset.ne_of_mem_erase hs)]
+        have hdot : (x ᵥ* Γ j) ⬝ᵥ (t • v) = (x ᵥ* Γ j) ⬝ᵥ v * t := by
+          rw [dotProduct_smul, smul_eq_mul, mul_comm]
+        rw [head_entry_ahi sees (hm t) (Γ j) (C j) t₀ s₂ ht₀ c, hZ', hA', hm₀, hm₂, hdot,
+          Matrix.smul_vecMul, Pi.smul_apply, smul_eq_mul, mul_assoc]
+      rw [Matrix.add_apply, Matrix.sum_apply, hM', ← hsub, Finset.sum_congr rfl
+        fun j _ => hhead j] at h1
+      exact h1
+    -- `Z_j > 1`: the tokens `t₀` and `s₁` are not `s₂`, and `e^{x Γ_j 0ᵀ} = 1`
+    have hZ : ∀ j ∈ S, 1 < Z j := by
+      intro j _
+      have hsub : ({t₀, s₁} : Finset T) ⊆ Finset.univ.erase s₂ := by
+        intro s hs
+        rcases Finset.mem_insert.1 hs with h1 | h1
+        · exact Finset.mem_erase.2 ⟨h1 ▸ hs₂.symm, Finset.mem_univ _⟩
+        · exact Finset.mem_erase.2 ⟨(Finset.mem_singleton.1 h1) ▸ hs₁₂, Finset.mem_univ _⟩
+      have h1 := Finset.sum_le_sum_of_subset_of_nonneg hsub
+        (f := fun s => Real.exp ((x ᵥ* Γ j) ⬝ᵥ r s)) fun s _ _ => (Real.exp_pos _).le
+      rw [Finset.sum_pair hs₁₀.symm] at h1
+      have hr₁ : r s₁ = 0 := by
+        show (if s₁ = t₀ then x else 0) = 0
+        simp only [hs₁₀, ite_false]
+      rw [hr₁, dotProduct_zero, Real.exp_zero] at h1
+      have h2 := Real.exp_pos ((x ᵥ* Γ j) ⬝ᵥ r t₀)
+      show 1 < ∑ s ∈ Finset.univ.erase s₂, Real.exp ((x ᵥ* Γ j) ⬝ᵥ r s)
+      linarith
+    exact residue_ahi S (fun j => (x ᵥ* Γ j) ⬝ᵥ v) Z (fun j => (A j ᵥ* C j) c)
+      (fun j => (v ᵥ* C j) c) ((x ᵥ* M) c) hZ hrow k
+      (Finset.mem_filter.2 ⟨Finset.mem_univ _, hCk⟩) hbk
+      fun j hj hjk => hmax j hjk (Finset.mem_filter.1 hj).2
+  -- **Step 2.** `C_k = 0` for every `Γ_k ≠ 0`: at a generic `x`, the head with the longest
+  -- `x Γ_k` among those with `C_k ≠ 0` has the largest `b_k` for every `v` near `x Γ_k`.
+  have hCne : ∀ k, Γ k ≠ 0 → C k = 0 := by
+    intro k₀ hΓk₀
+    by_contra hCk₀
+    set S' := Finset.univ.filter fun j => Γ j ≠ 0 ∧ C j ≠ 0 with hS'
+    -- a generic query row `x`: `x (Γ_i − Γ_j) ≠ 0` for `i ≠ j`, `x Γ_j ≠ 0` for `Γ_j ≠ 0`
+    set F : Finset (Matrix d d ℝ) :=
+      (Finset.univ.image (fun q : Fin m × Fin m => Γ q.1 - Γ q.2) ∪ Finset.univ.image Γ).erase 0
+      with hF
+    obtain ⟨x, hx⟩ := exists_vecMul_ne_zero_ahi F (Finset.notMem_erase 0 _)
+    have hx1 : ∀ j, Γ j ≠ 0 → x ᵥ* Γ j ≠ 0 := fun j hj => hx _ (Finset.mem_erase.2
+      ⟨hj, Finset.mem_union_right _ (Finset.mem_image_of_mem _ (Finset.mem_univ _))⟩)
+    have hx2 : ∀ i j, i ≠ j → x ᵥ* Γ i ≠ x ᵥ* Γ j := fun i j hij h => by
+      have h1 := hx (Γ i - Γ j) (Finset.mem_erase.2 ⟨sub_ne_zero.2 (hΓ.ne hij),
+        Finset.mem_union_left _ (Finset.mem_image_of_mem (fun q : Fin m × Fin m => Γ q.1 - Γ q.2)
+          (Finset.mem_univ (i, j)))⟩)
+      rw [Matrix.vecMul_sub, h, sub_self] at h1
+      exact h1 rfl
+    -- the head of `S'` with the longest `x Γ_k`
+    obtain ⟨k, hkS', hkmax⟩ := S'.exists_max_image (fun j => (x ᵥ* Γ j) ⬝ᵥ (x ᵥ* Γ j))
+      ⟨k₀, Finset.mem_filter.2 ⟨Finset.mem_univ _, hΓk₀, hCk₀⟩⟩
+    obtain ⟨-, hΓk, hCk⟩ := Finset.mem_filter.1 hkS'
+    set p := x ᵥ* Γ k with hp
+    have hpp : 0 < p ⬝ᵥ p := dotProduct_self_pos_ahi (hx1 k hΓk)
+    -- at `v = p`: `(x Γ_j) ⬝ p < p ⬝ p` for every other head with `C_j ≠ 0`
+    have hlt : ∀ j, j ≠ k → C j ≠ 0 → (x ᵥ* Γ j) ⬝ᵥ p < p ⬝ᵥ p := by
+      intro j hjk hCj
+      by_cases hΓj : Γ j = 0
+      · rw [hΓj, Matrix.vecMul_zero, zero_dotProduct]
+        exact hpp
+      · have hle := hkmax j (Finset.mem_filter.2 ⟨Finset.mem_univ _, hΓj, hCj⟩)
+        have hpos : 0 < (x ᵥ* Γ j - p) ⬝ᵥ (x ᵥ* Γ j - p) :=
+          dotProduct_self_pos_ahi (sub_ne_zero.2 (hx2 j k hjk))
+        simp only [sub_dotProduct, dotProduct_sub, dotProduct_comm p (x ᵥ* Γ j)] at hpos
+        linarith
+    -- the same strict inequalities at `p + ε eᵢ` for small `ε`, so `eᵢ C_k = 0`
+    have hCk0 : C k = 0 := by
+      refine eq_zero_of_vecMul_ahi fun u => ?_
+      have hcont : ∀ q : d → ℝ, Continuous fun ε : ℝ => q ⬝ᵥ (p + ε • u) := by
+        intro q
+        have e : (fun ε : ℝ => q ⬝ᵥ (p + ε • u)) = fun ε => q ⬝ᵥ p + ε * (q ⬝ᵥ u) := by
+          funext ε
+          rw [dotProduct_add, dotProduct_smul, smul_eq_mul]
+        rw [e]
+        exact continuous_const.add (continuous_id.mul continuous_const)
+      have hev0 : ∀ᶠ ε in nhds (0 : ℝ), 0 < p ⬝ᵥ (p + ε • u) := by
+        refine ContinuousAt.eventually_lt (f := fun _ : ℝ => (0 : ℝ)) continuousAt_const
+          (hcont p).continuousAt ?_
+        simp only [zero_smul, add_zero]
+        exact hpp
+      have hev1 : ∀ᶠ ε in nhds (0 : ℝ), ∀ j, j ≠ k → C j ≠ 0 →
+          (x ᵥ* Γ j) ⬝ᵥ (p + ε • u) < p ⬝ᵥ (p + ε • u) := by
+        refine Filter.eventually_all.2 fun j => ?_
+        by_cases hjk : j = k
+        · exact Filter.Eventually.of_forall fun _ h => absurd hjk h
+        by_cases hCj : C j = 0
+        · exact Filter.Eventually.of_forall fun _ _ h => absurd hCj h
+        refine (ContinuousAt.eventually_lt (hcont _).continuousAt (hcont p).continuousAt
+          ?_).mono fun ε h _ _ => h
+        simp only [zero_smul, add_zero]
+        exact hlt j hjk hCj
+      obtain ⟨δ, hδ, hball⟩ := Metric.eventually_nhds_iff.1 (hev0.and hev1)
+      have hδ2 : dist (δ / 2) 0 < δ := by
+        rw [Real.dist_eq, sub_zero, abs_of_pos (by linarith)]
+        linarith
+      obtain ⟨hb1, hb2⟩ := hball hδ2
+      -- `(p + (δ/2) u) C_k = 0` and `p C_k = 0`, so `u C_k = 0`
+      have h1 := hpole x (p + (δ / 2) • u) k hb1 hb2
+      have h2 := hpole x p k hpp hlt
+      rw [Matrix.add_vecMul, h2, zero_add, Matrix.smul_vecMul] at h1
+      exact (smul_eq_zero.1 h1).resolve_left (by linarith : δ / 2 ≠ 0)
+    exact hCk hCk0
+  -- **Step 3.** With a zero row at `t₀` every head of row `t₀` is uniform: `∑_k C_k = 0`.
+  have hsum : ∑ k, C k = 0 := by
+    refine eq_zero_of_vecMul_ahi fun u => ?_
+    set h₁ : Matrix T d ℝ := Matrix.of fun s => if s = s₂ then u else 0 with hh₁
+    have h₁0 : h₁ t₀ = 0 := by
+      show (if t₀ = s₂ then u else 0) = 0
+      simp only [hs₂.symm, ite_false]
+    have h₁s : ∑ s, h₁ s = u := by
+      show ∑ s, (if s = s₂ then u else 0) = u
+      simp only [Finset.sum_ite_eq', Finset.mem_univ, ite_true]
+    have h1 : (h₁ * M + ∑ k, attnWeights sees (h₁ * Γ k * h₁ᵀ) * h₁ * C k) t₀ = 0 :=
+      congrFun (hall h₁) t₀
+    have e : (h₁ * M + ∑ k, attnWeights sees (h₁ * Γ k * h₁ᵀ) * h₁ * C k) t₀
+        = h₁ t₀ ᵥ* M + attnHeads sees Γ C h₁ t₀ := by
+      rw [← Matrix.mul_apply_eq_vecMul]
+      rfl
+    rw [e, attnHeads_zero_row sees Γ C h₁ t₀ ht₀ h₁0, h₁0, Matrix.zero_vecMul, zero_add, h₁s,
+      Matrix.smul_vecMul] at h1
+    have hcard : (Fintype.card T : ℝ)⁻¹ ≠ 0 :=
+      inv_ne_zero (Nat.cast_ne_zero.2 (by omega))
+    exact (smul_eq_zero.1 h1).resolve_left hcard
+  -- **Step 4.** At most one head has `Γ_k = 0`, and its `C_k` is the whole sum.
+  have hC : ∀ k, C k = 0 := by
+    intro k
+    by_cases hΓk : Γ k = 0
+    · rw [← hsum, Finset.sum_eq_single k (fun j _ hjk => hCne j fun h => hjk (hΓ (h.trans
+        hΓk.symm))) (fun h => absurd (Finset.mem_univ k) h)]
+    · exact hCne k hΓk
+  -- **Step 5.** Then `h M = 0` for every `h`, so `M = 0`.
+  refine ⟨eq_zero_of_vecMul_ahi fun u => ?_, hC⟩
+  have h1 : ((Matrix.of fun _ => u : Matrix T d ℝ) * M + ∑ k, attnWeights sees
+      ((Matrix.of fun _ => u : Matrix T d ℝ) * Γ k * (Matrix.of fun _ => u : Matrix T d ℝ)ᵀ)
+        * (Matrix.of fun _ => u : Matrix T d ℝ) * C k) t₀ = 0 := congrFun (hall _) t₀
+  simp only [hC, Matrix.mul_zero, Finset.sum_const_zero, add_zero] at h1
+  rw [Matrix.mul_apply_eq_vecMul] at h1
+  exact h1
 
 /-- **Lemma A.14 without a mask:** every token sees every token. -/
 theorem attnHeads_identifiable_noMask (hT : 3 ≤ Fintype.card T) {m : ℕ}
