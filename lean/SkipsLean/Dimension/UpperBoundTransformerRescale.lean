@@ -43,13 +43,203 @@ variable {H dh hid : Fin L → Type} [∀ ℓ, Fintype (H ℓ)] [∀ ℓ, Fintyp
 
 /-! ### The rescalings are symmetries inside the blocks -/
 
+/-- Helper (copy of the private `hasDerivAt_exp_mul_const` of `Dimension/RescalingMlp.lean`):
+`τ ↦ e^{τ a} b` has derivative `a b` at `τ = 0`. -/
+private theorem hasDerivAt_exp_mul_const_ubr (a b : ℝ) :
+    HasDerivAt (fun τ : ℝ => Real.exp (τ * a) * b) (a * b) 0 := by
+  have h := ((hasDerivAt_id (0 : ℝ)).mul_const a).exp.mul_const b
+  simpa using h
+
+/-- Helper: `e^{τ c}^k e^{τ (−k c)} = 1`. -/
+private theorem exp_pow_mul_exp_neg_ubr (k : ℕ) (τ c : ℝ) :
+    Real.exp (τ * c) ^ k * Real.exp (τ * -((k : ℝ) * c)) = 1 := by
+  rw [← Real.exp_nat_mul, ← Real.exp_add,
+    show (k : ℝ) * (τ * c) + τ * -((k : ℝ) * c) = 0 by ring, Real.exp_zero]
+
+/-- Helper (copy of the private `rescaleCurveMlp` of `Dimension/RescalingMlp.lean`): the read
+column of hidden unit `i` of block `ℓ` is multiplied by `e^{τ α ℓ i}`, its write row by
+`e^{-τ k α ℓ i}`. -/
+private noncomputable def rescaleCurveMlp_ubr (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) (α : ∀ ℓ, hid ℓ → ℝ) (τ : ℝ) :
+    Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut where
+  E := θ.E
+  read ℓ := Matrix.of fun a i => Real.exp (τ * α ℓ i) * θ.read ℓ a i
+  write ℓ := Matrix.of fun i a => Real.exp (τ * -((k : ℝ) * α ℓ i)) * θ.write ℓ i a
+  D := θ.D
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (copy of `rescaleCurveMlp_zero`): the curve passes through `θ` at `τ = 0`. -/
+private theorem rescaleCurveMlp_zero_ubr (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) (α : ∀ ℓ, hid ℓ → ℝ) :
+    rescaleCurveMlp_ubr k θ α 0 = θ := by
+  apply Params.ext'
+  · rfl
+  · intro ℓ
+    ext a i
+    simp [rescaleCurveMlp_ubr]
+  · intro ℓ
+    ext i a
+    simp [rescaleCurveMlp_ubr]
+  · rfl
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper (copy of `hasDerivAt_rescaleCurveMlp`): the curve has velocity `rescaleDirMlp k θ α`
+at `τ = 0` (entry by entry, through `Params.linearEquivProd`). -/
+private theorem hasDerivAt_rescaleCurveMlp_ubr (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) (α : ∀ ℓ, hid ℓ → ℝ) :
+    HasDerivAt (rescaleCurveMlp_ubr k θ α) (rescaleDirMlp k θ α) 0 := by
+  have hprod : HasDerivAt (fun τ : ℝ => Params.linearEquivProd (rescaleCurveMlp_ubr k θ α τ))
+      (Params.linearEquivProd (rescaleDirMlp k θ α)) 0 := by
+    refine HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ ?_))
+    · -- the embedding does not move
+      exact hasDerivAt_const (0 : ℝ) θ.E
+    · -- the read entries are `e^{τ α} c`
+      exact hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun a => hasDerivAt_pi.2 fun i =>
+        hasDerivAt_exp_mul_const_ubr (α ℓ i) (θ.read ℓ a i)
+    · -- the write entries are `e^{-τ k α} a`
+      exact hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun i => hasDerivAt_pi.2 fun a =>
+        hasDerivAt_exp_mul_const_ubr (-((k : ℝ) * α ℓ i)) (θ.write ℓ i a)
+    · -- the readout does not move
+      exact hasDerivAt_const (0 : ℝ) θ.D
+  -- back from the tuples of components to the parameters
+  exact (LinearMap.toContinuousLinearMap
+    (Params.linearEquivProd (A := Arch.mlp (T := T) (d := d) σ χ hid) (dIn := dIn)
+      (dOut := dOut)).symm.toLinearMap).hasFDerivAt.comp_hasDerivAt 0 hprod
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the rescaling keeps the map of every MLP block: hidden unit `i` contributes
+`σ(e^{τ α} z_i) (e^{-τ k α} a_i) = σ(z_i) a_i` to every entry. -/
+private theorem block_rescaleCurveMlp_ubr {k : ℕ}
+    (hσ : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) (α : ∀ ℓ, hid ℓ → ℝ) (τ : ℝ)
+    (ℓ : Fin L) (n : Matrix T d ℝ) :
+    (Arch.mlp σ χ hid).f ℓ (n * (rescaleCurveMlp_ubr k θ α τ).read ℓ)
+        * (rescaleCurveMlp_ubr k θ α τ).write ℓ
+      = (Arch.mlp σ χ hid).f ℓ (n * θ.read ℓ) * θ.write ℓ := by
+  -- the pre-activations are multiplied by `e^{τ α}`
+  have hu : ∀ t i, (n * (rescaleCurveMlp_ubr k θ α τ).read ℓ) t i
+      = Real.exp (τ * α ℓ i) * (n * θ.read ℓ) t i := by
+    intro t i
+    rw [Matrix.mul_apply, Matrix.mul_apply, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    show n t j * (Real.exp (τ * α ℓ i) * θ.read ℓ j i)
+      = Real.exp (τ * α ℓ i) * (n t j * θ.read ℓ j i)
+    ring
+  -- compare term by term
+  ext t a
+  rw [Matrix.mul_apply, Matrix.mul_apply]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  show σ ((n * (rescaleCurveMlp_ubr k θ α τ).read ℓ) t i)
+      * (Real.exp (τ * -((k : ℝ) * α ℓ i)) * θ.write ℓ i a)
+    = σ ((n * θ.read ℓ) t i) * θ.write ℓ i a
+  rw [hu, hσ _ _ (Real.exp_pos _)]
+  -- `e^{τ α}^k e^{-τ k α} = 1`
+  calc _ = (Real.exp (τ * α ℓ i) ^ k * Real.exp (τ * -((k : ℝ) * α ℓ i)))
+        * (σ ((n * θ.read ℓ) t i) * θ.write ℓ i a) := by ring
+    _ = _ := by rw [exp_pow_mul_exp_neg_ubr, one_mul]
+
 /-- **The rescalings of the hidden units of an MLP block with a positively homogeneous
 activation are symmetries inside the blocks** (ReLU, ReLU²). -/
 theorem insideBlocks_rescaleDirMlp {k : ℕ}
     (hσ : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z)
     (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) (α : ∀ ℓ, hid ℓ → ℝ) :
     InsideBlocks (Arch.mlp σ χ hid) θ (rescaleDirMlp k θ α) := by
-  sorry
+  -- the curve of the rescalings by `e^{τ α}`: through `θ`, with velocity `rescaleDirMlp k θ α`;
+  -- it keeps `E` and `D` by definition and the map of every block at every `τ`
+  exact ⟨rescaleCurveMlp_ubr k θ α, rescaleCurveMlp_zero_ubr k θ α,
+    hasDerivAt_rescaleCurveMlp_ubr k θ α, Filter.Eventually.of_forall fun τ =>
+      ⟨rfl, rfl, fun ℓ n => block_rescaleCurveMlp_ubr hσ θ α τ ℓ n⟩⟩
+
+/-- Helper (copy of the private `rescaleCurveGate` of `Dimension/RescalingGate.lean`): the gate
+column of hidden unit `i` of block `ℓ` is multiplied by `e^{τ β ℓ i}`, its write row by
+`e^{-τ k β ℓ i}`, and the value columns do not move. -/
+private noncomputable def rescaleCurveGate_ubr (k : ℕ)
+    (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut) (β : ∀ ℓ, hid ℓ → ℝ) (τ : ℝ) :
+    Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut where
+  E := θ.E
+  read ℓ := Matrix.of fun a j =>
+    Sum.elim (fun i => Real.exp (τ * β ℓ i) * θ.read ℓ a (Sum.inl i))
+      (fun i => θ.read ℓ a (Sum.inr i)) j
+  write ℓ := Matrix.of fun i a => Real.exp (τ * -((k : ℝ) * β ℓ i)) * θ.write ℓ i a
+  D := θ.D
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (copy of `rescaleCurveGate_zero`): the curve passes through `θ` at `τ = 0`. -/
+private theorem rescaleCurveGate_zero_ubr (k : ℕ)
+    (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut) (β : ∀ ℓ, hid ℓ → ℝ) :
+    rescaleCurveGate_ubr k θ β 0 = θ := by
+  apply Params.ext'
+  · rfl
+  · intro ℓ
+    ext a j
+    cases j <;> simp [rescaleCurveGate_ubr]
+  · intro ℓ
+    ext i a
+    simp [rescaleCurveGate_ubr]
+  · rfl
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper (copy of `hasDerivAt_rescaleCurveGate`): the curve has velocity
+`rescaleDirGate k θ β` at `τ = 0`. -/
+private theorem hasDerivAt_rescaleCurveGate_ubr (k : ℕ)
+    (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut) (β : ∀ ℓ, hid ℓ → ℝ) :
+    HasDerivAt (rescaleCurveGate_ubr k θ β) (rescaleDirGate k θ β) 0 := by
+  have hprod : HasDerivAt (fun τ : ℝ => Params.linearEquivProd (rescaleCurveGate_ubr k θ β τ))
+      (Params.linearEquivProd (rescaleDirGate k θ β)) 0 := by
+    refine HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ ?_))
+    · -- the embedding does not move
+      exact hasDerivAt_const (0 : ℝ) θ.E
+    · -- the gate entries are `e^{τ β} g`; the value entries do not move
+      refine hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun a => hasDerivAt_pi.2 fun j => ?_
+      cases j with
+      | inl i => exact hasDerivAt_exp_mul_const_ubr (β ℓ i) (θ.read ℓ a (Sum.inl i))
+      | inr i => exact hasDerivAt_const (0 : ℝ) (θ.read ℓ a (Sum.inr i))
+    · -- the write entries are `e^{-τ k β} a`
+      exact hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun i => hasDerivAt_pi.2 fun a =>
+        hasDerivAt_exp_mul_const_ubr (-((k : ℝ) * β ℓ i)) (θ.write ℓ i a)
+    · -- the readout does not move
+      exact hasDerivAt_const (0 : ℝ) θ.D
+  -- back from the tuples of components to the parameters
+  exact (LinearMap.toContinuousLinearMap
+    (Params.linearEquivProd (A := Arch.gated (T := T) (d := d) σ χ hid) (dIn := dIn)
+      (dOut := dOut)).symm.toLinearMap).hasFDerivAt.comp_hasDerivAt 0 hprod
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the rescaling of the gates keeps the map of every gated block: hidden unit `i`
+contributes `σ(e^{τ β} z_i) u_i (e^{-τ k β} a_i) = σ(z_i) u_i a_i` to every entry. -/
+private theorem block_rescaleCurveGate_ubr {k : ℕ}
+    (hσ : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z)
+    (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut) (β : ∀ ℓ, hid ℓ → ℝ) (τ : ℝ)
+    (ℓ : Fin L) (n : Matrix T d ℝ) :
+    (Arch.gated σ χ hid).f ℓ (n * (rescaleCurveGate_ubr k θ β τ).read ℓ)
+        * (rescaleCurveGate_ubr k θ β τ).write ℓ
+      = (Arch.gated σ χ hid).f ℓ (n * θ.read ℓ) * θ.write ℓ := by
+  -- the gates are multiplied by `e^{τ β}`
+  have hz : ∀ t i, (n * (rescaleCurveGate_ubr k θ β τ).read ℓ) t (Sum.inl i)
+      = Real.exp (τ * β ℓ i) * (n * θ.read ℓ) t (Sum.inl i) := by
+    intro t i
+    rw [Matrix.mul_apply, Matrix.mul_apply, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    show n t j * (Real.exp (τ * β ℓ i) * θ.read ℓ j (Sum.inl i))
+      = Real.exp (τ * β ℓ i) * (n t j * θ.read ℓ j (Sum.inl i))
+    ring
+  -- the values are the same
+  have hu : ∀ t i, (n * (rescaleCurveGate_ubr k θ β τ).read ℓ) t (Sum.inr i)
+      = (n * θ.read ℓ) t (Sum.inr i) := fun _ _ => rfl
+  -- compare term by term
+  ext t a
+  rw [Matrix.mul_apply, Matrix.mul_apply]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  show σ ((n * (rescaleCurveGate_ubr k θ β τ).read ℓ) t (Sum.inl i))
+      * (n * (rescaleCurveGate_ubr k θ β τ).read ℓ) t (Sum.inr i)
+      * (Real.exp (τ * -((k : ℝ) * β ℓ i)) * θ.write ℓ i a)
+    = σ ((n * θ.read ℓ) t (Sum.inl i)) * (n * θ.read ℓ) t (Sum.inr i) * θ.write ℓ i a
+  rw [hz, hu, hσ _ _ (Real.exp_pos _)]
+  -- `e^{τ β}^k e^{-τ k β} = 1`
+  calc _ = (Real.exp (τ * β ℓ i) ^ k * Real.exp (τ * -((k : ℝ) * β ℓ i)))
+        * (σ ((n * θ.read ℓ) t (Sum.inl i)) * (n * θ.read ℓ) t (Sum.inr i)
+          * θ.write ℓ i a) := by ring
+    _ = _ := by rw [exp_pow_mul_exp_neg_ubr, one_mul]
 
 /-- **The rescalings of the gates of a gated block with a positively homogeneous gate are
 symmetries inside the blocks** (ReGLU). -/
@@ -57,7 +247,11 @@ theorem insideBlocks_rescaleDirGate {k : ℕ}
     (hσ : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z)
     (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut) (β : ∀ ℓ, hid ℓ → ℝ) :
     InsideBlocks (Arch.gated σ χ hid) θ (rescaleDirGate k θ β) := by
-  sorry
+  -- the curve of the rescalings of the gates by `e^{τ β}`: through `θ`, with velocity
+  -- `rescaleDirGate k θ β`; it keeps `E`, `D` and the map of every block at every `τ`
+  exact ⟨rescaleCurveGate_ubr k θ β, rescaleCurveGate_zero_ubr k θ β,
+    hasDerivAt_rescaleCurveGate_ubr k θ β, Filter.Eventually.of_forall fun τ =>
+      ⟨rfl, rfl, fun ℓ n => block_rescaleCurveGate_ubr hσ θ β τ ℓ n⟩⟩
 
 
 /-! ### Attention blocks and MLP blocks with a positively homogeneous activation -/
