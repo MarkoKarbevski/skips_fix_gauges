@@ -1,4 +1,4 @@
-import Mathlib
+import SkipsLean.Imports
 
 /-!
 # A flat direction of SwiGLU hidden units only rescales their values
