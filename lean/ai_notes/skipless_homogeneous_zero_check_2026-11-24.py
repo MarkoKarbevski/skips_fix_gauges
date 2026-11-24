@@ -23,3 +23,16 @@ for k in (1, 2):
             a = net(x, E, R, W, D, k); b = net(x, E @ G, np.linalg.inv(G) @ R, W, D, k)
             worst = max(worst, np.abs(a - b).max())
 print("largest difference of the outputs over 1200 inputs:", worst)
+# the same for a gated block with a ReLU gate (ReGLU): unit i gives relu(n c_i) (n e_i) a_i
+def net_gated(x, E, Rg, Rv, W, D):
+    n = N0(x @ E)
+    return N0((np.maximum(n @ Rg, 0.0) * (n @ Rv)) @ W) @ D
+worst = 0.0
+for (T, d, din, dout, m) in ((1, 2, 3, 2, 3), (2, 3, 4, 3, 5), (3, 4, 4, 5, 2)):
+    E, Rg, Rv, W, D = (rng.normal(size=s) for s in ((din, d), (d, m), (d, m), (m, d), (d, dout)))
+    G = np.eye(d) + 0.4 * rng.normal(size=(d, d)); Gi = np.linalg.inv(G)
+    for trial in range(200):
+        x = rng.normal(size=(T, din))
+        if trial % 10 == 0: x[0] = 0.0
+        worst = max(worst, np.abs(net_gated(x, E, Rg, Rv, W, D) - net_gated(x, E @ G, Gi @ Rg, Gi @ Rv, W, D)).max())
+print("ReGLU: largest difference of the outputs over 600 inputs:", worst)

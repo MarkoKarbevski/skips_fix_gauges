@@ -210,7 +210,7 @@ the eighteenth audit began): `OneBlock/ResidualRMSZeroSteps.lean`,
 `Symmetry/FiniteSymmetriesCompose.lean` (its proofs are the seventeenth reader's; its statements
 were read by the coordinator only), which are with the reader of the nineteenth audit since
 19:43 UTC, 24 November; and `OneBlock/SkiplessHomogeneousRMSZero.lean`,
-`OneBlock/SkiplessHomogeneousGatedRMSZero.lean` (written at 19:57 and 20:03 UTC). A ninth reader (part A, 24 November) compared the six files on
+`OneBlock/SkiplessHomogeneousGatedRMSZero.lean` (written at 19:57 and 20:02 UTC). A ninth reader (part A, 24 November) compared the six files on
 GELU at complex arguments (`Activations/MillsC.lean`, `Activations/MillsCExpansion.lean`,
 `Activations/MillsAtInfinityC.lean`, `Activations/GeluOnPath.lean`,
 `Generic/HolomorphicBall.lean`, `Depth/GeluPathSeparation.lean`: 31 public names) and found
