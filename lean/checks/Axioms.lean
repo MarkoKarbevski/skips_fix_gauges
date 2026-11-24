@@ -1750,3 +1750,5 @@ import SkipsLean
 #print axioms Skips.reluSq_unitsRescaleSphere
 #print axioms Skips.exists_of_flatSkipsOn_learned_rmsNorm_zero_on
 #print axioms Skips.reglu_unitsRescaleSphere
+#print axioms Skips.skipProdFwd_conformal_of_residual_rmsNorm_zero
+#print axioms Skips.skipProdFwd_orthogonal_of_residual_rmsNorm

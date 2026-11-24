@@ -105,6 +105,7 @@ private theorem exists_rows_lsv {ε : ℝ} (θ : Params A dIn dOut) (G : Fin (L 
     obtain ⟨W', hW'⟩ := hres ℓ
     exact rows_of_rmsNorm_lsv _ _ W' (hread ℓ) hW'
 
+omit [Fintype T] [Fintype dIn] in
 /-- **Theorem A.12 (ii) of the skips paper, "Conversely", for `ε = 0`:** let the reads and the
 readout have rank `d`, and let invertible `G_0, …, G_L` turn every skip into the identity,
 `G_{ℓ−1}⁻¹ A_ℓ G_ℓ = I`. If in the variables `h_ℓ G_ℓ` every read and the readout have the form
@@ -145,6 +146,7 @@ theorem skipProdFwd_conformal_of_residual_rmsNorm_zero (θ : Params A dIn dOut)
   rw [skipProdFwd_eq_lsv S G hG ℓ, Units.val_mul, hG₀, hℓ, Matrix.smul_mul, Matrix.mul_smul,
     smul_smul]
 
+omit [Fintype T] [Fintype dIn] in
 /-- **Theorem A.12 (ii) of the skips paper, "Conversely", for `ε > 0`:** let the reads and the
 readout have rank `d`, and let invertible `G_0, …, G_L` turn every skip into the identity,
 `G_{ℓ−1}⁻¹ A_ℓ G_ℓ = I`. If in the variables `h_ℓ G_ℓ` every read and the readout have the form
