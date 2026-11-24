@@ -178,4 +178,13 @@ import SkipsLean.Residual.FoldingOpen
 import SkipsLean.Symmetry.HomogeneousRMSNorm
 import SkipsLean.OneBlock.ResidualRMSStepsOn
 import SkipsLean.OneBlock.ResidualRMSRescale
+import SkipsLean.OneBlock.ResidualRMSReGLU
 import SkipsLean.Residual.SmallParameterOn
+import SkipsLean.Residual.SmallWritesOn
+import SkipsLean.Residual.DepthRescale
+import SkipsLean.Residual.DepthReGLU
+import SkipsLean.Absorb.InjectiveBlocks
+import SkipsLean.Dimension.RankCriterionOn
+import SkipsLean.Absorb.PatternMaps
+import SkipsLean.Absorb.FullNetworks
+import SkipsLean.Residual.FoldingDim

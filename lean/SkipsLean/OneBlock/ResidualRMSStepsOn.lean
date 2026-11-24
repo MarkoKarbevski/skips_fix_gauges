@@ -8,9 +8,11 @@ Paper (skips paper): proof of Theorem B.1 (ii), Steps 1 to 3, for `ε > 0` and n
 differentiable everywhere and the direction `η` is flat at every input.
 
 For ReLU, ReLU² and ReGLU blocks the paper takes the same steps at the inputs at which no hidden
-unit sits at its kink ("Notation and flat directions": "For these activations, every input means
-every input at which no hidden unit sits at its kink"), and in Step 4: "For the ReLU-type
-activations without biases the kinks lie on hyperplanes through the center of the ball".
+unit sits at its kink ("Notation and flat directions": "For the ReLU-type activations, `F(θ, x)`
+is differentiable in `θ` at the inputs `x` at which no hidden unit sits at its kink, which form an
+open set of full measure, and 'every input' means every such input"), and in Step 4: "For the
+ReLU-type activations without biases the kinks lie on hyperplanes through the center of the
+ball".
 
 Stated here: the statement of `exists_antisymm_of_flat_residual_rmsNorm` for a fixed map `f` that
 is continuously differentiable on an open set `V` of pre-activations that is invariant under the
