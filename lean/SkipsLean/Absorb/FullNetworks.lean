@@ -181,6 +181,7 @@ def IsFull (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) : Pro
         + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut)
 
+omit [Nonempty T] in
 /-- **"On any finite set of inputs, the Jacobian […] has rank at most `P − d² − s`", at every
 parameter:** for `d_in ≥ d ≥ 1`, on a batch on which no unit has argument `0` at `θ`. -/
 theorem jacobianRank_add_le_residual_relu_of_ne_zero [Nonempty d]
@@ -214,6 +215,7 @@ theorem jacobianRank_add_le_residual_relu_of_ne_zero [Nonempty d]
   have h2 := jacobianRank_le_funDim (A := Arch.mlp relu id hid) (S := 1) θ' X
   omega
 
+omit [Nonempty T] in
 /-- **Proposition 4.7, first sentence:** for `d_in ≥ d ≥ 1`, the full residual ReLU networks form
 an open set of weights. -/
 theorem isOpen_setOf_isFull [Nonempty d] (hdIn : Fintype.card d ≤ Fintype.card dIn) :
@@ -256,6 +258,7 @@ private theorem rank_lt_full {D s a L P P' Din Dout k r : ℕ} (hD : 1 ≤ D)
   have h3 : (e + 1) * s = e * s + s := by ring
   omega
 
+omit [Nonempty T] in
 /-- **Proposition 4.7, second sentence, given Sard's theorem:** for `d_in ≥ d ≥ 1`, for almost
 every residual ReLU network `θ` of `L` blocks: if `θ` is full, no skipless ReLU network of `L`
 blocks with the same `d` and at least `d` hidden units in every block equals it unless it has, in
