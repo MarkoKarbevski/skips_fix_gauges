@@ -362,6 +362,190 @@ theorem ae_funDim_gated_residual_iff_ae_locally_cob_rescale_rmsNorm
     generalize Fintype.card d * (Fintype.card d - 1) / 2 = a at h1 h2 ⊢
     omega
 
+/-! ### Attention blocks -/
+
+/-- Helper: the determinant of a matrix whose entries are `C¹` is `C¹` (a polynomial in the
+entries). -/
+private theorem contDiff_det_iffr {m X : Type*} [Fintype m] [DecidableEq m] [NormedAddCommGroup X]
+    [NormedSpace ℝ X] {g : X → Matrix m m ℝ} (hg : ∀ a b, ContDiff ℝ 1 fun x => g x a b) :
+    ContDiff ℝ 1 fun x => (g x).det := by
+  simp only [Matrix.det_apply']
+  exact ContDiff.sum fun τ _ => contDiff_const.mul (contDiff_prod fun i _ => hg (τ i) i)
+
+/-- Helper: the entries of the inverse of a matrix whose entries are `C¹` are `C¹` where the
+matrix is invertible: `A⁻¹ = det(A)⁻¹ adj(A)`, and the entries of the adjugate are
+determinants. -/
+private theorem contDiffOn_inv_entry_iffr {m X : Type*} [Fintype m] [DecidableEq m]
+    [NormedAddCommGroup X] [NormedSpace ℝ X] {g : X → Matrix m m ℝ}
+    (hg : ∀ a b, ContDiff ℝ 1 fun x => g x a b) {s : Set X} (hs : ∀ x ∈ s, IsUnit (g x))
+    (a b : m) : ContDiffOn ℝ 1 (fun x => (g x)⁻¹ a b) s := by
+  have h1 : (fun x => (g x)⁻¹ a b)
+      = fun x => ((g x).det)⁻¹ * ((g x).updateRow b (Pi.single a 1)).det := by
+    funext x
+    rw [Matrix.inv_def, Matrix.smul_apply, Matrix.adjugate_apply, Ring.inverse_eq_inv, smul_eq_mul]
+  rw [h1]
+  have hdet : ContDiff ℝ 1 fun x => (g x).det := contDiff_det_iffr hg
+  -- the matrix of the adjugate entry: row `b` replaced by the unit row `a`
+  have hadj : ContDiff ℝ 1 fun x => ((g x).updateRow b (Pi.single a 1)).det := by
+    refine contDiff_det_iffr fun i j => ?_
+    rcases eq_or_ne i b with rfl | h
+    · simp only [Matrix.updateRow_self]
+      exact contDiff_const
+    · simp only [Matrix.updateRow_ne h]
+      exact hg i j
+  exact (hdet.contDiffOn.inv fun x hx =>
+    ((Matrix.isUnit_iff_isUnit_det _).1 (hs x hx)).ne_zero).mul hadj.contDiffOn
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] [∀ ℓ, DecidableEq (dh ℓ)] in
+/-- Helper: the parameters `(θ.headsQK K).headsVO K'` written with the matrices `K`, `K'` and,
+as separate arguments, their inverses `Ki`, `K'i`: the query columns `W_Q K`, the key columns
+`W_K Kiᵀ`, the value columns `W_V K'`, the output rows `K'i W_O`. -/
+private noncomputable def headsMat_iffr {χ : Matrix T d ℝ → Matrix T d ℝ}
+    (θ : Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut)
+    (K Ki K' K'i : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
+    Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut where
+  E := θ.E
+  read ℓ := Matrix.of fun a p =>
+    match p.2 with
+    | Sum.inl k => ∑ k', θ.read ℓ a (p.1, Sum.inl k') * K ℓ p.1 k' k
+    | Sum.inr (Sum.inl k) => ∑ k', θ.read ℓ a (p.1, Sum.inr (Sum.inl k')) * Ki ℓ p.1 k k'
+    | Sum.inr (Sum.inr k) => ∑ k', θ.read ℓ a (p.1, Sum.inr (Sum.inr k')) * K' ℓ p.1 k' k
+  write ℓ := Matrix.of fun (p : H ℓ × dh ℓ) b => ∑ k', K'i ℓ p.1 p.2 k' * θ.write ℓ (p.1, k') b
+  D := θ.D
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] [∀ ℓ, DecidableEq (dh ℓ)] in
+/-- Helper: the family of the changes of basis inside the heads, at the pairs `n = (k, k')` of
+families of matrices, with the matrix inverses of `k`, `k'`. -/
+private noncomputable def headsFam_iffr {χ : Matrix T d ℝ → Matrix T d ℝ}
+    (θ : Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut)
+    (n : (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) × (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ)) :
+    Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut :=
+  headsMat_iffr θ n.1 (fun ℓ i => (n.1 ℓ i)⁻¹) n.2 (fun ℓ i => (n.2 ℓ i)⁻¹)
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: at the invertible matrices of `K`, `K'`, the family is `(θ.headsQK K).headsVO K'`. -/
+private theorem headsFam_coe_iffr {χ : Matrix T d ℝ → Matrix T d ℝ}
+    (θ : Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut)
+    (K K' : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) :
+    headsFam_iffr θ (fun ℓ i => (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ),
+      fun ℓ i => (K' ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ)) = (θ.headsQK K).headsVO K' := by
+  -- the matrix inverse of `K` is the matrix of `K⁻¹`
+  simp only [headsFam_iffr, ← Matrix.coe_units_inv]
+  refine Params.ext' rfl (fun ℓ => ?_) (fun ℓ => rfl) rfl
+  ext a p
+  rcases p with ⟨i, k | k | k⟩ <;> rfl
+
+omit [DecidableEq d] in
+/-- Helper: the family of the changes of basis inside the heads is `C¹` where the matrices are
+invertible. -/
+private theorem contDiffOn_headsFam_iffr {χ : Matrix T d ℝ → Matrix T d ℝ}
+    (θ : Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut) :
+    ContDiffOn ℝ 1 (headsFam_iffr θ)
+      {n | ∀ ℓ i, IsUnit (n.1 ℓ i) ∧ IsUnit (n.2 ℓ i)} := by
+  refine contDiffOn_params_iffr (fun i j => contDiffOn_const (c := θ.E i j)) (fun ℓ a p => ?_)
+    (fun ℓ p b => ?_) (fun k j => contDiffOn_const (c := θ.D k j))
+  · rcases p with ⟨i, k | k | k⟩
+    · -- the query columns `W_Q k`
+      have hk : ∀ k', ContDiff ℝ 1 fun n : (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ)
+          × (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) => n.1 ℓ i k' k := fun k' => by fun_prop
+      exact (ContDiff.sum fun k' _ => contDiff_const.mul (hk k')).contDiffOn
+    · -- the key columns `W_K (k⁻¹)ᵀ`
+      exact ContDiffOn.sum fun k' _ => contDiffOn_const.mul
+        (contDiffOn_inv_entry_iffr (g := fun n : (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ)
+          × (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) => n.1 ℓ i) (fun _ _ => by fun_prop)
+          (fun n (hn : ∀ ℓ i, IsUnit (n.1 ℓ i) ∧ IsUnit (n.2 ℓ i)) => (hn ℓ i).1) k k')
+    · -- the value columns `W_V k'`
+      have hk : ∀ k', ContDiff ℝ 1 fun n : (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ)
+          × (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) => n.2 ℓ i k' k := fun k' => by fun_prop
+      exact (ContDiff.sum fun k' _ => contDiff_const.mul (hk k')).contDiffOn
+  · -- the output rows `k'⁻¹ W_O`
+    rcases p with ⟨i, k⟩
+    exact ContDiffOn.sum fun k' _ => ContDiffOn.mul
+      (contDiffOn_inv_entry_iffr (g := fun n : (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ)
+        × (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) => n.2 ℓ i) (fun _ _ => by fun_prop)
+        (fun n (hn : ∀ ℓ i, IsUnit (n.1 ℓ i) ∧ IsUnit (n.2 ℓ i)) => (hn ℓ i).2) k k')
+      contDiffOn_const
+
+omit [∀ ℓ, DecidableEq (dh ℓ)] in
+/-- Helper (the private `finrank_headFun_lia`): the families of matrices of the heads form a
+space of dimension `∑_ℓ H_ℓ d_{h,ℓ}²`. -/
+private theorem finrank_headFun_iffr :
+    Module.finrank ℝ (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ)
+      = ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2 := by
+  rw [Module.finrank_pi_fintype]
+  simp only [Module.finrank_pi_fintype, Module.finrank_matrix, Module.finrank_self, mul_one,
+    Finset.sum_const, Finset.card_univ, smul_eq_mul, sq]
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper (the private `analyticOnNhd_det_lia`): the determinant of a square matrix that depends
+linearly on the parameters is an analytic function of the parameters. -/
+private theorem analyticOnNhd_det_iffr {A : Arch T d L} {n : Type*} [Fintype n] [DecidableEq n]
+    (Φ : Params A dIn dOut →ₗ[ℝ] Matrix n n ℝ) :
+    AnalyticOnNhd ℝ (fun θ => (Φ θ).det) Set.univ := by
+  simp only [Matrix.det_apply']
+  exact Finset.analyticOnNhd_fun_sum _ fun σ _ => analyticOnNhd_const.mul
+    (Finset.analyticOnNhd_fun_prod _ fun i _ =>
+      analyticOnNhd_linear ((Matrix.entryLinearMap ℝ ℝ (σ i) i).comp Φ))
+
+/-- Helper (the private `exists_submatrix_eq_one_lia`): a matrix whose submatrix on the rows `r`
+and the columns `c` (both injective) is the identity. -/
+private theorem exists_submatrix_eq_one_iffr {m p n : Type*} [DecidableEq n] {r : n → m}
+    (hr : Function.Injective r) {c : n → p} (hc : Function.Injective c) :
+    ∃ M : Matrix m p ℝ, M.submatrix r c = 1 := by
+  classical
+  refine ⟨Matrix.of fun a b => if ∃ x, r x = a ∧ c x = b then 1 else 0, ?_⟩
+  ext x y
+  simp [Matrix.one_apply, hr.eq_iff, hc.eq_iff]
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper (the private `ae_rank_read_cols_lia`): at generic parameters, `n ≤ d` distinct
+columns `c` of the read of block `ℓ` form a matrix of rank `n`. -/
+private theorem ae_rank_read_cols_iffr {A : Arch T d L} (μ : Measure (Params A dIn dOut))
+    [μ.IsAddHaarMeasure] (ℓ : Fin L) {n : Type*} [Fintype n] [DecidableEq n] {c : n → A.r ℓ}
+    (hc : Function.Injective c) (hn : Fintype.card n ≤ Fintype.card d) :
+    ∀ᵐ θ ∂μ, ((θ.read ℓ).submatrix id c).rank = Fintype.card n := by
+  -- `n` rows `ρ`, and the square submatrix of the read on the rows `ρ` and the columns `c`
+  obtain ⟨ρ⟩ := Function.Embedding.nonempty_of_card_le hn
+  obtain ⟨M, hM⟩ := exists_submatrix_eq_one_iffr ρ.injective hc
+  let Φ : Params A dIn dOut →ₗ[ℝ] Matrix n n ℝ :=
+    { toFun := fun θ => ((θ.read ℓ).submatrix id c).submatrix ρ id
+      map_add' := fun _ _ => rfl
+      map_smul' := fun _ _ => rfl }
+  -- it is the identity at the parameter whose read `ℓ` is `M`, so its determinant is not
+  -- identically zero, and it is nonzero almost everywhere
+  have hne : ∃ θ, (Φ θ).det ≠ 0 := by
+    refine ⟨⟨0, Pi.single ℓ M, 0, 0⟩, ?_⟩
+    show ((Pi.single (M := fun ℓ => Matrix d (A.r ℓ) ℝ) ℓ M ℓ).submatrix ρ c).det ≠ 0
+    rw [Pi.single_eq_same, hM, Matrix.det_one]
+    exact one_ne_zero
+  filter_upwards [ae_ne_zero_of_analytic μ (analyticOnNhd_det_iffr Φ) hne] with θ hθ
+  -- an invertible `n × n` submatrix gives rank `≥ n`, and the rank is at most the width `n`
+  have h1 : (((θ.read ℓ).submatrix id c).submatrix ρ id).rank = Fintype.card n :=
+    Matrix.rank_of_isUnit _ ((Matrix.isUnit_iff_isUnit_det _).2 (isUnit_iff_ne_zero.2 hθ))
+  have h2 : (((θ.read ℓ).submatrix id c).submatrix ρ id).rank
+      ≤ ((θ.read ℓ).submatrix id c).rank :=
+    Matrix.rank_submatrix_le _ ρ id
+  have h3 := Matrix.rank_le_card_width ((θ.read ℓ).submatrix id c)
+  omega
+
+omit [DecidableEq d] in
+/-- Helper (the private `ae_rank_QV_lia`): at generic parameters the query matrix and the value
+matrix of every head have rank `d_h`, when `d_h ≤ d`. -/
+private theorem ae_rank_QV_iffr {χ : Matrix T d ℝ → Matrix T d ℝ}
+    (μ : Measure (Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut))
+    [μ.IsAddHaarMeasure] (hdh : ∀ ℓ, Fintype.card (dh ℓ) ≤ Fintype.card d) :
+    ∀ᵐ θ ∂μ, (∀ ℓ (i : H ℓ), ((θ.read ℓ).submatrix id fun k : dh ℓ => (i, Sum.inl k)).rank
+        = Fintype.card (dh ℓ)) ∧
+      ∀ ℓ (i : H ℓ), ((θ.read ℓ).submatrix id fun k : dh ℓ => (i, Sum.inr (Sum.inr k))).rank
+        = Fintype.card (dh ℓ) := by
+  -- finitely many conditions, two for each head of each block
+  refine (ae_all_iff.2 fun ℓ => ae_all_iff.2 fun i => ?_).and
+    (ae_all_iff.2 fun ℓ => ae_all_iff.2 fun i => ?_)
+  · exact ae_rank_read_cols_iffr μ ℓ (c := fun k : dh ℓ => (i, Sum.inl k))
+      (fun _ _ h => Sum.inl_injective (Prod.mk.inj h).2) (hdh ℓ)
+  · exact ae_rank_read_cols_iffr μ ℓ (c := fun k : dh ℓ => (i, Sum.inr (Sum.inr k)))
+      (fun _ _ h => Sum.inr_injective (Sum.inr_injective (Prod.mk.inj h).2)) (hdh ℓ)
+
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks, without
 normalization:** `fd = P − d² − s` at almost every parameter (`s = 2 ∑ H d_h²`) if and only if at
 almost every parameter `θ` every `θ'` near `θ` with the same function is `θ` after changes of basis
@@ -383,7 +567,37 @@ theorem ae_funDim_attention_residual_iff_ae_locally_cob_heads
           ∃ G : GL d ℝ,
             θ' = ((θ.headsQK K).headsVO K').cob
               (fun _ => G) (fun _ => G)) := by
-  sorry
+  constructor
+  · -- from the equality condition: Proposition 4.5 at every `θ` where `E` has rank `d` and the
+    -- query and value matrices of every head have rank `d_h`, with no condition on `G`, `K`, `K'`
+    intro h
+    filter_upwards [h, ae_rank_E_iffr μ hdIn, ae_rank_QV_iffr μ hdh] with θ hfd hE hQV
+    obtain ⟨U, hU, hUV⟩ := exists_cob_heads_of_eval_eq_residual_attention θ hE hQV.1 hQV.2 hfd
+      Set.univ Filter.univ_mem Set.univ Filter.univ_mem
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨G, K, K', -, -, -, hθ'⟩ := hUV θ' hθ' heq
+    exact ⟨K, K', G, hθ'⟩
+  · -- to the equality condition: the lower bound `P ≤ fd + d² + 2 ∑ H d_h²` from local
+    -- identifiability, with the changes of basis inside the heads at pairs of families of
+    -- invertible matrices, and the upper bound of Theorem 4.2
+    intro h
+    have hlow := ae_finrank_le_funDim_add_of_ae_locally_cob_const
+      (Arch.attention (T := T) (d := d) sees id H dh) 1
+      (fun ℓ => analyticOnNhd_f_attention sees id H dh ℓ) analyticOnNhd_id μ headsFam_iffr
+      {n | ∀ ℓ i, IsUnit (n.1 ℓ i) ∧ IsUnit (n.2 ℓ i)} (fun θ => contDiffOn_headsFam_iffr θ) (by
+        filter_upwards [h] with θ ⟨U, hU, hUV⟩
+        refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+        obtain ⟨K, K', G, hG⟩ := hUV θ' hθ' heq
+        refine ⟨(fun ℓ i => (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ),
+          fun ℓ i => (K' ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ)),
+          fun ℓ i => ⟨(K ℓ i).isUnit, (K' ℓ i).isUnit⟩, G, ?_⟩
+        rw [headsFam_coe_iffr]
+        exact hG)
+    have hup := ae_funDim_add_le_residual_attention μ hdIn hdh
+    filter_upwards [hlow, hup] with θ h1 h2
+    rw [Module.finrank_prod, finrank_headFun_iffr] at h1
+    generalize ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2 = s at h1 h2 ⊢
+    omega
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks, under
 pre-RMSNorm with `ε > 0`:** `fd = P − d(d−1)/2 − s` at almost every parameter (`s = 2 ∑ H d_h²`) if
@@ -408,7 +622,39 @@ theorem ae_funDim_attention_residual_iff_ae_locally_cob_heads_rmsNorm
           ∃ Q : GL d ℝ, (Q : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ ∧
             θ' = ((θ.headsQK K).headsVO K').cob
               (fun _ => Q) (fun _ => Q)) := by
-  sorry
+  constructor
+  · -- from the equality condition: Proposition 4.5 at every `θ` where `E` has rank `d` and the
+    -- query and value matrices of every head have rank `d_h`, with no condition on `Q`, `K`, `K'`
+    intro h
+    filter_upwards [h, ae_rank_E_iffr μ hdIn, ae_rank_QV_iffr μ hdh] with θ hfd hE hQV
+    obtain ⟨U, hU, hUV⟩ := exists_cob_heads_of_eval_eq_residual_attention_rmsNorm hε θ hE hQV.1
+      hQV.2 hfd Set.univ Filter.univ_mem Set.univ Filter.univ_mem
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨Q, K, K', hQ, -, -, -, hθ'⟩ := hUV θ' hθ' heq
+    exact ⟨K, K', Q, hQ, hθ'⟩
+  · -- to the equality condition: the lower bound `P ≤ fd + d(d-1)/2 + 2 ∑ H d_h²` from local
+    -- identifiability, with the changes of basis inside the heads at pairs of families of
+    -- invertible matrices, and the upper bound of Theorem 4.2
+    intro h
+    have hlow := ae_finrank_le_funDim_add_of_ae_locally_cob_const_orthogonal
+      (Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh) 1
+      (fun ℓ => analyticOnNhd_f_attention sees (rmsNorm ε) H dh ℓ) (analyticOnNhd_rmsNorm hε) μ
+      headsFam_iffr {n | ∀ ℓ i, IsUnit (n.1 ℓ i) ∧ IsUnit (n.2 ℓ i)}
+      (fun θ => contDiffOn_headsFam_iffr θ) (by
+        filter_upwards [h] with θ ⟨U, hU, hUV⟩
+        refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+        obtain ⟨K, K', Q, hQ, hQθ⟩ := hUV θ' hθ' heq
+        refine ⟨(fun ℓ i => (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ),
+          fun ℓ i => (K' ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ)),
+          fun ℓ i => ⟨(K ℓ i).isUnit, (K' ℓ i).isUnit⟩, Q, hQ, ?_⟩
+        rw [headsFam_coe_iffr]
+        exact hQθ)
+    have hup := ae_funDim_add_le_residual_attention_rmsNorm ε μ hdIn hdh
+    filter_upwards [hlow, hup] with θ h1 h2
+    rw [Module.finrank_prod, finrank_headFun_iffr] at h1
+    generalize ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2 = s at h1 h2 ⊢
+    generalize Fintype.card d * (Fintype.card d - 1) / 2 = a at h1 h2 ⊢
+    omega
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks and MLP blocks
 with a real-analytic activation, in any order, without normalization:** `fd = P − d² − s` at almost
