@@ -196,12 +196,98 @@ private theorem hasStrictFDerivAt_rescale_write_eog (ℓ : Fin L) :
     hasStrictFDerivAt_pi.2 fun i => hasStrictFDerivAt_pi.2 fun k => hD i k,
     fun v => Matrix.ext fun i k => hDv i k v⟩
 
+omit [Fintype T] [Fintype dOut] in
+/-- Helper: the embedding `E exp (m_0)`, with derivative `v ↦ E v.1 0` at `0`. -/
+private theorem hasStrictFDerivAt_E_eog :
+    ∃ D : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) →L[ℝ] Matrix dIn d ℝ,
+      HasStrictFDerivAt (fun p : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) =>
+        θ.E * NormedSpace.exp (p.1 0)) D 0 ∧
+      ∀ v, D v = (cobDir θ v.1 + rescaleDir θ v.2).E := by
+  obtain ⟨g', hg, hgv⟩ := hasStrictFDerivAt_exp_fst_eog (d := d) (F := ∀ ℓ, hid ℓ → ℝ) 0
+  obtain ⟨D, hD, hDv⟩ := hasStrictFDerivAt_mul_eog
+    (hasStrictFDerivAt_const θ.E (0 : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ))) hg
+  refine ⟨D, hD, fun v => ?_⟩
+  -- `0 exp 0 + E v.1 0`, against `E v.1 0 + 0`
+  refine (hDv v).trans ?_
+  erw [hgv]
+  show (0 : Matrix dIn d ℝ) * _ + θ.E * v.1 0 = θ.E * v.1 0 + 0
+  rw [Matrix.zero_mul, zero_add, add_zero]
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the read of block `ℓ`, `exp (-m_{ℓ-1}) R_ℓ(α)`, with derivative
+`v ↦ -v.1 (ℓ-1) W_read + (rescaleDir θ v.2).read ℓ` at `0` (product rule). -/
+private theorem hasStrictFDerivAt_read_eog (ℓ : Fin L) :
+    ∃ D : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) →L[ℝ] Matrix d (hid ℓ ⊕ hid ℓ) ℝ,
+      HasStrictFDerivAt (fun p : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) =>
+        NormedSpace.exp (-p.1 ℓ.castSucc) * (θ.rescale fun ℓ i => Real.exp (p.2 ℓ i)).read ℓ)
+        D 0 ∧
+      ∀ v, D v = (cobDir θ v.1 + rescaleDir θ v.2).read ℓ := by
+  obtain ⟨f', hf, hfv⟩ :=
+    hasStrictFDerivAt_exp_neg_fst_eog (d := d) (F := ∀ ℓ, hid ℓ → ℝ) ℓ.castSucc
+  obtain ⟨g', hg, hgv⟩ := hasStrictFDerivAt_rescale_read_eog θ ℓ
+  obtain ⟨D, hD, hDv⟩ := hasStrictFDerivAt_mul_eog hf hg
+  refine ⟨D, hD, fun v => ?_⟩
+  -- at `0` the factors are `exp 0 = 1` and `θ.read ℓ`
+  refine (hDv v).trans ?_
+  erw [hfv, hgv]
+  simp only [Prod.fst_zero, Prod.snd_zero, Pi.zero_apply, Real.exp_zero, neg_zero,
+    NormedSpace.exp_zero, rescale_one_eog, Matrix.one_mul, Params.add_read, Matrix.neg_mul]
+  rfl
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the write of block `ℓ`, `W_ℓ(α) exp (m_ℓ)`, with derivative
+`v ↦ (rescaleDir θ v.2).write ℓ + W_write v.1 ℓ` at `0` (product rule). -/
+private theorem hasStrictFDerivAt_write_eog (ℓ : Fin L) :
+    ∃ D : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) →L[ℝ] Matrix (hid ℓ) d ℝ,
+      HasStrictFDerivAt (fun p : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) =>
+        (θ.rescale fun ℓ i => Real.exp (p.2 ℓ i)).write ℓ * NormedSpace.exp (p.1 ℓ.succ)) D 0 ∧
+      ∀ v, D v = (cobDir θ v.1 + rescaleDir θ v.2).write ℓ := by
+  obtain ⟨f', hf, hfv⟩ := hasStrictFDerivAt_rescale_write_eog θ ℓ
+  obtain ⟨g', hg, hgv⟩ := hasStrictFDerivAt_exp_fst_eog (d := d) (F := ∀ ℓ, hid ℓ → ℝ) ℓ.succ
+  obtain ⟨D, hD, hDv⟩ := hasStrictFDerivAt_mul_eog hf hg
+  refine ⟨D, hD, fun v => ?_⟩
+  -- at `0` the factors are `θ.write ℓ` and `exp 0 = 1`
+  refine (hDv v).trans ?_
+  erw [hfv, hgv]
+  simp only [Prod.fst_zero, Prod.snd_zero, Pi.zero_apply, Real.exp_zero,
+    NormedSpace.exp_zero, rescale_one_eog, Matrix.mul_one, Params.add_write]
+  exact add_comm _ _
+
+omit [Fintype T] [Fintype dIn] in
+/-- Helper: the readout `exp (-m_L) D`, with derivative `v ↦ -v.1 L D` at `0`. -/
+private theorem hasStrictFDerivAt_D_eog :
+    ∃ D : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) →L[ℝ] Matrix d dOut ℝ,
+      HasStrictFDerivAt (fun p : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) =>
+        NormedSpace.exp (-p.1 (Fin.last L)) * θ.D) D 0 ∧
+      ∀ v, D v = (cobDir θ v.1 + rescaleDir θ v.2).D := by
+  obtain ⟨f', hf, hfv⟩ :=
+    hasStrictFDerivAt_exp_neg_fst_eog (d := d) (F := ∀ ℓ, hid ℓ → ℝ) (Fin.last L)
+  obtain ⟨D, hD, hDv⟩ := hasStrictFDerivAt_mul_eog hf
+    (hasStrictFDerivAt_const θ.D (0 : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ)))
+  refine ⟨D, hD, fun v => ?_⟩
+  -- `-v.1 L D + exp 0 0`, against `-(v.1 L D) + 0`
+  refine (hDv v).trans ?_
+  erw [hfv]
+  show -v.1 (Fin.last L) * θ.D + _ * (0 : Matrix d dOut ℝ) = -(v.1 (Fin.last L) * θ.D) + 0
+  rw [Matrix.mul_zero, Matrix.neg_mul]
+
 /-- The map `(m, α) ↦ (θ.rescale (e^α)).cob (exp m) (exp m)` is strictly differentiable at `0`,
 with the derivative `(m, α) ↦ cobDir θ m + rescaleDir θ α`. -/
 theorem hasStrictFDerivAt_cobExpRescale :
     ∃ Φ' : ((Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ)) →L[ℝ]
         Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut,
       HasStrictFDerivAt (cobExpRescale θ) Φ' 0 ∧ ∀ p, Φ' p = cobDir θ p.1 + rescaleDir θ p.2 := by
-  sorry
+  -- the four components: `E exp(m_0)`, `exp(-m_{ℓ-1}) R_ℓ(α)`, `W_ℓ(α) exp(m_ℓ)`, `exp(-m_L) D`
+  obtain ⟨DE, hE, hEv⟩ := hasStrictFDerivAt_E_eog θ
+  choose DR hR hRv using hasStrictFDerivAt_read_eog θ
+  choose DW hW hWv using hasStrictFDerivAt_write_eog θ
+  obtain ⟨DD, hD, hDv⟩ := hasStrictFDerivAt_D_eog θ
+  -- the tuple of the components is strictly differentiable, hence so is the map into `Params`
+  have key := hE.prodMk ((hasStrictFDerivAt_pi.2 hR).prodMk ((hasStrictFDerivAt_pi.2 hW).prodMk hD))
+  let e := (Params.linearEquivProd (A := Arch.gated (T := T) (d := d) σ χ hid) (dIn := dIn)
+    (dOut := dOut)).toContinuousLinearEquiv
+  have hc := e.symm.hasStrictFDerivAt.comp
+    (0 : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ)) key
+  exact ⟨_, hc, fun v => Params.ext' (hEv v) (fun ℓ => hRv ℓ v) (fun ℓ => hWv ℓ v) (hDv v)⟩
 
 end Skips
