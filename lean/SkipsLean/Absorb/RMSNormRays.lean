@@ -499,6 +499,181 @@ theorem exists_ne_skipless_rmsNorm_of_turn {ε ε' : ℝ} (hε : 0 < ε) (hε' :
   obtain ⟨c, hc⟩ := exists_eq_smul_of_rayLim_eq_zero (hnr r₀) h0
   exact hturn c hc
 
+/-! ### Theorem 4.3 for `ε = 0` -/
+
+/-- Finitely many positive numbers have a positive lower bound (copy of a private lemma of
+`Absorb/Limits.lean`). -/
+private theorem exists_pos_le_of_finite' {ι : Type*} [Finite ι] (a : ι → ℝ)
+    (ha : ∀ i, 0 < a i) : ∃ ρ > 0, ∀ i, ρ ≤ a i := by
+  rcases isEmpty_or_nonempty ι with hι | hι
+  · exact ⟨1, one_pos, fun i => isEmptyElim i⟩
+  · obtain ⟨i₀, hi₀⟩ := Finite.exists_min a
+    exact ⟨a i₀, ha i₀, hi₀⟩
+
+omit [DecidableEq d] in
+/-- `N_0` is continuous at a state without zero rows. -/
+private theorem continuousAt_rmsNorm_zero {z : Matrix T d ℝ} (hz : ∀ r, z r ≠ 0) :
+    ContinuousAt (rmsNorm 0) z := by
+  obtain ⟨ρ, hρ, hρz⟩ := exists_pos_le_of_finite' (fun r => ‖z r‖)
+    (fun r => norm_pos_iff.2 (hz r))
+  refine continuousAt_of_locally_lipschitz one_pos (2 * Fintype.card d / ρ) fun y _ => ?_
+  rw [dist_eq_norm, dist_eq_norm]
+  exact norm_rmsNorm_zero_sub_le hρ hρz y
+
+omit [DecidableEq d] [Fintype dOut] in
+/-- For `χ = N_0` and continuous `f_ℓ`, every hidden state is continuous at an input at which the
+network is defined. -/
+private theorem continuousAt_hidden_of_definedAt (A : Arch T d L) (hχ : A.χ = rmsNorm 0)
+    (hf : ∀ ℓ, Continuous (A.f ℓ)) (S : Fin L → Matrix d d ℝ) (θ : Params A dIn dOut)
+    {X : Matrix T dIn ℝ} (hX : DefinedAt A S θ X) (k : Fin (L + 1)) :
+    ContinuousAt (fun X => hidden A S θ X k) X := by
+  induction k using Fin.induction with
+  | zero =>
+    simp only [hidden_zero]
+    exact (lipschitzWith_mul_right θ.E).continuous.continuousAt
+  | succ k ih =>
+    simp only [hidden_succ, hχ]
+    have hN : ContinuousAt (fun X => rmsNorm 0 (hidden A S θ X k.castSucc)) X :=
+      ContinuousAt.comp (f := fun X => hidden A S θ X k.castSucc)
+        (continuousAt_rmsNorm_zero (hX k.castSucc)) ih
+    exact ((lipschitzWith_mul_right (S k)).continuous.continuousAt.comp ih).add
+      ((lipschitzWith_mul_right (θ.write k)).continuous.continuousAt.comp
+        ((hf k).continuousAt.comp
+          ((lipschitzWith_mul_right (θ.read k)).continuous.continuousAt.comp hN)))
+
+omit [DecidableEq d] in
+/-- **(a)** For `χ = N_0` and continuous `f_ℓ`, the output is continuous at an input at which the
+network is defined. -/
+private theorem continuousAt_eval_of_definedAt (A : Arch T d L) (hχ : A.χ = rmsNorm 0)
+    (hf : ∀ ℓ, Continuous (A.f ℓ)) (S : Fin L → Matrix d d ℝ) (θ : Params A dIn dOut)
+    {X : Matrix T dIn ℝ} (hX : DefinedAt A S θ X) : ContinuousAt (eval A S θ) X := by
+  have hN : ContinuousAt (fun X => rmsNorm 0 (hidden A S θ X (Fin.last L))) X :=
+    ContinuousAt.comp (f := fun X => hidden A S θ X (Fin.last L))
+      (continuousAt_rmsNorm_zero (hX (Fin.last L)))
+      (continuousAt_hidden_of_definedAt A hχ hf S θ hX (Fin.last L))
+  show ContinuousAt (fun X => A.χ (hidden A S θ X (Fin.last L)) * θ.D) X
+  rw [hχ]
+  exact (lipschitzWith_mul_right θ.D).continuous.continuousAt.comp hN
+
+/-- Two maps continuous at `x` that agree on a dense set agree at `x`. -/
+private theorem eq_of_continuousAt_of_dense {α β : Type*} [TopologicalSpace α]
+    [TopologicalSpace β] [T2Space β] {f g : α → β} {S : Set α} (hS : Dense S)
+    (hfg : ∀ y ∈ S, f y = g y) {x : α} (hf : ContinuousAt f x) (hg : ContinuousAt g x) :
+    f x = g x := by
+  have : (𝓝[S] x).NeBot := mem_closure_iff_nhdsWithin_neBot.1 (hS x)
+  refine tendsto_nhds_unique (l := 𝓝[S] x) (hf.tendsto.mono_left nhdsWithin_le_nhds) ?_
+  exact (hg.tendsto.mono_left nhdsWithin_le_nhds).congr'
+    (eventually_nhdsWithin_of_forall fun y hy => (hfg y hy).symm)
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- **(b) Scale invariance of the skipless network** (`χ = N_0`): for `c > 0`, `h_0(c X) = c h_0(X)`
+and `h_k(c X) = h_k(X)` for `k ≥ 1`. -/
+private theorem exists_hidden_skipless_smul (A : Arch T d L) (hχ : A.χ = rmsNorm 0)
+    (θ : Params A dIn dOut) (X : Matrix T dIn ℝ) {c : ℝ} (hc : 0 < c) (k : Fin (L + 1)) :
+    ∃ c' : ℝ, 0 < c' ∧ hidden A 0 θ (c • X) k = c' • hidden A 0 θ X k := by
+  induction k using Fin.induction with
+  | zero => exact ⟨c, hc, by rw [hidden_zero, hidden_zero, Matrix.smul_mul]⟩
+  | succ k ih =>
+    obtain ⟨c', hc', h⟩ := ih
+    refine ⟨1, one_pos, ?_⟩
+    simp only [hidden_succ, h, hχ, rmsNorm_zero_smul hc', one_smul, Pi.zero_apply,
+      Matrix.mul_zero, zero_add]
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+private theorem definedAt_skipless_smul (A : Arch T d L) (hχ : A.χ = rmsNorm 0)
+    (θ : Params A dIn dOut) {X : Matrix T dIn ℝ} (hX : DefinedAt A 0 θ X) {c : ℝ}
+    (hc : 0 < c) : DefinedAt A 0 θ (c • X) := by
+  intro k r
+  obtain ⟨c', hc', h⟩ := exists_hidden_skipless_smul A hχ θ X hc k
+  rw [h]
+  exact smul_ne_zero hc'.ne' (hX k r)
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+private theorem eval_skipless_smul (A : Arch T d L) (hχ : A.χ = rmsNorm 0)
+    (θ : Params A dIn dOut) (X : Matrix T dIn ℝ) {c : ℝ} (hc : 0 < c) :
+    eval A 0 θ (c • X) = eval A 0 θ X := by
+  obtain ⟨c', hc', h⟩ := exists_hidden_skipless_smul A hχ θ X hc (Fin.last L)
+  unfold eval
+  rw [h, hχ, rmsNorm_zero_smul hc']
+
+/-- If `x_t - t W → β`, then `x_t / t → W`. -/
+private theorem tendsto_inv_smul_of_tendsto_sub_smul {M : Type*} [NormedAddCommGroup M]
+    [NormedSpace ℝ M] {x : ℝ → M} {W β : M}
+    (h : Tendsto (fun t : ℝ => x t - t • W) atTop (𝓝 β)) :
+    Tendsto (fun t : ℝ => t⁻¹ • x t) atTop (𝓝 W) := by
+  have h1 : Tendsto (fun t : ℝ => W + t⁻¹ • (x t - t • W)) atTop (𝓝 (W + (0 : ℝ) • β)) :=
+    tendsto_const_nhds.add (tendsto_inv_atTop_zero.smul h)
+  rw [zero_smul, add_zero] at h1
+  refine h1.congr' ?_
+  filter_upwards [eventually_gt_atTop 0] with t ht
+  rw [smul_sub, smul_smul, inv_mul_cancel₀ ht.ne', one_smul, add_sub_cancel]
+
+omit [Fintype dOut] in
+/-- **(c)** If no row of `X E` vanishes, the residual network is defined at `t X` for all large
+`t` (`h_k(t X) / t → X E`). -/
+private theorem eventually_definedAt_residual_ray (A : Arch T d L) {ε : ℝ}
+    (hχ : A.χ = rmsNorm ε) (hf : ∀ ℓ, Continuous (A.f ℓ)) (θ : Params A dIn dOut)
+    {X : Matrix T dIn ℝ} (hX : ∀ r, (X * θ.E) r ≠ 0) :
+    ∀ᶠ t : ℝ in atTop, DefinedAt A 1 θ (t • X) := by
+  have h : ∀ k r, ∀ᶠ t : ℝ in atTop, (t⁻¹ • hidden A 1 θ (t • X) k) r ≠ 0 := fun k r =>
+    (tendsto_pi_nhds.1 (tendsto_inv_smul_of_tendsto_sub_smul
+      (tendsto_hidden_residual_ray A hχ hf θ hX k)) r).eventually_ne (hX r)
+  filter_upwards [eventually_all.2 fun k => eventually_all.2 fun r => h k r] with t ht k r h0
+  refine ht k r ?_
+  show t⁻¹ • hidden A 1 θ (t • X) k r = 0
+  rw [h0, smul_zero]
+
+/-- **(c)** If the two networks agree wherever both are defined, then at every input `X` at which
+the skipless network is defined and `X E` has no zero row, every row of `β(N_0(X E))` is a
+multiple of the same row of `X E`. -/
+private theorem exists_eq_smul_row_of_agree (A : Arch T d L) (hχ : A.χ = rmsNorm 0)
+    (hf : ∀ ℓ, Continuous (A.f ℓ)) (θ : Params A dIn dOut) (hD : θ.D.rank = Fintype.card d)
+    {L' : ℕ} {d' : Type*} [Fintype d'] (A' : Arch T d' L') (hχ' : A'.χ = rmsNorm 0)
+    (θ' : Params A' dIn dOut)
+    (hagree : ∀ X, DefinedAt A 1 θ X → DefinedAt A' 0 θ' X → eval A 1 θ X = eval A' 0 θ' X)
+    {X : Matrix T dIn ℝ} (hX' : DefinedAt A' 0 θ' X) (hX : ∀ r, (X * θ.E) r ≠ 0) (r : T) :
+    ∃ c : ℝ, (∑ ℓ, A.f ℓ (rmsNorm 0 (X * θ.E) * θ.read ℓ) * θ.write ℓ) r = c • (X * θ.E) r := by
+  have hres := tendsto_smul_eval_residual_ray A hχ hf θ hX
+  -- for large `t` both networks are defined at `t X`, and the skipless output there is `F'(X)`
+  have hev : ∀ᶠ t : ℝ in atTop, eval A 1 θ (t • X) = eval A' 0 θ' X := by
+    filter_upwards [eventually_definedAt_residual_ray A hχ hf θ hX, eventually_gt_atTop 0]
+      with t hdef ht
+    rw [hagree _ hdef (definedAt_skipless_smul A' hχ' θ' hX' ht), eval_skipless_smul A' hχ' θ' X ht]
+  -- so the limit of the residual output is `F'(X)`, and then `P D = 0`
+  have hG : eval A' 0 θ' X = rmsNorm 0 (X * θ.E) * θ.D :=
+    tendsto_nhds_unique (tendsto_const_nhds.congr' (hev.mono fun t ht => ht.symm))
+      (tendsto_of_tendsto_smul_sub' hres)
+  have hPD : (Matrix.of fun r => rayLim ((X * θ.E) r)
+      ((∑ ℓ, A.f ℓ (rmsNorm 0 (X * θ.E) * θ.read ℓ) * θ.write ℓ) r)) * θ.D = 0 := by
+    refine tendsto_nhds_unique hres (tendsto_const_nhds.congr' (hev.mono fun t ht => ?_))
+    dsimp only
+    rw [ht, hG, sub_self, smul_zero]
+  have hP := eq_zero_of_mul_eq_zero_of_rank hD hPD
+  exact exists_eq_smul_of_rayLim_eq_zero (hX r) (congrFun hP r)
+
+omit [DecidableEq d] in
+/-- The dot product of two maps continuous at `x` is continuous at `x`. -/
+private theorem continuousAt_dotProduct' {α : Type*} [TopologicalSpace α] {f g : α → d → ℝ}
+    {x : α} (hf : ContinuousAt f x) (hg : ContinuousAt g x) :
+    ContinuousAt (fun y => f y ⬝ᵥ g y) x :=
+  ContinuousAt.comp (f := fun y => (f y, g y)) (x := x)
+    (continuous_fst.dotProduct continuous_snd).continuousAt (hf.prodMk hg)
+
+omit [DecidableEq d] [Fintype dOut] in
+/-- `X ↦ β(N_0(X E)) = ∑_ℓ f_ℓ(N_0(X E) W_read^ℓ) W_write^ℓ` is continuous at an input `X₀` such
+that `X₀ E` has no zero row. -/
+private theorem continuousAt_betaSum (A : Arch T d L) (hf : ∀ ℓ, Continuous (A.f ℓ))
+    (θ : Params A dIn dOut) {X₀ : Matrix T dIn ℝ} (hX₀ : ∀ r, (X₀ * θ.E) r ≠ 0) :
+    ContinuousAt (fun X : Matrix T dIn ℝ =>
+      ∑ ℓ, A.f ℓ (rmsNorm 0 (X * θ.E) * θ.read ℓ) * θ.write ℓ) X₀ := by
+  have hN : ContinuousAt (fun X : Matrix T dIn ℝ => rmsNorm 0 (X * θ.E)) X₀ :=
+    ContinuousAt.comp (f := fun X : Matrix T dIn ℝ => X * θ.E) (x := X₀)
+      (continuousAt_rmsNorm_zero hX₀) (lipschitzWith_mul_right θ.E).continuous.continuousAt
+  refine tendsto_finsetSum (f := fun ℓ X => A.f ℓ (rmsNorm 0 (X * θ.E) * θ.read ℓ) * θ.write ℓ)
+    _ fun ℓ _ => ?_
+  exact (lipschitzWith_mul_right (θ.write ℓ)).continuous.continuousAt.comp
+    ((hf ℓ).continuousAt.comp ((lipschitzWith_mul_right (θ.read ℓ)).continuous.continuousAt.comp hN))
+
 /-- **Theorem 4.3 for `ε = 0`, under the conditions of the proof.** A pre-RMSNorm residual network
 with `ε = 0` and locally Lipschitz blocks whose weights satisfy `TurnGeneric` equals no
 pre-RMSNorm skipless network with `ε = 0` and continuous blocks, in the paper's sense of equality
@@ -511,6 +686,59 @@ theorem not_dense_eq_skipless_rmsNorm_zero_of_turn
     (θ' : Params A' dIn dOut) :
     ¬ ∃ S : Set (Matrix T dIn ℝ), Dense S ∧
       ∀ X ∈ S, DefinedAt A 1 θ X ∧ DefinedAt A' 0 θ' X ∧ eval A 1 θ X = eval A' 0 θ' X := by
-  sorry
+  rintro ⟨S, hS, hSX⟩
+  have hfc : ∀ ℓ, Continuous (A.f ℓ) := fun ℓ => (hf ℓ).continuous
+  -- (a) both outputs are continuous where defined, so they agree wherever both are defined
+  have hagree : ∀ X, DefinedAt A 1 θ X → DefinedAt A' 0 θ' X → eval A 1 θ X = eval A' 0 θ' X :=
+    fun X h1 h2 => eq_of_continuousAt_of_dense hS (fun Y hY => (hSX Y hY).2.2)
+      (continuousAt_eval_of_definedAt A hχ hfc 1 θ h1)
+      (continuousAt_eval_of_definedAt A' hχ' hf' 0 θ' h2)
+  obtain ⟨n, hn, r₀, hturn⟩ := hθ.turn
+  -- `d` is not empty, the rows of `n` do not vanish, `N_0(n) = n`, and `X₀ = n B` has `X₀ E = n`
+  have hd : (0 : ℝ) < Fintype.card d := by
+    rcases (Fintype.card d).eq_zero_or_pos with h0 | h0
+    · have : IsEmpty d := Fintype.card_eq_zero_iff.1 h0
+      exact absurd (funext fun j => isEmptyElim j) (hturn 0)
+    · exact Nat.cast_pos.2 h0
+  have hnr : ∀ r, n r ≠ 0 := fun r h0 => by
+    have h1 := hn r
+    rw [h0, zero_dotProduct] at h1
+    exact hd.ne h1
+  have hnn : rmsNorm 0 n = n := rmsNorm_zero_eq_self hd hn
+  obtain ⟨B, hB⟩ := exists_left_inverse_of_rank' θ.E hθ.rank_E
+  have hX₀ : n * B * θ.E = n := by rw [Matrix.mul_assoc, hB, Matrix.mul_one]
+  -- (d) the defect `V(X) = (w·w) β - (β·w) w` with `w = (X E)_{r₀}`, `β = β(N_0(X E))_{r₀}`
+  obtain ⟨V, hV⟩ : ∃ V : Matrix T dIn ℝ → d → ℝ, ∀ X, V X =
+      ((X * θ.E) r₀ ⬝ᵥ (X * θ.E) r₀) •
+        (∑ ℓ, A.f ℓ (rmsNorm 0 (X * θ.E) * θ.read ℓ) * θ.write ℓ) r₀ -
+      ((∑ ℓ, A.f ℓ (rmsNorm 0 (X * θ.E) * θ.read ℓ) * θ.write ℓ) r₀ ⬝ᵥ (X * θ.E) r₀) •
+        (X * θ.E) r₀ := ⟨_, fun X => rfl⟩
+  -- `V` is continuous at `X₀`, and `V(X₀) ≠ 0` by `turn`
+  have hVc : ContinuousAt V (n * B) := by
+    rw [show V = _ from funext hV]
+    have hβ : ContinuousAt (fun X : Matrix T dIn ℝ =>
+        (∑ ℓ, A.f ℓ (rmsNorm 0 (X * θ.E) * θ.read ℓ) * θ.write ℓ) r₀) (n * B) :=
+      (continuous_apply r₀).continuousAt.comp
+        (continuousAt_betaSum A hfc θ (X₀ := n * B) (by rw [hX₀]; exact hnr))
+    have hw : ContinuousAt (fun X : Matrix T dIn ℝ => (X * θ.E) r₀) (n * B) :=
+      ((continuous_apply r₀).comp (lipschitzWith_mul_right θ.E).continuous).continuousAt
+    exact ((continuousAt_dotProduct' hw hw).smul hβ).sub
+      ((continuousAt_dotProduct' hβ hw).smul hw)
+  have hV0 : V (n * B) ≠ 0 := by
+    intro h0
+    rw [hV, hX₀, hnn, hn r₀, sub_eq_zero] at h0
+    apply hturn (((∑ ℓ, A.f ℓ (n * θ.read ℓ) * θ.write ℓ) r₀ ⬝ᵥ n r₀) / Fintype.card d)
+    rw [div_eq_inv_mul, ← smul_smul, ← h0, smul_smul, inv_mul_cancel₀ hd.ne', one_smul]
+  -- near `X₀`, `V ≠ 0` and no row of `X E` vanishes; the dense set `S` meets this neighbourhood
+  have hrows : ∀ᶠ X in 𝓝 (n * B), ∀ r, (X * θ.E) r ≠ 0 :=
+    eventually_all.2 fun r =>
+      (((continuous_apply r).comp (lipschitzWith_mul_right θ.E).continuous).continuousAt).eventually_ne
+        (by show (n * B * θ.E) r ≠ 0; rw [hX₀]; exact hnr r)
+  obtain ⟨X, hXS, hXV, hXr⟩ := hS.inter_nhds_nonempty ((hVc.eventually_ne hV0).and hrows)
+  -- (c) at such an `X`, row `r₀` of `β` is a multiple of `(X E)_{r₀}`, so `V(X) = 0`
+  obtain ⟨c, hc⟩ := exists_eq_smul_row_of_agree A hχ hfc θ hθ.rank_D A' hχ' θ' hagree
+    (hSX X hXS).2.1 hXr r₀
+  apply hXV
+  rw [hV, hc, smul_dotProduct, smul_eq_mul, smul_smul, mul_comm, sub_self]
 
 end Skips
