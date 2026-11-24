@@ -338,6 +338,118 @@ private theorem ite_mul_neg_rsn {l a w : ℝ} (hl : l ≠ 0) (ha : a < 0) :
   · simp only [mul_pos_of_neg_of_neg hneg ha, not_lt.2 hneg.le, ↓reduceIte]; ring
   · simp only [not_lt.2 (mul_neg_of_pos_of_neg hpos ha).le, hpos, ↓reduceIte, zero_mul]
 
+/-! ### Step 1: across the hyperplane of a unit -/
+
+/-- **Step 1 (K).** Let `J` be the units of `B_{θ′}` whose read and bias are `λ_j` times those of
+unit `i` (`λ_j ≠ 0`). Then `ŵ_i = ∑_{j ∈ J, λ_j > 0} λ_j² ŵ'_j − ∑_{j ∈ J, λ_j < 0} λ_j² ŵ'_j`:
+compare (C) on the two sides of the hyperplane of `i`, near a point of it on no other hyperplane. -/
+private theorem step1_rsn (Wr : Matrix p m ℝ) (b : m → ℝ) (Ww : Matrix m q ℝ)
+    (Wr' : Matrix p m' ℝ) (b' : m' → ℝ) (Ww' : Matrix m' q ℝ) (M : Matrix p q ℝ)
+    (hr : ∀ i, Wrᵀ i ≠ 0)
+    (hH : ∀ i k, i ≠ k → ∀ r : ℝ, ¬ (Wrᵀ i = r • Wrᵀ k ∧ b i = r * b k))
+    (hC : ∀ x : p → ℝ, (∀ i, x ⬝ᵥ Wrᵀ i + b i ≠ 0) →
+      (∀ j, x ⬝ᵥ Wr'ᵀ j + b' j = 0 → Wr'ᵀ j = 0) → ∀ o,
+      ((0 : Matrix p p ℝ), fun a => M a o)
+          + ∑ i, (if 0 < x ⬝ᵥ Wrᵀ i + b i then Ww i o else 0) • sqForm (Wrᵀ i) (b i)
+        = ∑ j, (if 0 < x ⬝ᵥ Wr'ᵀ j + b' j then Ww' j o else 0) • sqForm (Wr'ᵀ j) (b' j))
+    (i : m) (J : Finset m') (lam : m' → ℝ)
+    (hJ : ∀ j, j ∉ J → ∀ r : ℝ, r ≠ 0 → ¬ (Wr'ᵀ j = r • Wrᵀ i ∧ b' j = r * b i))
+    (hlam : ∀ j ∈ J, lam j ≠ 0 ∧ Wr'ᵀ j = lam j • Wrᵀ i ∧ b' j = lam j * b i) (o : q) :
+    Ww i o = ∑ j ∈ J, (if 0 < lam j then lam j ^ 2 * Ww' j o else 0)
+      - ∑ j ∈ J, (if 0 < lam j then 0 else lam j ^ 2 * Ww' j o) := by
+  classical
+  -- the other units of `B_θ` and the units of `B_{θ′}` off the class are not multiples of `i`
+  have hfam : ∀ k : m ⊕ m', Sum.elim (fun k => k ≠ i) (fun j => Wr'ᵀ j ≠ 0 ∧ j ∉ J) k →
+      ∀ r : ℝ, ¬ (Sum.elim (fun k => Wrᵀ k) (fun j => Wr'ᵀ j) k = r • Wrᵀ i ∧
+        Sum.elim b b' k = r * b i) := by
+    rintro (k | j) hk r ⟨h1, h2⟩
+    · simp only [Sum.elim_inl] at hk h1 h2
+      rcases eq_or_ne r 0 with rfl | hr0
+      · exact hr k (by rw [h1, zero_smul])
+      · refine hH i k (Ne.symm hk) r⁻¹ ⟨?_, ?_⟩
+        · rw [h1, smul_smul, inv_mul_cancel₀ hr0, one_smul]
+        · rw [h2, ← mul_assoc, inv_mul_cancel₀ hr0, one_mul]
+    · simp only [Sum.elim_inr] at hk h1 h2
+      rcases eq_or_ne r 0 with rfl | hr0
+      · exact hk.1 (by rw [h1, zero_smul])
+      · exact hJ j hk.2 r hr0 ⟨h1, h2⟩
+  -- two points `x₁`, `x₂` on the two sides of `H_i`, where all these units keep their signs
+  obtain ⟨x₁, x₂, h1i, h2i, hs⟩ := exists_two_sides_rsn (Wrᵀ i) (b i) (hr i) _ _ _ hfam
+  have hm : ∀ k, k ≠ i → x₁ ⬝ᵥ Wrᵀ k + b k ≠ 0 ∧ x₂ ⬝ᵥ Wrᵀ k + b k ≠ 0 ∧
+      (0 < x₁ ⬝ᵥ Wrᵀ k + b k ↔ 0 < x₂ ⬝ᵥ Wrᵀ k + b k) := fun k hk => hs (Sum.inl k) hk
+  have hm' : ∀ j, Wr'ᵀ j ≠ 0 → j ∉ J → x₁ ⬝ᵥ Wr'ᵀ j + b' j ≠ 0 ∧ x₂ ⬝ᵥ Wr'ᵀ j + b' j ≠ 0 ∧
+      (0 < x₁ ⬝ᵥ Wr'ᵀ j + b' j ↔ 0 < x₂ ⬝ᵥ Wr'ᵀ j + b' j) :=
+    fun j h1 h2 => hs (Sum.inr j) ⟨h1, h2⟩
+  -- on a unit of the class the argument is `λ_j` times that of `i`
+  have harg : ∀ j ∈ J, ∀ x : p → ℝ, x ⬝ᵥ Wr'ᵀ j + b' j = lam j * (x ⬝ᵥ Wrᵀ i + b i) := by
+    intro j hj x
+    rw [(hlam j hj).2.1, (hlam j hj).2.2, dotProduct_smul, smul_eq_mul]; ring
+  -- `x₁` and `x₂` lie on no hyperplane
+  have hadm : ∀ x : p → ℝ, x ⬝ᵥ Wrᵀ i + b i ≠ 0 → (∀ k, k ≠ i → x ⬝ᵥ Wrᵀ k + b k ≠ 0) →
+      (∀ j, Wr'ᵀ j ≠ 0 → j ∉ J → x ⬝ᵥ Wr'ᵀ j + b' j ≠ 0) →
+      (∀ k, x ⬝ᵥ Wrᵀ k + b k ≠ 0) ∧ (∀ j, x ⬝ᵥ Wr'ᵀ j + b' j = 0 → Wr'ᵀ j = 0) := by
+    intro x hxi hxk hxj
+    refine ⟨fun k => ?_, fun j h0 => ?_⟩
+    · by_cases hk : k = i
+      · rw [hk]; exact hxi
+      · exact hxk k hk
+    · by_contra hne
+      by_cases hj : j ∈ J
+      · rw [harg j hj x] at h0
+        exact mul_ne_zero (hlam j hj).1 hxi h0
+      · exact hxj j hne hj h0
+  obtain ⟨ha1, ha1'⟩ := hadm x₁ h1i.ne' (fun k hk => (hm k hk).1) (fun j h1 h2 => (hm' j h1 h2).1)
+  obtain ⟨ha2, ha2'⟩ := hadm x₂ h2i.ne (fun k hk => (hm k hk).2.1)
+    (fun j h1 h2 => (hm' j h1 h2).2.1)
+  have e1 := hC x₁ ha1 ha1' o
+  have e2 := hC x₂ ha2 ha2' o
+  -- on the side of `B_θ`, only unit `i` changes
+  have hL : ∑ k, (if 0 < x₁ ⬝ᵥ Wrᵀ k + b k then Ww k o else 0) • sqForm (Wrᵀ k) (b k)
+      - ∑ k, (if 0 < x₂ ⬝ᵥ Wrᵀ k + b k then Ww k o else 0) • sqForm (Wrᵀ k) (b k)
+      = Ww i o • sqForm (Wrᵀ i) (b i) := by
+    rw [← Finset.sum_sub_distrib, Finset.sum_eq_single i]
+    · simp only [h1i, not_lt.2 h2i.le, ↓reduceIte, zero_smul, sub_zero]
+    · intro k _ hk
+      simp only [(hm k hk).2.2, sub_self]
+    · intro h; exact absurd (Finset.mem_univ i) h
+  -- on the side of `B_{θ′}`, only the units of the class change
+  have hR : ∑ j, (if 0 < x₁ ⬝ᵥ Wr'ᵀ j + b' j then Ww' j o else 0) • sqForm (Wr'ᵀ j) (b' j)
+      - ∑ j, (if 0 < x₂ ⬝ᵥ Wr'ᵀ j + b' j then Ww' j o else 0) • sqForm (Wr'ᵀ j) (b' j)
+      = (∑ j ∈ J, (if 0 < lam j then lam j ^ 2 * Ww' j o else 0)
+          - ∑ j ∈ J, (if 0 < lam j then 0 else lam j ^ 2 * Ww' j o)) • sqForm (Wrᵀ i) (b i) := by
+    rw [← Finset.sum_sub_distrib, ← Finset.sum_sub_distrib, Finset.sum_smul,
+      ← Finset.sum_subset (Finset.subset_univ J)]
+    · refine Finset.sum_congr rfl fun j hj => ?_
+      obtain ⟨hl0, hw', hb'⟩ := hlam j hj
+      rw [harg j hj x₁, harg j hj x₂, hw', hb', sqForm_smul_rsn, smul_smul, smul_smul,
+        ← sub_smul, ite_mul_pos_rsn hl0 h1i, ite_mul_neg_rsn hl0 h2i]
+    · intro j _ hj
+      by_cases hw0 : Wr'ᵀ j = 0
+      · rw [hw0, sqForm_zero_rsn, smul_zero, smul_zero, sub_self]
+      · simp only [(hm' j hw0 hj).2.2, sub_self]
+  have key : Ww i o • sqForm (Wrᵀ i) (b i)
+      = (∑ j ∈ J, (if 0 < lam j then lam j ^ 2 * Ww' j o else 0)
+          - ∑ j ∈ J, (if 0 < lam j then 0 else lam j ^ 2 * Ww' j o)) • sqForm (Wrᵀ i) (b i) := by
+    rw [← hL, ← hR, ← e1, ← e2, add_sub_add_left_eq_sub]
+  exact smul_left_injective ℝ (sqForm_ne_zero_rsn (hr i) (b i)) key
+
+/-! ### Dimensions -/
+
+/-- A linearly independent family in a subspace has at most its dimension many vectors. -/
+private theorem card_le_finrank_of_mem_rsn {ι V : Type*} [Fintype ι] [AddCommGroup V]
+    [Module ℝ V] [FiniteDimensional ℝ V] {v : ι → V} (hv : LinearIndependent ℝ v)
+    (W : Submodule ℝ V) (hW : ∀ k, v k ∈ W) : Fintype.card ι ≤ Module.finrank ℝ W :=
+  (LinearIndependent.of_comp W.subtype (v := fun k => (⟨v k, hW k⟩ : W))
+    hv).fintype_card_le_finrank
+
+/-- The span of the images of `|s|` points has dimension at most `|s|`. -/
+private theorem finrank_span_image_le_rsn {ι V : Type*} [AddCommGroup V] [Module ℝ V]
+    (s : Finset ι) (f : ι → V) :
+    Module.finrank ℝ (Submodule.span ℝ (f '' (s : Set ι))) ≤ s.card := by
+  classical
+  rw [← Finset.coe_image]
+  exact (finrank_span_finset_le_card _).trans Finset.card_image_le
+
 /-- **Proof of Theorem C.2 (iii) of the absorb paper, "Squares", "Costs" and "Dimensions":** let
 the units of `B_θ` have nonzero reads and writes and lie on distinct hyperplanes, and let the
 polynomials of the cells of the two blocks satisfy `y M + B_θ = B_{θ′}` at every `x₀` off the
@@ -380,7 +492,35 @@ theorem card_add_two_mul_card_le_of_reluSqCell [Fintype q] (Wr : Matrix p m ℝ)
       (∀ j, (x₀ ᵥ* Wr') j + b' j = 0 → Wr'ᵀ j = 0) →
       ∀ y : p → ℝ, y ᵥ* M + reluSqCell Wr b Ww c x₀ y = reluSqCell Wr' b' Ww' c' x₀ y) :
     Fintype.card m + 2 * Fintype.card q ≤ Fintype.card m' := by
-  sorry
+  classical
+  obtain ⟨S, U, F₁, F₂, hSU, -, hcount, hspan⟩ :=
+    exists_sqTarget_mem_span_of_reluSqCell Wr b Ww c Wr' b' Ww' c' M hr hw hH hcell
+  by_cases hU : 2 * Fintype.card q ≤ U.card
+  · omega
+  push Not at hU
+  have hli := hG S U hSU hU
+  -- `d + |U|` independent vectors in a span of `|U| + |F|` vectors: `d ≤ |F|`
+  have hdim : ∀ F : Finset m', (∀ o, sqTarget M Wr b Ww S o ∈
+      Submodule.span ℝ ((fun i => sqForm (Wrᵀ i) (b i)) '' (U : Set m)) ⊔
+        Submodule.span ℝ ((fun j => sqForm (Wr'ᵀ j) (b' j)) '' (F : Set m'))) →
+      Fintype.card q ≤ F.card := by
+    intro F hF
+    have hmem : ∀ k, Sum.elim (fun o : q => sqTarget M Wr b Ww S o)
+        (fun i : U => sqForm (Wrᵀ (i : m)) (b i)) k ∈
+          Submodule.span ℝ ((fun i => sqForm (Wrᵀ i) (b i)) '' (U : Set m)) ⊔
+            Submodule.span ℝ ((fun j => sqForm (Wr'ᵀ j) (b' j)) '' (F : Set m')) := by
+      rintro (o | i)
+      · exact hF o
+      · exact Submodule.mem_sup_left (Submodule.subset_span ⟨i, i.2, rfl⟩)
+    have h1 := card_le_finrank_of_mem_rsn hli _ hmem
+    have h2 := (Submodule.finrank_add_le_finrank_add_finrank _ _).trans
+      (add_le_add (finrank_span_image_le_rsn U fun i => sqForm (Wrᵀ i) (b i))
+        (finrank_span_image_le_rsn F fun j => sqForm (Wr'ᵀ j) (b' j)))
+    rw [Fintype.card_sum, Fintype.card_coe] at h1
+    omega
+  have h1 := hdim F₁ fun o => (hspan o).1
+  have h2 := hdim F₂ fun o => (hspan o).2
+  omega
 
 /-- **Proof of Theorem C.2 (iii) of the absorb paper, last sentence, for the same width:** under
 the hypotheses of the three steps, if for every set `S` of units of `B_θ` some `τ_o` is nonzero,
@@ -395,6 +535,18 @@ theorem card_lt_card_of_reluSqCell (Wr : Matrix p m ℝ) (b : m → ℝ)
       (∀ j, (x₀ ᵥ* Wr') j + b' j = 0 → Wr'ᵀ j = 0) →
       ∀ y : p → ℝ, y ᵥ* M + reluSqCell Wr b Ww c x₀ y = reluSqCell Wr' b' Ww' c' x₀ y) :
     Fintype.card m < Fintype.card m' := by
-  sorry
+  classical
+  by_contra hle
+  push Not at hle
+  obtain ⟨S, U, F₁, F₂, -, -, hcount, hspan⟩ :=
+    exists_sqTarget_mem_span_of_reluSqCell Wr b Ww c Wr' b' Ww' c' M hr hw hH hcell
+  -- the count leaves no room: `U = F₁ = ∅`, so every `τ_o` is `0`
+  have hU : U = ∅ := Finset.card_eq_zero.1 (by omega)
+  have hF : F₁ = ∅ := Finset.card_eq_zero.1 (by omega)
+  obtain ⟨o, ho⟩ := hG S
+  have h := (hspan o).1
+  rw [hU, hF, Finset.coe_empty, Finset.coe_empty, Set.image_empty, Set.image_empty,
+    Submodule.span_empty, sup_bot_eq, Submodule.mem_bot] at h
+  exact ho h
 
 end Skips
