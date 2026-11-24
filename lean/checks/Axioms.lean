@@ -962,3 +962,10 @@ import SkipsLean
 #print axioms Skips.hasDerivAt_eval_cobAt_exp_of_rowHomogeneous
 #print axioms Skips.hasDerivAt_eval_scale_last_exp
 #print axioms Skips.eventually_finrank_le_of_small_parameter_of_contDiffOn
+#print axioms Skips.ae_oneBlockGenericReGLURMS
+#print axioms Skips.flatOn_noKinkGateRMS_le_reglu_residual_rmsNorm
+#print axioms Skips.funDim_reglu_oneBlock_residual_rmsNorm
+#print axioms Skips.exists_jacobianRank_reglu_oneBlock_residual_rmsNorm
+#print axioms Skips.ae_funDim_reglu_oneBlock_residual_rmsNorm
+#print axioms Skips.ae_exists_jacobianRank_reglu_oneBlock_residual_rmsNorm
+#print axioms Skips.ae_funDim_skipless_add_le_reglu_oneBlock_residual_rmsNorm
