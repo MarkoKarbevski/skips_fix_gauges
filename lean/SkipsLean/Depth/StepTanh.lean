@@ -37,21 +37,22 @@ open scoped Matrix.Norms.Elementwise Topology
 variable {T d dIn dOut : Type*} {L : ℕ} [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn]
   [Fintype dOut]
 variable {hid : Fin L → Type} [∀ ℓ, Fintype (hid ℓ)]
-variable {σ σ' : ℝ → ℝ}
+variable {σ σ' : ℝ → ℝ} {χ : Matrix T d ℝ → Matrix T d ℝ}
 
 /-- **The left side of the identity for one block,** equation (21) of the paper:
 `𝓛 = 𝐃𝓑(w̃ V) ((w̃' ⊙ ż) V + w̃ η_V) + 𝐃_θ 𝓑(w̃ V) η`, for block `k` with the write `V` and the
-network `𝓑` after it. Here `w` stands for the outputs `w̃` of the hidden units, `w'` for their
+network `𝓑` after it (for any map `χ` before the reads of the later blocks). Here `w` stands for
+the outputs `w̃` of the hidden units, `w'` for their
 derivatives `w̃'`, and `zdot` for `ż`, the derivative of what the hidden units read. (The network
 after the block does not depend on the weights of the block, so `𝐃_θ 𝓑 η` is the paper's
 `𝐃_θ 𝓑 η'`.) -/
-noncomputable def blockLHS (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)
-    (k : Fin L) (η : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)
+noncomputable def blockLHS (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut)
+    (k : Fin L) (η : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut)
     (w w' zdot : Matrix T (hid k) ℝ) : Matrix T dOut ℝ :=
-  fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.mlp σ id hid) 0 θ k.succ h') (w * θ.write k)
+  fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.mlp σ χ hid) 0 θ k.succ h') (w * θ.write k)
       ((Matrix.of fun t j => w' t j * zdot t j) * θ.write k + w * η.write k)
-    + fderiv ℝ (fun θ' : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut =>
-        suffix (Arch.mlp σ id hid) 0 θ' k.succ (w * θ.write k)) θ η
+    + fderiv ℝ (fun θ' : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut =>
+        suffix (Arch.mlp σ χ hid) 0 θ' k.succ (w * θ.write k)) θ η
 
 omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: the product rule for matrix-valued functions of one real variable. -/
