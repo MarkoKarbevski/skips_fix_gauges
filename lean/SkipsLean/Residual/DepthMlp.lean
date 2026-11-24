@@ -208,6 +208,30 @@ theorem smallWritesLimit_eq_zero_mlp (hσ : ∀ z, HasDerivAt σ (σ' z) z)
     exact eq_neg_of_add_eq_zero_right hM
   exact ⟨-(η.D * R), hE, cancel_left_of_rank_dm θ.E hθ.rank_E hD, hr, hw⟩
 
+/-- Helper: the directions `X ↦ (E X, 0, 0, -X D)` of one change of basis at all hidden states
+(reads and writes fixed), as a linear map from `Matrix d d ℝ`. -/
+private def smallWritesFlatLin (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
+    Matrix d d ℝ →ₗ[ℝ] Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut where
+  toFun X := ⟨θ.E * X, 0, 0, -(X * θ.D)⟩
+  map_add' X Y := by
+    apply Params.ext'
+    · exact Matrix.mul_add _ _ _
+    · intro ℓ
+      exact (add_zero 0).symm
+    · intro ℓ
+      exact (add_zero 0).symm
+    · show -((X + Y) * θ.D) = -(X * θ.D) + -(Y * θ.D)
+      rw [Matrix.add_mul, neg_add]
+  map_smul' c X := by
+    apply Params.ext'
+    · exact Matrix.mul_smul _ _ _
+    · intro ℓ
+      exact (smul_zero c).symm
+    · intro ℓ
+      exact (smul_zero c).symm
+    · show -((c • X) * θ.D) = c • -(X * θ.D)
+      rw [Matrix.smul_mul, smul_neg]
+
 /-- **Lemma A.27 (Small writes), first value, for MLP blocks with `s = 0`, under the conditions of
 its proof:** for all small `τ ≠ 0` the residual network has `fd(θ_τ) = P - d²`. -/
 theorem eventually_funDim_smallWrites_mlp (hσ : ∀ z, HasDerivAt σ (σ' z) z)
@@ -216,7 +240,67 @@ theorem eventually_funDim_smallWrites_mlp (hσ : ∀ z, HasDerivAt σ (σ' z) z)
     ∀ᶠ τ in 𝓝[≠] (0 : ℝ),
       funDim (Arch.mlp σ id hid) 1 (θ.smallWrites τ) + Fintype.card d ^ 2
         = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  have hσd : Differentiable ℝ σ := fun z => (hσ z).differentiableAt
+  -- the flat directions of `J_0` lie in the range `V` of `X ↦ (E X, 0, 0, -X D)` (step 1)
+  have hV : ∀ η, (∀ x, smallWritesLimit (Arch.mlp σ id hid) θ η x = 0) →
+      η ∈ LinearMap.range (smallWritesFlatLin θ) := by
+    intro η hη
+    obtain ⟨X, hE, hD, hr, hw⟩ := smallWritesLimit_eq_zero_mlp hσ hU θ hθ η hη
+    refine ⟨X, ?_⟩
+    apply Params.ext'
+    · exact hE.symm
+    · intro ℓ
+      exact (hr ℓ).symm
+    · intro ℓ
+      exact (hw ℓ).symm
+    · exact hD.symm
+  -- `dim V ≤ d²`
+  have hdim : Module.finrank ℝ (LinearMap.range (smallWritesFlatLin θ)) ≤ Fintype.card d ^ 2 := by
+    have h := LinearMap.finrank_range_le (smallWritesFlatLin θ)
+    rwa [Module.finrank_matrix, Module.finrank_self, mul_one, ← sq] at h
+  -- `≥`: "The rank" of the proof of Lemma A.27; `≤`: the upper bound for residual networks, as
+  -- `E` is not changed by `θ ↦ θ_τ`
+  filter_upwards [eventually_funDim_smallWrites_ge (Arch.mlp σ id hid) θ rfl
+    (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) _ hV] with τ hτ
+  have hle := funDim_add_le_residual (θ.smallWrites τ) rfl
+    (fun ℓ => differentiable_f_mlp hσd ℓ) hθ.rank_E
+  omega
+
+omit [Fintype T] [Nonempty T] in
+/-- Helper (as the private `rank_eq_of_isUnit_det_submatrix` of `Generic/Params.lean`): a matrix
+with `d` columns has rank `d` if some `d` of its rows form an invertible matrix. -/
+private theorem rank_eq_of_isUnit_det_rows_dm {m : Type*} [Fintype m] (M : Matrix m d ℝ)
+    (ρ : d ↪ m) (h : IsUnit (M.submatrix ρ id).det) : M.rank = Fintype.card d :=
+  le_antisymm (Matrix.rank_le_card_width M)
+    ((Matrix.rank_of_isUnit _ ((Matrix.isUnit_iff_isUnit_det _).2 h)).symm.le.trans
+      (Matrix.rank_submatrix_le M ρ id))
+
+omit [Fintype T] [Nonempty T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: for two distinct hidden units `p ≠ q`, of one block or of two blocks, some parameters
+have a nonzero minor of the columns `c_p`, `c_q` of `E W_read` at the input coordinates `a₁`, `a₂`:
+`E` with the row `e_{k₁}` at `a₁` and `e_{k₂}` elsewhere, reads with the column `e_{k₁}` at the
+unit `p` and `e_{k₂}` elsewhere. -/
+private theorem exists_minor_ne_zero_dm {a₁ a₂ : dIn} {k₁ k₂ : d} (ha : a₁ ≠ a₂) (hk : k₁ ≠ k₂)
+    {p q : Σ ℓ, hid ℓ} (hpq : p ≠ q) :
+    ∃ θ₀ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut,
+      (θ₀.E * θ₀.read p.1) a₁ p.2 * (θ₀.E * θ₀.read q.1) a₂ q.2
+        - (θ₀.E * θ₀.read q.1) a₁ q.2 * (θ₀.E * θ₀.read p.1) a₂ p.2 ≠ 0 := by
+  classical
+  let E₀ : Matrix dIn d ℝ :=
+    Matrix.of fun a k => if k = (if a = a₁ then k₁ else k₂) then 1 else 0
+  let R₀ : ∀ ℓ, Matrix d (hid ℓ) ℝ := fun ℓ =>
+    Matrix.of fun k j => if k = (if (⟨ℓ, j⟩ : Σ ℓ, hid ℓ) = p then k₁ else k₂) then 1 else 0
+  -- the column of the unit `s` of `E₀ W₀` is the column `k₁` (for `s = p`) or `k₂` of `E₀`
+  have hcol : ∀ (s : Σ ℓ, hid ℓ) (a : dIn),
+      (E₀ * R₀ s.1) a s.2 = E₀ a (if s = p then k₁ else k₂) := by
+    intro s a
+    simp only [R₀, Matrix.mul_apply, Matrix.of_apply, Sigma.eta, mul_ite, mul_one, mul_zero,
+      Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte]
+  refine ⟨⟨E₀, R₀, 0, 0⟩, ?_⟩
+  show (E₀ * R₀ p.1) a₁ p.2 * (E₀ * R₀ q.1) a₂ q.2
+    - (E₀ * R₀ q.1) a₁ q.2 * (E₀ * R₀ p.1) a₂ p.2 ≠ 0
+  simp only [hcol]
+  simp [E₀, Ne.symm hpq, Ne.symm ha, hk, Ne.symm hk]
 
 /-- The conditions of Lemma A.27 hold at generic parameters, for `d_in, d_out ≥ d ≥ 2` and blocks
 of any widths. -/
@@ -225,7 +309,59 @@ theorem ae_smallWritesGeneric
     (hd : 2 ≤ Fintype.card d) (hdIn : Fintype.card d ≤ Fintype.card dIn)
     (hdOut : Fintype.card d ≤ Fintype.card dOut) :
     ∀ᵐ θ ∂μ, SmallWritesGeneric θ := by
-  sorry
+  classical
+  -- two distinct coordinates of `h`, two distinct input coordinates, one output coordinate
+  obtain ⟨k₁, k₂, hk⟩ := Fintype.exists_pair_of_one_lt_card (show 1 < Fintype.card d by omega)
+  obtain ⟨a₁, a₂, ha⟩ := Fintype.exists_pair_of_one_lt_card (show 1 < Fintype.card dIn by omega)
+  obtain ⟨o₀⟩ : Nonempty dOut := Fintype.card_pos_iff.1 (by omega)
+  obtain ⟨cD⟩ := Function.Embedding.nonempty_of_card_le hdOut
+  obtain ⟨ρE⟩ := Function.Embedding.nonempty_of_card_le hdIn
+  -- the parameters with all entries `1`
+  let θ₁ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut :=
+    ⟨Matrix.of fun _ _ => 1, fun _ => Matrix.of fun _ _ => 1, fun _ => Matrix.of fun _ _ => 1,
+      Matrix.of fun _ _ => 1⟩
+  -- the ranks of `E` and `D`: invertible minors (`Generic/Params.lean`)
+  have h2 := ae_isUnit_det_submatrix μ
+  -- the rows of `W_write^ℓ D` are nonzero: their entries at `o₀` are
+  have h3 : ∀ᵐ θ ∂μ, ∀ ℓ (i : hid ℓ), (θ.write ℓ * θ.D) i o₀ ≠ 0 := by
+    refine ae_all_iff.2 fun ℓ => ae_all_iff.2 fun i => ?_
+    exact ae_ne_zero_of_analytic μ (analyticOnNhd_write_mul_D (A := Arch.mlp σ id hid)
+      (dIn := dIn) ℓ i o₀) ⟨θ₁, sum_one_mul_one_ne_zero hd⟩
+  -- the columns of `E W_read^ℓ` are nonzero: their entries at `a₁` are
+  have h4 : ∀ᵐ θ ∂μ, ∀ ℓ (i : hid ℓ), (θ.E * θ.read ℓ) a₁ i ≠ 0 := by
+    refine ae_all_iff.2 fun ℓ => ae_all_iff.2 fun i => ?_
+    exact ae_ne_zero_of_analytic μ (analyticOnNhd_E_mul_read (A := Arch.mlp σ id hid)
+      (dOut := dOut) ℓ a₁ i) ⟨θ₁, sum_one_mul_one_ne_zero hd⟩
+  -- two columns of distinct units, of one block or of two blocks, are not collinear: a `2 × 2`
+  -- minor does not vanish
+  have h5 : ∀ᵐ θ ∂μ, ∀ p q : (Σ ℓ, hid ℓ), p ≠ q →
+      (θ.E * θ.read p.1) a₁ p.2 * (θ.E * θ.read q.1) a₂ q.2
+        - (θ.E * θ.read q.1) a₁ q.2 * (θ.E * θ.read p.1) a₂ p.2 ≠ 0 := by
+    refine ae_all_iff.2 fun p => ae_all_iff.2 fun q => ?_
+    by_cases hpq : p = q
+    · exact Filter.Eventually.of_forall fun _ h => absurd hpq h
+    · obtain ⟨θ₀, h₀⟩ := exists_minor_ne_zero_dm (T := T) (σ := σ) (dOut := dOut) ha hk hpq
+      have hC : ∀ (s : Σ ℓ, hid ℓ) (a : dIn), AnalyticOnNhd ℝ
+          (fun θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut =>
+            (θ.E * θ.read s.1) a s.2) Set.univ :=
+        fun s a => analyticOnNhd_E_mul_read (A := Arch.mlp σ id hid) (dOut := dOut) s.1 a s.2
+      have hg : AnalyticOnNhd ℝ
+          (fun θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut =>
+            (θ.E * θ.read p.1) a₁ p.2 * (θ.E * θ.read q.1) a₂ q.2
+              - (θ.E * θ.read q.1) a₁ q.2 * (θ.E * θ.read p.1) a₂ p.2) Set.univ :=
+        ((hC p a₁).mul (hC q a₂)).sub ((hC q a₁).mul (hC p a₂))
+      exact (ae_ne_zero_of_analytic μ hg ⟨θ₀, h₀⟩).mono fun _ h _ => h
+  filter_upwards [h2, h3, h4, h5] with θ h2 h3 h4 h5
+  refine ⟨rank_eq_of_isUnit_det_rows_dm θ.E ρE (h2.2.2.1 ρE),
+    rank_eq_card_of_isUnit_det θ.D cD (h2.2.1 cD),
+    fun ℓ i hi => h3 ℓ i (congrFun hi o₀), fun ℓ i hi => h4 ℓ i (congrFun hi a₁), ?_⟩
+  -- if `c_p = r c_q`, the minor of the columns `p`, `q` vanishes
+  intro p q hpq r hr
+  have e1 : (θ.E * θ.read p.1) a₁ p.2 = r * (θ.E * θ.read q.1) a₁ q.2 := congrFun hr a₁
+  have e2 : (θ.E * θ.read p.1) a₂ p.2 = r * (θ.E * θ.read q.1) a₂ q.2 := congrFun hr a₂
+  apply h5 p q hpq
+  rw [e1, e2]
+  ring
 
 /-- **Lemma A.27 (Small writes), first value, for MLP blocks with `s = 0`:** with
 `d_in, d_out ≥ d ≥ 2` and blocks of any widths, for generic parameters `θ` and all small `τ ≠ 0`,
@@ -238,7 +374,8 @@ theorem ae_eventually_funDim_smallWrites_mlp (hσ : ∀ z, HasDerivAt σ (σ' z)
     ∀ᵐ θ ∂μ, ∀ᶠ τ in 𝓝[≠] (0 : ℝ),
       funDim (Arch.mlp σ id hid) 1 (θ.smallWrites τ) + Fintype.card d ^ 2
         = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  filter_upwards [ae_smallWritesGeneric μ hd hdIn hdOut] with θ hθ
+  exact eventually_funDim_smallWrites_mlp hσ hσa hU θ hθ
 
 /-- **Theorem 4.7 of the skips paper for MLP blocks with `s = 0`, without normalization:** with
 `d_in, d_out ≥ d ≥ 2` and `L` blocks of any widths, at generic parameters the residual network has
@@ -250,7 +387,17 @@ theorem ae_funDim_mlp_residual (hσ : ∀ z, HasDerivAt σ (σ' z) z)
     (hdOut : Fintype.card d ≤ Fintype.card dOut) :
     ∀ᵐ θ ∂μ, funDim (Arch.mlp σ id hid) 1 θ + Fintype.card d ^ 2
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  have hσd : Differentiable ℝ σ := fun z => (hσ z).differentiableAt
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.mlp (T := T) (d := d) σ id hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_mlp hσa ℓ
+  -- one parameter `θ₀` with the conditions of Lemma A.27, and one small `τ ≠ 0`:
+  -- `fd(θ₀_τ) = P - d²`
+  obtain ⟨θ₀, hθ₀⟩ := (ae_smallWritesGeneric μ hd hdIn hdOut).exists
+  obtain ⟨τ, hτ⟩ := (eventually_funDim_smallWrites_mlp hσ hσa hU θ₀ hθ₀).exists
+  -- at almost every `θ`, `fd(θ) ≥ fd(θ₀_τ)` (analytic outputs) and `fd(θ) ≤ P - d²`
+  filter_upwards [ae_funDim_ge (Arch.mlp σ id hid) 1 hf analyticOnNhd_id μ (θ₀.smallWrites τ),
+    ae_funDim_add_le_residual μ rfl (fun ℓ => differentiable_f_mlp hσd ℓ) hdIn] with θ h1 h2
+  omega
 
 /-! ### The two kinds of block -/
 
@@ -262,7 +409,8 @@ theorem ae_eventually_funDim_smallWrites_tanh
     ∀ᵐ θ ∂μ, ∀ᶠ τ in 𝓝[≠] (0 : ℝ),
       funDim (Arch.mlp Real.tanh id hid) 1 (θ.smallWrites τ) + Fintype.card d ^ 2
         = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut) := by
-  sorry
+  exact ae_eventually_funDim_smallWrites_mlp hasDerivAt_tanh analyticOnNhd_tanh
+    (tanh_unitsRigid _ _ _) μ hd hdIn hdOut
 
 /-- **Lemma A.27 (Small writes) for GELU blocks, without normalization and without biases.** -/
 theorem ae_eventually_funDim_smallWrites_gelu
@@ -272,7 +420,8 @@ theorem ae_eventually_funDim_smallWrites_gelu
     ∀ᵐ θ ∂μ, ∀ᶠ τ in 𝓝[≠] (0 : ℝ),
       funDim (Arch.mlp gelu id hid) 1 (θ.smallWrites τ) + Fintype.card d ^ 2
         = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) gelu id hid) dIn dOut) := by
-  sorry
+  exact ae_eventually_funDim_smallWrites_mlp hasDerivAt_gelu analyticOnNhd_gelu
+    (gelu_unitsRigid _ _ _) μ hd hdIn hdOut
 
 /-- **Theorem 4.7 of the skips paper for `tanh` blocks, without normalization:** at generic
 parameters the residual network of `L` blocks has the functional dimension `P - d²`. -/
@@ -282,7 +431,8 @@ theorem ae_funDim_tanh_residual
     (hdOut : Fintype.card d ≤ Fintype.card dOut) :
     ∀ᵐ θ ∂μ, funDim (Arch.mlp Real.tanh id hid) 1 θ + Fintype.card d ^ 2
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut) := by
-  sorry
+  exact ae_funDim_mlp_residual hasDerivAt_tanh analyticOnNhd_tanh (tanh_unitsRigid _ _ _) μ hd
+    hdIn hdOut
 
 /-- **Theorem 4.7 of the skips paper for GELU blocks, without normalization:** at generic
 parameters the residual network of `L` blocks has the functional dimension `P - d²`. -/
@@ -292,6 +442,7 @@ theorem ae_funDim_gelu_residual
     (hdOut : Fintype.card d ≤ Fintype.card dOut) :
     ∀ᵐ θ ∂μ, funDim (Arch.mlp gelu id hid) 1 θ + Fintype.card d ^ 2
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) gelu id hid) dIn dOut) := by
-  sorry
+  exact ae_funDim_mlp_residual hasDerivAt_gelu analyticOnNhd_gelu (gelu_unitsRigid _ _ _) μ hd
+    hdIn hdOut
 
 end Skips
