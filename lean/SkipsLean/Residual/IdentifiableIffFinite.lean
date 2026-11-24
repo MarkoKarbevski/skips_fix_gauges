@@ -61,7 +61,20 @@ theorem ae_funDim_mlp_residual_iff_ae_locally_cob_perm
         ∃ p : ∀ ℓ, Equiv.Perm (hid ℓ), ∃ G : GL d ℝ,
             θ' = (θ.permUnits p).cob
               (fun _ => G) (fun _ => G)) := by
-  sorry
+  have hfam := ae_funDim_mlp_residual_iff_ae_locally_cob_family hσ μ hdIn
+    (fun (p : (∀ ℓ, Equiv.Perm (hid ℓ))) θ => θ.permUnits p) (fun _ => 1)
+    permUnits_one
+  refine hfam.trans ⟨fun h => ?_, fun h => ?_⟩
+  · -- a symmetry `j` of the family is a finite symmetry: unpack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨p, G, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨p, G, hθ''⟩
+  · -- a finite symmetry is a symmetry `j` of the family: pack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨p, G, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨p, G, hθ''⟩
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of MLP blocks with a real-analytic
 activation (tanh, GELU), without normalization, with the permutations and the sign flips of the
@@ -84,7 +97,23 @@ theorem ae_funDim_mlp_residual_iff_ae_locally_cob_perm_flip
         ∃ (p : ∀ ℓ, Equiv.Perm (hid ℓ)) (s : ∀ ℓ, hid ℓ → ℤˣ), ∃ G : GL d ℝ,
             θ' = ((θ.permUnits p).flipUnits s).cob
               (fun _ => G) (fun _ => G)) := by
-  sorry
+  have hfam := ae_funDim_mlp_residual_iff_ae_locally_cob_family hσ μ hdIn
+    (fun (ps : (∀ ℓ, Equiv.Perm (hid ℓ)) × (∀ ℓ, hid ℓ → ℤˣ)) θ =>
+      (θ.permUnits ps.1).flipUnits ps.2) (fun _ => 1, fun _ _ => 1)
+    (fun θ => by
+      show (θ.permUnits fun _ => 1).flipUnits (fun _ _ => 1) = θ
+      rw [permUnits_one, flipUnits_one])
+  refine hfam.trans ⟨fun h => ?_, fun h => ?_⟩
+  · -- a symmetry `j` of the family is a finite symmetry: unpack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨⟨p, s⟩, G, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨p, s, G, hθ''⟩
+  · -- a finite symmetry is a symmetry `j` of the family: pack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨p, s, G, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨(p, s), G, hθ''⟩
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of MLP blocks with a real-analytic
 activation (tanh, GELU), under pre-RMSNorm with `ε > 0`, with the permutations of the hidden
@@ -107,7 +136,20 @@ theorem ae_funDim_mlp_residual_iff_ae_locally_cob_rmsNorm_perm
             ℝ ∧
             θ' = (θ.permUnits p).cob
               (fun _ => Q) (fun _ => Q)) := by
-  sorry
+  have hfam := ae_funDim_mlp_residual_iff_ae_locally_cob_rmsNorm_family hε hσ μ hdIn
+    (fun (p : (∀ ℓ, Equiv.Perm (hid ℓ))) θ => θ.permUnits p) (fun _ => 1)
+    permUnits_one
+  refine hfam.trans ⟨fun h => ?_, fun h => ?_⟩
+  · -- a symmetry `j` of the family is a finite symmetry: unpack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨p, Q, hQ, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨p, Q, hQ, hθ''⟩
+  · -- a finite symmetry is a symmetry `j` of the family: pack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨p, Q, hQ, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨p, Q, hQ, hθ''⟩
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of MLP blocks with a real-analytic
 activation (tanh, GELU), under pre-RMSNorm with `ε > 0`, with the permutations and the sign flips of
@@ -131,7 +173,23 @@ theorem ae_funDim_mlp_residual_iff_ae_locally_cob_rmsNorm_perm_flip
             Matrix.orthogonalGroup d ℝ ∧
             θ' = ((θ.permUnits p).flipUnits s).cob
               (fun _ => Q) (fun _ => Q)) := by
-  sorry
+  have hfam := ae_funDim_mlp_residual_iff_ae_locally_cob_rmsNorm_family hε hσ μ hdIn
+    (fun (ps : (∀ ℓ, Equiv.Perm (hid ℓ)) × (∀ ℓ, hid ℓ → ℤˣ)) θ =>
+      (θ.permUnits ps.1).flipUnits ps.2) (fun _ => 1, fun _ _ => 1)
+    (fun θ => by
+      show (θ.permUnits fun _ => 1).flipUnits (fun _ _ => 1) = θ
+      rw [permUnits_one, flipUnits_one])
+  refine hfam.trans ⟨fun h => ?_, fun h => ?_⟩
+  · -- a symmetry `j` of the family is a finite symmetry: unpack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨⟨p, s⟩, Q, hQ, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨p, s, Q, hQ, hθ''⟩
+  · -- a finite symmetry is a symmetry `j` of the family: pack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨p, s, Q, hQ, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨(p, s), Q, hQ, hθ''⟩
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of gated blocks with a real-analytic
 gate (SwiGLU, GeGLU), without normalization, with the permutations of the hidden units:** `fd = P −
@@ -156,7 +214,20 @@ theorem ae_funDim_gated_residual_iff_ae_locally_cob_rescale_perm
           ∃ G : GL d ℝ,
             θ' = ((θ.permUnitsGated p).rescale c).cob
               (fun _ => G) (fun _ => G)) := by
-  sorry
+  have hfam := ae_funDim_gated_residual_iff_ae_locally_cob_rescale_family hσ μ hdIn
+    (fun (p : (∀ ℓ, Equiv.Perm (hid ℓ))) θ => θ.permUnitsGated p) (fun _ => 1)
+    permUnitsGated_one
+  refine hfam.trans ⟨fun h => ?_, fun h => ?_⟩
+  · -- a symmetry `j` of the family is a finite symmetry: unpack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨p, c, hc, G, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨p, c, hc, G, hθ''⟩
+  · -- a finite symmetry is a symmetry `j` of the family: pack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨p, c, hc, G, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨p, c, hc, G, hθ''⟩
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of gated blocks with a real-analytic
 gate (SwiGLU, GeGLU), under pre-RMSNorm with `ε > 0`, with the permutations of the hidden units:**
@@ -181,7 +252,20 @@ theorem ae_funDim_gated_residual_iff_ae_locally_cob_rescale_rmsNorm_perm
           ∃ Q : GL d ℝ, (Q : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ ∧
             θ' = ((θ.permUnitsGated p).rescale c).cob
               (fun _ => Q) (fun _ => Q)) := by
-  sorry
+  have hfam := ae_funDim_gated_residual_iff_ae_locally_cob_rescale_rmsNorm_family hε hσ μ hdIn
+    (fun (p : (∀ ℓ, Equiv.Perm (hid ℓ))) θ => θ.permUnitsGated p) (fun _ => 1)
+    permUnitsGated_one
+  refine hfam.trans ⟨fun h => ?_, fun h => ?_⟩
+  · -- a symmetry `j` of the family is a finite symmetry: unpack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨p, c, hc, Q, hQ, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨p, c, hc, Q, hQ, hθ''⟩
+  · -- a finite symmetry is a symmetry `j` of the family: pack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨p, c, hc, Q, hQ, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨p, c, hc, Q, hQ, hθ''⟩
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks, without
 normalization, with the permutations of the heads:** `fd = P − d² − s` at almost every parameter (`s
@@ -205,7 +289,20 @@ theorem ae_funDim_attention_residual_iff_ae_locally_cob_heads_perm
           ∃ G : GL d ℝ,
             θ' = (((θ.permHeads q).headsQK K).headsVO K').cob
               (fun _ => G) (fun _ => G)) := by
-  sorry
+  have hfam := ae_funDim_attention_residual_iff_ae_locally_cob_heads_family μ hdIn hdh
+    (fun (q : (∀ ℓ, Equiv.Perm (H ℓ))) θ => θ.permHeads q) (fun _ => 1)
+    permHeads_one
+  refine hfam.trans ⟨fun h => ?_, fun h => ?_⟩
+  · -- a symmetry `j` of the family is a finite symmetry: unpack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨q, K, K', G, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨q, K, K', G, hθ''⟩
+  · -- a finite symmetry is a symmetry `j` of the family: pack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨q, K, K', G, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨q, K, K', G, hθ''⟩
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks, under
 pre-RMSNorm with `ε > 0`, with the permutations of the heads:** `fd = P − d(d−1)/2 − s` at almost
@@ -230,7 +327,20 @@ theorem ae_funDim_attention_residual_iff_ae_locally_cob_heads_rmsNorm_perm
           ∃ Q : GL d ℝ, (Q : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ ∧
             θ' = (((θ.permHeads q).headsQK K).headsVO K').cob
               (fun _ => Q) (fun _ => Q)) := by
-  sorry
+  have hfam := ae_funDim_attention_residual_iff_ae_locally_cob_heads_rmsNorm_family hε μ hdIn hdh
+    (fun (q : (∀ ℓ, Equiv.Perm (H ℓ))) θ => θ.permHeads q) (fun _ => 1)
+    permHeads_one
+  refine hfam.trans ⟨fun h => ?_, fun h => ?_⟩
+  · -- a symmetry `j` of the family is a finite symmetry: unpack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨q, K, K', Q, hQ, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨q, K, K', Q, hQ, hθ''⟩
+  · -- a finite symmetry is a symmetry `j` of the family: pack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨q, K, K', Q, hQ, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨q, K, K', Q, hQ, hθ''⟩
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks and MLP blocks
 with a real-analytic activation, in any order, without normalization, with the permutations of the
@@ -258,7 +368,23 @@ theorem ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads_perm
             θ' = (Params.sumOf (((θ.sumFst.permHeads q).headsQK K).headsVO K') (θ.sumSnd.permUnits
                 p)).cob
               (fun _ => G) (fun _ => G)) := by
-  sorry
+  have hfam := ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads_family hσ μ hdIn hdh
+    (fun (qp : (∀ ℓ, Equiv.Perm (H ℓ)) × (∀ ℓ, Equiv.Perm (hid ℓ))) θ =>
+      Params.sumOf (θ.sumFst.permHeads qp.1) (θ.sumSnd.permUnits qp.2)) (fun _ => 1, fun _ => 1)
+    (fun θ => by
+      show Params.sumOf (θ.sumFst.permHeads fun _ => 1) (θ.sumSnd.permUnits fun _ => 1) = θ
+      rw [permHeads_one, permUnits_one, Params.sumOf_sumFst_sumSnd])
+  refine hfam.trans ⟨fun h => ?_, fun h => ?_⟩
+  · -- a symmetry `j` of the family is a finite symmetry: unpack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨⟨q, p⟩, K, K', G, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨q, p, K, K', G, hθ''⟩
+  · -- a finite symmetry is a symmetry `j` of the family: pack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨q, p, K, K', G, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨(q, p), K, K', G, hθ''⟩
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks and MLP blocks
 with a real-analytic activation, in any order, without normalization, with the permutations of the
@@ -288,7 +414,25 @@ theorem ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads_perm_flip
             θ' = (Params.sumOf (((θ.sumFst.permHeads q).headsQK K).headsVO K')
                 ((θ.sumSnd.permUnits p).flipUnits s)).cob
               (fun _ => G) (fun _ => G)) := by
-  sorry
+  have hfam := ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads_family hσ μ hdIn hdh
+    (fun (qps : (∀ ℓ, Equiv.Perm (H ℓ)) × (∀ ℓ, Equiv.Perm (hid ℓ)) × (∀ ℓ, hid ℓ → ℤˣ)) θ =>
+      Params.sumOf (θ.sumFst.permHeads qps.1) ((θ.sumSnd.permUnits qps.2.1).flipUnits qps.2.2))
+    (fun _ => 1, fun _ => 1, fun _ _ => 1)
+    (fun θ => by
+      show Params.sumOf (θ.sumFst.permHeads fun _ => 1)
+        ((θ.sumSnd.permUnits fun _ => 1).flipUnits fun _ _ => 1) = θ
+      rw [permHeads_one, permUnits_one, flipUnits_one, Params.sumOf_sumFst_sumSnd])
+  refine hfam.trans ⟨fun h => ?_, fun h => ?_⟩
+  · -- a symmetry `j` of the family is a finite symmetry: unpack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨⟨q, p, s⟩, K, K', G, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨q, p, s, K, K', G, hθ''⟩
+  · -- a finite symmetry is a symmetry `j` of the family: pack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨q, p, s, K, K', G, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨(q, p, s), K, K', G, hθ''⟩
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks and MLP blocks
 with a real-analytic activation, in any order, under pre-RMSNorm with `ε > 0`, with the permutations
@@ -316,7 +460,24 @@ theorem ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads_rmsNorm_perm
             θ' = (Params.sumOf (((θ.sumFst.permHeads q).headsQK K).headsVO K') (θ.sumSnd.permUnits
                 p)).cob
               (fun _ => Q) (fun _ => Q)) := by
-  sorry
+  have hfam := ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads_rmsNorm_family hε hσ μ hdIn
+    hdh
+    (fun (qp : (∀ ℓ, Equiv.Perm (H ℓ)) × (∀ ℓ, Equiv.Perm (hid ℓ))) θ =>
+      Params.sumOf (θ.sumFst.permHeads qp.1) (θ.sumSnd.permUnits qp.2)) (fun _ => 1, fun _ => 1)
+    (fun θ => by
+      show Params.sumOf (θ.sumFst.permHeads fun _ => 1) (θ.sumSnd.permUnits fun _ => 1) = θ
+      rw [permHeads_one, permUnits_one, Params.sumOf_sumFst_sumSnd])
+  refine hfam.trans ⟨fun h => ?_, fun h => ?_⟩
+  · -- a symmetry `j` of the family is a finite symmetry: unpack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨⟨q, p⟩, K, K', Q, hQ, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨q, p, K, K', Q, hQ, hθ''⟩
+  · -- a finite symmetry is a symmetry `j` of the family: pack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨q, p, K, K', Q, hQ, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨(q, p), K, K', Q, hQ, hθ''⟩
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks and MLP blocks
 with a real-analytic activation, in any order, under pre-RMSNorm with `ε > 0`, with the permutations
@@ -346,7 +507,26 @@ theorem ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads_rmsNorm_perm_fl
             θ' = (Params.sumOf (((θ.sumFst.permHeads q).headsQK K).headsVO K')
                 ((θ.sumSnd.permUnits p).flipUnits s)).cob
               (fun _ => Q) (fun _ => Q)) := by
-  sorry
+  have hfam := ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads_rmsNorm_family hε hσ μ hdIn
+    hdh
+    (fun (qps : (∀ ℓ, Equiv.Perm (H ℓ)) × (∀ ℓ, Equiv.Perm (hid ℓ)) × (∀ ℓ, hid ℓ → ℤˣ)) θ =>
+      Params.sumOf (θ.sumFst.permHeads qps.1) ((θ.sumSnd.permUnits qps.2.1).flipUnits qps.2.2))
+    (fun _ => 1, fun _ => 1, fun _ _ => 1)
+    (fun θ => by
+      show Params.sumOf (θ.sumFst.permHeads fun _ => 1)
+        ((θ.sumSnd.permUnits fun _ => 1).flipUnits fun _ _ => 1) = θ
+      rw [permHeads_one, permUnits_one, flipUnits_one, Params.sumOf_sumFst_sumSnd])
+  refine hfam.trans ⟨fun h => ?_, fun h => ?_⟩
+  · -- a symmetry `j` of the family is a finite symmetry: unpack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨⟨q, p, s⟩, K, K', Q, hQ, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨q, p, s, K, K', Q, hQ, hθ''⟩
+  · -- a finite symmetry is a symmetry `j` of the family: pack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨q, p, s, K, K', Q, hQ, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨(q, p, s), K, K', Q, hQ, hθ''⟩
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks and gated blocks
 with a real-analytic gate, in any order, without normalization, with the permutations of the heads
@@ -376,7 +556,26 @@ theorem ae_funDim_attentionGated_residual_iff_ae_locally_cob_heads_rescale_perm
             θ' = (Params.sumOf (((θ.sumFst.permHeads q).headsQK K).headsVO K')
                 ((θ.sumSnd.permUnitsGated p).rescale c)).cob
               (fun _ => G) (fun _ => G)) := by
-  sorry
+  have hfam := ae_funDim_attentionGated_residual_iff_ae_locally_cob_heads_rescale_family hσ μ
+    hdIn hdh
+    (fun (qp : (∀ ℓ, Equiv.Perm (H ℓ)) × (∀ ℓ, Equiv.Perm (hid ℓ))) θ =>
+      Params.sumOf (θ.sumFst.permHeads qp.1) (θ.sumSnd.permUnitsGated qp.2))
+    (fun _ => 1, fun _ => 1)
+    (fun θ => by
+      show Params.sumOf (θ.sumFst.permHeads fun _ => 1)
+        (θ.sumSnd.permUnitsGated fun _ => 1) = θ
+      rw [permHeads_one, permUnitsGated_one, Params.sumOf_sumFst_sumSnd])
+  refine hfam.trans ⟨fun h => ?_, fun h => ?_⟩
+  · -- a symmetry `j` of the family is a finite symmetry: unpack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨⟨q, p⟩, K, K', c, hc, G, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨q, p, K, K', c, hc, G, hθ''⟩
+  · -- a finite symmetry is a symmetry `j` of the family: pack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨q, p, K, K', c, hc, G, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨(q, p), K, K', c, hc, G, hθ''⟩
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks and gated blocks
 with a real-analytic gate, in any order, under pre-RMSNorm with `ε > 0`, with the permutations of
@@ -406,6 +605,25 @@ theorem ae_funDim_attentionGated_residual_iff_ae_locally_cob_heads_rescale_rmsNo
             θ' = (Params.sumOf (((θ.sumFst.permHeads q).headsQK K).headsVO K')
                 ((θ.sumSnd.permUnitsGated p).rescale c)).cob
               (fun _ => Q) (fun _ => Q)) := by
-  sorry
+  have hfam := ae_funDim_attentionGated_residual_iff_ae_locally_cob_heads_rescale_rmsNorm_family
+    hε hσ μ hdIn hdh
+    (fun (qp : (∀ ℓ, Equiv.Perm (H ℓ)) × (∀ ℓ, Equiv.Perm (hid ℓ))) θ =>
+      Params.sumOf (θ.sumFst.permHeads qp.1) (θ.sumSnd.permUnitsGated qp.2))
+    (fun _ => 1, fun _ => 1)
+    (fun θ => by
+      show Params.sumOf (θ.sumFst.permHeads fun _ => 1)
+        (θ.sumSnd.permUnitsGated fun _ => 1) = θ
+      rw [permHeads_one, permUnitsGated_one, Params.sumOf_sumFst_sumSnd])
+  refine hfam.trans ⟨fun h => ?_, fun h => ?_⟩
+  · -- a symmetry `j` of the family is a finite symmetry: unpack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨⟨q, p⟩, K, K', c, hc, Q, hQ, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨q, p, K, K', c, hc, Q, hQ, hθ''⟩
+  · -- a finite symmetry is a symmetry `j` of the family: pack the index
+    filter_upwards [h] with θ ⟨U, hU, hUV⟩
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨q, p, K, K', c, hc, Q, hQ, hθ''⟩ := hUV θ' hθ' heq
+    exact ⟨(q, p), K, K', c, hc, Q, hQ, hθ''⟩
 
 end Skips
