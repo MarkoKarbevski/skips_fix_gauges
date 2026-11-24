@@ -287,6 +287,8 @@ import SkipsLean.OneBlock.ResidualRMSZeroSteps
 import SkipsLean.OneBlock.ResidualRMSZeroStepsOn
 import SkipsLean.OneBlock.ResidualRMSZeroRescale
 import SkipsLean.OneBlock.ResidualRMSZeroRescaleGeneric
+import SkipsLean.OneBlock.ResidualRMSZeroReGLU
+import SkipsLean.OneBlock.ResidualRMSZeroReGLUGeneric
 import SkipsLean.OneBlock.ResidualRMSZeroGain
 import SkipsLean.OneBlock.ResidualRMSZeroKinds
 import SkipsLean.OneBlock.ResidualRMSZeroValue
