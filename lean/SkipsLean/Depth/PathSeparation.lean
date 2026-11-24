@@ -10,8 +10,8 @@ Paper (dimension paper): Lemma D.16 (Separation on the path), Appendix D.6 (the 
   `ζ_j(t) = exp(−(t + t⁻¹) u_j − i (t − t⁻¹) u'_j)`.
 
 Let `ρ₀ > max_j e^{−2 u_j}`, and let `𝒯_{−K}, …, 𝒯_K` be holomorphic maps from the polydisc
-`{ζ ∈ ℂ^q : |ζ_j| < ρ₀}` to `ℂ^{1 × d_out}`. If `∑_{i=−K}^{K} t^i 𝒯_i(ζ_1(t), …, ζ_q(t)) = 0` for all
-`t ≥ 1`, then `𝒯_i = 0` for every `i`."
+`{ζ ∈ ℂ^q : |ζ_j| < ρ₀}` to `ℂ^{1 × d_out}`. If `∑_{i=−K}^{K} t^i 𝒯_i(ζ_1(t), …, ζ_q(t)) = 0` for
+all `t ≥ 1`, then `𝒯_i = 0` for every `i`."
 
 "This is the proof of Lemma D.1, with a phase and with negative powers": in the expansion
 `𝒯_i(ζ) = ∑_α b_{i,α} ζ^α` the monomial `ζ(t)^α` has the absolute value `e^{−(t + t⁻¹) μ_α}`,

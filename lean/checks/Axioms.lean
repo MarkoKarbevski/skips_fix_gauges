@@ -759,3 +759,5 @@ import SkipsLean
 #print axioms Skips.fderiv_rmsNorm_zero_apply
 #print axioms Skips.fderiv_rmsNorm_zero_self
 #print axioms Skips.claimZero_last
+#print axioms Skips.eventually_eq_zero_of_sum_pow_mul_exp_path
+#print axioms Skips.path_separation
