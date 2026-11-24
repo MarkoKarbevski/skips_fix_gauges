@@ -58,7 +58,7 @@ large `t`.
 * Steps 2 and 4 are `gelu_path_unit`: if `Ψ(s, ·)` vanishes on the points whose entries outside a
   set `A` of hidden units vanish (for `A = ∅` this is Step 1), and the unit `j ∉ A` has a smaller
   rate than every other unit outside `A`, then the two first derivatives of `Ψ(s, ·)` at `0` in
-  the entries of unit `j` vanish, for `s ∈ (0, 1]`. These are `(t c₀)⁻¹ t⁻² 𝓛_j` and `t⁻² 𝓛'_j`
+  the entries of unit `j` vanish, for `s ∈ (0, 1]`. These are `(t c₀)⁻¹ 𝓛_j` and `t⁻² 𝓛'_j`
   up to sign, at `t = 1/s`.
 
 The norm on `(ι → ℂ) × (ι → ℂ)` is the sup norm, so `‖x‖ ≤ r` is a polydisc.

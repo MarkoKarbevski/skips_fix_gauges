@@ -15,9 +15,11 @@ dimension paper), with one copy of `CO(d)` at each hidden state: the directions 
 (antisymmetric `Y_ℓ`) and `scaleDir θ β`. With identity skips the change of basis `G = cQ` is the
 same at all hidden states (Theorem 3.3): `E ↦ E G`, `W_read^ℓ ↦ Q⁻¹ W_read^ℓ`,
 `W_write^ℓ ↦ W_write^ℓ G`, `D ↦ Q⁻¹ D`. Its directions at `θ` are `cobDir θ (fun _ => Y)` with one
-antisymmetric `Y`, and `scaleDir θ (fun _ => β)` with one number `β`. Stated here for blocks of any
-kind (`s = 0`), as the statements of `Dimension/UpperBoundRMSNormZero.lean`: they hold at every
-parameter and for arbitrary maps `f_ℓ`, for Lean's total function (`rmsRow 0 0 = 0`).
+antisymmetric `Y`, and `scaleDir θ (fun _ => β)` with one number `β`. Stated here for arbitrary
+maps `f_ℓ`, as the statements of `Dimension/UpperBoundRMSNormZero.lean`: they hold at every
+parameter, for Lean's total function (`rmsRow 0 0 = 0`). The symmetries inside the blocks are not
+counted (no term `s`): for tanh and GELU blocks this is the bound of Theorem A.17 (ii), for blocks
+with symmetries inside it is weaker by `s`.
 -/
 
 namespace Skips
