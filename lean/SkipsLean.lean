@@ -122,3 +122,7 @@ import SkipsLean.Depth.StepZeroValues
 import SkipsLean.Depth.SuffixRows
 import SkipsLean.Depth.RowsAux
 import SkipsLean.Depth.ComplexBlockIdentity
+import SkipsLean.Depth.ComplexOneSubSq
+import SkipsLean.Depth.FlatAtWriteRows
+import SkipsLean.Depth.StepZeroTanhPath
+import SkipsLean.Depth.StepZeroTanh
