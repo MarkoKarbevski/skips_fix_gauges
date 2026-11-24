@@ -677,6 +677,92 @@ theorem exists_jacobianRankSkips_mlp_rescale_rmsNorm {k : ℕ} (hk : k ≠ 0) (h
   rw [hrank]
   exact funDimLearned_mlp_rescale_rmsNorm hk hε hσ hhom hU θ hθ R hR
 
+/-! ### Helpers: almost every `(θ, A)` -/
+
+omit [DecidableEq d] in
+/-- Helper: the skips `Fin 1 → Matrix d d ℝ` carry the Borel σ-algebra of their norm topology (a
+copy of the private `borelSpace_skips_lsk` of `OneBlock/LearnedSkipKinds.lean`). -/
+private theorem borelSpace_skips_lsr : BorelSpace (Fin 1 → Matrix d d ℝ) :=
+  inferInstanceAs (BorelSpace (Fin 1 → d → d → ℝ))
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper: a condition on the weights that holds at almost every `θ` holds at almost every
+`(θ, v)` (a copy of the private `ae_fst_lsk` of `OneBlock/LearnedSkipKinds.lean`). -/
+private theorem ae_fst_lsr {A : Arch T d 1} {V : Type*} [NormedAddCommGroup V]
+    [NormedSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] (hB : BorelSpace V)
+    (μ : Measure (Params A dIn dOut × V)) (hμ : μ.IsAddHaarMeasure) {Q : Params A dIn dOut → Prop}
+    (h : ∀ᵐ θ ∂(Measure.addHaar : Measure (Params A dIn dOut)), Q θ) :
+    ∀ᵐ p ∂μ, Q p.1 := by
+  rw [ae_iff] at h
+  obtain ⟨N, hsub, hN, hN0⟩ := exists_measurable_superset_of_null h
+  have hc : ∀ᵐ θ ∂(Measure.addHaar : Measure (Params A dIn dOut)), θ ∈ Nᶜ :=
+    measure_eq_zero_iff_ae_notMem.1 hN0
+  have h1 := (ae_comp_linearMap_mem_iff (LinearMap.fst ℝ (Params A dIn dOut) V) μ
+    Measure.addHaar (LinearMap.fst_surjective) hN.compl).2 hc
+  refine h1.mono fun p hp => ?_
+  by_contra hq
+  exact hp (hsub hq)
+
+/-- Helper: if a square matrix that depends linearly on a point of `E` is the identity at one
+point, it is invertible at almost every point (a copy of the private `ae_isUnit_det_lst` of
+`OneBlock/LearnedSkipTriangular.lean`). -/
+private theorem ae_isUnit_det_lsr {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [FiniteDimensional ℝ E] [MeasurableSpace E] (hB : BorelSpace E) (μ : Measure E)
+    (hμ : μ.IsAddHaarMeasure) (Φ : E →ₗ[ℝ] Matrix d d ℝ) (x₀ : E) (h₀ : Φ x₀ = 1) :
+    ∀ᵐ x ∂μ, IsUnit (Φ x).det := by
+  have hentry : ∀ i j, AnalyticOnNhd ℝ (fun x => Φ x i j) Set.univ := fun i j =>
+    (LinearMap.toContinuousLinearMap ((Matrix.entryLinearMap ℝ ℝ i j) ∘ₗ Φ)).analyticOnNhd _
+  have hφ : AnalyticOnNhd ℝ (fun x => (Φ x).det) Set.univ := by
+    simp only [Matrix.det_apply']
+    exact Finset.analyticOnNhd_fun_sum _ fun σ _ => analyticOnNhd_const.mul
+      (Finset.analyticOnNhd_fun_prod _ fun i _ => hentry (σ i) i)
+  have hnull := measure_zeroSet_of_analytic μ hφ ⟨x₀, by rw [h₀, Matrix.det_one]; exact one_ne_zero⟩
+  rw [ae_iff]
+  simpa only [isUnit_iff_ne_zero, not_not] using hnull
+
+/-- Helper: at almost every `(θ, A)` the conditions `OneBlockGenericRMS θ` hold and the skip
+`A = R 0` is invertible, for `d_in, d_out ≥ d ≥ 2`. -/
+private theorem ae_generic_lsr
+    (μ : Measure (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut
+      × (Fin 1 → Matrix d d ℝ)))
+    [hμ : μ.IsAddHaarMeasure] (hd : 2 ≤ Fintype.card d) (hdIn : Fintype.card d ≤ Fintype.card dIn)
+    (hdOut : Fintype.card d ≤ Fintype.card dOut) :
+    ∀ᵐ p ∂μ, OneBlockGenericRMS p.1 ∧ IsUnit (p.2 0).det := by
+  have hBs : BorelSpace (Fin 1 → Matrix d d ℝ) := borelSpace_skips_lsr
+  have hBp : BorelSpace (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut
+      × (Fin 1 → Matrix d d ℝ)) := Prod.borelSpace
+  have h1 := ae_fst_lsr hBs μ hμ (ae_oneBlockGenericRMS Measure.addHaar hd hdIn hdOut)
+  have h2 := ae_isUnit_det_lsr hBp μ hμ
+    ((LinearMap.proj (R := ℝ) (φ := fun _ : Fin 1 => Matrix d d ℝ) 0)
+      ∘ₗ (LinearMap.snd ℝ (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
+        (Fin 1 → Matrix d d ℝ))) (0, fun _ => 1) rfl
+  filter_upwards [h1, h2] with p hp1 hp2
+  exact ⟨hp1, hp2⟩
+
+omit [Fintype T] [Nonempty T] in
+/-- Helper (the form `…_eq_residual_add`; a copy of the private `ae_eq_residual_add_lsk` of
+`OneBlock/LearnedSkipKinds.lean`): from the value `fd + (d (d − 1) + s) = P + d²` with the learned
+skip and the value `fd₁ + (d (d − 1)/2 + s) = P` of the residual network, the difference is
+`d² − d (d − 1)/2 = d (d + 1)/2`. -/
+private theorem ae_eq_residual_add_lsr {A : Arch T d 1}
+    (μ : Measure (Params A dIn dOut × (Fin 1 → Matrix d d ℝ))) (ν : Measure (Params A dIn dOut))
+    {k₁ k₂ s : ℕ}
+    (hval : ∀ᵐ p ∂μ, funDimLearned A p + k₁
+      = Module.finrank ℝ (Params A dIn dOut) + Fintype.card d ^ 2)
+    (hres : ∀ᵐ θ' ∂ν, funDim A 1 θ' + k₂ = Module.finrank ℝ (Params A dIn dOut))
+    (hk₁ : k₁ = Fintype.card d * (Fintype.card d - 1) + s)
+    (hk₂ : k₂ = Fintype.card d * (Fintype.card d - 1) / 2 + s) :
+    ∀ᵐ p ∂μ, ∀ᵐ θ' ∂ν, funDimLearned A p
+      = funDim A 1 θ' + Fintype.card d * (Fintype.card d + 1) / 2 := by
+  have h := half_add_half_lsr (Fintype.card d)
+  have h2 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self (Fintype.card d))
+  filter_upwards [hval] with p hp
+  filter_upwards [hres] with θ' hθ'
+  generalize Fintype.card d * (Fintype.card d + 1) = y at h ⊢
+  generalize Fintype.card d * (Fintype.card d - 1) = x at h h2 hk₁ hk₂
+  generalize Fintype.card d ^ 2 = q at h hp
+  omega
+
 /-- **Theorem B.1 (iii) of the skips paper for one ReLU block with a full learned skip, `ε > 0`:**
 for `d_in, d_out ≥ d ≥ 2` and a block of any width with at least one hidden unit, at almost every
 `(θ, A)` the functional dimension is `P + d² − d (d − 1) − d_hidden`. -/
@@ -689,7 +775,10 @@ theorem ae_funDimLearned_relu_rmsNorm (hε : 0 < ε) [Nonempty (hid 0)]
         + (Fintype.card d * (Fintype.card d - 1) + Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
         + Fintype.card d ^ 2 := by
-  sorry
+  -- the conditions of the proof and an invertible skip hold at almost every `(θ, A)`
+  filter_upwards [ae_generic_lsr μ hd hdIn hdOut] with p hp
+  exact funDimLearned_mlp_rescale_rmsNorm one_ne_zero hε (fun _ hz => hasDerivAt_relu hz)
+    relu_homogeneous (relu_unitsRescale d d (hid 0)) p.1 hp.1 p.2 hp.2
 
 /-- **Theorem B.1 (iii) in the paper's own sense, for one ReLU block with a full learned skip:**
 at almost every `(θ, A)` there is a finite batch of inputs with no hidden unit at its kink on which
@@ -705,7 +794,11 @@ theorem ae_exists_jacobianRankSkips_relu_rmsNorm (hε : 0 < ε) [Nonempty (hid 0
           + (Fintype.card d * (Fintype.card d - 1) + Fintype.card (hid 0))
         = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
           + Fintype.card d ^ 2 := by
-  sorry
+  -- the conditions of the proof and an invertible skip hold at almost every `(θ, A)`
+  filter_upwards [ae_generic_lsr μ hd hdIn hdOut] with p hp
+  exact exists_jacobianRankSkips_mlp_rescale_rmsNorm one_ne_zero hε
+    (fun _ hz => hasDerivAt_relu hz) relu_homogeneous (relu_unitsRescale d d (hid 0)) p.1 hp.1 p.2
+    hp.2
 
 /-- **Theorem 4.6 (ii) of the skips paper, "A learned skip raises it by exactly `d (d + 1)/2` more
 than an identity skip", for one ReLU block, `ε > 0`:** at almost every `(θ, A)` and almost every
@@ -720,8 +813,9 @@ theorem ae_funDimLearned_relu_rmsNorm_eq_residual_add (hε : 0 < ε) [Nonempty (
     (hdOut : Fintype.card d ≤ Fintype.card dOut) :
     ∀ᵐ p ∂μ, ∀ᵐ θ' ∂ν, funDimLearned (Arch.mlp relu (rmsNorm ε) hid) p
       = funDim (Arch.mlp relu (rmsNorm ε) hid) 1 θ'
-        + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+        + Fintype.card d * (Fintype.card d + 1) / 2 :=
+  ae_eq_residual_add_lsr μ ν (ae_funDimLearned_relu_rmsNorm hε μ hd hdIn hdOut)
+    (ae_funDim_relu_oneBlock_residual_rmsNorm hε ν hd hdIn hdOut) rfl rfl
 
 /-- **Theorem B.1 (iii) of the skips paper for one ReLU² block with a full learned skip,
 `ε > 0`:** for `d_in, d_out ≥ d ≥ 2` and a block of any width with at least one hidden unit, at
@@ -735,7 +829,10 @@ theorem ae_funDimLearned_reluSq_rmsNorm (hε : 0 < ε) [Nonempty (hid 0)]
         + (Fintype.card d * (Fintype.card d - 1) + Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) reluSq (rmsNorm ε) hid) dIn dOut)
         + Fintype.card d ^ 2 := by
-  sorry
+  -- the conditions of the proof and an invertible skip hold at almost every `(θ, A)`
+  filter_upwards [ae_generic_lsr μ hd hdIn hdOut] with p hp
+  exact funDimLearned_mlp_rescale_rmsNorm two_ne_zero hε (fun z _ => hasDerivAt_reluSq z)
+    reluSq_homogeneous (reluSq_unitsRescale d d (hid 0)) p.1 hp.1 p.2 hp.2
 
 /-- **Theorem B.1 (iii) in the paper's own sense, for one ReLU² block with a full learned skip:**
 at almost every `(θ, A)` there is a finite batch of inputs with no hidden unit at its kink on which
@@ -752,7 +849,11 @@ theorem ae_exists_jacobianRankSkips_reluSq_rmsNorm (hε : 0 < ε) [Nonempty (hid
         = Module.finrank ℝ
             (Params (Arch.mlp (T := T) (d := d) reluSq (rmsNorm ε) hid) dIn dOut)
           + Fintype.card d ^ 2 := by
-  sorry
+  -- the conditions of the proof and an invertible skip hold at almost every `(θ, A)`
+  filter_upwards [ae_generic_lsr μ hd hdIn hdOut] with p hp
+  exact exists_jacobianRankSkips_mlp_rescale_rmsNorm two_ne_zero hε
+    (fun z _ => hasDerivAt_reluSq z) reluSq_homogeneous (reluSq_unitsRescale d d (hid 0)) p.1 hp.1
+    p.2 hp.2
 
 /-- **Theorem 4.6 (ii) of the skips paper, "A learned skip raises it by exactly `d (d + 1)/2` more
 than an identity skip", for one ReLU² block, `ε > 0`:** at almost every `(θ, A)` and almost every
@@ -767,7 +868,8 @@ theorem ae_funDimLearned_reluSq_rmsNorm_eq_residual_add (hε : 0 < ε) [Nonempty
     (hdOut : Fintype.card d ≤ Fintype.card dOut) :
     ∀ᵐ p ∂μ, ∀ᵐ θ' ∂ν, funDimLearned (Arch.mlp reluSq (rmsNorm ε) hid) p
       = funDim (Arch.mlp reluSq (rmsNorm ε) hid) 1 θ'
-        + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+        + Fintype.card d * (Fintype.card d + 1) / 2 :=
+  ae_eq_residual_add_lsr μ ν (ae_funDimLearned_reluSq_rmsNorm hε μ hd hdIn hdOut)
+    (ae_funDim_reluSq_oneBlock_residual_rmsNorm hε ν hd hdIn hdOut) rfl rfl
 
 end Skips
