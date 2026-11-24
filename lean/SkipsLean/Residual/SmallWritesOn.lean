@@ -456,7 +456,134 @@ theorem eventually_jacobianRank_smallWrites_ge_of_contDiffOn (hA : A.χ = id)
       (∀ i ℓ, hidden A 1 (θ.smallWrites τ) (X i) ℓ.castSucc * θ.read ℓ ∈ V ℓ) ∧
       Module.finrank ℝ (Params A dIn dOut)
         ≤ jacobianRank A 1 X (θ.smallWrites τ) + Module.finrank ℝ W := by
-  sorry
+  -- `f_ℓ` is continuous and differentiable at the points of `V ℓ`
+  have hfc : ∀ ℓ z, z ∈ V ℓ → ContinuousAt (A.f ℓ) z := fun ℓ z hz =>
+    ((hf ℓ).contDiffAt ((hVo ℓ).mem_nhds hz)).continuousAt
+  have hfd : ∀ ℓ z, z ∈ V ℓ → DifferentiableAt ℝ (A.f ℓ) z := fun ℓ z hz =>
+    ((hf ℓ).contDiffAt ((hVo ℓ).mem_nhds hz)).differentiableAt (by norm_num)
+  -- at `τ = 0` every hidden state is `x E`, so the pre-activations at `θ_0` are the `x E W_read^ℓ`
+  have hX0 : ∀ i ℓ, hidden A 1 (θ.smallWrites 0) (X i) ℓ.castSucc
+      * (θ.smallWrites 0).read ℓ ∈ V ℓ := by
+    intro i ℓ
+    rw [hidden_smallWrites_zero_swo A θ hA, smallWrites_read_swo]
+    exact hX i ℓ
+  -- the pre-activations at `θ_τ` are continuous in `τ` at `0`, so they stay in the `V ℓ`
+  have hpre : ∀ᶠ τ in 𝓝 (0 : ℝ), ∀ i ℓ,
+      hidden A 1 (θ.smallWrites τ) (X i) ℓ.castSucc * θ.read ℓ ∈ V ℓ := by
+    refine eventually_all.2 fun i => eventually_all.2 fun ℓ => ?_
+    have hd := hasDerivAt_hidden_smallWrites_swo A θ hA (X i) (fun ℓ => hfc ℓ _ (hX i ℓ))
+      ℓ.castSucc
+    have hc : ContinuousAt
+        (fun τ : ℝ => hidden A 1 (θ.smallWrites τ) (X i) ℓ.castSucc * θ.read ℓ) 0 :=
+      continuousAt_mul_swo hd.continuousAt continuousAt_const
+    exact hc.eventually_mem ((hVo ℓ).mem_nhds (hX0 i ℓ))
+  -- `G τ θ'` is the batch of outputs at `θ'_τ`
+  set G : ℝ → Params A dIn dOut → (Fin n → Matrix T dOut ℝ) :=
+    fun τ θ' => evalBatch A 1 X (θ'.smallWrites τ) with hGdef
+  -- `(τ, θ') ↦ G τ θ'` is `C²` near `(0, θ)`: `θ'_τ = (θ' - W θ') + τ W θ'` is smooth in `(τ, θ')`
+  have hGc : ContDiffAt ℝ 2 (fun p : ℝ × Params A dIn dOut => G p.1 p.2) ((0 : ℝ), θ) := by
+    let Wl := LinearMap.toContinuousLinearMap (linW_swo A (dIn := dIn) (dOut := dOut))
+    have hS : ContDiff ℝ 2 (fun p : ℝ × Params A dIn dOut => (p.2 - Wl p.2) + p.1 • Wl p.2) :=
+      (contDiff_snd.sub (Wl.contDiff.comp contDiff_snd)).add
+        (contDiff_fst.smul (Wl.contDiff.comp contDiff_snd))
+    have hE : ContDiffAt ℝ 2 (evalBatch A 1 X) ((θ - Wl θ) + (0 : ℝ) • Wl θ) := by
+      have h := contDiffAt_evalBatch_swo A hA 1 V hVo hf (θ.smallWrites 0) X hX0
+      rw [smallWrites_eq_swo A 0 θ] at h
+      exact h
+    have hc := hE.comp ((0 : ℝ), θ) hS.contDiffAt
+    have hfun : (fun p : ℝ × Params A dIn dOut => G p.1 p.2)
+        = evalBatch A 1 X ∘ (fun p : ℝ × Params A dIn dOut => (p.2 - Wl p.2) + p.1 • Wl p.2) := by
+      funext p
+      show evalBatch A 1 X (p.2.smallWrites p.1) = evalBatch A 1 X ((p.2 - Wl p.2) + p.1 • Wl p.2)
+      rw [smallWrites_eq_swo A p.1 p.2]
+      rfl
+    rw [hfun]
+    exact hc
+  obtain ⟨U, hU, hGU⟩ := hGc.contDiffOn (m := 2) le_rfl (by simp)
+  -- `G 0 θ' = (X_i E' D')_i` for every `θ'`, and its derivative at `θ`
+  have hG0 : G 0 = fun θ' i => X i * θ'.E * θ'.D := by
+    funext θ' i
+    exact eval_smallWrites_zero A θ' hA (X i)
+  choose a' ha ha' using fun i => hasFDerivAt_xED_swo A θ (dOut := dOut) (X i)
+  have hD0 : ∀ v, fderiv ℝ (G 0) θ v = fun i => X i * v.E * θ.D + X i * θ.E * v.D := by
+    intro v
+    have hd : HasFDerivAt (G 0) (ContinuousLinearMap.pi a') θ := by
+      rw [hG0]
+      exact hasFDerivAt_pi.2 ha
+    rw [hd.fderiv]
+    funext i
+    exact ha' i v
+  -- near `θ` the limit pre-activations `X_i E' W'_read` stay in the `V ℓ`, so there
+  -- `∂_τ G(0, θ') = ((∑_ℓ f_ℓ(X_i E' W'_read) W'_write) D')_i`
+  have hnear : ∀ᶠ θ' in 𝓝 θ, ∀ i ℓ, X i * θ'.E * θ'.read ℓ ∈ V ℓ := by
+    refine eventually_all.2 fun i => eventually_all.2 fun ℓ => ?_
+    have hE : ContDiffAt ℝ 0 (fun θ' : Params A dIn dOut => θ'.E) θ :=
+      (clmE_swo A (dIn := dIn) (dOut := dOut)).contDiff.contDiffAt
+    have hR : ContDiffAt ℝ 0 (fun θ' : Params A dIn dOut => θ'.read ℓ) θ :=
+      (clmRead_swo A (dIn := dIn) (dOut := dOut) ℓ).contDiff.contDiffAt
+    have hc : ContDiffAt ℝ 0 (fun θ' : Params A dIn dOut => X i * θ'.E * θ'.read ℓ) θ :=
+      contDiffAt_mul_swo (contDiffAt_mul_swo contDiffAt_const hE) hR
+    exact hc.continuousAt.eventually_mem ((hVo ℓ).mem_nhds (hX i ℓ))
+  have hG1 : (fun θ' => deriv (fun τ => G τ θ') 0)
+      =ᶠ[𝓝 θ] fun θ' i => (∑ ℓ, A.f ℓ (X i * θ'.E * θ'.read ℓ) * θ'.write ℓ) * θ'.D := by
+    filter_upwards [hnear] with θ' hθ'
+    have hd : HasDerivAt (fun τ => G τ θ')
+        (fun i => (∑ ℓ, A.f ℓ (X i * θ'.E * θ'.read ℓ) * θ'.write ℓ) * θ'.D) 0 :=
+      hasDerivAt_pi.2 fun i =>
+        hasDerivAt_eval_smallWrites_swo A θ' hA (X i) (fun ℓ => hfc ℓ _ (hθ' i ℓ))
+    exact hd.deriv
+  choose b' hb hb' using fun i =>
+    hasFDerivAt_sumD_swo A θ (dOut := dOut) (X i) (fun ℓ => hfd ℓ _ (hX i ℓ))
+  have hD1 : ∀ v, fderiv ℝ (fun θ' => deriv (fun τ => G τ θ') 0) θ v
+      = fun i => (∑ ℓ, (fderiv ℝ (A.f ℓ) (X i * θ.E * θ.read ℓ)
+            (X i * v.E * θ.read ℓ + X i * θ.E * v.read ℓ) * θ.write ℓ
+          + A.f ℓ (X i * θ.E * θ.read ℓ) * v.write ℓ)) * θ.D
+          + (∑ ℓ, A.f ℓ (X i * θ.E * θ.read ℓ) * θ.write ℓ) * v.D := by
+    intro v
+    have hd : HasFDerivAt (fun θ' => deriv (fun τ => G τ θ') 0)
+        (ContinuousLinearMap.pi b') θ :=
+      (hasFDerivAt_pi.2 hb).congr_of_eventuallyEq hG1
+    rw [hd.fderiv]
+    funext i
+    exact hb' i v
+  -- `G 0` does not move along `π η = (0, η_read, η_write, 0)`
+  have h0 : ∀ η, fderiv ℝ (G 0) θ (clmPi_swo A η) = 0 := by
+    intro η
+    rw [hD0]
+    funext i
+    simp only [clmPi_swo_E, clmPi_swo_D, Matrix.mul_zero, Matrix.zero_mul, add_zero,
+      Pi.zero_apply]
+  -- the limit `D_θ G(0, θ)(η - π η) + D_θ(∂_τ G(0, ·))(θ)(π η)` is `((J_0 η)(X_i))_i`, so its
+  -- kernel is flat for `J_0` on the batch, hence in `W`
+  have hV' : ∀ η, fderiv ℝ (G 0) θ (η - clmPi_swo A η)
+      + fderiv ℝ (fun θ' => deriv (fun τ => G τ θ') 0) θ (clmPi_swo A η) = 0 → η ∈ W := by
+    intro η hη
+    rw [hD0, hD1] at hη
+    refine hW η (fun i => ?_)
+    have hi := congrFun hη i
+    simp only [Pi.add_apply, Pi.zero_apply] at hi
+    refine Eq.trans ?_ hi
+    simp only [smallWritesLimit, sub_E_swo, sub_D_swo, clmPi_swo_E, clmPi_swo_D, clmPi_swo_read,
+      clmPi_swo_write, sub_zero, Matrix.mul_zero, Matrix.zero_mul, add_zero, zero_add,
+      Matrix.mul_add, Matrix.sum_mul, Matrix.mul_assoc]
+  -- the small-parameter lemma, for `G` smooth on `U`
+  have key := eventually_finrank_le_of_small_parameter_of_contDiffOn G θ U hU hGU (clmPi_swo A)
+    h0 W hV'
+  -- `D_θ G(τ, θ) = J(θ_τ) ∘ S_τ`, so its rank is at most the rank of the Jacobian at `θ_τ`
+  filter_upwards [key, hpre.filter_mono nhdsWithin_le_nhds] with τ hτ hp
+  refine ⟨hp, hτ.trans (Nat.add_le_add_right ?_ _)⟩
+  let S := LinearMap.toContinuousLinearMap (linSmall_swo A (dIn := dIn) (dOut := dOut) τ)
+  have hEv : DifferentiableAt ℝ (evalBatch A 1 X) (S θ) :=
+    (contDiffAt_evalBatch_swo A hA 1 V hVo hf (θ.smallWrites τ) X hp).differentiableAt
+      (by norm_num)
+  have hcomp : HasFDerivAt (G τ) ((fderiv ℝ (evalBatch A 1 X) (S θ)).comp S) θ := by
+    have hc := hEv.hasFDerivAt.comp θ S.hasFDerivAt
+    exact hc
+  have hrank : Module.finrank ℝ (LinearMap.range (fderiv ℝ (G τ) θ).toLinearMap)
+      ≤ jacobianRank A 1 X (θ.smallWrites τ) := by
+    rw [hcomp.fderiv]
+    exact Submodule.finrank_mono (LinearMap.range_comp_le_range _ _)
+  exact hrank
 
 /-- **Proof of Lemma A.30, "Near such parameters the signs on the batch do not change" and the
 lower semicontinuity of the rank:** blocks without normalization, any stream matrices, `f_ℓ`
