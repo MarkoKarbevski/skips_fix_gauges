@@ -482,7 +482,10 @@ theorem ae_funDim_relu_oneBlock
     ∀ᵐ θ ∂μ, funDim (Arch.mlp relu id hid) 0 θ
         + (2 * Fintype.card d ^ 2 + Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) := by
-  sorry
+  -- the conditions of the proof hold at generic parameters (`Mlp.lean`, for every `σ`)
+  exact (ae_oneBlockGeneric μ hd hdIn hdOut hhid).mono fun θ hθ =>
+    funDim_mlp_oneBlock_rescale (fun _ hz => hasDerivAt_relu hz) relu_homogeneous
+      (relu_unitsRescale dIn dOut (hid 0)) θ hθ
 
 /-- **Theorem 5.1 / C.1 for a ReLU block, on the paper's inputs:** at generic parameters the
 Jacobian has the rank `P - 2 d² - d_hidden` on a batch of inputs with no hidden unit at its
@@ -495,7 +498,10 @@ theorem ae_exists_jacobianRank_relu_oneBlock
       jacobianRank (Arch.mlp relu id hid) 0 X θ
           + (2 * Fintype.card d ^ 2 + Fintype.card (hid 0))
         = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) := by
-  sorry
+  -- the conditions of the proof hold at generic parameters (`Mlp.lean`, for every `σ`)
+  exact (ae_oneBlockGeneric μ hd hdIn hdOut hhid).mono fun θ hθ =>
+    exists_jacobianRank_mlp_oneBlock_rescale (fun _ hz => hasDerivAt_relu hz) relu_homogeneous
+      (relu_unitsRescale dIn dOut (hid 0)) θ hθ
 
 /-- **Theorem 5.1 / C.1 for a ReLU² block:** for `d_in, d_out, d_hidden ≥ d ≥ 2`, at generic
 parameters, `fd = P - 2 d² - d_hidden`. -/
@@ -506,7 +512,10 @@ theorem ae_funDim_reluSq_oneBlock
     ∀ᵐ θ ∂μ, funDim (Arch.mlp reluSq id hid) 0 θ
         + (2 * Fintype.card d ^ 2 + Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) reluSq id hid) dIn dOut) := by
-  sorry
+  -- the conditions of the proof hold at generic parameters (`Mlp.lean`, for every `σ`)
+  exact (ae_oneBlockGeneric μ hd hdIn hdOut hhid).mono fun θ hθ =>
+    funDim_mlp_oneBlock_rescale (fun z _ => hasDerivAt_reluSq z) reluSq_homogeneous
+      (reluSq_unitsRescale dIn dOut (hid 0)) θ hθ
 
 /-- **Theorem 5.1 / C.1 for a ReLU² block, on the paper's inputs:** at generic parameters the
 Jacobian has the rank `P - 2 d² - d_hidden` on a batch of inputs with no hidden unit at its
@@ -519,6 +528,9 @@ theorem ae_exists_jacobianRank_reluSq_oneBlock
       jacobianRank (Arch.mlp reluSq id hid) 0 X θ
           + (2 * Fintype.card d ^ 2 + Fintype.card (hid 0))
         = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) reluSq id hid) dIn dOut) := by
-  sorry
+  -- the conditions of the proof hold at generic parameters (`Mlp.lean`, for every `σ`)
+  exact (ae_oneBlockGeneric μ hd hdIn hdOut hhid).mono fun θ hθ =>
+    exists_jacobianRank_mlp_oneBlock_rescale (fun z _ => hasDerivAt_reluSq z) reluSq_homogeneous
+      (reluSq_unitsRescale dIn dOut (hid 0)) θ hθ
 
 end Skips
