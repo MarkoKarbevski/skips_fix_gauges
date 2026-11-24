@@ -402,6 +402,7 @@ private theorem hasDerivAt_betaF_hom {ε s : ℝ} (hε : 0 < ε) (hs : 0 ≤ s) 
   rw [hsq]
   ring
 
+omit [Fintype T] [DecidableEq d] in
 /-- Helper: the scalars along the network for `ε > 0`. If a hidden state `h_{i₀}` becomes
 `diag(μ) h_{i₀}` with `μ > 0` and the later weights are unchanged, then `h_i`, `i = i₀ + m`,
 becomes `diag(F(μ)) h_i`, where `F` (one function per token) depends only on `θ` and `x`:
@@ -540,6 +541,144 @@ theorem eval_scale_last_rmsNorm_zero (hA : A.χ = rmsNorm 0) (θ : Params A dIn 
     eval A 0 { θ.cobAt (Fin.last L) G with D := θ.D } x = eval A 0 θ x := by
   exact eval_scale_last_zero_hom hA θ hc G hG x
 
+/-! ### Lemma A.3 (ii): the derivatives -/
+
+set_option backward.isDefEq.respectTransparency false in
+/-- Helper: the derivative at `τ = 0` of an entry of `exp (τ Y)` is the entry of `Y` (a copy of
+the private `hasDerivAt_exp_smul_apply` of `Dimension/UpperBoundRMSNorm.lean`). -/
+private theorem hasDerivAt_exp_smul_apply_hom (Y : Matrix d d ℝ) (i j : d) :
+    HasDerivAt (fun τ : ℝ => NormedSpace.exp (τ • Y) i j) (Y i j) 0 := by
+  let _ : NormedRing (Matrix d d ℝ) := Matrix.linftyOpNormedRing
+  let _ : NormedAlgebra ℝ (Matrix d d ℝ) := Matrix.linftyOpNormedAlgebra
+  have h := hasDerivAt_exp_smul_const (𝕂 := ℝ) Y (0 : ℝ)
+  rw [zero_smul, NormedSpace.exp_zero, one_mul] at h
+  exact (LinearMap.toContinuousLinearMap
+    (Matrix.entryLinearMap ℝ ℝ i j)).hasFDerivAt.comp_hasDerivAt 0 h
+
+/-- Helper: `τ ↦ r²(v e^{τ S})` has the derivative `2 v S vᵀ / d` at `0`. -/
+private theorem hasDerivAt_meanSq_exp_hom (v : d → ℝ) (S : Matrix d d ℝ) :
+    HasDerivAt (fun τ : ℝ => meanSq (v ᵥ* NormedSpace.exp (τ • S)))
+      (2 * (v ⬝ᵥ (S *ᵥ v)) / (Fintype.card d : ℝ)) 0 := by
+  -- each entry of `v e^{τ S}` has the derivative `(v S)_j`
+  have hw : ∀ j, HasDerivAt (fun τ : ℝ => (v ᵥ* NormedSpace.exp (τ • S)) j)
+      ((v ᵥ* S) j) 0 := by
+    intro j
+    simp only [Matrix.vecMul, dotProduct]
+    exact HasDerivAt.fun_sum fun i _ => (hasDerivAt_exp_smul_apply_hom S i j).const_mul (v i)
+  -- `r² = (∑_j w_j w_j) / d`
+  have hs := (HasDerivAt.fun_sum fun j (_ : j ∈ Finset.univ) => (hw j).fun_mul (hw j)).div_const
+    (Fintype.card d : ℝ)
+  refine (hs : HasDerivAt (fun τ : ℝ => meanSq (v ᵥ* NormedSpace.exp (τ • S))) _ 0).congr_deriv
+    ?_
+  simp only [zero_smul, NormedSpace.exp_zero, Matrix.vecMul_one]
+  rw [Matrix.dotProduct_mulVec, dotProduct, Finset.mul_sum]
+  congr 1
+  exact Finset.sum_congr rfl fun j _ => by ring
+
+/-- Helper: `γ(τ) = √(r² + ε)/√(q(τ) + ε)` has the derivative `-q'/(2 (r² + ε))` at `0` if
+`q(0) = r²`. -/
+private theorem hasDerivAt_gammaF_hom {ε s : ℝ} (hp : 0 < s + ε) {q : ℝ → ℝ} {q' : ℝ}
+    (hq : HasDerivAt q q' 0) (hq0 : q 0 = s) :
+    HasDerivAt (fun τ => gammaF_hom ε s (q τ)) (-q' / (2 * (s + ε))) 0 := by
+  have hr : 0 < Real.sqrt (s + ε) := Real.sqrt_pos.2 hp
+  have h1 := (hq.add_const ε).sqrt (by simp only [hq0]; exact hp.ne')
+  have h2 := (hasDerivAt_const (0 : ℝ) (Real.sqrt (s + ε))).fun_div h1
+    (by simp only [hq0]; exact hr.ne')
+  refine (h2 : HasDerivAt (fun τ => gammaF_hom ε s (q τ)) _ 0).congr_deriv ?_
+  have hsq : Real.sqrt (s + ε) ^ 2 = s + ε := Real.sq_sqrt hp.le
+  rw [hq0, hsq]
+  field_simp
+  ring
+
+/-- Helper: `τ ↦ c(τ) y` has the derivative `c' y` at `0`. The space `n → ℝ` need not be normed
+(`n` need not be finite), so the chain rule is the one for a continuous linear map into a
+topological vector space. -/
+private theorem hasDerivAt_smul_const_hom {n : Type*} {c : ℝ → ℝ} {c' : ℝ}
+    (hc : HasDerivAt c c' 0) (y : n → ℝ) : HasDerivAt (fun τ => c τ • y) (c' • y) 0 := by
+  have h := (ContinuousLinearMap.smulRight (1 : ℝ →L[ℝ] ℝ) y).hasFDerivAt.comp (0 : ℝ)
+    (hasDerivAt_iff_hasFDerivAt.1 hc)
+  have e1 : (fun τ => c τ • y) = ⇑(ContinuousLinearMap.smulRight (1 : ℝ →L[ℝ] ℝ) y) ∘ c := by
+    funext τ
+    simp
+  have e2 : ContinuousLinearMap.toSpanSingleton ℝ (c' • y) =
+      (ContinuousLinearMap.smulRight (1 : ℝ →L[ℝ] ℝ) y).comp
+        (ContinuousLinearMap.toSpanSingleton ℝ c') := by
+    ext
+    simp
+  rw [hasDerivAt_iff_hasFDerivAt, e1, e2]
+  exact h
+
+omit [Fintype T] in
+/-- Helper, Lemma A.3 (ii) for a curve `G(τ)` of changes of basis at `h_ℓ`, `ℓ < L`, along which
+`r²(h_ℓ G(τ))` (token `t`) has the derivative `q'` at `0` and `G(0)` keeps `r_ℓ²`. -/
+private theorem hasDerivAt_eval_cobAt_hom {ε : ℝ} (hε : 0 < ε) (hA : A.χ = rmsNorm ε) {k : ℕ}
+    (hf : RowHomogeneous A k) (θ : Params A dIn dOut) (ℓ : Fin L) (G : ℝ → GL d ℝ)
+    (x : Matrix T dIn ℝ) (t : T) {q' : ℝ}
+    (hq : HasDerivAt
+      (fun τ => meanSq (hidden A 0 θ x ℓ.castSucc t ᵥ* (G τ : Matrix d d ℝ))) q' 0)
+    (hq0 : meanSq (hidden A 0 θ x ℓ.castSucc t ᵥ* (G 0 : Matrix d d ℝ)) =
+      meanSq (hidden A 0 θ x ℓ.castSucc t)) :
+    HasDerivAt (fun τ => eval A 0 (θ.cobAt ℓ.castSucc (G τ)) x t)
+      (((k : ℝ) ^ (L - (ℓ : ℕ)) * (-q' / (2 * (meanSq (hidden A 0 θ x ℓ.castSucc t) + ε)))
+          * ∏ i ∈ Finset.univ.filter (fun i : Fin (L + 1) => ℓ.castSucc < i),
+              ε / (meanSq (hidden A 0 θ x i t) + ε))
+        • eval A 0 θ x t) 0 := by
+  have hL := ℓ.isLt
+  -- block `ℓ` reads `N_ε(h G) G⁻¹ = diag(γ) N_ε(h)` and writes `diag(γ^k) h_{ℓ+1}`
+  let γ : ℝ → T → ℝ := fun τ t' => gammaF_hom ε (meanSq (hidden A 0 θ x ℓ.castSucc t'))
+    (meanSq (hidden A 0 θ x ℓ.castSucc t' ᵥ* (G τ : Matrix d d ℝ)))
+  have hγ : ∀ τ t', 0 < γ τ t' := fun τ t' =>
+    gammaF_pos_hom (by linarith [meanSq_nonneg_hom (hidden A 0 θ x ℓ.castSucc t')])
+      (by linarith [meanSq_nonneg_hom (hidden A 0 θ x ℓ.castSucc t' ᵥ* (G τ : Matrix d d ℝ))])
+  have h1 : ∀ τ, hidden A 0 (θ.cobAt ℓ.castSucc (G τ)) x ℓ.succ =
+      rowScale_hom (fun t' => γ τ t' ^ k) (hidden A 0 θ x ℓ.succ) := fun τ => by
+    have heq := rmsNorm_mul_inv_hom hε (G τ) (hidden A 0 θ x ℓ.castSucc)
+    rw [← hA] at heq
+    exact hidden_succ_cobAt_hom hf θ x ℓ (G τ) (γ τ) (hγ τ) heq
+  -- the later blocks and the readout: `y ↦ β_L(F(γ^k)) y`
+  obtain ⟨F, hFpos, hF1, hFd, hFrel⟩ := exists_scale_fun_hom hε hA hf θ x ℓ.succ
+    (L - (ℓ + 1)) (Fin.last L) (by rw [Fin.val_last, Fin.val_succ]; omega)
+  have hout : ∀ τ, eval A 0 (θ.cobAt ℓ.castSucc (G τ)) x t =
+      (betaF_hom ε (meanSq (hidden A 0 θ x (Fin.last L) t)) ∘ (F t ∘ fun τ => γ τ t ^ k)) τ
+        • eval A 0 θ x t := fun τ => by
+    have h2 := hFrel _ _ (fun t' => pow_pos (hγ τ t') k) (cobAt_read_write_hom θ ℓ (G τ))
+      (h1 τ)
+    rw [eval, eval, h2, hA, rmsNorm_rowScale_hom hε,
+      θ.cobAt_D_of_ne _ (Fin.castSucc_lt_last ℓ).ne, rowScale_mul_hom]
+    rfl
+  -- the chain rule along `γ ↦ γ^k ↦ F ↦ β_L`
+  have hs := meanSq_nonneg_hom (hidden A 0 θ x ℓ.castSucc t)
+  have hγ0 : γ 0 t = 1 := by
+    show gammaF_hom ε _ _ = 1
+    rw [hq0]
+    exact div_self (Real.sqrt_pos.2 (by linarith)).ne'
+  have hγd : HasDerivAt (fun τ => γ τ t)
+      (-q' / (2 * (meanSq (hidden A 0 θ x ℓ.castSucc t) + ε))) 0 :=
+    hasDerivAt_gammaF_hom (by linarith) hq hq0
+  have hF := (hFd t).comp_of_eq 0 (hγd.fun_pow k) (by simp only [hγ0, one_pow])
+  have hB := (hasDerivAt_betaF_hom hε
+    (meanSq_nonneg_hom (hidden A 0 θ x (Fin.last L) t))).comp_of_eq 0 hF
+    (by simp only [Function.comp_apply, hγ0, one_pow, hF1])
+  have hfun : (fun τ => eval A 0 (θ.cobAt ℓ.castSucc (G τ)) x t) = fun τ =>
+      (betaF_hom ε (meanSq (hidden A 0 θ x (Fin.last L) t)) ∘ (F t ∘ fun τ => γ τ t ^ k)) τ
+        • eval A 0 θ x t := funext hout
+  rw [hfun]
+  convert hasDerivAt_smul_const_hom hB (eval A 0 θ x t) using 2
+  -- the scalar: `ε/(r_L² + ε) · k^{L-ℓ-1} ∏_{ℓ < j < L} ε/(r_j² + ε) · k γ'`
+  have hfil : Finset.univ.filter (fun i : Fin (L + 1) => ℓ.castSucc < i) =
+      insert (Fin.last L) (Finset.univ.filter
+        (fun j : Fin (L + 1) => ℓ.succ ≤ j ∧ j < Fin.last L)) := by
+    ext j
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_insert, Fin.ext_iff,
+      Fin.le_iff_val_le_val, Fin.lt_def, Fin.val_succ, Fin.val_castSucc, Fin.val_last]
+    have := j.isLt
+    omega
+  have hnot : Fin.last L ∉ Finset.univ.filter
+      (fun j : Fin (L + 1) => ℓ.succ ≤ j ∧ j < Fin.last L) := by simp
+  have hk : L - (ℓ : ℕ) = (L - (ℓ + 1)) + 1 := by omega
+  rw [hfil, Finset.prod_insert hnot, hk, pow_succ, hγ0, one_pow]
+  ring
+
 /-- **Lemma A.3 (ii), a change of basis before the last hidden state:** for `ε > 0`, blocks that
 are positively homogeneous of degree `k` and `G = e^{τ S}` at `h_ℓ`, `ℓ < L`, the derivative of
 the output at token `t` at `τ = 0` is the output times
@@ -554,7 +693,24 @@ theorem hasDerivAt_eval_cobAt_exp_of_rowHomogeneous {ε : ℝ} (hε : 0 < ε)
           * ∏ i ∈ Finset.univ.filter (fun i : Fin (L + 1) => ℓ.castSucc < i),
               ε / (meanSq (hidden A 0 θ x i t) + ε))
         • eval A 0 θ x t) 0 := by
-  sorry
+  -- `q(τ) = r²(h_ℓ e^{τ S})` has the derivative `2 h_ℓ S h_ℓᵀ / d` at `0`, and `q(0) = r_ℓ²`
+  have hq := hasDerivAt_meanSq_exp_hom (hidden A 0 θ x ℓ.castSucc t) S
+  have hq0 : meanSq (hidden A 0 θ x ℓ.castSucc t ᵥ* (expGL ((0 : ℝ) • S) : Matrix d d ℝ)) =
+      meanSq (hidden A 0 θ x ℓ.castSucc t) := by
+    rw [coe_expGL, zero_smul, NormedSpace.exp_zero, Matrix.vecMul_one]
+  have h := hasDerivAt_eval_cobAt_hom hε hA hf θ ℓ (fun τ => expGL (τ • S)) x t hq hq0
+  convert h using 2
+  simp only [div_mul_eq_div_div]
+  ring
+
+omit [Fintype T] in
+/-- Helper: `e^{τ I} = e^τ I`. -/
+private theorem exp_smul_one_hom (τ : ℝ) :
+    NormedSpace.exp (τ • (1 : Matrix d d ℝ)) = Real.exp τ • (1 : Matrix d d ℝ) := by
+  rw [Matrix.smul_one_eq_diagonal, Matrix.exp_diagonal, Matrix.smul_one_eq_diagonal]
+  congr 1
+  funext i
+  rw [Pi.coe_exp, Real.exp_eq_exp_ℝ]
 
 /-- **Lemma A.3 (ii), the scaling at the last hidden state:** for `ε > 0` and the scaling
 `c = e^τ` at `h_L` with the readout `D` unchanged, the derivative of the output at token `t` at
@@ -565,6 +721,24 @@ theorem hasDerivAt_eval_scale_last_exp {ε : ℝ} (hε : 0 < ε) (hA : A.χ = rm
       (fun τ : ℝ => eval A 0
         { θ.cobAt (Fin.last L) (expGL (τ • (1 : Matrix d d ℝ))) with D := θ.D } x t)
       ((ε / (meanSq (hidden A 0 θ x (Fin.last L) t) + ε)) • eval A 0 θ x t) 0 := by
-  sorry
+  -- `h_L ↦ h_L e^τ = diag(e^τ) h_L`, and the readout reads `diag(β_L(e^τ)) N_ε(h_L)`
+  have hout : ∀ τ : ℝ, eval A 0
+      { θ.cobAt (Fin.last L) (expGL (τ • (1 : Matrix d d ℝ))) with D := θ.D } x t =
+        (betaF_hom ε (meanSq (hidden A 0 θ x (Fin.last L) t)) ∘ Real.exp) τ
+          • eval A 0 θ x t := fun τ => by
+    rw [eval_scale_last_eq_hom, coe_expGL, exp_smul_one_hom, mul_smul_one_hom, hA,
+      rmsNorm_rowScale_hom hε, rowScale_mul_hom, eval, hA]
+    rfl
+  -- the chain rule: `β_L'(1) e^0 = ε/(r_L² + ε)`
+  have hB := (hasDerivAt_betaF_hom hε
+    (meanSq_nonneg_hom (hidden A 0 θ x (Fin.last L) t))).comp_of_eq 0 (Real.hasDerivAt_exp 0)
+    Real.exp_zero.symm
+  have hfun : (fun τ : ℝ => eval A 0
+      { θ.cobAt (Fin.last L) (expGL (τ • (1 : Matrix d d ℝ))) with D := θ.D } x t) =
+        fun τ => (betaF_hom ε (meanSq (hidden A 0 θ x (Fin.last L) t)) ∘ Real.exp) τ
+          • eval A 0 θ x t := funext hout
+  rw [hfun]
+  convert hasDerivAt_smul_const_hom hB (eval A 0 θ x t) using 2
+  rw [Real.exp_zero, mul_one]
 
 end Skips
