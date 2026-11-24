@@ -151,6 +151,7 @@ import SkipsLean
 #print axioms Skips.dense_setOf_linearIndependent_mul
 #print axioms Skips.eq_zero_of_fderiv_suffix_one_sub_sq
 #print axioms Skips.claim_castSucc_tanh
+#print axioms Skips.analyticOnNhd_suffix_prod
 #print axioms Skips.regular_of_tanhDepthGeneric
 #print axioms Skips.claim_of_tanhDepthGeneric
 #print axioms Skips.funDim_tanh_skipless
