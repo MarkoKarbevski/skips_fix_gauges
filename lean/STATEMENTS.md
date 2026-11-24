@@ -236,7 +236,7 @@ a batch of the paper's inputs is the paper's functional dimension; 32 cases of o
 computed at 60 digits, all equal to the value, also for widths below `d`; 124 parameters of
 skipless networks, none above the bound. Report: `lean-statement-audit-twentyfirst-a-2026-11-24.md`.
 The reports of the readers are in `ai_notes/`. Not yet compared by such a reader (written after
-the twenty-first audit began; with the two readers of the twenty-second audit since 21:49 UTC,
+the twenty-first audit began; with the two readers of the twenty-second audit since 21:47 UTC,
 24 November: part A the files of S Theorem B.1 (iv), part B the files of Theorems A.12, A.17 and
 B.1 (iii)): `OneBlock/ResidualRMSZeroReGLU.lean` and `OneBlock/ResidualRMSZeroReGLUGeneric.lean`
 (written at 21:07 UTC), `Symmetry/InsideBlocksRMSNormZero.lean` (written at 21:14 UTC; three of
