@@ -1,4 +1,6 @@
 import SkipsLean.Depth.Cones
+import SkipsLean.Depth.RayGatedN
+import SkipsLean.Depth.StepsGatedN
 
 /-!
 # The step for GELU and gated blocks on rays
@@ -13,8 +15,11 @@ GELU blocks in the case (+). "Good for the cones" is `GoodForConesGated` or `Goo
 SwiGLU blocks, of the matrices `c_j c_j^⊤` for GeGLU and GELU blocks. The claims are `ClaimGated`
 (`Depth/SuffixGated.lean`) and `ClaimRMS` (`Depth/SuffixRMS.lean`).
 
-This is the longest argument of Appendix D. Its proof is not written yet; it will rest on the
-lemmas of Appendix D.5 (Lemmas D.8 to D.11), stated in files of their own.
+This is the longest argument of Appendix D. In the case (n) the two proofs below put together
+its two halves, each stated in a file of its own: from (28) to (38) on generic rays
+(`Depth/RayGatedN.lean`, which uses Lemmas D.8 and D.11, the frozen network and the induction on
+the exponents), and steps 1 to 3 (`Depth/StepsGatedN.lean`). The three statements in the case (+)
+are not proved yet.
 -/
 
 namespace Skips
@@ -33,7 +38,12 @@ theorem claimGated_castSucc_swiglu [Nonempty T] {C : Fin (L + 1) → Set (d → 
     (hθ : GoodForConesGated C A θ)
     (hQ : ∀ ℓ, LinearIndependent ℚ (fun j : hid ℓ => (θ.read ℓ)ᵀ (Sum.inl j)))
     (k : Fin L) (hk : ClaimGated ⊤ θ k.succ) : ClaimGated ⊤ θ k.castSucc := by
-  sorry
+  intro Z η hflat
+  -- the ray: (28) gives (38) with the frozen network (`Depth/RayGatedN.lean`)
+  obtain ⟨hgate, hfro⟩ := frozen_flat_of_suffixFlat_swiglu hθ k (hQ k) Z η hflat
+  -- steps 1 to 3 (`Depth/StepsGatedN.lean`)
+  exact claimGated_castSucc_of_frozen hasDerivAt_silu analyticOnNhd_silu hθ
+    (regular_of_goodForConesGated_swiglu hθ) k hk Z η hflat hgate hfro
 
 /-- **Lemma D.12, SwiGLU blocks, case (+).** -/
 theorem claimGated_castSucc_swiglu_rmsNorm [Nonempty T] {ε : ℝ} (hε : 0 < ε)
@@ -52,7 +62,12 @@ theorem claimGated_castSucc_geglu [Nonempty T] {C : Fin (L + 1) → Set (d → �
     (hQ : ∀ ℓ, LinearIndependent ℚ (fun j : hid ℓ =>
       Matrix.vecMulVec ((θ.read ℓ)ᵀ (Sum.inl j)) ((θ.read ℓ)ᵀ (Sum.inl j))))
     (k : Fin L) (hk : ClaimGated ⊤ θ k.succ) : ClaimGated ⊤ θ k.castSucc := by
-  sorry
+  intro Z η hflat
+  -- the ray: (28) gives (38) with the frozen network (`Depth/RayGatedN.lean`)
+  obtain ⟨hgate, hfro⟩ := frozen_flat_of_suffixFlat_geglu hθ k (hQ k) Z η hflat
+  -- steps 1 to 3 (`Depth/StepsGatedN.lean`)
+  exact claimGated_castSucc_of_frozen hasDerivAt_gelu analyticOnNhd_gelu hθ
+    (regular_of_goodForConesGated_geglu hθ) k hk Z η hflat hgate hfro
 
 /-- **Lemma D.12, GeGLU blocks, case (+).** -/
 theorem claimGated_castSucc_geglu_rmsNorm [Nonempty T] {ε : ℝ} (hε : 0 < ε)

@@ -74,3 +74,7 @@ import SkipsLean.Depth.BlockIdentityGated
 import SkipsLean.Activations.GateFar
 import SkipsLean.Depth.RayDense
 import SkipsLean.Depth.Frozen
+import SkipsLean.Depth.FrozenFar
+import SkipsLean.Depth.SuffixFlatConverse
+import SkipsLean.Depth.RayGatedN
+import SkipsLean.Depth.StepsGatedN
