@@ -30,6 +30,7 @@ import SkipsLean.OneBlock.UnitsGeGLU
 import SkipsLean.OneBlock.GeGLU
 import SkipsLean.Generic.Gated
 import SkipsLean.Residual.OneChangeOfBasis
+import SkipsLean.Residual.OneChangeOfBasisRMSZero
 import SkipsLean.Activations.ReLU
 import SkipsLean.OneBlock.UnitsReLU
 import SkipsLean.OneBlock.UnitsReGLU
