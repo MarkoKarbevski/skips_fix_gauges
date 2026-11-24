@@ -268,3 +268,4 @@ import SkipsLean.Absorb.RidgeFunctions
 import SkipsLean.Absorb.AttentionHeadsIdentifiable
 import SkipsLean.Absorb.BiasesConstructions
 import SkipsLean.Absorb.BiasesAttention
+import SkipsLean.Absorb.BiasesVanillaLower
