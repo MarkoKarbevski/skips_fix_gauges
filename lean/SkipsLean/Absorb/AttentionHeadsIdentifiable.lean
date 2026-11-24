@@ -180,6 +180,174 @@ private theorem residue_ahi {ι : Type*} (S : Finset ι) (b Z α β : ι → ℝ
   · linarith
   · exact h1
 
+/-- The denominator of row `t` of the weights is positive when token `t` sees some token. -/
+private theorem attnWeights_den_pos_ahi (sees : T → T → Prop) [DecidableRel sees]
+    (Z : Matrix T T ℝ) (t : T) (ht : ∃ s, sees t s) :
+    0 < ∑ s', if sees t s' then Real.exp (Z t s') else 0 := by
+  obtain ⟨s, hs⟩ := ht
+  refine Finset.sum_pos' (fun s' _ => ?_) ⟨s, Finset.mem_univ _, ?_⟩
+  · split_ifs
+    · exact (Real.exp_pos _).le
+    · exact le_rfl
+  · simp only [hs, ite_true]
+    exact Real.exp_pos _
+
+/-- A coordinate `h ↦ h t j` is analytic. -/
+private theorem analyticOnNhd_coord_ahi (t : T) (j : d) :
+    AnalyticOnNhd ℝ (fun h : T → d → ℝ => h t j) Set.univ :=
+  ((ContinuousLinearMap.proj (R := ℝ) j).comp
+    (ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : T => d → ℝ) t)).analyticOnNhd _
+
+/-- An entry of `h A` is analytic in `h`. -/
+private theorem analyticOnNhd_mul_entry_ahi (A : Matrix d d ℝ) (t : T) (a : d) :
+    AnalyticOnNhd ℝ (fun h : T → d → ℝ => (Matrix.of h * A) t a) Set.univ := by
+  simp only [Matrix.mul_apply, Matrix.of_apply]
+  exact Finset.analyticOnNhd_fun_sum _ fun c _ =>
+    (analyticOnNhd_coord_ahi t c).mul analyticOnNhd_const
+
+/-- An entry of the scores `h Γ hᵀ` is analytic in `h`. -/
+private theorem analyticOnNhd_scores_ahi (Γ : Matrix d d ℝ) (t s : T) :
+    AnalyticOnNhd ℝ (fun h : T → d → ℝ => (Matrix.of h * Γ * (Matrix.of h)ᵀ) t s)
+      Set.univ := by
+  have e : (fun h : T → d → ℝ => (Matrix.of h * Γ * (Matrix.of h)ᵀ) t s)
+      = fun h => ∑ k, (Matrix.of h * Γ) t k * h s k := by
+    funext h
+    rw [Matrix.mul_apply]
+    rfl
+  rw [e]
+  exact Finset.analyticOnNhd_fun_sum _ fun k _ =>
+    (analyticOnNhd_mul_entry_ahi Γ t k).mul (analyticOnNhd_coord_ahi s k)
+
+omit [Fintype d] in
+/-- An entry of the weights of analytic scores is analytic. -/
+private theorem analyticOnNhd_attnWeights_ahi (sees : T → T → Prop) [DecidableRel sees]
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (Z : E → Matrix T T ℝ)
+    (hZ : ∀ t s, AnalyticOnNhd ℝ (fun h => Z h t s) Set.univ) (t s : T) :
+    AnalyticOnNhd ℝ (fun h => attnWeights sees (Z h) t s) Set.univ := by
+  simp only [attnWeights, Matrix.of_apply]
+  by_cases hs : sees t s
+  · simp only [hs, ite_true]
+    refine (hZ t s).rexp.div (Finset.analyticOnNhd_fun_sum _ fun s' _ => ?_)
+      fun h _ => (attnWeights_den_pos_ahi sees (Z h) t ⟨s, hs⟩).ne'
+    by_cases hs' : sees t s'
+    · simp only [hs', ite_true]
+      exact (hZ t s').rexp
+    · simp only [hs', ite_false]
+      exact analyticOnNhd_const
+  · simp only [hs, ite_false]
+    exact analyticOnNhd_const
+
+/-- An entry of the block is analytic in `h`. -/
+private theorem analyticOnNhd_attnHeads_ahi (sees : T → T → Prop) [DecidableRel sees]
+    {H : Type*} [Fintype H] (Γ C : H → Matrix d d ℝ) (t : T) (a : d) :
+    AnalyticOnNhd ℝ (fun h : T → d → ℝ => attnHeads sees Γ C (Matrix.of h) t a) Set.univ := by
+  have e : ∀ h : T → d → ℝ, attnHeads sees Γ C (Matrix.of h) t a
+      = ∑ i, ∑ c, (∑ s, attnWeights sees (Matrix.of h * Γ i * (Matrix.of h)ᵀ) t s * h s c)
+        * C i c a := by
+    intro h
+    simp only [attnHeads, Matrix.sum_apply, Matrix.mul_apply, Matrix.of_apply]
+  simp only [e]
+  exact Finset.analyticOnNhd_fun_sum _ fun i _ => Finset.analyticOnNhd_fun_sum _ fun c _ =>
+    (Finset.analyticOnNhd_fun_sum _ fun s _ =>
+      (analyticOnNhd_attnWeights_ahi sees _ (analyticOnNhd_scores_ahi (Γ i)) t s).mul
+        (analyticOnNhd_coord_ahi s c)).mul analyticOnNhd_const
+
+open Topology in
+/-- **Analytic continuation in `h`:** the identity on a nonempty open set holds for every `h`,
+since each entry of its left side is analytic on `ℝ^{T × d}`. -/
+private theorem identity_all_ahi (sees : T → T → Prop) [DecidableRel sees] {m : ℕ}
+    (Γ C : Fin m → Matrix d d ℝ) (M : Matrix d d ℝ) (U : Set (Matrix T d ℝ)) (hU : IsOpen U)
+    (hne : U.Nonempty)
+    (h0 : ∀ h ∈ U, h * M + ∑ k, attnWeights sees (h * Γ k * hᵀ) * h * C k = 0)
+    (h : Matrix T d ℝ) : h * M + ∑ k, attnWeights sees (h * Γ k * hᵀ) * h * C k = 0 := by
+  obtain ⟨h₀, hh₀⟩ := hne
+  ext t a
+  have hf : AnalyticOnNhd ℝ (fun g : T → d → ℝ =>
+      (Matrix.of g * M + attnHeads sees Γ C (Matrix.of g)) t a) Set.univ := by
+    simp only [Matrix.add_apply]
+    exact (analyticOnNhd_mul_entry_ahi M t a).add (analyticOnNhd_attnHeads_ahi sees Γ C t a)
+  have hev : (fun g : T → d → ℝ =>
+      (Matrix.of g * M + attnHeads sees Γ C (Matrix.of g)) t a) =ᶠ[𝓝 h₀] 0 := by
+    filter_upwards [hU.mem_nhds hh₀] with g hg
+    have h1 := h0 g hg
+    show (g * M + ∑ k, attnWeights sees (g * Γ k * gᵀ) * g * C k) t a = 0
+    rw [h1]
+    rfl
+  exact hf.eqOn_zero_of_preconnected_of_eventuallyEq_zero isPreconnected_univ
+    (Set.mem_univ h₀) hev (Set.mem_univ h)
+
+omit [Fintype T] in
+/-- Row `t₀`, column `c` of one head, with the sum over the tokens split at `s₂`:
+`(e^{z₂} h_{s₂} C + (∑_{s ≠ s₂} e^{z_s} h_s) C) / (e^{z₂} + ∑_{s ≠ s₂} e^{z_s})`, where
+`z_s = h_{t₀} Γ h_sᵀ`, when token `t₀` sees every token. -/
+private theorem head_entry_ahi [Fintype T] [DecidableEq T] (sees : T → T → Prop)
+    [DecidableRel sees] (h : Matrix T d ℝ) (G C : Matrix d d ℝ) (t₀ s₂ : T)
+    (ht₀ : ∀ s, sees t₀ s) (c : d) :
+    (attnWeights sees (h * G * hᵀ) * h * C) t₀ c
+      = (Real.exp ((h t₀ ᵥ* G) ⬝ᵥ h s₂) * (h s₂ ᵥ* C) c
+          + ((∑ s ∈ Finset.univ.erase s₂, Real.exp ((h t₀ ᵥ* G) ⬝ᵥ h s) • h s) ᵥ* C) c)
+        / (Real.exp ((h t₀ ᵥ* G) ⬝ᵥ h s₂)
+          + ∑ s ∈ Finset.univ.erase s₂, Real.exp ((h t₀ ᵥ* G) ⬝ᵥ h s)) := by
+  -- the scores of row `t₀` are `z_s = (h_{t₀} Γ) ⬝ h_s`
+  have hz : ∀ s, (h * G * hᵀ) t₀ s = (h t₀ ᵥ* G) ⬝ᵥ h s := fun s => rfl
+  have hrow : (attnWeights sees (h * G * hᵀ) * h * C) t₀
+      = ((∑ s, Real.exp ((h t₀ ᵥ* G) ⬝ᵥ h s))⁻¹
+          • ∑ s, Real.exp ((h t₀ ᵥ* G) ⬝ᵥ h s) • h s) ᵥ* C := by
+    rw [Matrix.mul_apply_eq_vecMul, Matrix.mul_apply_eq_vecMul]
+    congr 1
+    rw [Matrix.vecMul_eq_sum, Finset.smul_sum (s := Finset.univ)
+      (f := fun s => Real.exp ((h t₀ ᵥ* G) ⬝ᵥ h s) • h s)]
+    refine Finset.sum_congr rfl fun s _ => ?_
+    rw [smul_smul]
+    congr 1
+    simp only [attnWeights, Matrix.of_apply, ht₀, ite_true, hz]
+    rw [div_eq_inv_mul]
+  rw [hrow, ← Finset.add_sum_erase _ _ (Finset.mem_univ s₂),
+    ← Finset.add_sum_erase _ _ (Finset.mem_univ s₂), Matrix.smul_vecMul, Matrix.add_vecMul,
+    Matrix.smul_vecMul]
+  simp only [Pi.smul_apply, Pi.add_apply, smul_eq_mul]
+  rw [div_eq_inv_mul]
+
+omit [Fintype T] in
+/-- A positive dot product of a nonzero vector with itself. -/
+private theorem dotProduct_self_pos_ahi {v : d → ℝ} (hv : v ≠ 0) : 0 < v ⬝ᵥ v :=
+  lt_of_le_of_ne (Finset.sum_nonneg fun i _ => mul_self_nonneg (v i))
+    fun h => hv (dotProduct_self_eq_zero.1 h.symm)
+
+omit [Fintype T] in
+/-- A matrix `A` with `u A = 0` for every row `u` is `0`. -/
+private theorem eq_zero_of_vecMul_ahi [DecidableEq d] {A : Matrix d d ℝ}
+    (h : ∀ u : d → ℝ, u ᵥ* A = 0) : A = 0 := by
+  ext a b
+  have hb := congrFun (h (Pi.single a 1)) b
+  simpa only [single_vecMul, one_smul, Matrix.row_apply, Pi.zero_apply, Matrix.zero_apply]
+    using hb
+
+omit [Fintype T] in
+/-- **A generic query row:** for a finite set of nonzero matrices, some row `x` has `x A ≠ 0`
+for each of them (a vector space over `ℝ` is not a finite union of proper subspaces). -/
+private theorem exists_vecMul_ne_zero_ahi (F : Finset (Matrix d d ℝ))
+    (hF : (0 : Matrix d d ℝ) ∉ F) : ∃ x : d → ℝ, ∀ A ∈ F, x ᵥ* A ≠ 0 := by
+  classical
+  by_contra hcon
+  have hcov : ⋃ A : F, ((LinearMap.ker (Matrix.vecMulLinear (A : Matrix d d ℝ)) :
+      Subspace ℝ (d → ℝ)) : Set (d → ℝ)) = Set.univ := by
+    refine Set.eq_univ_of_forall fun x => Set.mem_iUnion.2 ?_
+    by_contra hx
+    refine hcon ⟨x, fun A hA hxA => hx ⟨⟨A, hA⟩, ?_⟩⟩
+    rw [SetLike.mem_coe, LinearMap.mem_ker, Matrix.vecMulLinear_apply]
+    exact hxA
+  obtain ⟨⟨A, hA⟩, htop⟩ := Subspace.exists_eq_top_of_iUnion_eq_univ hcov
+  -- every row is in the kernel of `A`, so `A = 0`
+  have hA0 : A = 0 := by
+    refine eq_zero_of_vecMul_ahi fun u => ?_
+    have h1 : u ∈ LinearMap.ker (Matrix.vecMulLinear A) := by
+      have h2 : LinearMap.ker (Matrix.vecMulLinear A) = ⊤ := htop
+      rw [h2]
+      exact Submodule.mem_top
+    rwa [LinearMap.mem_ker, Matrix.vecMulLinear_apply] at h1
+  exact hF (hA0 ▸ hA)
+
 /-- **Lemma A.14 of the absorb paper (Attention heads are identifiable):** on at least three
 tokens, with a mask in which some token sees every token, let the score matrices `Γ_1, …, Γ_m` be
 distinct. If `h M + ∑_k P_{Γ_k}(h) h C_k = 0` for all `h` in a nonempty open set, then `M = 0` and
