@@ -496,6 +496,125 @@ theorem noSymmetricPart_mlp_rescale_rmsNorm {k : ℕ} (hk : k ≠ 0) (hε : 0 < 
     · exact (div_eq_zero_iff.1 h4).resolve_right hc
   · exact absurd h3 hout
 
+/-! ### Helpers: Step 5, the directions of the block with derivative zero -/
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper: `tangentRMS 0 n = 0`. -/
+private theorem tangentRMS_zero_lsr (n : Matrix T d ℝ) : tangentRMS (0 : Matrix d d ℝ) n = 0 := by
+  ext t j
+  have h : (0 : Matrix T d ℝ) t = 0 := rfl
+  simp only [tangentRMS, Matrix.mul_zero, h, zero_dotProduct, zero_div, zero_smul, sub_zero,
+    Matrix.of_apply]
+
+/-- Helper (Step 4 (a), (b), (c) of part (ii)): a direction `ψ` of the weights of the block along
+which `B(n) = σ(n W_read) W_write` has derivative zero at the inputs of `noKinkRMS θ` is a
+rescaling of the hidden units: equation (17) with `X = 0` gives `lhs(v) = 0` at every row `v` off
+the kinks, and Lemma B.3 makes every hidden unit only rescaled. -/
+private theorem rescale_of_flat_lsr {k : ℕ} (hε : 0 < ε)
+    (hσ : ∀ z, z ≠ 0 → HasDerivAt σ (σ' z) z)
+    (hhom : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z)
+    (hU : UnitsRescale σ σ' k d d (hid 0))
+    (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
+    (hθ : OneBlockGenericRMS θ) (ψ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
+    (hE0 : ψ.E = 0) (hD0 : ψ.D = 0)
+    (hψ : ∀ x : Matrix T dIn ℝ, x * θ.E * θ.read 0 ∈ noZero_lsr T (hid 0) →
+      fderiv ℝ ((Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid).f 0)
+          (rmsNorm ε (x * θ.E) * θ.read 0) (rmsNorm ε (x * θ.E) * ψ.read 0) * θ.write 0
+        + (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid).f 0 (rmsNorm ε (x * θ.E) * θ.read 0)
+          * ψ.write 0 = 0) :
+    ∃ α : ∀ ℓ, hid ℓ → ℝ, ψ = rescaleDirMlp k θ α := by
+  -- equation (17) with `X = 0`
+  have h0 : ∀ x ∈ noKinkRMS θ,
+      fderiv ℝ ((Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid).f 0)
+          (rmsNorm ε (x * θ.E) * θ.read 0)
+          (tangentRMS 0 (rmsNorm ε (x * θ.E)) * θ.read 0 + rmsNorm ε (x * θ.E) * ψ.read 0)
+          * θ.write 0
+        + (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid).f 0 (rmsNorm ε (x * θ.E) * θ.read 0)
+          * ψ.write 0 = 0 := by
+    intro x hx
+    rw [tangentRMS_zero_lsr, Matrix.zero_mul, zero_add]
+    exact hψ x hx
+  -- Lemma B.3 with `E`, `D` the identity and `M = 0`: `ψ_{c_i} = λ_i c_i`, `ψ_{a_i} = -k λ_i a_i`
+  obtain ⟨-, -, lam, hlam⟩ := hU (fun i => (θ.read 0)ᵀ i) 0 (fun i => θ.write 0 i) 0 0
+    (fun i => (ψ.read 0)ᵀ i) 0 (fun i => ψ.write 0 i) hθ.row_ne_zero hθ.col_ne_zero
+    hθ.col_not_collinear (by
+      intro x hx
+      have hx' : ∀ i, x ⬝ᵥ (θ.read 0)ᵀ i ≠ 0 := fun i => by
+        have h := hx i
+        simp only [Pi.zero_apply, add_zero] at h
+        exact h
+      funext j
+      have h := (stepA_lsr hε hσ hhom θ hθ.rank_E 0 (ψ.read 0) (ψ.write 0) h0 x hx' j).1
+      unfold lhs_lsr at h
+      simp only [Matrix.vecMul_zero, zero_dotProduct, zero_add] at h
+      simp only [Matrix.vecMul_zero, Pi.add_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul,
+        Pi.zero_apply, add_zero, zero_add]
+      refine Eq.trans (Finset.sum_congr rfl fun i _ => ?_) h
+      ring)
+  -- `ψ = rescaleDirMlp k θ α`, component by component
+  obtain ⟨α, hα⟩ : ∃ α : ∀ ℓ : Fin 1, hid ℓ → ℝ, α 0 = lam :=
+    ⟨fun ℓ => Fin.cases lam (fun l => l.elim0) ℓ, rfl⟩
+  refine ⟨α, Params.ext' hE0 (fun ℓ => ?_) (fun ℓ => ?_) hD0⟩
+  · obtain rfl := Subsingleton.elim ℓ 0
+    ext a i
+    have h1 : ψ.read 0 a i = lam i * θ.read 0 a i := congrFun (hlam i).1 a
+    show ψ.read 0 a i = α 0 i * θ.read 0 a i
+    rw [hα, h1]
+  · obtain rfl := Subsingleton.elim ℓ 0
+    ext i a
+    have h1 : ψ.write 0 i a = -((k : ℝ) * lam i) * θ.write 0 i a := congrFun (hlam i).2.2 a
+    show ψ.write 0 i a = -((k : ℝ) * α 0 i) * θ.write 0 i a
+    rw [hα, h1]
+
+/-- Helper (Step 5): `funDimLearned_eq_funDim_residual_add_of_noSymmetricPart_on` with the cone
+of the pre-activations with no zero entry, Step 4 from `noSymmetricPart_mlp_rescale_rmsNorm`,
+and the directions of the block with derivative zero from `rescale_of_flat_lsr`. -/
+private theorem on_lsr {k : ℕ} (hk : k ≠ 0) (hε : 0 < ε)
+    (hσ : ∀ z, z ≠ 0 → HasDerivAt σ (σ' z) z)
+    (hhom : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z)
+    (hU : UnitsRescale σ σ' k d d (hid 0)) [Nonempty (hid 0)]
+    (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
+    (hθ : OneBlockGenericRMS θ) (R : Fin 1 → Matrix d d ℝ) (hR : IsUnit (R 0).det) :
+    funDimLearned (Arch.mlp σ (rmsNorm ε) hid) (θ, R)
+        = funDim (Arch.mlp σ (rmsNorm ε) hid) 1 θ + Fintype.card d * (Fintype.card d + 1) / 2 ∧
+      ∃ (n : ℕ) (X : Fin n → Matrix T dIn ℝ),
+        (∀ i, X i * θ.E * θ.read 0 ∈ noZero_lsr T (hid 0)) ∧
+        jacobianRankSkips (Arch.mlp σ (rmsNorm ε) hid)
+            (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) X (θ, R)
+          = funDimLearned (Arch.mlp σ (rmsNorm ε) hid) (θ, R) := by
+  -- an input with equal rows and no hidden unit at its kink: `x = v B` with `v c_i ≠ 0`
+  obtain ⟨B, hB⟩ := Matrix.vecMul_surjective_iff_exists_left_inverse.mp
+    (Matrix.vecMul_surjective_iff_rank_eq_card.mpr hθ.rank_E)
+  have hw : ∃ w : dIn → ℝ,
+      (Matrix.of fun _ : T => w) * θ.E * θ.read 0 ∈ noZero_lsr T (hid 0) := by
+    obtain ⟨v, hv⟩ := exists_dotProduct_ne_zero_lsr (fun i => (θ.read 0)ᵀ i) hθ.col_ne_zero
+    refine ⟨v ᵥ* B, fun t i => ?_⟩
+    have e : (Matrix.of fun _ : T => v ᵥ* B) = (Matrix.of fun _ : T => v) * B := by
+      ext; rfl
+    rw [e, Matrix.mul_assoc _ B, hB, Matrix.mul_one]
+    exact hv i
+  -- the cone is open, invariant under positive scalings of the rows, and `σ` is `C¹` on it
+  exact funDimLearned_eq_funDim_residual_add_of_noSymmetricPart_on
+    (A := Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) hε rfl (noZero_lsr T (hid 0))
+    isOpen_noZero_lsr (fun M hM c hc t i => mul_ne_zero (hc t).ne' (hM t i))
+    (contDiffOn_map_lsr hhom) θ R hθ.rank_E hθ.rank_D hR hw
+    (noSymmetricPart_mlp_rescale_rmsNorm hk hε hσ hhom hU θ hθ) (fun ψ hE0 hD0 hψ => by
+      obtain ⟨α, rfl⟩ := rescale_of_flat_lsr hε hσ hhom hU θ hθ ψ hE0 hD0 hψ
+      exact Submodule.subset_span (insideBlocks_rescaleDirMlp hhom θ α))
+
+/-- Helper: `d (d + 1)/2 + d (d − 1)/2 = d²` (both products are even; a copy of the private
+`half_add_half_lsk` of `OneBlock/LearnedSkipKinds.lean`). -/
+private theorem half_add_half_lsr (n : ℕ) : n * (n + 1) / 2 + n * (n - 1) / 2 = n ^ 2 := by
+  have h1 := Nat.two_mul_div_two_of_even (Nat.even_mul_succ_self n)
+  have h2 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self n)
+  have h3 : n * (n + 1) + n * (n - 1) = 2 * n ^ 2 := by
+    cases n with
+    | zero => rfl
+    | succ m => rw [Nat.add_sub_cancel]; ring
+  generalize n * (n + 1) = y at h1 h3 ⊢
+  generalize n * (n - 1) = x at h2 h3 ⊢
+  generalize n ^ 2 = q at h3 ⊢
+  omega
 
 /-- **Theorem 4.6 (ii), "A learned skip raises it by exactly `d (d + 1)/2` more than an identity
 skip", for ReLU-type MLP blocks, at one parameter:** under the conditions `OneBlockGenericRMS`,
@@ -509,8 +628,8 @@ theorem funDimLearned_mlp_rescale_rmsNorm_eq_residual_add {k : ℕ} (hk : k ≠ 
     (hθ : OneBlockGenericRMS θ) (R : Fin 1 → Matrix d d ℝ) (hR : IsUnit (R 0).det) :
     funDimLearned (Arch.mlp σ (rmsNorm ε) hid) (θ, R)
       = funDim (Arch.mlp σ (rmsNorm ε) hid) 1 θ
-        + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+        + Fintype.card d * (Fintype.card d + 1) / 2 :=
+  (on_lsr hk hε hσ hhom hU θ hθ R hR).1
 
 /-- **Theorem B.1 (iii) for ReLU-type MLP blocks with a full learned skip, at one parameter:**
 under the conditions `OneBlockGenericRMS`, for an invertible skip,
@@ -526,7 +645,16 @@ theorem funDimLearned_mlp_rescale_rmsNorm {k : ℕ} (hk : k ≠ 0) (hε : 0 < ε
         + (Fintype.card d * (Fintype.card d - 1) + Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
         + Fintype.card d ^ 2 := by
-  sorry
+  -- `fd = fd_res + d (d + 1)/2` and `fd_res + d (d − 1)/2 + s = P`
+  have h1 := (on_lsr hk hε hσ hhom hU θ hθ R hR).1
+  have h2 := funDim_mlp_oneBlock_rescale_residual_rmsNorm hε hσ hhom hU θ hθ
+  have h3 := half_add_half_lsr (Fintype.card d)
+  have h4 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self (Fintype.card d))
+  rw [h1]
+  generalize Fintype.card d * (Fintype.card d + 1) = y at h3 ⊢
+  generalize Fintype.card d * (Fintype.card d - 1) = x at h2 h3 h4 ⊢
+  generalize Fintype.card d ^ 2 = q at h3 ⊢
+  omega
 
 /-- **Theorem B.1 (iii) in the paper's own sense, for ReLU-type MLP blocks, at one parameter:** a
 finite batch of inputs with no hidden unit at its kink on which the Jacobian in the weights and
@@ -543,7 +671,11 @@ theorem exists_jacobianRankSkips_mlp_rescale_rmsNorm {k : ℕ} (hk : k ≠ 0) (h
           + (Fintype.card d * (Fintype.card d - 1) + Fintype.card (hid 0))
         = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
           + Fintype.card d ^ 2 := by
-  sorry
+  -- the batch of Step 5, with the value of `funDimLearned_mlp_rescale_rmsNorm`
+  obtain ⟨n, X, hX, hrank⟩ := (on_lsr hk hε hσ hhom hU θ hθ R hR).2
+  refine ⟨n, X, hX, ?_⟩
+  rw [hrank]
+  exact funDimLearned_mlp_rescale_rmsNorm hk hε hσ hhom hU θ hθ R hR
 
 /-- **Theorem B.1 (iii) of the skips paper for one ReLU block with a full learned skip, `ε > 0`:**
 for `d_in, d_out ≥ d ≥ 2` and a block of any width with at least one hidden unit, at almost every
