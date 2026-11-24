@@ -30,10 +30,60 @@ variable {T d dIn dOut : Type*} {L : ℕ} [Fintype T] [Fintype d] [DecidableEq d
 
 /-! ### RMSNorm with `ε = 0` away from the zero rows -/
 
+/-- Helper: `√` is analytic at a positive number, where it agrees with `x ↦ exp (log x / 2)`. -/
+private theorem analyticAt_sqrt_of_pos_sz {x : ℝ} (hx : 0 < x) : AnalyticAt ℝ Real.sqrt x := by
+  have h : AnalyticAt ℝ (Real.exp ∘ fun y => Real.log y * (1 / 2)) x :=
+    ((analyticAt_log hx).mul analyticAt_const).rexp
+  refine h.congr ?_
+  filter_upwards [lt_mem_nhds hx] with y hy
+  show Real.exp (Real.log y * (1 / 2)) = Real.sqrt y
+  rw [Real.sqrt_eq_rpow, Real.rpow_def_of_pos hy]
+
+omit [DecidableEq d] in
+/-- Helper: `‖v‖² / d > 0` for a row `v ≠ 0` (then `d` is not empty). -/
+private theorem dotProduct_self_div_pos_sz {v : d → ℝ} (hv : v ≠ 0) :
+    0 < (v ⬝ᵥ v) / (Fintype.card d : ℝ) := by
+  have h1 : 0 < v ⬝ᵥ v :=
+    lt_of_le_of_ne (Finset.sum_nonneg fun j _ => mul_self_nonneg (v j))
+      (fun h => hv (dotProduct_self_eq_zero.1 h.symm))
+  obtain ⟨j, -⟩ := Function.ne_iff.1 hv
+  have h2 : (0 : ℝ) < Fintype.card d := Nat.cast_pos.2 (Fintype.card_pos_iff.2 ⟨j⟩)
+  exact div_pos h1 h2
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (as in `Depth/SuffixRMS.lean`): an entry of a matrix is a real-analytic (linear)
+function of the matrix. -/
+private theorem analyticAt_entry_sz {m n : Type*} [Fintype m] [Fintype n] (t : m) (i : n)
+    (M₀ : Matrix m n ℝ) : AnalyticAt ℝ (fun M : Matrix m n ℝ => M t i) M₀ :=
+  ((ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : n => ℝ) i).comp
+    (ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : m => n → ℝ) t)).analyticAt _
+
 /-- RMSNorm with `ε = 0` is real-analytic at every matrix without a zero row. -/
 theorem analyticAt_rmsNorm_zero (h : Matrix T d ℝ) (hh : ∀ t, h t ≠ 0) :
     AnalyticAt ℝ (rmsNorm 0 : Matrix T d ℝ → Matrix T d ℝ) h := by
-  sorry
+  -- entry `(t, i)` is `(√(‖h_t‖²/d + 0))⁻¹ h_{ti}`
+  show AnalyticAt ℝ (fun h : Matrix T d ℝ => fun t => fun i =>
+    (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + 0))⁻¹ * h t i) h
+  refine AnalyticAt.pi fun t => AnalyticAt.pi fun i => ?_
+  -- the quantity under the root is a polynomial in the entries, positive at `h` (`h_t ≠ 0`)
+  have hq : AnalyticAt ℝ (fun h : Matrix T d ℝ => (h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + 0) h :=
+    ((Finset.analyticAt_fun_sum _ fun j _ =>
+      (analyticAt_entry_sz t j h).mul (analyticAt_entry_sz t j h)).div_const).add
+        analyticAt_const
+  have hpos : 0 < (h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + 0 := by
+    rw [add_zero]; exact dotProduct_self_div_pos_sz (hh t)
+  -- `√` is analytic at a positive number, and the inverse where it is not zero
+  exact (((analyticAt_sqrt_of_pos_sz hpos).comp
+    (f := fun h : Matrix T d ℝ => (h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + 0) hq).inv
+      (Real.sqrt_pos.2 hpos).ne').mul (analyticAt_entry_sz t i h)
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: with the elementwise norm, the derivative of a matrix-valued function of one real
+variable is taken entry by entry. -/
+private theorem hasDerivAt_matrix_sz {m n : Type*} [Fintype m] [Fintype n]
+    {f : ℝ → Matrix m n ℝ} {f' : Matrix m n ℝ} {x : ℝ}
+    (h : ∀ i j, HasDerivAt (fun τ => f τ i j) (f' i j) x) : HasDerivAt f f' x :=
+  hasDerivAt_pi.2 fun i => hasDerivAt_pi.2 (h i)
 
 /-- **The derivative of RMSNorm with `ε = 0`** at a matrix `h` without a zero row: on every row,
 `𝐃N(h) u = u/ρ − ⟨h, u⟩ h/(d ρ³)` with `ρ = ‖h‖/√d` (the formula of the case `ε > 0` with
@@ -44,13 +94,67 @@ theorem fderiv_rmsNorm_zero_apply (h U : Matrix T d ℝ) (hh : ∀ t, h t ≠ 0)
           (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)))⁻¹ • U t
             - ((h t ⬝ᵥ U t) / (Fintype.card d : ℝ)
                 * (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)))⁻¹ ^ 3) • h t := by
-  sorry
+  -- the line `τ ↦ h + τ U` passes through `h` with velocity `U`
+  have hline : HasDerivAt (fun τ : ℝ => h + τ • U) U 0 := by
+    have h1 := ((hasDerivAt_id (0 : ℝ)).smul_const U).const_add h
+    rw [one_smul] at h1
+    exact h1
+  have h0 : h = h + (0 : ℝ) • U := by rw [zero_smul, add_zero]
+  -- the chain rule: `τ ↦ N(h + τ U)` has the derivative `𝐃N(h) U` at `0`
+  have hF := (analyticAt_rmsNorm_zero h hh).differentiableAt.hasFDerivAt.comp_hasDerivAt_of_eq
+    (0 : ℝ) hline h0
+  -- the same derivative, entry by entry: entry `(t, i)` is `q(τ)^{-1/2} (h_{ti} + τ U_{ti})`
+  refine hF.unique (hasDerivAt_matrix_sz fun t i => ?_)
+  have hpos := dotProduct_self_div_pos_sz (hh t)
+  -- `‖h_t + τ U_t‖² = ‖h_t‖² + 2 τ ⟨h_t, U_t⟩ + τ² ‖U_t‖²` has the derivative `2 ⟨h_t, U_t⟩` at `0`
+  have hdot : HasDerivAt (fun τ : ℝ => (h t + τ • U t) ⬝ᵥ (h t + τ • U t))
+      (2 * (h t ⬝ᵥ U t)) 0 := by
+    have e : (fun τ : ℝ => (h t + τ • U t) ⬝ᵥ (h t + τ • U t))
+        = fun τ => h t ⬝ᵥ h t + τ * (2 * (h t ⬝ᵥ U t)) + τ * τ * (U t ⬝ᵥ U t) := by
+      funext τ
+      simp only [add_dotProduct, dotProduct_add, smul_dotProduct, dotProduct_smul, smul_eq_mul,
+        dotProduct_comm (U t) (h t)]
+      ring
+    rw [e]
+    exact hasDerivAt_quad _ _ _
+  -- `q(τ) = ‖h_t + τ U_t‖²/d`, then `q^{-1/2}`, then the product with `h_{ti} + τ U_{ti}`
+  have hq := hdot.div_const (Fintype.card d : ℝ)
+  have hs : 0 < Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)) := Real.sqrt_pos.2 hpos
+  have hsq := hq.sqrt (by simp only [zero_smul, add_zero]; exact hpos.ne')
+  have hinv := hsq.inv (by simp only [zero_smul, add_zero]; exact hs.ne')
+  have hent : HasDerivAt (fun τ : ℝ => h t i + τ * U t i) (U t i) 0 := by
+    have h1 := ((hasDerivAt_id (0 : ℝ)).mul_const (U t i)).const_add (h t i)
+    rw [one_mul] at h1
+    exact h1
+  show HasDerivAt (fun τ : ℝ => (Real.sqrt ((h t + τ • U t) ⬝ᵥ (h t + τ • U t)
+      / (Fintype.card d : ℝ) + 0))⁻¹ * (h t i + τ * U t i))
+    ((Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)))⁻¹ * U t i
+      - ((h t ⬝ᵥ U t) / (Fintype.card d : ℝ)
+        * (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)))⁻¹ ^ 3) * h t i) 0
+  simp only [add_zero]
+  refine (hinv.mul hent).congr_deriv ?_
+  simp only [Pi.inv_apply, zero_smul, add_zero, zero_mul]
+  ring
 
 /-- **Equation (15) of the dimension paper for the normalization:** RMSNorm with `ε = 0` does not
 change along `h`: `𝐃N(h) h = 0` at every matrix `h` without a zero row. -/
 theorem fderiv_rmsNorm_zero_self (h : Matrix T d ℝ) (hh : ∀ t, h t ≠ 0) :
     fderiv ℝ (rmsNorm 0 : Matrix T d ℝ → Matrix T d ℝ) h h = 0 := by
-  sorry
+  rw [fderiv_rmsNorm_zero_apply h h hh]
+  ext t i
+  -- with `ρ = √q`, `q = ‖h_t‖²/d`: `ρ⁻¹ - q ρ⁻³ = 0` because `q = ρ²`
+  have hpos := dotProduct_self_div_pos_sz (hh t)
+  have hs : 0 < Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)) := Real.sqrt_pos.2 hpos
+  have hs2 : Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)) ^ 2
+      = (h t ⬝ᵥ h t) / (Fintype.card d : ℝ) := Real.sq_sqrt hpos.le
+  show (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)))⁻¹ * h t i
+      - ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)
+        * (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)))⁻¹ ^ 3) * h t i = 0
+  generalize Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)) = ρ at hs hs2 ⊢
+  rw [← hs2]
+  have hne := hs.ne'
+  field_simp
+  ring
 
 variable (A : Arch T d L) (θ : Params A dIn dOut)
 
