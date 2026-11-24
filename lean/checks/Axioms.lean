@@ -546,3 +546,7 @@ import SkipsLean
 #print axioms Skips.MeromorphicAtInfinity.eventually_eq_zero
 #print axioms Skips.eventually_eq_zero_of_millsRatio_smul_add
 #print axioms Skips.blockLHSGated_eq_writeLHS
+#print axioms Skips.blockLHSGated_add_right
+#print axioms Skips.blockLHSGated_neg
+#print axioms Skips.suffixFlat_castSucc_iff_gated
+#print axioms Skips.suffixFlat_castSucc_iff_gated_rmsNorm
