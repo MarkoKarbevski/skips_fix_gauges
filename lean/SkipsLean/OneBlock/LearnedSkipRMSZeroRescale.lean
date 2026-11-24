@@ -42,8 +42,9 @@ for `ε = 0` of `OneBlock/LearnedSkipRescale.lean`, and for a learned skip of
 
 The step "`X_0` is a multiple of `I`", with Lemma B.3, is the hypothesis `UnitsRescaleSphere`
 (`OneBlock/UnitsRescaleSphere.lean`; ReLU and ReLU²). No width of the block is asked. Numeric
-check of the values: `learned_skip_zero_relu_check_2026-11-24.py`. Not stated: ReGLU blocks; the
-upper triangular skip.
+check of the values: `learned_skip_zero_relu_check_2026-11-24.py`. Not stated here: ReGLU blocks
+(`OneBlock/LearnedSkipRMSZeroReGLU.lean`, `OneBlock/LearnedSkipRMSZeroReGLUGeneric.lean`); the
+upper triangular skip (`OneBlock/LearnedSkipTriangularRMSZeroRescale.lean`).
 -/
 
 namespace Skips

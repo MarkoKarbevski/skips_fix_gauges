@@ -24,7 +24,9 @@ with `d ≥ 2`:
   of the paper's inputs with this rank, and the equality with the residual network at the same
   weights, `funDimLearned = funDim + d(d+1)/2 − 1`.
 
-Not stated: ReGLU blocks; the upper triangular skip.
+Not stated here: ReGLU blocks (`OneBlock/LearnedSkipRMSZeroReGLU.lean`,
+`OneBlock/LearnedSkipRMSZeroReGLUGeneric.lean`); the upper triangular skip
+(`OneBlock/LearnedSkipTriangularRMSZeroRescale.lean`).
 -/
 
 namespace Skips

@@ -36,7 +36,8 @@ the proof:
 
 The step "`X_0` is a multiple of `I`", with Lemma B.3, is `reglu_unitsRescaleSphere`
 (`OneBlock/UnitsRescaleSphereReGLU.lean`). No width of the block is asked. Numeric check of the
-values: `learned_skip_zero_relu_check_2026-11-24.py`. Not stated: the upper triangular skip.
+values: `learned_skip_zero_relu_check_2026-11-24.py`. Not stated here: the upper triangular skip
+(`OneBlock/LearnedSkipTriangularRMSZeroRescale.lean`).
 -/
 
 namespace Skips
