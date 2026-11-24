@@ -299,6 +299,7 @@ import SkipsLean.Residual.LearnedGainUnderEquality
 import SkipsLean.OneBlock.LearnedSkipRMSZeroBound
 import SkipsLean.OneBlock.LearnedSkipRMSZeroBoundKinds
 import SkipsLean.OneBlock.LearnedSkipRMSZeroRescaleBound
+import SkipsLean.OneBlock.LearnedSkipTriangularRMSZeroBound
 import SkipsLean.Symmetry.InsideBlocksRMSNormZero
 import SkipsLean.Dimension.UpperBoundSymmetriesRMSNormZero
 import SkipsLean.OneBlock.ResidualRMSZeroGain
