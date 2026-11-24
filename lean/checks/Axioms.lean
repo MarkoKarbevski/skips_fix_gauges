@@ -1011,3 +1011,16 @@ import SkipsLean
 #print axioms Skips.ae_mul_add_attentionBlock_ne
 #print axioms Skips.exists_row_attentionBlock_sub_ge
 #print axioms Skips.hasDerivAt_eval_attention_zero
+#print axioms Skips.eval_headsQK
+#print axioms Skips.eval_headsVO
+#print axioms Skips.headDirQK_mem_flat
+#print axioms Skips.headDirVO_mem_flat
+#print axioms Skips.cobDir_add_headDirQK_add_headDirVO_injective
+#print axioms Skips.funDim_add_le_skipless_attention
+#print axioms Skips.funDim_add_le_skipless_attention_rmsNorm
+#print axioms Skips.funDim_add_le_residual_attention
+#print axioms Skips.funDim_add_le_residual_attention_rmsNorm
+#print axioms Skips.ae_funDim_add_le_skipless_attention
+#print axioms Skips.ae_funDim_add_le_skipless_attention_rmsNorm
+#print axioms Skips.ae_funDim_add_le_residual_attention
+#print axioms Skips.ae_funDim_add_le_residual_attention_rmsNorm

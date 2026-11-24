@@ -183,6 +183,7 @@ private theorem block_headsVO_ath (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ 
   rw [headsVO_value_ath, headsVO_output_ath, Matrix.mul_assoc,
     ← Matrix.mul_assoc (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ), Units.mul_inv, Matrix.one_mul]
 
+omit [DecidableEq d] [Fintype dOut] in
 /-- **The changes of basis between queries and keys preserve the function** (Appendix B), for
 every mask, every `χ` and all stream matrices. -/
 theorem eval_headsQK (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (S : Fin L → Matrix d d ℝ)
@@ -192,6 +193,7 @@ theorem eval_headsQK (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (S : Fin L → Mat
   -- `E` and `D` do not move, and every block computes the same map
   exact eval_eq_of_blocks_ath θ (θ.headsQK K) rfl rfl (block_headsQK_ath θ K) S x
 
+omit [DecidableEq d] [Fintype dOut] in
 /-- **The changes of basis between values and outputs preserve the function** (Appendix B). -/
 theorem eval_headsVO (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (S : Fin L → Matrix d d ℝ)
     (x : Matrix T dIn ℝ) :
@@ -357,6 +359,7 @@ private theorem hasDerivAt_headsVO_ath (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) 
     (Params.linearEquivProd (A := Arch.attention sees χ H dh) (dIn := dIn)
       (dOut := dOut)).symm.toLinearMap).hasFDerivAt.comp_hasDerivAt 0 hprod
 
+omit [DecidableEq d] in
 /-- The directions of the changes of basis between queries and keys are flat. -/
 theorem headDirQK_mem_flat (S : Fin L → Matrix d d ℝ) (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
     headDirQK θ Γ ∈ flat (Arch.attention sees χ H dh) S θ := by
@@ -366,6 +369,7 @@ theorem headDirQK_mem_flat (S : Fin L → Matrix d d ℝ) (Γ : ∀ ℓ, H ℓ �
     (headDirQK θ Γ) (hasDerivAt_headsQK_ath θ Γ) (headsQK_expGL_zero_ath θ Γ)
     (Filter.Eventually.of_forall fun τ x => eval_headsQK θ _ S x)
 
+omit [DecidableEq d] in
 /-- The directions of the changes of basis between values and outputs are flat. -/
 theorem headDirVO_mem_flat (S : Fin L → Matrix d d ℝ) (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
     headDirVO θ Γ ∈ flat (Arch.attention sees χ H dh) S θ := by
@@ -395,6 +399,7 @@ private theorem cancel_left_of_rank_ath {m n k : Type*} [Fintype n] (M : Matrix 
     simpa [Matrix.mul_apply, Matrix.mulVec, dotProduct] using this
   exact congrFun (hinj hcol) i
 
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] [(ℓ : Fin L) → DecidableEq (dh ℓ)] in
 /-- **Lemma B.1 for attention blocks, in infinitesimal form:** if `E` and every write have rank
 `d` and the query matrix and the value matrix of every head have rank `d_h`, the changes of basis
 `X` of the hidden states and the changes of basis `Γ`, `Γ'` inside the heads are determined by
