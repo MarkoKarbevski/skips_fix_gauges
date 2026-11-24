@@ -138,6 +138,7 @@ private theorem block_rescaleCurveMlp_ubr {k : ℕ}
         * (σ ((n * θ.read ℓ) t i) * θ.write ℓ i a) := by ring
     _ = _ := by rw [exp_pow_mul_exp_neg_ubr, one_mul]
 
+omit [Fintype T] [DecidableEq d] in
 /-- **The rescalings of the hidden units of an MLP block with a positively homogeneous
 activation are symmetries inside the blocks** (ReLU, ReLU²). -/
 theorem insideBlocks_rescaleDirMlp {k : ℕ}
@@ -241,6 +242,7 @@ private theorem block_rescaleCurveGate_ubr {k : ℕ}
           * θ.write ℓ i a) := by ring
     _ = _ := by rw [exp_pow_mul_exp_neg_ubr, one_mul]
 
+omit [Fintype T] [DecidableEq d] in
 /-- **The rescalings of the gates of a gated block with a positively homogeneous gate are
 symmetries inside the blocks** (ReGLU). -/
 theorem insideBlocks_rescaleDirGate {k : ℕ}
@@ -488,6 +490,7 @@ private theorem rescaleMlp_eq_zero_ubr {k : ℕ}
   simp only [rescaleDirMlp, Matrix.of_apply, Matrix.zero_apply] at this
   exact (mul_eq_zero.1 this).resolve_left hα
 
+omit [Fintype T] [DecidableEq d] in
 /-- Helper: the directions of the rescalings of the hidden units of MLP blocks with a positively
 homogeneous activation span a space `V_B` of directions of symmetries inside the blocks, of
 dimension `∑_ℓ d_hidden,ℓ`, in which a direction whose read of a block is `0` has the write of
@@ -622,6 +625,7 @@ private theorem rescaleGate_eq_zero_ubr {k : ℕ}
       Sum.elim_inl, zero_add, Matrix.zero_apply] at this
     exact (mul_eq_zero.1 this).resolve_left hβ
 
+omit [Fintype T] [DecidableEq d] in
 /-- Helper: the directions of the rescalings of the values and of the gates of gated blocks with
 a positively homogeneous gate span a space `V_B` of directions of symmetries inside the blocks,
 of dimension `2 ∑_ℓ d_hidden,ℓ`, in which a direction whose read of a block is `0` has the write
