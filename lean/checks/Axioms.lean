@@ -1270,3 +1270,7 @@ import SkipsLean
 #print axioms Skips.finrank_ker_le_of_level_set_subset_iUnion_image
 #print axioms Skips.finrank_le_funDim_add_of_locally_mem_iUnion_image
 #print axioms Skips.ae_finrank_le_funDim_add_of_ae_locally_mem_iUnion_image
+#print axioms Skips.isUnit_det_one_add_of_mem_antisymmetric
+#print axioms Skips.cayley_mem_orthogonalGroup
+#print axioms Skips.exists_det_one_add_mul_diagonal_ne_zero
+#print axioms Skips.exists_cayley_mul_diagonal_of_mem_orthogonalGroup

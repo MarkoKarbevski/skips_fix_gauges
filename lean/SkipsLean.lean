@@ -237,3 +237,5 @@ import SkipsLean.Generic.LevelSetImages
 import SkipsLean.Dimension.IdentifiableConverse
 import SkipsLean.Generic.Cayley
 import SkipsLean.Dimension.IdentifiableConverseCob
+import SkipsLean.Dimension.IdentifiableIff
+import SkipsLean.Residual.IdentifiableIff
