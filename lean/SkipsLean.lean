@@ -119,3 +119,6 @@ import SkipsLean.Depth.SuffixZeroClaim
 import SkipsLean.Depth.ComplexRMSNorm
 import SkipsLean.Depth.ComplexSuffix
 import SkipsLean.Depth.StepZeroValues
+import SkipsLean.Depth.SuffixRows
+import SkipsLean.Depth.RowsAux
+import SkipsLean.Depth.ComplexBlockIdentity
