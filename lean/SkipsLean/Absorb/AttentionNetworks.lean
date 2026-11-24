@@ -157,6 +157,82 @@ private theorem core_atn {sees : T → T → Prop} [DecidableRel sees]
   congr 1
   ring
 
+omit [Fintype dIn] [Fintype dOut] in
+/-- Helper: at `λ = 0` the matrix `ξ E ∏_ℓ (I + ξ λ V_ℓ) D` is `ξ E D`. -/
+private theorem resMat_zero_atn {sees : T → T → Prop} [DecidableRel sees]
+    {χ : Matrix T d ℝ → Matrix T d ℝ} (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (ξ : ℝ) : resMat_atn θ ξ 0 = ξ • (θ.E * θ.D) := by
+  simp [resMat_atn]
+
+/-- Helper: without a mask every entry of `U` is `1 / T`, so `U a = 0` for the column
+`a = e_{t₁} − e_{t₂} ≠ 0`. -/
+private theorem exists_kernel_noMask_atn (hT : 2 ≤ Fintype.card T) :
+    ∃ a : T → ℝ, a ≠ 0 ∧ attnWeights (fun _ _ : T => True) 0 *ᵥ a = (0 : ℝ) • a := by
+  classical
+  obtain ⟨t₁, t₂, h12⟩ := Fintype.one_lt_card_iff.1 hT
+  refine ⟨Pi.single t₁ 1 - Pi.single t₂ 1, fun h => ?_, ?_⟩
+  · have h1 := congrFun h t₁
+    simp [h12] at h1
+  · ext t
+    simp [attnWeights, Matrix.mulVec, dotProduct, mul_sub, Finset.sum_sub_distrib,
+      ← Finset.mul_sum, Finset.sum_pi_single']
+
+/-- Helper: under the causal mask row `t` of `U` is uniform on the `t + 1` tokens `s ≤ t`. -/
+private theorem attnWeights_causal_atn {n : ℕ} (t s : Fin n) :
+    attnWeights (fun t s : Fin n => s ≤ t) 0 t s = if s ≤ t then 1 / ((t : ℝ) + 1) else 0 := by
+  simp only [attnWeights, Matrix.of_apply, Matrix.zero_apply, Real.exp_zero]
+  split_ifs with h
+  · rw [Finset.sum_boole, Finset.filter_ge_eq_Iic, Fin.card_Iic]
+    push_cast
+    rfl
+  · rfl
+
+/-- Helper: under the causal mask `U` is lower triangular with the diagonal entries
+`1 / (t + 1)`, so each `1 / (t + 1)` is an eigenvalue with a nonzero eigencolumn. -/
+private theorem exists_eigen_causal_atn {n : ℕ} (t : Fin n) {lam : ℝ}
+    (hlam : lam = 1 / ((t : ℝ) + 1)) :
+    ∃ a : Fin n → ℝ, a ≠ 0 ∧ attnWeights (fun t s : Fin n => s ≤ t) 0 *ᵥ a = lam • a := by
+  set M := attnWeights (fun t s : Fin n => s ≤ t) 0 - lam • (1 : Matrix (Fin n) (Fin n) ℝ)
+    with hM
+  -- `U − λ I` is lower triangular with the diagonal entry `0` at `t`
+  have hlow : M.IsLowerTriangular := fun i j hij => by
+    have hij' : i < j := hij
+    rw [hM, Matrix.sub_apply, attnWeights_causal_atn, Matrix.smul_apply,
+      Matrix.one_apply_ne hij'.ne, ite_eq_right (not_le.2 hij'), smul_zero, sub_zero]
+  have hdet : M.det = 0 := by
+    rw [Matrix.det_of_isLowerTriangular M hlow]
+    refine Finset.prod_eq_zero (Finset.mem_univ t) ?_
+    rw [hM, Matrix.sub_apply, attnWeights_causal_atn, ite_eq_left le_rfl, Matrix.smul_apply,
+      Matrix.one_apply_eq, hlam, smul_eq_mul, mul_one, sub_self]
+  obtain ⟨a, ha0, ha⟩ := Matrix.exists_mulVec_eq_zero_iff.2 hdet
+  refine ⟨a, ha0, ?_⟩
+  rw [hM, Matrix.sub_mulVec, Matrix.smul_mulVec, Matrix.one_mulVec, sub_eq_zero] at ha
+  exact ha
+
+/-- Helper, **Theorem 4.2 (i) without a mask**, for any `χ` with `χ(0) = 0` and the derivative
+`ξ I` at `0`, `ξ ≠ 0`: at `λ = 0` the core gives `ξ E D = 0`. -/
+private theorem noMask_atn (hT : 2 ≤ Fintype.card T) {χ : Matrix T d ℝ → Matrix T d ℝ} {ξ : ℝ}
+    (hξ : ξ ≠ 0) (hχ0 : χ 0 = 0)
+    (hχ : HasFDerivAt χ (ξ • ContinuousLinearMap.id ℝ (Matrix T d ℝ)) 0)
+    (θ : Params (Arch.attention (fun _ _ => True) χ H dh) dIn dOut) (hED : θ.E * θ.D ≠ 0)
+    {L' : ℕ} {d' : Type*} [Fintype d'] [DecidableEq d'] {χ' : Matrix T d' ℝ → Matrix T d' ℝ}
+    {ξ' : ℝ} (hχ0' : χ' 0 = 0)
+    (hχ' : HasFDerivAt χ' (ξ' • ContinuousLinearMap.id ℝ (Matrix T d' ℝ)) 0)
+    {H' dh' : Fin (L' + 1) → Type} [∀ ℓ, Fintype (H' ℓ)] [∀ ℓ, Fintype (dh' ℓ)]
+    (θ' : Params (Arch.attention (fun _ _ => True) χ' H' dh') dIn dOut) :
+    ∃ X : Matrix T dIn ℝ,
+      eval (Arch.attention (fun _ _ => True) χ H dh) 1 θ X
+        ≠ eval (Arch.attention (fun _ _ => True) χ' H' dh') 0 θ' X := by
+  by_contra hne
+  have heq : ∀ X, eval (Arch.attention (fun _ _ => True) χ H dh) 1 θ X
+      = eval (Arch.attention (fun _ _ => True) χ' H' dh') 0 θ' X :=
+    fun X => by_contra fun hX => hne ⟨X, hX⟩
+  -- `U a = 0 a` for a column `a ≠ 0`; at `λ = 0` the core reads `ξ E D = 0^{L'+1} Λ' = 0`
+  obtain ⟨a, ha0, ha⟩ := exists_kernel_noMask_atn (T := T) hT
+  have h := core_atn hχ0 hχ hχ0' hχ' θ θ' heq ha ha0
+  rw [resMat_zero_atn, zero_pow (Nat.succ_ne_zero L'), zero_smul] at h
+  exact hED ((smul_eq_zero.1 h).resolve_left hξ)
+
 /-- **Theorem 4.2 (i), no mask, without normalization:** with at least two tokens, a residual
 network of `L` attention blocks with `E D ≠ 0` differs from every skipless network of one or more
 attention blocks, with any heads, head dimensions and model dimension. -/
@@ -168,7 +244,9 @@ theorem exists_ne_residual_skipless_attention_noMask (hT : 2 ≤ Fintype.card T)
     ∃ X : Matrix T dIn ℝ,
       eval (Arch.attention (fun _ _ => True) id H dh) 1 θ X
         ≠ eval (Arch.attention (fun _ _ => True) id H' dh') 0 θ' X := by
-  sorry
+  -- without normalization `χ = id`: `χ(0) = 0` and the derivative is `1 • I`
+  exact noMask_atn hT one_ne_zero rfl (by rw [one_smul]; exact hasFDerivAt_id 0) θ hED rfl
+    (by rw [one_smul]; exact hasFDerivAt_id 0) θ'
 
 /-- **Theorem 4.2 (i), no mask, under pre-RMSNorm with `ε > 0`.** -/
 theorem exists_ne_residual_skipless_attention_noMask_rmsNorm (hT : 2 ≤ Fintype.card T)
@@ -181,7 +259,10 @@ theorem exists_ne_residual_skipless_attention_noMask_rmsNorm (hT : 2 ≤ Fintype
     ∃ X : Matrix T dIn ℝ,
       eval (Arch.attention (fun _ _ => True) (rmsNorm ε) H dh) 1 θ X
         ≠ eval (Arch.attention (fun _ _ => True) (rmsNorm ε') H' dh') 0 θ' X := by
-  sorry
+  -- RMSNorm: `N(0) = 0` and the derivative `I / √ε` at `0`, with `1 / √ε ≠ 0`
+  exact noMask_atn hT (inv_ne_zero (Real.sqrt_pos.2 hε).ne') (rmsNorm_zero_mat_atn ε)
+    (hasFDerivAt_rmsNorm_zero_atn hε) θ hED (rmsNorm_zero_mat_atn ε')
+    (hasFDerivAt_rmsNorm_zero_atn hε') θ'
 
 /-- **Theorem 4.2 (i), causal mask, without normalization:** on `n` tokens with the causal mask,
 a residual network of `L` attention blocks with `E D ≠ 0` differs from every skipless network of
