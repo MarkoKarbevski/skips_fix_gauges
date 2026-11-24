@@ -203,8 +203,8 @@ inputs, `q` outputs), which contains the paper's `p = q = d`.
 | A Theorem 3.1 (i), first sentence / Corollary A.9: the equivalence | `relu_absorb_same_width_iff`, `gelu_absorb_same_width_iff` | `Absorb/SameWidth.lean` | proved |
 | A Theorem 3.1 (i), second sentence: for `M ≠ 0` and generic `θ`, no block of the same width | `ae_forall_subProd_ne_neg`, `ae_not_relu_absorb_same_width`, `ae_not_gelu_absorb_same_width` | `Absorb/SameWidth.lean` | proved |
 | A Proposition 3.2 (ReLU, GELU; `d_in, d_out, d_hidden ≥ d ≥ 2`): at generic weights a residual network of one block equals no skipless network of one block of the same width, of any model dimension | `ae_ne_skipless_oneBlock_relu`, `ae_ne_skipless_oneBlock_gelu` | `Absorb/SameWidth.lean` | proved |
-| A Proposition A.11 (ii) under the conditions of its proof (nondegenerate; `M + W_read[:,S] W_write[S,:]` invertible for every `S`): no block with fewer than `m + d` hidden units computes `xM + B(x)` | `exists_ne_of_relu_card_lt`, `exists_ne_of_gelu_card_lt` | `Absorb/FewerUnits.lean` | in work |
-| A Theorem 3.1 (ii), second half / Proposition A.11 (ii): `M` invertible, generic `θ`: none with fewer than `d` more hidden units | `ae_forall_isUnit_det_add_subProd`, `ae_not_relu_absorb_of_card_lt`, `ae_not_gelu_absorb_of_card_lt` | `Absorb/FewerUnits.lean` | in work |
+| A Proposition A.11 (ii) under the conditions of its proof (nondegenerate; `M + W_read[:,S] W_write[S,:]` invertible for every `S`): no block with fewer than `m + d` hidden units computes `xM + B(x)` | `exists_ne_of_relu_card_lt`, `exists_ne_of_gelu_card_lt` | `Absorb/FewerUnits.lean` | proved |
+| A Theorem 3.1 (ii), second half / Proposition A.11 (ii): `M` invertible, generic `θ`: none with fewer than `d` more hidden units | `ae_forall_isUnit_det_add_subProd`, `ae_not_relu_absorb_of_card_lt`, `ae_not_gelu_absorb_of_card_lt` | `Absorb/FewerUnits.lean` | proved |
 | A Proposition A.1 (homogeneous blocks, degree `k ≠ 1`) | `exists_ne_of_homogeneous` | `Absorb/NoWidth.lean` | proved |
 | A Proposition A.2 (gated blocks whose gates vanish at `0` and are differentiable there) | `exists_ne_of_gated` | `Absorb/NoWidth.lean` | proved |
 | A Theorem 3.3 (a): ReLU² and ReGLU blocks (homogeneous of degree 2) | `vanillaBlock_reluSq_smul`, `gatedBlock_relu_smul`, `exists_ne_reluSq`, `exists_ne_reglu` | `Absorb/NoWidth.lean` | proved |
@@ -228,6 +228,11 @@ Notes for the authors on these statements:
 - Corollary A.9 and Theorem 3.1 (i), first sentence: the proof does not use `p ≥ 2` (for one input a
   nondegenerate read has at most one hidden unit), so the Lean statements leave it out. The generic
   clause needs it (two rows, for the columns to be pairwise non-collinear at generic weights).
+- Proposition A.11 (ii): the Lean proof is shorter than the paper's. The units of the absorbing
+  block that are matched to no unit of `B` number fewer than `d`, so some row `x ≠ 0` is orthogonal
+  to all their reads; at this `x` the odd part of the equation gives `x (M + W_read[:,S] W_write[S,:])
+  = 0`, against the invertibility. No classes of collinear reads and no count of mixed classes are
+  needed. The statement under explicit conditions does not use `d ≥ 2`.
 - Two helper lemmas of the proof of Corollary A.9 are public, for blocks of different widths:
   `exists_dotProduct_eq_zero_and_ne_zero` (a point of a hyperplane off finitely many others) and
   `write_eq_sum_of_abs_eq` (the write row of a unit is the sum of `|c_j|` times the write rows of the

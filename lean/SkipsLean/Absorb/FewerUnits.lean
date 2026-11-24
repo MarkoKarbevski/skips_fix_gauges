@@ -50,8 +50,9 @@ theorem exists_ne_zero_forall_dotProduct_eq_zero {n ι : Type*} [Fintype n] [Fin
 
 /-- **Proposition A.11 (ii) for ReLU, under the conditions of its proof.** Let the block be
 nondegenerate and let `M + W_read[:,S] W_write[S,:]` be invertible for every set `S` of hidden
-units. Then no ReLU block with fewer than `m + d` hidden units computes `x M + B(x)`. -/
-theorem exists_ne_of_relu_card_lt (hd : 2 ≤ Fintype.card d) (Wr : Matrix d m ℝ)
+units. Then no ReLU block with fewer than `m + d` hidden units computes `x M + B(x)`. (The paper
+assumes `d ≥ 2`; the proof does not use it.) -/
+theorem exists_ne_of_relu_card_lt (Wr : Matrix d m ℝ)
     (Ww : Matrix m d ℝ) (hnd : Nondegenerate Wr Ww) (M : Matrix d d ℝ)
     (hdet : ∀ S : Finset m, IsUnit (M + subProd S Wr Ww).det)
     {m' : Type*} [Fintype m'] (hm' : Fintype.card m' < Fintype.card m + Fintype.card d)
@@ -214,7 +215,7 @@ theorem exists_ne_of_relu_card_lt (hd : 2 ≤ Fintype.card d) (Wr : Matrix d m �
 
 /-- **Proposition A.11 (ii) for GELU, under the same conditions** (from the case of ReLU by the
 reduction along rays, `relu_absorb_of_gelu_absorb`). -/
-theorem exists_ne_of_gelu_card_lt (hd : 2 ≤ Fintype.card d) (Wr : Matrix d m ℝ)
+theorem exists_ne_of_gelu_card_lt (Wr : Matrix d m ℝ)
     (Ww : Matrix m d ℝ) (hnd : Nondegenerate Wr Ww) (M : Matrix d d ℝ)
     (hdet : ∀ S : Finset m, IsUnit (M + subProd S Wr Ww).det)
     {m' : Type*} [Fintype m'] (hm' : Fintype.card m' < Fintype.card m + Fintype.card d)
@@ -223,7 +224,7 @@ theorem exists_ne_of_gelu_card_lt (hd : 2 ≤ Fintype.card d) (Wr : Matrix d m �
   by_contra hcon
   push Not at hcon
   -- the ReLU blocks with the same weights would satisfy the same equation
-  obtain ⟨x, hx⟩ := exists_ne_of_relu_card_lt hd Wr Ww hnd M hdet hm' Wr' Ww'
+  obtain ⟨x, hx⟩ := exists_ne_of_relu_card_lt Wr Ww hnd M hdet hm' Wr' Ww'
   exact hx (relu_absorb_of_gelu_absorb Wr Ww Wr' Ww' M hcon x)
 
 /-- An entry of a product of two matrix-valued functions whose entries are analytic is
@@ -313,7 +314,7 @@ theorem ae_not_relu_absorb_of_card_lt (hd : 2 ≤ Fintype.card d) (M : Matrix d 
   filter_upwards [ae_nondegenerate hd μ, ae_forall_isUnit_det_add_subProd M hM μ]
     with W hnd hdet
   intro m' _ hm' Wr' Ww'
-  exact exists_ne_of_relu_card_lt hd W.1 W.2 hnd M hdet hm' Wr' Ww'
+  exact exists_ne_of_relu_card_lt W.1 W.2 hnd M hdet hm' Wr' Ww'
 
 /-- **Theorem 3.1 (ii), second half, for GELU.** -/
 theorem ae_not_gelu_absorb_of_card_lt (hd : 2 ≤ Fintype.card d) (M : Matrix d d ℝ)
@@ -326,6 +327,6 @@ theorem ae_not_gelu_absorb_of_card_lt (hd : 2 ≤ Fintype.card d) (M : Matrix d 
   filter_upwards [ae_nondegenerate hd μ, ae_forall_isUnit_det_add_subProd M hM μ]
     with W hnd hdet
   intro m' _ hm' Wr' Ww'
-  exact exists_ne_of_gelu_card_lt hd W.1 W.2 hnd M hdet hm' Wr' Ww'
+  exact exists_ne_of_gelu_card_lt W.1 W.2 hnd M hdet hm' Wr' Ww'
 
 end Skips
