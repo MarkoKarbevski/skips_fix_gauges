@@ -232,7 +232,50 @@ theorem ae_not_reluSq_absorbB_of_card_lt [Nonempty d] (M : Matrix d d ℝ) (hM :
       ∀ (Wr' : Matrix d m' ℝ) (b' : m' → ℝ) (Ww' : Matrix m' d ℝ) (c' : d → ℝ),
         ∃ x : d → ℝ, x ᵥ* M + vanillaBlockB reluSq θ.1 θ.2.1 θ.2.2.1 θ.2.2.2 x
           ≠ vanillaBlockB reluSq Wr' b' Ww' c' x := by
-  sorry
+  classical
+  obtain ⟨a⟩ := ‹Nonempty d›
+  filter_upwards [ae_units_rsl a a μ, ae_linearIndependent_sqTarget M hM μ] with θ hu hG
+  intro m' _ hm' Wr' b' Ww' c'
+  by_contra hc
+  have h : ∀ x : d → ℝ, x ᵥ* M + vanillaBlockB reluSq θ.1 θ.2.1 θ.2.2.1 θ.2.2.2 x
+      = vanillaBlockB reluSq Wr' b' Ww' c' x := fun x => not_not.1 (not_exists.1 hc x)
+  -- the polynomials of the cells satisfy (2), so the absorbing block has `2 d` more units
+  have hcell := fun x₀ (hx₀ : ∀ i, (x₀ ᵥ* θ.1) i + θ.2.1 i ≠ 0) hx₀' =>
+    reluSqCell_eq_of_vanillaBlockB_absorb _ _ _ _ _ _ _ _ M h x₀
+      (fun i hi => absurd hi (hx₀ i)) hx₀'
+  have hle := card_add_two_mul_card_le_of_reluSqCell _ _ _ _ _ _ _ _ M hu.1 hu.2.1 hu.2.2 hG
+    hcell
+  omega
+
+open scoped Matrix.Norms.Elementwise in
+/-- At generic `θ`, a read with at least as many columns as rows has full rank. -/
+private theorem ae_rank_rsl (hm : Fintype.card d ≤ Fintype.card m)
+    (μ : Measure (Matrix d m ℝ × (m → ℝ) × Matrix m d ℝ × (d → ℝ))) [μ.IsAddHaarMeasure] :
+    ∀ᵐ θ ∂μ, θ.1.rank = Fintype.card d := by
+  classical
+  obtain ⟨e⟩ := Function.Embedding.nonempty_of_card_le hm
+  -- `θ ↦ det W_read[:, e]` is a polynomial, equal to `1` when `W_read[:, e] = 1`
+  have hg : AnalyticOnNhd ℝ (fun θ : Matrix d m ℝ × (m → ℝ) × Matrix m d ℝ × (d → ℝ) =>
+      (θ.1.submatrix id e).det) Set.univ := by
+    simp only [Matrix.det_apply', Matrix.submatrix_apply, id_eq]
+    exact Finset.analyticOnNhd_fun_sum _ fun σ _ => analyticOnNhd_const.mul
+      (Finset.analyticOnNhd_fun_prod _ fun i _ => analyticOnNhd_read_rsl (σ i) (e i))
+  have h0 : ((Matrix.of fun a i => if i = e a then (1 : ℝ) else 0 : Matrix d m ℝ).submatrix
+      id e).det ≠ 0 := by
+    have h1 : (Matrix.of fun a i => if i = e a then (1 : ℝ) else 0 : Matrix d m ℝ).submatrix
+        id e = 1 := by
+      ext a b
+      simp only [Matrix.submatrix_apply, id_eq, Matrix.of_apply, Matrix.one_apply,
+        e.injective.eq_iff, eq_comm]
+    rw [h1, Matrix.det_one]
+    exact one_ne_zero
+  filter_upwards [ae_ne_zero_rsl μ hg ⟨(_, 0, 0, 0), h0⟩] with θ hW
+  -- an invertible `d × d` column submatrix gives rank `d`
+  refine le_antisymm (Matrix.rank_le_card_height _) ?_
+  have h3 := Matrix.rank_submatrix_le θ.1 id e
+  rw [Matrix.rank_of_isUnit _ ((Matrix.isUnit_iff_isUnit_det _).2 (isUnit_iff_ne_zero.2 hW))]
+    at h3
+  exact h3
 
 /-- **Theorem C.2 (iii) of the absorb paper:** let `M` be invertible. For generic
 `θ = (W_read, b, W_write, c)`, a ReLU² block with biases and at least `d` hidden units absorbs
@@ -249,7 +292,9 @@ theorem ae_reluSq_absorbB_add_card [Nonempty d] (hm : Fintype.card d ≤ Fintype
         ∀ (Wr' : Matrix d m' ℝ) (b' : m' → ℝ) (Ww' : Matrix m' d ℝ) (c' : d → ℝ),
           ∃ x : d → ℝ, x ᵥ* M + vanillaBlockB reluSq θ.1 θ.2.1 θ.2.2.1 θ.2.2.2 x
             ≠ vanillaBlockB reluSq Wr' b' Ww' c' x := by
-  sorry
+  -- generic reads have rank `d`: the construction gives `3 d` more units
+  filter_upwards [ae_rank_rsl hm μ, ae_not_reluSq_absorbB_of_card_lt M hM μ] with θ hr hlt
+  exact ⟨exists_vanillaBlockB_add_linear_reluSq_of_rank θ.1 θ.2.1 θ.2.2.1 θ.2.2.2 hr M, hlt⟩
 
 end Square
 
