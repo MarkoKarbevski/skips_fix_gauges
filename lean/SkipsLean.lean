@@ -239,3 +239,4 @@ import SkipsLean.Generic.Cayley
 import SkipsLean.Dimension.IdentifiableConverseCob
 import SkipsLean.Dimension.IdentifiableIff
 import SkipsLean.Residual.IdentifiableIff
+import SkipsLean.Symmetry.OnlyOrthogonalRows
