@@ -768,7 +768,21 @@ theorem jacobianRank_add_le_skipless_ends_attentionMlp
           + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2)
       ≤ Module.finrank ℝ (Params
           (Arch.attentionMlp (T := T) (d := d) sees σ id H dh hid) dIn dOut) := by
-  sorry
+  -- the bound at almost every parameter gives it at every parameter, the blocks being analytic
+  refine jacobianRank_add_le_of_ae_set
+    (A := Arch.attentionMlp (T := T) (d := d) sees σ id H dh hid)
+    (fun ℓ => analyticOnNhd_f_sum (analyticOnNhd_f_attention sees id H dh ℓ)
+      (analyticOnNhd_f_mlp hσa ℓ)) analyticOnNhd_id θ X ?_
+  -- at almost every `θ'`, `E` and `D` have rank `d` and the query and value matrices of every
+  -- head have rank `d_h`
+  filter_upwards [ae_rank_E_D_set Measure.addHaar hdIn hdOut,
+    ae_rank_QV_set Measure.addHaar hdh] with θ' h1 h2
+  -- `V_A`: the changes of basis inside the heads; `V_B = 0` for the MLP part
+  obtain ⟨VA, hVA, hdimA⟩ := attn_part_set θ'.sumFst h2.1 h2.2
+  have h := funDim_add_le_skipless_ends_of_insideBlocks
+    (A := Arch.attentionMlp (T := T) (d := d) sees σ id H dh hid) rfl hL θ' _
+    (sup_le_span_set θ' VA ⊥ hVA bot_le) h1.1 h1.2
+  rwa [finrank_sup_set θ' VA ⊥ hVA, hdimA, finrank_bot, add_zero] at h
 
 /-- **The bound at every parameter, on every batch, for a skipless network of attention blocks and
 MLP blocks, under pre-RMSNorm with `ε > 0`:** for a real-analytic activation, `d_in, d_out ≥ d`,
@@ -786,7 +800,21 @@ theorem jacobianRank_add_le_skipless_ends_attentionMlp_rmsNorm (hε : 0 < ε)
           + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2)
       ≤ Module.finrank ℝ (Params
           (Arch.attentionMlp (T := T) (d := d) sees σ (rmsNorm ε) H dh hid) dIn dOut) := by
-  sorry
+  -- the bound at almost every parameter gives it at every parameter, the blocks being analytic
+  refine jacobianRank_add_le_of_ae_set
+    (A := Arch.attentionMlp (T := T) (d := d) sees σ (rmsNorm ε) H dh hid)
+    (fun ℓ => analyticOnNhd_f_sum (analyticOnNhd_f_attention sees (rmsNorm ε) H dh ℓ)
+      (analyticOnNhd_f_mlp hσa ℓ)) (analyticOnNhd_rmsNorm hε) θ X ?_
+  -- at almost every `θ'`, `E` and `D` have rank `d` and the query and value matrices of every
+  -- head have rank `d_h`
+  filter_upwards [ae_rank_E_D_set Measure.addHaar hdIn hdOut,
+    ae_rank_QV_set Measure.addHaar hdh] with θ' h1 h2
+  -- `V_A`: the changes of basis inside the heads; `V_B = 0` for the MLP part
+  obtain ⟨VA, hVA, hdimA⟩ := attn_part_set θ'.sumFst h2.1 h2.2
+  have h := funDim_add_le_skipless_ends_of_insideBlocks_rmsNorm
+    (A := Arch.attentionMlp (T := T) (d := d) sees σ (rmsNorm ε) H dh hid) ε rfl hL θ' _
+    (sup_le_span_set θ' VA ⊥ hVA bot_le) h1.1 h1.2
+  rwa [finrank_sup_set θ' VA ⊥ hVA, hdimA, finrank_bot, add_zero] at h
 
 /-- **The bound at every parameter, on every batch, for a skipless network of attention blocks and
 gated blocks, without normalization:** for a real-analytic gate, `d_in, d_out ≥ d` `≥ 1`, `L ≥ 1`
@@ -805,7 +833,22 @@ theorem jacobianRank_add_le_skipless_ends_attentionGated [Nonempty d]
             + ∑ ℓ, Fintype.card (hid ℓ)))
       ≤ Module.finrank ℝ (Params
           (Arch.attentionGated (T := T) (d := d) sees σ id H dh hid) dIn dOut) := by
-  sorry
+  -- the bound at almost every parameter gives it at every parameter, the blocks being analytic
+  refine jacobianRank_add_le_of_ae_set
+    (A := Arch.attentionGated (T := T) (d := d) sees σ id H dh hid)
+    (fun ℓ => analyticOnNhd_f_sum (analyticOnNhd_f_attention sees id H dh ℓ)
+      (analyticOnNhd_f_gated hσa ℓ)) analyticOnNhd_id θ X ?_
+  -- at almost every `θ'`, `E` and `D` have rank `d`, the query and value matrices of every head
+  -- have rank `d_h`, and no value column of the gated part vanishes
+  filter_upwards [ae_rank_E_D_set Measure.addHaar hdIn hdOut,
+    ae_rank_QV_set Measure.addHaar hdh, ae_value_ne_zero_set Measure.addHaar] with θ' h1 h2 h3
+  -- `V_A`: the changes of basis inside the heads; `V_B`: the rescalings of the values
+  obtain ⟨VA, hVA, hdimA⟩ := attn_part_set θ'.sumFst h2.1 h2.2
+  obtain ⟨VB, hVB, hdimB⟩ := gated_part_set θ'.sumSnd h3
+  have h := funDim_add_le_skipless_ends_of_insideBlocks
+    (A := Arch.attentionGated (T := T) (d := d) sees σ id H dh hid) rfl hL θ' _
+    (sup_le_span_set θ' VA VB hVA hVB) h1.1 h1.2
+  rwa [finrank_sup_set θ' VA VB hVA, hdimA, hdimB] at h
 
 /-- **The bound at every parameter, on every batch, for a skipless network of attention blocks and
 gated blocks, under pre-RMSNorm with `ε > 0`:** for a real-analytic gate, `d_in, d_out ≥ d` `≥ 1`,
@@ -824,6 +867,21 @@ theorem jacobianRank_add_le_skipless_ends_attentionGated_rmsNorm [Nonempty d] (h
             + ∑ ℓ, Fintype.card (hid ℓ)))
       ≤ Module.finrank ℝ (Params
           (Arch.attentionGated (T := T) (d := d) sees σ (rmsNorm ε) H dh hid) dIn dOut) := by
-  sorry
+  -- the bound at almost every parameter gives it at every parameter, the blocks being analytic
+  refine jacobianRank_add_le_of_ae_set
+    (A := Arch.attentionGated (T := T) (d := d) sees σ (rmsNorm ε) H dh hid)
+    (fun ℓ => analyticOnNhd_f_sum (analyticOnNhd_f_attention sees (rmsNorm ε) H dh ℓ)
+      (analyticOnNhd_f_gated hσa ℓ)) (analyticOnNhd_rmsNorm hε) θ X ?_
+  -- at almost every `θ'`, `E` and `D` have rank `d`, the query and value matrices of every head
+  -- have rank `d_h`, and no value column of the gated part vanishes
+  filter_upwards [ae_rank_E_D_set Measure.addHaar hdIn hdOut,
+    ae_rank_QV_set Measure.addHaar hdh, ae_value_ne_zero_set Measure.addHaar] with θ' h1 h2 h3
+  -- `V_A`: the changes of basis inside the heads; `V_B`: the rescalings of the values
+  obtain ⟨VA, hVA, hdimA⟩ := attn_part_set θ'.sumFst h2.1 h2.2
+  obtain ⟨VB, hVB, hdimB⟩ := gated_part_set θ'.sumSnd h3
+  have h := funDim_add_le_skipless_ends_of_insideBlocks_rmsNorm
+    (A := Arch.attentionGated (T := T) (d := d) sees σ (rmsNorm ε) H dh hid) ε rfl hL θ' _
+    (sup_le_span_set θ' VA VB hVA hVB) h1.1 h1.2
+  rwa [finrank_sup_set θ' VA VB hVA, hdimA, hdimB] at h
 
 end Skips
