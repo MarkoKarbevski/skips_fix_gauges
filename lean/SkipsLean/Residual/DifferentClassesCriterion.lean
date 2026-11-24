@@ -30,10 +30,9 @@ namespace Skips
 open Matrix MeasureTheory
 open scoped Matrix.Norms.Elementwise
 
-variable {T d d' dIn dOut : Type*} {L L' : ℕ} [Fintype T] [Fintype d] [DecidableEq d]
-  [Fintype d'] [DecidableEq d'] [Fintype dIn] [Fintype dOut]
+variable {T d d' dIn dOut : Type*} {L L' : ℕ} [Fintype T] [Fintype d] [Fintype d']
+  [Fintype dIn] [Fintype dOut]
 
-omit [DecidableEq d] in
 /-- Helper: the outputs of a network with real-analytic blocks on a batch are real-analytic in the
 parameters (one input at a time, `analyticOnNhd_eval_params`). -/
 private theorem analyticOnNhd_evalBatch_dcc (A : Arch T d L) (S : Fin L → Matrix d d ℝ)
