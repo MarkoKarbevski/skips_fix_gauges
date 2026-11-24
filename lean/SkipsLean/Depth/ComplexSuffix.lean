@@ -362,7 +362,7 @@ private theorem rmsRowC_mem_of_cone_cs (O : Set (d → ℂ)) {δ : ℝ} (hδ : 0
 omit [DecidableEq d] [Fintype dIn] in
 /-- **Lemma D.14 of the dimension paper (`𝓑_{>k}` on a complex cone),** for MLP blocks whose
 activation `σ` extends to a map `σC` that is holomorphic at every real point: if `θ` is regular
-((R1) and (R2) are used), then for every `k` there is a `κ_k ∈ (0, 1]` such that `𝓑_{>k}`, with
+(of (R1) to (R3) the proof uses (R2) only), then for every `k` there is a `κ_k ∈ (0, 1]` such that `𝓑_{>k}`, with
 its derivatives, extends to a holomorphic map on `C_{κ_k}`. -/
 theorem exists_holomorphicOnCone {σ : ℝ → ℝ} {σC : ℂ → ℂ}
     (hσ : ∀ x : ℝ, σC (x : ℂ) = ((σ x : ℝ) : ℂ)) (hσC : ∀ x : ℝ, AnalyticAt ℂ σC (x : ℂ))
