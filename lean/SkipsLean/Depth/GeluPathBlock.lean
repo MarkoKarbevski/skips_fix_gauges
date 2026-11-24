@@ -221,6 +221,281 @@ private theorem det_unit_gpb {l ε η : ℝ} (m : ℕ) (hl : 0 < l) (hε : 0 < �
   rw [hs, mul_zero, zero_add] at h
   simpa [hl.ne', hε.ne'] using h
 
+/-- Helper: `|x| ≤ (x² + 1)/2`. -/
+private theorem abs_le_gpb (x : ℝ) : |x| ≤ (x * x + 1) / 2 := by
+  nlinarith [sq_nonneg (|x| - 1), abs_mul_abs_self x]
+
+/-- Helper: `|GELU z| ≤ |z|` (`0 < Φ < 1`). -/
+private theorem abs_gelu_le_gpb (z : ℝ) : |gelu z| ≤ |z| := by
+  rw [gelu, abs_mul, abs_of_pos (gaussCdf_pos z)]
+  exact mul_le_of_le_one_right (abs_nonneg z) (gaussCdf_lt_one z).le
+
+/-- Helper: `|GELU z| ≥ z₀ Φ(−z₁)` for `z₀ ≤ |z| ≤ z₁` (`Φ` is increasing). -/
+private theorem le_abs_gelu_gpb {z z₀ z₁ : ℝ} (h1 : z₀ ≤ |z|) (h2 : |z| ≤ z₁) :
+    z₀ * gaussCdf (-z₁) ≤ |gelu z| := by
+  rw [gelu, abs_mul, abs_of_pos (gaussCdf_pos z)]
+  have hz : -z₁ ≤ z := by linarith [neg_abs_le z]
+  exact mul_le_mul h1 (strictMono_gaussCdf.monotone hz) (gaussCdf_pos _).le (abs_nonneg z)
+
+/-- Helper (R2): `g(n) ≠ 0` on the sphere: some `z_b = λ (s + ε n_b)` (`s = ∑_a n_a`) has
+`λε/2 ≤ |z_b| ≤ 2λD`, so `|GELU z_b| ≥ (λε/2) Φ(−2λD)`, and the term `η ∑_j GELU(λ (j + 1) s)` is
+at most `η λ S D` in absolute value. -/
+private theorem ne_zero_gpb [Nonempty d] {l ε η : ℝ} (m : ℕ) (hl : 0 < l) (hε : 0 < ε)
+    (hε1 : ε ≤ 1) (hη : 0 ≤ η)
+    (hηm : η * (l * (∑ j : Fin m, (((j : ℕ) : ℝ) + 1)) * Fintype.card d)
+      < l * ε / 2 * gaussCdf (-(2 * l * Fintype.card d)))
+    (n : d → ℝ) (hn : n ⬝ᵥ n = (Fintype.card d : ℝ)) :
+    (fun k => gelu ((n ᵥ* readGpb l ε m) k)) ᵥ* writeGpb η m ≠ 0 := by
+  have hD1 : (1 : ℝ) ≤ Fintype.card d := by exact_mod_cast Fintype.card_pos
+  obtain ⟨s, hs⟩ : ∃ s, s = ∑ a, n a := ⟨_, rfl⟩
+  -- some `|n_i| ≥ 1`, otherwise `n ⬝ n < D`
+  obtain ⟨i, hi⟩ : ∃ i, 1 ≤ |n i| := by
+    by_contra h
+    push Not at h
+    have hlt : n ⬝ᵥ n < ∑ _i : d, (1 : ℝ) :=
+      Finset.sum_lt_sum_of_nonempty Finset.univ_nonempty fun i _ => by
+        have := (sq_lt_one_iff_abs_lt_one (n i)).2 (h i)
+        nlinarith
+    simp only [Finset.sum_const, Finset.card_univ, nsmul_eq_mul, mul_one] at hlt
+    linarith
+  -- `|s| ≤ D` and `|n_b| ≤ D`
+  have hsD : |s| ≤ Fintype.card d := by
+    rw [hs]
+    refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+    calc ∑ a, |n a| ≤ ∑ a, (n a * n a + 1) / 2 :=
+          Finset.sum_le_sum fun a _ => abs_le_gpb (n a)
+      _ = (n ⬝ᵥ n + Fintype.card d) / 2 := by
+          rw [← Finset.sum_div, Finset.sum_add_distrib]
+          simp [dotProduct]
+      _ = Fintype.card d := by rw [hn]; ring
+  have hnD : ∀ b, |n b| ≤ Fintype.card d := fun b => by
+    have h1 : n b * n b ≤ n ⬝ᵥ n :=
+      Finset.single_le_sum (f := fun a => n a * n a) (fun a _ => mul_self_nonneg (n a))
+        (Finset.mem_univ b)
+    linarith [abs_le_gpb (n b)]
+  -- some `|s + ε n_b| ≥ ε/2`: otherwise, summing, `|s| < ε/2`, and then `|s + ε n_i| > ε/2`
+  obtain ⟨b, hb⟩ : ∃ b, ε / 2 ≤ |s + ε * n b| := by
+    by_contra h
+    push Not at h
+    have hsum : |(Fintype.card d + ε) * s| < Fintype.card d * (ε / 2) := by
+      have e : (Fintype.card d + ε) * s = ∑ a, (s + ε * n a) := by
+        rw [Finset.sum_add_distrib, ← Finset.mul_sum, ← hs]
+        simp only [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+        ring
+      rw [e]
+      refine lt_of_le_of_lt (Finset.abs_sum_le_sum_abs _ _) ?_
+      have h' := Finset.sum_lt_sum_of_nonempty Finset.univ_nonempty
+        fun a (_ : a ∈ Finset.univ) => h a
+      simpa only [Finset.sum_const, Finset.card_univ, nsmul_eq_mul] using h'
+    have hs2 : |s| < ε / 2 := by
+      rw [abs_mul, abs_of_pos (by linarith)] at hsum
+      nlinarith [abs_nonneg s]
+    have h3 := h i
+    have h4 : ε ≤ |ε * n i| := by
+      rw [abs_mul, abs_of_pos hε]
+      nlinarith
+    rw [abs_lt] at h3 hs2
+    have h5 : |ε * n i| < ε := abs_lt.2 ⟨by linarith, by linarith⟩
+    linarith
+  intro h0
+  have hc := congrFun h0 b
+  simp only [vecMul_write_gpb, vecMul_read_inl_gpb, vecMul_read_inr_gpb, ← hs,
+    Pi.zero_apply] at hc
+  -- the term `inl b`: `|GELU z_b| ≥ (λε/2) Φ(−2λD)`
+  have h1 : l * ε / 2 * gaussCdf (-(2 * l * Fintype.card d)) ≤ |gelu (l * (s + ε * n b))| := by
+    have h2 : |s + ε * n b| ≤ 2 * Fintype.card d := by
+      refine (abs_add_le _ _).trans ?_
+      rw [abs_mul, abs_of_pos hε]
+      nlinarith [hnD b, abs_nonneg (n b)]
+    apply le_abs_gelu_gpb
+    · rw [abs_mul, abs_of_pos hl]
+      nlinarith
+    · rw [abs_mul, abs_of_pos hl]
+      nlinarith
+  -- the terms `inr j`: at most `η λ S D`
+  have h2 : |η * ∑ j : Fin m, gelu (l * (((j : ℕ) : ℝ) + 1) * s)|
+      ≤ η * (l * (∑ j : Fin m, (((j : ℕ) : ℝ) + 1)) * Fintype.card d) := by
+    rw [abs_mul, abs_of_nonneg hη]
+    refine mul_le_mul_of_nonneg_left ((Finset.abs_sum_le_sum_abs _ _).trans ?_) hη
+    rw [Finset.mul_sum, Finset.sum_mul]
+    refine Finset.sum_le_sum fun j _ => (abs_gelu_le_gpb _).trans ?_
+    rw [abs_mul, abs_of_pos (by positivity)]
+    exact mul_le_mul_of_nonneg_left hsD (by positivity)
+  rw [add_eq_zero_iff_eq_neg] at hc
+  rw [hc, abs_neg] at h1
+  linarith
+
+/-- Helper (R3) at `n₀ = 𝟙`: for `v ⊥ 𝟙`, `𝐃g(𝟙) v = GELU'(z) λ ε v`, and `g(𝟙)` is a positive
+multiple of `𝟙`. -/
+private theorem deriv_gpb [Nonempty d] {l ε η : ℝ} (m : ℕ) (hl : 0 < l) (hε : 0 < ε)
+    (hη : 0 ≤ η) :
+    ∃ n : d → ℝ, n ⬝ᵥ n = (Fintype.card d : ℝ) ∧ ∀ v : d → ℝ, v ⬝ᵥ n = 0 →
+      (∃ a : ℝ,
+        fderiv ℝ (fun n' : d → ℝ =>
+            (fun j => gelu ((n' ᵥ* readGpb l ε m) j)) ᵥ* writeGpb η m) n v
+          = a • ((fun j => gelu ((n ᵥ* readGpb l ε m) j)) ᵥ* writeGpb η m)) →
+      v = 0 := by
+  refine ⟨fun _ => 1, by simp [dotProduct], fun v hv ⟨a, ha⟩ => ?_⟩
+  -- `∑_i v_i = 0`
+  have hs : ∑ i, v i = 0 := by simpa [dotProduct] using hv
+  rw [fderiv_gelu_vecMul_gpb] at ha
+  obtain ⟨z, hz⟩ : ∃ z, z = l * (∑ _a : d, (1 : ℝ) + ε * 1) := ⟨_, rfl⟩
+  obtain ⟨G, hG⟩ : ∃ G, G = gelu z
+      + η * ∑ j : Fin m, gelu (l * (((j : ℕ) : ℝ) + 1) * ∑ _a : d, (1 : ℝ)) := ⟨_, rfl⟩
+  -- coordinate `i`: `GELU'(z) λ ε v_i = a G`
+  have hi : ∀ i, (gaussCdf z + z * gaussPdf z) * (l * (ε * v i)) = a * G := by
+    intro i
+    have h := congrFun ha i
+    simp only [vecMul_write_gpb, vecMul_read_inl_gpb, vecMul_read_inr_gpb, hs, mul_zero,
+      zero_add, Finset.sum_const_zero, add_zero, Pi.smul_apply, smul_eq_mul, ← hz,
+      ← hG] at h
+    exact h
+  have hz0 : 0 < z := by
+    rw [hz]
+    simp only [Finset.sum_const, Finset.card_univ, nsmul_eq_mul, mul_one]
+    have : (0 : ℝ) < Fintype.card d := by exact_mod_cast Fintype.card_pos
+    positivity
+  -- `G > 0`
+  have hG0 : 0 < G := by
+    rw [hG]
+    refine add_pos_of_pos_of_nonneg (mul_pos hz0 (gaussCdf_pos z))
+      (mul_nonneg hη (Finset.sum_nonneg fun j _ => ?_))
+    exact mul_nonneg (by positivity) (gaussCdf_pos _).le
+  -- summing over `i`: `0 = a D G`, so `a = 0`
+  have hsum : (gaussCdf z + z * gaussPdf z) * (l * ε) * ∑ i, v i
+      = a * ∑ _i : d, G := by
+    rw [Finset.mul_sum, Finset.mul_sum]
+    exact Finset.sum_congr rfl fun i _ => by rw [← hi i]; ring
+  rw [hs, mul_zero, Finset.sum_const, Finset.card_univ, nsmul_eq_mul] at hsum
+  have ha0 : a = 0 := by
+    have hc : (0 : ℝ) < Fintype.card d := by exact_mod_cast Fintype.card_pos
+    rcases mul_eq_zero.1 hsum.symm with h | h
+    · exact h
+    · exact absurd h (mul_pos hc hG0).ne'
+  -- then `GELU'(z) λ ε v_i = 0` with `GELU'(z) λ ε ≠ 0`
+  funext i
+  have h := hi i
+  rw [ha0, zero_mul] at h
+  have hc : (gaussCdf z + z * gaussPdf z) * (l * ε) ≠ 0 :=
+    mul_ne_zero (add_pos (gaussCdf_pos z) (mul_pos hz0 (gaussPdf_pos z))).ne'
+      (mul_pos hl hε).ne'
+  have h' : (gaussCdf z + z * gaussPdf z) * (l * ε) * v i = 0 := by
+    rw [← h]; ring
+  simpa [hc] using h'
+
+/-- Helper (P2) with `ξ₀ = 𝟙/√D`: for `ξ' ⊥ ξ₀` (so `∑_a ξ'_a = 0`), `ξ'W = (λ ε ξ', 0)`,
+`ξ' W V = λ ε ξ'`, every `ξ₀ c_k ≥ λ √D` and every entry of `ξ₀ W V` is at least `λ √D`, so
+`‖ξ₀ W V‖ ≥ λ D`; the left side of the third inequality is at most `(D + m) √D`. -/
+private theorem p2_gpb (hd : 2 ≤ Fintype.card d) {l ε η κ : ℝ} (m : ℕ) (hκ : 0 < κ)
+    (hl : 1 ≤ l) (hε : 0 < ε) (hε1 : ε ≤ 1) (hεκ : ε ≤ κ / 2) (hη : 0 ≤ η) (hη1 : η ≤ 1)
+    (hlκ : (Fintype.card d : ℝ) + m < κ * l / 8) :
+    ∃ ξ₀ : d → ℝ, ξ₀ ⬝ᵥ ξ₀ = 1 ∧ ∀ ξ' : d → ℝ, ξ' ⬝ᵥ ξ' = 1 → ξ₀ ⬝ᵥ ξ' = 0 →
+      PathP2 (readGpb l ε m) (writeGpb η m) κ ξ₀ ξ' := by
+  have hD2 : (2 : ℝ) ≤ Fintype.card d := by exact_mod_cast hd
+  have hl0 : 0 < l := by linarith
+  -- `r = √D`, `r r = D`, `r > 1`
+  obtain ⟨r, hr⟩ : ∃ r, r = Real.sqrt (Fintype.card d) := ⟨_, rfl⟩
+  have hr0 : 0 < r := by rw [hr]; exact Real.sqrt_pos.2 (by linarith)
+  have hrr : r * r = Fintype.card d := by rw [hr]; exact Real.mul_self_sqrt (by linarith)
+  have hr1 : 1 < r := by nlinarith
+  have hS : 0 ≤ η * ∑ j : Fin m, (((j : ℕ) : ℝ) + 1) :=
+    mul_nonneg hη (Finset.sum_nonneg fun j _ => by positivity)
+  -- `ξ₀ = r⁻¹ 𝟙`: `∑_a ξ₀_a = r`, `ξ₀ ⬝ ξ₀ = 1`
+  have hsum0 : ∑ _a : d, r⁻¹ = r := by
+    simp only [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+    rw [← hrr]
+    field_simp
+  have hξ : (fun _ : d => r⁻¹) ⬝ᵥ (fun _ : d => r⁻¹) = 1 := by
+    simp only [dotProduct, Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+    rw [← hrr]
+    field_simp
+  refine ⟨fun _ => r⁻¹, hξ, fun ξ' h1 h0 => ?_⟩
+  -- `∑_a ξ'_a = 0` and `|ξ'_a| ≤ 1`
+  have hs' : ∑ a, ξ' a = 0 := by
+    have h : r⁻¹ * ∑ a, ξ' a = 0 := by
+      rw [Finset.mul_sum]
+      simpa [dotProduct] using h0
+    exact (mul_eq_zero.1 h).resolve_left (inv_ne_zero hr0.ne')
+  have hξ'1 : ∀ a, |ξ' a| ≤ 1 := fun a => by
+    have h : ξ' a * ξ' a ≤ ξ' ⬝ᵥ ξ' :=
+      Finset.single_le_sum (f := fun b => ξ' b * ξ' b) (fun b _ => mul_self_nonneg (ξ' b))
+        (Finset.mem_univ a)
+    rw [h1] at h
+    exact abs_le.2 ⟨by nlinarith, by nlinarith⟩
+  -- `‖ξ₀ W V‖ ≥ λ D`: every entry is at least `λ r`
+  have hN : l * Fintype.card d ≤ Real.sqrt (((fun _ : d => r⁻¹) ᵥ* (readGpb l ε m *
+      writeGpb η m)) ⬝ᵥ ((fun _ : d => r⁻¹) ᵥ* (readGpb l ε m * writeGpb η m))) := by
+    have hb : ∀ b, l * r ≤ ((fun _ : d => r⁻¹) ᵥ* (readGpb l ε m * writeGpb η m)) b :=
+      fun b => by
+        rw [vecMul_mul_gpb, hsum0]
+        have h2 : 0 ≤ ε * r⁻¹ := by positivity
+        have h3 : r ≤ (1 + η * ∑ j : Fin m, (((j : ℕ) : ℝ) + 1)) * r := by nlinarith
+        exact mul_le_mul_of_nonneg_left (by linarith) hl0.le
+    refine (Real.le_sqrt (by positivity) ?_).2 ?_
+    · exact Finset.sum_nonneg fun b _ => mul_self_nonneg _
+    calc (l * Fintype.card d) ^ 2 = ∑ _b : d, (l * r) * (l * r) := by
+          simp only [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+          linear_combination (-((Fintype.card d : ℝ) * l ^ 2)) * hrr
+      _ ≤ _ := Finset.sum_le_sum fun b _ =>
+          mul_self_le_mul_self (by positivity) (hb b)
+  refine ⟨fun k => ?_, ?_, ?_⟩
+  · -- `|ξ' c_k| < ξ₀ c_k`
+    rcases k with i | j
+    · simp only [vecMul_read_inl_gpb, hs', hsum0, zero_add]
+      rw [abs_mul, abs_of_pos hl0, abs_mul, abs_of_pos hε]
+      have h2 : ε * |ξ' i| ≤ 1 := by nlinarith [hξ'1 i, abs_nonneg (ξ' i)]
+      have h3 : 0 ≤ ε * r⁻¹ := by positivity
+      exact mul_lt_mul_of_pos_left (by linarith) hl0
+    · simp only [vecMul_read_inr_gpb, hs', hsum0, mul_zero, abs_zero]
+      positivity
+  · -- `ξ' W V = λ ε ξ'`, of norm `λ ε ≤ λ κ/2 < κ λ ≤ (κ/2) λ D`
+    have he : ξ' ᵥ* (readGpb l ε m * writeGpb η m) = (l * ε) • ξ' := by
+      funext b
+      rw [vecMul_mul_gpb, hs', Pi.smul_apply, smul_eq_mul]
+      ring
+    rw [he, dotProduct_smul, smul_dotProduct, h1, smul_eq_mul, smul_eq_mul, mul_one,
+      Real.sqrt_mul_self (by positivity)]
+    have h2 : κ / 2 * (l * Fintype.card d) ≤ κ / 2 * Real.sqrt _ :=
+      mul_le_mul_of_nonneg_left hN (by positivity)
+    have h3 : κ * l ≤ κ / 2 * (l * Fintype.card d) := by nlinarith
+    have h4 : l * ε ≤ l * (κ / 2) := mul_le_mul_of_nonneg_left hεκ hl0.le
+    nlinarith
+  · -- the third: every `e^{…} ≤ 1` and `‖V_k‖ ≤ r`
+    have hV : ∀ k, Real.sqrt (writeGpb η m k ⬝ᵥ writeGpb η m k) ≤ r := fun k => by
+      rw [hr]
+      apply Real.sqrt_le_sqrt
+      calc writeGpb η m k ⬝ᵥ writeGpb η m k ≤ ∑ _b : d, (1 : ℝ) :=
+            Finset.sum_le_sum fun b _ => by
+              have h0 : 0 ≤ writeGpb η m k b ∧ writeGpb η m k b ≤ 1 := by
+                rcases k with i | j
+                · simp only [writeGpb, Matrix.of_apply, Sum.elim_inl]
+                  split_ifs <;> norm_num
+                · exact ⟨hη, hη1⟩
+              nlinarith [h0.1, h0.2]
+        _ = Fintype.card d := by simp
+    have hL : ∑ k : d ⊕ Fin m, Real.exp (-((Fintype.card d : ℝ) *
+        (((fun _ : d => r⁻¹) ᵥ* readGpb l ε m) k) ^ 2 / 2)) *
+          Real.sqrt (writeGpb η m k ⬝ᵥ writeGpb η m k)
+        ≤ ((Fintype.card d : ℝ) + m) * r := by
+      calc _ ≤ ∑ _k : d ⊕ Fin m, r := Finset.sum_le_sum fun k _ => by
+              have he : Real.exp (-((Fintype.card d : ℝ) *
+                  (((fun _ : d => r⁻¹) ᵥ* readGpb l ε m) k) ^ 2 / 2)) ≤ 1 := by
+                rw [Real.exp_le_one_iff, neg_nonpos]
+                positivity
+              exact (mul_le_of_le_one_left (Real.sqrt_nonneg _) he).trans (hV k)
+        _ = ((Fintype.card d : ℝ) + m) * r := by
+              simp [Fintype.card_sum]
+    have h2 : κ * r / 8 * (l * Fintype.card d) ≤ κ * r / 8 * Real.sqrt _ :=
+      mul_le_mul_of_nonneg_left hN (by positivity)
+    have h3 : κ * l / 8 * r ≤ κ * r / 8 * (l * Fintype.card d) := by
+      have h5 : 0 ≤ κ * r * l / 8 := by positivity
+      have h6 := mul_le_mul_of_nonneg_left (show (1 : ℝ) ≤ Fintype.card d by linarith) h5
+      linarith
+    have h4 : ((Fintype.card d : ℝ) + m) * r < κ * l / 8 * r :=
+      mul_lt_mul_of_pos_right hlκ hr0
+    rw [← hr]
+    linarith
+
 /-- **"Parameters that satisfy all conditions, in the case (0)", one GELU block:** for `d ≥ 2`, at
 least `d` hidden units and every `κ > 0`, there are a read `W` and a write `V` that satisfy (R1)
 for the write, (R2), (R3), (P1), and (P2) for `κ`. -/
