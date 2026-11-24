@@ -1,0 +1,5 @@
+d=1 m=3: 20 pairs (S,U), all independent; smallest ratio of singular values 2.44e-06
+d=2 m=4: 80 pairs (S,U), all independent; smallest ratio of singular values 3.39e-03
+d=2 m=5: 232 pairs (S,U), all independent; smallest ratio of singular values 3.84e-07
+d=3 m=5: 243 pairs (S,U), all independent; smallest ratio of singular values 8.51e-03
+d=3 m=6: 728 pairs (S,U), all independent; smallest ratio of singular values 7.85e-05

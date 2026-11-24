@@ -1,0 +1,21 @@
+tanh d_in=3 d=2 d_out=2 hidden=[1, 2] eps=0.5: P=22, expected rank 21
+   J_0: singular value 21 = 0.00011359, next = 1.0948e-40
+   tau=1.0e-6: J_tau: singular value 21 = 4.7338e-10, next = 5.5546e-41;  max|K_tau - J_0| = 7.8371e-6
+   tau=1.0e-9: J_tau: singular value 21 = 4.734e-13, next = 1.0699e-40;  max|K_tau - J_0| = 7.8371e-9
+   tau=1.0: J_tau: singular value 21 = 0.0014488, next = 9.4763e-41
+tanh d_in=3 d=3 d_out=3 hidden=[2, 1] eps=0.1: P=36, expected rank 33
+   J_0: singular value 33 = 0.086477, next = 3.3724e-40
+   tau=1.0e-6: J_tau: singular value 33 = 1.7113e-7, next = 2.2128e-40;  max|K_tau - J_0| = 2.4361e-5
+   tau=1.0e-9: J_tau: singular value 33 = 1.7113e-10, next = 2.2062e-40;  max|K_tau - J_0| = 2.4361e-8
+   tau=1.0: J_tau: singular value 33 = 0.081184, next = 3.4064e-40
+gated d_in=2 d=2 d_out=2 hidden=[1, 2] eps=0.5: P=26, expected rank 22
+   J_0: singular value 22 = 0.00055669, next = 7.8705e-41
+   tau=1.0e-6: J_tau: singular value 22 = 6.6837e-10, next = 4.3149e-41;  max|K_tau - J_0| = 9.9328e-7
+   tau=1.0e-9: J_tau: singular value 22 = 6.6837e-13, next = 3.4874e-41;  max|K_tau - J_0| = 9.9328e-10
+   tau=1.0: J_tau: singular value 22 = 0.00076131, next = 5.974e-41
+gated d_in=3 d=3 d_out=3 hidden=[1, 1] eps=1.0: P=36, expected rank 31
+   J_0: singular value 31 = 0.015671, next = 3.3323e-40
+   tau=1.0e-6: J_tau: singular value 31 = 4.157e-8, next = 1.4413e-40;  max|K_tau - J_0| = 4.1538e-6
+   tau=1.0e-9: J_tau: singular value 31 = 4.157e-11, next = 1.9353e-40;  max|K_tau - J_0| = 4.1538e-9
+   tau=1.0: J_tau: singular value 31 = 0.13667, next = 2.4847e-40
+ALL AS EXPECTED
