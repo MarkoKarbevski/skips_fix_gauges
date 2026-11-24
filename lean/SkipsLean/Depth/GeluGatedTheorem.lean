@@ -1,6 +1,9 @@
 import SkipsLean.Depth.GeluGatedExplicit
 import SkipsLean.Dimension.GenericRank
 import SkipsLean.Generic.Gated
+import SkipsLean.Depth.SuffixRMS
+import SkipsLean.Depth.SuffixGated
+import SkipsLean.OneBlock.UnitsSwiGLU
 
 /-!
 # The bound is attained at any depth: GELU, SwiGLU and GeGLU blocks
@@ -39,7 +42,22 @@ theorem ae_funDim_gelu_skipless_rmsNorm [Nonempty T] {ε : ℝ} (hε : 0 < ε)
     ∀ᵐ θ ∂μ, funDim (Arch.mlp gelu (rmsNorm ε) hid) 0 θ
         + (L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2)
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  obtain ⟨θ₀, hθ, h0⟩ := exists_regular_claimRMS_gelu (T := T) (d := d) (dIn := dIn) (dOut := dOut)
+    (hid := hid) hε hd hdIn hdOut hhid
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.mlp (T := T) (d := d) gelu (rmsNorm ε) hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_mlp analyticOnNhd_gelu ℓ
+  -- step 1: the value at `θ₀` (Proposition D.4)
+  have h1 := funDim_of_claimRMS _ θ₀ hε rfl hf hθ h0
+  -- step 2: generic parameters have at least this functional dimension
+  have h2 := ae_funDim_ge (Arch.mlp (T := T) (d := d) gelu (rmsNorm ε) hid) 0 hf
+    (analyticOnNhd_rmsNorm hε) μ θ₀
+  -- step 3: and at most the value (Theorem 4.3)
+  have hfd : ∀ ℓ, Differentiable ℝ ((Arch.mlp (T := T) (d := d) gelu (rmsNorm ε) hid).f ℓ) :=
+    fun ℓ => differentiableOn_univ.1 (hf ℓ).differentiableOn
+  have h3 := ae_funDim_add_le_skipless_rmsNorm (A := Arch.mlp (T := T) (d := d) gelu (rmsNorm ε) hid)
+    μ hε rfl hfd hdIn hhid
+  filter_upwards [h2, h3] with θ h2 h3
+  omega
 
 /-- **Theorem 5.2 (iii), SwiGLU blocks without normalization:** at generic parameters
 `fd = P − (L + 1) d² − ∑ d_hidden`. -/
@@ -51,7 +69,21 @@ theorem ae_funDim_swiglu_skipless [Nonempty T]
     ∀ᵐ θ ∂μ, funDim (Arch.gated silu id hid) 0 θ
         + ((L + 1) * Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
       = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut) := by
-  sorry
+  obtain ⟨θ₀, hθ, hv, h0⟩ := exists_regular_claimGated_swiglu (T := T) (d := d) (dIn := dIn) (dOut := dOut)
+    (hid := hid) hd hdIn hdOut hhid
+  have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.gated (T := T) (d := d) silu id hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_gated analyticOnNhd_silu ℓ
+  -- step 1: the value at `θ₀` (Proposition D.4)
+  have h1 := funDim_of_claimGated analyticOnNhd_silu θ₀ hθ hv h0
+  -- step 2: generic parameters have at least this functional dimension
+  have h2 := ae_funDim_ge (Arch.gated (T := T) (d := d) silu id hid) 0 hf
+    analyticOnNhd_id μ θ₀
+  -- step 3: and at most the value (Theorem 4.3)
+  have h3 := ae_funDim_add_le_skipless_gated (T := T) (d := d) (hid := hid)
+    (fun z => (hasDerivAt_silu z).differentiableAt) μ hdIn hhid
+  filter_upwards [h2, h3] with θ h2 h3
+  omega
 
 /-- **Theorem 5.2 (iii), SwiGLU blocks under pre-RMSNorm with `ε > 0`:** at generic parameters
 `fd = P − (L + 1) d (d − 1) / 2 − ∑ d_hidden`. -/
@@ -63,7 +95,21 @@ theorem ae_funDim_swiglu_skipless_rmsNorm [Nonempty T] {ε : ℝ} (hε : 0 < ε)
     ∀ᵐ θ ∂μ, funDim (Arch.gated silu (rmsNorm ε) hid) 0 θ
         + ((L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2) + ∑ ℓ, Fintype.card (hid ℓ))
       = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) silu (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  obtain ⟨θ₀, hθ, hv, h0⟩ := exists_regular_claimGated_swiglu_rmsNorm (T := T) (d := d) (dIn := dIn) (dOut := dOut)
+    (hid := hid) hε hd hdIn hdOut hhid
+  have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.gated (T := T) (d := d) silu (rmsNorm ε) hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_gated analyticOnNhd_silu ℓ
+  -- step 1: the value at `θ₀` (Proposition D.4)
+  have h1 := funDim_of_claimGated_rmsNorm hε analyticOnNhd_silu θ₀ hθ hv h0
+  -- step 2: generic parameters have at least this functional dimension
+  have h2 := ae_funDim_ge (Arch.gated (T := T) (d := d) silu (rmsNorm ε) hid) 0 hf
+    (analyticOnNhd_rmsNorm hε) μ θ₀
+  -- step 3: and at most the value (Theorem 4.3)
+  have h3 := ae_funDim_add_le_skipless_gated_rmsNorm (T := T) (d := d) (hid := hid) hε
+    (fun z => (hasDerivAt_silu z).differentiableAt) μ hdIn hhid
+  filter_upwards [h2, h3] with θ h2 h3
+  omega
 
 /-- **Theorem 5.2 (iii), GeGLU blocks without normalization.** -/
 theorem ae_funDim_geglu_skipless [Nonempty T]
@@ -74,7 +120,21 @@ theorem ae_funDim_geglu_skipless [Nonempty T]
     ∀ᵐ θ ∂μ, funDim (Arch.gated gelu id hid) 0 θ
         + ((L + 1) * Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
       = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) gelu id hid) dIn dOut) := by
-  sorry
+  obtain ⟨θ₀, hθ, hv, h0⟩ := exists_regular_claimGated_geglu (T := T) (d := d) (dIn := dIn) (dOut := dOut)
+    (hid := hid) hd hdIn hdOut hhid
+  have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.gated (T := T) (d := d) gelu id hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_gated analyticOnNhd_gelu ℓ
+  -- step 1: the value at `θ₀` (Proposition D.4)
+  have h1 := funDim_of_claimGated analyticOnNhd_gelu θ₀ hθ hv h0
+  -- step 2: generic parameters have at least this functional dimension
+  have h2 := ae_funDim_ge (Arch.gated (T := T) (d := d) gelu id hid) 0 hf
+    analyticOnNhd_id μ θ₀
+  -- step 3: and at most the value (Theorem 4.3)
+  have h3 := ae_funDim_add_le_skipless_gated (T := T) (d := d) (hid := hid)
+    (fun z => (hasDerivAt_gelu z).differentiableAt) μ hdIn hhid
+  filter_upwards [h2, h3] with θ h2 h3
+  omega
 
 /-- **Theorem 5.2 (iii), GeGLU blocks under pre-RMSNorm with `ε > 0`.** -/
 theorem ae_funDim_geglu_skipless_rmsNorm [Nonempty T] {ε : ℝ} (hε : 0 < ε)
@@ -85,6 +145,20 @@ theorem ae_funDim_geglu_skipless_rmsNorm [Nonempty T] {ε : ℝ} (hε : 0 < ε)
     ∀ᵐ θ ∂μ, funDim (Arch.gated gelu (rmsNorm ε) hid) 0 θ
         + ((L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2) + ∑ ℓ, Fintype.card (hid ℓ))
       = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) gelu (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  obtain ⟨θ₀, hθ, hv, h0⟩ := exists_regular_claimGated_geglu_rmsNorm (T := T) (d := d) (dIn := dIn) (dOut := dOut)
+    (hid := hid) hε hd hdIn hdOut hhid
+  have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.gated (T := T) (d := d) gelu (rmsNorm ε) hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_gated analyticOnNhd_gelu ℓ
+  -- step 1: the value at `θ₀` (Proposition D.4)
+  have h1 := funDim_of_claimGated_rmsNorm hε analyticOnNhd_gelu θ₀ hθ hv h0
+  -- step 2: generic parameters have at least this functional dimension
+  have h2 := ae_funDim_ge (Arch.gated (T := T) (d := d) gelu (rmsNorm ε) hid) 0 hf
+    (analyticOnNhd_rmsNorm hε) μ θ₀
+  -- step 3: and at most the value (Theorem 4.3)
+  have h3 := ae_funDim_add_le_skipless_gated_rmsNorm (T := T) (d := d) (hid := hid) hε
+    (fun z => (hasDerivAt_gelu z).differentiableAt) μ hdIn hhid
+  filter_upwards [h2, h3] with θ h2 h3
+  omega
 
 end Skips
