@@ -143,3 +143,7 @@ import SkipsLean.Activations.MillsAtInfinityC
 import SkipsLean.Generic.HolomorphicBall
 import SkipsLean.Activations.GeluOnPath
 import SkipsLean.Depth.GeluPathSeparation
+import SkipsLean.Depth.SuffixCongr
+import SkipsLean.Depth.SuffixFlatZeroConverse
+import SkipsLean.Depth.FlatAtMatrixRows
+import SkipsLean.Depth.CondP
