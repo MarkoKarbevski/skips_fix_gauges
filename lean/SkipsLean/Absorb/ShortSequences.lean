@@ -38,6 +38,17 @@ namespace Skips
 open Matrix
 open scoped Matrix.Norms.Elementwise
 
+/-- Helper: the entries of the causal weights at zero scores: row `t` is uniform on the tokens
+`s ≤ t`. -/
+private theorem attnWeights_causal_ssq {n : ℕ} (t s : Fin n) :
+    attnWeights (fun t s : Fin n => s ≤ t) 0 t s = if s ≤ t then 1 / ((t : ℝ) + 1) else 0 := by
+  simp only [attnWeights, Matrix.of_apply, Matrix.zero_apply, Real.exp_zero]
+  split_ifs with h
+  · rw [Finset.sum_boole, Finset.filter_ge_eq_Iic, Fin.card_Iic]
+    push_cast
+    rfl
+  · rfl
+
 /-- **After Theorem 4.2:** for two tokens under the causal mask and zero scores, with `U` the
 matrix of the attention weights, `I − 3 U = −2 U²`: "the residual block `h ↦ h − 3 U h` equals
 the composition `h ↦ −2 U² h` of two skipless blocks". -/
@@ -46,7 +57,10 @@ theorem one_sub_three_smul_attnWeights_causal_two :
         - (3 : ℝ) • attnWeights (fun t s : Fin 2 => s ≤ t) (0 : Matrix (Fin 2) (Fin 2) ℝ)
       = (-2 : ℝ) • (attnWeights (fun t s : Fin 2 => s ≤ t) (0 : Matrix (Fin 2) (Fin 2) ℝ)
           * attnWeights (fun t s : Fin 2 => s ≤ t) (0 : Matrix (Fin 2) (Fin 2) ℝ)) := by
-  sorry
+  -- `U = !![1, 0; 1/2, 1/2]`: check the four entries
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [attnWeights_causal_ssq, Matrix.mul_apply, Fin.sum_univ_two] <;> norm_num
 
 /-- **Theorem 4.2 (iii), short sequences:** without normalization, with the causal mask on
 `n ≥ 1` tokens, when `n ≤ L`, or `n = L + 1` and `L ≤ L'`: for every model dimension `m + 2`,
