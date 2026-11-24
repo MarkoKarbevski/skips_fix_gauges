@@ -14,8 +14,8 @@ Checked against the papers by readers who did not write the statements (three co
 November 2026): every row of this file for the statements that were in the library at commit
 `46d0223`. Result: no Lean statement was found false, vacuous or changed in meaning by a
 definition; the differences were of coverage and of form, and the rows and notes below say them.
-Not yet compared by such a reader: the statements for ReLU, ReLU² and ReGLU blocks, written after
-that commit (`Dimension/RescalingMlp.lean`, `Dimension/RescalingGate.lean`, `OneBlock/Rescale.lean`,
+Not yet compared by such a reader: Theorem 4.5 of the absorb paper (`Absorb/FirstBlock.lean`) and the
+statements for ReLU, ReLU² and ReGLU blocks, written after that commit (`Dimension/RescalingMlp.lean`, `Dimension/RescalingGate.lean`, `OneBlock/Rescale.lean`,
 the last section of `Dimension/Functional.lean` and the statements marked with a prime).
 
 ## Definitions
@@ -297,6 +297,10 @@ the named kinds of network) as instances of the general statements.
 | A Theorem 4.1 (i), second class of blocks: fixed maps that are positively homogeneous of degree `k > 1` and bounded on the unit sphere (true for continuous maps) vanish at `0` with derivative `0` | `flatAtZero_of_homogeneous`, `flatAtZero_of_homogeneous_of_continuous` | `Absorb/PaperForms.lean` | proved |
 | **A Theorem 4.1 (i)** for its two classes of blocks (gated blocks whose gate vanishes at `0` and is differentiable there; positively homogeneous blocks of degree `> 1`, bounded on the unit sphere), without normalization and under pre-RMSNorm with `ε > 0` | `exists_ne_residual_skipless_gated`, `exists_ne_residual_skipless_gated_rmsNorm`, `exists_ne_residual_skipless_homogeneous`, `exists_ne_residual_skipless_homogeneous_rmsNorm` | `Absorb/PaperForms.lean` | proved |
 | A Theorem 4.1 (i) for SwiGLU, GeGLU, ReLU² and ReGLU networks, without normalization and under pre-RMSNorm with `ε > 0` | `exists_ne_residual_skipless_swiglu`, `exists_ne_residual_skipless_geglu`, `exists_ne_residual_skipless_reluSq`, `exists_ne_residual_skipless_reglu`, and the four names with `_rmsNorm` | `Absorb/PaperForms.lean` | proved |
+| A Theorem 4.5, the conditions of its proof on the weights of the residual network (`E`, `D` of rank `d`; no read of a hidden unit zero; `I + W_read[:,S] W_write[S,:]` invertible for every block and every `S`), which hold for almost every choice of weights (`d_in, d_out ≥ d ≥ 1`) | `FirstBlockGeneric`, `ae_firstBlockGeneric` | `Absorb/FirstBlock.lean` | in work |
+| **A Theorem 4.5 for ReLU:** under these conditions, and for almost every choice of weights (`d_in, d_out ≥ d`), a residual ReLU network equals no skipless ReLU network whose first block has fewer than `2d` hidden units, whatever its model dimension, depth and other widths | `exists_ne_skipless_of_first_card_lt_relu`, `ae_ne_skipless_of_first_card_lt_relu` | `Absorb/FirstBlock.lean` | in work |
+| A proof of Theorem 4.5, "GELU", for networks: without normalization, with or without skips, `F(tX)/t` of a GELU network tends as `t → ∞` to the output at `X` of the ReLU network with the same weights | `Params.withActivation`, `tendsto_eval_gelu_ray` | `Absorb/FirstBlock.lean` | in work |
+| **A Theorem 4.5 for GELU:** the same two statements for GELU networks | `exists_ne_skipless_of_first_card_lt_gelu`, `ae_ne_skipless_of_first_card_lt_gelu` | `Absorb/FirstBlock.lean` | in work |
 | A Proposition 5.1 (i) with the rate of Remark A.16: no normalization, locally Lipschitz fixed maps `f_ℓ` (the paper asks it of the blocks, which follows); the residual networks `F_t` (reads `t^{1−ℓ}W_read^ℓ`, writes `t^ℓ W_write^ℓ`, readout `t^{−L}D`) satisfy `‖F_t(X) − F(X)‖ ≤ C/t` on every bounded set of inputs, for `t ≥ 1`; uniform limit | `Params.limitScale`, `exists_bound_eval_limitScale`, `tendstoUniformlyOn_eval_limitScale` | `Absorb/Limits.lean` | proved |
 | A Proposition 5.1 (ii) with the rate: pre-RMSNorm with `ε = 0`, locally Lipschitz `f_ℓ`; `F_t` with the writes `t^ℓ W_write^ℓ`; on every compact set of inputs at which `F` is defined, for `t ≥ t_0`, `F_t` is defined and `‖F_t(X) − F(X)‖ ≤ C/t`; uniform limit | `Params.writeScale`, `DefinedAt`, `exists_bound_eval_writeScale`, `tendstoUniformlyOn_eval_writeScale` | `Absorb/Limits.lean` | proved |
 
@@ -342,7 +346,7 @@ Notes for the authors on these statements:
 - The first sentence of Corollary A.3 (compositions without embedding and readout) is the instance
   `E = D = I` of the statements for networks. "Exactly `d_model` units" (Theorem 3.1 (ii)) is two
   statements, one for each half.
-- Not stated yet: Theorems 3.4, 4.2, 4.3, 4.5; Propositions 4.6, 4.7; Remarks 5.2, 5.3; Lemmas A.5,
+- Not stated yet: Theorems 3.4, 4.2, 4.3; Propositions 4.6, 4.7; Remarks 5.2, 5.3; Lemmas A.5,
   A.6; Remarks A.8, A.12; Theorem A.13, Lemma A.14, Proposition A.15; Appendix C (blocks with
-  biases). The GELU step of the proof of Theorem 4.5 is stated for one block only.
+  biases).
 

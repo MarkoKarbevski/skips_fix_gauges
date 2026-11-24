@@ -316,3 +316,11 @@ import SkipsLean
 #print axioms Skips.ae_gate_ne_zero
 #print axioms Skips.ae_funDim_add_le_skipless_reglu
 #print axioms Skips.ae_funDim_add_le_skipless_reglu_rmsNorm
+
+-- Absorb paper, Theorem 4.5: the first block needs 2d hidden units
+#print axioms Skips.ae_firstBlockGeneric
+#print axioms Skips.exists_ne_skipless_of_first_card_lt_relu
+#print axioms Skips.ae_ne_skipless_of_first_card_lt_relu
+#print axioms Skips.tendsto_eval_gelu_ray
+#print axioms Skips.exists_ne_skipless_of_first_card_lt_gelu
+#print axioms Skips.ae_ne_skipless_of_first_card_lt_gelu
