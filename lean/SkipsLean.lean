@@ -35,3 +35,7 @@ import SkipsLean.OneBlock.UnitsReLU
 import SkipsLean.OneBlock.UnitsReGLU
 import SkipsLean.OneBlock.Residual
 import SkipsLean.Depth.Suffix
+import SkipsLean.Network.Analytic
+import SkipsLean.Depth.RaySeparation
+import SkipsLean.Depth.StepTanh
+import SkipsLean.Depth.Tanh

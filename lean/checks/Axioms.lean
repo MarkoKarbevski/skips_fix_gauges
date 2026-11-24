@@ -141,3 +141,18 @@ import SkipsLean
 #print axioms Skips.suffixFlat_of_flat_at_write
 #print axioms Skips.flat_le_range_cobDir_of_claim
 #print axioms Skips.funDim_of_claim
+-- Dimension paper, Appendix D, tanh blocks without normalization: Lemma D.1, Lemma D.7, Theorem 5.2 (i)
+#print axioms Skips.analyticOnNhd_tanh
+#print axioms Skips.analyticOnNhd_f_mlp
+#print axioms Skips.eventually_eq_zero_of_sum_pow_mul_exp_ray
+#print axioms Skips.tanh_ray_separation
+#print axioms Skips.tanh_ray_separation_matrix
+#print axioms Skips.suffixFlat_castSucc_iff_mlp
+#print axioms Skips.dense_setOf_linearIndependent_mul
+#print axioms Skips.eq_zero_of_fderiv_suffix_one_sub_sq
+#print axioms Skips.claim_castSucc_tanh
+#print axioms Skips.regular_of_tanhDepthGeneric
+#print axioms Skips.claim_of_tanhDepthGeneric
+#print axioms Skips.funDim_tanh_skipless
+#print axioms Skips.ae_tanhDepthGeneric
+#print axioms Skips.ae_funDim_tanh_skipless
