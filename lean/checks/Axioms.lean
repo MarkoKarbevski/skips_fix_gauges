@@ -1052,3 +1052,12 @@ import SkipsLean
 #print axioms Skips.aeval_attnWeights_causal_eq_zero
 #print axioms Skips.one_sub_three_smul_attnWeights_causal_two
 #print axioms Skips.exists_residual_eq_skipless_attention_causal_short
+#print axioms Skips.attnFamily_two_tokens
+#print axioms Skips.attnFamily_rigid
+#print axioms Skips.ae_smallWritesGenericAttention
+#print axioms Skips.smallWritesLimit_eq_zero_attention
+#print axioms Skips.eventually_funDim_smallWrites_attention
+#print axioms Skips.ae_eventually_funDim_smallWrites_attention
+#print axioms Skips.ae_funDim_attention_residual
+#print axioms Skips.ae_funDim_attention_residual_ge_add
+#print axioms Skips.ae_funDim_attention_residual_of_width
