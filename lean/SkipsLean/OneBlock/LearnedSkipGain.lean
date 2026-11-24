@@ -554,6 +554,61 @@ private theorem mem_flatSkips_of_blockFlat_lsn {A : Arch T d 1} {ε : ℝ} (hε 
   exact h1.unique (hasDerivAt_eval_blockFlat_lsn hε hA R θ ψ x (hf _) hψE hψD
     (hψ x (Set.mem_univ x)))
 
+/-! ### The open cone `V` (copies of the private helpers of `OneBlock/ResidualRMSStepsOn.lean`) -/
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `0 ≤ ⟨v, v⟩`. -/
+private theorem dot_self_nonneg_lsn (v : d → ℝ) : 0 ≤ v ⬝ᵥ v :=
+  Finset.sum_nonneg fun i _ => mul_self_nonneg (v i)
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: scaling the rows of `h` by positive numbers scales the rows of `h M` by the same
+numbers, so it keeps `h M` in `V`. -/
+private theorem rowScale_mul_mem_lsn {m r : Type*} [Fintype m] {V : Set (Matrix T r ℝ)}
+    (hVs : ∀ M ∈ V, ∀ c : T → ℝ, (∀ t, 0 < c t) → (Matrix.of fun t i => c t * M t i) ∈ V)
+    {h : Matrix T m ℝ} {M : Matrix m r ℝ} (hM : h * M ∈ V) {c : T → ℝ} (hc : ∀ t, 0 < c t) :
+    (Matrix.of fun t => c t • h t) * M ∈ V := by
+  have e : (Matrix.of fun t => c t • h t) * M = Matrix.of fun t i => c t * (h * M) t i := by
+    ext t i
+    simp only [Matrix.mul_apply, Matrix.of_apply, Pi.smul_apply, smul_eq_mul, Finset.mul_sum,
+      mul_assoc]
+  rw [e]
+  exact hVs _ hM c hc
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: for `ε > 0`, `h M ∈ V` gives `N_ε(h) M ∈ V` (`N_ε` scales every row by a positive
+number). -/
+private theorem rmsNorm_mul_mem_lsn {ε : ℝ} (hε : 0 < ε) {r : Type*} {V : Set (Matrix T r ℝ)}
+    (hVs : ∀ M ∈ V, ∀ c : T → ℝ, (∀ t, 0 < c t) → (Matrix.of fun t i => c t * M t i) ∈ V)
+    {h : Matrix T d ℝ} {M : Matrix d r ℝ} (hM : h * M ∈ V) : rmsNorm ε h * M ∈ V :=
+  rowScale_mul_mem_lsn hVs hM
+    (c := fun t => (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε))⁻¹)
+    fun t => inv_pos.2 (Real.sqrt_pos.2 (by have := dot_self_nonneg_lsn (h t); positivity))
+
+/-! ### The count -/
+
+/-- Helper (the private `half_add_half_lsk` of `OneBlock/LearnedSkipKinds.lean`):
+`n (n + 1)/2 + n (n − 1)/2 = n²`. -/
+private theorem half_add_half_lsn (n : ℕ) : n * (n + 1) / 2 + n * (n - 1) / 2 = n ^ 2 := by
+  have h1 := Nat.two_mul_div_two_of_even (Nat.even_mul_succ_self n)
+  have h2 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self n)
+  have h3 : n * (n + 1) + n * (n - 1) = 2 * n ^ 2 := by
+    cases n with
+    | zero => rfl
+    | succ m => rw [Nat.add_sub_cancel]; ring
+  generalize n * (n + 1) = y at h1 h3 ⊢
+  generalize n * (n - 1) = x at h2 h3 ⊢
+  generalize n ^ 2 = q at h3 ⊢
+  omega
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper: the weights and the skip have `P + d²` entries. -/
+private theorem finrank_paramsSkip_lsn {A : Arch T d 1} :
+    Module.finrank ℝ (Params A dIn dOut × (Fin 1 → Matrix d d ℝ))
+      = Module.finrank ℝ (Params A dIn dOut) + Fintype.card d ^ 2 := by
+  rw [Module.finrank_prod, Module.finrank_pi_fintype, Module.finrank_matrix]
+  simp [sq]
+
 /-- **Theorem 4.6 (ii), "A learned skip raises it by exactly `d (d + 1)/2` more than an identity
 skip", at one parameter, for a continuously differentiable block (`ε > 0`):** if `E` and `D` have
 rank `d`, the skip `A = R 0` is invertible and Step 4 holds at `θ` (`NoSymmetricPart` at all
@@ -594,6 +649,70 @@ theorem funDimLearned_eq_funDim_residual_add_of_noSymmetricPart_on {A : Arch T d
       ∃ (n : ℕ) (X : Fin n → Matrix T dIn ℝ), (∀ i, X i * θ.E * θ.read 0 ∈ V) ∧
         jacobianRankSkips A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) X (θ, R)
           = funDimLearned A (θ, R) := by
-  sorry
+  -- the inputs `U` (`x E W_read ∈ V`) and the space `K_U` of the directions of the block with
+  -- derivative zero at these inputs
+  obtain ⟨U, hU⟩ : ∃ U : Set (Matrix T dIn ℝ), U = {x | x * θ.E * θ.read 0 ∈ V} := ⟨_, rfl⟩
+  rw [← hU] at hX
+  have hmemU : ∀ x, x ∈ U ↔ x * θ.E * θ.read 0 ∈ V := fun x => by rw [hU]; rfl
+  let K := blockFlat_lsn A ε θ U
+  -- `K_U` is spanned by directions of symmetries inside the block (the hypothesis `hK`)
+  have hK' : K ≤ Submodule.span ℝ {η | InsideBlocks A θ η} := fun ψ hψ =>
+    hK ψ hψ.1 hψ.2.1 fun x hx => hψ.2.2 x ((hmemU x).2 hx)
+  -- at an input of `U`, `f` is differentiable at `N_ε(x E) W_read ∈ V`
+  have hfx : ∀ x ∈ U, DifferentiableAt ℝ (A.f 0) (rmsNorm ε (x * θ.E) * θ.read 0) :=
+    fun x hx => (hf.contDiffAt (hV.mem_nhds
+      (rmsNorm_mul_mem_lsn hε hVs ((hmemU x).1 hx)))).differentiableAt one_ne_zero
+  -- (a) the learned skip: the directions flat on `U` are rotations plus directions of `K_U`
+  have hL : flatSkipsOn A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R) U
+      ≤ LinearMap.range (phiL_lsn θ R K) := by
+    refine le_range_phiL_lsn hε θ R U hX _ fun η ρ hp => ?_
+    rw [hU] at hp
+    obtain ⟨X, Y, hY, hηE, hρ, hηD, h⟩ :=
+      exists_of_flatSkipsOn_learned_rmsNorm hε hA V hV hVs hf θ R hE hD hR hw η ρ hp
+    exact ⟨X, Y, hY, hηE, hρ, hηD, fun x hx => h x ((hmemU x).1 hx)⟩
+  have hdimL : Module.finrank ℝ
+      (flatSkipsOn A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R) U)
+      ≤ Fintype.card d * (Fintype.card d - 1) + Module.finrank ℝ K :=
+    (Submodule.finrank_mono hL).trans
+      ((LinearMap.finrank_range_le _).trans (finrank_domL_lsn K).le)
+  -- (b) the residual network: the directions flat on `U` are rotations plus directions of `K_U`
+  have hRs : flatOn A 1 θ U ≤ LinearMap.range (phiR_lsn θ K) := by
+    refine le_range_phiR_lsn θ U _ fun η hη => ?_
+    rw [hU] at hη
+    obtain ⟨Y, hY, hηE, hηD, h⟩ :=
+      exists_antisymm_of_flatOn_residual_rmsNorm hε hA V hV hVs hf θ hE hD hw η hη
+    exact ⟨Y, hY, hηE, hηD, fun x hx => h x ((hmemU x).1 hx)⟩
+  have hdimR : Module.finrank ℝ (flatOn A 1 θ U)
+      ≤ Fintype.card d * (Fintype.card d - 1) / 2 + Module.finrank ℝ K :=
+    (Submodule.finrank_mono hRs).trans
+      ((LinearMap.finrank_range_le _).trans (finrank_domR_lsn K).le)
+  -- (c) the upper bounds from the rotations and the symmetries inside the block
+  have hupL := funDimLearned_add_le_rmsNorm' ε hA (θ, R) hE hD K hK'
+  have hupR := funDim_add_le_residual_of_insideBlocks_rmsNorm θ ε hA K hK' hE
+  -- `fd + dim (flat directions) = number of parameters`, and flat implies flat on `U`
+  have hsumL : funDimLearned A (θ, R) + Module.finrank ℝ
+      (flatSkips A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R))
+      = Module.finrank ℝ (Params A dIn dOut × (Fin 1 → Matrix d d ℝ)) :=
+    funDimSkips_add_finrank_flatSkips' A _ (θ, R)
+  have hsumR := funDim_add_finrank_flat' (A := A) (S := 1) θ
+  have hmonoL := Submodule.finrank_mono
+    (flatSkips_le_flatSkipsOn A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R) U)
+  have hmonoR := Submodule.finrank_mono (flat_le_flatOn (A := A) (S := 1) θ U)
+  have hP := finrank_paramsSkip_lsn (A := A) (dIn := dIn) (dOut := dOut)
+  -- a batch of inputs of `U` with rank `P + d² − dim (directions flat on U)`
+  obtain ⟨n, Xb, hXb, hrank⟩ := exists_jacobianRankSkips_add_finrank_flatSkipsOn A
+    (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R) U
+    fun x hx => differentiableAt_evalSkips_lsn hε hA θ R x (hfx x hx)
+  -- the arithmetic: `d (d + 1)/2 + d (d − 1)/2 = d²` and `2 · (d (d − 1)/2) = d (d − 1)`
+  have hhalf := half_add_half_lsn (Fintype.card d)
+  have h2 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self (Fintype.card d))
+  refine ⟨?_, n, Xb, fun i => (hmemU (Xb i)).1 (hXb i), ?_⟩
+  · generalize Fintype.card d * (Fintype.card d + 1) / 2 = b at hhalf ⊢
+    generalize Fintype.card d * (Fintype.card d - 1) = a at hhalf h2 hdimL hdimR hupL hupR
+    generalize Fintype.card d ^ 2 = q at hhalf hupL hP
+    omega
+  · generalize Fintype.card d * (Fintype.card d - 1) = a at hdimL hupL
+    generalize Fintype.card d ^ 2 = q at hupL hP
+    omega
 
 end Skips
