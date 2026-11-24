@@ -190,3 +190,5 @@ import SkipsLean.Absorb.FullNetworks
 import SkipsLean.Residual.FoldingDim
 import SkipsLean.Network.Attention
 import SkipsLean.Absorb.AttentionBlock
+import SkipsLean.Absorb.AttentionZero
+import SkipsLean.Absorb.AttentionNetworks
