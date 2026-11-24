@@ -128,6 +128,7 @@ theorem suffixC_ofReal {σ : ℝ → ℝ} {σC : ℂ → ℂ} (hσ : ∀ x : ℝ
     ext t j
     simp [hσ]
 
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
 /-- "`𝓑_{>k}(λh) = 𝓑_{>k}(h)` for `λ > 0`" on the cone `C_1`: multiplying the rows of `h` by
 positive numbers does not change `suffixC`, when every row of `h` has `Re⟨h, h⟩ > 0`. -/
 theorem suffixC_smul_rows (σC : ℂ → ℂ) (ω : CWeights d dOut hid) (k : Fin (L + 1))
@@ -358,6 +359,7 @@ private theorem rmsRowC_mem_of_cone_cs (O : Set (d → ℂ)) {δ : ℝ} (hδ : 0
     refine abs_lt_of_sq_lt_sq ?_ hδ.le
     nlinarith
 
+omit [DecidableEq d] [Fintype dIn] in
 /-- **Lemma D.14 of the dimension paper (`𝓑_{>k}` on a complex cone),** for MLP blocks whose
 activation `σ` extends to a map `σC` that is holomorphic at every real point: if `θ` is regular
 ((R1) and (R2) are used), then for every `k` there is a `κ_k ∈ (0, 1]` such that `𝓑_{>k}`, with
@@ -459,6 +461,7 @@ theorem exists_holomorphicOnCone {σ : ℝ → ℝ} {σC : ℂ → ℂ}
     rw [heq]
     exact hc
 
+omit [DecidableEq d] [Fintype dIn] in
 /-- The cones of Lemma D.14 may be shrunk: `HolomorphicOnCone` for `κ` gives it for every
 `0 ≤ κ' ≤ κ`. -/
 theorem HolomorphicOnCone.mono {σ : ℝ → ℝ} {σC : ℂ → ℂ}
