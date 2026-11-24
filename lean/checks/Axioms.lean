@@ -1746,3 +1746,5 @@ import SkipsLean
 #print axioms Skips.ae_funDimSkipsOn_tri_le_residual_add_swiglu_oneBlock_rmsNorm_zero
 #print axioms Skips.ae_funDimSkipsOn_tri_le_residual_add_geglu_oneBlock_rmsNorm_zero
 #print axioms Skips.ae_funDimSkipsOn_tri_le_residual_add_attention_oneBlock_rmsNorm_zero
+#print axioms Skips.relu_unitsRescaleSphere
+#print axioms Skips.reluSq_unitsRescaleSphere
