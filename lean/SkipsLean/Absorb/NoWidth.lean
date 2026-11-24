@@ -176,7 +176,10 @@ theorem exists_ne_swiglu (Wg Wv : Matrix p m ℝ) (Ww : Matrix m q ℝ) (Wg' Wv'
 theorem exists_ne_geglu (Wg Wv : Matrix p m ℝ) (Ww : Matrix m q ℝ) (Wg' Wv' : Matrix p m' ℝ)
     (Ww' : Matrix m' q ℝ) (M : Matrix p q ℝ) (hM : M ≠ 0) :
     ∃ x : p → ℝ, x ᵥ* M + gatedBlock gelu Wg Wv Ww x ≠ gatedBlock gelu Wg' Wv' Ww' x := by
-  sorry
+  -- Proposition A.2: GELU vanishes at `0` and is differentiable there
+  have h0 : gelu 0 = 0 := by rw [gelu, zero_mul]
+  exact exists_ne_of_gated h0 (hasDerivAt_gelu 0).differentiableAt h0
+    (hasDerivAt_gelu 0).differentiableAt Wg Wv Ww Wg' Wv' Ww' M hM
 
 /-- **Theorem 3.3 (c):** for `M ≠ 0`, no `tanh` block of any width computes `x M + B(x)`: a `tanh`
 block is bounded, and `x M` is not. -/
