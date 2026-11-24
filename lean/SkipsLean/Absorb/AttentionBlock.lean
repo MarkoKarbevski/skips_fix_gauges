@@ -33,12 +33,64 @@ open Matrix MeasureTheory
 
 variable {T d : Type*} [Fintype T] [Fintype d]
 
+/-- The denominator of row `t` of the weights is positive when token `t` sees some token. -/
+private theorem attnWeights_den_pos_atb (sees : T → T → Prop) [DecidableRel sees]
+    (Z : Matrix T T ℝ) (t : T) (ht : ∃ s, sees t s) :
+    0 < ∑ s', if sees t s' then Real.exp (Z t s') else 0 := by
+  obtain ⟨s, hs⟩ := ht
+  refine Finset.sum_pos' (fun s' _ => ?_) ⟨s, Finset.mem_univ _, ?_⟩
+  · split_ifs
+    · exact (Real.exp_pos _).le
+    · exact le_rfl
+  · simp only [hs, ite_true]
+    exact Real.exp_pos _
+
+/-- **(a)** Row `t` of the weights sums to `1` when token `t` sees some token. -/
+private theorem attnWeights_sum_atb (sees : T → T → Prop) [DecidableRel sees]
+    (Z : Matrix T T ℝ) (t : T) (ht : ∃ s, sees t s) :
+    ∑ s, attnWeights sees Z t s = 1 := by
+  have hS := attnWeights_den_pos_atb sees Z t ht
+  have h1 : ∀ s, attnWeights sees Z t s = (if sees t s then Real.exp (Z t s) else 0)
+      / ∑ s', if sees t s' then Real.exp (Z t s') else 0 := by
+    intro s
+    simp only [attnWeights, Matrix.of_apply]
+    split_ifs
+    · rfl
+    · rw [zero_div]
+  simp only [h1, ← Finset.sum_div]
+  exact div_self hS.ne'
+
+/-- **(b)** If row `t` of the scores is `0` and token `t` sees all tokens, row `t` of the
+weights is uniform. -/
+private theorem attnWeights_uniform_atb (sees : T → T → Prop) [DecidableRel sees]
+    (Z : Matrix T T ℝ) (t : T) (ht : ∀ s, sees t s) (hZ : ∀ s, Z t s = 0) (s : T) :
+    attnWeights sees Z t s = (Fintype.card T : ℝ)⁻¹ := by
+  simp only [attnWeights, Matrix.of_apply, ht, ite_true, hZ, Real.exp_zero, Finset.sum_const,
+    Finset.card_univ, nsmul_eq_mul, mul_one, one_div]
+
+omit [Fintype T] [Fintype d] in
+/-- A row of a sum of matrices. -/
+private theorem sum_row_atb {H : Type*} [Fintype H] (A : H → Matrix T d ℝ) (t : T) :
+    (∑ i, A i) t = ∑ i, A i t :=
+  Finset.sum_apply t _ _
+
+/-- Row `t` of one head: `(P * h * C) t = (∑_s P t s • h s) ᵥ* C`. -/
+private theorem head_row_atb (P : Matrix T T ℝ) (h : Matrix T d ℝ) (C : Matrix d d ℝ) (t : T) :
+    (P * h * C) t = (∑ s, P t s • h s) ᵥ* C := by
+  rw [Matrix.mul_apply_eq_vecMul, Matrix.mul_apply_eq_vecMul, Matrix.vecMul_eq_sum (P t) h]
+
 /-- **Proof of Theorem A.13, Step 1 (equal tokens):** if every row of `h` is `x`, the row of the
 block at a token that sees some token is `x ∑_i C_i`. -/
 theorem attnHeads_const_row (sees : T → T → Prop) [DecidableRel sees] {H : Type*} [Fintype H]
     (Γ C : H → Matrix d d ℝ) (x : d → ℝ) (t : T) (ht : ∃ s, sees t s) :
     attnHeads sees Γ C (Matrix.of fun _ => x) t = x ᵥ* ∑ i, C i := by
-  sorry
+  -- each row of the weights sums to `1`, so each head gives `x C_i`
+  rw [attnHeads, sum_row_atb, Matrix.vecMul_sum]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [head_row_atb]
+  congr 1
+  have h1 : ∀ s, (Matrix.of fun _ : T => x) s = x := fun s => rfl
+  simp only [h1, ← Finset.sum_smul, attnWeights_sum_atb sees _ t ht, one_smul]
 
 /-- **Proof of Theorem A.13, Step 2 (one zero token):** if row `t₀` of `h` is `0` and token `t₀`
 sees all tokens, the row of the block at `t₀` is the mean of the rows of `h` times
@@ -47,7 +99,17 @@ theorem attnHeads_zero_row (sees : T → T → Prop) [DecidableRel sees] {H : Ty
     (Γ C : H → Matrix d d ℝ) (h : Matrix T d ℝ) (t₀ : T) (ht₀ : ∀ s, sees t₀ s)
     (h0 : h t₀ = 0) :
     attnHeads sees Γ C h t₀ = ((Fintype.card T : ℝ)⁻¹ • ∑ s, h s) ᵥ* ∑ i, C i := by
-  sorry
+  rw [attnHeads, sum_row_atb, Matrix.vecMul_sum]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [head_row_atb]
+  congr 1
+  -- row `t₀` of the scores is `0`, so row `t₀` of the weights is uniform
+  have hZ : ∀ s, (h * Γ i * hᵀ) t₀ s = 0 := by
+    intro s
+    rw [Matrix.mul_apply_eq_vecMul, Matrix.mul_apply_eq_vecMul, h0, Matrix.zero_vecMul,
+      Matrix.zero_vecMul, Pi.zero_apply]
+  simp only [attnWeights_uniform_atb sees _ t₀ ht₀ hZ]
+  exact (Finset.smul_sum (s := Finset.univ) (f := fun s => h s)).symm
 
 /-- **Theorem A.13 (ii) / Theorem 3.4 (ii):** with at least two tokens and a token that sees all
 tokens, for every row `x` of norm at most `1` some `h` whose rows have norm at most `1` has a row
