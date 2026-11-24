@@ -42,6 +42,66 @@ def valueOutput {sees : T → T → Prop} [DecidableRel sees] {χ : Matrix T d �
   ∑ i : H ℓ, ((θ.read ℓ).submatrix id fun k : dh ℓ => (i, Sum.inr (Sum.inr k)))
     * ((θ.write ℓ).submatrix (fun k : dh ℓ => (i, k)) id)
 
+omit [Fintype d] [DecidableEq d] in
+/-- Helper: the attention weights are continuous in the scores. -/
+private theorem continuous_attnWeights_atz (sees : T → T → Prop) [DecidableRel sees] :
+    Continuous (attnWeights sees) := by
+  refine continuous_pi fun t => continuous_pi fun s => ?_
+  simp only [attnWeights, Matrix.of_apply]
+  refine continuous_if_const _ (fun hts => ?_) fun _ => continuous_const
+  have he : ∀ s' : T, Continuous fun Z : Matrix T T ℝ => Real.exp (Z t s') := fun s' =>
+    Real.continuous_exp.comp ((continuous_apply s').comp (continuous_apply t))
+  refine (he s).div (continuous_finsetSum _ fun s' _ =>
+    continuous_if_const _ (fun _ => he s') fun _ => continuous_const) fun Z => ?_
+  -- the denominator is at least the term of the token `s`, which `t` sees
+  have h1 := Finset.single_le_sum (f := fun s' => if sees t s' then Real.exp (Z t s') else 0)
+    (fun s' _ => by positivity) (Finset.mem_univ s)
+  simp only [hts, ite_true] at h1
+  exact (lt_of_lt_of_le (Real.exp_pos _) h1).ne'
+
+omit [DecidableEq d] in
+/-- Helper: `τ ↦ P(τ) g(τ) C` with `P` continuous at `0` and `g(0) = 0` has the derivative
+`P(0) g'(0) C` at `0`: its slope is `P(τ) (g(τ)/τ) C`. -/
+private theorem hasDerivAt_mul_mul_atz {l m n p : Type*} [Fintype l] [Fintype m] [Fintype n]
+    [Fintype p] {P : ℝ → Matrix l m ℝ} {g : ℝ → Matrix m n ℝ} {g' : Matrix m n ℝ}
+    (C : Matrix n p ℝ) (hP : ContinuousAt P 0) (hg : HasDerivAt g g' 0) (hg0 : g 0 = 0) :
+    HasDerivAt (fun τ => P τ * g τ * C) (P 0 * g' * C) 0 := by
+  have hs := hasDerivAt_iff_tendsto_slope.1 hg
+  refine hasDerivAt_iff_tendsto_slope.2 ?_
+  have hc : Continuous fun q : Matrix l m ℝ × Matrix m n ℝ => q.1 * q.2 * C :=
+    (continuous_fst.matrix_mul continuous_snd).matrix_mul continuous_const
+  have h := (hc.tendsto (P 0, g')).comp
+    ((hP.tendsto.mono_left nhdsWithin_le_nhds).prodMk_nhds hs)
+  refine h.congr fun τ => ?_
+  simp only [Function.comp_apply, slope_def_module, hg0, Matrix.mul_zero, Matrix.zero_mul,
+    sub_zero, Matrix.mul_smul, Matrix.smul_mul]
+
+omit [DecidableEq d] in
+/-- Helper: an attention block vanishes at `0`. -/
+private theorem attnHeads_zero_atz (sees : T → T → Prop) [DecidableRel sees] {H : Type*}
+    [Fintype H] (Γ C : H → Matrix d d ℝ) : attnHeads sees Γ C (0 : Matrix T d ℝ) = 0 := by
+  simp only [attnHeads, Matrix.mul_zero, Matrix.zero_mul, Finset.sum_const_zero]
+
+omit [DecidableEq d] in
+/-- Helper: an attention block along a curve `g` through `0` with the velocity `g'` has the
+velocity `U g' ∑_i C_i`, `U = softmax(0)`. -/
+private theorem hasDerivAt_attnHeads_atz (sees : T → T → Prop) [DecidableRel sees] {H : Type*}
+    [Fintype H] (Γ C : H → Matrix d d ℝ) {g : ℝ → Matrix T d ℝ} {g' : Matrix T d ℝ}
+    (hg : HasDerivAt g g' 0) (hg0 : g 0 = 0) :
+    HasDerivAt (fun τ => attnHeads sees Γ C (g τ)) (attnWeights sees 0 * g' * ∑ i, C i) 0 := by
+  -- head `i`: its weights `P_i(τ) = softmax(g Γ_i gᵀ)` are continuous at `τ = 0`
+  have hP : ∀ i, ContinuousAt (fun τ => attnWeights sees (g τ * Γ i * (g τ)ᵀ)) 0 := fun i => by
+    have hc : Continuous fun h : Matrix T d ℝ => attnWeights sees (h * Γ i * hᵀ) :=
+      (continuous_attnWeights_atz sees).comp
+        ((continuous_id.matrix_mul continuous_const).matrix_mul continuous_id.matrix_transpose)
+    exact hc.continuousAt.comp hg.continuousAt
+  -- so head `i` has the velocity `P_i(0) g' C_i`, and `P_i(0) = softmax(0)`
+  have h := HasDerivAt.fun_sum (u := Finset.univ) fun i _ =>
+    hasDerivAt_mul_mul_atz (C i) (hP i) hg hg0
+  simp only [hg0, Matrix.zero_mul, Matrix.transpose_zero, Matrix.mul_zero] at h
+  rw [Matrix.mul_sum]
+  exact h
+
 /-- **Proof of Theorem 4.2, the Jacobians at `X = 0`, on the inputs `a b`:** let `χ(0) = 0` and
 let `χ` have the derivative `ξ I` at `0`, and let the column `a` satisfy `U a = λ a` for
 `U = softmax(0)`. For a network of attention blocks with the stream matrices `s I`, the
