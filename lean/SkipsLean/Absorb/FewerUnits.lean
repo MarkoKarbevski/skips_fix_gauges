@@ -132,6 +132,13 @@ theorem exists_ne_of_relu_card_lt (hd : 2 ≤ Fintype.card d) (Wr : Matrix d m �
     exact hsame a b (ρ a) (ρ b) (hρ a) (by rw [← hf a, ← hf b, hab])
   -- the other units `E` of the new block: fewer than `d`, as `m' < m + d`
   obtain ⟨E, hE⟩ : ∃ E : Finset m', E = (Finset.univ.image f)ᶜ := ⟨_, rfl⟩
+  -- (`d` is nonempty without `hd`: else `hm'` makes `m` nonempty, and a column of the read, a
+  -- vector with no coordinates, would be `0`)
+  have hd0 : 0 < Fintype.card d := by
+    by_contra h0
+    have : IsEmpty d := Fintype.card_eq_zero_iff.1 (by omega)
+    obtain ⟨i⟩ : Nonempty m := Fintype.card_pos_iff.1 (by omega)
+    exact hnd.col_ne_zero i (funext fun a => isEmptyElim a)
   have hEcard : Fintype.card E < Fintype.card d := by
     rw [Fintype.card_coe, hE, Finset.card_compl, Finset.card_image_of_injective _ hinj,
       Finset.card_univ]
