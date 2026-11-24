@@ -362,7 +362,7 @@ private theorem one_le_half_ltz (hd : 2 ≤ Fintype.card d) :
   have h := Nat.mul_le_mul hd (show 3 ≤ Fintype.card d + 1 by omega)
   omega
 
-omit [LinearOrder d] in
+omit [LinearOrder d] [Fintype T] [Nonempty T] in
 /-- Helper (the two conditions of `OneBlock/TurnsActiveRowsSkipLinear.lean` for a ReLU block, with
 the Borel and Haar instances as explicit arguments): at almost every `(θ, v)` the block turns a
 dense set of the active rows and some row off the kinks, for the skip `ι v`. -/
@@ -376,7 +376,7 @@ private theorem ae_turned_relu_ltz [Nonempty (hid 0)] {V : Type*} [NormedAddComm
   (ae_turnsActiveRowsSkip_relu_of_linear ι v₀ hι μ hd).and
     (ae_exists_turned_row_skip_relu_of_linear ι v₀ hι μ hd)
 
-omit [LinearOrder d] in
+omit [LinearOrder d] [Fintype T] [Nonempty T] in
 /-- Helper (the same for a ReLU² block). -/
 private theorem ae_turned_reluSq_ltz [Nonempty (hid 0)] {V : Type*} [NormedAddCommGroup V]
     [NormedSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] (hB : BorelSpace V)
@@ -388,7 +388,7 @@ private theorem ae_turned_reluSq_ltz [Nonempty (hid 0)] {V : Type*} [NormedAddCo
   (ae_turnsActiveRowsSkip_reluSq_of_linear ι v₀ hι μ hd).and
     (ae_exists_turned_row_skip_reluSq_of_linear ι v₀ hι μ hd)
 
-omit [LinearOrder d] in
+omit [LinearOrder d] [Fintype T] [Nonempty T] in
 /-- Helper (the same for a ReGLU block, with the gates). -/
 private theorem ae_turned_reglu_ltz [Nonempty (hid 0)] {V : Type*} [NormedAddCommGroup V]
     [NormedSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] (hB : BorelSpace V)
