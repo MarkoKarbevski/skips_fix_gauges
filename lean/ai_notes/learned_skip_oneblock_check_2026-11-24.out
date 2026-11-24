@@ -1,0 +1,24 @@
+tanh d_in=2 d=2 d_out=2 hidden=2 eps=0.5: P=16, s=0, P+d-s=18, residual value P-d(d-1)/2-s=15
+    full, generic A: rank 18 (last singular value 0.0003928, next 3.528e-41)
+    triangular, generic A: rank 18 (last singular value 0.0003095, next 2.28e-41)
+    skipless (A = 0, theta only): rank 14 (last singular value 0.0003056, next 4.901e-41)
+    full, at A = 0: rank 18 (last singular value 0.0001969, next 1.507e-40)
+    residual (A = I, theta only): rank 15 (last singular value 0.01978, next 4.652e-41)
+tanh d_in=3 d=3 d_out=3 hidden=3 eps=0.2: P=36, s=0, P+d-s=39, residual value P-d(d-1)/2-s=33
+    full, generic A: rank 39 (last singular value 0.007675, next 2.211e-40)
+    triangular, generic A: rank 39 (last singular value 0.02449, next 2.077e-40)
+    skipless (A = 0, theta only): rank 30 (last singular value 0.01548, next 1.335e-40)
+    full, at A = 0: rank 39 (last singular value 0.01363, next 2.643e-40)
+    residual (A = I, theta only): rank 33 (last singular value 0.06331, next 1.842e-40)
+gated d_in=2 d=2 d_out=3 hidden=2 eps=0.5: P=22, s=2, P+d-s=22, residual value P-d(d-1)/2-s=19
+    full, generic A: rank 22 (last singular value 0.001597, next 1.154e-40)
+    triangular, generic A: rank 22 (last singular value 0.01465, next 2.436e-40)
+    skipless (A = 0, theta only): rank 18 (last singular value 4.993e-5, next 1.347e-40)
+    full, at A = 0: rank 22 (last singular value 3.03e-5, next 2.738e-40)
+    residual (A = I, theta only): rank 19 (last singular value 0.008485, next 8.277e-41)
+tanh d_in=3 d=3 d_out=3 hidden=2 eps=0.5: P=30, s=0, P+d-s=33, residual value P-d(d-1)/2-s=27
+    full, generic A: rank 33 (last singular value 0.003456, next 1.303e-40)
+    triangular, generic A: rank 33 (last singular value 0.008074, next 2.626e-40)
+    skipless (A = 0, theta only): rank 21 (last singular value 0.02877, next 1.37e-40)
+    full, at A = 0: rank 30 (last singular value 0.02767, next 2.64e-40)
+    residual (A = I, theta only): rank 27 (last singular value 0.0798, next 1.239e-40)

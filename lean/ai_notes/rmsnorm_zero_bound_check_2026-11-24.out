@@ -1,0 +1,10 @@
+eps=0 tanh dIn=2 d=2 dOut=2 hid=[2] P=16 s=0: skipless rank 12 (gap 1.44e-5 / 9.53e-42); bound P-(L+1)(d(d-1)/2+1)-s=12; largest derivative along the symmetry directions 1.49e-40 OK
+eps=0 tanh dIn=3 d=2 dOut=2 hid=[2, 3] P=30 s=0: skipless rank 24 (gap 4.49e-18 / 1.16e-41); bound P-(L+1)(d(d-1)/2+1)-s=24; largest derivative along the symmetry directions 3.03e-41 OK
+eps=0 tanh dIn=3 d=3 dOut=3 hid=[3] P=36 s=0: skipless rank 28 (gap 0.000445 / 7.76e-42); bound P-(L+1)(d(d-1)/2+1)-s=28; largest derivative along the symmetry directions 5.41e-41 OK
+eps=0 gelu dIn=2 d=2 dOut=2 hid=[2] P=16 s=0: skipless rank 12 (gap 0.00244 / 1.43e-41); bound P-(L+1)(d(d-1)/2+1)-s=12; largest derivative along the symmetry directions 3.43e-41 OK
+eps=0 gelu dIn=2 d=2 dOut=3 hid=[3, 2] P=30 s=0: skipless rank 24 (gap 1.41e-5 / 1.21e-41); bound P-(L+1)(d(d-1)/2+1)-s=24; largest derivative along the symmetry directions 4.99e-41 OK
+eps=0 gelu dIn=3 d=3 dOut=3 hid=[3] P=36 s=0: skipless rank 28 (gap 4.32e-7 / 8.65e-42); bound P-(L+1)(d(d-1)/2+1)-s=28; largest derivative along the symmetry directions 9.18e-41 OK
+eps=0 swiglu dIn=2 d=2 dOut=2 hid=[2] P=20 s=2: skipless rank 14 (gap 0.00102 / 1.69e-41); bound P-(L+1)(d(d-1)/2+1)-s=14; largest derivative along the symmetry directions 4.26e-41 OK
+eps=0 swiglu dIn=3 d=2 dOut=2 hid=[2, 2] P=34 s=4: skipless rank 24 (gap 2.17e-7 / 1.37e-41); bound P-(L+1)(d(d-1)/2+1)-s=24; largest derivative along the symmetry directions 7.55e-41 OK
+ALL AS EXPECTED
+exit 0
