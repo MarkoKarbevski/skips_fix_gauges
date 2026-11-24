@@ -573,3 +573,16 @@ import SkipsLean
 #print axioms Skips.fderiv_params_suffix_pow_smul
 #print axioms Skips.claimGated_castSucc_of_flat_rmsNorm
 #print axioms Skips.claimRMS_castSucc_of_flat_rmsNorm
+#print axioms Skips.ray_induction
+#print axioms Skips.ray_induction_matrix
+#print axioms Skips.exists_far_frozen_bounds
+#print axioms Skips.frozen_flat_at_generic_ray
+#print axioms Skips.frozen_flat_of_suffixFlat
+#print axioms Skips.frozen_flat_of_suffixFlat_swiglu
+#print axioms Skips.frozen_flat_of_suffixFlat_geglu
+#print axioms Skips.claimGated_castSucc_swiglu
+#print axioms Skips.claimGated_castSucc_geglu
+#print axioms Skips.exists_regular_claimGated_swiglu
+#print axioms Skips.exists_regular_claimGated_geglu
+#print axioms Skips.ae_funDim_swiglu_skipless
+#print axioms Skips.ae_funDim_geglu_skipless
