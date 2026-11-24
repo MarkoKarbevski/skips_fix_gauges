@@ -1135,3 +1135,9 @@ import SkipsLean
 #print axioms Skips.ae_funDimBlocks_attention_residual_of_width
 #print axioms Skips.ae_sumFst
 #print axioms Skips.ae_sumSnd
+#print axioms Skips.ae_forall_eval_residual_ne_skipless_attention
+#print axioms Skips.exists_batch_ae_exists_pos_le_norm_sub_skipless_attention
+#print axioms Skips.ae_not_isPointwiseLimit_skipless_attention
+#print axioms Skips.ae_forall_eval_residual_ne_skipless_attention_rmsNorm
+#print axioms Skips.exists_batch_ae_exists_pos_le_norm_sub_skipless_attention_rmsNorm
+#print axioms Skips.ae_not_isPointwiseLimit_skipless_attention_rmsNorm
