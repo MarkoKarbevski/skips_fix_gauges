@@ -28,9 +28,15 @@ variable {T d dIn dOut : Type*} {L : ℕ} [Fintype T] [Fintype d] [DecidableEq d
 variable {σ : ℝ → ℝ} {χ : Matrix T d ℝ → Matrix T d ℝ} {hid : Fin L → Type}
   [∀ ℓ, Fintype (hid ℓ)]
 
+/-- Helper: `max (λ z) 0 = λ max z 0` for `λ > 0`. -/
+private theorem max_mul_zero_of_pos (lam z : ℝ) (hlam : 0 < lam) :
+    max (lam * z) 0 = lam * max z 0 := by
+  rw [mul_max_of_nonneg _ _ hlam.le, mul_zero]
+
 /-- ReLU is positively homogeneous of degree `1`. -/
 theorem relu_homogeneous (lam z : ℝ) (hlam : 0 < lam) : relu (lam * z) = lam ^ 1 * relu z := by
-  sorry
+  unfold relu
+  rw [pow_one, max_mul_zero_of_pos lam z hlam]
 
 /-- ReLU² is positively homogeneous of degree `2`. -/
 theorem reluSq_homogeneous (lam z : ℝ) (hlam : 0 < lam) :
