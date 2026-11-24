@@ -205,3 +205,9 @@ import SkipsLean.OneBlock.AttentionFamily
 import SkipsLean.Residual.DepthAttention
 import SkipsLean.Residual.DepthAttentionGeneric
 import SkipsLean.Residual.DepthAttentionDim
+import SkipsLean.Dimension.ExpOrbitAttention
+import SkipsLean.Dimension.LocalIdentifiabilityAttention
+import SkipsLean.Residual.DepthAttentionRMS
+import SkipsLean.Residual.DepthAttentionRMSDim
+import SkipsLean.Residual.LocalIdentifiabilityAttentionRMS
+import SkipsLean.Residual.ExactGainAttention
