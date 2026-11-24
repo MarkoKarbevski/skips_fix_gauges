@@ -137,10 +137,63 @@ theorem rmsRowC_eq_self (n : d → ℂ) (hn : n ⬝ᵥ n = (Fintype.card d : ℂ
     unfold rmsRowC
     rw [hn, div_self hc, Complex.log_one, zero_div, neg_zero, Complex.exp_zero, one_smul]
 
+omit [Fintype T] in
+/-- Helper: a polynomial `a + τ b + τ² c` in one complex variable has the derivative `b` at
+`τ = 0` (the complex copy of `hasDerivAt_quad`). -/
+private theorem hasDerivAt_quad_crn (a b c : ℂ) :
+    HasDerivAt (fun τ : ℂ => a + τ * b + τ * τ * c) b 0 := by
+  have h := ((hasDerivAt_id' (x := (0 : ℂ))).mul_const b).const_add a |>.add
+    (((hasDerivAt_id' (x := (0 : ℂ))).mul (hasDerivAt_id' (x := (0 : ℂ)))).mul_const c)
+  convert h using 1
+  ring
+
 /-- **Equation (40), second part:** `⟨n, n⟩ = d ⟹ 𝐃N(n) v = v − (⟨v, n⟩/d) n`. -/
 theorem fderiv_rmsRowC_apply (n v : d → ℂ) (hn : n ⬝ᵥ n = (Fintype.card d : ℂ)) :
     fderiv ℂ (rmsRowC : (d → ℂ) → d → ℂ) n v = v - ((v ⬝ᵥ n) / (Fintype.card d : ℂ)) • n := by
-  sorry
+  -- with `d` empty both sides are functions on an empty type
+  rcases isEmpty_or_nonempty d with hd | hd
+  · exact Subsingleton.elim _ _
+  have hc : (Fintype.card d : ℂ) ≠ 0 := Nat.cast_ne_zero.2 Fintype.card_ne_zero
+  -- `Re⟨n, n⟩ = d > 0`, so `N` is analytic at `n`
+  have hre : 0 < (n ⬝ᵥ n).re := by
+    rw [hn, Complex.natCast_re]; exact Nat.cast_pos.2 Fintype.card_pos
+  -- the chain rule along the line `τ ↦ n + τ v`: `τ ↦ N(n + τ v)` has the derivative `𝐃N(n) v`
+  have hline : HasDerivAt (fun τ : ℂ => n + τ • v) v 0 := by
+    have h1 := ((hasDerivAt_id (0 : ℂ)).smul_const v).const_add n
+    rw [one_smul] at h1
+    exact h1
+  have h0 : n = n + (0 : ℂ) • v := by rw [zero_smul, add_zero]
+  have hF := (analyticAt_rmsRowC n hre).differentiableAt.hasFDerivAt.comp_hasDerivAt_of_eq
+    (0 : ℂ) hline h0
+  -- the same derivative, entry by entry: entry `i` is `exp(-(log q(τ))/2) (n_i + τ v_i)`
+  refine hF.unique (hasDerivAt_pi.2 fun i => ?_)
+  -- `q(τ) = ⟨n + τv, n + τv⟩/d = ⟨n, n⟩/d + τ 2⟨n, v⟩/d + τ² ⟨v, v⟩/d`, with `q(0) = 1`
+  have hq : HasDerivAt (fun τ : ℂ => ((n + τ • v) ⬝ᵥ (n + τ • v)) / (Fintype.card d : ℂ))
+      (2 * (n ⬝ᵥ v) / (Fintype.card d : ℂ)) 0 := by
+    have e : (fun τ : ℂ => ((n + τ • v) ⬝ᵥ (n + τ • v)) / (Fintype.card d : ℂ))
+        = fun τ => (n ⬝ᵥ n) / (Fintype.card d : ℂ) + τ * (2 * (n ⬝ᵥ v) / (Fintype.card d : ℂ))
+          + τ * τ * ((v ⬝ᵥ v) / (Fintype.card d : ℂ)) := by
+      funext τ
+      simp only [add_dotProduct, dotProduct_add, smul_dotProduct, dotProduct_smul, smul_eq_mul,
+        dotProduct_comm v n]
+      ring
+    rw [e]
+    exact hasDerivAt_quad_crn _ _ _
+  have hq0 : ((n + (0 : ℂ) • v) ⬝ᵥ (n + (0 : ℂ) • v)) / (Fintype.card d : ℂ) = 1 := by
+    rw [zero_smul, add_zero, hn, div_self hc]
+  -- `log` at `q(0) = 1`, then `exp(-(·)/2)`, then the product with `n_i + τ v_i`
+  have hφ := ((hq.clog (by rw [hq0]; exact Complex.one_mem_slitPlane)).div_const 2).fun_neg.cexp
+  have hent : HasDerivAt (fun τ : ℂ => n i + τ * v i) (v i) 0 := by
+    have h1 := ((hasDerivAt_id (0 : ℂ)).mul_const (v i)).const_add (n i)
+    rw [one_mul] at h1
+    exact h1
+  show HasDerivAt (fun τ : ℂ => Complex.exp (-(Complex.log (((n + τ • v) ⬝ᵥ (n + τ • v))
+      / (Fintype.card d : ℂ)) / 2)) * (n i + τ * v i))
+    (v i - (v ⬝ᵥ n) / (Fintype.card d : ℂ) * n i) 0
+  refine (hφ.mul hent).congr_deriv ?_
+  simp only [zero_smul, add_zero, hn, div_self hc, Complex.log_one, zero_div, neg_zero,
+    Complex.exp_zero, div_one, one_mul, zero_mul, dotProduct_comm n v]
+  ring
 
 /-- The cone `C_κ = {u + iu' : ‖u'‖ < κ‖u‖}` of complex rows, with Euclidean norms (written with
 squares: `‖u'‖² < κ² ‖u‖²`, for `κ > 0`). -/
