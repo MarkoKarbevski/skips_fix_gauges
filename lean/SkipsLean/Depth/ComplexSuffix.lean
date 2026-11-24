@@ -367,7 +367,97 @@ theorem exists_holomorphicOnCone {σ : ℝ → ℝ} {σC : ℂ → ℂ}
     (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut)
     (hθ : RegularZero (Arch.mlp σ (rmsNorm 0) hid) θ) (k : Fin (L + 1)) :
     ∃ κ : ℝ, 0 < κ ∧ κ ≤ 1 ∧ HolomorphicOnCone σC θ k κ := by
-  sorry
+  -- no tokens: every map into `Matrix T dOut ℂ` is constant
+  rcases isEmpty_or_nonempty T with hT | ⟨⟨t₀⟩⟩
+  · refine ⟨1, one_pos, le_rfl, fun h _ => ?_⟩
+    have hc : (fun p : CWeights d dOut hid × Matrix T d ℂ => suffixC σC p.1 k p.2)
+        = fun _ => (0 : Matrix T dOut ℂ) := funext fun p => Matrix.ext fun t => isEmptyElim t
+    rw [hc]
+    exact analyticAt_const
+  -- the projections to the reads, the writes and the readout are continuous linear
+  have hfst : ∀ x : CWeights d dOut hid × Matrix T d ℂ,
+      AnalyticAt ℂ (fun p : CWeights d dOut hid × Matrix T d ℂ => p.1) x := fun x => analyticAt_fst
+  have hread : ∀ (ℓ : Fin L) (x : CWeights d dOut hid × Matrix T d ℂ),
+      AnalyticAt ℂ (fun p : CWeights d dOut hid × Matrix T d ℂ => p.1.1 ℓ) x := by
+    intro ℓ x
+    have h1 : AnalyticAt ℂ (fun ω : (∀ ℓ, Matrix d (hid ℓ) ℂ) => ω ℓ) x.1.1 :=
+      (ContinuousLinearMap.proj (R := ℂ) (φ := fun ℓ => Matrix d (hid ℓ) ℂ) ℓ).analyticAt _
+    have h2 : AnalyticAt ℂ (fun ω : CWeights d dOut hid => ω.1) x.1 := analyticAt_fst
+    exact AnalyticAt.comp (f := fun p : CWeights d dOut hid × Matrix T d ℂ => p.1.1) h1
+      (AnalyticAt.comp (f := fun p : CWeights d dOut hid × Matrix T d ℂ => p.1) h2 (hfst x))
+  have hwrite : ∀ (ℓ : Fin L) (x : CWeights d dOut hid × Matrix T d ℂ),
+      AnalyticAt ℂ (fun p : CWeights d dOut hid × Matrix T d ℂ => p.1.2.1 ℓ) x := by
+    intro ℓ x
+    have h1 : AnalyticAt ℂ (fun ω : (∀ ℓ, Matrix (hid ℓ) d ℂ) => ω ℓ) x.1.2.1 :=
+      (ContinuousLinearMap.proj (R := ℂ) (φ := fun ℓ => Matrix (hid ℓ) d ℂ) ℓ).analyticAt _
+    have h2 : AnalyticAt ℂ (fun ω : CWeights d dOut hid => ω.2.1) x.1 :=
+      AnalyticAt.comp (f := fun ω : CWeights d dOut hid => ω.2) analyticAt_fst analyticAt_snd
+    exact AnalyticAt.comp (f := fun p : CWeights d dOut hid × Matrix T d ℂ => p.1.2.1) h1
+      (AnalyticAt.comp (f := fun p : CWeights d dOut hid × Matrix T d ℂ => p.1) h2 (hfst x))
+  have hD : ∀ x : CWeights d dOut hid × Matrix T d ℂ,
+      AnalyticAt ℂ (fun p : CWeights d dOut hid × Matrix T d ℂ => p.1.2.2) x := by
+    intro x
+    have h2 : AnalyticAt ℂ (fun ω : CWeights d dOut hid => ω.2.2) x.1 :=
+      AnalyticAt.comp (f := fun ω : CWeights d dOut hid => ω.2) analyticAt_snd analyticAt_snd
+    exact AnalyticAt.comp (f := fun p : CWeights d dOut hid × Matrix T d ℂ => p.1) h2 (hfst x)
+  -- `N` after the projection to the hidden state, where every row has `Re⟨h, h⟩ > 0`
+  have hN : ∀ h : Matrix T d ℂ, (∀ t, 0 < (h t ⬝ᵥ h t).re) →
+      AnalyticAt ℂ (fun p : CWeights d dOut hid × Matrix T d ℂ => rmsNormC p.2) (θ.toC, h) := by
+    intro h hh
+    have hc := (analyticAt_rmsNormC_cs h hh).comp
+      (analyticAt_snd (𝕜 := ℂ) (p := ((θ.toC, h) : CWeights d dOut hid × Matrix T d ℂ)))
+    exact hc
+  induction k using Fin.reverseInduction with
+  | last =>
+    -- `𝓑_{>L}(h) = N(h) D` is holomorphic on `C_1`: `κ_L = 1`
+    refine ⟨1, one_pos, le_rfl, fun h hh => ?_⟩
+    have hpos : ∀ t, 0 < (h t ⬝ᵥ h t).re := fun t =>
+      re_dotProduct_self_pos_of_mem_complexCone zero_le_one le_rfl (hh t)
+    have hc : (fun p : CWeights d dOut hid × Matrix T d ℂ => suffixC σC p.1 (Fin.last L) p.2)
+        = fun p => rmsNormC p.2 * p.1.2.2 := funext fun p => suffixC_last_cs σC p.1 p.2
+    rw [hc]
+    exact analyticAt_matrix_mul_cs (hN h hpos) (hD _)
+  | cast ℓ ih =>
+    obtain ⟨κ', hκ'0, -, hκ'⟩ := ih
+    -- (a) by (R2), the rows at which block `ℓ + 1` is holomorphic and lands in `C_{κ'}` form a
+    -- neighbourhood of every real row on the sphere `S`
+    have ha : ∀ n₀ : d → ℝ, n₀ ⬝ᵥ n₀ = (Fintype.card d : ℝ) →
+        {v : d → ℂ | (∀ j, AnalyticAt ℂ σC ((v ᵥ* θ.toC.1 ℓ) j)) ∧
+          (fun j => σC ((v ᵥ* θ.toC.1 ℓ) j)) ᵥ* θ.toC.2.1 ℓ ∈ complexCone κ'}
+          ∈ nhds (fun i => (n₀ i : ℂ)) := by
+      intro n₀ hn₀
+      refine goodRow_mem_nhds_cs hσ hσC (θ.read ℓ) (θ.write ℓ) hκ'0 n₀ ?_
+      have h2 := hθ.block_ne_zero ℓ (Matrix.of fun _ => n₀) (fun _ => hn₀) t₀
+      rw [Matrix.mul_apply_eq_vecMul] at h2
+      exact h2
+    -- (b) there is a `κ` such that `N` maps `C_κ` into these rows
+    obtain ⟨δ, hδ, hδO⟩ := exists_delta_cs _ ha
+    refine ⟨min 1 δ, lt_min one_pos hδ, min_le_left _ _, fun h hh => ?_⟩
+    have hpos : ∀ t, 0 < (h t ⬝ᵥ h t).re := fun t =>
+      re_dotProduct_self_pos_of_mem_complexCone (lt_min one_pos hδ).le (min_le_left _ _) (hh t)
+    have hr : ∀ t, (∀ j, AnalyticAt ℂ σC ((rmsNormC h t ᵥ* θ.toC.1 ℓ) j)) ∧
+        (fun j => σC ((rmsNormC h t ᵥ* θ.toC.1 ℓ) j)) ᵥ* θ.toC.2.1 ℓ ∈ complexCone κ' :=
+      fun t => rmsRowC_mem_of_cone_cs _ hδ hδO (h t) (hh t)
+    -- (c) `𝓑_{>ℓ} = 𝓑_{>ℓ+1} ∘ g_{ℓ+1} ∘ N` is a composition of holomorphic maps
+    have hF : AnalyticAt ℂ (fun p : CWeights d dOut hid × Matrix T d ℂ =>
+        rmsNormC p.2 * p.1.1 ℓ) (θ.toC, h) :=
+      analyticAt_matrix_mul_cs (hN h hpos) (hread ℓ _)
+    have hG : AnalyticAt ℂ (fun p : CWeights d dOut hid × Matrix T d ℂ =>
+        (rmsNormC p.2 * p.1.1 ℓ).map σC * p.1.2.1 ℓ) (θ.toC, h) := by
+      refine analyticAt_matrix_mul_cs (analyticAt_map_cs hF fun t j => ?_) (hwrite ℓ _)
+      show AnalyticAt ℂ σC ((rmsNormC h * θ.toC.1 ℓ) t j)
+      rw [Matrix.mul_apply_eq_vecMul]
+      exact (hr t).1 j
+    have hval : ∀ t, ((rmsNormC h * θ.toC.1 ℓ).map σC * θ.toC.2.1 ℓ) t ∈ complexCone κ' :=
+      fun t => (hr t).2
+    have hB := hκ' _ hval
+    have hc := hB.comp_of_eq ((hfst _).prod hG) rfl
+    have heq : (fun p : CWeights d dOut hid × Matrix T d ℂ => suffixC σC p.1 ℓ.castSucc p.2)
+        = (fun q : CWeights d dOut hid × Matrix T d ℂ => suffixC σC q.1 ℓ.succ q.2) ∘
+          (fun p => (p.1, (rmsNormC p.2 * p.1.1 ℓ).map σC * p.1.2.1 ℓ)) :=
+      funext fun p => suffixC_castSucc_cs σC p.1 ℓ p.2
+    rw [heq]
+    exact hc
 
 /-- The cones of Lemma D.14 may be shrunk: `HolomorphicOnCone` for `κ` gives it for every
 `0 ≤ κ' ≤ κ`. -/
