@@ -79,6 +79,7 @@ private theorem headsVO_one_eoa : θ.headsVO (fun _ _ => 1) = θ := by
     simp only [inv_one, Units.val_one, Matrix.one_apply, ite_mul, one_mul, zero_mul,
       Finset.sum_ite_eq, Finset.mem_univ, ite_true]
 
+omit [Fintype dIn] [Fintype dOut] in
 /-- The orbit map passes through `θ` at `0`. -/
 theorem cobExpHeads_zero : cobExpHeads θ 0 = θ := by
   -- `exp 0 = 1` in every head, then `exp 0 = 1` at every hidden state

@@ -1061,3 +1061,9 @@ import SkipsLean
 #print axioms Skips.ae_funDim_attention_residual
 #print axioms Skips.ae_funDim_attention_residual_ge_add
 #print axioms Skips.ae_funDim_attention_residual_of_width
+#print axioms Skips.cobExpHeads_zero
+#print axioms Skips.hasStrictFDerivAt_cobExpHeads
+#print axioms Skips.exists_cob_heads_of_eval_eq_skipless_attention
+#print axioms Skips.exists_cob_heads_of_eval_eq_residual_attention
+#print axioms Skips.ae_exists_cob_heads_of_eval_eq_attention_residual
+#print axioms Skips.ae_exists_cob_heads_of_eval_eq_attention_oneBlock
