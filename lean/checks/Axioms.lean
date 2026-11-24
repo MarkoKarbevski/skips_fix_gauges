@@ -113,3 +113,9 @@ import SkipsLean
 #print axioms Skips.eval_cob_residual_rmsNorm_iff
 #print axioms Skips.exists_orthogonal_mul_upperTriangular
 #print axioms Skips.exists_cob_learned_upperTriangular
+-- ReLU, ReLU², ReGLU: Lemma C.3
+#print axioms Skips.hasDerivAt_relu
+#print axioms Skips.hasDerivAt_reluSq
+#print axioms Skips.relu_units_flat
+#print axioms Skips.reluSq_units_flat
+#print axioms Skips.relu_gated_units_flat
