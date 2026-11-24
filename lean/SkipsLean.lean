@@ -267,3 +267,4 @@ import SkipsLean.OneBlock.LearnedSkipTriangularRescale
 import SkipsLean.Absorb.RidgeFunctions
 import SkipsLean.Absorb.AttentionHeadsIdentifiable
 import SkipsLean.Absorb.BiasesConstructions
+import SkipsLean.Absorb.BiasesAttention

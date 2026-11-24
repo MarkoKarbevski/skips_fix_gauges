@@ -26,7 +26,8 @@ block and no attention block as above absorbs `x M`, at any width. (iii) For gen
 
 Here: the three kinds of block with biases (`vanillaBlockB`, `gatedBlockB`, `attentionBlockB`), the
 constructions of the proof of Theorem C.1 (i) with their numbers of new units ("The constructions
-also give the upper bounds of Theorem C.2"; Remark C.3), and Theorem C.1 (ii).
+also give the upper bounds of Theorem C.2"; Remark C.3), and Theorem C.1 (ii) for tanh blocks.
+Theorem C.1 (ii) for attention blocks is in `Absorb/BiasesAttention.lean`.
 
 * Gated: "A unit with gate read `0` and gate bias `1` computes `σ(1) (x v + b^v) ŵ`, which is
   affine in `x`, and `σ(1) ≠ 0` for ReLU, SiLU and GELU. […] So `rank M ≤ d_model` units add `x M`."
@@ -36,11 +37,6 @@ also give the upper bounds of Theorem C.2"; Remark C.3), and Theorem C.1 (ii).
 * ReLU²: "`4 d_model` new units add `x M`. If the read has rank `d_model` […]: `3 d_model` new
   units."
 * tanh: "`B_{θ′} − B_θ` is bounded, and `x M` is not."
-* Attention: on inputs whose rows are all equal, and with one row moved, the sums of the
-  value–output products of the two blocks agree, so `M = 0`. The paper's proof looks at "the second
-  row, which sees the first token with or without a causal mask"; the statement here is for any
-  mask in which some token sees another token (if every token sees itself only, the block is affine
-  and absorbs `h M` with more heads).
 
 Not stated here: Theorem C.1 (iii), the lower bounds of Theorem C.2, Lemma C.8, the construction
 with `d (d + 3)/2` units of Remark C.3, rotary embeddings (Proposition C.6). The statements are for
@@ -220,7 +216,7 @@ theorem exists_vanillaBlockB_add_linear_gelu_of_rank [DecidableEq p] (Wr : Matri
         x ᵥ* M + vanillaBlockB gelu Wr b Ww c x = vanillaBlockB gelu Wr' b' Ww' c' x := by
   sorry
 
-/-! ### Theorem C.1 (ii): tanh blocks and attention blocks never absorb -/
+/-! ### Theorem C.1 (ii): tanh blocks never absorb -/
 
 /-- **Theorem C.1 (ii) for tanh blocks:** for a bounded activation (tanh), no block with biases,
 of any width, absorbs `x M` with `M ≠ 0`. -/
@@ -237,19 +233,6 @@ theorem forall_exists_ne_vanillaBlockB_tanh (Wr : Matrix p m ℝ) (b : m → ℝ
     (M : Matrix p q ℝ) (hM : M ≠ 0) :
     ∃ x : p → ℝ,
       x ᵥ* M + vanillaBlockB Real.tanh Wr b Ww c x ≠ vanillaBlockB Real.tanh Wr' b' Ww' c' x := by
-  sorry
-
-/-- **Theorem C.1 (ii) for attention blocks with biases:** with a mask in which some token sees
-another token, no attention block with biases, with any number of heads and any head dimension,
-absorbs `h M` with `M ≠ 0`. -/
-theorem forall_exists_ne_attentionBlockB {T d H dh H' dh' : Type*} [Fintype T] [Fintype d]
-    [Fintype H] [Fintype dh] [Fintype H'] [Fintype dh'] (sees : T → T → Prop)
-    [DecidableRel sees] (hsees : ∃ t₁ t₂, t₁ ≠ t₂ ∧ sees t₂ t₁)
-    (WQ WK WV : H → Matrix d dh ℝ) (bQ bK bV : H → dh → ℝ) (WO : H → Matrix dh d ℝ)
-    (bO : d → ℝ) (WQ' WK' WV' : H' → Matrix d dh' ℝ) (bQ' bK' bV' : H' → dh' → ℝ)
-    (WO' : H' → Matrix dh' d ℝ) (bO' : d → ℝ) (M : Matrix d d ℝ) (hM : M ≠ 0) :
-    ∃ h : Matrix T d ℝ, h * M + attentionBlockB sees WQ WK WV bQ bK bV WO bO h
-      ≠ attentionBlockB sees WQ' WK' WV' bQ' bK' bV' WO' bO' h := by
   sorry
 
 end Skips
