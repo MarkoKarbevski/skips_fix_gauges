@@ -228,6 +228,8 @@ inputs, `q` outputs), which contains the paper's `p = q = d`.
 | A Theorem 4.1 (ii): `tanh` blocks without normalization | `exists_ne_residual_skipless_tanh` | `Absorb/Networks.lean` | in work |
 | A Proposition 5.4 (i): for `σ(z) − σ(−z) = cz` the skipless network equals the network with the learned skips `cK_ℓ` and flipped reads (an identity, for any sets `S_ℓ`); at generic weights the skips are invertible | `Params.flipReads`, `eval_skipless_eq_learned_flipReads`, `ae_exists_learned_skips_eq_skipless` | `Absorb/Networks.lean` | in work |
 | A Proposition 5.4 (ii): at generic weights the skipless network equals a residual network with the same `D`, `d` and widths, with `E′D ≠ 0` | `ae_exists_residual_eq_skipless` | `Absorb/Networks.lean` | in work |
+| A Proposition 5.1 (i) with the rate of Remark A.16: no normalization, locally Lipschitz blocks; the residual networks `F_t` (reads `t^{1−ℓ}W_read^ℓ`, writes `t^ℓ W_write^ℓ`, readout `t^{−L}D`) satisfy `‖F_t(X) − F(X)‖ ≤ C/t` on every bounded set of inputs, for `t ≥ 1`; uniform limit | `Params.limitScale`, `exists_bound_eval_limitScale`, `tendstoUniformlyOn_eval_limitScale` | `Absorb/Limits.lean` | in work |
+| A Proposition 5.1 (ii) with the rate: pre-RMSNorm with `ε = 0`; `F_t` with the writes `t^ℓ W_write^ℓ`; on every compact set of inputs at which `F` is defined, for `t ≥ t_0`, `F_t` is defined and `‖F_t(X) − F(X)‖ ≤ C/t`; uniform limit | `Params.writeScale`, `DefinedAt`, `exists_bound_eval_writeScale`, `tendstoUniformlyOn_eval_writeScale` | `Absorb/Limits.lean` | in work |
 
 Notes for the authors on these statements:
 - Proposition A.1 is stated for arbitrary maps `B`, `B′` with `B(λx) = λ^k B(x)` for `λ > 0`: its
