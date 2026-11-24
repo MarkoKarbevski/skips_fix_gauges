@@ -1463,3 +1463,8 @@ import SkipsLean
 #print axioms Skips.funDimSkipsOn_tri_reglu_rmsNorm
 #print axioms Skips.ae_funDimSkipsOn_tri_reglu_rmsNorm
 #print axioms Skips.ae_funDimSkipsOn_tri_reglu_rmsNorm_eq_residual_add
+#print axioms Skips.attnHeads_identifiable
+#print axioms Skips.attnHeads_identifiable_noMask
+#print axioms Skips.attnHeads_identifiable_causal
+#print axioms Skips.attnHeads_sum_eq_of_mul_add_eq
+#print axioms Skips.attentionBlock_sum_eq_of_mul_add_eq
