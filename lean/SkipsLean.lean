@@ -30,6 +30,7 @@ import SkipsLean.OneBlock.UnitsGeGLU
 import SkipsLean.OneBlock.GeGLU
 import SkipsLean.Generic.Gated
 import SkipsLean.Residual.OneChangeOfBasis
+import SkipsLean.Residual.OneChangeOfBasisRMSZero
 import SkipsLean.Activations.ReLU
 import SkipsLean.OneBlock.UnitsReLU
 import SkipsLean.OneBlock.UnitsReGLU
@@ -160,6 +161,7 @@ import SkipsLean.Depth.TanhZeroBatch
 import SkipsLean.Depth.GeluZeroBatch
 import SkipsLean.Generic.LevelSetOrbit
 import SkipsLean.Dimension.LocalIdentifiability
+import SkipsLean.Dimension.LocalIdentifiabilityUnderEquality
 import SkipsLean.Dimension.OrbitNetwork
 import SkipsLean.Dimension.RescaleAction
 import SkipsLean.Residual.LocalIdentifiability
@@ -239,11 +241,14 @@ import SkipsLean.Dimension.IdentifiableConverse
 import SkipsLean.Generic.Cayley
 import SkipsLean.Dimension.IdentifiableConverseCob
 import SkipsLean.Dimension.IdentifiableIff
+import SkipsLean.Dimension.IdentifiableUnderEquality
 import SkipsLean.Residual.IdentifiableIff
+import SkipsLean.Residual.IdentifiableUnderEquality
 import SkipsLean.Symmetry.OnlyOrthogonalRows
 import SkipsLean.Generic.GroupDimension
 import SkipsLean.Symmetry.CobGroup
 import SkipsLean.Dimension.IdentifiableIffTransformer
+import SkipsLean.Dimension.IdentifiableUnderEqualityTransformer
 import SkipsLean.Dimension.IdentifiableConverseFamily
 import SkipsLean.Dimension.IdentifiableIffFamily
 import SkipsLean.Residual.IdentifiableIffFamily
@@ -279,8 +284,12 @@ import SkipsLean.Absorb.ReluSqBiasesLower
 import SkipsLean.Absorb.RotaryBiases
 import SkipsLean.Symmetry.FiniteSymmetriesCompose
 import SkipsLean.OneBlock.ResidualRMSZeroSteps
+import SkipsLean.OneBlock.ResidualRMSZeroStepsOn
+import SkipsLean.OneBlock.ResidualRMSZeroRescale
+import SkipsLean.OneBlock.ResidualRMSZeroRescaleGeneric
 import SkipsLean.OneBlock.ResidualRMSZeroGain
 import SkipsLean.OneBlock.ResidualRMSZeroKinds
 import SkipsLean.OneBlock.ResidualRMSZeroValue
 import SkipsLean.OneBlock.SkiplessHomogeneousRMSZero
 import SkipsLean.OneBlock.SkiplessHomogeneousGatedRMSZero
+import SkipsLean.Dimension.UpperBoundHomogeneousRMSNormZero

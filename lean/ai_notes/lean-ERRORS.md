@@ -56,7 +56,7 @@ Rules, so that the file stays small:
   Fubini on `Params` = rest × writes: private `measure_null_of_slices`, `paramsSplit` in `Absorb/RMSNormGeneric.lean`;
   `continuousOn_univ.mp hf.continuousOn` for an `AnalyticOnNhd … univ`.
 - `Pi.single` on a dependent family: `Pi.single (M := fun ℓ => …) ℓ N` (the argument is `M`). Also
-  for `Pi.single_eq_of_ne (M := …) hj V` and in `show`: else `Application type mismatch … ?m k`. A matrix
+  for `Pi.single_eq_of_ne (M := …) hj V` and in `show`: else `Application type mismatch … ?m k` (also `c * Pi.single j (1 : ℝ) i` in a statement: `Type mismatch … ?m i`). whnf timeout at `lem θ (Pi.single ℓ.castSucc X)`: state `lem` for any family `m`, then `refine lem θ _ …` takes it from the goal (`Dimension/UpperBoundHomogeneousRMSNormZero.lean`). A matrix
   with one nonzero row `ξ`: `Pi.single (M := fun _ : T => d → ℝ) t₀ ξ`; `Matrix.of (Pi.single t₀ ξ)` does not unify. As a write, `F * Pi.single j r` blocks `Matrix.mul_apply`: use `Matrix.of fun j' i => if j' = j then r i else 0`. A field `Function.update (fun _ => 0) m M` of a structure `def`, at `ℓ ≠ m`: `exact Function.update_of_ne h _ _` fails (`?f ℓ =?= 0`), use `simp only [myDef]; rw [Function.update_of_ne h]` (`Depth/InactiveUnit.lean`).
 
 ## Derivatives, norms, analyticity
