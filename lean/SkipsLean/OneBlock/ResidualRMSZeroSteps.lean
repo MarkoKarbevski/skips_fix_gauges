@@ -37,8 +37,8 @@ is flat at the inputs of `U_θ`: an antisymmetric `Y` and a number `c` with `η_
 (read `η_read + Y W_read`, write `η_write − W_write (Y + c I)`), has derivative zero at every `n`
 whose rows lie on the sphere of radius `√d`. The condition of the paper on generic parameters is
 a hypothesis: some input `w` at which, for every token, the rows of `w E` and of `g(w)` are
-linearly independent. `d ≥ 2` is the Scope's and is needed (for `d = 1` the step "`η′_E = c E`"
-fails).
+linearly independent. `d ≥ 2` is the Scope's; it also follows from this hypothesis (for `d = 1`
+no such input exists, and there the step "`η′_E = c E`" would fail).
 -/
 
 namespace Skips
