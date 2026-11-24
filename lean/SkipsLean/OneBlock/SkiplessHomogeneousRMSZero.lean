@@ -219,6 +219,91 @@ theorem cobDir_zero_mem_flat_skipless_mlp_homogeneous_rmsNorm_zero {k : ℕ}
   show σ (c t * z t i) = c t ^ k * σ (z t i)
   exact hσ _ _ (hc t)
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (the private `cancel_left_of_rank` of `Dimension/RescalingMlp.lean`): a matrix `M` of
+rank equal to its number of columns cancels on the left, `M X = M Y → X = Y` (its kernel is `0`
+by rank–nullity). -/
+private theorem cancel_left_of_rank_shz {m n k : Type*} [Fintype n] (M : Matrix m n ℝ)
+    (hM : M.rank = Fintype.card n) {X Y : Matrix n k ℝ} (h : M * X = M * Y) : X = Y := by
+  -- `v ↦ M v` is injective: `rank M + dim ker M = card n`
+  have hinj : Function.Injective M.mulVecLin := by
+    rw [← LinearMap.ker_eq_bot, ← Submodule.finrank_eq_zero]
+    have := LinearMap.finrank_range_add_finrank_ker M.mulVecLin
+    rw [Module.finrank_fintype_fun_eq_card] at this
+    rw [Matrix.rank] at hM
+    omega
+  -- compare `X` and `Y` column by column
+  ext i j
+  have hcol : M.mulVecLin (fun l => X l j) = M.mulVecLin (fun l => Y l j) := by
+    funext p
+    have := congrFun (congrFun h p) j
+    simpa [Matrix.mul_apply, Matrix.mulVec, dotProduct] using this
+  exact congrFun (hinj hcol) i
+
+omit [Fintype T] [Fintype d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: if `Y + b I = 0` with `Y` antisymmetric, then `Y = 0` and `b = 0`: the diagonal of an
+antisymmetric matrix vanishes, so a diagonal entry gives `b = 0`. -/
+private theorem antisymm_add_smul_one_eq_zero_shz [Nonempty d] {Y : Matrix d d ℝ}
+    (hY : Yᵀ = -Y) {b : ℝ} (h : Y + b • (1 : Matrix d d ℝ) = 0) : Y = 0 ∧ b = 0 := by
+  obtain ⟨k⟩ := ‹Nonempty d›
+  -- the diagonal entry `(k, k)` of `Y` vanishes
+  have hd : Y k k = 0 := by
+    have := congrFun (congrFun hY k) k
+    rw [transpose_apply, Matrix.neg_apply] at this
+    linarith
+  -- so the entry `(k, k)` of `Y + b I` is `b`
+  have hk := congrFun (congrFun h k) k
+  simp only [Matrix.add_apply, Matrix.smul_apply, Matrix.one_apply_eq, smul_eq_mul, mul_one, hd,
+    zero_add, Matrix.zero_apply] at hk
+  subst hk
+  simpa using h
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: a matrix and an antisymmetric matrix `(X, Y)`, as the family `![X, Y]` of matrices on
+the two hidden states, linearly. -/
+private noncomputable def pairLin_shz :
+    (Matrix d d ℝ × antisymmetric d) →ₗ[ℝ] (Fin (1 + 1) → Matrix d d ℝ) where
+  toFun p := ![p.1, (p.2 : Matrix d d ℝ)]
+  map_add' p q := by
+    funext i
+    fin_cases i <;> rfl
+  map_smul' c p := by
+    funext i
+    fin_cases i <;> rfl
+
+/-- Helper: `α ↦ rescaleDirMlp k θ α` is linear (a copy of the private `rescaleDirMlpLin` of
+`Dimension/RescalingMlp.lean`). -/
+private noncomputable def rescaleDirMlpLin_shz (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut) :
+    (∀ ℓ, hid ℓ → ℝ) →ₗ[ℝ] Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut where
+  toFun := rescaleDirMlp k θ
+  map_add' α β := by
+    apply Params.ext'
+    · simp [rescaleDirMlp]
+    · intro ℓ
+      ext a i
+      simp only [rescaleDirMlp, Pi.add_apply, Params.add_read, Matrix.add_apply, Matrix.of_apply]
+      ring
+    · intro ℓ
+      ext i a
+      simp only [rescaleDirMlp, Pi.add_apply, Params.add_write, Matrix.add_apply, Matrix.of_apply]
+      ring
+    · simp [rescaleDirMlp]
+  map_smul' c α := by
+    apply Params.ext'
+    · simp [rescaleDirMlp]
+    · intro ℓ
+      ext a i
+      simp only [rescaleDirMlp, Pi.smul_apply, Params.smul_read, Matrix.smul_apply,
+        Matrix.of_apply, smul_eq_mul, RingHom.id_apply]
+      ring
+    · intro ℓ
+      ext i a
+      simp only [rescaleDirMlp, Pi.smul_apply, Params.smul_write, Matrix.smul_apply,
+        Matrix.of_apply, smul_eq_mul, RingHom.id_apply]
+      ring
+    · simp [rescaleDirMlp]
+
 /-- **Theorem B.1 (iv) of the skips paper, the skipless network, the bound, under the conditions
 of the proof:** for one skipless MLP block with a positively homogeneous activation under
 pre-RMSNorm with `ε = 0`, if `E` and the write have rank `d ≥ 1` and no read column is zero, the
@@ -233,7 +318,84 @@ theorem funDim_add_le_skipless_mlp_homogeneous_rmsNorm_zero [Nonempty d] {k : �
         + (Fintype.card d ^ 2 + (Fintype.card d * (Fintype.card d - 1) / 2 + 1)
           + Fintype.card (hid 0))
       ≤ Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut) := by
-  sorry
+  -- the linear map `(((X, Y), c), α) ↦ cobDir θ ![X, Y] + c scaleDir θ ![0, 1]
+  -- + rescaleDirMlp k θ α` with antisymmetric `Y`: the changes of basis `GL(d)` at `h_0` and
+  -- `CO(d)` at `h_1`, and the rescalings of the hidden units
+  let Φ : ((Matrix d d ℝ × antisymmetric d) × ℝ) × (∀ ℓ, hid ℓ → ℝ) →ₗ[ℝ]
+      Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut :=
+    (((cobDirLin θ).comp pairLin_shz).coprod
+      (LinearMap.toSpanSingleton ℝ _ (scaleDir θ ![0, 1]))).coprod (rescaleDirMlpLin_shz k θ)
+  -- its directions are flat, since the summands are
+  have hV : LinearMap.range Φ ≤ flat (Arch.mlp σ (rmsNorm 0) hid) 0 θ := by
+    rintro _ ⟨p, rfl⟩
+    rw [LinearMap.coprod_apply, LinearMap.coprod_apply]
+    refine Submodule.add_mem _ (Submodule.add_mem _ ?_ ?_) (rescaleDirMlp_mem_flat hσ θ 0 p.2)
+    · -- `cobDir θ ![X, Y] = cobDir θ ![X, 0] + cobDir θ ![0, Y]`: the change of basis `I + τ X`
+      -- at `h_0` (Theorem 1) and the orthogonal one `exp (τ Y)` at `h_1`
+      have hsplit : pairLin_shz p.1.1 = ![p.1.1.1, 0] + ![0, (p.1.1.2 : Matrix d d ℝ)] := by
+        funext i
+        fin_cases i <;> simp [pairLin_shz]
+      rw [LinearMap.comp_apply, hsplit, map_add, cobDirLin_apply, cobDirLin_apply]
+      refine Submodule.add_mem _
+        (cobDir_zero_mem_flat_skipless_mlp_homogeneous_rmsNorm_zero hσ θ p.1.1.1) ?_
+      refine cobDir_mem_flat_skipless_rmsNorm' θ 0 rfl _ fun ℓ => ?_
+      fin_cases ℓ
+      · simp
+      · exact p.1.1.2.2
+    · -- the scale `c` at `h_1`
+      rw [LinearMap.toSpanSingleton_apply]
+      exact Submodule.smul_mem _ _ (scaleDir_mem_flat_skipless_rmsNorm_zero θ rfl _)
+  -- it is injective (Lemma B.1)
+  have hinj : Function.Injective Φ := by
+    refine (injective_iff_map_eq_zero Φ).2 fun p hp => ?_
+    obtain ⟨⟨⟨X, Y⟩, c⟩, α⟩ := p
+    rw [LinearMap.coprod_apply, LinearMap.coprod_apply] at hp
+    -- the embedding moves by `E X` (no scale at `h_0`, the rescalings leave `E` alone): `X = 0`
+    have hX : X = 0 := by
+      have h := congrArg Params.E hp
+      change θ.E * X + c • ((0 : ℝ) • θ.E) + 0 = 0 at h
+      rw [zero_smul, smul_zero, add_zero, add_zero] at h
+      exact cancel_left_of_rank_shz θ.E hE (h.trans (Matrix.mul_zero _).symm)
+    subst hX
+    -- the read moves by `diag(α) W_read`; an entry `a` with `W_read a i ≠ 0` gives `α_i = 0`
+    have hα : α = 0 := by
+      funext ℓ
+      obtain rfl : ℓ = 0 := Subsingleton.elim ℓ 0
+      funext i
+      obtain ⟨a, ha⟩ := Function.ne_iff.mp (hc 0 i)
+      have h := congrArg (fun η => η.read 0 a i) hp
+      change -((0 : Matrix d d ℝ) * θ.read 0) a i + c • (0 : Matrix d (hid 0) ℝ) a i
+        + α 0 i * θ.read 0 a i = 0 at h
+      simp only [Matrix.zero_mul, neg_zero, Matrix.zero_apply, smul_zero, zero_add] at h
+      exact (mul_eq_zero.mp h).resolve_right ha
+    subst hα
+    -- the write moves by `W_write (Y + c I)`, and `W_write` has rank `d`
+    have hYc : (Y : Matrix d d ℝ) + c • (1 : Matrix d d ℝ) = 0 := by
+      have h := congrArg (fun η => η.write 0) hp
+      change θ.write 0 * (Y : Matrix d d ℝ) + c • ((1 : ℝ) • θ.write 0)
+        + Matrix.of (fun i a => -((k : ℝ) * (0 : ∀ ℓ, hid ℓ → ℝ) 0 i) * θ.write 0 i a) = 0 at h
+      have h0 : Matrix.of (fun i a => -((k : ℝ) * (0 : ∀ ℓ, hid ℓ → ℝ) 0 i) * θ.write 0 i a)
+          = 0 := by
+        ext i a
+        simp
+      rw [h0, add_zero, one_smul] at h
+      apply cancel_left_of_rank_shz (θ.write 0) (hw 0)
+      rw [Matrix.mul_add, Matrix.mul_smul, Matrix.mul_one, Matrix.mul_zero]
+      exact h
+    obtain ⟨hY, hc0⟩ := antisymm_add_smul_one_eq_zero_shz Y.2 hYc
+    obtain rfl : Y = 0 := Subtype.ext hY
+    subst hc0
+    rfl
+  -- the domain has dimension `d² + (d (d - 1) / 2 + 1) + s`
+  have hdim : Module.finrank ℝ (((Matrix d d ℝ × antisymmetric d) × ℝ) × (∀ ℓ, hid ℓ → ℝ)) =
+      Fintype.card d ^ 2 + (Fintype.card d * (Fintype.card d - 1) / 2 + 1)
+        + Fintype.card (hid 0) := by
+    rw [Module.finrank_prod, Module.finrank_prod, Module.finrank_prod, Module.finrank_matrix,
+      finrank_antisymmetric, Module.finrank_self, Module.finrank_pi_fintype, Fin.sum_univ_one]
+    simp only [Module.finrank_fintype_fun_eq_card]
+    ring
+  have h := funDim_add_finrank_le_of_le_flat' θ _ hV
+  rwa [LinearMap.finrank_range_of_inj hinj, hdim] at h
 
 /-- **Theorem B.1 (iv) of the skips paper, the skipless network, for a ReLU block of width at
 least `d` at generic parameters:** under pre-RMSNorm with `ε = 0`, with `d_in ≥ d ≥ 1`, the
@@ -246,7 +408,10 @@ theorem ae_funDim_add_le_skipless_relu_oneBlock_rmsNorm_zero [Nonempty d]
         + (Fintype.card d ^ 2 + (Fintype.card d * (Fintype.card d - 1) / 2 + 1)
           + Fintype.card (hid 0))
       ≤ Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu (rmsNorm 0) hid) dIn dOut) := by
-  sorry
+  -- the pointwise bound holds wherever `E` and the write have rank `d` and no column of the read
+  -- vanishes
+  filter_upwards [ae_rank_E_write μ hdIn hhid, ae_read_col_ne_zero μ] with θ h1 h2
+  exact funDim_add_le_skipless_mlp_homogeneous_rmsNorm_zero relu_homogeneous θ h1.1 h1.2 h2
 
 /-- **Theorem B.1 (iv) of the skips paper, the skipless network, for a ReLU² block of width at
 least `d` at generic parameters:** under pre-RMSNorm with `ε = 0`, with `d_in ≥ d ≥ 1`, the
@@ -260,6 +425,7 @@ theorem ae_funDim_add_le_skipless_reluSq_oneBlock_rmsNorm_zero [Nonempty d]
           + Fintype.card (hid 0))
       ≤ Module.finrank ℝ
           (Params (Arch.mlp (T := T) (d := d) reluSq (rmsNorm 0) hid) dIn dOut) := by
-  sorry
+  filter_upwards [ae_rank_E_write μ hdIn hhid, ae_read_col_ne_zero μ] with θ h1 h2
+  exact funDim_add_le_skipless_mlp_homogeneous_rmsNorm_zero reluSq_homogeneous θ h1.1 h1.2 h2
 
 end Skips
