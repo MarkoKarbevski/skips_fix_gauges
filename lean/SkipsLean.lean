@@ -83,3 +83,4 @@ import SkipsLean.Depth.ScaledSuffix
 import SkipsLean.Depth.RayGatedPlus
 import SkipsLean.Depth.RayMlpPlus
 import SkipsLean.Depth.StepsPlus
+import SkipsLean.Symmetry.OnlyOrthogonal
