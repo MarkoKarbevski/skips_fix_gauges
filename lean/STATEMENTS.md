@@ -81,8 +81,8 @@ in work are on the branch `lean-wip`.
 | D Lemma B.1 for gated blocks: the changes of basis and the rescalings move `θ` in independent directions | `cobDir_add_rescaleDir_injective` | `Dimension/Rescaling.lean` | proved |
 | D Theorem 4.3 for gated blocks, without normalization: `fd ≤ P − (L+1)d² − s`, `s` the number of hidden units | `funDim_add_le_skipless_gated` | `Dimension/Rescaling.lean` | proved |
 | the rescalings are flat for every differentiable map `χ` before the reads (identity, RMSNorm with `ε > 0`) | `rescaleDir_mem_flat_of_differentiable` | `Dimension/Rescaling.lean` | proved |
-| D Theorem 4.3 for gated blocks under pre-RMSNorm (`ε > 0`), under the conditions of the proof: `fd ≤ P − (L+1)d(d−1)/2 − s` | `funDim_add_le_skipless_gated_rmsNorm` | `Dimension/Rescaling.lean` | in work |
-| D Theorem 4.3 for gated blocks at generic parameters (`d_in ≥ d`, at least `d` hidden units per block), without normalization and under pre-RMSNorm | `ae_value_ne_zero`, `ae_funDim_add_le_skipless_gated`, `ae_funDim_add_le_skipless_gated_rmsNorm` | `Generic/Gated.lean` | in work |
+| D Theorem 4.3 for gated blocks under pre-RMSNorm (`ε > 0`), under the conditions of the proof: `fd ≤ P − (L+1)d(d−1)/2 − s` | `funDim_add_le_skipless_gated_rmsNorm` | `Dimension/Rescaling.lean` | proved |
+| D Theorem 4.3 for gated blocks at generic parameters (`d_in ≥ d`, at least `d` hidden units per block), without normalization and under pre-RMSNorm | `ae_value_ne_zero`, `ae_funDim_add_le_skipless_gated`, `ae_funDim_add_le_skipless_gated_rmsNorm` | `Generic/Gated.lean` | proved |
 | D Theorem 5.1 / C.1 for every gate activation `σ` for which Lemma C.3 holds with the rescalings of the values (`GatedUnitsRescale σ σ'`; Steps 1 and 3 of the proof): `fd = P − 2d² − d_hidden` under the conditions of the proof (`OneBlockGenericGated`), which hold at generic parameters | `GatedUnitsRescale`, `OneBlockGenericGated`, `flat_le_cobDir_add_rescaleDir_gated`, `funDim_gated_oneBlock`, `ae_oneBlockGenericGated`, `ae_funDim_gated_oneBlock` | `OneBlock/Gated.lean` | proved |
 | D Theorem 5.1 / C.1 for a SwiGLU block: `fd = P − 2d² − d_hidden`, under the conditions of the proof and at generic parameters | `silu_gatedUnitsRescale`, `flat_le_cobDir_add_rescaleDir_swiglu`, `funDim_swiglu_oneBlock`, `ae_funDim_swiglu_oneBlock` | `OneBlock/SwiGLU.lean` | proved |
 | an MLP network with activation `σ` (Section 2, "Blocks") | `Arch.mlp σ χ hid` | `Network/Blocks.lean` | defined |
@@ -114,10 +114,10 @@ Notes for the authors on these statements:
   are corollaries, with Lemma C.3 proved for each of the four in its own file.
 - Theorem 4.3 is stated under the conditions that its proof uses (`E` and every write have rank
   `d`, the maps `f_ℓ` are differentiable), and then at generic parameters for the changes of basis.
-  The number `s` of the symmetries inside the blocks is counted for gated blocks without
-  normalization (`funDim_add_le_skipless_gated`); for tanh and GELU blocks `s = 0`. Not stated yet:
-  the bound with `s` at generic parameters and under pre-RMSNorm for gated blocks, and the blocks
-  with `s > 0` other than SwiGLU and GeGLU (ReLU, ReLU², ReGLU, attention).
+  The number `s` of the symmetries inside the blocks is counted for gated blocks, without
+  normalization and under pre-RMSNorm, also at generic parameters (`Dimension/Rescaling.lean`,
+  `Generic/Gated.lean`); for tanh and GELU blocks `s = 0`. Not stated yet: the blocks with `s > 0`
+  other than SwiGLU and GeGLU (ReLU, ReLU², ReGLU, attention).
 - The Jacobian needs a norm on the parameters and on the outputs. Matrices carry the elementwise
   norm; on finite-dimensional spaces the derivative does not depend on the norm. The derivative of
   a map that is not differentiable is `0` in Mathlib, so the statements on the functional
