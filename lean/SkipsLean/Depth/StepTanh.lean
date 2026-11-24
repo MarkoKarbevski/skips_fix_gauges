@@ -53,6 +53,58 @@ noncomputable def blockLHS (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) d
     + fderiv ℝ (fun θ' : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut =>
         suffix (Arch.mlp σ id hid) 0 θ' k.succ (w * θ.write k)) θ η
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the product rule for matrix-valued functions of one real variable. -/
+private theorem hasDerivAt_matMul {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    {A : ℝ → Matrix m n ℝ} {B : ℝ → Matrix n p ℝ} {A' : Matrix m n ℝ} {B' : Matrix n p ℝ}
+    {τ : ℝ} (hA : HasDerivAt A A' τ) (hB : HasDerivAt B B' τ) :
+    HasDerivAt (fun s => A s * B s) (A' * B τ + A τ * B') τ := by
+  refine hasDerivAt_pi.2 fun t => hasDerivAt_pi.2 fun i => ?_
+  -- entry `(t, i)` is `∑_j A_{t j} B_{j i}`
+  have h := HasDerivAt.fun_sum (u := Finset.univ) fun j _ =>
+    (hasDerivAt_pi.1 (hasDerivAt_pi.1 hA t) j).mul (hasDerivAt_pi.1 (hasDerivAt_pi.1 hB j) i)
+  simp only [Matrix.mul_apply, Matrix.add_apply, ← Finset.sum_add_distrib]
+  exact h
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the derivative of `s ↦ σ(P(s))`, with `σ` applied to every entry of the matrix `P(s)`. -/
+private theorem hasDerivAt_matrix_map {m n : Type*} [Fintype m] [Fintype n]
+    (hσ : ∀ z, HasDerivAt σ (σ' z) z) {P : ℝ → Matrix m n ℝ} {P' : Matrix m n ℝ} {τ : ℝ}
+    (hP : HasDerivAt P P' τ) :
+    HasDerivAt (fun s => (P s).map σ) (Matrix.of fun t j => σ' (P τ t j) * P' t j) τ :=
+  hasDerivAt_pi.2 fun t => hasDerivAt_pi.2 fun j =>
+    (hσ (P τ t j)).comp τ (hasDerivAt_pi.1 (hasDerivAt_pi.1 hP t) j)
+
+/-- Helper: for `Φ` differentiable at `(x, y)`, the derivatives of its two partial maps, along `b`
+and `a`, add up to its derivative along `(a, b)`. -/
+private theorem fderiv_partial_add {E₁ E₂ F : Type*} [NormedAddCommGroup E₁] [NormedSpace ℝ E₁]
+    [NormedAddCommGroup E₂] [NormedSpace ℝ E₂] [NormedAddCommGroup F] [NormedSpace ℝ F]
+    {Φ : E₁ → E₂ → F} {x : E₁} {y : E₂}
+    (hΦ : DifferentiableAt ℝ (fun p : E₁ × E₂ => Φ p.1 p.2) (x, y)) (a : E₁) (b : E₂) :
+    fderiv ℝ (fun y' => Φ x y') y b + fderiv ℝ (fun x' => Φ x' y) x a
+      = fderiv ℝ (fun p : E₁ × E₂ => Φ p.1 p.2) (x, y) (a, b) := by
+  have h1 : HasFDerivAt (fun x' => Φ x' y)
+      ((fderiv ℝ (fun p : E₁ × E₂ => Φ p.1 p.2) (x, y)).comp
+        (ContinuousLinearMap.inl ℝ E₁ E₂)) x := by
+    have hc := hΦ.hasFDerivAt.comp x (hasFDerivAt_prodMk_left (𝕜 := ℝ) x y)
+    exact hc
+  have h2 : HasFDerivAt (fun y' => Φ x y')
+      ((fderiv ℝ (fun p : E₁ × E₂ => Φ p.1 p.2) (x, y)).comp
+        (ContinuousLinearMap.inr ℝ E₁ E₂)) y := by
+    have hc := hΦ.hasFDerivAt.comp y (hasFDerivAt_prodMk_right (𝕜 := ℝ) x y)
+    exact hc
+  rw [h1.fderiv, h2.fderiv, ContinuousLinearMap.comp_apply, ContinuousLinearMap.comp_apply,
+    ContinuousLinearMap.inl_apply, ContinuousLinearMap.inr_apply, ← map_add, Prod.mk_add_mk,
+    zero_add, add_zero]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the line `τ ↦ a + τ b` has the velocity `b`. -/
+private theorem hasDerivAt_line {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (a b : E) :
+    HasDerivAt (fun τ : ℝ => a + τ • b) b 0 := by
+  have h := ((hasDerivAt_id (0 : ℝ)).smul_const b).const_add a
+  rw [one_smul] at h
+  exact h
+
 /-- **The identity for one block, case (n)** (equation (22) of the paper, by the chain rule): for
 an MLP block whose activation `σ` has the derivative `σ'`, the identity (16) for the hidden state
 before block `k` holds for `Z` and `η` if and only if `𝓛(σ(n W), σ'(n W); n) = 0` for all `n`, with
@@ -64,7 +116,72 @@ theorem suffixFlat_castSucc_iff_mlp (hσ : ∀ z, HasDerivAt σ (σ' z) z)
       ∀ n : Matrix T d ℝ,
         blockLHS θ k η ((n * θ.read k).map σ) ((n * θ.read k).map σ')
           (n * (Z * θ.read k + η.read k)) = 0 := by
-  sorry
+  -- the blocks are differentiable, hence so are `(θ', h') ↦ 𝓑_{>k+1}(h')` and `𝓑_{>k}(h')`
+  have hfd : ∀ ℓ, Differentiable ℝ ((Arch.mlp (T := T) (d := d) σ id hid).f ℓ) :=
+    differentiable_f_mlp fun z => (hσ z).differentiableAt
+  have hΦ := differentiable_suffix_prod (Arch.mlp (T := T) (d := d) σ id hid) (dIn := dIn)
+    (dOut := dOut) rfl hfd k.succ
+  have hΨ := differentiable_suffix_prod (Arch.mlp (T := T) (d := d) σ id hid) (dIn := dIn)
+    (dOut := dOut) rfl hfd k.castSucc
+  -- it suffices that the two left sides agree at every `h`
+  suffices key : ∀ h : Matrix T d ℝ,
+      fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.mlp σ id hid) 0 θ k.castSucc h') h (h * Z)
+        + fderiv ℝ (fun θ' : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut =>
+            suffix (Arch.mlp σ id hid) 0 θ' k.castSucc h) θ η
+      = blockLHS θ k η ((h * θ.read k).map σ) ((h * θ.read k).map σ')
+          (h * (Z * θ.read k + η.read k)) by
+    exact forall_congr' fun h => by rw [key h]
+  intro h
+  -- the block along the line `τ ↦ (θ + τ η, h + τ h Z)`, entrywise: equation (22)
+  have hg := hasDerivAt_matMul (hasDerivAt_matrix_map hσ (hasDerivAt_matMul
+    (hasDerivAt_line h (h * Z)) (hasDerivAt_line (θ.read k) (η.read k))))
+    (hasDerivAt_line (θ.write k) (η.write k))
+  simp only [zero_smul, add_zero] at hg
+  -- the derivative of `τ ↦ 𝓑_{>k}(h + τ h Z)` (with the weights `θ + τ η`) at `0`, directly ...
+  have e1 : HasDerivAt
+      (fun τ : ℝ => suffix (Arch.mlp σ id hid) 0 (θ + τ • η) k.castSucc (h + τ • (h * Z)))
+      (fderiv ℝ (fun p : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut × Matrix T d ℝ =>
+        suffix (Arch.mlp σ id hid) 0 p.1 k.castSucc p.2) (θ, h) (η, h * Z)) 0 := by
+    have hc := (hΨ (θ, h)).hasFDerivAt.comp_hasDerivAt_of_eq 0
+      ((hasDerivAt_line θ η).prodMk (hasDerivAt_line h (h * Z))) (by simp)
+    exact hc
+  -- ... and through the block: `𝓑_{>k}(h') = 𝓑_{>k+1}(σ(h' W) V)`
+  have e2 : HasDerivAt
+      (fun τ : ℝ => suffix (Arch.mlp σ id hid) 0 (θ + τ • η) k.castSucc (h + τ • (h * Z)))
+      (fderiv ℝ (fun p : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut × Matrix T d ℝ =>
+        suffix (Arch.mlp σ id hid) 0 p.1 k.succ p.2) (θ, (h * θ.read k).map σ * θ.write k)
+        (η, (Matrix.of fun t j => σ' ((h * θ.read k) t j)
+            * (h * Z * θ.read k + h * η.read k) t j) * θ.write k
+          + (h * θ.read k).map σ * η.write k)) 0 := by
+    have hc := (hΦ (θ, (h * θ.read k).map σ * θ.write k)).hasFDerivAt.comp_hasDerivAt_of_eq 0
+      ((hasDerivAt_line θ η).prodMk hg) (by simp)
+    have hfun : (fun τ : ℝ =>
+        suffix (Arch.mlp σ id hid) 0 (θ + τ • η) k.castSucc (h + τ • (h * Z)))
+        = (fun p : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut × Matrix T d ℝ =>
+            suffix (Arch.mlp σ id hid) 0 p.1 k.succ p.2) ∘ fun τ : ℝ =>
+          (θ + τ • η, ((h + τ • (h * Z)) * (θ.read k + τ • η.read k)).map σ
+            * (θ.write k + τ • η.write k)) := by
+      funext τ
+      simp only [Function.comp_apply, suffix_castSucc, Pi.zero_apply, Matrix.mul_zero, zero_add]
+      rfl
+    rw [hfun]
+    exact hc
+  -- the direction of `blockLHS` is the derivative of the block
+  have hX : (Matrix.of fun t j =>
+      ((h * θ.read k).map σ') t j * (h * (Z * θ.read k + η.read k)) t j)
+      = Matrix.of fun t j => σ' ((h * θ.read k) t j) * (h * Z * θ.read k + h * η.read k) t j := by
+    ext t j
+    simp only [Matrix.of_apply, Matrix.map_apply, Matrix.mul_add, Matrix.mul_assoc]
+  unfold blockLHS
+  rw [hX]
+  -- both sides are derivatives of the joint maps `(θ', h') ↦ 𝓑(h')` along `(η, ·)`
+  calc _ = _ := fderiv_partial_add
+        (Φ := fun θ' h' => suffix (Arch.mlp (T := T) (d := d) σ id hid) 0 θ' k.castSucc h')
+        (hΨ (θ, h)) η (h * Z)
+    _ = _ := e1.unique e2
+    _ = _ := (fderiv_partial_add
+        (Φ := fun θ' h' => suffix (Arch.mlp (T := T) (d := d) σ id hid) 0 θ' k.succ h')
+        (hΦ _) η _).symm
 
 omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: the set where a nonzero additive and homogeneous function `f` does not vanish is dense
