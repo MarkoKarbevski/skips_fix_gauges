@@ -212,6 +212,62 @@ theorem fderiv_rmsNorm_apply (hε : 0 < ε) (h U : Matrix T d ℝ) :
   simp only [Pi.inv_apply, zero_smul, add_zero, zero_mul]
   ring
 
+/-- For `ε > 0` the derivative of RMSNorm is injective at every `h`. (Row by row, `𝐃N_ε(h) U = 0`
+says `U_t = c h_t`; the product with `h_t` then gives `ε ⟨h_t, U_t⟩ = 0`.) -/
+theorem injective_fderiv_rmsNorm (hε : 0 < ε) (h : Matrix T d ℝ) :
+    Function.Injective (fderiv ℝ (rmsNorm ε : Matrix T d ℝ → Matrix T d ℝ) h) := by
+  refine (injective_iff_map_eq_zero _).2 fun U hU => ?_
+  rw [fderiv_rmsNorm_apply hε] at hU
+  -- every row `U_t` vanishes
+  have hUt : ∀ t, U t = 0 := by
+    intro t
+    have hpos := dotProduct_self_div_add_pos hε (h t)
+    have hs : 0 < Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε) := Real.sqrt_pos.2 hpos
+    have hs2 : Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε) ^ 2
+        = (h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε := Real.sq_sqrt hpos.le
+    -- row `t`: `U_t / s - (⟨h_t, U_t⟩/d) h_t / s³ = 0`
+    have hrow : (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε))⁻¹ • U t
+        - ((h t ⬝ᵥ U t) / (Fintype.card d : ℝ)
+          * (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε))⁻¹ ^ 3) • h t = 0 :=
+      congrFun hU t
+    generalize Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε) = s at hs hs2 hrow
+    -- its product with `h_t`: `r / s - (r/d) ‖h_t‖² / s³ = ε r / s³` with `r = ⟨h_t, U_t⟩`
+    have hdot := congrArg (fun w => h t ⬝ᵥ w) hrow
+    simp only [dotProduct_sub, dotProduct_smul, smul_eq_mul, dotProduct_zero] at hdot
+    have hu : s⁻¹ ^ 2 * ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε) = 1 := by
+      rw [← hs2, inv_pow, inv_mul_cancel₀ (pow_ne_zero 2 hs.ne')]
+    have hr : h t ⬝ᵥ U t = 0 := by
+      have e : s⁻¹ ^ 3 * (ε * (h t ⬝ᵥ U t)) = 0 := by
+        linear_combination hdot + (s⁻¹ * (h t ⬝ᵥ U t)) * hu
+      have e' := (mul_eq_zero.1 e).resolve_left (pow_ne_zero 3 (inv_ne_zero hs.ne'))
+      exact (mul_eq_zero.1 e').resolve_left hε.ne'
+    -- so `U_t / s = 0`
+    rw [hr, zero_div, zero_mul, zero_smul, sub_zero] at hrow
+    exact (smul_eq_zero.1 hrow).resolve_left (inv_ne_zero hs.ne')
+  ext t i
+  rw [hUt t]
+  rfl
+
+/-- For `ε > 0`, RMSNorm is an open map: its derivative is invertible at every point (inverse
+function theorem). -/
+theorem isOpenMap_rmsNorm (hε : 0 < ε) : IsOpenMap (rmsNorm ε : Matrix T d ℝ → Matrix T d ℝ) := by
+  have hA := analyticOnNhd_rmsNorm (T := T) (d := d) hε
+  refine isOpenMap_of_hasStrictFDerivAt_equiv (f' := fun h => (LinearEquiv.ofInjectiveEndo
+    (fderiv ℝ (rmsNorm ε : Matrix T d ℝ → Matrix T d ℝ) h : Matrix T d ℝ →ₗ[ℝ] Matrix T d ℝ)
+    (injective_fderiv_rmsNorm hε h)).toContinuousLinearEquiv) fun h => ?_
+  have he : ((LinearEquiv.ofInjectiveEndo
+      (fderiv ℝ (rmsNorm ε : Matrix T d ℝ → Matrix T d ℝ) h : Matrix T d ℝ →ₗ[ℝ] Matrix T d ℝ)
+      (injective_fderiv_rmsNorm hε h)).toContinuousLinearEquiv : Matrix T d ℝ →L[ℝ] Matrix T d ℝ)
+      = fderiv ℝ (rmsNorm ε : Matrix T d ℝ → Matrix T d ℝ) h :=
+    ContinuousLinearMap.ext fun v => rfl
+  exact (hA h (Set.mem_univ _)).hasStrictFDerivAt.congr_fderiv he.symm
+
+/-- For `ε > 0`, the preimage under RMSNorm of an open dense set is open and dense: RMSNorm is
+continuous and an open map. -/
+theorem isOpen_dense_preimage_rmsNorm (hε : 0 < ε) {V : Set (Matrix T d ℝ)} (hVo : IsOpen V)
+    (hVd : Dense V) : IsOpen (rmsNorm ε ⁻¹' V) ∧ Dense (rmsNorm ε ⁻¹' V) :=
+  ⟨hVo.preimage (differentiable_rmsNorm hε).continuous, hVd.preimage (isOpenMap_rmsNorm hε)⟩
+
 /-! ### Derivatives of the network after a hidden state, for any `χ` -/
 
 /-- Helper: `y ↦ y M`, as a linear map. -/
@@ -260,6 +316,33 @@ theorem fderiv_params_suffix_last_eq_mul (h : Matrix T d ℝ) (η : Params A dIn
   exact fderiv_linMap
     ((mulLeftLin (A.χ h)).comp (Params.linD (A := A) (dIn := dIn) (dOut := dOut))) θ η
 
+/-- For any `χ`, `𝓑_{>ℓ-1} = 𝓑_{>ℓ} ∘ G_ℓ` with `G_ℓ(h) = f_ℓ(χ(h) W_read^ℓ) W_write^ℓ`. -/
+theorem suffix_castSucc_eq_comp_block (ℓ : Fin L) :
+    suffix A 0 θ ℓ.castSucc
+      = suffix A 0 θ ℓ.succ ∘ fun h => A.f ℓ (A.χ h * θ.read ℓ) * θ.write ℓ := by
+  funext h
+  rw [suffix_castSucc, Function.comp_apply, Pi.zero_apply, Matrix.mul_zero, zero_add]
+
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- `G_ℓ(h) = f_ℓ(χ(h) W_read^ℓ) W_write^ℓ` is analytic for an analytic `χ` and an analytic `f_ℓ`. -/
+theorem analyticOnNhd_block_comp (hχ : AnalyticOnNhd ℝ A.χ Set.univ)
+    (hf : ∀ ℓ, AnalyticOnNhd ℝ (A.f ℓ) Set.univ) (ℓ : Fin L) :
+    AnalyticOnNhd ℝ (fun h : Matrix T d ℝ => A.f ℓ (A.χ h * θ.read ℓ) * θ.write ℓ) Set.univ := by
+  have hc := (analyticOnNhd_block A θ hf ℓ).comp hχ (Set.mapsTo_univ _ _)
+  exact hc
+
+/-- The chain rule for `𝓑_{>ℓ-1} = 𝓑_{>ℓ} ∘ G_ℓ` (analytic `χ` and blocks):
+`𝐃𝓑_{>ℓ-1}(h) = 𝐃𝓑_{>ℓ}(G_ℓ(h)) ∘ 𝐃G_ℓ(h)`. -/
+theorem fderiv_suffix_castSucc_of_analytic (hχ : AnalyticOnNhd ℝ A.χ Set.univ)
+    (hf : ∀ ℓ, AnalyticOnNhd ℝ (A.f ℓ) Set.univ) (ℓ : Fin L) (h : Matrix T d ℝ) :
+    fderiv ℝ (suffix A 0 θ ℓ.castSucc) h
+      = (fderiv ℝ (suffix A 0 θ ℓ.succ) (A.f ℓ (A.χ h * θ.read ℓ) * θ.write ℓ)).comp
+          (fderiv ℝ (fun n : Matrix T d ℝ => A.f ℓ (A.χ n * θ.read ℓ) * θ.write ℓ) h) := by
+  rw [suffix_castSucc_eq_comp_block A θ ℓ]
+  exact fderiv_comp h
+    ((analyticOnNhd_suffix_of_analytic A θ hχ hf ℓ.succ) _ (Set.mem_univ _)).differentiableAt
+    ((analyticOnNhd_block_comp A θ hχ hf ℓ) h (Set.mem_univ _)).differentiableAt
+
 /-! ### Lemma D.2 -/
 
 omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
@@ -270,6 +353,70 @@ private theorem exists_right_inverse_of_rank {m n : Type*} [Fintype m] [Fintype 
   Matrix.mulVec_surjective_iff_exists_right_inverse.1
     (Matrix.mulVec_surjective_iff_rank_eq_card.2 hM)
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (as in `Depth/Suffix.lean`): an analytic family `x ↦ J x` of linear maps between
+finite-dimensional spaces that is injective at one point `x₀` is injective on an open dense set
+that contains `x₀`. With a left inverse `K` of `J x₀`, the determinant `φ x` of `K ∘ J x` is
+analytic in `x` and `φ x₀ = 1`; by the identity theorem its zero set has empty interior. -/
+private theorem exists_open_dense_injective_of_analytic
+    {X E F : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
+    [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
+    {J : X → E →L[ℝ] F} (hJ : AnalyticOnNhd ℝ J Set.univ) {x₀ : X}
+    (h₀ : Function.Injective (J x₀)) :
+    ∃ U : Set X, IsOpen U ∧ Dense U ∧ x₀ ∈ U ∧ ∀ x ∈ U, Function.Injective (J x) := by
+  -- a left inverse `K` of `J x₀`
+  obtain ⟨K, hK⟩ :=
+    (J x₀ : E →ₗ[ℝ] F).exists_leftInverse_of_injective (LinearMap.ker_eq_bot.2 h₀)
+  -- the matrix of `K ∘ J x` in a basis `b` of `E`, a linear function of `J x`
+  let b := Module.finBasis ℝ E
+  let Ψ : (E →L[ℝ] F) →ₗ[ℝ]
+      Matrix (Fin (Module.finrank ℝ E)) (Fin (Module.finrank ℝ E)) ℝ :=
+    (LinearMap.toMatrix b b).toLinearMap ∘ₗ (LinearMap.llcomp ℝ E F E K) ∘ₗ
+      (ContinuousLinearMap.coeLM ℝ)
+  have hΨ : ∀ x, Ψ (J x) = LinearMap.toMatrix b b (K ∘ₗ (J x : E →ₗ[ℝ] F)) := fun x => rfl
+  -- its determinant `φ x` is an analytic function of `x`: a polynomial in the entries
+  let φ : X → ℝ := fun x => (Ψ (J x)).det
+  have hentry : ∀ i j, AnalyticOnNhd ℝ (fun x => Ψ (J x) i j) Set.univ := fun i j =>
+    ((LinearMap.toContinuousLinearMap ((Matrix.entryLinearMap ℝ ℝ i j) ∘ₗ Ψ)).analyticOnNhd
+      _).comp hJ (Set.mapsTo_univ _ _)
+  have hφ : AnalyticOnNhd ℝ φ Set.univ := by
+    show AnalyticOnNhd ℝ (fun x => (Ψ (J x)).det) Set.univ
+    simp only [Matrix.det_apply']
+    exact Finset.analyticOnNhd_fun_sum _ fun σ _ => analyticOnNhd_const.mul
+      (Finset.analyticOnNhd_fun_prod _ fun i _ => hentry (σ i) i)
+  have hφcont : Continuous φ := continuousOn_univ.mp hφ.continuousOn
+  -- `φ x₀ = det 1 = 1`
+  have hφ₀ : φ x₀ = 1 := by
+    show (Ψ (J x₀)).det = 1
+    rw [hΨ, hK, LinearMap.toMatrix_id, Matrix.det_one]
+  -- where `φ x ≠ 0`, `K ∘ J x` is invertible, so `J x` is injective
+  have hφinj : ∀ x, φ x ≠ 0 → Function.Injective (J x) := by
+    intro x hx
+    have hdet : LinearMap.det (K ∘ₗ (J x : E →ₗ[ℝ] F)) ≠ 0 := by
+      rw [← LinearMap.det_toMatrix b]
+      exact hx
+    have hbij := (Module.End.isUnit_iff _).1
+      ((LinearMap.isUnit_iff_isUnit_det _).2 (isUnit_iff_ne_zero.2 hdet))
+    have hinj := hbij.1
+    rw [LinearMap.coe_comp] at hinj
+    exact hinj.of_comp
+  refine ⟨{x | φ x ≠ 0}, isOpen_ne_fun hφcont continuous_const, ?_, ?_, hφinj⟩
+  · -- dense: if `φ` vanished on a nonempty open set, it would vanish everywhere
+    rw [dense_iff_inter_open]
+    rintro W hW ⟨z, hz⟩
+    by_contra hne
+    have hzero : φ =ᶠ[𝓝 z] 0 := Filter.eventually_of_mem (hW.mem_nhds hz) fun y hy => by
+      by_contra hy'
+      exact hne ⟨y, hy, hy'⟩
+    have h1 := hφ.eqOn_zero_of_preconnected_of_eventuallyEq_zero isPreconnected_univ
+      (Set.mem_univ z) hzero (Set.mem_univ x₀)
+    rw [hφ₀] at h1
+    exact one_ne_zero h1
+  · show φ x₀ ≠ 0
+    rw [hφ₀]
+    exact one_ne_zero
+
 /-- **Lemma D.2, case (+):** for a regular `θ` and analytic blocks there is, for every `k`, an open
 dense set of hidden states `h` at which the derivative of `𝓑_{>k}` is injective. (`N_ε` is a
 diffeomorphism of the rows onto the ball `‖n‖² < d`.) -/
@@ -277,7 +424,71 @@ theorem exists_open_dense_injective_fderiv_suffix_rmsNorm (hε : 0 < ε) (hχ : 
     (hf : ∀ ℓ, AnalyticOnNhd ℝ (A.f ℓ) Set.univ) (hθ : Regular A θ) (k : Fin (L + 1)) :
     ∃ U : Set (Matrix T d ℝ), IsOpen U ∧ Dense U ∧
       ∀ h ∈ U, Function.Injective (fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ k h') h) := by
-  sorry
+  -- `χ = N_ε` is analytic, and its derivative is injective at every `h`
+  have hχa : AnalyticOnNhd ℝ A.χ Set.univ := by rw [hχ]; exact analyticOnNhd_rmsNorm hε
+  have hχd : Differentiable ℝ A.χ := by rw [hχ]; exact differentiable_rmsNorm hε
+  have hχi : ∀ h, Function.Injective (fderiv ℝ A.χ h) := by
+    rw [hχ]; exact injective_fderiv_rmsNorm hε
+  induction k using Fin.reverseInduction with
+  | last =>
+    -- `𝐃𝓑_{>L}(h) v = (𝐃χ(h) v) D` is injective for every `h`: `D R = 1`, and `𝐃χ(h)` is injective
+    obtain ⟨R, hR⟩ := exists_right_inverse_of_rank θ.D hθ.rank_D
+    refine ⟨Set.univ, isOpen_univ, dense_univ, fun h _ v w hvw => ?_⟩
+    rw [fderiv_suffix_last_of_differentiable A θ hχd,
+      fderiv_suffix_last_of_differentiable A θ hχd] at hvw
+    have hR' := congrArg (· * R) hvw
+    simp only [Matrix.mul_assoc, hR, Matrix.mul_one] at hR'
+    exact hχi h hR'
+  | cast ℓ ih =>
+    obtain ⟨U', -, hU'd, hU'⟩ := ih
+    -- the block `g_ℓ(n) = f_ℓ(n W_read) W_write` and `G_ℓ = g_ℓ ∘ χ` are analytic
+    have hg := analyticOnNhd_block A θ hf ℓ
+    have hG := analyticOnNhd_block_comp A θ hχa hf ℓ
+    -- by (R3) and analyticity, `𝐃g_ℓ` is injective on an open dense set `V` of rows
+    obtain ⟨n₀, hn₀⟩ := hθ.deriv_block ℓ
+    obtain ⟨V, hVo, hVd, -, hV⟩ := exists_open_dense_injective_of_analytic hg.fderiv hn₀
+    -- `χ⁻¹(V)` is dense, so some `h₀` has `χ(h₀) ∈ V`
+    obtain ⟨h₀, hh₀⟩ := (isOpen_dense_preimage_rmsNorm hε hVo hVd).2.nonempty
+    -- at `h₀`, `𝐃G_ℓ(h₀) = 𝐃g_ℓ(χ(h₀)) ∘ 𝐃χ(h₀)` is injective
+    have hG₀ : Function.Injective
+        (fderiv ℝ (fun n : Matrix T d ℝ => A.f ℓ (A.χ n * θ.read ℓ) * θ.write ℓ) h₀) := by
+      have hc := fderiv_comp h₀ (hg (A.χ h₀) (Set.mem_univ _)).differentiableAt (hχd h₀)
+      have hc' : fderiv ℝ (fun n : Matrix T d ℝ => A.f ℓ (A.χ n * θ.read ℓ) * θ.write ℓ) h₀
+          = (fderiv ℝ (fun n : Matrix T d ℝ => A.f ℓ (n * θ.read ℓ) * θ.write ℓ)
+              (A.χ h₀)).comp (fderiv ℝ A.χ h₀) := hc
+      rw [hc', ContinuousLinearMap.coe_comp]
+      exact (hV _ (by rw [hχ]; exact hh₀)).comp (hχi h₀)
+    -- an open set `V' ∋ h₀` on which `𝐃G_ℓ` is injective
+    obtain ⟨V', hV'o, -, hh₀V', hV'⟩ := exists_open_dense_injective_of_analytic hG.fderiv hG₀
+    -- inverse function theorem: `𝐃G_ℓ(h₀)` is invertible, so `G_ℓ(V')` is a neighbourhood
+    -- of `G_ℓ(h₀)`
+    let e := (LinearEquiv.ofInjectiveEndo
+      (fderiv ℝ (fun n : Matrix T d ℝ => A.f ℓ (A.χ n * θ.read ℓ) * θ.write ℓ) h₀ :
+        Matrix T d ℝ →ₗ[ℝ] Matrix T d ℝ) hG₀).toContinuousLinearEquiv
+    have hs : HasStrictFDerivAt
+        (fun n : Matrix T d ℝ => A.f ℓ (A.χ n * θ.read ℓ) * θ.write ℓ)
+        (e : Matrix T d ℝ →L[ℝ] Matrix T d ℝ) h₀ := by
+      have he : (e : Matrix T d ℝ →L[ℝ] Matrix T d ℝ)
+          = fderiv ℝ (fun n : Matrix T d ℝ => A.f ℓ (A.χ n * θ.read ℓ) * θ.write ℓ) h₀ :=
+        ContinuousLinearMap.ext fun v => rfl
+      rw [he]
+      exact (hG h₀ (Set.mem_univ _)).hasStrictFDerivAt
+    have hnhds : (fun n : Matrix T d ℝ => A.f ℓ (A.χ n * θ.read ℓ) * θ.write ℓ) '' V'
+        ∈ 𝓝 (A.f ℓ (A.χ h₀ * θ.read ℓ) * θ.write ℓ) := by
+      have hm := Filter.image_mem_map
+        (m := fun n : Matrix T d ℝ => A.f ℓ (A.χ n * θ.read ℓ) * θ.write ℓ) (hV'o.mem_nhds hh₀V')
+      rw [hs.map_nhds_eq_of_equiv] at hm
+      exact hm
+    -- it meets the dense set `U'`: some `h₁ ∈ V'` has `G_ℓ(h₁) ∈ U'`
+    obtain ⟨_, hyU', h₁, hh₁V', rfl⟩ := hU'd.inter_nhds_nonempty hnhds
+    -- at `h₁`, `𝐃𝓑_{>ℓ-1}(h₁) = 𝐃𝓑_{>ℓ}(G_ℓ(h₁)) ∘ 𝐃G_ℓ(h₁)` is injective
+    have hinj₁ : Function.Injective (fderiv ℝ (suffix A 0 θ ℓ.castSucc) h₁) := by
+      rw [fderiv_suffix_castSucc_of_analytic A θ hχa hf ℓ h₁, ContinuousLinearMap.coe_comp]
+      exact (hU' _ hyU').comp (hV' h₁ hh₁V')
+    -- so `𝐃𝓑_{>ℓ-1}` is injective on an open dense set
+    obtain ⟨U, hUo, hUd, -, hU⟩ := exists_open_dense_injective_of_analytic
+      (analyticOnNhd_suffix_of_analytic A θ hχa hf ℓ.castSucc).fderiv hinj₁
+    exact ⟨U, hUo, hUd, hU⟩
 
 /-- **Lemma D.3, case (+) (a direction at a write).** Let `θ` be regular, and let `M` be a matrix
 with `d` columns and rank `d`. If `𝐃𝓑_{>k}(w M) (w η_M) + 𝐃_θ 𝓑_{>k}(w M) η = 0` for all `w`, then
