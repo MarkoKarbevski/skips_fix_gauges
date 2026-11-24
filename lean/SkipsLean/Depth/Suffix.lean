@@ -1,4 +1,5 @@
 import SkipsLean.Dimension.UpperBound
+import SkipsLean.OneBlock.Common
 
 /-!
 # The network after a hidden state, the claim `(D_k)`, and how it gives the rank
@@ -53,23 +54,29 @@ variable (S : Fin L → Matrix d d ℝ) (θ : Params A dIn dOut)
 
 /-- `𝓑_{>L}(h) = χ(h) D`. -/
 theorem suffix_last (h : Matrix T d ℝ) : suffix A S θ (Fin.last L) h = A.χ h * θ.D := by
-  sorry
+  simp only [suffix, Fin.reverseInduction_last]
 
 /-- `𝓑_{>k-1}(h) = 𝓑_{>k}(g_k(χ(h)))` (plus the stream term `h S_k`). -/
 theorem suffix_castSucc (ℓ : Fin L) (h : Matrix T d ℝ) :
     suffix A S θ ℓ.castSucc h
       = suffix A S θ ℓ.succ (h * S ℓ + A.f ℓ (A.χ h * θ.read ℓ) * θ.write ℓ) := by
-  sorry
+  simp only [suffix, Fin.reverseInduction_castSucc]
 
 /-- The network after `h_k`, at the hidden state `h_k` of the input `x`, is the output at `x`. -/
 theorem suffix_hidden (x : Matrix T dIn ℝ) (k : Fin (L + 1)) :
     suffix A S θ k (hidden A S θ x k) = eval A S θ x := by
-  sorry
+  induction k using Fin.reverseInduction with
+  | last =>
+    -- `𝓑_{>L}(h_L) = χ(h_L) D` is the output
+    rw [suffix_last, eval]
+  | cast ℓ ih =>
+    -- `𝓑_{>ℓ}(h_ℓ) = 𝓑_{>ℓ+1}(h_{ℓ+1})`
+    rw [suffix_castSucc, ← hidden_succ, ih]
 
 /-- `F_θ(x) = 𝓑_{>0}(x E)`. -/
 theorem eval_eq_suffix_zero (x : Matrix T dIn ℝ) :
     eval A S θ x = suffix A S θ 0 (x * θ.E) := by
-  sorry
+  rw [← suffix_hidden A S θ x 0, hidden_zero]
 
 /-- The identity (18) of the paper for `k`, `Z` and `η`, in a network without skips:
 `𝐃𝓑_{>k}(h) (h Z) + 𝐃_θ 𝓑_{>k}(h) η = 0` for all `h`. -/
@@ -97,9 +104,68 @@ structure Regular : Prop where
   deriv_block : ∀ ℓ, ∃ n : Matrix T d ℝ, Function.Injective
     (fderiv ℝ (fun n' : Matrix T d ℝ => A.f ℓ (n' * θ.read ℓ) * θ.write ℓ) n)
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `y ↦ y M`, as a linear map. -/
+private def mulRightLin {m n p : Type*} [Fintype n] (M : Matrix n p ℝ) :
+    Matrix m n ℝ →ₗ[ℝ] Matrix m p ℝ where
+  toFun y := y * M
+  map_add' a b := Matrix.add_mul a b M
+  map_smul' c a := Matrix.smul_mul c a M
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `y ↦ M y`, as a linear map. -/
+private def mulLeftLin {m n p : Type*} [Fintype n] (M : Matrix m n ℝ) :
+    Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ where
+  toFun y := M * y
+  map_add' a b := Matrix.mul_add M a b
+  map_smul' c a := Matrix.mul_smul M c a
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the derivative of a linear map on a finite-dimensional space is the map itself. -/
+private theorem fderiv_linMap {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [FiniteDimensional ℝ E] [NormedAddCommGroup F] [NormedSpace ℝ F] (l : E →ₗ[ℝ] F)
+    (x v : E) : fderiv ℝ (fun y => l y) x v = l v := by
+  have h := (LinearMap.toContinuousLinearMap l).fderiv (x := x)
+  rw [LinearMap.coe_toContinuousLinearMap'] at h
+  change fderiv ℝ (⇑l) x v = l v
+  rw [h]
+  rfl
+
 /-- **Lemma D.5, case (n):** `(D_L)` holds. -/
 theorem claim_last [Nonempty T] (hχ : A.χ = id) : Claim A θ (Fin.last L) := by
-  sorry
+  intro Z η hZ
+  -- `X_L = Z`; no block comes after `L`
+  refine ⟨fun _ => Z, rfl, fun ℓ hℓ => absurd hℓ (not_le.2 (Fin.castSucc_lt_last ℓ)), ?_⟩
+  show η.D = -(Z * θ.D)
+  -- the derivative in `h` of `𝓑_{>L}(h) = h D` along `h Z` is `h Z D`
+  have h1 : ∀ h : Matrix T d ℝ,
+      fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ (Fin.last L) h') h (h * Z)
+        = h * Z * θ.D := by
+    intro h
+    simp only [suffix_last, hχ, id]
+    exact fderiv_linMap (mulRightLin θ.D) h (h * Z)
+  -- the derivative in `θ` of `h D` along `η` is `h η_D`
+  have h2 : ∀ h : Matrix T d ℝ,
+      fderiv ℝ (fun θ' : Params A dIn dOut => suffix A 0 θ' (Fin.last L) h) θ η = h * η.D := by
+    intro h
+    simp only [suffix_last, hχ, id]
+    exact fderiv_linMap ((mulLeftLin h).comp (Params.linD (A := A) (dIn := dIn) (dOut := dOut)))
+      θ η
+  -- so `h (Z D + η_D) = 0` for every `h`
+  have key : ∀ h : Matrix T d ℝ, h * (Z * θ.D + η.D) = 0 := by
+    intro h
+    have e := hZ h
+    rw [h1, h2] at e
+    rw [Matrix.mul_add, ← Matrix.mul_assoc]
+    exact e
+  -- with `h` whose every row is `e_i`, row `t₀` of `h (Z D + η_D)` is row `i` of `Z D + η_D`
+  obtain ⟨t₀⟩ := ‹Nonempty T›
+  have hrow : Z * θ.D + η.D = 0 := by
+    ext i c
+    have e := congrFun (congrFun (key (Matrix.of fun _ j => if j = i then 1 else 0)) t₀) c
+    simpa [Matrix.mul_apply] using e
+  rw [eq_neg_iff_add_eq_zero, add_comm]
+  exact hrow
 
 /-- **Lemma D.2, case (n):** for a regular `θ` and analytic blocks there is, for every `k`, an open
 dense set of hidden states `h` at which the derivative of `𝓑_{>k}` is injective. -/
