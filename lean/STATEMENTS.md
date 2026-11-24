@@ -94,9 +94,9 @@ in work are on the branch `lean-wip`.
 | D Theorem 5.1 / C.1 for a GELU block: `fd = P − 2d²`, under the conditions of the proof and at generic parameters | `gelu_unitsRigid`, `flat_le_range_cobDir_gelu`, `funDim_gelu_oneBlock`, `ae_funDim_gelu_oneBlock` | `OneBlock/GELU.lean` | proved |
 | D Lemma C.3 for GeGLU (gate GELU), with the linear term, the constant and the biases: a flat direction only rescales the value of each hidden unit | `gelu_gated_units_flat` (the paper's form), `gelu_gated_units_flat_of_value_ne_zero` (without the hypothesis on proportionality) | `OneBlock/UnitsGeGLU.lean` | proved |
 | D Theorem 5.1 / C.1 for a GeGLU block: `fd = P − 2d² − d_hidden`, under the conditions of the proof and at generic parameters | `gelu_gatedUnitsRescale`, `flat_le_cobDir_add_rescaleDir_geglu`, `funDim_geglu_oneBlock`, `ae_funDim_geglu_oneBlock` | `OneBlock/GeGLU.lean` | proved |
-| ReLU `max(z,0)` and ReLU² `max(z,0)²`, with their derivatives `1[z>0]` (for `z ≠ 0`) and `2 max(z,0)` | `relu`, `reluDeriv`, `reluSq`, `reluSqDeriv`, `hasDerivAt_relu`, `hasDerivAt_reluSq` | `Activations/ReLU.lean` | in work |
-| D Lemma C.3 for ReLU and for ReLU², with the linear term, the constant and the biases: a direction that is flat at every input with no hidden unit at its kink only rescales each hidden unit, `(ψ_c, ψ_β) = λ(c, β)`, `ψ_a = −λa` (ReLU), `ψ_a = −2λa` (ReLU²) | `relu_units_flat`, `reluSq_units_flat` | `OneBlock/UnitsReLU.lean` | in work |
-| D Lemma C.3 for ReGLU: `(ψ_c, ψ_β) = λ(c, β)`, `(ψ_e, ψ_β') = −α(e, β')`, `ψ_a = (α − λ)a`, with the paper's hypothesis that `(e, β')` is not proportional to `(c, β)` | `relu_gated_units_flat` | `OneBlock/UnitsReGLU.lean` | in work |
+| ReLU `max(z,0)` and ReLU² `max(z,0)²`, with their derivatives `1[z>0]` (for `z ≠ 0`) and `2 max(z,0)` | `relu`, `reluDeriv`, `reluSq`, `reluSqDeriv`, `hasDerivAt_relu`, `hasDerivAt_reluSq` | `Activations/ReLU.lean` | proved |
+| D Lemma C.3 for ReLU and for ReLU², with the linear term, the constant and the biases: a direction that is flat at every input with no hidden unit at its kink only rescales each hidden unit, `(ψ_c, ψ_β) = λ(c, β)`, `ψ_a = −λa` (ReLU), `ψ_a = −2λa` (ReLU²) | `relu_units_flat`, `reluSq_units_flat` | `OneBlock/UnitsReLU.lean` | proved |
+| D Lemma C.3 for ReGLU: `(ψ_c, ψ_β) = λ(c, β)`, `(ψ_e, ψ_β') = −α(e, β')`, `ψ_a = (α − λ)a`, with the paper's hypothesis that `(e, β')` is not proportional to `(c, β)` | `relu_gated_units_flat` | `OneBlock/UnitsReGLU.lean` | proved |
 | D Appendix D.3: `𝓑_{>k}(h)`, the output of the network when its hidden state `h_k` is set to `h`; `F_θ(x) = 𝓑_{>0}(xE)` | `suffix`, `suffix_last`, `suffix_castSucc`, `suffix_hidden`, `eval_eq_suffix_zero` | `Depth/Suffix.lean` | in work |
 | D Appendix D.3, case (n): the identity (18), `𝐃𝓑_{>k}(h)(hZ) + 𝐃_θ𝓑_{>k}(h)η = 0` for all `h`; Claim `(D_k)` for blocks without symmetries inside; "regular" (R1), (R3) | `SuffixFlat`, `Claim`, `Regular` | `Depth/Suffix.lean` | defined |
 | D Lemma D.2, case (n): for regular `θ` and analytic blocks the derivative of `𝓑_{>k}` is injective on an open dense set | `exists_open_dense_injective_fderiv_suffix` | `Depth/Suffix.lean` | in work |
@@ -117,6 +117,9 @@ Notes for the authors on these statements:
   (c_i, β_i)" is not used by the proofs; only `e_i ≠ 0` is needed. Both forms are stated and proved,
   and the conditions of the one-block theorem for gated blocks (`OneBlockGenericGated`) leave the
   hypothesis out.
+- Lemma C.3 for ReGLU: the proof uses the hypothesis on proportionality (a numerical check gives a
+  larger kernel without it) and does not use `e_i ≠ 0`, which that hypothesis implies for the
+  multiple `0`.
 - Theorem 5.1 is stated once for every activation that satisfies the conclusion of Lemma C.3
   (`OneBlock/Mlp.lean` for `s = 0`, `OneBlock/Gated.lean` for the rescalings of the values). Steps 1
   and 3 of the paper's proof do not depend on the activation; the cases tanh, GELU, SwiGLU and GeGLU
