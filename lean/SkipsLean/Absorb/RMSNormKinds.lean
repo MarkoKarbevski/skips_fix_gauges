@@ -29,45 +29,56 @@ open scoped Matrix.Norms.Elementwise Topology
 
 /-- `tanh` is locally Lipschitz. -/
 theorem locallyLipschitz_tanh : LocallyLipschitz Real.tanh := by
-  sorry
+  -- real-analytic, hence `C¹`, hence locally Lipschitz
+  exact (analyticOnNhd_tanh.contDiff (n := 1)).locallyLipschitz
 
 /-- GELU is locally Lipschitz. -/
 theorem locallyLipschitz_gelu : LocallyLipschitz gelu := by
-  sorry
+  exact (analyticOnNhd_gelu.contDiff (n := 1)).locallyLipschitz
 
 /-- SiLU is locally Lipschitz. -/
 theorem locallyLipschitz_silu : LocallyLipschitz silu := by
-  sorry
+  exact (analyticOnNhd_silu.contDiff (n := 1)).locallyLipschitz
 
 /-- ReLU is locally Lipschitz. -/
 theorem locallyLipschitz_relu : LocallyLipschitz relu := by
-  sorry
+  -- `max z 0` is 1-Lipschitz
+  have h : LipschitzWith 1 (fun z : ℝ => max z 0) := by
+    simpa using (LipschitzWith.id (α := ℝ)).max (LipschitzWith.const (0 : ℝ))
+  exact h.locallyLipschitz
 
 /-- ReLU² is locally Lipschitz. -/
 theorem locallyLipschitz_reluSq : LocallyLipschitz reluSq := by
-  sorry
+  -- the square (a `C¹` map) after ReLU
+  have hsq : LocallyLipschitz (fun x : ℝ => x ^ 2) :=
+    (contDiff_id.pow 2 : ContDiff ℝ 1 fun x : ℝ => id x ^ 2).locallyLipschitz
+  exact hsq.comp locallyLipschitz_relu
 
 /-! ### They do not vanish on the positive reals -/
 
 /-- `tanh z ≠ 0` for `z > 0`. -/
 theorem tanh_ne_zero_of_pos {z : ℝ} (hz : 0 < z) : Real.tanh z ≠ 0 := by
-  sorry
+  rw [Real.tanh_eq_sinh_div_cosh]
+  exact (div_pos (Real.sinh_pos_iff.2 hz) (Real.cosh_pos z)).ne'
 
 /-- `GELU(z) ≠ 0` for `z > 0`. -/
 theorem gelu_ne_zero_of_pos {z : ℝ} (hz : 0 < z) : gelu z ≠ 0 := by
-  sorry
+  exact (mul_pos hz (gaussCdf_pos z)).ne'
 
 /-- `SiLU(z) ≠ 0` for `z > 0`. -/
 theorem silu_ne_zero_of_pos {z : ℝ} (hz : 0 < z) : silu z ≠ 0 := by
-  sorry
+  unfold silu
+  exact (div_pos hz (by positivity)).ne'
 
 /-- `ReLU(z) ≠ 0` for `z > 0`. -/
 theorem relu_ne_zero_of_pos {z : ℝ} (hz : 0 < z) : relu z ≠ 0 := by
-  sorry
+  simp only [relu, max_eq_left hz.le]
+  exact hz.ne'
 
 /-- `ReLU²(z) ≠ 0` for `z > 0`. -/
 theorem reluSq_ne_zero_of_pos {z : ℝ} (hz : 0 < z) : reluSq z ≠ 0 := by
-  sorry
+  simp only [reluSq, max_eq_left hz.le]
+  exact (pow_pos hz 2).ne'
 
 variable {T d dIn dOut : Type*} {L : ℕ} [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn]
   [Fintype dOut]
@@ -87,7 +98,8 @@ theorem ae_ne_skipless_rmsNorm_tanh [Nonempty T] {ε : ℝ} (hε : 0 < ε)
       A'.χ = rmsNorm ε' → (∀ ℓ, LocallyLipschitz (A'.f ℓ)) → ∀ θ' : Params A' dIn dOut,
         ∃ X : Matrix T dIn ℝ,
           eval (Arch.mlp Real.tanh (rmsNorm ε) hid) 1 θ X ≠ eval A' 0 θ' X := by
-  sorry
+  exact ae_ne_skipless_rmsNorm_mlp hε (fun z hz => tanh_ne_zero_of_pos hz)
+    locallyLipschitz_tanh hhid μ hd hdIn hdOut
 
 /-- **Theorem 4.3 for tanh blocks, `ε = 0`.** For almost every choice of weights, the residual network
 equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
@@ -102,7 +114,8 @@ theorem ae_not_dense_eq_skipless_rmsNorm_zero_tanh [Nonempty T]
         ¬ ∃ S : Set (Matrix T dIn ℝ), Dense S ∧
           ∀ X ∈ S, DefinedAt (Arch.mlp Real.tanh (rmsNorm 0) hid) 1 θ X ∧ DefinedAt A' 0 θ' X ∧
             eval (Arch.mlp Real.tanh (rmsNorm 0) hid) 1 θ X = eval A' 0 θ' X := by
-  sorry
+  exact ae_not_dense_eq_skipless_rmsNorm_zero_mlp (fun z hz => tanh_ne_zero_of_pos hz)
+    locallyLipschitz_tanh hhid μ hd hdIn hdOut
 
 /-- **Theorem 4.3 for GELU blocks, `ε > 0`.** For almost every choice of weights, the residual network
 equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
@@ -116,7 +129,8 @@ theorem ae_ne_skipless_rmsNorm_gelu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
       A'.χ = rmsNorm ε' → (∀ ℓ, LocallyLipschitz (A'.f ℓ)) → ∀ θ' : Params A' dIn dOut,
         ∃ X : Matrix T dIn ℝ,
           eval (Arch.mlp gelu (rmsNorm ε) hid) 1 θ X ≠ eval A' 0 θ' X := by
-  sorry
+  exact ae_ne_skipless_rmsNorm_mlp hε (fun z hz => gelu_ne_zero_of_pos hz)
+    locallyLipschitz_gelu hhid μ hd hdIn hdOut
 
 /-- **Theorem 4.3 for GELU blocks, `ε = 0`.** For almost every choice of weights, the residual network
 equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
@@ -131,7 +145,8 @@ theorem ae_not_dense_eq_skipless_rmsNorm_zero_gelu [Nonempty T]
         ¬ ∃ S : Set (Matrix T dIn ℝ), Dense S ∧
           ∀ X ∈ S, DefinedAt (Arch.mlp gelu (rmsNorm 0) hid) 1 θ X ∧ DefinedAt A' 0 θ' X ∧
             eval (Arch.mlp gelu (rmsNorm 0) hid) 1 θ X = eval A' 0 θ' X := by
-  sorry
+  exact ae_not_dense_eq_skipless_rmsNorm_zero_mlp (fun z hz => gelu_ne_zero_of_pos hz)
+    locallyLipschitz_gelu hhid μ hd hdIn hdOut
 
 /-- **Theorem 4.3 for ReLU blocks, `ε > 0`.** For almost every choice of weights, the residual network
 equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
@@ -145,7 +160,8 @@ theorem ae_ne_skipless_rmsNorm_relu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
       A'.χ = rmsNorm ε' → (∀ ℓ, LocallyLipschitz (A'.f ℓ)) → ∀ θ' : Params A' dIn dOut,
         ∃ X : Matrix T dIn ℝ,
           eval (Arch.mlp relu (rmsNorm ε) hid) 1 θ X ≠ eval A' 0 θ' X := by
-  sorry
+  exact ae_ne_skipless_rmsNorm_mlp hε (fun z hz => relu_ne_zero_of_pos hz)
+    locallyLipschitz_relu hhid μ hd hdIn hdOut
 
 /-- **Theorem 4.3 for ReLU blocks, `ε = 0`.** For almost every choice of weights, the residual network
 equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
@@ -160,7 +176,8 @@ theorem ae_not_dense_eq_skipless_rmsNorm_zero_relu [Nonempty T]
         ¬ ∃ S : Set (Matrix T dIn ℝ), Dense S ∧
           ∀ X ∈ S, DefinedAt (Arch.mlp relu (rmsNorm 0) hid) 1 θ X ∧ DefinedAt A' 0 θ' X ∧
             eval (Arch.mlp relu (rmsNorm 0) hid) 1 θ X = eval A' 0 θ' X := by
-  sorry
+  exact ae_not_dense_eq_skipless_rmsNorm_zero_mlp (fun z hz => relu_ne_zero_of_pos hz)
+    locallyLipschitz_relu hhid μ hd hdIn hdOut
 
 /-- **Theorem 4.3 for ReLU² blocks, `ε > 0`.** For almost every choice of weights, the residual network
 equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
@@ -174,7 +191,8 @@ theorem ae_ne_skipless_rmsNorm_reluSq [Nonempty T] {ε : ℝ} (hε : 0 < ε)
       A'.χ = rmsNorm ε' → (∀ ℓ, LocallyLipschitz (A'.f ℓ)) → ∀ θ' : Params A' dIn dOut,
         ∃ X : Matrix T dIn ℝ,
           eval (Arch.mlp reluSq (rmsNorm ε) hid) 1 θ X ≠ eval A' 0 θ' X := by
-  sorry
+  exact ae_ne_skipless_rmsNorm_mlp hε (fun z hz => reluSq_ne_zero_of_pos hz)
+    locallyLipschitz_reluSq hhid μ hd hdIn hdOut
 
 /-- **Theorem 4.3 for ReLU² blocks, `ε = 0`.** For almost every choice of weights, the residual network
 equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
@@ -189,7 +207,8 @@ theorem ae_not_dense_eq_skipless_rmsNorm_zero_reluSq [Nonempty T]
         ¬ ∃ S : Set (Matrix T dIn ℝ), Dense S ∧
           ∀ X ∈ S, DefinedAt (Arch.mlp reluSq (rmsNorm 0) hid) 1 θ X ∧ DefinedAt A' 0 θ' X ∧
             eval (Arch.mlp reluSq (rmsNorm 0) hid) 1 θ X = eval A' 0 θ' X := by
-  sorry
+  exact ae_not_dense_eq_skipless_rmsNorm_zero_mlp (fun z hz => reluSq_ne_zero_of_pos hz)
+    locallyLipschitz_reluSq hhid μ hd hdIn hdOut
 
 /-- **Theorem 4.3 for SwiGLU blocks, `ε > 0`.** For almost every choice of weights, the residual network
 equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
@@ -203,7 +222,8 @@ theorem ae_ne_skipless_rmsNorm_swiglu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
       A'.χ = rmsNorm ε' → (∀ ℓ, LocallyLipschitz (A'.f ℓ)) → ∀ θ' : Params A' dIn dOut,
         ∃ X : Matrix T dIn ℝ,
           eval (Arch.gated silu (rmsNorm ε) hid) 1 θ X ≠ eval A' 0 θ' X := by
-  sorry
+  exact ae_ne_skipless_rmsNorm_gated hε (fun z hz => silu_ne_zero_of_pos hz)
+    locallyLipschitz_silu hhid μ hd hdIn hdOut
 
 /-- **Theorem 4.3 for SwiGLU blocks, `ε = 0`.** For almost every choice of weights, the residual network
 equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
@@ -218,7 +238,8 @@ theorem ae_not_dense_eq_skipless_rmsNorm_zero_swiglu [Nonempty T]
         ¬ ∃ S : Set (Matrix T dIn ℝ), Dense S ∧
           ∀ X ∈ S, DefinedAt (Arch.gated silu (rmsNorm 0) hid) 1 θ X ∧ DefinedAt A' 0 θ' X ∧
             eval (Arch.gated silu (rmsNorm 0) hid) 1 θ X = eval A' 0 θ' X := by
-  sorry
+  exact ae_not_dense_eq_skipless_rmsNorm_zero_gated (fun z hz => silu_ne_zero_of_pos hz)
+    locallyLipschitz_silu hhid μ hd hdIn hdOut
 
 /-- **Theorem 4.3 for GeGLU blocks, `ε > 0`.** For almost every choice of weights, the residual network
 equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
@@ -232,7 +253,8 @@ theorem ae_ne_skipless_rmsNorm_geglu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
       A'.χ = rmsNorm ε' → (∀ ℓ, LocallyLipschitz (A'.f ℓ)) → ∀ θ' : Params A' dIn dOut,
         ∃ X : Matrix T dIn ℝ,
           eval (Arch.gated gelu (rmsNorm ε) hid) 1 θ X ≠ eval A' 0 θ' X := by
-  sorry
+  exact ae_ne_skipless_rmsNorm_gated hε (fun z hz => gelu_ne_zero_of_pos hz)
+    locallyLipschitz_gelu hhid μ hd hdIn hdOut
 
 /-- **Theorem 4.3 for GeGLU blocks, `ε = 0`.** For almost every choice of weights, the residual network
 equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
@@ -247,7 +269,8 @@ theorem ae_not_dense_eq_skipless_rmsNorm_zero_geglu [Nonempty T]
         ¬ ∃ S : Set (Matrix T dIn ℝ), Dense S ∧
           ∀ X ∈ S, DefinedAt (Arch.gated gelu (rmsNorm 0) hid) 1 θ X ∧ DefinedAt A' 0 θ' X ∧
             eval (Arch.gated gelu (rmsNorm 0) hid) 1 θ X = eval A' 0 θ' X := by
-  sorry
+  exact ae_not_dense_eq_skipless_rmsNorm_zero_gated (fun z hz => gelu_ne_zero_of_pos hz)
+    locallyLipschitz_gelu hhid μ hd hdIn hdOut
 
 /-- **Theorem 4.3 for ReGLU blocks, `ε > 0`.** For almost every choice of weights, the residual network
 equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
@@ -261,7 +284,8 @@ theorem ae_ne_skipless_rmsNorm_reglu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
       A'.χ = rmsNorm ε' → (∀ ℓ, LocallyLipschitz (A'.f ℓ)) → ∀ θ' : Params A' dIn dOut,
         ∃ X : Matrix T dIn ℝ,
           eval (Arch.gated relu (rmsNorm ε) hid) 1 θ X ≠ eval A' 0 θ' X := by
-  sorry
+  exact ae_ne_skipless_rmsNorm_gated hε (fun z hz => relu_ne_zero_of_pos hz)
+    locallyLipschitz_relu hhid μ hd hdIn hdOut
 
 /-- **Theorem 4.3 for ReGLU blocks, `ε = 0`.** For almost every choice of weights, the residual network
 equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
@@ -276,6 +300,7 @@ theorem ae_not_dense_eq_skipless_rmsNorm_zero_reglu [Nonempty T]
         ¬ ∃ S : Set (Matrix T dIn ℝ), Dense S ∧
           ∀ X ∈ S, DefinedAt (Arch.gated relu (rmsNorm 0) hid) 1 θ X ∧ DefinedAt A' 0 θ' X ∧
             eval (Arch.gated relu (rmsNorm 0) hid) 1 θ X = eval A' 0 θ' X := by
-  sorry
+  exact ae_not_dense_eq_skipless_rmsNorm_zero_gated (fun z hz => relu_ne_zero_of_pos hz)
+    locallyLipschitz_relu hhid μ hd hdIn hdOut
 
 end Skips
