@@ -586,3 +586,16 @@ import SkipsLean
 #print axioms Skips.exists_regular_claimGated_geglu
 #print axioms Skips.ae_funDim_swiglu_skipless
 #print axioms Skips.ae_funDim_geglu_skipless
+#print axioms Skips.eq_of_forall_map_dotProduct_eq
+#print axioms Skips.eq_of_forall_gate_mul_eq
+#print axioms Skips.orthogonal_of_eval_cob_skipless_rmsNorm_mlp
+#print axioms Skips.orthogonal_of_eval_cob_skipless_rmsNorm_gated
+#print axioms Skips.eval_cob_skipless_rmsNorm_iff_mlp
+#print axioms Skips.eval_cob_skipless_rmsNorm_iff_gated
+#print axioms Skips.tanh_not_even_not_const
+#print axioms Skips.gelu_not_even_not_const
+#print axioms Skips.relu_not_even_not_const
+#print axioms Skips.reluSq_not_even_not_const
+#print axioms Skips.relu_gate_scale
+#print axioms Skips.silu_gate_scale
+#print axioms Skips.gelu_gate_scale
