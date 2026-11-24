@@ -54,6 +54,7 @@ def RowHomogeneous (A : Arch T d L) (k : ℕ) : Prop :=
 /-- `r² = ‖v‖² / d` for a row `v`. -/
 noncomputable def meanSq (v : d → ℝ) : ℝ := (v ⬝ᵥ v) / (Fintype.card d : ℝ)
 
+omit [Fintype T] [Fintype d] [DecidableEq d] in
 /-- MLP blocks with an activation that is positively homogeneous of degree `k` (ReLU: `k = 1`,
 ReLU²: `k = 2`) are positively homogeneous of degree `k`, row by row. -/
 theorem rowHomogeneous_mlp {σ : ℝ → ℝ} {k : ℕ}
@@ -66,6 +67,7 @@ theorem rowHomogeneous_mlp {σ : ℝ → ℝ} {k : ℕ}
   show σ (c t * M t i) = c t ^ k * σ (M t i)
   exact hσ (c t) (M t i) (hc t)
 
+omit [Fintype T] [Fintype d] [DecidableEq d] in
 /-- Gated blocks with a gate activation that is positively homogeneous of degree `k` (ReGLU:
 `k = 1`) are positively homogeneous of degree `k + 1`, row by row. -/
 theorem rowHomogeneous_gated {σ : ℝ → ℝ} {k : ℕ}
@@ -474,6 +476,7 @@ private theorem exists_scale_fun_hom {ε : ℝ} (hε : 0 < ε) (hA : A.χ = rmsN
         (by rw [hA, h, rmsNorm_rowScale_hom hε, (hrw j hle).1, rowScale_mul_hom])
         (hrw j hle).2
 
+omit [Fintype T] in
 /-- **Lemma A.3, the scalar `Λ`, for a change of basis before the last hidden state:** for
 `ε ≥ 0` and blocks that are positively homogeneous of degree `k`, the change of basis `G` at
 `h_ℓ`, `ℓ < L`, multiplies the output at every token by a positive number. -/
@@ -503,6 +506,7 @@ theorem exists_pos_smul_eval_cobAt_of_rowHomogeneous {ε : ℝ} (hε : 0 ≤ ε)
       θ.cobAt_D_of_ne G (Fin.castSucc_lt_last ℓ).ne, rowScale_mul_hom]
     rfl
 
+omit [Fintype T] in
 /-- **Lemma A.3, the scalar `Λ`, for the scaling at the last hidden state:** for `ε ≥ 0`, the
 scaling `G = cI`, `c > 0`, at `h_L` with the readout `D` unchanged multiplies the output at every
 token by a positive number. -/
@@ -523,6 +527,7 @@ theorem exists_pos_smul_eval_scale_last {ε : ℝ} (hε : 0 ≤ ε) (hA : A.χ =
       rowScale_mul_hom, eval, hA]
     rfl
 
+omit [Fintype T] in
 /-- **Lemma A.3 (i) for `ε = 0`, a change of basis before the last hidden state:** for blocks
 that are positively homogeneous of degree `k` under pre-RMSNorm with `ε = 0`, every invertible
 change of basis at `h_ℓ`, `ℓ < L`, preserves the function. -/
@@ -532,6 +537,7 @@ theorem eval_cobAt_rmsNorm_zero_of_rowHomogeneous (hA : A.χ = rmsNorm 0) {k : �
     eval A 0 (θ.cobAt ℓ.castSucc G) x = eval A 0 θ x := by
   exact eval_cobAt_zero_hom hA hf θ ℓ G x
 
+omit [Fintype T] in
 /-- **Lemma A.3 (i) for `ε = 0`, the scaling at the last hidden state:** under pre-RMSNorm with
 `ε = 0`, the scaling `G = cI`, `c > 0`, at `h_L` with the readout `D` unchanged preserves the
 function. -/
@@ -679,6 +685,7 @@ private theorem hasDerivAt_eval_cobAt_hom {ε : ℝ} (hε : 0 < ε) (hA : A.χ =
   rw [hfil, Finset.prod_insert hnot, hk, pow_succ, hγ0, one_pow]
   ring
 
+omit [Fintype T] in
 /-- **Lemma A.3 (ii), a change of basis before the last hidden state:** for `ε > 0`, blocks that
 are positively homogeneous of degree `k` and `G = e^{τ S}` at `h_ℓ`, `ℓ < L`, the derivative of
 the output at token `t` at `τ = 0` is the output times
@@ -712,6 +719,7 @@ private theorem exp_smul_one_hom (τ : ℝ) :
   funext i
   rw [Pi.coe_exp, Real.exp_eq_exp_ℝ]
 
+omit [Fintype T] in
 /-- **Lemma A.3 (ii), the scaling at the last hidden state:** for `ε > 0` and the scaling
 `c = e^τ` at `h_L` with the readout `D` unchanged, the derivative of the output at token `t` at
 `τ = 0` is the output times `ε/(r_L² + ε)`. -/

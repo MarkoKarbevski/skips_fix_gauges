@@ -953,3 +953,11 @@ import SkipsLean
 #print axioms Skips.ae_funDim_reluSq_oneBlock_residual_rmsNorm
 #print axioms Skips.ae_exists_jacobianRank_reluSq_oneBlock_residual_rmsNorm
 #print axioms Skips.ae_funDim_skipless_add_le_reluSq_oneBlock_residual_rmsNorm
+#print axioms Skips.rowHomogeneous_mlp
+#print axioms Skips.rowHomogeneous_gated
+#print axioms Skips.exists_pos_smul_eval_cobAt_of_rowHomogeneous
+#print axioms Skips.exists_pos_smul_eval_scale_last
+#print axioms Skips.eval_cobAt_rmsNorm_zero_of_rowHomogeneous
+#print axioms Skips.eval_scale_last_rmsNorm_zero
+#print axioms Skips.hasDerivAt_eval_cobAt_exp_of_rowHomogeneous
+#print axioms Skips.hasDerivAt_eval_scale_last_exp
