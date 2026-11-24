@@ -609,6 +609,267 @@ private theorem finrank_paramsSkip_lsn {A : Arch T d 1} :
   rw [Module.finrank_prod, Module.finrank_pi_fintype, Module.finrank_matrix]
   simp [sq]
 
+section RotationsLsn
+
+open scoped Topology
+
+variable {L : ℕ} {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+
+/-! ### The rotations of the learned skip are flat (copies of the private helpers of
+`OneBlock/LearnedSkipBound.lean`) -/
+
+omit [Nonempty T] [DecidableEq d] in
+/-- Helper (the twin of `mem_flat_of_hasDerivAt'`): if a curve `γ` through `p` with velocity `v`
+keeps the function near `τ = 0`, then `v` is flat. -/
+private theorem mem_flatSkips_of_hasDerivAt_lsn {A : Arch T d L}
+    (ι : V →L[ℝ] (Fin L → Matrix d d ℝ)) (p : Params A dIn dOut × V)
+    (γ : ℝ → Params A dIn dOut × V) (v : Params A dIn dOut × V) (hγ : HasDerivAt γ v 0)
+    (hγ0 : γ 0 = p)
+    (hconst : ∀ᶠ τ in 𝓝 (0 : ℝ), ∀ x : Matrix T dIn ℝ,
+      evalSkips A ι (γ τ) x = evalSkips A ι p x) :
+    v ∈ flatSkips A ι p := by
+  rw [flatSkips, Submodule.mem_iInf]
+  intro x
+  rw [LinearMap.mem_ker]
+  show fderiv ℝ (fun p' => evalSkips A ι p' x) p v = 0
+  by_cases hx : DifferentiableAt ℝ (fun p' : Params A dIn dOut × V => evalSkips A ι p' x) p
+  · -- the chain rule: `τ ↦ F_{γ(τ)}(x)` has derivative `D_p F(x) v` at `0`
+    have hl : HasFDerivAt (fun p' => evalSkips A ι p' x)
+        (fderiv ℝ (fun p' => evalSkips A ι p' x) p) (γ 0) := by
+      rw [hγ0]
+      exact hx.hasFDerivAt
+    have h1 := hl.comp_hasDerivAt (0 : ℝ) hγ
+    -- the same map is constant near `0`, so its derivative there is `0`
+    have h2 : HasDerivAt ((fun p' => evalSkips A ι p' x) ∘ γ) 0 0 :=
+      (hasDerivAt_const (0 : ℝ) (evalSkips A ι p x)).congr_of_eventuallyEq
+        (hconst.mono fun τ hτ => hτ x)
+    exact h1.unique h2
+  · -- not differentiable at `p`: Mathlib's derivative is `0`
+    rw [fderiv_zero_of_not_differentiableAt hx, _root_.zero_apply]
+
+
+-- As in Mathlib's `MatrixExponential.lean`: without this option the instances of the operator
+-- norm (e.g. `CompleteSpace`) are not found.
+set_option backward.isDefEq.respectTransparency false in
+/-- The derivative at `τ = 0` of an entry of `exp (τ Y)` is the entry of `Y` (computed with the
+operator norm, under which matrices form a normed ring). -/
+private theorem hasDerivAt_exp_smul_apply_lsn (Y : Matrix d d ℝ) (i j : d) :
+    HasDerivAt (fun τ : ℝ => NormedSpace.exp (τ • Y) i j) (Y i j) 0 := by
+  let _ : NormedRing (Matrix d d ℝ) := Matrix.linftyOpNormedRing
+  let _ : NormedAlgebra ℝ (Matrix d d ℝ) := Matrix.linftyOpNormedAlgebra
+  have h := hasDerivAt_exp_smul_const (𝕂 := ℝ) Y (0 : ℝ)
+  rw [zero_smul, NormedSpace.exp_zero, one_mul] at h
+  exact (LinearMap.toContinuousLinearMap
+    (Matrix.entryLinearMap ℝ ℝ i j)).hasFDerivAt.comp_hasDerivAt 0 h
+
+/-- With the elementwise norm, the derivative of a matrix-valued function is taken entry by
+entry. -/
+private theorem hasDerivAt_matrix_lsn {m n : Type*} [Fintype m] [Fintype n] {f : ℝ → Matrix m n ℝ}
+    {f' : Matrix m n ℝ} {x : ℝ} (h : ∀ i j, HasDerivAt (fun τ => f τ i j) (f' i j) x) :
+    HasDerivAt f f' x :=
+  hasDerivAt_pi.2 fun i => hasDerivAt_pi.2 (h i)
+
+/-- The derivative of `τ ↦ M exp (τ Y)` at `0` is `M Y`. -/
+private theorem hasDerivAt_mul_exp_lsn {m : Type*} [Fintype m] (M : Matrix m d ℝ)
+    (Y : Matrix d d ℝ) :
+    HasDerivAt (fun τ : ℝ => M * NormedSpace.exp (τ • Y)) (M * Y) 0 :=
+  hasDerivAt_matrix_lsn fun i j => by
+    simp only [Matrix.mul_apply]
+    exact HasDerivAt.fun_sum fun k _ => (hasDerivAt_exp_smul_apply_lsn Y k j).const_mul (M i k)
+
+/-- The derivative of `τ ↦ exp (τ Y) M` at `0` is `Y M`. -/
+private theorem hasDerivAt_exp_mul_lsn {n : Type*} [Fintype n] (Y : Matrix d d ℝ)
+    (M : Matrix d n ℝ) :
+    HasDerivAt (fun τ : ℝ => NormedSpace.exp (τ • Y) * M) (Y * M) 0 :=
+  hasDerivAt_matrix_lsn fun i j => by
+    simp only [Matrix.mul_apply]
+    exact HasDerivAt.fun_sum fun k _ => (hasDerivAt_exp_smul_apply_lsn Y i k).mul_const (M k j)
+
+-- See `hasDerivAt_exp_smul_apply_lsn` for this option.
+set_option backward.isDefEq.respectTransparency false in
+/-- The derivative of `τ ↦ exp (-τ Y) S exp (τ Z)` at `0` is `−Y S + S Z` (the product rule,
+with the operator norm). -/
+private theorem hasDerivAt_exp_mul_exp_lsn (Y Z S : Matrix d d ℝ) :
+    HasDerivAt (fun τ : ℝ => NormedSpace.exp (τ • -Y) * S * NormedSpace.exp (τ • Z))
+      (-(Y * S) + S * Z) 0 := by
+  let _ : NormedRing (Matrix d d ℝ) := Matrix.linftyOpNormedRing
+  let _ : NormedAlgebra ℝ (Matrix d d ℝ) := Matrix.linftyOpNormedAlgebra
+  have h1 := hasDerivAt_exp_smul_const (𝕂 := ℝ) (-Y) (0 : ℝ)
+  have h2 := hasDerivAt_exp_smul_const (𝕂 := ℝ) Z (0 : ℝ)
+  have h := (h1.mul_const S).fun_mul h2
+  simp only [zero_smul, NormedSpace.exp_zero, one_mul, mul_one] at h
+  rw [neg_mul] at h
+  exact h
+
+/-- `exp (τ Y) exp (-τ Y) = 1`. -/
+private theorem exp_smul_mul_exp_smul_neg_lsn (Y : Matrix d d ℝ) (τ : ℝ) :
+    NormedSpace.exp (τ • Y) * NormedSpace.exp (τ • -Y) = 1 := by
+  rw [← Matrix.exp_add_of_commute _ _ (((Commute.refl Y).neg_right.smul_left τ).smul_right τ),
+    smul_neg, add_neg_cancel, NormedSpace.exp_zero]
+
+/-- The invertible matrix `exp (τ Y)`, with inverse `exp (-τ Y)`. -/
+private noncomputable def expGL_lsn (Y : Matrix d d ℝ) (τ : ℝ) : GL d ℝ :=
+  ⟨NormedSpace.exp (τ • Y), NormedSpace.exp (τ • -Y), exp_smul_mul_exp_smul_neg_lsn Y τ,
+    by simpa only [neg_neg] using exp_smul_mul_exp_smul_neg_lsn (-Y) τ⟩
+
+/-- `exp (0 Y) = 1`. -/
+private theorem expGL_zero_lsn (Y : Matrix d d ℝ) : expGL_lsn Y 0 = 1 := by
+  apply Units.ext
+  change NormedSpace.exp ((0 : ℝ) • Y) = 1
+  rw [zero_smul, NormedSpace.exp_zero]
+
+/-- For antisymmetric `Y`, `exp (τ Y)` is orthogonal: `exp (τ Y)ᵀ = exp (τ Yᵀ) = exp (-τ Y)`. -/
+private theorem expGL_mem_orthogonalGroup_lsn {Y : Matrix d d ℝ} (hY : Yᵀ = -Y) (τ : ℝ) :
+    (expGL_lsn Y τ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ := by
+  rw [Matrix.mem_orthogonalGroup_iff']
+  change (NormedSpace.exp (τ • Y))ᵀ * NormedSpace.exp (τ • Y) = 1
+  rw [← Matrix.exp_transpose, Matrix.transpose_smul, hY]
+  simpa only [neg_neg] using exp_smul_mul_exp_smul_neg_lsn (-Y) τ
+
+omit [Fintype T] [Nonempty T] [Fintype dIn] [Fintype dOut] in
+/-- The curve `τ ↦ θ.cob (exp (τ X_ℓ)) (exp (τ X_ℓ))` passes through `θ` at `τ = 0`. -/
+private theorem cob_expGL_zero_lsn {A : Arch T d L} (θ : Params A dIn dOut)
+    (X : Fin (L + 1) → Matrix d d ℝ) :
+    θ.cob (fun ℓ => expGL_lsn (X ℓ) 0) (fun ℓ => expGL_lsn (X ℓ) 0) = θ := by
+  simp only [expGL_zero_lsn]
+  refine Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_ <;>
+    simp only [Params.cob, inv_one, Units.val_one, Matrix.mul_one, Matrix.one_mul]
+
+omit [Fintype T] [Nonempty T] in
+/-- The curve `τ ↦ θ.cob (exp (τ X_ℓ)) (exp (τ X_ℓ))` has velocity `cobDir θ X` at `τ = 0`. -/
+private theorem hasDerivAt_cob_expGL_lsn {A : Arch T d L} (θ : Params A dIn dOut)
+    (X : Fin (L + 1) → Matrix d d ℝ) :
+    HasDerivAt (fun τ : ℝ => θ.cob (fun ℓ => expGL_lsn (X ℓ) τ) (fun ℓ => expGL_lsn (X ℓ) τ))
+      (cobDir θ X) 0 := by
+  -- The norm of the parameters is that of the tuple of their components.
+  let e : Params A dIn dOut ≃L[ℝ] Params.Prod A dIn dOut :=
+    Params.linearEquivProd.toContinuousLinearEquiv
+  -- Componentwise: `E exp (τ X_0)`, `exp (-τ X_{ℓ-1}) W_read^ℓ`, `W_write^ℓ exp (τ X_ℓ)`,
+  -- `exp (-τ X_L) D`.
+  have key : HasDerivAt
+      (fun τ : ℝ => e (θ.cob (fun ℓ => expGL_lsn (X ℓ) τ) (fun ℓ => expGL_lsn (X ℓ) τ)))
+      (e (cobDir θ X)) 0 := by
+    refine HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ ?_))
+    · exact hasDerivAt_mul_exp_lsn θ.E (X 0)
+    · exact hasDerivAt_pi.2 fun ℓ =>
+        (hasDerivAt_exp_mul_lsn (-X ℓ.castSucc) (θ.read ℓ)).congr_deriv (Matrix.neg_mul _ _)
+    · exact hasDerivAt_pi.2 fun ℓ => hasDerivAt_mul_exp_lsn (θ.write ℓ) (X ℓ.succ)
+    · exact (hasDerivAt_exp_mul_lsn (-X (Fin.last L)) θ.D).congr_deriv (Matrix.neg_mul _ _)
+  -- Back to the parameters through `e⁻¹`.
+  exact e.symm.hasFDerivAt.comp_hasDerivAt (0 : ℝ) key
+
+omit [Nonempty T] in
+/-- **The rotations are flat** (Proposition 3.2 under pre-RMSNorm with the skips as parameters):
+for antisymmetric `X_ℓ`, the orthogonal changes of basis `G_ℓ = exp (τ X_ℓ)` together with
+`S_ℓ ↦ G_{ℓ-1}⁻¹ S_ℓ G_ℓ` keep the function, so their direction
+`(cobDir θ X, −X_{ℓ-1} S_ℓ + S_ℓ X_ℓ)` is flat. -/
+private theorem rot_mem_flatSkips_lsn {A : Arch T d L} {ε : ℝ} (hA : A.χ = rmsNorm ε)
+    (θ : Params A dIn dOut) (S : Fin L → Matrix d d ℝ) (X : Fin (L + 1) → Matrix d d ℝ)
+    (hX : ∀ ℓ, (X ℓ)ᵀ = -X ℓ) :
+    (cobDir θ X, fun ℓ => -(X ℓ.castSucc * S ℓ) + S ℓ * X ℓ.succ)
+      ∈ flatSkips A (ContinuousLinearMap.id ℝ (Fin L → Matrix d d ℝ)) (θ, S) := by
+  -- the curve `τ ↦ (θ.cob G_τ G_τ, cobSkip S G_τ)` with `G_τ ℓ = exp (τ X_ℓ)` and its velocity
+  have hγ : HasDerivAt (fun τ : ℝ => (θ.cob (fun ℓ => expGL_lsn (X ℓ) τ)
+      (fun ℓ => expGL_lsn (X ℓ) τ), cobSkip S (fun ℓ => expGL_lsn (X ℓ) τ)))
+      (cobDir θ X, fun ℓ => -(X ℓ.castSucc * S ℓ) + S ℓ * X ℓ.succ) 0 :=
+    (hasDerivAt_cob_expGL_lsn θ X).prodMk
+      (hasDerivAt_pi.2 fun ℓ => hasDerivAt_exp_mul_exp_lsn (X ℓ.castSucc) (X ℓ.succ) (S ℓ))
+  refine mem_flatSkips_of_hasDerivAt_lsn _ _ _ _ hγ ?_ ?_
+  · -- at `τ = 0` the curve is at `(θ, S)`
+    refine Prod.ext (cob_expGL_zero_lsn θ X) ?_
+    show cobSkip S (fun ℓ => expGL_lsn (X ℓ) 0) = S
+    funext ℓ
+    simp only [cobSkip, expGL_zero_lsn, inv_one, Units.val_one, Matrix.one_mul, Matrix.mul_one]
+  · -- along the curve the function is kept: pre-RMSNorm commutes with the orthogonal `G_τ ℓ`
+    refine Filter.Eventually.of_forall fun τ x => ?_
+    have hχ : ∀ ℓ (h : Matrix T d ℝ), A.χ (h * (expGL_lsn (X ℓ) τ : Matrix d d ℝ))
+        = A.χ h * (expGL_lsn (X ℓ) τ : Matrix d d ℝ) := by
+      intro ℓ h
+      rw [hA]
+      exact rmsNorm_mul_orthogonal ε (expGL_mem_orthogonalGroup_lsn (hX ℓ) τ) h
+    exact eval_cob (M := S) (θ := θ) (G := fun ℓ => expGL_lsn (X ℓ) τ)
+      (K := fun ℓ => expGL_lsn (X ℓ) τ) (x := x) hχ
+
+end RotationsLsn
+
+/-! ### Independence (Step 5 of the paper) -/
+
+/-- Helper (the private `cancel_left_of_rank_ibl`): a matrix `M` of rank equal to its number of
+columns cancels on the left, `M X = M Y → X = Y` (its kernel is `0` by rank–nullity). -/
+private theorem cancel_left_of_rank_lsn {m n k : Type*} [Fintype n] (M : Matrix m n ℝ)
+    (hM : M.rank = Fintype.card n) {X Y : Matrix n k ℝ} (h : M * X = M * Y) : X = Y := by
+  -- `v ↦ M v` is injective: `rank M + dim ker M = card n`
+  have hinj : Function.Injective M.mulVecLin := by
+    rw [← LinearMap.ker_eq_bot, ← Submodule.finrank_eq_zero]
+    have := LinearMap.finrank_range_add_finrank_ker M.mulVecLin
+    rw [Module.finrank_fintype_fun_eq_card] at this
+    rw [Matrix.rank] at hM
+    omega
+  -- compare `X` and `Y` column by column
+  ext i j
+  have hcol : M.mulVecLin (fun l => X l j) = M.mulVecLin (fun l => Y l j) := by
+    funext p
+    have := congrFun (congrFun h p) j
+    simpa [Matrix.mul_apply, Matrix.mulVec, dotProduct] using this
+  exact congrFun (hinj hcol) i
+
+/-- A matrix `M` of rank equal to its number of rows cancels on the right, `X M = Y M → X = Y`
+(transpose, and cancel `Mᵀ` on the left). -/
+private theorem cancel_right_of_rank_lsn {m n k : Type*} [Fintype m] [Fintype n]
+    (M : Matrix n m ℝ) (hM : M.rank = Fintype.card n) {X Y : Matrix k n ℝ}
+    (h : X * M = Y * M) : X = Y := by
+  have h' := congrArg Matrix.transpose h
+  rw [Matrix.transpose_mul, Matrix.transpose_mul] at h'
+  have hMt : Mᵀ.rank = Fintype.card n := by rw [Matrix.rank_transpose, hM]
+  exact Matrix.transpose_injective (cancel_left_of_rank_lsn Mᵀ hMt h')
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] in
+/-- Helper: `phiL_lsn` is injective when the directions of `K` have `E` and `D` components `0` and
+`E`, `D` have rank `d`: `E Z_0` gives `Z_0`, `−Z_1 D` gives `Z_1`, and then the rest gives `ψ`. -/
+private theorem phiL_injective_lsn {A : Arch T d 1} (θ : Params A dIn dOut)
+    (S : Fin 1 → Matrix d d ℝ) (K : Submodule ℝ (Params A dIn dOut))
+    (hKE : ∀ ψ ∈ K, ψ.E = 0) (hKD : ∀ ψ ∈ K, ψ.D = 0)
+    (hE : θ.E.rank = Fintype.card d) (hD : θ.D.rank = Fintype.card d) :
+    Function.Injective (phiL_lsn θ S K) := by
+  rintro ⟨X, u⟩ ⟨Y, u'⟩ h
+  have h1 : cobDir θ (fun ℓ => (X ℓ : Matrix d d ℝ)) + (u : Params A dIn dOut)
+      = cobDir θ (fun ℓ => (Y ℓ : Matrix d d ℝ)) + (u' : Params A dIn dOut) :=
+    congrArg Prod.fst h
+  -- the embedding: `E X_0 = E Y_0`
+  have hX0 : (X 0 : Matrix d d ℝ) = Y 0 := by
+    have h2 := congrArg Params.E h1
+    rw [Params.add_E, Params.add_E, hKE u u.2, hKE u' u'.2, add_zero, add_zero] at h2
+    exact cancel_left_of_rank_lsn θ.E hE h2
+  -- the readout: `−X_1 D = −Y_1 D`
+  have hX1 : (X (Fin.last 1) : Matrix d d ℝ) = Y (Fin.last 1) := by
+    have h2 := congrArg Params.D h1
+    rw [Params.add_D, Params.add_D, hKD u u.2, hKD u' u'.2, add_zero, add_zero] at h2
+    have h3 : -((X (Fin.last 1) : Matrix d d ℝ) * θ.D)
+        = -((Y (Fin.last 1) : Matrix d d ℝ) * θ.D) := h2
+    exact cancel_right_of_rank_lsn θ.D hD (neg_inj.1 h3)
+  have hXY : X = Y := by
+    refine funext fun ℓ => Subtype.ext ?_
+    fin_cases ℓ
+    exacts [hX0, hX1]
+  subst hXY
+  exact Prod.ext rfl (Subtype.ext (add_left_cancel h1))
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `phiR_lsn` is injective when the directions of `K` have `E` component `0` and `E` has
+rank `d`: `E Y` gives `Y`, and then the rest gives `ψ`. -/
+private theorem phiR_injective_lsn {A : Arch T d 1} (θ : Params A dIn dOut)
+    (K : Submodule ℝ (Params A dIn dOut)) (hKE : ∀ ψ ∈ K, ψ.E = 0)
+    (hE : θ.E.rank = Fintype.card d) : Function.Injective (phiR_lsn θ K) := by
+  rintro ⟨Y, u⟩ ⟨Y', u'⟩ h
+  have h1 : cobDir θ (fun _ => (Y : Matrix d d ℝ)) + (u : Params A dIn dOut)
+      = cobDir θ (fun _ => (Y' : Matrix d d ℝ)) + (u' : Params A dIn dOut) := h
+  have hY : (Y : Matrix d d ℝ) = Y' := by
+    have h2 := congrArg Params.E h1
+    rw [Params.add_E, Params.add_E, hKE u u.2, hKE u' u'.2, add_zero, add_zero] at h2
+    exact cancel_left_of_rank_lsn θ.E hE h2
+  obtain rfl : Y = Y' := Subtype.ext hY
+  exact Prod.ext rfl (Subtype.ext (add_left_cancel h1))
+
 /-- **Theorem 4.6 (ii), "A learned skip raises it by exactly `d (d + 1)/2` more than an identity
 skip", at one parameter, for a continuously differentiable block (`ε > 0`):** if `E` and `D` have
 rank `d`, the skip `A = R 0` is invertible and Step 4 holds at `θ` (`NoSymmetricPart` at all
@@ -621,7 +882,64 @@ theorem funDimLearned_eq_funDim_residual_add_of_noSymmetricPart {A : Arch T d 1}
     (hX : NoSymmetricPart A ε θ Set.univ) :
     funDimLearned A (θ, R)
       = funDim A 1 θ + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  have hfd : Differentiable ℝ (A.f 0) := hf.differentiable one_ne_zero
+  -- the space `K` of the directions of the block with derivative zero at every input
+  let K := blockFlat_lsn A ε θ Set.univ
+  have hKE : ∀ ψ ∈ K, ψ.E = 0 := fun ψ hψ => hψ.1
+  have hKD : ∀ ψ ∈ K, ψ.D = 0 := fun ψ hψ => hψ.2.1
+  -- (a) the learned skip: a flat direction is a rotation plus a direction of `K` (Steps 1 to 5,
+  -- with `V` everything) ...
+  have hL : flatSkips A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R)
+      ≤ LinearMap.range (phiL_lsn θ R K) := by
+    refine le_range_phiL_lsn hε θ R Set.univ hX _ fun η ρ hp => ?_
+    obtain ⟨X, Y, hY, hηE, hρ, hηD, h⟩ := exists_of_flatSkipsOn_learned_rmsNorm hε hA Set.univ
+      isOpen_univ (fun _ _ _ _ => Set.mem_univ _) hf.contDiffOn θ R hE hD hR
+      ⟨0, Set.mem_univ _⟩ η ρ (flatSkips_le_flatSkipsOn _ _ _ _ hp)
+    exact ⟨X, Y, hY, hηE, hρ, hηD, fun x _ => h x (Set.mem_univ _)⟩
+  -- ... and the rotations and the directions of `K` are flat and independent
+  have hflatL : LinearMap.range (phiL_lsn θ R K)
+      ≤ flatSkips A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R) := by
+    rintro _ ⟨⟨Z, ψ⟩, rfl⟩
+    rw [phiL_apply_lsn]
+    exact Submodule.add_mem _
+      (rot_mem_flatSkips_lsn hA θ R (fun ℓ => (Z ℓ : Matrix d d ℝ)) fun ℓ => (Z ℓ).2)
+      (mem_flatSkips_of_blockFlat_lsn hε hA hfd θ R ψ.2)
+  have hdimL : Module.finrank ℝ
+      (flatSkips A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R))
+      = Fintype.card d * (Fintype.card d - 1) + Module.finrank ℝ K := by
+    rw [← finrank_domL_lsn K,
+      ← LinearMap.finrank_range_of_inj (phiL_injective_lsn θ R K hKE hKD hE hD)]
+    exact le_antisymm (Submodule.finrank_mono hL) (Submodule.finrank_mono hflatL)
+  -- (b) the residual network: the same with one rotation
+  have hRs : flat A 1 θ ≤ LinearMap.range (phiR_lsn θ K) := by
+    refine le_range_phiR_lsn θ Set.univ _ fun η hη => ?_
+    obtain ⟨Y, hY, hηE, hηD, h⟩ :=
+      exists_antisymm_of_flat_residual_rmsNorm hε hA hf θ hE hD η hη
+    exact ⟨Y, hY, hηE, hηD, fun x _ => h x⟩
+  have hflatR : LinearMap.range (phiR_lsn θ K) ≤ flat A 1 θ := by
+    rintro _ ⟨⟨Y, ψ⟩, rfl⟩
+    rw [phiR_apply_lsn]
+    exact Submodule.add_mem _
+      (cobDir_const_mem_flat_residual_rmsNorm' θ ε hA (Y : Matrix d d ℝ) Y.2)
+      (blockFlat_le_flat_lsn hε hA hfd θ ψ.2)
+  have hdimR : Module.finrank ℝ (flat A 1 θ)
+      = Fintype.card d * (Fintype.card d - 1) / 2 + Module.finrank ℝ K := by
+    rw [← finrank_domR_lsn K, ← LinearMap.finrank_range_of_inj (phiR_injective_lsn θ K hKE hE)]
+    exact le_antisymm (Submodule.finrank_mono hRs) (Submodule.finrank_mono hflatR)
+  -- `fd + dim (flat directions) = number of parameters`, for both networks
+  have hsumL : funDimLearned A (θ, R) + Module.finrank ℝ
+      (flatSkips A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R))
+      = Module.finrank ℝ (Params A dIn dOut × (Fin 1 → Matrix d d ℝ)) :=
+    funDimSkips_add_finrank_flatSkips' A _ (θ, R)
+  have hsumR := funDim_add_finrank_flat' (A := A) (S := 1) θ
+  have hP := finrank_paramsSkip_lsn (A := A) (dIn := dIn) (dOut := dOut)
+  -- the arithmetic: `d (d + 1)/2 + d (d − 1)/2 = d²` and `2 · (d (d − 1)/2) = d (d − 1)`
+  have hhalf := half_add_half_lsn (Fintype.card d)
+  have h2 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self (Fintype.card d))
+  generalize Fintype.card d * (Fintype.card d + 1) / 2 = b at hhalf ⊢
+  generalize Fintype.card d * (Fintype.card d - 1) = a at hhalf h2 hdimL hdimR
+  generalize Fintype.card d ^ 2 = q at hhalf hP
+  omega
 
 /-- **The same for a block that is continuously differentiable on an open cone `V` of
 pre-activations (`ε > 0`):** let `V` be open and invariant under positive scalings of the rows,
