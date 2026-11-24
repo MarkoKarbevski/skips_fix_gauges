@@ -50,3 +50,5 @@ import SkipsLean.Depth.TanhRMS
 import SkipsLean.Absorb.Limits
 import SkipsLean.Symmetry.AtOneState
 import SkipsLean.Absorb.PaperForms
+import SkipsLean.Dimension.RescalingMlp
+import SkipsLean.OneBlock.Rescale

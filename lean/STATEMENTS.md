@@ -17,7 +17,9 @@ below, and the five files `Absorb/Block.lean`, `NoWidth.lean`, `Networks.lean`, 
 definition; the differences were of coverage and of form, and the rows and notes below say them.
 Not yet compared by such a reader: `Depth/SuffixRMS.lean`, `Depth/StepTanhRMS.lean`,
 `Depth/TanhRMS.lean` (Theorem 5.2 (i) under pre-RMSNorm), `Absorb/Limits.lean` (Proposition 5.1),
-`Symmetry/AtOneState.lean`, `Absorb/PaperForms.lean` and `exists_cob_residual_D_upperTriangular`.
+`Symmetry/AtOneState.lean`, `Absorb/PaperForms.lean`, `exists_cob_residual_D_upperTriangular`, and the
+statements for ReLU and ReLU² blocks (`Dimension/RescalingMlp.lean`, `OneBlock/Rescale.lean`, the last
+section of `Dimension/Functional.lean` and the statements marked with a prime).
 
 ## Definitions
 
@@ -144,6 +146,14 @@ the paper's object is checked by reading it.
 | D proof of Lemma D.7, "the fact", case (+) | `eq_zero_of_fderiv_suffix_one_sub_sq_rmsNorm` | `Depth/StepTanhRMS.lean` | proved |
 | D Lemma D.7 (the step for `tanh` on rays), case (+) | `claimRMS_castSucc_tanh` | `Depth/StepTanhRMS.lean` | proved |
 | **D Theorem 5.2 (i), under pre-RMSNorm with `ε > 0`:** `L` `tanh` blocks, `d_in, d_out ≥ d ≥ 2`, at least `d` hidden units per block: `fd = P − (L+1)d(d−1)/2`, under the conditions of the proof and at generic parameters | `claimRMS_of_tanhDepthGeneric`, `funDim_tanh_skipless_rmsNorm`, `ae_funDim_tanh_skipless_rmsNorm` | `Depth/TanhRMS.lean` | proved |
+| D Appendix C, "Notation and flat directions", for blocks that are not differentiable everywhere: the directions flat at every input of a set `U`; `fd(θ) = P − dim K(θ)`, "a direction of a symmetry is flat" and the bound from a subspace of flat directions, with no hypothesis of differentiability; a batch of inputs of `U` on which the Jacobian has the rank `P − dim K_U(θ)` | `flatOn`, `flat_le_flatOn`, `mem_flat_of_hasDerivAt'`, `funDim_add_finrank_flat'`, `funDim_add_finrank_le_of_le_flat'`, `exists_jacobianRank_add_finrank_flatOn` | `Dimension/Functional.lean` | in work |
+| D Theorem 4.3 for the changes of basis, for arbitrary maps `f_ℓ` (no differentiability): `fd ≤ P − (L+1)d²` without normalization, `fd ≤ P − (L+1)d(d−1)/2` under pre-RMSNorm (every real `ε`) | `cobDir_mem_flat_skipless'`, `funDim_add_le_skipless'`, `cobDir_mem_flat_skipless_rmsNorm'`, `funDim_add_le_skipless_rmsNorm'` | `Dimension/UpperBound.lean`, `Dimension/UpperBoundRMSNorm.lean` | in work (proved from the row above) |
+| D Appendix B: the rescalings `(c_i, a_i) ↦ (λc_i, a_i/λ)` of a ReLU hidden unit and `(λc_i, a_i/λ²)` of a ReLU² hidden unit, `λ > 0`, preserve the function (stated for `σ(λz) = λ^k σ(z)`); their directions are flat | `relu_homogeneous`, `reluSq_homogeneous`, `eval_rescale_mlp`, `rescaleDirMlp`, `rescaleDirMlp_mem_flat` | `Dimension/RescalingMlp.lean` | in work |
+| D Lemma B.1 for ReLU and ReLU² blocks, in infinitesimal form: the changes of basis and the rescalings move `θ` in independent directions (`E` and the writes of rank `d`, no column of a read zero) | `cobDir_add_rescaleDirMlp_injective` | `Dimension/RescalingMlp.lean` | in work |
+| D Theorem 4.3 for ReLU and ReLU² blocks, with the term `s` (the number of hidden units), under the conditions of the proof and at generic parameters (`d_in ≥ d`, at least `d` hidden units per block), without normalization and under pre-RMSNorm (every real `ε`) | `funDim_add_le_skipless_mlp_rescale`, `funDim_add_le_skipless_mlp_rescale_rmsNorm`, `ae_read_col_ne_zero`, `ae_funDim_add_le_skipless_relu`, `ae_funDim_add_le_skipless_reluSq`, `ae_funDim_add_le_skipless_relu_rmsNorm`, `ae_funDim_add_le_skipless_reluSq_rmsNorm` | `Dimension/RescalingMlp.lean` | in work |
+| D Lemma C.3 for ReLU and ReLU² as a property of the activation (the rescaling with exponent `k`) | `UnitsRescale`, `relu_unitsRescale`, `reluSq_unitsRescale` | `OneBlock/Rescale.lean` | in work |
+| D Theorem 5.1 / C.1 for every activation that is positively homogeneous of degree `k`, differentiable away from `0` and satisfies Lemma C.3 with the rescalings: the inputs with no hidden unit at its kink; differentiability there; a direction that is flat at these inputs is a direction of the two changes of basis and of the rescalings; `fd = P − 2d² − d_hidden` under the conditions of the proof; the same rank on a batch of such inputs | `noKink`, `differentiableAt_eval_of_mem_noKink`, `flatOn_noKink_le_mlp_rescale`, `funDim_mlp_oneBlock_rescale`, `exists_jacobianRank_mlp_oneBlock_rescale` | `OneBlock/Rescale.lean` | in work |
+| **D Theorem 5.1 / C.1 for a ReLU block and for a ReLU² block:** `d_in, d_out, d_hidden ≥ d ≥ 2`, at generic parameters `fd = P − 2d² − d_hidden`, and the Jacobian has this rank on a batch of inputs with no hidden unit at its kink | `ae_funDim_relu_oneBlock`, `ae_exists_jacobianRank_relu_oneBlock`, `ae_funDim_reluSq_oneBlock`, `ae_exists_jacobianRank_reluSq_oneBlock` | `OneBlock/Rescale.lean` | in work |
 | the antisymmetric matrices (the directions of the orthogonal changes of basis; their dimension is in `finrank_antisymmetric`); the centering matrix `Z` of Proposition A.3; `Q⁻¹ = Qᵀ` for an orthogonal `Q` | `antisymmetric`, `centering`, `coe_inv_of_mem_orthogonalGroup` | `Dimension/UpperBoundRMSNorm.lean`, `Basic/LayerNorm.lean`, `Symmetry/Normalized.lean` | defined / proved |
 | helpers shared by the one-block theorems: `X ↦ cobDir θ X` as a linear map, the weights as linear maps of `θ`, analyticity of the entries of `E W_read` and `W_write D`, the derivative along a line `θ + τη` | `cobDirLin`, `finrank_cobDomain`, `Params.linE`, `Params.linRead`, `Params.linWrite`, `Params.linD`, `analyticOnNhd_E_mul_read`, `analyticOnNhd_write_mul_D`, `ae_ne_zero_of_analytic`, `rank_eq_card_of_isUnit_det`, `exists_minor_ne_zero`, `hasDerivAt_eval_line`, `differentiable_f_mlp`, `differentiable_f_gated` | `OneBlock/Common.lean` | proved |
 
@@ -187,6 +197,15 @@ Notes for the authors on these statements:
   normalization and under pre-RMSNorm, also at generic parameters (`Dimension/Rescaling.lean`,
   `Generic/Gated.lean`); for tanh and GELU blocks `s = 0`. Not stated yet: the blocks with `s > 0`
   other than SwiGLU and GeGLU (ReLU, ReLU², ReGLU, attention).
+- ReLU blocks and the functional dimension. The paper takes the Jacobian of a ReLU, ReLU² or ReGLU
+  network at the inputs at which no hidden unit sits at its kink. In Lean `funDim` is the largest
+  rank over all finite batches, and Mathlib's derivative is `0` where a map is not differentiable,
+  so a batch with an input at which the network is not differentiable in `θ` has rank `0`: `funDim`
+  is the largest rank over the batches of inputs at which the network is differentiable in `θ`,
+  a set that contains the paper's. For each kind of block two statements are made: the value of
+  `funDim`, and a batch of the paper's inputs with that rank. Together they give the paper's
+  maximum. The statements marked with a prime hold with no hypothesis of differentiability, and
+  those on the upper bound under pre-RMSNorm for every real `ε`.
 - The Jacobian needs a norm on the parameters and on the outputs. Matrices carry the elementwise
   norm; on finite-dimensional spaces the derivative does not depend on the norm. The derivative of
   a map that is not differentiable is `0` in Mathlib, so the statements on the functional

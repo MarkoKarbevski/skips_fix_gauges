@@ -272,3 +272,36 @@ import SkipsLean
 #print axioms Skips.exists_ne_residual_skipless_reluSq_rmsNorm
 #print axioms Skips.exists_ne_residual_skipless_reglu
 #print axioms Skips.exists_ne_residual_skipless_reglu_rmsNorm
+
+-- ReLU and ReLU² blocks: Theorem 4.3 with the rescalings, Theorem 5.1
+#print axioms Skips.flat_le_flatOn
+#print axioms Skips.mem_flat_of_hasDerivAt'
+#print axioms Skips.funDim_add_finrank_flat'
+#print axioms Skips.funDim_add_finrank_le_of_le_flat'
+#print axioms Skips.exists_jacobianRank_add_finrank_flatOn
+#print axioms Skips.cobDir_mem_flat_skipless'
+#print axioms Skips.funDim_add_le_skipless'
+#print axioms Skips.cobDir_mem_flat_skipless_rmsNorm'
+#print axioms Skips.funDim_add_le_skipless_rmsNorm'
+#print axioms Skips.relu_homogeneous
+#print axioms Skips.reluSq_homogeneous
+#print axioms Skips.eval_rescale_mlp
+#print axioms Skips.rescaleDirMlp_mem_flat
+#print axioms Skips.cobDir_add_rescaleDirMlp_injective
+#print axioms Skips.funDim_add_le_skipless_mlp_rescale
+#print axioms Skips.funDim_add_le_skipless_mlp_rescale_rmsNorm
+#print axioms Skips.ae_read_col_ne_zero
+#print axioms Skips.ae_funDim_add_le_skipless_relu
+#print axioms Skips.ae_funDim_add_le_skipless_reluSq
+#print axioms Skips.ae_funDim_add_le_skipless_relu_rmsNorm
+#print axioms Skips.ae_funDim_add_le_skipless_reluSq_rmsNorm
+#print axioms Skips.relu_unitsRescale
+#print axioms Skips.reluSq_unitsRescale
+#print axioms Skips.differentiableAt_eval_of_mem_noKink
+#print axioms Skips.flatOn_noKink_le_mlp_rescale
+#print axioms Skips.funDim_mlp_oneBlock_rescale
+#print axioms Skips.exists_jacobianRank_mlp_oneBlock_rescale
+#print axioms Skips.ae_funDim_relu_oneBlock
+#print axioms Skips.ae_exists_jacobianRank_relu_oneBlock
+#print axioms Skips.ae_funDim_reluSq_oneBlock
+#print axioms Skips.ae_exists_jacobianRank_reluSq_oneBlock

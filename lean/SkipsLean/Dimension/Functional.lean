@@ -297,4 +297,54 @@ theorem mem_flat_of_hasDerivAt
       (hconst.mono fun τ hτ => hτ x)
   exact h1.unique h2
 
+/-! ### Without a hypothesis of differentiability
+
+Mathlib's derivative of a map at a point where it is not differentiable is `0`. So an input `x` at
+which `θ ↦ F_θ(x)` is not differentiable at `θ` puts no condition on `flat A S θ`, and a batch that
+contains such an input has a Jacobian of rank `0`. The flat directions `K(θ)` are therefore the
+directions that are flat "at every input at which the network is differentiable in `θ`", and the
+functional dimension is the largest rank over the batches of such inputs. This is the convention
+of the paper for ReLU, ReLU² and ReGLU blocks (Appendix C, "Notation and flat directions": "every
+input" means every input at which no hidden unit sits at its kink), with a set of inputs that may
+be larger. The statements of this section hold for every network, with no hypothesis. -/
+
+/-- The directions that are flat at every input of a set `U`. -/
+noncomputable def flatOn (A : Arch T d L) (S : Fin L → Matrix d d ℝ) (θ : Params A dIn dOut)
+    (U : Set (Matrix T dIn ℝ)) : Submodule ℝ (Params A dIn dOut) :=
+  ⨅ x ∈ U, LinearMap.ker (fderiv ℝ (fun θ' => eval A S θ' x) θ).toLinearMap
+
+/-- A flat direction is flat at every input of `U`. -/
+theorem flat_le_flatOn (U : Set (Matrix T dIn ℝ)) : flat A S θ ≤ flatOn A S θ U := by
+  sorry
+
+/-- A direction of a symmetry is flat, with no hypothesis of differentiability: if a curve of
+parameters through `θ` with velocity `η` keeps the function near `τ = 0`, then `η` is flat. -/
+theorem mem_flat_of_hasDerivAt'
+    (γ : ℝ → Params A dIn dOut) (η : Params A dIn dOut) (hγ : HasDerivAt γ η 0) (hγ0 : γ 0 = θ)
+    (hconst : ∀ᶠ τ in 𝓝 (0 : ℝ), ∀ x : Matrix T dIn ℝ, eval A S (γ τ) x = eval A S θ x) :
+    η ∈ flat A S θ := by
+  sorry
+
+/-- `fd(θ) = P - dim K(θ)`, with no hypothesis of differentiability. -/
+theorem funDim_add_finrank_flat' :
+    funDim A S θ + Module.finrank ℝ (flat A S θ) = Module.finrank ℝ (Params A dIn dOut) := by
+  sorry
+
+/-- A subspace of flat directions bounds the functional dimension, with no hypothesis of
+differentiability. -/
+theorem funDim_add_finrank_le_of_le_flat' (V : Submodule ℝ (Params A dIn dOut))
+    (hV : V ≤ flat A S θ) :
+    funDim A S θ + Module.finrank ℝ V ≤ Module.finrank ℝ (Params A dIn dOut) := by
+  sorry
+
+/-- On a set `U` of inputs at which `θ ↦ F_θ(x)` is differentiable at `θ`, some finite batch of
+inputs of `U` has a Jacobian of rank `P - dim K_U(θ)`, where `K_U(θ)` are the directions that are
+flat at every input of `U`. -/
+theorem exists_jacobianRank_add_finrank_flatOn (U : Set (Matrix T dIn ℝ))
+    (hU : ∀ x ∈ U, DifferentiableAt ℝ (fun θ' : Params A dIn dOut => eval A S θ' x) θ) :
+    ∃ (n : ℕ) (X : Fin n → Matrix T dIn ℝ), (∀ i, X i ∈ U) ∧
+      jacobianRank A S X θ + Module.finrank ℝ (flatOn A S θ U)
+        = Module.finrank ℝ (Params A dIn dOut) := by
+  sorry
+
 end Skips
