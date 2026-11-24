@@ -194,7 +194,6 @@ private theorem tool_one_szg [Nonempty T]
   exact one_ne_zero (tool_szg hθ hd k hM N hN hN0 a ha (fun _ => 1) continuousOn_const
     (fun x hx => by rw [one_smul]; exact h x hx) x hx)
 
-
 omit [Fintype T] [DecidableEq d] in
 /-- Helper: the entry `(t, j)` of `ż = (n Z − (⟨nZ, n⟩/d) n) W + n M` at `n = c(ν)` (the row `ν`
 at every token). -/
@@ -289,7 +288,6 @@ private theorem quadratic_of_unit_szg [Nonempty T]
   field_simp at e
   linear_combination e
 
-
 omit [DecidableEq d] [Fintype dIn] in
 /-- **Step 4, the hypothesis `hA`:** let `η°` vanish at the blocks after block `k` and at `D`, let
 `η°_W V + W η°_V = 0` (51), and let column `i` of `η°_W` and row `i` of `η°_V` vanish for `i ∈ A`.
@@ -367,7 +365,6 @@ private theorem blockLHSC_eq_zero_szg
     rw [hz, e1, e2, Matrix.mul_assoc, Matrix.mul_assoc, ← Matrix.mul_add, h51C, Matrix.mul_zero]
   unfold blockLHSC
   rw [hdir, map_zero, h2, add_zero]
-
 
 omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: `τ ↦ (−τ) G(τ)` has the derivative `−G(0)` at `0` when `G` is continuous at `0`. -/
@@ -471,7 +468,6 @@ private theorem fderiv_row_eq_zero_szg
   have e := hd.symm.trans ((congrArg (fun f => deriv f (0 : ℝ)) hfun).symm.trans h)
   rw [zero_smul, sub_zero, neg_eq_zero] at e
   exact e
-
 
 omit [DecidableEq d] in
 /-- Helper: a column `u` with `x ⬝ u = 0` for the rows `x` of a nonempty open set is `0`. -/
@@ -692,6 +688,75 @@ theorem claimZero_castSucc_gelu [Nonempty T]
     calc a + Y₀ * P + (b - (P * Y' k.succ + (β' k.succ - β₀) • P))
         = (a + b) + Y₀ * P - P * Y' k.succ - (β' k.succ - β₀) • P := by abel
       _ = 0 := by rw [e']; module
-  sorry
+  -- Step 4: by induction along the order `e` of the rates, column `j` of `η°_W` and row `j` of
+  -- `η°_V` vanish
+  have hstep4 : ∀ m : ℕ, m ≤ Fintype.card (hid k) → ∀ i : hid k, (e i : ℕ) < m →
+      (∀ a, ηo.read k a i = 0) ∧ ηo.write k i = 0 := by
+    intro m
+    induction m with
+    | zero => exact fun _ i hi => absurd hi (Nat.not_lt_zero _)
+    | succ m ih =>
+      intro hm
+      have IH := ih (Nat.le_of_succ_le hm)
+      -- the unit `j` with `e j = m`, and `A = {j' | e j' < e j}`
+      obtain ⟨j, hj⟩ : ∃ j : hid k, (e j : ℕ) = m :=
+        ⟨e.symm ⟨m, hm⟩, by rw [e.apply_symm_apply]⟩
+      have hAj : ∀ i ∈ {i' : hid k | e i' < e j},
+          (∀ a, ηo.read k a i = 0) ∧ ηo.write k i = 0 :=
+        fun i hi => IH i (by rw [← hj]; exact Fin.lt_def.1 hi)
+      -- the path step at `(x̂, ξ'(x))` for `x ∈ N`, with `Z = 0`, `η°`, `A` and `j`
+      have hres := fun (x : d → ℝ) (hx : x ∈ N) =>
+        gelu_path_step_unit θ hθ k hκ hκ1 hhol 0 ηo h16o (unitRow_szg x) (ξ' x) (hpair x hx).1
+          (hpair x hx).2.1 (hpair x hx).2.2.1 (hpair x hx).2.2.2 {i' | e i' < e j} j
+          (lt_irrefl (e j))
+          (fun i hiA hij => (hNξ x hx).2.2 j i
+            (lt_of_le_of_ne (not_lt.1 hiA) fun h => hij (e.injective h).symm))
+          (fun _ _ δ δ' hδ => blockLHSC_eq_zero_szg θ k ηo hro hwo hDo h51 _ hAj _ δ δ' hδ)
+      -- `𝓛°'_j(1) = 0`: `x η°_{c_j} = 0` on `N`, so the column vanishes
+      have hquad := quadratic_of_unit_szg hθ hd k hM j (hVne j) 0 (ηo.read k) N hNo hN0
+        fun x hx => (hres x hx).2
+      have hu := eq_zero_of_dotProduct_szg N hNo hNne _ fun x hx => by
+        have e' := hquad x hx
+        rw [Matrix.vecMul_zero, zero_dotProduct, zero_mul] at e'
+        exact (mul_eq_zero.1 e').resolve_left (dotProduct_self_pos_szg (hN0 x hx)).ne'
+      have hcol : ∀ a, ηo.read k a j = 0 := fun a => by
+        have e' := congrFun hu a
+        simp only [Matrix.zero_mul, zero_add, Pi.zero_apply] at e'
+        exact e'
+      -- `𝓛°_j(1) = 0`: `𝐃𝓑(n W V) c(η°_{a_j}) = 0` on `N`, so the row vanishes
+      have hrow : ηo.write k j = 0 :=
+        tool_one_szg hθ hd k hM N hNo hNne hN0 _ fun x hx =>
+          fderiv_row_eq_zero_szg θ hθ k ηo hro hwo hDo h51 _ (hrows x hx) j (hres x hx).1
+      intro i hi
+      rcases Nat.lt_or_eq_of_le (Nat.lt_succ_iff.1 hi) with hlt | heq
+      · exact IH i hlt
+      · obtain rfl : i = j := e.injective (Fin.ext (heq.trans hj.symm))
+        exact ⟨hcol, hrow⟩
+  have hW0 : ηo.read k = 0 := by
+    ext a i
+    exact (hstep4 _ le_rfl i (e i).isLt).1 a
+  have hV0 : ηo.write k = 0 := by
+    ext i a
+    rw [(hstep4 _ le_rfl i (e i).isLt).2]
+    rfl
+  -- Conclusion: `(D_k)` with `Y`, `β`
+  refine ⟨Y, β, hYanti, by rw [hYk, hβk]; exact hZ, fun ℓ hℓ => ?_, by rw [hYlast]; exact hYD⟩
+  rcases eq_or_ne ℓ k with rfl | hne
+  · -- the block itself: `η°_W = 0` and `η°_V = 0`
+    rw [hW0] at hηW
+    rw [hV0] at hηV
+    refine ⟨?_, ?_⟩
+    · rw [hYk]
+      exact eq_neg_of_add_eq_zero_left hηW.symm
+    · rw [hYk1, hβk1, Matrix.mul_add, Matrix.mul_smul, Matrix.mul_one]
+      exact sub_eq_zero.1 hηV.symm
+  · -- a later block: `(D_{k+1})`
+    have hlt : k < ℓ := lt_of_le_of_ne (Fin.castSucc_le_castSucc_iff.1 hℓ) (Ne.symm hne)
+    have hle : k.succ ≤ ℓ.castSucc := by
+      rw [Fin.le_def, Fin.val_succ, Fin.val_castSucc]
+      exact hlt
+    obtain ⟨h1, h2, h3⟩ := hlater ℓ hle
+    rw [h1, h2, h3]
+    exact hY ℓ hle
 
 end Skips
