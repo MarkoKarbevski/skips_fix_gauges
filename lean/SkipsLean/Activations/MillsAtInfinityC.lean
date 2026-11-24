@@ -324,6 +324,153 @@ private lemma exists_invFactor_mic {ω : ℂ} (hω0 : ω ≠ 0) (ω' : ℂ) :
     rw [h2]
     field_simp
 
+/-- At one point `t > 0` of the curve, with `σ = ω + ω'/t²` close to `ω`: `z(t) = t σ`,
+`Re z(t) > 0`, `1/t ≤ 2‖ω‖ |w|` and `1/Re z(t) ≤ (4‖ω‖/Re ω) |w|` for `w = 1/z(t)`. -/
+private lemma curve_bounds_mic {ω ω' σ : ℂ} (hω : 0 < ω.re) {t : ℝ} (ht : 0 < t)
+    (hσ : σ = ω + ω' * ((t : ℂ)⁻¹) ^ 2) (h2 : ‖σ‖ < 2 * ‖ω‖) (h3 : ‖ω‖ / 2 < ‖σ‖)
+    (h4 : ω.re / 2 < σ.re) :
+    ω * (t : ℂ) + ω' / (t : ℂ) = (t : ℂ) * σ ∧ 0 < ((t : ℂ) * σ).re ∧
+      t⁻¹ ≤ 2 * ‖ω‖ * ‖((t : ℂ) * σ)⁻¹‖ ∧
+      (((t : ℂ) * σ).re)⁻¹ ≤ 4 * ‖ω‖ / ω.re * ‖((t : ℂ) * σ)⁻¹‖ := by
+  have hT : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 ht.ne'
+  have ht' : t ≠ 0 := ht.ne'
+  have hz : ω * (t : ℂ) + ω' / (t : ℂ) = (t : ℂ) * σ := by
+    rw [hσ]
+    field_simp
+  have hσn : 0 < ‖σ‖ := lt_of_le_of_lt (by positivity) h3
+  have hωn : 0 < ‖ω‖ := by linarith
+  have hωn' : ‖ω‖ ≠ 0 := hωn.ne'
+  have hωr : ω.re ≠ 0 := hω.ne'
+  have hre : ((t : ℂ) * σ).re = t * σ.re := Complex.re_ofReal_mul t σ
+  have hnw : ‖((t : ℂ) * σ)⁻¹‖ = (t * ‖σ‖)⁻¹ := by
+    rw [norm_inv, norm_mul, Complex.norm_of_nonneg ht.le]
+  have h2' := h2.le
+  have h4' := h4.le
+  rw [hre, hnw]
+  refine ⟨hz, mul_pos ht (by linarith), ?_, ?_⟩
+  · -- `1/t = 2‖ω‖ / (t · 2‖ω‖) ≤ 2‖ω‖ / (t ‖σ‖)`
+    calc t⁻¹ = 2 * ‖ω‖ * (t * (2 * ‖ω‖))⁻¹ := by field_simp
+      _ ≤ 2 * ‖ω‖ * (t * ‖σ‖)⁻¹ := by gcongr
+  · -- `1/Re z = 1/(t Re σ) ≤ 2/(t Re ω) = (4‖ω‖/Re ω) / (t · 2‖ω‖) ≤ (4‖ω‖/Re ω) / (t ‖σ‖)`
+    calc (t * σ.re)⁻¹ ≤ (t * (ω.re / 2))⁻¹ := by gcongr
+      _ = 4 * ‖ω‖ / ω.re * (t * (2 * ‖ω‖))⁻¹ := by field_simp; ring
+      _ ≤ 4 * ‖ω‖ / ω.re * (t * ‖σ‖)⁻¹ := by gcongr
+
+/-- **The scalar core of Lemma D.9.** If `k` is holomorphic at `0`, then
+`(1/t)^e mr(ω t + ω'/t) − k(1/t)` does not tend to `0` faster than every power of `1/t`. -/
+private lemma not_fasterThanPowers_millsRatioC_sub_mic {ω ω' : ℂ} (hω : 0 < ω.re) (e : ℕ)
+    {k : ℂ → ℂ} (hk : AnalyticAt ℂ k 0)
+    (h : FasterThanPowers fun t : ℝ =>
+      ((t : ℂ)⁻¹) ^ e * millsRatioC (ω * (t : ℂ) + ω' / (t : ℂ)) - k ((t : ℂ)⁻¹)) : False := by
+  have hω0 : ω ≠ 0 := fun h0 => by rw [h0, Complex.zero_re] at hω; exact lt_irrefl 0 hω
+  have hωn : 0 < ‖ω‖ := norm_pos_iff.2 hω0
+  -- "`1/t` is a convergent power series in `1/z` without constant term": `1/t = w S₁(w)` with
+  -- `w = 1/z(t)`, `S₁` holomorphic at `0` and `S₁(0) = ω`
+  obtain ⟨S₁, hS₁, hS₁0, hS₁eq⟩ := exists_invFactor_mic hω0 ω'
+  -- `σ(t) = ω + ω'/t²`, so that `z(t) = t σ(t)` and `w(t) = 1/z(t) = 1/(t σ(t))`
+  obtain ⟨σ, hσ_def⟩ : ∃ σ : ℝ → ℂ, ∀ t, σ t = ω + ω' * ((t : ℂ)⁻¹) ^ 2 := ⟨_, fun _ => rfl⟩
+  obtain ⟨w, hw_def⟩ : ∃ w : ℝ → ℂ, ∀ t, w t = ((t : ℂ) * σ t)⁻¹ := ⟨_, fun _ => rfl⟩
+  have hσ : Tendsto σ atTop (𝓝 ω) := by
+    have h1 := ((tendsto_ofReal_inv_mic.pow 2).const_mul ω').const_add ω
+    rw [zero_pow two_ne_zero, mul_zero, add_zero] at h1
+    exact h1.congr fun t => (hσ_def t).symm
+  have hu : Tendsto (fun t => (2 * ω - σ t) / σ t) atTop (𝓝 1) := by
+    have h1 := (tendsto_const_nhds (x := 2 * ω)).sub hσ |>.div hσ hω0
+    rw [show (2 * ω - ω) / ω = 1 by rw [two_mul, add_sub_cancel_right, div_self hω0]] at h1
+    exact h1
+  -- for large `t`, `σ(t)` is close to `ω`
+  have hev : ∀ᶠ t : ℝ in atTop, 0 < t ∧ ‖σ t‖ < 2 * ‖ω‖ ∧ ‖ω‖ / 2 < ‖σ t‖ ∧
+      ω.re / 2 < (σ t).re ∧ 0 < ((2 * ω - σ t) / σ t).re := by
+    filter_upwards [eventually_gt_atTop 0,
+      Filter.Tendsto.eventually_lt_const (by linarith : ‖ω‖ < 2 * ‖ω‖) hσ.norm,
+      Filter.Tendsto.eventually_const_lt (half_lt_self hωn) hσ.norm,
+      Filter.Tendsto.eventually_const_lt (half_lt_self hω)
+        ((Complex.continuous_re.tendsto ω).comp hσ),
+      Filter.Tendsto.eventually_const_lt (by simp : (0 : ℝ) < (1 : ℂ).re)
+        ((Complex.continuous_re.tendsto 1).comp hu)] with t h1 h2 h3 h4 h5
+    exact ⟨h1, h2, h3, h4, h5⟩
+  -- `K(w) = k(w S₁(w)) / S₁(w)^e`, holomorphic at `0`: "`−Θ₂/Θ₁` is, for large `t`, a
+  -- convergent series in powers of `1/z`"
+  obtain ⟨K, hK, hK_def⟩ : ∃ K : ℂ → ℂ, AnalyticAt ℂ K 0 ∧
+      ∀ y, K y = k (y * S₁ y) / S₁ y ^ e := by
+    refine ⟨fun y => k (y * S₁ y) / S₁ y ^ e, ?_, fun _ => rfl⟩
+    have h0 : AnalyticAt ℂ (fun y : ℂ => y * S₁ y) 0 := analyticAt_id.fun_mul hS₁
+    have h1 : AnalyticAt ℂ (fun y => k (y * S₁ y)) 0 := hk.comp_of_eq h0 (by simp)
+    exact h1.fun_div (hS₁.fun_pow e) (by rw [hS₁0]; exact pow_ne_zero e hω0)
+  -- "this series is an asymptotic expansion of `mr(z)` along the curve":
+  -- `w^e mr(z) − K(w) = ((1/t)^e mr(z) − k(1/t)) / σ^e = O(|w|^M)` for every `M`
+  have hA : ∀ M : ℕ, ∃ C, ∀ᶠ t in atTop,
+      ‖w t ^ e * millsRatioC (ω * (t : ℂ) + ω' / (t : ℂ)) - K (w t)‖ ≤ C * ‖w t‖ ^ M := by
+    intro M
+    refine ⟨(2 * ‖ω‖) ^ M * (2 / ‖ω‖) ^ e, ?_⟩
+    filter_upwards [hev, eventually_norm_le_inv_pow_mic h M] with t ⟨ht, h2, h3, h4, h5⟩ hf
+    obtain ⟨-, -, hinv, -⟩ := curve_bounds_mic hω ht (hσ_def t) h2 h3 h4
+    rw [← hw_def] at hinv
+    have hT : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 ht.ne'
+    have hσ0 : σ t ≠ 0 := norm_pos_iff.1 (lt_trans (half_pos hωn) h3)
+    have hS : S₁ (w t) = σ t := by
+      rw [hσ_def] at h5 hσ0
+      rw [hw_def, hσ_def]
+      exact hS₁eq _ hT hσ0 h5
+    have hwσ : w t * σ t = (t : ℂ)⁻¹ := by
+      rw [hw_def, mul_inv, mul_assoc, inv_mul_cancel₀ hσ0, mul_one]
+    have heq : w t ^ e * millsRatioC (ω * (t : ℂ) + ω' / (t : ℂ)) - K (w t) =
+        (((t : ℂ)⁻¹) ^ e * millsRatioC (ω * (t : ℂ) + ω' / (t : ℂ)) - k ((t : ℂ)⁻¹))
+          / σ t ^ e := by
+      rw [hK_def, hS, hwσ]
+      generalize millsRatioC (ω * (t : ℂ) + ω' / (t : ℂ)) = Mz
+      generalize k ((t : ℂ)⁻¹) = kz
+      rw [← hwσ, mul_pow, sub_div, mul_right_comm, mul_div_cancel_right₀ _ (pow_ne_zero _ hσ0)]
+    have hσinv : ‖σ t‖⁻¹ ≤ 2 / ‖ω‖ := by
+      rw [← inv_div]
+      exact inv_anti₀ (half_pos hωn) h3.le
+    rw [heq, norm_div, norm_pow, div_eq_mul_inv, ← inv_pow]
+    calc _ ≤ t⁻¹ ^ M * (2 / ‖ω‖) ^ e := by gcongr
+      _ ≤ (2 * ‖ω‖ * ‖w t‖) ^ M * (2 / ‖ω‖) ^ e := by gcongr
+      _ = (2 * ‖ω‖) ^ M * (2 / ‖ω‖) ^ e * ‖w t‖ ^ M := by ring
+  -- Lemma D.8 (ii) along the curve: `Re z ≥ c |z|`, so
+  -- `w^e mr(z) = ∑_{i<m} (−1)^i (2i−1)!! w^{e+2i+1} + O(|w|^{e+2m+1})`
+  have hB : ∀ m : ℕ, ∃ C, ∀ᶠ t in atTop,
+      ‖w t ^ e * millsRatioC (ω * (t : ℂ) + ω' / (t : ℂ))
+        - ∑ i ∈ Finset.range m, millsCoeffC_mic i * w t ^ (e + 2 * i + 1)‖
+        ≤ C * ‖w t‖ ^ (e + 2 * m + 1) := by
+    intro m
+    refine ⟨(Nat.doubleFactorial (2 * m - 1) : ℝ) * (4 * ‖ω‖ / ω.re) ^ (2 * m + 1), ?_⟩
+    filter_upwards [hev] with t ⟨ht, h2, h3, h4, _⟩
+    obtain ⟨hz, hzre, -, hrinv⟩ := curve_bounds_mic hω ht (hσ_def t) h2 h3 h4
+    rw [← hw_def] at hrinv
+    rw [← hz] at hzre hrinv
+    have hwz : w t = (ω * (t : ℂ) + ω' / (t : ℂ))⁻¹ := by rw [hw_def, hz]
+    generalize ω * (t : ℂ) + ω' / (t : ℂ) = z at hzre hrinv hwz ⊢
+    have hsum : ∑ i ∈ Finset.range m, millsCoeffC_mic i * w t ^ (e + 2 * i + 1) =
+        w t ^ e * ∑ l ∈ Finset.range m,
+          (-1 : ℂ) ^ l * ((Nat.doubleFactorial (2 * l - 1) : ℕ) : ℂ) / z ^ (2 * l + 1) := by
+      rw [Finset.mul_sum]
+      refine Finset.sum_congr rfl fun i _ => ?_
+      rw [hwz, millsCoeffC_mic]
+      ring
+    rw [hsum, ← mul_sub, norm_mul, norm_pow]
+    calc _ ≤ ‖w t‖ ^ e * ((Nat.doubleFactorial (2 * m - 1) : ℝ) / z.re ^ (2 * m + 1)) := by
+          gcongr
+          exact norm_millsRatioC_sub_sum_le hzre m
+      _ = ‖w t‖ ^ e * ((Nat.doubleFactorial (2 * m - 1) : ℝ) * (z.re⁻¹) ^ (2 * m + 1)) := by
+          rw [inv_pow, div_eq_mul_inv]
+      _ ≤ ‖w t‖ ^ e * ((Nat.doubleFactorial (2 * m - 1) : ℝ)
+            * (4 * ‖ω‖ / ω.re * ‖w t‖) ^ (2 * m + 1)) := by gcongr
+      _ = _ := by ring
+  -- along the curve, `w → 0` and `w ≠ 0`
+  have hwt : Tendsto w atTop (𝓝 0) := by
+    have h1 := tendsto_ofReal_inv_mic.mul (hσ.inv₀ hω0)
+    rw [zero_mul] at h1
+    exact h1.congr fun t => by rw [hw_def, mul_inv]
+  have hw0 : ∀ᶠ t in atTop, w t ≠ 0 := by
+    filter_upwards [hev] with t ⟨ht, _, h3, _, _⟩
+    rw [hw_def]
+    exact inv_ne_zero (mul_ne_zero (Complex.ofReal_ne_zero.2 ht.ne')
+      (norm_pos_iff.1 (lt_trans (half_pos hωn) h3)))
+  exact false_of_expansions_mic (Φ := fun t : ℝ => millsRatioC (ω * (t : ℂ) + ω' / (t : ℂ)))
+    hwt hw0 e hK hA hB
+
 /-- **Lemma D.9 (the Mills ratio at infinity), for complex `ω`, `ω'` with `Re ω > 0`.** If `Θ₁`
 and `Θ₂` are meromorphic at infinity and `Θ₁(t) mr(ω t + ω'/t) + Θ₂(t)` tends to `0` faster than
 every power of `1/t`, then `Θ₁` and `Θ₂` vanish for all large `t`. -/
@@ -332,6 +479,74 @@ theorem eventually_eq_zero_of_millsRatioC_smul_add {ω ω' : ℂ} (hω : 0 < ω.
     (h : FasterThanPowers fun t : ℝ =>
       millsRatioC (ω * (t : ℂ) + ω' / (t : ℂ)) • Θ₁ t + Θ₂ t) :
     (∀ᶠ t in atTop, Θ₁ t = 0) ∧ ∀ᶠ t in atTop, Θ₂ t = 0 := by
-  sorry
+  obtain ⟨l₁, f₁, hf₁, hΘ₁⟩ := h₁
+  -- "Suppose that a component of `Θ₁` is not zero": then `f₁(s) = s^n g(s)` near `0` with
+  -- `g(0) ≠ 0`, and we take the component `ψ` with `ψ(g(0)) = ‖g(0)‖ ≠ 0`
+  have key : ∀ᶠ s in 𝓝 (0 : ℂ), f₁ s = 0 := by
+    by_contra hne
+    obtain ⟨l₂, f₂, hf₂, hΘ₂⟩ := h₂
+    obtain ⟨n, g, hg, hg0, hfg⟩ := hf₁.exists_eventuallyEq_pow_smul_ne_zero_iff.2 hne
+    obtain ⟨ψ, hψ1, hψg⟩ := exists_dual_vector ℂ (g 0) (norm_ne_zero_iff.2 hg0)
+    have hγ : AnalyticAt ℂ (fun s => ψ (g s)) 0 := (ψ.analyticAt (g 0)).comp hg
+    have hβ : AnalyticAt ℂ (fun s => ψ (f₂ s)) 0 := (ψ.analyticAt (f₂ 0)).comp hf₂
+    have hγ0 : ψ (g 0) ≠ 0 := by
+      rw [hψg]
+      exact Complex.ofReal_ne_zero.2 (norm_ne_zero_iff.2 hg0)
+    have hpos : 0 < ‖ψ (g 0)‖ := norm_pos_iff.2 hγ0
+    have hγnear : ∀ᶠ s in 𝓝 (0 : ℂ), ‖ψ (g 0)‖ / 2 < ‖ψ (g s)‖ :=
+      Filter.Tendsto.eventually_const_lt (half_lt_self hpos) hγ.continuousAt.norm
+    -- the component `φ(t) = mr(z(t)) ψ(Θ₁(t)) + ψ(Θ₂(t))` tends to `0` faster than every power
+    have hφ : FasterThanPowers fun t : ℝ =>
+        ψ (millsRatioC (ω * (t : ℂ) + ω' / (t : ℂ)) • Θ₁ t + Θ₂ t) :=
+      h.mono (Eventually.of_forall fun t => (ψ.le_opNorm _).trans (by rw [hψ1, one_mul]))
+    -- multiplied by `(1/t)^{l₁+l₂} / ψ(g(1/t))`, it is `(1/t)^{l₂+n} mr(z(t)) − k(1/t)` with
+    -- `k(s) = −s^{l₁} ψ(f₂(s)) / ψ(g(s))` holomorphic at `0`
+    have hk : AnalyticAt ℂ (fun s => -(s ^ l₁ * ψ (f₂ s) / ψ (g s))) 0 :=
+      (((analyticAt_id.fun_pow l₁).fun_mul hβ).fun_div hγ hγ0).fun_neg
+    have hS : FasterThanPowers fun t : ℝ =>
+        ((t : ℂ)⁻¹) ^ (l₂ + n) * millsRatioC (ω * (t : ℂ) + ω' / (t : ℂ))
+          - (fun s => -(s ^ l₁ * ψ (f₂ s) / ψ (g s))) ((t : ℂ)⁻¹) := by
+      refine fasterThanPowers_of_le_mul_mic hφ (2 / ‖ψ (g 0)‖) ?_
+      filter_upwards [eventually_ge_atTop 1, hΘ₁, hΘ₂, tendsto_ofReal_inv_mic.eventually hfg,
+        tendsto_ofReal_inv_mic.eventually hγnear] with t ht h1 h2 h3 h4
+      have hT : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 (by linarith)
+      have hγt : ψ (g (t : ℂ)⁻¹) ≠ 0 := by
+        intro h0
+        rw [h0, norm_zero] at h4
+        linarith
+      have hu : ∀ l : ℕ, (t : ℂ) ^ l * ((t : ℂ)⁻¹) ^ l = 1 := fun l => by
+        rw [← mul_pow, mul_inv_cancel₀ hT, one_pow]
+      have hγinv : ψ (g (t : ℂ)⁻¹) * (ψ (g (t : ℂ)⁻¹))⁻¹ = 1 := mul_inv_cancel₀ hγt
+      have heq : ((t : ℂ)⁻¹) ^ (l₁ + l₂) / ψ (g (t : ℂ)⁻¹) *
+            ψ (millsRatioC (ω * (t : ℂ) + ω' / (t : ℂ)) • Θ₁ t + Θ₂ t)
+          = ((t : ℂ)⁻¹) ^ (l₂ + n) * millsRatioC (ω * (t : ℂ) + ω' / (t : ℂ))
+            - (fun s => -(s ^ l₁ * ψ (f₂ s) / ψ (g s))) ((t : ℂ)⁻¹) := by
+        simp only [map_add, map_smul, smul_eq_mul, h1, h2, h3, sub_zero]
+        linear_combination
+          (((t : ℂ)⁻¹) ^ l₂ * ((t : ℂ)⁻¹) ^ n * millsRatioC (ω * (t : ℂ) + ω' / (t : ℂ))
+            * (ψ (g (t : ℂ)⁻¹) * (ψ (g (t : ℂ)⁻¹))⁻¹)) * hu l₁
+          + (((t : ℂ)⁻¹) ^ l₂ * ((t : ℂ)⁻¹) ^ n * millsRatioC (ω * (t : ℂ) + ω' / (t : ℂ)))
+            * hγinv
+          + (((t : ℂ)⁻¹) ^ l₁ * ψ (f₂ (t : ℂ)⁻¹) * (ψ (g (t : ℂ)⁻¹))⁻¹) * hu l₂
+      rw [← heq, norm_mul]
+      refine mul_le_mul_of_nonneg_right ?_ (norm_nonneg _)
+      -- `‖(1/t)^{l₁+l₂} / ψ(g(1/t))‖ ≤ 1 / (‖ψ(g(0))‖/2)` for `t ≥ 1`
+      have hp : ‖((t : ℂ)⁻¹) ^ (l₁ + l₂)‖ ≤ 1 := by
+        rw [norm_pow, norm_inv, Complex.norm_of_nonneg (by linarith)]
+        exact pow_le_one₀ (by positivity) (inv_le_one_of_one_le₀ ht)
+      rw [norm_div]
+      calc ‖((t : ℂ)⁻¹) ^ (l₁ + l₂)‖ / ‖ψ (g (t : ℂ)⁻¹)‖ ≤ 1 / (‖ψ (g 0)‖ / 2) :=
+            div_le_div₀ zero_le_one hp (half_pos hpos) h4.le
+        _ = 2 / ‖ψ (g 0)‖ := by rw [one_div, inv_div]
+    exact not_fasterThanPowers_millsRatioC_sub_mic hω (l₂ + n) hk hS
+  -- "Hence `Θ₁ = 0`"
+  have hΘ₁0 : ∀ᶠ t in atTop, Θ₁ t = 0 := by
+    filter_upwards [hΘ₁, tendsto_ofReal_inv_mic.eventually key] with t h1 h2
+    rw [h1, h2, smul_zero]
+  refine ⟨hΘ₁0, ?_⟩
+  -- "then `Θ₂` tends to `0` faster than every power, and `Θ₂ = 0`"
+  refine h₂.eventually_eq_zero (h.congr ?_)
+  filter_upwards [hΘ₁0] with t ht
+  rw [ht, smul_zero, zero_add]
 
 end Skips
