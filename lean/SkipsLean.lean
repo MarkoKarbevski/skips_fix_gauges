@@ -55,6 +55,7 @@ import SkipsLean.OneBlock.Rescale
 import SkipsLean.Dimension.RescalingGate
 import SkipsLean.Absorb.FirstBlock
 import SkipsLean.Residual.UpperBoundSymmetries
+import SkipsLean.Residual.UpperBoundRescaleRMSNormZero
 import SkipsLean.OneBlock.ResidualRescale
 import SkipsLean.OneBlock.ReGLU
 import SkipsLean.Absorb.RMSNormRays
@@ -280,3 +281,6 @@ import SkipsLean.Symmetry.FiniteSymmetriesCompose
 import SkipsLean.OneBlock.ResidualRMSZeroSteps
 import SkipsLean.OneBlock.ResidualRMSZeroGain
 import SkipsLean.OneBlock.ResidualRMSZeroKinds
+import SkipsLean.OneBlock.ResidualRMSZeroValue
+import SkipsLean.OneBlock.SkiplessHomogeneousRMSZero
+import SkipsLean.OneBlock.SkiplessHomogeneousGatedRMSZero
