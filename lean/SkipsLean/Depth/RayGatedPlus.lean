@@ -617,6 +617,182 @@ private theorem rayG_negRGP
   unfold rayCoef
   rw [neg_sq]
 
+/-! ### Generic rays are dense -/
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (a copy of the private lemma of `Depth/Suffix.lean`): an analytic family `J` of linear
+maps that is injective at one point `x₀` is injective on an open dense set that contains `x₀`. -/
+private theorem exists_open_dense_injective_of_analyticRGP
+    {X E F : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
+    [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
+    {J : X → E →L[ℝ] F} (hJ : AnalyticOnNhd ℝ J Set.univ) {x₀ : X}
+    (h₀ : Function.Injective (J x₀)) :
+    ∃ U : Set X, IsOpen U ∧ Dense U ∧ x₀ ∈ U ∧ ∀ x ∈ U, Function.Injective (J x) := by
+  obtain ⟨K, hK⟩ :=
+    (J x₀ : E →ₗ[ℝ] F).exists_leftInverse_of_injective (LinearMap.ker_eq_bot.2 h₀)
+  let b := Module.finBasis ℝ E
+  let Ψ : (E →L[ℝ] F) →ₗ[ℝ]
+      Matrix (Fin (Module.finrank ℝ E)) (Fin (Module.finrank ℝ E)) ℝ :=
+    (LinearMap.toMatrix b b).toLinearMap ∘ₗ (LinearMap.llcomp ℝ E F E K) ∘ₗ
+      (ContinuousLinearMap.coeLM ℝ)
+  have hΨ : ∀ x, Ψ (J x) = LinearMap.toMatrix b b (K ∘ₗ (J x : E →ₗ[ℝ] F)) := fun x => rfl
+  let φ : X → ℝ := fun x => (Ψ (J x)).det
+  have hentry : ∀ i j, AnalyticOnNhd ℝ (fun x => Ψ (J x) i j) Set.univ := fun i j =>
+    ((LinearMap.toContinuousLinearMap ((Matrix.entryLinearMap ℝ ℝ i j) ∘ₗ Ψ)).analyticOnNhd
+      _).comp hJ (Set.mapsTo_univ _ _)
+  have hφ : AnalyticOnNhd ℝ φ Set.univ := by
+    show AnalyticOnNhd ℝ (fun x => (Ψ (J x)).det) Set.univ
+    simp only [Matrix.det_apply']
+    exact Finset.analyticOnNhd_fun_sum _ fun σ _ => analyticOnNhd_const.mul
+      (Finset.analyticOnNhd_fun_prod _ fun i _ => hentry (σ i) i)
+  have hφcont : Continuous φ := continuousOn_univ.mp hφ.continuousOn
+  have hφ₀ : φ x₀ = 1 := by
+    show (Ψ (J x₀)).det = 1
+    rw [hΨ, hK, LinearMap.toMatrix_id, Matrix.det_one]
+  have hφinj : ∀ x, φ x ≠ 0 → Function.Injective (J x) := by
+    intro x hx
+    have hdet : LinearMap.det (K ∘ₗ (J x : E →ₗ[ℝ] F)) ≠ 0 := by
+      rw [← LinearMap.det_toMatrix b]
+      exact hx
+    have hbij := (Module.End.isUnit_iff _).1
+      ((LinearMap.isUnit_iff_isUnit_det _).2 (isUnit_iff_ne_zero.2 hdet))
+    have hinj := hbij.1
+    rw [LinearMap.coe_comp] at hinj
+    exact hinj.of_comp
+  refine ⟨{x | φ x ≠ 0}, isOpen_ne_fun hφcont continuous_const, ?_, ?_, hφinj⟩
+  · rw [dense_iff_inter_open]
+    rintro W hW ⟨z, hz⟩
+    by_contra hne
+    have hzero : φ =ᶠ[𝓝 z] 0 := Filter.eventually_of_mem (hW.mem_nhds hz) fun y hy => by
+      by_contra hy'
+      exact hne ⟨y, hy, hy'⟩
+    have h1 := hφ.eqOn_zero_of_preconnected_of_eventuallyEq_zero isPreconnected_univ
+      (Set.mem_univ z) hzero (Set.mem_univ x₀)
+    rw [hφ₀] at h1
+    exact one_ne_zero h1
+  · show φ x₀ ≠ 0
+    rw [hφ₀]
+    exact one_ne_zero
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper, condition (iii): let `G` be an analytic map of a finite-dimensional space to itself with
+an injective derivative at some point, and let `B` be analytic with an injective derivative on an
+open dense set. Then `𝐃B(G x)` is injective for all `x` in an open dense set. (By the inverse
+function theorem the image of `G` meets the open dense set, so `𝐃(B ∘ G)` is injective somewhere,
+hence on an open dense set; there `𝐃G(x)` is injective, hence onto, so `𝐃B(G x)` is injective.) -/
+private theorem exists_open_dense_injective_fderiv_compRGP {E F : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] [FiniteDimensional ℝ E] [NormedAddCommGroup F] [NormedSpace ℝ F]
+    [FiniteDimensional ℝ F] {G : E → E} {B : E → F} (hG : AnalyticOnNhd ℝ G Set.univ)
+    (hB : AnalyticOnNhd ℝ B Set.univ) {x₁ : E} (hx₁ : Function.Injective (fderiv ℝ G x₁))
+    {U : Set E} (hUd : Dense U) (hU : ∀ h ∈ U, Function.Injective (fderiv ℝ B h)) :
+    ∃ U₃ : Set E, IsOpen U₃ ∧ Dense U₃ ∧ ∀ x ∈ U₃, Function.Injective (fderiv ℝ B (G x)) := by
+  -- an open set `V ∋ x₁` on which `𝐃G` is injective
+  obtain ⟨V, hVo, -, hx₁V, hV⟩ := exists_open_dense_injective_of_analyticRGP hG.fderiv hx₁
+  -- inverse function theorem: `G(V)` is a neighbourhood of `G x₁`
+  let e := (LinearEquiv.ofInjectiveEndo (fderiv ℝ G x₁ : E →ₗ[ℝ] E) hx₁).toContinuousLinearEquiv
+  have hs : HasStrictFDerivAt G (e : E →L[ℝ] E) x₁ := by
+    have he : (e : E →L[ℝ] E) = fderiv ℝ G x₁ := ContinuousLinearMap.ext fun v => rfl
+    rw [he]
+    exact (hG x₁ (Set.mem_univ _)).hasStrictFDerivAt
+  have hnhds : G '' V ∈ 𝓝 (G x₁) := by
+    have hm := Filter.image_mem_map (m := G) (hVo.mem_nhds hx₁V)
+    rw [hs.map_nhds_eq_of_equiv] at hm
+    exact hm
+  -- it meets `U`: some `x₂ ∈ V` has `G x₂ ∈ U`, and there `𝐃(B ∘ G)` is injective
+  obtain ⟨_, hyU, x₂, hx₂V, rfl⟩ := hUd.inter_nhds_nonempty hnhds
+  have hcomp : ∀ x, fderiv ℝ (B ∘ G) x = (fderiv ℝ B (G x)).comp (fderiv ℝ G x) := fun x =>
+    fderiv_comp x (hB _ (Set.mem_univ _)).differentiableAt (hG x (Set.mem_univ _)).differentiableAt
+  have hinj₂ : Function.Injective (fderiv ℝ (B ∘ G) x₂) := by
+    rw [hcomp, ContinuousLinearMap.coe_comp]
+    exact (hU _ hyU).comp (hV x₂ hx₂V)
+  -- so `𝐃(B ∘ G)` is injective on an open dense set `U₃`
+  obtain ⟨U₃, hU₃o, hU₃d, -, hU₃⟩ := exists_open_dense_injective_of_analyticRGP
+    (hB.comp hG (Set.mapsTo_univ _ _)).fderiv hinj₂
+  refine ⟨U₃, hU₃o, hU₃d, fun x hx => ?_⟩
+  have h := hU₃ x hx
+  rw [hcomp, ContinuousLinearMap.coe_comp] at h
+  -- `𝐃G(x)` is injective, hence onto (an endomorphism of a finite-dimensional space)
+  have hGsurj : Function.Surjective (fderiv ℝ G x) :=
+    (LinearMap.injective_iff_surjective (f := (fderiv ℝ G x : E →ₗ[ℝ] E))).1 h.of_comp
+  intro a b hab
+  obtain ⟨a', rfl⟩ := hGsurj a
+  obtain ⟨b', rfl⟩ := hGsurj b
+  exact congrArg _ (h hab)
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (as in `Depth/StepTanhRMS.lean`): the set where a nonzero additive and homogeneous
+function `f` does not vanish is dense. -/
+private theorem dense_setOf_ne_zero_of_linearRGP {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] (f : E → ℝ) (hadd : ∀ x y, f (x + y) = f x + f y)
+    (hsmul : ∀ (c : ℝ) x, f (c • x) = c * f x) {x₀ : E} (hx₀ : f x₀ ≠ 0) :
+    Dense {x | f x ≠ 0} := by
+  intro x
+  by_cases hx : f x ≠ 0
+  · exact subset_closure hx
+  rw [not_not] at hx
+  have ht : Filter.Tendsto (fun s : ℝ => x + s • x₀) (𝓝[≠] 0) (𝓝 x) := by
+    have hc : Continuous (fun s : ℝ => x + s • x₀) :=
+      continuous_const.add (continuous_id.smul continuous_const)
+    have h0 := hc.tendsto 0
+    rw [zero_smul, add_zero] at h0
+    exact h0.mono_left nhdsWithin_le_nhds
+  refine mem_closure_of_tendsto ht (eventually_nhdsWithin_of_forall fun s hs => ?_)
+  show f (x + s • x₀) ≠ 0
+  rw [hadd, hsmul, hx, zero_add]
+  exact mul_ne_zero hs hx₀
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (a copy of the private `analyticOnNhd_frozenGated` of `Depth/Cones.lean`): the frozen
+gated block is a polynomial, hence analytic. -/
+private theorem analyticOnNhd_frozenGatedRGP
+    (θ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) (ℓ : Fin L)
+    (B : Finset (hid ℓ)) : AnalyticOnNhd ℝ (frozenGated θ ℓ B) Set.univ := by
+  have hdot : ∀ c : d → ℝ, AnalyticOnNhd ℝ (fun v : d → ℝ => v ⬝ᵥ c) Set.univ := fun c =>
+    (LinearMap.toContinuousLinearMap
+      ({ toFun := fun v => v ⬝ᵥ c
+         map_add' := fun v w => add_dotProduct v w c
+         map_smul' := fun r v => smul_dotProduct r v c } : (d → ℝ) →ₗ[ℝ] ℝ)).analyticOnNhd _
+  show AnalyticOnNhd ℝ (fun n => ∑ j ∈ B, ((n ⬝ᵥ (θ.read ℓ)ᵀ (Sum.inl j)) *
+    (n ⬝ᵥ (θ.read ℓ)ᵀ (Sum.inr j))) • θ.write ℓ j) Set.univ
+  refine Finset.analyticOnNhd_fun_sum _ fun j _ => ?_
+  have h := ((hdot ((θ.read ℓ)ᵀ (Sum.inl j))).mul (hdot ((θ.read ℓ)ᵀ (Sum.inr j)))).smul
+    (analyticOnNhd_const (v := θ.write ℓ j))
+  exact h
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper (a copy of the private `injective_fderiv_rowwise` of `Depth/Cones.lean`): a map acting
+row by row has, at the matrix all of whose rows are `x`, an injective derivative if the map of one
+row has. -/
+private theorem injective_fderiv_rowwiseRGP [Finite T] {g : (d → ℝ) → (d → ℝ)}
+    {G : (d → ℝ) →L[ℝ] (d → ℝ)} {x : d → ℝ} (hg : HasFDerivAt g G x)
+    (hG : Function.Injective G) :
+    Function.Injective (fderiv ℝ (fun n : T → d → ℝ => fun t => g (n t)) (fun _ => x)) := by
+  have : Fintype T := Fintype.ofFinite T
+  have h : HasFDerivAt (fun n : T → d → ℝ => fun t => g (n t))
+      (ContinuousLinearMap.pi fun t => G.comp (ContinuousLinearMap.proj t)) (fun _ => x) :=
+    hasFDerivAt_pi.2 fun t =>
+      hg.comp (fun _ : T => x) (hasFDerivAt_apply (𝕜 := ℝ) (F' := fun _ : T => d → ℝ) t _)
+  rw [h.fderiv]
+  intro V W hVW
+  funext t
+  exact hG (congrFun hVW t)
+
+omit [DecidableEq d] in
+/-- Helper: `n ↦ n Z − ⟨n Z, n⟩ n / d` (equation (14)) is analytic (a polynomial). -/
+private theorem analyticAt_tangentRMSRGP (Z : Matrix d d ℝ) (n₀ : Matrix T d ℝ) :
+    AnalyticAt ℝ (tangentRMS (T := T) Z) n₀ := by
+  have hZ : AnalyticAt ℝ (fun n : Matrix T d ℝ => n * Z) n₀ :=
+    analyticAt_matMulRGP analyticAt_id analyticAt_const
+  have hid' : AnalyticAt ℝ (fun n : Matrix T d ℝ => n) n₀ := analyticAt_id
+  show AnalyticAt ℝ (fun n : Matrix T d ℝ => (Matrix.of fun t i =>
+    (n * Z) t i - ((∑ l, (n * Z) t l * n t l) / (Fintype.card d : ℝ)) * n t i : Matrix T d ℝ)) n₀
+  refine analyticAt_matrixOfRGP fun t i => ?_
+  exact (analyticAt_entryRGP hZ t i).fun_sub (((Finset.analyticAt_fun_sum _ fun l _ =>
+    (analyticAt_entryRGP hZ t l).fun_mul (analyticAt_entryRGP hid' t l)).div_const).fun_mul
+      (analyticAt_entryRGP hid' t i))
+
+
 /-- **Lemma D.12 up to (38), on one generic ray, gated blocks, case (+).** Let `θ` be good for the
 cones, let `Z` and `η` satisfy (16) for `k`, and let `Ξ` have its rows in `C_k` and satisfy (i),
 (ii), (iii). Then `ż^g(Ξ) = 0`, and the second part of (38) holds at `n = Ξ` for every `w̃`. -/
@@ -905,7 +1081,104 @@ theorem flat_of_suffixFlat_gated_rmsNorm (hε : 0 < ε) (hg : GateFar σ σ' p)
           (Matrix.of fun t j => w t j * (n * θ.read k) t (Sum.inr j))
           (Matrix.of fun t j =>
             w t j * (tangentRMS Z n * θ.read k + n * η.read k) t (Sum.inr j)) = 0 := by
-  sorry
+  classical
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_gated hg.analytic ℓ
+  have hBaire : BaireSpace (Matrix T d ℝ) := inferInstanceAs (BaireSpace (T → d → ℝ))
+  have hrow : ∀ (Ξ : Matrix T d ℝ) τ c, (Ξ * θ.read k) τ c = Ξ τ ⬝ᵥ (θ.read k)ᵀ c :=
+    fun _ _ _ => rfl
+  -- the matrices with their rows in `C_k` form an open set
+  have hOo : IsOpen {n : Matrix T d ℝ | ∀ t, n t ∈ C k.castSucc} := by
+    rw [Set.ofPred_forall]
+    exact isOpen_iInter_of_finite fun t =>
+      (hθ.cone k.castSucc).isOpen.preimage (continuous_apply t)
+  -- (ii): no value `ι_{τ j}` vanishes, on an open dense set (no value column `e_j` vanishes)
+  have hD2 : ∀ i : T × hid k, IsOpen {Ξ : Matrix T d ℝ | (Ξ * θ.read k) i.1 (Sum.inr i.2) ≠ 0}
+      ∧ Dense {Ξ : Matrix T d ℝ | (Ξ * θ.read k) i.1 (Sum.inr i.2) ≠ 0} := by
+    rintro ⟨τ, j⟩
+    have hc : Continuous fun Ξ : Matrix T d ℝ => (Ξ * θ.read k) τ (Sum.inr j) :=
+      (continuous_apply_apply τ (Sum.inr j)).comp (continuous_id.matrix_mul continuous_const)
+    refine ⟨isOpen_ne_fun hc continuous_const, ?_⟩
+    refine dense_setOf_ne_zero_of_linearRGP (fun Ξ : Matrix T d ℝ => (Ξ * θ.read k) τ (Sum.inr j))
+      (fun x y => by simp only [Matrix.add_mul, Matrix.add_apply])
+      (fun c x => by simp only [Matrix.smul_mul, Matrix.smul_apply, smul_eq_mul])
+      (x₀ := Pi.single (M := fun _ : T => d → ℝ) τ ((θ.read k)ᵀ (Sum.inr j))) ?_
+    show (Pi.single (M := fun _ : T => d → ℝ) τ ((θ.read k)ᵀ (Sum.inr j))) τ ⬝ᵥ
+      (θ.read k)ᵀ (Sum.inr j) ≠ 0
+    rw [Pi.single_eq_same]
+    exact fun h => hθ.value_ne_zero k j (dotProduct_self_eq_zero.1 h)
+  have hD2o : IsOpen (⋂ i : T × hid k, {Ξ : Matrix T d ℝ | (Ξ * θ.read k) i.1 (Sum.inr i.2) ≠ 0}) :=
+    isOpen_iInter_of_finite fun i => (hD2 i).1
+  have hD2d : Dense (⋂ i : T × hid k, {Ξ : Matrix T d ℝ | (Ξ * θ.read k) i.1 (Sum.inr i.2) ≠ 0}) :=
+    dense_iInter_of_isOpen (fun i => (hD2 i).1) (fun i => (hD2 i).2)
+  -- (iii): `𝐃𝓑(g°(Ξ))` is injective on an open dense set (Lemma D.2 and (K2))
+  obtain ⟨U, -, hUd, hU⟩ := exists_open_dense_injective_fderiv_suffix_rmsNorm
+    (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) θ hε rfl hf hreg k.succ
+  have hgo : AnalyticOnNhd ℝ (fun Ξ : Matrix T d ℝ =>
+      (Matrix.of fun t => frozenGated θ k (A k) (Ξ t) : Matrix T d ℝ)) Set.univ := by
+    show AnalyticOnNhd ℝ (fun Ξ : Matrix T d ℝ => fun t => frozenGated θ k (A k) (Ξ t)) Set.univ
+    exact AnalyticOnNhd.pi fun t => (analyticOnNhd_frozenGatedRGP θ k (A k)).comp
+      ((ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : T => d → ℝ) t).analyticOnNhd _)
+      (Set.mapsTo_univ _ _)
+  obtain ⟨ν, hν⟩ := hθ.frozen_deriv k
+  have hgν : HasFDerivAt (frozenGated θ k (A k)) (fderiv ℝ (frozenGated θ k (A k)) ν) ν :=
+    (analyticOnNhd_frozenGatedRGP θ k (A k) ν (Set.mem_univ _)).differentiableAt.hasFDerivAt
+  have hinjν : Function.Injective (fderiv ℝ (fun Ξ : Matrix T d ℝ =>
+      (Matrix.of fun t => frozenGated θ k (A k) (Ξ t) : Matrix T d ℝ)) (fun _ => ν)) := by
+    have h := injective_fderiv_rowwiseRGP (T := T) hgν hν
+    exact h
+  obtain ⟨U₃, hU₃o, hU₃d, hU₃⟩ := exists_open_dense_injective_fderiv_compRGP hgo
+    (analyticOnNhd_suffix_of_analytic (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) θ
+      (analyticOnNhd_rmsNorm hε) hf k.succ) hinjν hUd hU
+  -- the generic `Ξ`, with (i), (ii), (iii), are dense
+  have hD : Dense ({Ξ : Matrix T d ℝ |
+      LinearIndependent ℚ (fun i : T × hid k => |(Ξ * θ.read k) i.1 (Sum.inl i.2)| ^ p)} ∩
+      ((⋂ i : T × hid k, {Ξ : Matrix T d ℝ | (Ξ * θ.read k) i.1 (Sum.inr i.2) ≠ 0}) ∩ U₃)) :=
+    hdense.inter_of_isOpen_right (hD2d.inter_of_isOpen_left hU₃d hD2o) (hD2o.inter hU₃o)
+  -- at a generic `Ξ` with its rows in `C_k`, (38) holds
+  have hgood : ∀ Ξ ∈ {n : Matrix T d ℝ | ∀ t, n t ∈ C k.castSucc} ∩ ({Ξ : Matrix T d ℝ |
+      LinearIndependent ℚ (fun i : T × hid k => |(Ξ * θ.read k) i.1 (Sum.inl i.2)| ^ p)} ∩
+      ((⋂ i : T × hid k, {Ξ : Matrix T d ℝ | (Ξ * θ.read k) i.1 (Sum.inr i.2) ≠ 0}) ∩ U₃)),
+      (∀ t j, (tangentRMS Z Ξ * θ.read k + Ξ * η.read k) t (Sum.inl j) = 0) ∧
+      ∀ w : Matrix T (hid k) ℝ,
+        writeLHS (Arch.gated σ (rmsNorm ε) hid) θ k η
+          (Matrix.of fun t j => w t j * (Ξ * θ.read k) t (Sum.inr j))
+          (Matrix.of fun t j =>
+            w t j * (tangentRMS Z Ξ * θ.read k + Ξ * η.read k) t (Sum.inr j)) = 0 := by
+    rintro Ξ ⟨hO, h1, h2, h3⟩
+    exact flat_at_generic_ray_gated_rmsNorm hε hg hone hθ k Z η hflat Ξ hO h1
+      (fun t j => Set.mem_iInter.1 h2 (t, j)) (hU₃ Ξ h3)
+  -- both parts of (38) are closed conditions in `n`
+  intro n hn
+  have hcl := hD.open_subset_closure_inter hOo hn
+  have hzan : ∀ n₀ : Matrix T d ℝ, AnalyticAt ℝ
+      (fun n : Matrix T d ℝ => tangentRMS Z n * θ.read k + n * η.read k) n₀ := fun n₀ =>
+    (analyticAt_matMulRGP (analyticAt_tangentRMSRGP Z n₀) analyticAt_const).fun_add
+      (analyticAt_matMulRGP analyticAt_id analyticAt_const)
+  refine ⟨fun t j => ?_, fun w => ?_⟩
+  · have hc : Continuous fun n : Matrix T d ℝ =>
+        (tangentRMS Z n * θ.read k + n * η.read k) t (Sum.inl j) :=
+      continuous_iff_continuousAt.2 fun n₀ => (analyticAt_entryRGP (hzan n₀) t (Sum.inl j)).continuousAt
+    exact (closure_minimal (fun Ξ hΞ => (hgood Ξ hΞ).1 t j) (isClosed_eq hc continuous_const)) hcl
+  · have hc : Continuous fun n : Matrix T d ℝ =>
+        writeLHS (Arch.gated σ (rmsNorm ε) hid) θ k η
+          (Matrix.of fun t j => w t j * (n * θ.read k) t (Sum.inr j))
+          (Matrix.of fun t j =>
+            w t j * (tangentRMS Z n * θ.read k + n * η.read k) t (Sum.inr j)) := by
+      refine continuous_iff_continuousAt.2 fun n₀ => ?_
+      have hv : AnalyticAt ℝ (fun n : Matrix T d ℝ =>
+          (Matrix.of fun t j => w t j * (n * θ.read k) t (Sum.inr j) : Matrix T (hid k) ℝ)) n₀ :=
+        analyticAt_matrixOfRGP fun t j => analyticAt_const.fun_mul (analyticAt_entryRGP
+          (analyticAt_matMulRGP analyticAt_id analyticAt_const) t (Sum.inr j))
+      have hvd : AnalyticAt ℝ (fun n : Matrix T d ℝ => (Matrix.of fun t j =>
+          w t j * (tangentRMS Z n * θ.read k + n * η.read k) t (Sum.inr j) :
+            Matrix T (hid k) ℝ)) n₀ :=
+        analyticAt_matrixOfRGP fun t j =>
+          analyticAt_const.fun_mul (analyticAt_entryRGP (hzan n₀) t (Sum.inr j))
+      have h := analyticAt_writeLHSRGP (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid)
+        (analyticOnNhd_rmsNorm hε) hf θ η k hv hvd
+      exact h.continuousAt
+    exact (closure_minimal (fun Ξ hΞ => (hgood Ξ hΞ).2 w) (isClosed_eq hc continuous_const)) hcl
 
 /-- **Lemma D.12 up to (38), SwiGLU blocks, case (+):** with the gate columns of block `k`
 linearly independent over `ℚ`. -/
