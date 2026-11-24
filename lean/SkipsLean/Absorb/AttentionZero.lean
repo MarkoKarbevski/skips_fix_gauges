@@ -102,6 +102,96 @@ private theorem hasDerivAt_attnHeads_atz (sees : T → T → Prop) [DecidableRel
   rw [Matrix.mul_sum]
   exact h
 
+omit [DecidableEq d] in
+/-- Helper: the right multiplication by a fixed matrix, as a continuous linear map. -/
+private noncomputable def mulRightL_atz {m n : Type*} [Fintype m] [Fintype n]
+    (R : Matrix m n ℝ) : Matrix T m ℝ →L[ℝ] Matrix T n ℝ :=
+  LinearMap.toContinuousLinearMap
+    { toFun := fun M => M * R
+      map_add' := fun a b => Matrix.add_mul a b R
+      map_smul' := fun r a => Matrix.smul_mul r a R }
+
+/-- Helper: one attention block with the stream `s I` along a curve `γ` through `0` whose
+velocity is `a w`, with `U a = λ a`: the hidden state after the block passes through `0` with the
+velocity `a w (s I + ξ λ ∑_i C_i)`. -/
+private theorem hasDerivAt_step_atz (sees : T → T → Prop) [DecidableRel sees]
+    {χ : Matrix T d ℝ → Matrix T d ℝ} {ξ : ℝ} (hχ0 : χ 0 = 0)
+    (hχ : HasFDerivAt χ (ξ • ContinuousLinearMap.id ℝ (Matrix T d ℝ)) 0) {H : Type*}
+    [Fintype H] (Γ C : H → Matrix d d ℝ) (s : ℝ) {a : T → ℝ} {lam : ℝ}
+    (ha : attnWeights sees (0 : Matrix T T ℝ) *ᵥ a = lam • a) {γ : ℝ → Matrix T d ℝ}
+    {w : d → ℝ} (hγ : HasDerivAt γ (vecMulVec a w) 0) (hγ0 : γ 0 = 0) :
+    s • γ 0 + attnHeads sees Γ C (χ (γ 0)) = 0 ∧
+      HasDerivAt (fun τ => s • γ τ + attnHeads sees Γ C (χ (γ τ)))
+        (vecMulVec a (w ᵥ* (s • (1 : Matrix d d ℝ) + (ξ * lam) • ∑ i, C i))) 0 := by
+  refine ⟨by rw [hγ0, smul_zero, hχ0, attnHeads_zero_atz, add_zero], ?_⟩
+  -- the read `χ(γ)` passes through `0` with the velocity `ξ a w`
+  have h2 := hχ.comp_hasDerivAt_of_eq (0 : ℝ) hγ hγ0.symm
+  have h20 : (χ ∘ γ) 0 = 0 := by rw [Function.comp_apply, hγ0, hχ0]
+  -- so the block has the velocity `U (ξ a w) ∑_i C_i`
+  have h3 := hasDerivAt_attnHeads_atz sees Γ C h2 h20
+  refine ((hγ.const_smul s).add h3).congr_deriv ?_
+  -- `U (ξ a w) V = ξ (U a) w V = ξ λ a (w V)`
+  show s • vecMulVec a w + attnWeights sees 0 * (ξ • vecMulVec a w) * ∑ i, C i = _
+  rw [Matrix.mul_smul, Matrix.mul_vecMulVec, ha, Matrix.smul_vecMulVec, Matrix.smul_mul,
+    Matrix.smul_mul, Matrix.vecMulVec_mul, smul_smul, Matrix.vecMul_add, Matrix.vecMul_smul,
+    Matrix.vecMul_smul, Matrix.vecMul_one, Matrix.vecMulVec_add, Matrix.vecMulVec_smul,
+    Matrix.vecMulVec_smul]
+
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the block `ℓ` of a network of attention blocks, on a hidden state `h`, is an
+attention block whose value–output products sum to `valueOutput θ ℓ`. -/
+private theorem block_atz (sees : T → T → Prop) [DecidableRel sees]
+    (χ : Matrix T d ℝ → Matrix T d ℝ) (H dh : Fin L → Type) [∀ ℓ, Fintype (H ℓ)]
+    [∀ ℓ, Fintype (dh ℓ)] (θ : Params (Arch.attention sees χ H dh) dIn dOut) (ℓ : Fin L) :
+    ∃ Γ C : H ℓ → Matrix d d ℝ, (∀ h : Matrix T d ℝ,
+      (Arch.attention sees χ H dh).f ℓ (h * θ.read ℓ) * θ.write ℓ = attnHeads sees Γ C h) ∧
+      ∑ i, C i = valueOutput θ ℓ :=
+  ⟨_, _, fun h => f_attention_mul sees χ H dh ℓ h (θ.read ℓ) (θ.write ℓ), rfl⟩
+
+/-- Helper: the product of the first `ℓ + 1` factors. -/
+private theorem prod_take_succ_atz (M : Fin L → Matrix d d ℝ) (ℓ : Fin L) :
+    ((List.ofFn M).take (ℓ.succ : ℕ)).prod = ((List.ofFn M).take (ℓ.castSucc : ℕ)).prod * M ℓ := by
+  simp only [Fin.val_succ, List.take_add_one, List.length_ofFn, ℓ.isLt, getElem?_pos,
+    List.getElem_ofFn, Fin.eta, Option.toList_some, List.prod_append, List.prod_cons,
+    List.prod_nil, mul_one, Fin.val_castSucc]
+
+omit [Fintype dOut] in
+/-- Helper: along the line `τ ↦ τ a b`, the hidden state `h_k` passes through `0` at `τ = 0` with
+the velocity `a (b E ∏_{ℓ < k} M_ℓ)`, `M_ℓ = s I + ξ λ V_ℓ`. -/
+private theorem hidden_line_atz (sees : T → T → Prop) [DecidableRel sees]
+    (χ : Matrix T d ℝ → Matrix T d ℝ) (ξ : ℝ) (hχ0 : χ 0 = 0)
+    (hχ : HasFDerivAt χ (ξ • ContinuousLinearMap.id ℝ (Matrix T d ℝ)) 0)
+    (H dh : Fin L → Type) [∀ ℓ, Fintype (H ℓ)] [∀ ℓ, Fintype (dh ℓ)]
+    (θ : Params (Arch.attention sees χ H dh) dIn dOut) (s : ℝ) (a : T → ℝ) (lam : ℝ)
+    (ha : attnWeights sees (0 : Matrix T T ℝ) *ᵥ a = lam • a) (b : dIn → ℝ)
+    (k : Fin (L + 1)) :
+    hidden (Arch.attention sees χ H dh) (fun _ => s • (1 : Matrix d d ℝ)) θ
+        ((0 : ℝ) • Matrix.vecMulVec a b) k = 0 ∧
+      HasDerivAt (fun τ : ℝ => hidden (Arch.attention sees χ H dh)
+          (fun _ => s • (1 : Matrix d d ℝ)) θ (τ • Matrix.vecMulVec a b) k)
+        (Matrix.vecMulVec a (b ᵥ* (θ.E * ((List.ofFn fun ℓ : Fin L =>
+          s • (1 : Matrix d d ℝ) + (ξ * lam) • valueOutput θ ℓ).take k).prod))) 0 := by
+  induction k using Fin.induction with
+  | zero =>
+    refine ⟨by rw [hidden_zero, zero_smul, Matrix.zero_mul], ?_⟩
+    simp only [hidden_zero, Fin.val_zero, List.take_zero, List.prod_nil, Matrix.mul_one]
+    -- `h_0 = τ a b E` has the velocity `a b E = a (b E)`
+    rw [← Matrix.vecMulVec_mul]
+    have h := (hasDerivAt_id (0 : ℝ)).smul_const (vecMulVec a b * θ.E)
+    rw [one_smul] at h
+    refine h.congr_of_eventuallyEq (Filter.Eventually.of_forall fun τ => ?_)
+    exact Matrix.smul_mul τ _ _
+  | succ ℓ ih =>
+    obtain ⟨h0, hd⟩ := ih
+    -- block `ℓ` is an attention block with `∑_i C_i = V_ℓ`
+    obtain ⟨Γ, C, hB, hC⟩ := block_atz sees χ H dh θ ℓ
+    have h := hasDerivAt_step_atz sees hχ0 hχ Γ C s ha hd h0
+    rw [hC] at h
+    simp only [hidden_succ, hB, Matrix.mul_smul, Matrix.mul_one]
+    refine ⟨h.1, h.2.congr_deriv ?_⟩
+    -- `(b E ∏_{ℓ' < ℓ} M_ℓ') M_ℓ = b E ∏_{ℓ' ≤ ℓ} M_ℓ'`
+    rw [Matrix.vecMul_vecMul, prod_take_succ_atz, Matrix.mul_assoc]
+
 /-- **Proof of Theorem 4.2, the Jacobians at `X = 0`, on the inputs `a b`:** let `χ(0) = 0` and
 let `χ` have the derivative `ξ I` at `0`, and let the column `a` satisfy `U a = λ a` for
 `U = softmax(0)`. For a network of attention blocks with the stream matrices `s I`, the
@@ -120,6 +210,14 @@ theorem hasDerivAt_eval_attention_zero (sees : T → T → Prop) [DecidableRel s
         * (List.ofFn fun ℓ : Fin L => s • (1 : Matrix d d ℝ) + (ξ * lam) • valueOutput θ ℓ).prod
         * θ.D))))
       0 := by
-  sorry
+  -- the last hidden state passes through `0` with the velocity `a (b E ∏_ℓ M_ℓ)`
+  obtain ⟨h0, hd⟩ := hidden_line_atz sees χ ξ hχ0 hχ H dh θ s a lam ha b (Fin.last L)
+  -- the readout `χ(h_L) D` has the velocity `ξ a (b E ∏_ℓ M_ℓ) D`
+  have h1 := hχ.comp_hasDerivAt_of_eq (0 : ℝ) hd h0.symm
+  have h2 := (mulRightL_atz (T := T) θ.D).hasFDerivAt.comp_hasDerivAt (0 : ℝ) h1
+  refine h2.congr_deriv ?_
+  show (ξ • vecMulVec a _) * θ.D = _
+  rw [Fin.val_last, List.take_of_length_le (by rw [List.length_ofFn]), Matrix.smul_mul,
+    Matrix.vecMulVec_mul, Matrix.vecMul_vecMul, Matrix.vecMulVec_smul]
 
 end Skips
