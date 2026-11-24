@@ -453,7 +453,10 @@ theorem exists_gatedBlockB_add_linear_reglu [DecidableEq p] (Wg : Matrix p m ℝ
       (bv' : m ⊕ p → ℝ) (Ww' : Matrix (m ⊕ p) q ℝ) (c' : q → ℝ),
       ∀ x : p → ℝ, x ᵥ* M + gatedBlockB relu Wg bg Wv bv Ww c x
         = gatedBlockB relu Wg' bg' Wv' bv' Ww' c' x := by
-  sorry
+  -- `relu 1 = 1`
+  have h1 : relu 1 ≠ 0 := by
+    rw [relu, max_eq_left zero_le_one]; exact one_ne_zero
+  exact exists_gatedBlockB_add_linear h1 Wg bg Wv bv Ww c M
 
 /-- **Theorem C.1 (i) for SwiGLU blocks, and the upper bound of Theorem C.2 (i):** every SwiGLU
 block with biases absorbs `x M` with `d` more hidden units. -/
@@ -463,7 +466,10 @@ theorem exists_gatedBlockB_add_linear_swiglu [DecidableEq p] (Wg : Matrix p m �
       (bv' : m ⊕ p → ℝ) (Ww' : Matrix (m ⊕ p) q ℝ) (c' : q → ℝ),
       ∀ x : p → ℝ, x ᵥ* M + gatedBlockB silu Wg bg Wv bv Ww c x
         = gatedBlockB silu Wg' bg' Wv' bv' Ww' c' x := by
-  sorry
+  -- `silu 1 = 1 / (1 + e⁻¹) > 0`
+  have h1 : silu 1 ≠ 0 := by
+    rw [silu]; positivity
+  exact exists_gatedBlockB_add_linear h1 Wg bg Wv bv Ww c M
 
 /-- **Theorem C.1 (i) for GeGLU blocks, and the upper bound of Theorem C.2 (i):** every GeGLU block
 with biases absorbs `x M` with `d` more hidden units. -/
@@ -473,7 +479,10 @@ theorem exists_gatedBlockB_add_linear_geglu [DecidableEq p] (Wg : Matrix p m ℝ
       (bv' : m ⊕ p → ℝ) (Ww' : Matrix (m ⊕ p) q ℝ) (c' : q → ℝ),
       ∀ x : p → ℝ, x ᵥ* M + gatedBlockB gelu Wg bg Wv bv Ww c x
         = gatedBlockB gelu Wg' bg' Wv' bv' Ww' c' x := by
-  sorry
+  -- `gelu 1 = Φ(1) > 0`
+  have h1 : gelu 1 ≠ 0 := by
+    rw [gelu, one_mul]; exact (gaussCdf_pos 1).ne'
+  exact exists_gatedBlockB_add_linear h1 Wg bg Wv bv Ww c M
 
 /-- **Theorem C.1 (i) for ReLU blocks:** every ReLU block with biases absorbs `x M` with `2 d` more
 hidden units. -/
@@ -483,7 +492,7 @@ theorem exists_vanillaBlockB_add_linear_relu [DecidableEq p] (Wr : Matrix p m �
       (Ww' : Matrix (m ⊕ (p ⊕ p)) q ℝ) (c' : q → ℝ),
       ∀ x : p → ℝ,
         x ᵥ* M + vanillaBlockB relu Wr b Ww c x = vanillaBlockB relu Wr' b' Ww' c' x := by
-  sorry
+  exact exists_vanillaBlockB_add_linear relu_sub_relu_neg Wr b Ww c M
 
 /-- **Theorem C.1 (i) for GELU blocks:** every GELU block with biases absorbs `x M` with `2 d` more
 hidden units. -/
@@ -493,7 +502,7 @@ theorem exists_vanillaBlockB_add_linear_gelu [DecidableEq p] (Wr : Matrix p m �
       (Ww' : Matrix (m ⊕ (p ⊕ p)) q ℝ) (c' : q → ℝ),
       ∀ x : p → ℝ,
         x ᵥ* M + vanillaBlockB gelu Wr b Ww c x = vanillaBlockB gelu Wr' b' Ww' c' x := by
-  sorry
+  exact exists_vanillaBlockB_add_linear gelu_sub_gelu_neg Wr b Ww c M
 
 /-- **The upper bound of Theorem C.2 (ii) for ReLU blocks:** a ReLU block with biases whose read
 has rank `d` absorbs `x M` with `d` more hidden units. -/
@@ -503,7 +512,7 @@ theorem exists_vanillaBlockB_add_linear_relu_of_rank [DecidableEq p] (Wr : Matri
     ∃ (Wr' : Matrix p (m ⊕ p) ℝ) (b' : m ⊕ p → ℝ) (Ww' : Matrix (m ⊕ p) q ℝ) (c' : q → ℝ),
       ∀ x : p → ℝ,
         x ᵥ* M + vanillaBlockB relu Wr b Ww c x = vanillaBlockB relu Wr' b' Ww' c' x := by
-  sorry
+  exact exists_vanillaBlockB_add_linear_of_rank relu_sub_relu_neg Wr b Ww c hr M
 
 /-- **The upper bound of Theorem C.2 (ii) for GELU blocks:** a GELU block with biases whose read
 has rank `d` absorbs `x M` with `d` more hidden units. -/
@@ -513,9 +522,24 @@ theorem exists_vanillaBlockB_add_linear_gelu_of_rank [DecidableEq p] (Wr : Matri
     ∃ (Wr' : Matrix p (m ⊕ p) ℝ) (b' : m ⊕ p → ℝ) (Ww' : Matrix (m ⊕ p) q ℝ) (c' : q → ℝ),
       ∀ x : p → ℝ,
         x ᵥ* M + vanillaBlockB gelu Wr b Ww c x = vanillaBlockB gelu Wr' b' Ww' c' x := by
-  sorry
+  exact exists_vanillaBlockB_add_linear_of_rank gelu_sub_gelu_neg Wr b Ww c hr M
 
 /-! ### Theorem C.1 (ii): tanh blocks never absorb -/
+
+/-- A block with a bounded activation is bounded: `|B_θ(x)_j| ≤ C ∑_i |W_write i j| + |c_j|`. -/
+private theorem abs_vanillaBlockB_le_bc {k : Type*} [Fintype k] {σ : ℝ → ℝ} {C : ℝ}
+    (hC : ∀ z, |σ z| ≤ C) (Wr : Matrix p k ℝ) (b : k → ℝ) (Ww : Matrix k q ℝ) (c : q → ℝ)
+    (x : p → ℝ) (j : q) :
+    |vanillaBlockB σ Wr b Ww c x j| ≤ C * ∑ i, |Ww i j| + |c j| := by
+  have hsum : |∑ i, σ ((x ᵥ* Wr) i + b i) * Ww i j| ≤ C * ∑ i, |Ww i j| := by
+    refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+    rw [Finset.mul_sum]
+    refine Finset.sum_le_sum fun i _ => ?_
+    rw [abs_mul]
+    exact mul_le_mul_of_nonneg_right (hC _) (abs_nonneg _)
+  have h : vanillaBlockB σ Wr b Ww c x j = ∑ i, σ ((x ᵥ* Wr) i + b i) * Ww i j + c j := rfl
+  rw [h]
+  exact (abs_add_le _ _).trans (add_le_add hsum le_rfl)
 
 /-- **Theorem C.1 (ii) for tanh blocks:** for a bounded activation (tanh), no block with biases,
 of any width, absorbs `x M` with `M ≠ 0`. -/
@@ -524,7 +548,32 @@ theorem forall_exists_ne_vanillaBlockB_of_bounded {σ : ℝ → ℝ}
     (c : q → ℝ) (Wr' : Matrix p m' ℝ) (b' : m' → ℝ) (Ww' : Matrix m' q ℝ) (c' : q → ℝ)
     (M : Matrix p q ℝ) (hM : M ≠ 0) :
     ∃ x : p → ℝ, x ᵥ* M + vanillaBlockB σ Wr b Ww c x ≠ vanillaBlockB σ Wr' b' Ww' c' x := by
-  sorry
+  classical
+  obtain ⟨C, hC⟩ := hσ
+  by_contra hcon
+  simp only [not_exists, not_not] at hcon
+  -- an entry `M a j ≠ 0`
+  obtain ⟨a, j, hj⟩ : ∃ a j, M a j ≠ 0 := by
+    by_contra h0
+    simp only [not_exists, not_not] at h0
+    exact hM (Matrix.ext h0)
+  -- `B_{θ'} − B_θ` is bounded by `K` in the coordinate `j`
+  set K := (C * ∑ i, |Ww' i j| + |c' j|) + (C * ∑ i, |Ww i j| + |c j|) with hK
+  have hbd : ∀ x : p → ℝ, |(x ᵥ* M) j| ≤ K := fun x => by
+    have h := congrFun (hcon x) j
+    rw [Pi.add_apply] at h
+    have h2 : (x ᵥ* M) j = vanillaBlockB σ Wr' b' Ww' c' x j - vanillaBlockB σ Wr b Ww c x j := by
+      linarith
+    rw [h2]
+    exact (abs_sub _ _).trans (add_le_add (abs_vanillaBlockB_le_bc hC Wr' b' Ww' c' x j)
+      (abs_vanillaBlockB_le_bc hC Wr b Ww c x j))
+  -- and `x M` at `x = t e_a` is `t M_{a j}`, unbounded
+  have h := hbd (Pi.single a ((K + 1) / M a j))
+  rw [Matrix.single_vecMul, Pi.smul_apply, smul_eq_mul, Matrix.row_apply, div_mul_cancel₀ _ hj]
+    at h
+  have hK0 : 0 ≤ K := (abs_nonneg _).trans (hbd 0)
+  rw [abs_of_nonneg (by linarith)] at h
+  linarith
 
 /-- **Theorem C.1 (ii) for tanh blocks, by name.** -/
 theorem forall_exists_ne_vanillaBlockB_tanh (Wr : Matrix p m ℝ) (b : m → ℝ) (Ww : Matrix m q ℝ)
@@ -532,6 +581,8 @@ theorem forall_exists_ne_vanillaBlockB_tanh (Wr : Matrix p m ℝ) (b : m → ℝ
     (M : Matrix p q ℝ) (hM : M ≠ 0) :
     ∃ x : p → ℝ,
       x ᵥ* M + vanillaBlockB Real.tanh Wr b Ww c x ≠ vanillaBlockB Real.tanh Wr' b' Ww' c' x := by
-  sorry
+  -- `|tanh z| < 1`
+  exact forall_exists_ne_vanillaBlockB_of_bounded ⟨1, fun z => (Real.abs_tanh_lt_one z).le⟩
+    Wr b Ww c Wr' b' Ww' c' M hM
 
 end Skips
