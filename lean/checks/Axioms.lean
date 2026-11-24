@@ -1696,3 +1696,4 @@ import SkipsLean
 #print axioms Skips.ae_funDim_skipless_add_le_relu_oneBlock_residual_rmsNorm_zero
 #print axioms Skips.ae_funDim_skipless_add_le_reluSq_oneBlock_residual_rmsNorm_zero
 #print axioms Skips.ae_funDim_skipless_add_le_reglu_oneBlock_residual_rmsNorm_zero
+#print axioms Skips.exists_antisymm_of_fderiv_rmsNorm_zero_mul
