@@ -157,8 +157,11 @@ theorem exists_ne_reluSq (Wr : Matrix p m ℝ) (Ww : Matrix m q ℝ) (Wr' : Matr
 /-- **Theorem 3.3 (a) for ReGLU blocks.** -/
 theorem exists_ne_reglu (Wg Wv : Matrix p m ℝ) (Ww : Matrix m q ℝ) (Wg' Wv' : Matrix p m' ℝ)
     (Ww' : Matrix m' q ℝ) (M : Matrix p q ℝ) (hM : M ≠ 0) :
-    ∃ x : p → ℝ, x ᵥ* M + gatedBlock relu Wg Wv Ww x ≠ gatedBlock relu Wg' Wv' Ww' x := by
-  sorry
+    ∃ x : p → ℝ, x ᵥ* M + gatedBlock relu Wg Wv Ww x ≠ gatedBlock relu Wg' Wv' Ww' x :=
+  -- Proposition A.1 with `k = 2`
+  exists_ne_of_homogeneous (k := 2) (by norm_num) _ _
+    (fun lam x hlam => gatedBlock_relu_smul Wg Wv Ww lam x hlam)
+    (fun lam x hlam => gatedBlock_relu_smul Wg' Wv' Ww' lam x hlam) M hM
 
 /-- **Theorem 3.3 (b) for SwiGLU blocks** (gate SiLU). -/
 theorem exists_ne_swiglu (Wg Wv : Matrix p m ℝ) (Ww : Matrix m q ℝ) (Wg' Wv' : Matrix p m' ℝ)
