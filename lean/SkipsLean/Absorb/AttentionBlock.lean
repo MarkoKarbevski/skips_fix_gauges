@@ -413,7 +413,10 @@ theorem ae_mul_add_attentionBlock_ne (sees : T → T → Prop) [DecidableRel see
     (M : Matrix d d ℝ) (hM : M ≠ 0) (μ : Measure (T → d → ℝ)) [μ.IsAddHaarMeasure] :
     ∀ᵐ h ∂μ, (Matrix.of h) * M + attentionBlock sees WQ WK WV WO (Matrix.of h)
       ≠ attentionBlock sees WQ' WK' WV' WO' (Matrix.of h) := by
-  sorry
+  -- the blocks of equation (4) are `attnHeads` with `Γ_i = W_{Q,i} W_{K,i}ᵀ / √d_h`,
+  -- `C_i = W_{V,i} W_{O,i}`
+  unfold attentionBlock
+  exact ae_mul_add_attnHeads_ne sees hT t₀ ht₀ _ _ _ _ M hM μ
 
 /-- **Theorem 3.4 (ii), for the blocks of equation (4).** -/
 theorem exists_row_attentionBlock_sub_ge (sees : T → T → Prop) [DecidableRel sees]
@@ -427,6 +430,7 @@ theorem exists_row_attentionBlock_sub_ge (sees : T → T → Prop) [DecidableRel
               - attentionBlock sees WQ' WK' WV' WO' h) t)
             ⬝ᵥ ((h * M + attentionBlock sees WQ WK WV WO h
               - attentionBlock sees WQ' WK' WV' WO' h) t)) := by
-  sorry
+  unfold attentionBlock
+  exact exists_row_attnHeads_sub_ge sees hT t₀ ht₀ _ _ _ _ M x hx
 
 end Skips
