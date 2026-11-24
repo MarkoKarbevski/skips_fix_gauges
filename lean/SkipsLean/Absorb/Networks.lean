@@ -320,6 +320,7 @@ private theorem hidden_line_residual {m : Type*} [Fintype m] [DecidableEq m] {A 
     simp only [hidden_succ]
     exact ⟨h.1, h.2.congr_deriv (Matrix.mul_one _)⟩
 
+omit [Fintype dOut] in
 /-- Helper: in the skipless network (`S = 0`) of one or more blocks the last hidden state has the
 velocity `0`: it is `f(χ(h) R) W` with `h` through `0`. -/
 private theorem hidden_line_skipless_last {m : Type*} [Fintype m] {L' : ℕ}
@@ -483,6 +484,7 @@ private theorem abs_mul_apply_le {m n : Type*} [Fintype m] {M : Matrix T m ℝ} 
   rw [abs_mul]
   exact mul_le_mul_of_nonneg_right (hM t j) (abs_nonneg _)
 
+omit [Fintype T] in
 /-- Helper: a residual `tanh` block moves a hidden state by at most `∑ i, |W i j|` in the
 entry `(t, j)`. -/
 private theorem abs_step_tanh_le {m : Type*} [Fintype m] (h Y : Matrix T d ℝ)
@@ -492,6 +494,7 @@ private theorem abs_step_tanh_le {m : Type*} [Fintype m] (h Y : Matrix T d ℝ)
   rw [Matrix.mul_one, add_sub_right_comm, Matrix.add_apply]
   exact (abs_add_le _ _).trans (add_le_add le_rfl (abs_map_tanh_mul_le _ _ t j))
 
+omit [Fintype T] [Fintype dOut] in
 /-- Helper: in a residual network of `tanh` blocks, `F(X E) - X E` is bounded: at every hidden
 state, the entries of `h_k - X E` are bounded independently of `X`. -/
 private theorem bounded_hidden_tanh
