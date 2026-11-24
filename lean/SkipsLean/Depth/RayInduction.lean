@@ -37,7 +37,191 @@ meaning.
 namespace Skips
 
 open Filter Topology
-open scoped Matrix.Norms.Elementwise
+open scoped Matrix.Norms.Elementwise NNReal ENNReal
+
+/-- Expansion of a multilinear map at a linear combination of vectors:
+`f (∑_j y_j b_j, …) = ∑_v (∏_k y_{v k}) • f (b_{v 1}, …, b_{v n})`. -/
+private lemma cmm_apply_sum_smul' {ι X F : Type*} [Fintype ι] [NormedAddCommGroup X]
+    [NormedSpace ℝ X] [NormedAddCommGroup F] [NormedSpace ℝ F] {n : ℕ}
+    (f : ContinuousMultilinearMap ℝ (fun _ : Fin n => X) F) (b : ι → X) (y : ι → ℝ) :
+    f (fun _ => ∑ j, y j • b j) = ∑ v : Fin n → ι, (∏ k, y (v k)) • f (fun k => b (v k)) := by
+  rw [f.map_sum (fun (_ : Fin n) (j : ι) => y j • b j)]
+  refine Finset.sum_congr rfl fun v _ => ?_
+  exact f.map_smul_univ (fun k => y (v k)) (fun k => b (v k))
+
+/-- Over the words `w = (n, v)` on `ι`, `∑_w ∏_k c_{v k}` converges when `∑_j c_j < 1`. -/
+private lemma summable_prod_words {ι : Type*} [Fintype ι] (c : ι → ℝ) (hc : ∀ j, 0 ≤ c j)
+    (h1 : ∑ j, c j < 1) :
+    Summable (fun w : Σ n : ℕ, (Fin n → ι) => ∏ k, c (w.2 k)) := by
+  refine (summable_sigma_of_nonneg fun w => Finset.prod_nonneg fun k _ => hc _).2
+    ⟨fun n => Summable.of_finite, ?_⟩
+  have h : ∀ n : ℕ, ∑' v : Fin n → ι, ∏ k, c (v k) = (∑ j, c j) ^ n := fun n => by
+    rw [tsum_fintype, ← Fintype.prod_sum (fun (_ : Fin n) j => c j), Finset.prod_const,
+      Finset.card_univ, Fintype.card_fin]
+  simp only [h]
+  exact summable_geometric_of_lt_one (Finset.sum_nonneg fun j _ => hc j) h1
+
+/-- **The expansion in `y` at `(s, 0)`.** A map `G₀` that is analytic at `(0, 0)` is, for small
+`s` and `y`, the sum over the words `w = (n, v)` of `(∏_k y_{v k}) • a_w(s)`, with coefficients
+`a_w` that are analytic in `s`, bounded by `S / ρ^n`, and with `a_{(1, j)}(s) = ∂G₀/∂y_j (s, 0)`. -/
+private lemma exists_expansion {ι : Type*} [Fintype ι] [DecidableEq ι] {F : Type*}
+    [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
+    (G₀ : ℝ × (ι → ℝ) → F) (hG₀ : AnalyticAt ℝ G₀ 0) :
+    ∃ (ρ S : ℝ) (a : (Σ n : ℕ, (Fin n → ι)) → ℝ → F), 0 < ρ ∧
+      (∀ w, AnalyticOnNhd ℝ (a w) (Metric.ball 0 ρ)) ∧
+      (∀ w s, |s| < ρ → ‖a w s‖ * ρ ^ w.1 ≤ S) ∧
+      (∀ s (y : ι → ℝ), |s| < ρ → ∑ j, |y j| < ρ →
+        HasSum (fun w => (∏ k, y (w.2 k)) • a w s) (G₀ (s, y))) ∧
+      (∀ s j, |s| < ρ →
+        fderiv ℝ (fun y : ι → ℝ => G₀ (s, y)) 0 (Pi.single j 1) = a ⟨1, fun _ => j⟩ s) := by
+  classical
+  obtain ⟨P, R, hP⟩ := hG₀
+  obtain ⟨ρ₂, hρ₂0, hρ₂R⟩ := ENNReal.lt_iff_exists_nnreal_btwn.1 hP.r_pos
+  let ρ : ℝ≥0 := ρ₂ / 2
+  have hρ0 : (0 : ℝ) < ρ := by
+    have : (0 : ℝ≥0) < ρ₂ := by exact_mod_cast hρ₂0
+    exact_mod_cast (half_pos this)
+  have hρρ : ((ρ + ρ : ℝ≥0) : ℝ≥0∞) < R := by
+    rw [add_halves]; exact hρ₂R
+  have hρρ' : ((ρ : ℝ≥0∞) + ρ) < P.radius := by
+    exact_mod_cast hρρ.trans_le hP.r_le
+  have hρR : (ρ : ℝ≥0∞) < R :=
+    lt_of_le_of_lt (by exact_mod_cast le_add_self) hρρ
+  have hρrad : (ρ : ℝ≥0∞) < P.radius := hρR.trans_le hP.r_le
+  -- The vectors `e_j = (0, 1_j)` and the coefficients `a_w(s)`.
+  let e : ι → ℝ × (ι → ℝ) := fun j => (0, Pi.single j 1)
+  have he : ∀ j, ‖e j‖ = 1 := fun j => by
+    simp [e, Prod.norm_def, Pi.norm_single]
+  let a : (Σ n : ℕ, (Fin n → ι)) → ℝ → F := fun w s =>
+    P.changeOrigin ((s, 0) : ℝ × (ι → ℝ)) w.1 (fun k => e (w.2 k))
+  have hnorm_s : ∀ s : ℝ, ‖((s, 0) : ℝ × (ι → ℝ))‖ = |s| := fun s => by
+    simp [Prod.norm_def]
+  -- The uniform bound `‖p.changeOrigin x n‖ ρ^n ≤ S` for `‖x‖ ≤ ρ`.
+  let Snn : ℝ≥0 := ∑' z : (Σ k l : ℕ, {s : Finset (Fin (k + l)) // s.card = l}),
+    ‖P (z.1 + z.2.1)‖₊ * ρ ^ z.2.1 * ρ ^ z.1
+  have hsum1 := P.changeOriginSeries_summable_aux₁ hρρ'
+  have hbdnn : ∀ n (x : ℝ × (ι → ℝ)), ‖x‖₊ ≤ ρ → ‖P.changeOrigin x n‖₊ * ρ ^ n ≤ Snn := by
+    intro n x hx
+    have hxr : (‖x‖₊ : ℝ≥0∞) < P.radius :=
+      lt_of_le_of_lt (by exact_mod_cast hx) hρrad
+    have hs2 := P.changeOriginSeries_summable_aux₂ hρrad n
+    calc ‖P.changeOrigin x n‖₊ * ρ ^ n
+        ≤ (∑' s : Σ l : ℕ, {s : Finset (Fin (n + l)) // s.card = l},
+            ‖P (n + s.1)‖₊ * ρ ^ s.1) * ρ ^ n := by
+          gcongr
+          refine (P.nnNorm_changeOrigin_le n hxr).trans ?_
+          refine Summable.tsum_le_tsum (fun s => by gcongr) ?_ hs2
+          exact NNReal.summable_of_le (fun s => by gcongr) hs2
+      _ = ∑' s : Σ l : ℕ, {s : Finset (Fin (n + l)) // s.card = l},
+            ‖P (n + s.1)‖₊ * ρ ^ s.1 * ρ ^ n := (NNReal.tsum_mul_right _ _).symm
+      _ ≤ Snn := by
+          have hfib : Summable (fun s : Σ l : ℕ, {s : Finset (Fin (n + l)) // s.card = l} =>
+              ‖P (n + s.1)‖₊ * ρ ^ s.1 * ρ ^ n) := (NNReal.summable_sigma.1 hsum1).1 n
+          have h2 := NNReal.summable_sigma.1 hsum1
+          calc _ ≤ ∑' k, ∑' s : Σ l : ℕ, {s : Finset (Fin (k + l)) // s.card = l},
+                ‖P (k + s.1)‖₊ * ρ ^ s.1 * ρ ^ k := h2.2.le_tsum' n
+            _ = Snn := (Summable.tsum_sigma' h2.1 hsum1).symm
+  let S : ℝ := Snn
+  have hbd : ∀ w (s : ℝ), |s| < (ρ : ℝ) → ‖a w s‖ * (ρ : ℝ) ^ w.1 ≤ S := by
+    intro w s hs
+    have h1 : ‖a w s‖ ≤ ‖P.changeOrigin ((s, 0) : ℝ × (ι → ℝ)) w.1‖ := by
+      refine ((P.changeOrigin _ w.1).le_opNorm _).trans (le_of_eq ?_)
+      simp [he]
+    have h2 := hbdnn w.1 ((s, 0) : ℝ × (ι → ℝ)) (by
+      rw [← NNReal.coe_le_coe, coe_nnNorm, hnorm_s]; exact hs.le)
+    have h3 : ‖P.changeOrigin ((s, 0) : ℝ × (ι → ℝ)) w.1‖ * (ρ : ℝ) ^ w.1 ≤ S := by
+      exact_mod_cast h2
+    exact (mul_le_mul_of_nonneg_right h1 (pow_nonneg hρ0.le _)).trans h3
+  refine ⟨(ρ : ℝ), S, a, hρ0, ?_, hbd, ?_, ?_⟩
+  · -- Analyticity in `s`.
+    intro w s₀ hs₀
+    have hs₀' : |s₀| < ρ := by simpa [Real.dist_eq] using hs₀
+    have hco := P.hasFPowerSeriesOnBall_changeOrigin w.1 (lt_of_le_of_lt zero_le hρrad)
+    have hmem : ((s₀, 0) : ℝ × (ι → ℝ)) ∈ Metric.eball (0 : ℝ × (ι → ℝ)) P.radius := by
+      rw [mem_eball_zero_iff, eNorm_eq_nnNorm]
+      refine lt_of_le_of_lt ?_ hρrad
+      rw [ENNReal.coe_le_coe, ← NNReal.coe_le_coe, coe_nnNorm, hnorm_s]
+      exact hs₀'.le
+    have h1 := hco.analyticAt_of_mem hmem
+    have h2 : AnalyticAt ℝ (fun s : ℝ => ((s, 0) : ℝ × (ι → ℝ))) s₀ :=
+      (ContinuousLinearMap.inl ℝ ℝ (ι → ℝ)).analyticAt s₀
+    have h4 : AnalyticAt ℝ (fun s : ℝ => P.changeOrigin ((s, 0) : ℝ × (ι → ℝ)) w.1) s₀ :=
+      h1.comp_of_eq h2 rfl
+    have h3 : AnalyticAt ℝ (fun c : ContinuousMultilinearMap ℝ (fun _ : Fin w.1 => ℝ × (ι → ℝ)) F =>
+        c (fun k => e (w.2 k))) (P.changeOrigin ((s₀, 0) : ℝ × (ι → ℝ)) w.1) :=
+      (ContinuousMultilinearMap.apply ℝ (fun _ : Fin w.1 => ℝ × (ι → ℝ)) F
+        (fun k => e (w.2 k))).analyticAt _
+    have hc := h3.comp_of_eq h4 rfl
+    exact hc
+  · -- The sum over the words.
+    intro s y hs hy
+    have hs' : (‖((s, 0) : ℝ × (ι → ℝ))‖₊ : ℝ≥0∞) < R := by
+      refine lt_of_le_of_lt ?_ hρR
+      rw [ENNReal.coe_le_coe, ← NNReal.coe_le_coe, coe_nnNorm, hnorm_s]
+      exact hs.le
+    have hco := hP.changeOrigin hs'
+    have hyn : ‖y‖ ≤ ∑ j, |y j| := by
+      refine (pi_norm_le_iff_of_nonneg (Finset.sum_nonneg fun j _ => abs_nonneg _)).2 fun j => ?_
+      rw [Real.norm_eq_abs]
+      exact Finset.single_le_sum (fun j _ => abs_nonneg (y j)) (Finset.mem_univ j)
+    have hymem : ((0 : ℝ), y) ∈ Metric.eball (0 : ℝ × (ι → ℝ))
+        (R - ‖((s, 0) : ℝ × (ι → ℝ))‖₊) := by
+      rw [mem_eball_zero_iff, eNorm_eq_nnNorm, lt_tsub_iff_right]
+      refine lt_of_le_of_lt ?_ hρρ
+      rw [← ENNReal.coe_add, ENNReal.coe_le_coe, ← NNReal.coe_le_coe, NNReal.coe_add,
+        coe_nnNorm, coe_nnNorm, hnorm_s]
+      have : ‖((0 : ℝ), y)‖ = ‖y‖ := by simp [Prod.norm_def]
+      rw [this]
+      push_cast
+      linarith
+    have h2 := hco.hasSum hymem
+    have hpt : (0 : ℝ × (ι → ℝ)) + (s, 0) + (0, y) = (s, y) := by simp
+    rw [hpt] at h2
+    have hyeq : ((0 : ℝ), y) = ∑ j, y j • e j := by
+      ext i
+      · rw [Prod.fst_sum]; simp [e]
+      · simp only [e, Prod.snd_sum, Prod.smul_snd]
+        rw [Finset.sum_apply]
+        simp [Pi.single_apply]
+    have h3 : ∀ n, ∑ v : Fin n → ι, (∏ k, y (v k)) • a ⟨n, v⟩ s =
+        P.changeOrigin ((s, 0) : ℝ × (ι → ℝ)) n (fun _ => ((0 : ℝ), y)) := by
+      intro n
+      rw [hyeq, cmm_apply_sum_smul']
+    -- Summability over the words.
+    let c : ι → ℝ := fun j => |y j| / ρ
+    have hc : ∑ j, c j < 1 := by
+      rw [← Finset.sum_div, div_lt_one hρ0]; exact hy
+    have hmaj := (summable_prod_words c (fun j => div_nonneg (abs_nonneg _) hρ0.le) hc).mul_left S
+    have hsm : Summable (fun w : Σ n : ℕ, (Fin n → ι) => (∏ k, y (w.2 k)) • a w s) := by
+      refine Summable.of_norm_bounded hmaj fun w => ?_
+      have hb := hbd w s hs
+      have hb' : ‖a w s‖ ≤ S / (ρ : ℝ) ^ w.1 := by
+        rw [le_div_iff₀ (pow_pos hρ0 _)]; exact hb
+      rw [norm_smul, norm_prod]
+      calc (∏ k, ‖y (w.2 k)‖) * ‖a w s‖ ≤ (∏ k, |y (w.2 k)|) * (S / (ρ : ℝ) ^ w.1) := by
+            simp only [Real.norm_eq_abs]
+            exact mul_le_mul_of_nonneg_left hb' (Finset.prod_nonneg fun k _ => abs_nonneg _)
+        _ = S * ∏ k, c (w.2 k) := by
+            simp only [c, Finset.prod_div_distrib, Finset.prod_const, Finset.card_univ,
+              Fintype.card_fin]
+            ring
+    have h1 := hsm.hasSum.sigma fun n => hasSum_fintype _
+    simp only [h3] at h1
+    rw [← h1.unique h2]
+    exact hsm.hasSum
+  · -- The derivative in `y_j`.
+    intro s j hs
+    have hs' : (‖((s, 0) : ℝ × (ι → ℝ))‖₊ : ℝ≥0∞) < R := by
+      refine lt_of_le_of_lt ?_ hρR
+      rw [ENNReal.coe_le_coe, ← NNReal.coe_le_coe, coe_nnNorm, hnorm_s]
+      exact hs.le
+    have hd := (hP.changeOrigin hs').hasFPowerSeriesAt.hasFDerivAt
+    rw [zero_add] at hd
+    have hc := hd.comp (0 : ι → ℝ) (hasFDerivAt_prodMk_right (𝕜 := ℝ) s (0 : ι → ℝ))
+    rw [show (fun y : ι → ℝ => G₀ (s, y)) = G₀ ∘ fun y => (s, y) from rfl, hc.fderiv]
+    simp only [ContinuousLinearMap.coe_comp, Function.comp_apply,
+      ContinuousLinearMap.inr_apply, continuousMultilinearCurryFin1_apply]
+    exact congrArg _ (funext fun k => by rw [show k = Fin.last 0 from Fin.fin_one_eq_zero k, Fin.snoc_last])
 
 /-- **The induction on the exponents** (proof of Lemma D.12, (34) to (36)). Let the rates
 `r_j > 0` be linearly independent over `ℚ`, let `ζ_j(t)` lie between `e^{-r_j t^p}` divided and
