@@ -192,6 +192,7 @@ private theorem eq_zero_of_symm_of_dotProduct_lsa {X : Matrix d d ℝ} (hX : X�
   rw [Matrix.zero_apply]
   linarith
 
+omit [Nonempty T] [Fintype dOut] in
 /-- **Proof of Theorem B.1 (iii), Step 4, for an attention block:** for `ε > 0`, if `E` has rank
 `d`, some token sees a token and `S = ∑_i W_{V,i} W_{O,i}` is not `0`, equation (17) at all inputs
 forces `X_s = 0`. -/
