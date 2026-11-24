@@ -145,6 +145,7 @@ private theorem row_sum_fam {ι m n : Type*} [Fintype ι] (F : ι → Matrix m n
   ext o
   rw [Matrix.sum_apply, Finset.sum_apply]
 
+omit [Fintype dOut] in
 /-- **Equation (8) for a family of heads:** let token `t₂` see itself and another token `t₁`, and
 let `k` be the number of tokens other than `t₂` that `t₂` sees. At the input `twoTokenInput t₂ u v`
 the sum of the heads has at `t₂` the row

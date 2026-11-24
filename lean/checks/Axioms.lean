@@ -1052,3 +1052,5 @@ import SkipsLean
 #print axioms Skips.aeval_attnWeights_causal_eq_zero
 #print axioms Skips.one_sub_three_smul_attnWeights_causal_two
 #print axioms Skips.exists_residual_eq_skipless_attention_causal_short
+#print axioms Skips.attnFamily_two_tokens
+#print axioms Skips.attnFamily_rigid
