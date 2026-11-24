@@ -278,3 +278,4 @@ import SkipsLean.Absorb.ReluSqBiasesLower
 import SkipsLean.Absorb.RotaryBiases
 import SkipsLean.Symmetry.FiniteSymmetriesCompose
 import SkipsLean.OneBlock.ResidualRMSZeroSteps
+import SkipsLean.OneBlock.ResidualRMSZeroGain
