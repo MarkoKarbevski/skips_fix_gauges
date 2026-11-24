@@ -310,6 +310,7 @@ import SkipsLean.OneBlock.LearnedSkipRMSZeroReGLU
 import SkipsLean.OneBlock.LearnedSkipRMSZeroReGLUGeneric
 import SkipsLean.OneBlock.LearnedSkipTriangularRMSZeroRank
 import SkipsLean.OneBlock.TurnsActiveRowsSkipLinear
+import SkipsLean.OneBlock.LearnedSkipTriangularRMSZeroRescale
 import SkipsLean.Symmetry.InsideBlocksRMSNormZero
 import SkipsLean.Dimension.UpperBoundSymmetriesRMSNormZero
 import SkipsLean.OneBlock.ResidualRMSZeroGain
