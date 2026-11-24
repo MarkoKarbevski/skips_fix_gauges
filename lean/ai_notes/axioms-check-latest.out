@@ -2013,3 +2013,103 @@
 'Skips.ae_funDim_skipless_add_le_reglu_oneBlock_residual_rmsNorm_zero' depends on axioms: [propext,
  Classical.choice,
  Quot.sound]
+'Skips.exists_antisymm_of_fderiv_rmsNorm_zero_mul' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.funDim_residual_eq_skipless_add_of_equality' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDim_residual_eq_skipless_add_of_equality' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimLearned_eq_residual_add_of_equality' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.sq_sub_half_mul_pred' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.sq_sub_half_mul_pred_add_one' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_skipProdFwd_E' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.eval_learned_eq_residual_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.eval_learned_eq_residual_rmsNorm_zero_fwd' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.eval_learned_eq_residual_rmsNorm_fwd' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.skipProdFwd_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.skipProdFwd_succ' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.relu_unitsParallel' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.reluSq_unitsParallel' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.funDimSkipsOn_add_le_learned_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.funDimSkipsOn_learned_le_funDimOn_residual_add_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_learned_le_funDimOn_residual_add_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_learned_le_residual_add_mlp_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_learned_le_residual_add_tanh_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_learned_le_residual_add_gelu_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_learned_le_residual_add_gated_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_learned_le_residual_add_swiglu_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_learned_le_residual_add_geglu_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_learned_le_residual_add_attention_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.eval_skipless_rmsNorm_zero_of_rowHomogeneous' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.flatOn_le_mlp_rescale_skipless_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.funDim_mlp_oneBlock_rescale_skipless_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_jacobianRank_mlp_oneBlock_rescale_skipless_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_rank_E_D_read_write_of_card_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDim_relu_oneBlock_skipless_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_exists_jacobianRank_relu_oneBlock_skipless_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDim_reluSq_oneBlock_skipless_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_exists_jacobianRank_reluSq_oneBlock_skipless_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDim_relu_oneBlock_residual_rmsNorm_zero_eq_add' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDim_reluSq_oneBlock_residual_rmsNorm_zero_eq_add' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.funDimLearned_add_le_rmsNorm_zero'' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimLearned_le_residual_add_relu_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimLearned_le_residual_add_reluSq_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimLearned_le_residual_add_reglu_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.funDimSkipsOn_tri_le_learned_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.funDimSkipsOn_tri_add_le_learned_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.funDimSkipsOn_tri_le_funDimOn_residual_add_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_tri_le_funDimOn_residual_add_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_tri_le_residual_add_mlp_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_tri_le_residual_add_tanh_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_tri_le_residual_add_gelu_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_tri_le_residual_add_gated_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_tri_le_residual_add_swiglu_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_tri_le_residual_add_geglu_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_tri_le_residual_add_attention_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
