@@ -130,3 +130,5 @@ import SkipsLean.Depth.SuffixZeroBatch
 import SkipsLean.Generic.AnalyticZeroSetOn
 import SkipsLean.Dimension.GenericRankOn
 import SkipsLean.Generic.ConnectedCompl
+import SkipsLean.Depth.ComplexSuffixStep
+import SkipsLean.Depth.TanhPathBlock

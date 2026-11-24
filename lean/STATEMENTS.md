@@ -69,8 +69,8 @@ compared by such a reader (written after the seventh audit began):
 `Depth/ComplexSuffix.lean`, `Depth/StepZeroValues.lean`, `Depth/SuffixRows.lean`,
 `Depth/RowsAux.lean`, `Depth/ComplexBlockIdentity.lean`, `Depth/ComplexOneSubSq.lean`,
 `Depth/FlatAtWriteRows.lean`, `Depth/StepZeroTanhPath.lean`, `Depth/StepZeroTanh.lean`,
-`Depth/SuffixZeroBatch.lean`, `Generic/AnalyticZeroSetOn.lean`, `Dimension/GenericRankOn.lean` and
-`Generic/ConnectedCompl.lean`.
+`Depth/SuffixZeroBatch.lean`, `Generic/AnalyticZeroSetOn.lean`, `Dimension/GenericRankOn.lean`,
+`Generic/ConnectedCompl.lean`, `Depth/ComplexSuffixStep.lean` and `Depth/TanhPathBlock.lean`.
 
 ## Definitions
 
@@ -172,6 +172,8 @@ the paper's object is checked by reading it.
 | **D Appendix D.7, the case (0), "real-analytic on the connected open set `O_{X*}` and does not vanish at `θ*`, so its zero set has measure zero":** a real-analytic function on a connected open set of a finite-dimensional space that is not identically zero vanishes on a set of measure zero (any additive Haar measure) | `measure_zeroSet_of_analyticOnNhd_of_isPreconnected` | `Generic/AnalyticZeroSetOn.lean` | proved |
 | **D Appendix D.7, the case (0), "Hence the rank on `X*` is at least (13) at almost every parameter":** for `G` real-analytic on a connected open set `U` whose complement has measure zero, the rank of `𝐃G` is at almost every point at least its rank at `x₀ ∈ U`; and the same for the Jacobian of the outputs of a network on a batch | `ae_finrank_range_fderiv_ge_of_isPreconnected`, `ae_jacobianRank_ge_of_isPreconnected` | `Dimension/GenericRankOn.lean` | proved |
 | **D proof of Lemma D.20, "Removing finitely many closed submanifolds of codimension at least two, one after the other, from a connected open set leaves a connected open set":** one removal, with the submanifold given as the zero set of a map `g` into a space of dimension `≥ 2` that is strictly differentiable with an onto derivative at every zero in `U`: `U ∖ {g = 0}` is preconnected; with the topological step (local to global) | `isPreconnected_diff_of_forall_exists_nhds`, `isPreconnected_diff_zeroSet_of_surjective` | `Generic/ConnectedCompl.lean` | in work |
+| **D Lemma D.14, its two steps and its last sentence:** `𝓑_{>L}` is holomorphic on `C_1` at every `θ`; if `𝓑_{>ℓ+1}` is holomorphic on `C_{κ'}` and block `ℓ` satisfies (R2) (one row: `σ(nW)V ≠ 0` on the sphere), then `𝓑_{>ℓ}` is holomorphic on some `C_κ`, `κ ∈ (0, 1]`; and "`κ_k` depends only on the weights of the blocks `k+1, …, L` and on `D`" (with these, Lemma D.14 holds with (R2) alone, without (R3)) | `holomorphicOnCone_last`, `exists_holomorphicOnCone_castSucc`, `HolomorphicOnCone.congr` | `Depth/ComplexSuffixStep.lean` | in work |
+| **D Appendix D.6, "Parameters that satisfy all conditions, in the case (0)", one tanh block:** for `d ≥ 2`, at least `d` hidden units and every `κ > 0` there are a read `W` and a write `V` with (R1) for the write, (R2), (R3), (S1), (S2), and (S3) for the cone `C_κ` (conditions for one row; `TanhPathBlock`) | `TanhPathBlock`, `exists_tanhPathBlock` | `Depth/TanhPathBlock.lean` | in work |
 | a real-analytic function that is not identically zero vanishes on a set of measure zero (not in Mathlib at this version) | `volume_zeroSet_of_analytic_pi`, `measure_zeroSet_of_analytic` | `Generic/AnalyticZeroSet.lean` | proved |
 | D proof of Proposition 3.3, its last sentence: at generic parameters every `d` columns of a read or of `D`, and every `d` rows of `E` or of a write, form an invertible matrix | `ae_isUnit_det_submatrix` | `Generic/Params.lean` | proved |
 | at generic parameters `E` and the writes have rank `d` (`d_in ≥ d`, at least `d` rows in each write) | `ae_rank_E_write` | `Generic/Params.lean` | proved |
