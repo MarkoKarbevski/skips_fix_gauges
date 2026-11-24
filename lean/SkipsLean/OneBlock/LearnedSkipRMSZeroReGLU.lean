@@ -644,6 +644,208 @@ theorem flatSkipsOn_noKinkGate_le_reglu_learned_rmsNorm_zero
     rw [hDY, add_zero, add_zero, add_zero]
   · rw [hρ, sub_add_cancel]
 
+
+/-! ### Helpers: the directions of the symmetries, as a linear map, and their dimension -/
+
+/-- Helper (copy of the private `skipDirLin_lzf`): the direction of the skips under the
+rotations `X`: `S_ℓ ↦ −X_{ℓ-1} S_ℓ + S_ℓ X_ℓ`, linear in `X`. -/
+private noncomputable def skipDirLin_lrg {L : ℕ} (S : Fin L → Matrix d d ℝ) :
+    (Fin (L + 1) → Matrix d d ℝ) →ₗ[ℝ] (Fin L → Matrix d d ℝ) where
+  toFun X ℓ := -(X ℓ.castSucc * S ℓ) + S ℓ * X ℓ.succ
+  map_add' X Y := by
+    funext ℓ
+    simp only [Pi.add_apply, Matrix.add_mul, Matrix.mul_add, neg_add]
+    abel
+  map_smul' c X := by
+    funext ℓ
+    simp only [Pi.smul_apply, Matrix.smul_mul, Matrix.mul_smul, smul_neg, smul_add,
+      RingHom.id_apply]
+
+/-- Helper (copy of the private `scaleDirLin_lzf`): `β ↦ scaleDir θ β` is linear. -/
+private noncomputable def scaleDirLin_lrg {L : ℕ} {A : Arch T d L} (θ : Params A dIn dOut) :
+    (Fin (L + 1) → ℝ) →ₗ[ℝ] Params A dIn dOut where
+  toFun := scaleDir θ
+  map_add' β β' := by
+    refine Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_ <;>
+      simp only [scaleDir, Params.add_E, Params.add_read, Params.add_write, Params.add_D,
+        Pi.add_apply, add_smul, add_zero]
+  map_smul' c β := by
+    refine Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_ <;>
+      simp only [scaleDir, Params.smul_E, Params.smul_read, Params.smul_write, Params.smul_D,
+        Pi.smul_apply, smul_eq_mul, mul_smul, smul_zero, RingHom.id_apply]
+
+/-- Helper (copy of the private `scaleSkipLin_lzf`): the direction of the skips under the scales
+`β`: `S_ℓ ↦ (β_ℓ − β_{ℓ-1}) S_ℓ`, linear in `β`. -/
+private noncomputable def scaleSkipLin_lrg {L : ℕ} (S : Fin L → Matrix d d ℝ) :
+    (Fin (L + 1) → ℝ) →ₗ[ℝ] (Fin L → Matrix d d ℝ) where
+  toFun β ℓ := (β ℓ.succ - β ℓ.castSucc) • S ℓ
+  map_add' β β' := by
+    funext ℓ
+    simp only [Pi.add_apply]
+    rw [add_sub_add_comm, add_smul]
+  map_smul' c β := by
+    funext ℓ
+    simp only [Pi.smul_apply, smul_eq_mul, RingHom.id_apply]
+    rw [← mul_sub, mul_smul]
+
+/-- Helper: `α ↦ rescaleDir θ α` is linear (a copy of the private `rescaleDirLin_rgz`). -/
+private noncomputable def rescaleDirLin_lrg
+    (θ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut) :
+    (∀ ℓ : Fin 1, hid ℓ → ℝ) →ₗ[ℝ]
+      Params (Arch.gated (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut where
+  toFun := rescaleDir θ
+  map_add' α β := by
+    apply Params.ext'
+    · exact (add_zero 0).symm
+    · intro ℓ
+      ext k j
+      rcases j with i | i
+      · exact (add_zero 0).symm
+      · show -((α + β) ℓ i) * θ.read ℓ k (Sum.inr i)
+          = -(α ℓ i) * θ.read ℓ k (Sum.inr i) + -(β ℓ i) * θ.read ℓ k (Sum.inr i)
+        rw [Pi.add_apply, Pi.add_apply]
+        ring
+    · intro ℓ
+      ext i k
+      show (α + β) ℓ i * θ.write ℓ i k = α ℓ i * θ.write ℓ i k + β ℓ i * θ.write ℓ i k
+      rw [Pi.add_apply, Pi.add_apply]
+      ring
+    · exact (add_zero 0).symm
+  map_smul' c α := by
+    apply Params.ext'
+    · exact (smul_zero c).symm
+    · intro ℓ
+      ext k j
+      rcases j with i | i
+      · exact (smul_zero c).symm
+      · show -((c • α) ℓ i) * θ.read ℓ k (Sum.inr i) = c * (-(α ℓ i) * θ.read ℓ k (Sum.inr i))
+        rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+        ring
+    · intro ℓ
+      ext i k
+      show (c • α) ℓ i * θ.write ℓ i k = c * (α ℓ i * θ.write ℓ i k)
+      rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+      ring
+    · exact (smul_zero c).symm
+
+/-- Helper: `β ↦ rescaleDirGate 1 θ β` is linear (a copy of the private
+`rescaleDirGateLin_rgz`). -/
+private noncomputable def rescaleDirGateLin_lrg
+    (θ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut) :
+    (∀ ℓ : Fin 1, hid ℓ → ℝ) →ₗ[ℝ]
+      Params (Arch.gated (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut where
+  toFun := rescaleDirGate 1 θ
+  map_add' α β := by
+    apply Params.ext'
+    · exact (add_zero 0).symm
+    · intro ℓ
+      ext a j
+      rcases j with i | i
+      · show (α + β) ℓ i * θ.read ℓ a (Sum.inl i)
+          = α ℓ i * θ.read ℓ a (Sum.inl i) + β ℓ i * θ.read ℓ a (Sum.inl i)
+        rw [Pi.add_apply, Pi.add_apply]
+        ring
+      · exact (add_zero 0).symm
+    · intro ℓ
+      ext i a
+      show -(((1 : ℕ) : ℝ) * (α + β) ℓ i) * θ.write ℓ i a
+        = -(((1 : ℕ) : ℝ) * α ℓ i) * θ.write ℓ i a + -(((1 : ℕ) : ℝ) * β ℓ i) * θ.write ℓ i a
+      rw [Pi.add_apply, Pi.add_apply]
+      ring
+    · exact (add_zero 0).symm
+  map_smul' c α := by
+    apply Params.ext'
+    · exact (smul_zero c).symm
+    · intro ℓ
+      ext a j
+      rcases j with i | i
+      · show (c • α) ℓ i * θ.read ℓ a (Sum.inl i) = c * (α ℓ i * θ.read ℓ a (Sum.inl i))
+        rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+        ring
+      · exact (smul_zero c).symm
+    · intro ℓ
+      ext i a
+      show -(((1 : ℕ) : ℝ) * (c • α) ℓ i) * θ.write ℓ i a
+        = c * (-(((1 : ℕ) : ℝ) * α ℓ i) * θ.write ℓ i a)
+      rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+      ring
+    · exact (smul_zero c).symm
+
+/-- Helper: the directions of the rotations and the scalings of `h_0` and `h_1` and of the two
+rescalings, with the matching directions of the skip,
+`((X, β), (α, β')) ↦ (cobDir θ X + scaleDir θ β + rescaleDir θ α + rescaleDirGate 1 θ β',
+−X_0 A + A X_1 + (β_1 − β_0) A)` with `X_0`, `X_1` antisymmetric, as a linear map. -/
+private noncomputable def dirLin_lrg
+    (θ : Params (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid) dIn dOut)
+    (R : Fin 1 → Matrix d d ℝ) :
+    ((Fin (1 + 1) → antisymmetric d) × (Fin (1 + 1) → ℝ))
+        × ((∀ ℓ : Fin 1, hid ℓ → ℝ) × (∀ ℓ : Fin 1, hid ℓ → ℝ)) →ₗ[ℝ]
+      Params (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid) dIn dOut
+        × (Fin 1 → Matrix d d ℝ) :=
+  ((((cobDirLin θ).comp (LinearMap.compLeft (antisymmetric d).subtype (Fin (1 + 1)))).prod
+      ((skipDirLin_lrg R).comp (LinearMap.compLeft (antisymmetric d).subtype (Fin (1 + 1))))).coprod
+    ((scaleDirLin_lrg θ).prod (scaleSkipLin_lrg R))).coprod
+    ((LinearMap.inl ℝ _ _).comp ((rescaleDirLin_lrg θ).coprod (rescaleDirGateLin_lrg θ)))
+
+/-- Helper: the source of `dirLin_lrg` has dimension `(d(d−1) + 2) + 2 d_hidden`. -/
+private theorem finrank_dom_lrg :
+    Module.finrank ℝ (((Fin (1 + 1) → antisymmetric d) × (Fin (1 + 1) → ℝ))
+        × ((∀ ℓ : Fin 1, hid ℓ → ℝ) × (∀ ℓ : Fin 1, hid ℓ → ℝ)))
+      = (Fintype.card d * (Fintype.card d - 1) + 2) + 2 * Fintype.card (hid 0) := by
+  rw [Module.finrank_prod, Module.finrank_prod, Module.finrank_prod,
+    Module.finrank_pi_fintype (R := ℝ) (ι := Fin (1 + 1)) (M := fun _ => antisymmetric d),
+    finrank_antisymmetric, Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul,
+    Module.finrank_fin_fun, Module.finrank_pi_fintype]
+  simp only [Module.finrank_fintype_fun_eq_card, Finset.univ_unique, Fin.default_eq_zero,
+    Finset.sum_singleton]
+  have h2 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self (Fintype.card d))
+  generalize Fintype.card d * (Fintype.card d - 1) = n at h2 ⊢
+  omega
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper: the weights and the skip have `P + d²` entries. -/
+private theorem finrank_paramsSkip_lrg {A : Arch T d 1} :
+    Module.finrank ℝ (Params A dIn dOut × (Fin 1 → Matrix d d ℝ))
+      = Module.finrank ℝ (Params A dIn dOut) + Fintype.card d ^ 2 := by
+  rw [Module.finrank_prod, Module.finrank_pi_fintype, Module.finrank_matrix]
+  simp [sq]
+
+/-- Helper: the directions that are flat at every input of
+`learnedZeroDomain ∩ noKinkGateRMS θ` are among the directions of `dirLin_lrg`. -/
+private theorem flatSkipsOn_le_range_lrg
+    (θ : Params (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid) dIn dOut)
+    (hθ : OneBlockGenericReGLURMS θ) (hd : 2 ≤ Fintype.card d)
+    (R : Fin 1 → Matrix d d ℝ) (hR : IsUnit (R 0).det)
+    (hturn : TurnsActiveRowsGatedSkip θ (R 0))
+    (hw : ∃ v : d → ℝ, (∀ i, (v ᵥ* θ.read 0) (Sum.inl i) ≠ 0) ∧
+      LinearIndependent ℝ ![v ᵥ* R 0, gatedBlock relu ((θ.read 0).submatrix id Sum.inl)
+        ((θ.read 0).submatrix id Sum.inr) (θ.write 0) v]) :
+    flatSkipsOn (Arch.gated relu (rmsNorm 0) hid)
+        (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R)
+        (learnedZeroDomain (Arch.gated relu (rmsNorm 0) hid) θ R ∩ noKinkGateRMS θ)
+      ≤ LinearMap.range (dirLin_lrg θ R) := by
+  rintro ⟨η, ρ⟩ hη
+  obtain ⟨X₀, Y, c₀, c₁, α, β, hX₀, hY, rfl, hρ⟩ :=
+    flatSkipsOn_noKinkGate_le_reglu_learned_rmsNorm_zero θ hθ hd R hR hturn hw η ρ hη
+  have hΨ : (LinearMap.compLeft (antisymmetric d).subtype (Fin (1 + 1)))
+      ![⟨X₀, hX₀⟩, ⟨Y, hY⟩] = ![X₀, Y] := by
+    funext i
+    fin_cases i <;> rfl
+  refine ⟨((![⟨X₀, hX₀⟩, ⟨Y, hY⟩], ![c₀, c₁]), (α, β)), Prod.ext ?_ (funext fun ℓ => ?_)⟩
+  · show cobDirLin θ ((LinearMap.compLeft (antisymmetric d).subtype (Fin (1 + 1)))
+        ![⟨X₀, hX₀⟩, ⟨Y, hY⟩]) + scaleDir θ ![c₀, c₁]
+        + (rescaleDir θ α + rescaleDirGate 1 θ β)
+      = cobDir θ ![X₀, Y] + scaleDir θ ![c₀, c₁] + rescaleDir θ α + rescaleDirGate 1 θ β
+    rw [hΨ, cobDirLin_apply, ← add_assoc]
+  · obtain rfl := Subsingleton.elim ℓ 0
+    show skipDirLin_lrg R ((LinearMap.compLeft (antisymmetric d).subtype (Fin (1 + 1)))
+        ![⟨X₀, hX₀⟩, ⟨Y, hY⟩]) 0 + scaleSkipLin_lrg R ![c₀, c₁] 0 + 0 = ρ 0
+    rw [hΨ, hρ]
+    show -(X₀ * R 0) + R 0 * Y + (c₁ - c₀) • R 0 + 0 = _
+    rw [Matrix.mul_add, Matrix.add_mul, Matrix.mul_smul, Matrix.smul_mul, Matrix.mul_one,
+      Matrix.one_mul, sub_smul, add_zero]
+    abel
+
 /-- **Theorem B.1 (iii) of the skips paper for `ε = 0`, "with equality", for one ReGLU block with
 a full learned skip, at one parameter:** under the conditions of the proof,
 `funDimLearned = P + d² − (d(d−1) + 2) − 2 d_hidden`, with `P` the number of weights without the
@@ -660,7 +862,157 @@ theorem funDimLearned_reglu_oneBlock_rmsNorm_zero
         + ((Fintype.card d * (Fintype.card d - 1) + 2) + 2 * Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid) dIn dOut)
         + Fintype.card d ^ 2 := by
-  sorry
+  have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+  -- `≤`: the rotations and the scalings of `h_0` and `h_1` and the rescalings of the values and
+  -- of the gates are flat and independent (no value column and no gate column is zero)
+  have hv : ∀ ℓ i, (fun a => θ.read ℓ a (Sum.inr i)) ≠ 0 := by
+    intro ℓ i
+    obtain rfl := Subsingleton.elim ℓ 0
+    exact hθ.gated.value_ne_zero i
+  have hg : ∀ ℓ i, (fun a => θ.read ℓ a (Sum.inl i)) ≠ 0 := by
+    intro ℓ i
+    obtain rfl := Subsingleton.elim ℓ 0
+    exact hθ.gated.gate_ne_zero i
+  obtain ⟨V, hVle, -, hVdim⟩ := gate_part_ubr relu_homogeneous θ hv hg
+  have hle := funDimLearned_add_le_rmsNorm_zero'
+    (A := Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid) rfl (θ, R) hθ.gated.rank_E hR V hVle
+  rw [hVdim, Fin.sum_univ_one] at hle
+  -- `≥`: the flat directions lie in the directions flat on
+  -- `learnedZeroDomain ∩ noKinkGateRMS θ`, which are in the range of `dirLin_lrg`
+  have hflat := (flatSkips_le_flatSkipsOn (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid)
+    (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R)
+    (learnedZeroDomain (Arch.gated relu (rmsNorm 0) hid) θ R ∩ noKinkGateRMS θ)).trans
+    (flatSkipsOn_le_range_lrg θ hθ hd R hR hturn hw)
+  -- `fd + dim K = P + d²`
+  have h : funDimLearned (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid) (θ, R)
+      + Module.finrank ℝ (flatSkips (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid)
+        (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R))
+      = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid) dIn dOut
+        × (Fin 1 → Matrix d d ℝ)) :=
+    funDimSkips_add_finrank_flatSkips' _ _ (θ, R)
+  have hmono := Submodule.finrank_mono hflat
+  have hdim := (LinearMap.finrank_range_le (dirLin_lrg θ R)).trans_eq finrank_dom_lrg
+  have hP := finrank_paramsSkip_lrg
+    (A := Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid) (dIn := dIn) (dOut := dOut)
+  generalize Fintype.card d * (Fintype.card d - 1) = N at hle hdim ⊢
+  generalize Fintype.card d ^ 2 = Q at hle hP ⊢
+  omega
+
+/-! ### Helpers: differentiability at the inputs off the kinks (copies of the private `_lzf`
+helpers of `OneBlock/LearnedSkipRMSZeroRescale.lean`) -/
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (a copy of the private `differentiableAt_matMul_lzf`): the product of two
+matrix-valued maps that are differentiable at a point is differentiable there. -/
+private theorem differentiableAt_matMul_lrg {P : Type*} [NormedAddCommGroup P] [NormedSpace ℝ P]
+    {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    {f : P → Matrix m n ℝ} {g : P → Matrix n p ℝ} {y : P}
+    (hf : DifferentiableAt ℝ f y) (hg : DifferentiableAt ℝ g y) :
+    DifferentiableAt ℝ (fun y => f y * g y) y := by
+  let B : Matrix m n ℝ →ₗ[ℝ] Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ :=
+    LinearMap.mk₂ ℝ (fun a b => a * b) Matrix.add_mul (fun c a b => Matrix.smul_mul c a b)
+      Matrix.mul_add (fun c a b => Matrix.mul_smul a c b)
+  let B' : Matrix m n ℝ →L[ℝ] Matrix n p ℝ →L[ℝ] Matrix m p ℝ :=
+    LinearMap.toContinuousLinearMap
+      ((LinearMap.toContinuousLinearMap :
+        (Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ) ≃ₗ[ℝ] (Matrix n p ℝ →L[ℝ] Matrix m p ℝ)).toLinearMap ∘ₗ B)
+  have hB : (fun y => f y * g y) = fun y => B' (f y) (g y) := rfl
+  rw [hB]
+  exact (B'.differentiableAt.comp y hf).clm_apply hg
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dOut] in
+/-- Helper (a copy of the private `eval_eq_lzf`): the function of one block under pre-RMSNorm
+with the skip `S 0`, `F(x) = N_0(x E S + f(N_0(x E) W_read) W_write) D`. -/
+private theorem eval_eq_lrg {A : Arch T d 1} (hA : A.χ = rmsNorm 0)
+    (S : Fin 1 → Matrix d d ℝ) (θ : Params A dIn dOut) (x : Matrix T dIn ℝ) :
+    eval A S θ x = rmsNorm 0 (x * θ.E * S 0
+      + A.f 0 (rmsNorm 0 (x * θ.E) * θ.read 0) * θ.write 0) * θ.D := by
+  have h1 : (Fin.last 1 : Fin 2) = (0 : Fin 1).succ := rfl
+  rw [eval, h1, hidden_succ, Fin.castSucc_zero, hidden_zero, hA]
+
+omit [Nonempty T] [DecidableEq d] in
+/-- Helper (a copy of the private `differentiableAt_evalSkips_lzf`): at an input `x` at which no
+normalized row vanishes and `f` is differentiable at `N_0(x E) W_read`, the output with the full
+learned skip is a differentiable function of `(θ, R)`. -/
+private theorem differentiableAt_evalSkips_lrg {A : Arch T d 1}
+    (hA : A.χ = rmsNorm 0) (θ : Params A dIn dOut) (R : Fin 1 → Matrix d d ℝ)
+    (x : Matrix T dIn ℝ) (hx : x ∈ learnedZeroDomain A θ R)
+    (hfx : DifferentiableAt ℝ (A.f 0) (rmsNorm 0 (x * θ.E) * θ.read 0)) :
+    DifferentiableAt ℝ (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      evalSkips A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) p x) (θ, R) := by
+  have e : (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      evalSkips A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) p x)
+      = fun p => rmsNorm 0 (x * p.1.E * p.2 0
+          + A.f 0 (rmsNorm 0 (x * p.1.E) * p.1.read 0) * p.1.write 0) * p.1.D :=
+    funext fun p => eval_eq_lrg hA p.2 p.1 x
+  rw [e]
+  -- the weights and the skip are linear, hence differentiable, functions of `(θ, R)`
+  have hE : DifferentiableAt ℝ
+      (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) => p.1.E) (θ, R) :=
+    ((LinearMap.toContinuousLinearMap (Params.linE (A := A) (dIn := dIn) (dOut := dOut))).comp
+      (ContinuousLinearMap.fst ℝ _ (Fin 1 → Matrix d d ℝ))).differentiableAt
+  have hR : DifferentiableAt ℝ
+      (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) => p.1.read 0) (θ, R) :=
+    ((LinearMap.toContinuousLinearMap
+      (Params.linRead (A := A) (dIn := dIn) (dOut := dOut) 0)).comp
+      (ContinuousLinearMap.fst ℝ _ (Fin 1 → Matrix d d ℝ))).differentiableAt
+  have hW : DifferentiableAt ℝ
+      (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) => p.1.write 0) (θ, R) :=
+    ((LinearMap.toContinuousLinearMap
+      (Params.linWrite (A := A) (dIn := dIn) (dOut := dOut) 0)).comp
+      (ContinuousLinearMap.fst ℝ _ (Fin 1 → Matrix d d ℝ))).differentiableAt
+  have hD : DifferentiableAt ℝ
+      (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) => p.1.D) (θ, R) :=
+    ((LinearMap.toContinuousLinearMap (Params.linD (A := A) (dIn := dIn) (dOut := dOut))).comp
+      (ContinuousLinearMap.fst ℝ _ (Fin 1 → Matrix d d ℝ))).differentiableAt
+  have hS : DifferentiableAt ℝ
+      (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) => p.2 0) (θ, R) :=
+    ((ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : Fin 1 => Matrix d d ℝ) 0).comp
+      (ContinuousLinearMap.snd ℝ (Params A dIn dOut) _)).differentiableAt
+  -- `x E`, `N_0(x E)` (no row of `x E` is zero), `N_0(x E) W_read`, `f(…)`
+  have h1 : DifferentiableAt ℝ
+      (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) => x * p.1.E) (θ, R) :=
+    differentiableAt_matMul_lrg (differentiableAt_const x) hE
+  have h2 : DifferentiableAt ℝ
+      (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) => rmsNorm 0 (x * p.1.E)) (θ, R) :=
+    DifferentiableAt.comp (f := fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      x * p.1.E) (θ, R) (analyticAt_rmsNorm_zero (x * θ.E) hx.1).differentiableAt h1
+  have h3 : DifferentiableAt ℝ (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      rmsNorm 0 (x * p.1.E) * p.1.read 0) (θ, R) :=
+    differentiableAt_matMul_lrg h2 hR
+  have h4 : DifferentiableAt ℝ (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      A.f 0 (rmsNorm 0 (x * p.1.E) * p.1.read 0)) (θ, R) :=
+    DifferentiableAt.comp (f := fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      rmsNorm 0 (x * p.1.E) * p.1.read 0) (θ, R) hfx h3
+  -- `h_1 = x E S + f(…) W_write`, `N_0(h_1)` (no row of `h_1` is zero) and `N_0(h_1) D`
+  have h5 : DifferentiableAt ℝ (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      x * p.1.E * p.2 0 + A.f 0 (rmsNorm 0 (x * p.1.E) * p.1.read 0) * p.1.write 0) (θ, R) :=
+    (differentiableAt_matMul_lrg h1 hS).add (differentiableAt_matMul_lrg h4 hW)
+  have h6 : DifferentiableAt ℝ (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      rmsNorm 0 (x * p.1.E * p.2 0
+        + A.f 0 (rmsNorm 0 (x * p.1.E) * p.1.read 0) * p.1.write 0)) (θ, R) :=
+    DifferentiableAt.comp (f := fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      x * p.1.E * p.2 0 + A.f 0 (rmsNorm 0 (x * p.1.E) * p.1.read 0) * p.1.write 0) (θ, R)
+      (analyticAt_rmsNorm_zero _ hx.2).differentiableAt h5
+  exact differentiableAt_matMul_lrg h6 hD
+
+omit [Nonempty T] [DecidableEq d] in
+/-- Helper: at an input of `learnedZeroDomain ∩ noKinkGateRMS θ` the output is differentiable in
+the weights and the skip: no gate of the pre-activations `N_0(x E) W_read` is at its kink, as
+`N_0` scales the rows of `x E` by positive numbers. -/
+private theorem differentiableAt_noKinkGate_lrg
+    (θ : Params (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid) dIn dOut)
+    (R : Fin 1 → Matrix d d ℝ) (x : Matrix T dIn ℝ)
+    (hx : x ∈ learnedZeroDomain (Arch.gated relu (rmsNorm 0) hid) θ R ∩ noKinkGateRMS θ) :
+    DifferentiableAt ℝ (fun p : Params (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid) dIn
+        dOut × (Fin 1 → Matrix d d ℝ) =>
+      evalSkips (Arch.gated relu (rmsNorm 0) hid)
+        (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) p x) (θ, R) := by
+  have hP : ∀ t i, (rmsNorm 0 (x * θ.E) * θ.read 0) t (Sum.inl i) ≠ 0 := fun t i => by
+    rw [rmsNorm_mul_apply_lrg]
+    exact mul_ne_zero (inv_sqrt_pos_lrg (hx.1.1 t)).ne' (hx.2 t i)
+  exact differentiableAt_evalSkips_lrg rfl θ R x hx.1
+    (contDiffAt_f_lrg (d := d) _ hP).differentiableAt_one
 
 /-- **Theorem B.1 (iii) of the skips paper for `ε = 0`, "with equality", in the paper's own
 sense, for one ReGLU block with a full learned skip, at one parameter:** a finite batch of inputs
@@ -682,6 +1034,31 @@ theorem exists_jacobianRankSkips_reglu_oneBlock_rmsNorm_zero
         = Module.finrank ℝ
             (Params (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid) dIn dOut)
           + Fintype.card d ^ 2 := by
-  sorry
+  -- a batch of inputs of `U = learnedZeroDomain ∩ noKinkGateRMS θ`, where the output is
+  -- differentiable in the weights and the skip, with the rank `P + d² − dim K_U(θ, A)`
+  obtain ⟨n, X, hX, h⟩ := exists_jacobianRankSkips_add_finrank_flatSkipsOn
+    (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid)
+    (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R)
+    (learnedZeroDomain (Arch.gated relu (rmsNorm 0) hid) θ R ∩ noKinkGateRMS θ)
+    (fun x hx => differentiableAt_noKinkGate_lrg θ R x hx)
+  -- the sandwich: `dim K ≤ dim K_U ≤ d(d−1) + 2 + 2 d_hidden = dim K`
+  have hfd := funDimLearned_reglu_oneBlock_rmsNorm_zero θ hθ hd R hR hturn hw
+  have h' : funDimLearned (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid) (θ, R)
+      + Module.finrank ℝ (flatSkips (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid)
+        (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R))
+      = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid) dIn dOut
+        × (Fin 1 → Matrix d d ℝ)) :=
+    funDimSkips_add_finrank_flatSkips' _ _ (θ, R)
+  have h1 := Submodule.finrank_mono (flatSkips_le_flatSkipsOn
+    (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid)
+    (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R)
+    (learnedZeroDomain (Arch.gated relu (rmsNorm 0) hid) θ R ∩ noKinkGateRMS θ))
+  have h2 := Submodule.finrank_mono (flatSkipsOn_le_range_lrg θ hθ hd R hR hturn hw)
+  have h3 := (LinearMap.finrank_range_le (dirLin_lrg θ R)).trans_eq finrank_dom_lrg
+  have hP := finrank_paramsSkip_lrg
+    (A := Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid) (dIn := dIn) (dOut := dOut)
+  refine ⟨n, X, hX, ?_⟩
+  generalize Fintype.card d * (Fintype.card d - 1) = N at hfd h3 ⊢
+  omega
 
 end Skips
