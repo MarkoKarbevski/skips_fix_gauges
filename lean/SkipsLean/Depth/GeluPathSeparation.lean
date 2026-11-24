@@ -385,6 +385,61 @@ theorem gelu_path_zero (ω : ι → ℂ) (hω : ∀ i, |(ω i).im| < (ω i).re) 
     rwa [Complex.ofReal_zero] at h
   exact eq_zero_of_eventually_gps hg (hmer.eventually_eq_zero hΘ)
 
+omit [Fintype ι] in
+/-- `X(t)` is the sum of its parts on `A`, on `{j}` and on the other units. -/
+private lemma geluGap_split_gps (c₀ : ℝ) (ω : ι → ℂ) (A : Set ι) {j : ι} (hjA : j ∉ A)
+    (t : ℝ) :
+    geluGap c₀ ω t = gapPart_gps c₀ ω A t + gapPart_gps c₀ ω {j} t
+      + gapPart_gps c₀ ω {i | i ∉ A ∧ i ≠ j} t := by
+  classical
+  ext i
+  all_goals
+    by_cases hiA : i ∈ A
+    · have hij : i ≠ j := fun h => hjA (h ▸ hiA)
+      simp [gapPart_gps, hiA, hij]
+    · by_cases hij : i = j
+      · subst hij
+        simp [gapPart_gps, hiA]
+      · simp [gapPart_gps, hiA, hij]
+
+omit [Fintype ι] in
+/-- The part of `X(t)` on the unit `j` is `x_j(t) (e_j, 0) + y_j(t) (0, e_j)`. -/
+private lemma gapPart_single_gps [DecidableEq ι] (c₀ : ℝ) (ω : ι → ℂ) (j : ι) (t : ℝ) :
+    gapPart_gps c₀ ω {j} t
+      = (geluGap c₀ ω t).1 j • ((Pi.single j 1 : ι → ℂ), (0 : ι → ℂ))
+        + (geluGap c₀ ω t).2 j • ((0 : ι → ℂ), (Pi.single j 1 : ι → ℂ)) := by
+  ext i
+  all_goals
+    by_cases hij : i = j
+    · subst hij
+      simp [gapPart_gps]
+    · simp [gapPart_gps, hij]
+
+/-- Step 1, the arithmetic: the bound of the estimate is at most `K t² e^{−(ρ_j + γ) u/2}`. -/
+private lemma step1_arith_gps {M r C t nA nj nC Ej Em Eg : ℝ} (hM : 0 ≤ M) (hr : 0 < r)
+    (hC : 0 ≤ C) (ht : 1 ≤ t) (hEj : 0 ≤ Ej) (hEg : 0 ≤ Eg)
+    (hjm : Ej * Em ≤ Eg) (hnC : nC ≤ C * t * Eg) (hj : nj ≤ C * t * Ej)
+    (hj' : nj ≤ C * t * Em) (hA : nA ≤ C * t * Em) (hnj : 0 ≤ nj) (hnA : 0 ≤ nA) :
+    16 * M * (nC / r + nj / r * (nA / r + nj / r))
+      ≤ 16 * M / r * (C + 2 * C ^ 2 / r) * t ^ 2 * Eg := by
+  have htt : t ≤ t ^ 2 := by nlinarith
+  have hCt : 0 ≤ C * t := mul_nonneg hC (by linarith)
+  -- `‖X_C‖ ≤ C t² E_{ρ_j+γ}`
+  have hnC' : nC ≤ C * t ^ 2 * Eg :=
+    hnC.trans (mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left htt hC) hEg)
+  -- `‖X_j‖ (‖X_A‖ + ‖X_j‖) ≤ 2 C² t² E_{ρ_j} E_{ρ_m} ≤ 2 C² t² E_{ρ_j+γ}`
+  have hprod : nj * (nA + nj) ≤ 2 * C ^ 2 * t ^ 2 * Eg :=
+    calc nj * (nA + nj) ≤ (C * t * Ej) * (C * t * Em + C * t * Em) :=
+          mul_le_mul hj (add_le_add hA hj') (add_nonneg hnA hnj) (mul_nonneg hCt hEj)
+      _ = 2 * C ^ 2 * t ^ 2 * (Ej * Em) := by ring
+      _ ≤ 2 * C ^ 2 * t ^ 2 * Eg := mul_le_mul_of_nonneg_left hjm (by positivity)
+  calc 16 * M * (nC / r + nj / r * (nA / r + nj / r))
+      = 16 * M / r * (nC + nj * (nA + nj) / r) := by ring
+    _ ≤ 16 * M / r * (C * t ^ 2 * Eg + 2 * C ^ 2 * t ^ 2 * Eg / r) :=
+        mul_le_mul_of_nonneg_left (add_le_add hnC' (div_le_div_of_nonneg_right hprod hr.le))
+          (div_nonneg (by linarith) hr.le)
+    _ = 16 * M / r * (C + 2 * C ^ 2 / r) * t ^ 2 * Eg := by ring
+
 /-- **Lemma D.19, Steps 2 and 4 (analytic part), (50):** let `Ψ` be as in `gelu_path_zero`, with
 `c₀ ≠ 0`. Let `A` be a set of hidden units such that `Ψ(s, x) = 0` for `s ∈ (0, 1]` and every `x`
 in the polydisc whose entries outside `A` vanish, and let the unit `j ∉ A` have a smaller rate
