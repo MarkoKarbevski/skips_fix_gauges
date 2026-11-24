@@ -133,3 +133,11 @@ import SkipsLean
 #print axioms Skips.ae_funDim_gelu_oneBlock_residual_eq_add
 #print axioms Skips.ae_funDim_swiglu_oneBlock_residual_eq_add
 #print axioms Skips.ae_funDim_geglu_oneBlock_residual_eq_add
+-- Dimension paper, Appendix D, case (n): the network after a hidden state, the claim, the rank
+#print axioms Skips.suffix_hidden
+#print axioms Skips.eval_eq_suffix_zero
+#print axioms Skips.claim_last
+#print axioms Skips.exists_open_dense_injective_fderiv_suffix
+#print axioms Skips.suffixFlat_of_flat_at_write
+#print axioms Skips.flat_le_range_cobDir_of_claim
+#print axioms Skips.funDim_of_claim

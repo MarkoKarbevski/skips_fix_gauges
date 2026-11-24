@@ -34,3 +34,4 @@ import SkipsLean.Activations.ReLU
 import SkipsLean.OneBlock.UnitsReLU
 import SkipsLean.OneBlock.UnitsReGLU
 import SkipsLean.OneBlock.Residual
+import SkipsLean.Depth.Suffix
