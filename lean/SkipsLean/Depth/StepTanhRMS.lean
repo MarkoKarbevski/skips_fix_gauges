@@ -36,12 +36,71 @@ variable {σ σ' : ℝ → ℝ} {ε : ℝ}
 noncomputable def tangentRMS (Z : Matrix d d ℝ) (n : Matrix T d ℝ) : Matrix T d ℝ :=
   Matrix.of fun t => (n * Z) t - (((n * Z) t ⬝ᵥ n t) / (Fintype.card d : ℝ)) • n t
 
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: a row of `rmsNorm ε h * Z` is `s⁻¹ • (h * Z) t`. -/
+private theorem rmsNorm_mul_row (Z : Matrix d d ℝ) (h : Matrix T d ℝ) (t : T) :
+    (rmsNorm ε h * Z) t
+      = (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε))⁻¹ • (h * Z) t := by
+  rw [Matrix.mul_apply_eq_vecMul, Matrix.mul_apply_eq_vecMul]
+  exact Matrix.smul_vecMul (R := ℝ) _ (h t) Z
+
 omit [DecidableEq d] in
 /-- **Equation (14):** for `ε > 0`, `𝐃N_ε(h)(h Z) = n Z - ⟨n Z, n⟩ n / d` at `n = N_ε(h)`. -/
 theorem fderiv_rmsNorm_mul (hε : 0 < ε) (Z : Matrix d d ℝ) (h : Matrix T d ℝ) :
     fderiv ℝ (rmsNorm ε : Matrix T d ℝ → Matrix T d ℝ) h (h * Z)
       = tangentRMS Z (rmsNorm ε h) := by
-  sorry
+  classical
+  obtain ⟨v, hv⟩ : ∃ v, v = h * Z := ⟨_, rfl⟩
+  rw [← hv]
+  -- the derivative of `τ ↦ N_ε(h + τ v)` at `0` is `𝐃N_ε(h) v` ...
+  have hl : HasDerivAt (fun τ : ℝ => h + τ • v) v 0 := by
+    have h1 := ((hasDerivAt_id (0 : ℝ)).smul_const v).const_add h
+    rw [one_smul] at h1
+    exact h1
+  have hline : HasDerivAt (fun τ : ℝ => rmsNorm ε (h + τ • v))
+      (fderiv ℝ (rmsNorm ε : Matrix T d ℝ → Matrix T d ℝ) h v) 0 := by
+    have hc := (differentiable_rmsNorm (T := T) (d := d) hε h).hasFDerivAt.comp_hasDerivAt_of_eq
+      (0 : ℝ) hl (by rw [zero_smul, add_zero])
+    exact hc
+  -- ... and, entry by entry, `n Z - ⟨n Z, n⟩ n / d`
+  refine hline.unique (hasDerivAt_pi.2 fun t => hasDerivAt_pi.2 fun j => ?_)
+  -- the radicand `q(τ) = ‖h_t + τ v_t‖² / d + ε` along the line
+  have hx : ∀ i, HasDerivAt (fun τ : ℝ => h t i + τ * v t i) (v t i) 0 := fun i => by
+    have h1 := ((hasDerivAt_id (0 : ℝ)).mul_const (v t i)).const_add (h t i)
+    rw [one_mul] at h1
+    exact h1
+  have hq := ((HasDerivAt.fun_sum (u := Finset.univ) fun i _ => (hx i).mul (hx i)).div_const
+    (Fintype.card d : ℝ)).add_const ε
+  have hsum : (∑ i, (h t i + 0 * v t i) * (h t i + 0 * v t i)) = h t ⬝ᵥ h t := by
+    simp only [zero_mul, add_zero, dotProduct]
+  have hq0 : 0 < (∑ i, (h t i + 0 * v t i) * (h t i + 0 * v t i)) / (Fintype.card d : ℝ) + ε := by
+    rw [hsum]
+    have : 0 ≤ (h t ⬝ᵥ h t) / (Fintype.card d : ℝ) :=
+      div_nonneg (Finset.sum_nonneg fun i _ => mul_self_nonneg _) (Nat.cast_nonneg _)
+    linarith
+  have hm := ((hq.sqrt hq0.ne').inv (Real.sqrt_pos.2 hq0).ne').mul (hx j)
+  have hm' : HasDerivAt (fun τ : ℝ => (Real.sqrt ((∑ i, (h t i + τ * v t i) * (h t i + τ * v t i))
+          / (Fintype.card d : ℝ) + ε))⁻¹ * (h t j + τ * v t j)) _ 0 := hm
+  refine hm'.congr_deriv ?_
+  -- the algebra of equation (14), with `s = √(‖h_t‖² / d + ε)`
+  obtain ⟨s, hs⟩ : ∃ s, s = Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε) := ⟨_, rfl⟩
+  have hs0 : 0 < s := by
+    rw [hs]
+    exact Real.sqrt_pos.2 (by rw [hsum] at hq0; exact hq0)
+  have hrow : (rmsNorm ε h * Z) t = s⁻¹ • v t := by rw [hs, hv]; exact rmsNorm_mul_row Z h t
+  have hnt : rmsNorm ε h t = s⁻¹ • h t := by rw [hs]; rfl
+  have hsum' : ∑ i, (v t i * (h t i + 0 * v t i) + (h t i + 0 * v t i) * v t i)
+      = 2 * (v t ⬝ᵥ h t) := by
+    simp only [zero_mul, add_zero, dotProduct, Finset.mul_sum]
+    exact Finset.sum_congr rfl fun i _ => by ring
+  simp only [Pi.mul_apply, Pi.inv_apply]
+  rw [hsum, hsum', ← hs, zero_mul, add_zero]
+  show _ = (rmsNorm ε h * Z) t j - ((rmsNorm ε h * Z) t ⬝ᵥ rmsNorm ε h t) / (Fintype.card d : ℝ)
+      * rmsNorm ε h t j
+  rw [hrow, hnt, smul_dotProduct, dotProduct_smul, Pi.smul_apply, Pi.smul_apply, smul_eq_mul,
+    smul_eq_mul, smul_eq_mul, smul_eq_mul]
+  field_simp
+  ring
 
 /-- **The identity for one block, case (+)** (equation (22), by the chain rule and (14)): for an
 MLP block whose activation `σ` has the derivative `σ'`, the identity (16) for the hidden state
