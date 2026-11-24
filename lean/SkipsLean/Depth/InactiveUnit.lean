@@ -118,6 +118,7 @@ private theorem hasDerivAt_line_iu {A : Arch T d L} (θ η : Params A dIn dOut) 
   rw [one_smul] at h
   exact h
 
+omit [DecidableEq d] in
 /-- **Proof of Proposition E.1, "The columns of the Jacobian that belong to the weights of the
 inactive hidden unit vanish":** if `σ` vanishes on `z ≤ 0` and hidden unit `j` of block `m` is
 inactive at every input at all parameters near `θ`, then every direction that moves only the read

@@ -171,3 +171,7 @@ import SkipsLean.Depth.InactiveGate
 import SkipsLean.Depth.InactiveUnitRelu
 import SkipsLean.Depth.InactiveGateOpen
 import SkipsLean.Depth.InactiveGateReGLU
+import SkipsLean.Literature.InvarianceOfDomain
+import SkipsLean.Residual.Folding
+import SkipsLean.Residual.DeadUnits
+import SkipsLean.Residual.FoldingOpen

@@ -152,6 +152,7 @@ private theorem hasDerivAt_line_ig {E : Type*} [NormedAddCommGroup E] [NormedSpa
   rw [one_smul] at h
   exact h
 
+omit [DecidableEq d] in
 /-- **Proof of Proposition E.1 for gated blocks, "The columns of the Jacobian that belong to the
 weights of the inactive hidden unit vanish":** if the gate activation vanishes on `z ≤ 0` and the
 gate of hidden unit `j` of block `m` is closed at every input at all parameters near `θ`, then

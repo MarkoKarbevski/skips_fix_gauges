@@ -353,6 +353,7 @@ private theorem Z_nonpos_of_sphere_igo (ℓ : Fin L) (j : hid ℓ.succ)
     rw [he, Z_smul_igo ℓ j θ _ (norm_nonneg u)]
     exact mul_nonpos_of_nonneg_of_nonpos (sq_nonneg _) (h _ hmem)
 
+omit [Fintype T] in
 /-- **Proof of Proposition E.1, ReGLU:** for `d ≥ 1` and at least `d` hidden units in block
 `ℓ.castSucc`, there is a nonempty open set of weights on which the gate of hidden unit `j` of the
 next block `ℓ.succ` is closed at every input. -/

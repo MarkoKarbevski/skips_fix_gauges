@@ -922,3 +922,17 @@ import SkipsLean
 #print axioms Skips.ae_exists_cob_rescale_of_eval_eq_swiglu_residual_rmsNorm
 #print axioms Skips.ae_exists_cob_rescale_of_eval_eq_geglu_residual
 #print axioms Skips.ae_exists_cob_rescale_of_eval_eq_geglu_residual_rmsNorm
+#print axioms Skips.unitDir_mem_flat
+#print axioms Skips.funDim_add_le_of_eventually_unitInactive
+#print axioms Skips.unitDirGated_mem_flat
+#print axioms Skips.funDim_add_le_of_eventually_gateInactive
+#print axioms Skips.isOpen_negReadSet
+#print axioms Skips.nonempty_negReadSet
+#print axioms Skips.unitInactive_of_mem_negReadSet
+#print axioms Skips.exists_isOpen_unitInactive_relu
+#print axioms Skips.exists_isOpen_unitInactive_reluSq
+#print axioms Skips.not_ae_funDim_add_eq_relu_skipless
+#print axioms Skips.not_ae_funDim_add_eq_reluSq_skipless
+#print axioms Skips.exists_isOpen_gateInactive_reglu
+#print axioms Skips.exists_isOpen_gateInactive_reglu_bound
+#print axioms Skips.not_ae_funDim_add_eq_reglu_skipless
