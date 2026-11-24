@@ -961,3 +961,4 @@ import SkipsLean
 #print axioms Skips.eval_scale_last_rmsNorm_zero
 #print axioms Skips.hasDerivAt_eval_cobAt_exp_of_rowHomogeneous
 #print axioms Skips.hasDerivAt_eval_scale_last_exp
+#print axioms Skips.eventually_finrank_le_of_small_parameter_of_contDiffOn
