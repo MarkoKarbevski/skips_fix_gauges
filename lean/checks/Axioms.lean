@@ -1501,3 +1501,17 @@ import SkipsLean
 #print axioms Skips.gateLinear_gateQuadratic_of_gatedBlockB_absorb
 #print axioms Skips.vanillaBlockB_reluSq_eq_reluSqCell
 #print axioms Skips.reluSqCell_eq_of_vanillaBlockB_absorb
+#print axioms Skips.exists_rank_add_card_le_of_gateLinear_gateQuadratic
+#print axioms Skips.exists_rank_add_card_le_of_gatedBlockB_absorb
+#print axioms Skips.exists_rank_add_card_le_of_reglu_absorbB
+#print axioms Skips.exists_rank_add_card_le_of_swiglu_absorbB
+#print axioms Skips.exists_rank_add_card_le_of_geglu_absorbB
+#print axioms Skips.ae_not_gatedBlockB_absorb_same_width
+#print axioms Skips.ae_not_reglu_absorbB_same_width
+#print axioms Skips.ae_not_swiglu_absorbB_same_width
+#print axioms Skips.ae_not_geglu_absorbB_same_width
+#print axioms Skips.ae_not_gatedBlockB_absorb_of_card_lt
+#print axioms Skips.ae_gatedBlockB_absorb_add_card
+#print axioms Skips.ae_reglu_absorbB_add_card
+#print axioms Skips.ae_swiglu_absorbB_add_card
+#print axioms Skips.ae_geglu_absorbB_add_card
