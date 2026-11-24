@@ -227,6 +227,48 @@ theorem exists_vanillaBlockB_add_linear [DecidableEq p] {σ : ℝ → ℝ}
   have h := exists_vanillaBlockB_add_mul_bc hσ Wr b Ww c 1 M
   rwa [Matrix.one_mul] at h
 
+/-- A copy of the private `exists_isUnit_det_submatrix` of `Absorb/Block.lean`: a matrix with `d`
+rows and rank `d` has `d` columns that form an invertible matrix. -/
+private theorem exists_isUnit_det_submatrix_bc [DecidableEq p] (Wr : Matrix p m ℝ)
+    (hr : Wr.rank = Fintype.card p) : ∃ e : p → m, IsUnit (Wr.submatrix id e).det := by
+  obtain ⟨κ, a, -, hsp, hli⟩ := exists_linearIndependent' ℝ (fun j => Wr.col j)
+  have : Finite κ := hli.finite
+  have := Fintype.ofFinite κ
+  -- the family has `finrank (span of the columns) = rank = card p` members
+  have hcard : Fintype.card κ = Fintype.card p := by
+    have h := finrank_span_eq_card hli
+    rw [hsp] at h
+    have h2 := Wr.rank_eq_finrank_span_cols
+    have h3 : Set.range (fun j => Wr.col j) = Set.range Wr.col := rfl
+    rw [h3, ← h2] at h
+    omega
+  let f : p ≃ κ := Fintype.equivOfCardEq hcard.symm
+  refine ⟨a ∘ f, ?_⟩
+  have hK : LinearIndependent ℝ (Wr.submatrix id (a ∘ f)).col := hli.comp f f.injective
+  exact (Matrix.isUnit_iff_isUnit_det _).1 (Matrix.linearIndependent_col_iff_isUnit.1 hK)
+
+/-- If the read has rank `d`, its columns `e k` form an invertible `K`, and `M = K N` with
+`N = K⁻¹ M`: so `x M = ∑_k (x W_read)_{e k} N_k`. -/
+private theorem exists_factor_of_rank_bc [DecidableEq p] (Wr : Matrix p m ℝ)
+    (hr : Wr.rank = Fintype.card p) (M : Matrix p q ℝ) :
+    ∃ (e : p → m) (N : Matrix p q ℝ),
+      ∀ (x : p → ℝ) (o : q), (x ᵥ* M) o = ∑ k, (x ᵥ* Wr) (e k) * N k o := by
+  obtain ⟨e, he⟩ := exists_isUnit_det_submatrix_bc Wr hr
+  refine ⟨e, (Wr.submatrix id e)⁻¹ * M, fun x o => ?_⟩
+  have hKN : M = Wr.submatrix id e * ((Wr.submatrix id e)⁻¹ * M) := by
+    rw [← Matrix.mul_assoc, Matrix.mul_nonsing_inv _ he, Matrix.one_mul]
+  conv_lhs => rw [hKN, ← Matrix.vecMul_vecMul, vecMul_apply_bc]
+  rfl
+
+/-- The extra write `∑_k [e k = j] N_k` of the old unit `j` adds `∑_k f_{e k} N_k`. -/
+private theorem sum_mul_sum_ite_bc [DecidableEq m] (e : p → m) (N : Matrix p q ℝ) (f : m → ℝ)
+    (o : q) :
+    ∑ j, f j * (∑ k, if e k = j then N k o else 0) = ∑ k, f (e k) * N k o := by
+  simp only [Finset.mul_sum]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun k _ => ?_
+  simp only [mul_ite, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, ↓reduceIte]
+
 /-- **The upper bound of Theorem C.2 (ii) (ReLU and GELU blocks, `d` more units):** if
 `σ(z) − σ(−z) = z` and the read has rank `d` (the number of its rows), the block with biases
 absorbs `x M` with `d` more hidden units. -/
@@ -235,7 +277,35 @@ theorem exists_vanillaBlockB_add_linear_of_rank [DecidableEq p] {σ : ℝ → �
     (c : q → ℝ) (hr : Wr.rank = Fintype.card p) (M : Matrix p q ℝ) :
     ∃ (Wr' : Matrix p (m ⊕ p) ℝ) (b' : m ⊕ p → ℝ) (Ww' : Matrix (m ⊕ p) q ℝ) (c' : q → ℝ),
       ∀ x : p → ℝ, x ᵥ* M + vanillaBlockB σ Wr b Ww c x = vanillaBlockB σ Wr' b' Ww' c' x := by
-  sorry
+  classical
+  -- `x M = ∑_k (x W_read)_{e k} N_k`
+  obtain ⟨e, N, hN⟩ := exists_factor_of_rank_bc Wr hr M
+  -- old unit `e k` gets the write `+ N_k`; new unit `k` reads `−w_{e k}`, bias `−b_{e k}`,
+  -- write `−N_k`; the output bias loses `∑_k b_{e k} N_k`
+  obtain ⟨D, hD⟩ : ∃ D : Matrix m q ℝ,
+      D = Matrix.of fun j o => ∑ k, if e k = j then N k o else 0 := ⟨_, rfl⟩
+  obtain ⟨Wn, hWn⟩ : ∃ Wn : Matrix p p ℝ, Wn = Matrix.of fun i k => -Wr i (e k) := ⟨_, rfl⟩
+  refine ⟨Matrix.of fun i s => Sum.elim (Wr i) (Wn i) s, Sum.elim b fun k => -b (e k),
+    Matrix.of fun s o => Sum.elim (fun j => Ww j o + D j o) (fun l => (-N) l o) s,
+    fun o => c o - ∑ k, b (e k) * N k o, fun x => ?_⟩
+  rw [vanillaBlockB_sum_bc σ Wr b Ww c Wn _ D (-N) _ x]
+  have hyr : ∀ k, (x ᵥ* Wn) k = -(x ᵥ* Wr) (e k) := fun k => by
+    simp only [hWn, vecMul, dotProduct, Matrix.of_apply, mul_neg, Finset.sum_neg_distrib]
+  funext o
+  simp only [Pi.add_apply, Pi.sub_apply]
+  rw [hN, vecMul_apply_bc _ D, hD]
+  simp only [Matrix.of_apply]
+  rw [sum_mul_sum_ite_bc e N (fun j => σ ((x ᵥ* Wr) j + b j)) o, vecMul_apply_bc]
+  simp only [hyr, Matrix.neg_apply]
+  -- the pair adds `(σ z_k − σ (−z_k)) N_k = z_k N_k`, with `z_k = (x W_read)_{e k} + b_{e k}`
+  have h3 : ∑ k, σ ((x ᵥ* Wr) (e k) + b (e k)) * N k o
+      + ∑ k, σ (-(x ᵥ* Wr) (e k) + -b (e k)) * -N k o
+      = ∑ k, (x ᵥ* Wr) (e k) * N k o + ∑ k, b (e k) * N k o := by
+    rw [← Finset.sum_add_distrib, ← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    rw [← neg_add]
+    linear_combination (N k o) * hσ ((x ᵥ* Wr) (e k) + b (e k))
+  linear_combination -h3
 
 /-- `relu² z + relu² (−z) = z²`. -/
 private theorem reluSq_add_reluSq_neg_bc (z : ℝ) : reluSq z + reluSq (-z) = z ^ 2 := by
@@ -246,7 +316,8 @@ private theorem reluSq_add_reluSq_neg_bc (z : ℝ) : reluSq z + reluSq (-z) = z 
 
 /-- **Four ReLU² units for a factorization `M = A B`:** units `(l, 0)`, `(l, 1)` read `± A_{:,l}`
 with biases `1`, `−1` and write `B_l / 4`; units `(l, 2)`, `(l, 3)` read `± A_{:,l}` with biases
-`−1`, `1` and write `−B_l / 4`; with `y = (x A)_l` they add `((y + 1)² − (y − 1)²)/4 B_l = y B_l`. -/
+`−1`, `1` and write `−B_l / 4`; with `y = (x A)_l` they add
+`((y + 1)² − (y − 1)²)/4 B_l = y B_l`. -/
 private theorem exists_vanillaBlockB_add_mul_reluSq_bc {k : Type*} [Fintype k]
     (Wr : Matrix p m ℝ) (b : m → ℝ) (Ww : Matrix m q ℝ) (c : q → ℝ) (A : Matrix p k ℝ)
     (B : Matrix k q ℝ) :
@@ -310,7 +381,67 @@ theorem exists_vanillaBlockB_add_linear_reluSq_of_rank [DecidableEq p] (Wr : Mat
       (Ww' : Matrix (m ⊕ (p × Fin 3)) q ℝ) (c' : q → ℝ),
       ∀ x : p → ℝ,
         x ᵥ* M + vanillaBlockB reluSq Wr b Ww c x = vanillaBlockB reluSq Wr' b' Ww' c' x := by
-  sorry
+  classical
+  -- `x M = ∑_k (x W_read)_{e k} N_k`
+  obtain ⟨e, N, hN⟩ := exists_factor_of_rank_bc Wr hr M
+  -- old unit `e k` gets the write `+ N_k`; unit `(k, 0)` reads `−w_{e k}` with bias `−b_{e k}`
+  -- and writes `N_k`; units `(k, 1)`, `(k, 2)` read `± w_{e k}` with biases `±(b_{e k} − 1/2)`
+  -- and write `−N_k`; the output bias loses `∑_k (b_{e k} − 1/4) N_k`
+  obtain ⟨D, hD⟩ : ∃ D : Matrix m q ℝ,
+      D = Matrix.of fun j o => ∑ k, if e k = j then N k o else 0 := ⟨_, rfl⟩
+  obtain ⟨Wn, hWn⟩ : ∃ Wn : Matrix p (p × Fin 3) ℝ,
+      Wn = Matrix.of fun i s => ![-1, 1, -1] s.2 * Wr i (e s.1) := ⟨_, rfl⟩
+  obtain ⟨bn, hbn⟩ : ∃ bn : p × Fin 3 → ℝ,
+      bn = fun s => ![-b (e s.1), b (e s.1) - 1 / 2, -(b (e s.1) - 1 / 2)] s.2 := ⟨_, rfl⟩
+  obtain ⟨Wwn, hWwn⟩ : ∃ Wwn : Matrix (p × Fin 3) q ℝ,
+      Wwn = Matrix.of fun s o => ![1, -1, -1] s.2 * N s.1 o := ⟨_, rfl⟩
+  refine ⟨Matrix.of fun i s => Sum.elim (Wr i) (Wn i) s, Sum.elim b bn,
+    Matrix.of fun s o => Sum.elim (fun j => Ww j o + D j o) (fun l => Wwn l o) s,
+    fun o => c o - ∑ k, (b (e k) - 1 / 4) * N k o, fun x => ?_⟩
+  rw [vanillaBlockB_sum_bc reluSq Wr b Ww c Wn bn D Wwn _ x]
+  funext o
+  simp only [Pi.add_apply, Pi.sub_apply]
+  rw [hN, vecMul_apply_bc _ D, hD]
+  simp only [Matrix.of_apply]
+  rw [sum_mul_sum_ite_bc e N (fun j => reluSq ((x ᵥ* Wr) j + b j)) o, vecMul_apply_bc,
+    Fintype.sum_prod_type]
+  -- the three new units of `k`, with `z = (x W_read)_{e k} + b_{e k}`
+  have hk : ∀ k, ∑ t : Fin 3, reluSq ((x ᵥ* Wn) (k, t) + bn (k, t)) * Wwn (k, t) o
+      = reluSq (-((x ᵥ* Wr) (e k) + b (e k))) * N k o
+        - reluSq ((x ᵥ* Wr) (e k) + b (e k) - 1 / 2) * N k o
+        - reluSq (-((x ᵥ* Wr) (e k) + b (e k) - 1 / 2)) * N k o := fun k => by
+    have hy : ∀ t : Fin 3, (x ᵥ* Wn) (k, t) = ![-1, 1, -1] t * (x ᵥ* Wr) (e k) := fun t => by
+      simp only [hWn, vecMul, dotProduct, Matrix.of_apply, Finset.mul_sum]
+      exact Finset.sum_congr rfl fun i _ => by ring
+    have e0 : (x ᵥ* Wn) (k, 0) + bn (k, 0) = -((x ᵥ* Wr) (e k) + b (e k)) := by
+      rw [hy, hbn]; simp; ring
+    have e1 : (x ᵥ* Wn) (k, 1) + bn (k, 1) = (x ᵥ* Wr) (e k) + b (e k) - 1 / 2 := by
+      rw [hy, hbn]; simp; ring
+    have e2 : (x ᵥ* Wn) (k, 2) + bn (k, 2) = -((x ᵥ* Wr) (e k) + b (e k) - 1 / 2) := by
+      rw [hy, hbn]; simp; ring
+    have w0 : Wwn (k, 0) o = N k o := by rw [hWwn]; exact one_mul _
+    have w1 : Wwn (k, 1) o = -N k o := by rw [hWwn]; exact neg_one_mul _
+    have w2 : Wwn (k, 2) o = -N k o := by rw [hWwn]; exact neg_one_mul _
+    rw [Fin.sum_univ_three, e0, e1, e2, w0, w1, w2]
+    ring
+  simp only [hk]
+  -- per `k`: `(z² − (z − 1/2)²) N_k = (z − 1/4) N_k`
+  have h3 : ∀ k, reluSq ((x ᵥ* Wr) (e k) + b (e k)) * N k o
+      + (reluSq (-((x ᵥ* Wr) (e k) + b (e k))) * N k o
+        - reluSq ((x ᵥ* Wr) (e k) + b (e k) - 1 / 2) * N k o
+        - reluSq (-((x ᵥ* Wr) (e k) + b (e k) - 1 / 2)) * N k o)
+      = (x ᵥ* Wr) (e k) * N k o + (b (e k) - 1 / 4) * N k o := fun k => by
+    have h1 := reluSq_add_reluSq_neg_bc ((x ᵥ* Wr) (e k) + b (e k))
+    have h2 := reluSq_add_reluSq_neg_bc ((x ᵥ* Wr) (e k) + b (e k) - 1 / 2)
+    linear_combination (N k o) * h1 - (N k o) * h2
+  have hsum : ∑ k, reluSq ((x ᵥ* Wr) (e k) + b (e k)) * N k o
+      + ∑ k, (reluSq (-((x ᵥ* Wr) (e k) + b (e k))) * N k o
+        - reluSq ((x ᵥ* Wr) (e k) + b (e k) - 1 / 2) * N k o
+        - reluSq (-((x ᵥ* Wr) (e k) + b (e k) - 1 / 2)) * N k o)
+      = ∑ k, (x ᵥ* Wr) (e k) * N k o + ∑ k, (b (e k) - 1 / 4) * N k o := by
+    rw [← Finset.sum_add_distrib, ← Finset.sum_add_distrib]
+    exact Finset.sum_congr rfl fun k _ => h3 k
+  linear_combination -hsum
 
 /-! ### Theorem C.1 (i) and the upper bounds of Theorem C.2, by the names of the blocks -/
 
