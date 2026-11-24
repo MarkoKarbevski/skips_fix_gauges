@@ -338,6 +338,7 @@ private noncomputable def valueRescaleLin {χ : Matrix T d ℝ → Matrix T d �
       simp [rescaleDir, mul_assoc]
     · simp [rescaleDir]
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: if no value column of a read vanishes, `α ↦ rescaleDir θ α` is injective: the value
 column `e_i` moves by `-α_i e_i`. -/
 private theorem valueRescaleLin_injective {χ : Matrix T d ℝ → Matrix T d ℝ}
@@ -445,6 +446,7 @@ private noncomputable def mlpRescaleLin {χ : Matrix T d ℝ → Matrix T d ℝ}
       ring
     · simp [rescaleDirMlp]
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: if no column of a read vanishes, `α ↦ rescaleDirMlp k θ α` is injective: the read
 column `c_i` moves by `α_i c_i`. -/
 private theorem mlpRescaleLin_injective {χ : Matrix T d ℝ → Matrix T d ℝ} (k : ℕ)
@@ -562,6 +564,7 @@ private noncomputable def gateRescaleLin {χ : Matrix T d ℝ → Matrix T d ℝ
       ring
     · simp [rescaleDirGate]
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: if no value column and no gate column of a read vanishes,
 `(α, β) ↦ rescaleDir θ α + rescaleDirGate k θ β` is injective: the gate column `g_i` moves by
 `β_i g_i` and the value column `e_i` by `-α_i e_i`. -/
