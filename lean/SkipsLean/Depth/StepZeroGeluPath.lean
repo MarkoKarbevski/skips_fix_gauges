@@ -790,6 +790,347 @@ private theorem psi_zero_gzp [Nonempty T]
     (Filter.eventually_atTop.2 ⟨1, fun _ ht =>
       psi_path_gzp θ hθ k hκ hκ1 hhol Z η h16 ξ ξ' hξ hξ' hξξ' hP2 hd ht⟩)
 
+/-! ### At `t = 1`: the real objects -/
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: the cast of a product of real matrices is the product of the casts. -/
+private theorem map_mul_gzp {m n p : Type*} [Fintype n] (A : Matrix m n ℝ) (B : Matrix n p ℝ) :
+    (A * B).map (fun x : ℝ => (x : ℂ))
+      = A.map (fun x : ℝ => (x : ℂ)) * B.map (fun x : ℝ => (x : ℂ)) :=
+  Matrix.map_mul (f := Complex.ofRealHom)
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: `d > 0`, as `ξ ⬝ᵥ ξ = 1`. -/
+private theorem card_pos_gzp (ξ : d → ℝ) (hξ : ξ ⬝ᵥ ξ = 1) : 0 < Fintype.card d := by
+  by_contra h
+  have h0 : Fintype.card d = 0 := by omega
+  have : IsEmpty d := Fintype.card_eq_zero_iff.1 h0
+  simp [dotProduct] at hξ
+
+omit [Fintype T] [DecidableEq d] in
+/-- Step 6: `n(1) = n = √d ξ` at every token. -/
+private theorem pathMatrix_one_gzp (ξ ξ' : d → ℝ) :
+    pathMatrix (Matrix.of fun _ : T => ξ) (Matrix.of fun _ : T => ξ') ((1 : ℝ) : ℂ)
+      = (Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ).map (fun x : ℝ => (x : ℂ)) := by
+  ext τ i
+  rw [Complex.ofReal_one]
+  show pathRow ξ ξ' 1 i = (((Real.sqrt (Fintype.card d) • ξ) i : ℝ) : ℂ)
+  rw [pathRow_one]
+  rfl
+
+omit [Fintype T] [DecidableEq d] in
+/-- Step 6: the rows of `n W V = √d ξWV` do not vanish. -/
+private theorem rows_ne_zero_gzp {ι : Type*} [Fintype ι] (W : Matrix d ι ℝ) (V : Matrix ι d ℝ)
+    (ξ : d → ℝ) (hU : 0 < Real.sqrt ((ξ ᵥ* (W * V)) ⬝ᵥ (ξ ᵥ* (W * V))))
+    (hd : 0 < Fintype.card d) (τ : T) :
+    ((Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * W * V) τ ≠ 0 := by
+  intro h
+  have e : ((Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * W * V) τ
+      = Real.sqrt (Fintype.card d) • (ξ ᵥ* (W * V)) := by
+    rw [Matrix.mul_assoc, Matrix.mul_apply_eq_vecMul, ← smul_vecMul]
+    rfl
+  rw [e] at h
+  have hu : ξ ᵥ* (W * V) = 0 :=
+    (smul_eq_zero.1 h).resolve_left (Real.sqrt_pos.2 (by exact_mod_cast hd)).ne'
+  rw [hu] at hU
+  simp at hU
+
+omit [Fintype T] [DecidableEq d] in
+/-- Step 6: the rows of `n W V` (cast to `ℂ`) are in the cone. -/
+private theorem rows_mem_cone_gzp {ι : Type*} [Fintype ι] (W : Matrix d ι ℝ) (V : Matrix ι d ℝ)
+    (ξ : d → ℝ) {κ : ℝ} (hκ : 0 < κ) (hU : 0 < Real.sqrt ((ξ ᵥ* (W * V)) ⬝ᵥ (ξ ᵥ* (W * V))))
+    (hd : 0 < Fintype.card d) (τ : T) :
+    (((Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * W).map (fun x : ℝ => (x : ℂ))
+      * V.map (fun x : ℝ => (x : ℂ))) τ ∈ complexCone κ := by
+  rw [← map_mul_gzp]
+  exact ofReal_mem_complexCone hκ _ (rows_ne_zero_gzp W V ξ hU hd τ)
+
+/-- **Step 6, the identity at `t = s = 1`:** for `‖(x, y)‖ ≤ r`,
+`Ψ(1, (x, y)) = 𝓛(nW − (√d/2) x, 1 − y; ż(n))`, with the real `nW` and `ż(n)` cast to `ℂ`. -/
+private theorem psi_one_gzp
+    (θ : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut) (k : Fin L)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1) (hhol : HolomorphicOnCone geluC θ k.succ κ)
+    (Z : Matrix d d ℝ) (η : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut)
+    (ξ ξ' : d → ℝ) (hP2 : PathP2 (θ.read k) (θ.write k) κ ξ ξ') (hd : 0 < Fintype.card d)
+    (x : (hid k → ℂ) × (hid k → ℂ)) (hx : ‖x‖ ≤ rad_gzp (θ.read k) (θ.write k) ξ κ) :
+    psi_gzp θ k η Z ξ ξ' (((1 : ℝ) : ℂ), x)
+      = blockLHSC geluC θ k η
+        (((Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * θ.read k).map
+            (fun x : ℝ => (x : ℂ))
+          - ((Real.sqrt (Fintype.card d) / 2 : ℝ) : ℂ) • rowM_gzp T x.1)
+        (wpM_gzp T x.2)
+        ((tangentRMS Z (Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * θ.read k
+          + (Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * η.read k).map
+            (fun x : ℝ => (x : ℂ))) := by
+  have hcone : ∀ τ, (wM_gzp T (θ.toC.1 k) ξ ξ' (((1 : ℝ)⁻¹ : ℝ) : ℂ) x.1 * θ.toC.2.1 k) τ
+      ∈ complexCone κ := by
+    rw [inv_one]
+    exact cone_poly_gzp (θ.read k) (θ.write k) hκ hκ1 ξ ξ' hP2.2.1 zero_le_one le_rfl x hx
+  have h := psi_identity_gzp θ k hκ hκ1 hhol Z η ξ ξ' hd one_pos x.1 x.2 hcone
+  have e0 : ((1 : ℝ) : ℂ) ^ 2 = 1 := by simp
+  rw [smul_wM_gzp _ ξ ξ' one_pos, e0, one_smul, inv_one, pathMatrix_one_gzp, zdotC_ofReal] at h
+  refine h.trans ?_
+  congr 1
+  have hW : θ.toC.1 k = (θ.read k).map (fun x : ℝ => (x : ℂ)) := rfl
+  ext τ i
+  rw [hW, map_mul_gzp]
+  simp only [Matrix.of_apply, Matrix.sub_apply, Matrix.smul_apply, rowM_apply_gzp, smul_eq_mul]
+  push_cast
+  ring
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the real part of complex matrices, as a real continuous linear map. -/
+private noncomputable def reCLM_gzp (m n : Type*) [Fintype m] [Fintype n] :
+    Matrix m n ℂ →L[ℝ] Matrix m n ℝ :=
+  LinearMap.toContinuousLinearMap
+    { toFun := fun M => M.map Complex.re
+      map_add' := fun A B => by ext i j; simp
+      map_smul' := fun c A => by ext i j; simp [Complex.real_smul] }
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the real part of the cast is the matrix. -/
+private theorem reCLM_ofReal_gzp {m n : Type*} [Fintype m] [Fintype n] (M : Matrix m n ℝ) :
+    reCLM_gzp m n (M.map (fun x : ℝ => (x : ℂ))) = M := by
+  ext i j
+  simp [reCLM_gzp]
+
+omit [Fintype d] [DecidableEq d] in
+/-- Helper: `rowM_gzp` of `0`. -/
+private theorem rowM_zero_gzp (T' : Type*) {ι : Type*} :
+    rowM_gzp T' (0 : ι → ℂ) = 0 := rfl
+
+omit [Fintype d] [DecidableEq d] in
+/-- Helper: `rowM_gzp` of `c v`. -/
+private theorem rowM_smul_gzp (T' : Type*) {ι : Type*} (c : ℂ) (v : ι → ℂ) :
+    rowM_gzp T' (c • v) = c • rowM_gzp T' v := rfl
+
+/-- **Step 7, `𝓛'_j(1) = 0`:** if the derivative of `Ψ(1, ·)` at `0` along `(0, e_j)` vanishes,
+then `𝐃𝓑(nWV)(ż_j(n) a_j) = 0`. Near `0`, `Ψ(1, (0, σ e_j)) = 𝓛(nW, 1; ż) − σ 𝐃𝓑(nWV)((e_j ⊙ ż)V)`
+(the identity at `t = 1`, and `𝓛` affine in `w'`). -/
+private theorem unit_write_gzp
+    (θ : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut) (k : Fin L)
+    [DecidableEq (hid k)] {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
+    (hhol : HolomorphicOnCone geluC θ k.succ κ)
+    (Z : Matrix d d ℝ) (η : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut)
+    (ξ ξ' : d → ℝ) (hP2 : PathP2 (θ.read k) (θ.write k) κ ξ ξ') (hd : 0 < Fintype.card d)
+    (j : hid k)
+    (hu : fderiv ℂ (fun x : (hid k → ℂ) × (hid k → ℂ) => psi_gzp θ k η Z ξ ξ' (((1 : ℝ) : ℂ), x))
+      0 ((0 : hid k → ℂ), (Pi.single j 1 : hid k → ℂ)) = 0) :
+    fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.mlp gelu (rmsNorm 0) hid) 0 θ k.succ h')
+        ((Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * θ.read k * θ.write k)
+        (Matrix.of fun t =>
+          (tangentRMS Z (Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * θ.read k
+            + (Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * η.read k) t j
+            • θ.write k j) = 0 := by
+  have hU := sqrt_u_pos_gzp (θ.read k) (θ.write k) hκ ξ ξ' hP2.2.1
+  have hr := rad_pos_gzp (θ.read k) (θ.write k) hκ ξ ξ' hP2.2.1
+  have hrow := rows_ne_zero_gzp (T := T) (θ.read k) (θ.write k) ξ hU hd
+  have hone := psi_one_gzp θ k hκ hκ1 hhol Z η ξ ξ' hP2 hd
+  obtain ⟨n, hn⟩ : ∃ n : Matrix T d ℝ, n = Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ :=
+    ⟨_, rfl⟩
+  rw [← hn] at hone hrow ⊢
+  obtain ⟨zd, hzd⟩ : ∃ zd : Matrix T (hid k) ℝ, zd = tangentRMS Z n * θ.read k + n * η.read k :=
+    ⟨_, rfl⟩
+  rw [← hzd] at hone ⊢
+  -- the line `σ ↦ σ v`, `v = (0, e_j)`: its derivative at `0` is `𝐃Ψ(1, ·)(0) v = 0`
+  obtain ⟨v, hv⟩ : ∃ v : (hid k → ℂ) × (hid k → ℂ),
+      v = ((0 : hid k → ℂ), (Pi.single j 1 : hid k → ℂ)) := ⟨_, rfl⟩
+  rw [← hv] at hu
+  have hf : DifferentiableAt ℂ
+      (fun x : (hid k → ℂ) × (hid k → ℂ) => psi_gzp θ k η Z ξ ξ' (((1 : ℝ) : ℂ), x)) 0 :=
+    ((analyticAt_psi_poly_gzp θ k hκ hκ1 hhol Z η ξ ξ' hP2 1 zero_le_one le_rfl 0
+      (by rw [norm_zero]; exact hr.le)).comp₂ analyticAt_const analyticAt_id).differentiableAt
+  have hline : HasDerivAt (fun σ : ℂ => psi_gzp θ k η Z ξ ξ' (((1 : ℝ) : ℂ), σ • v)) 0 0 := by
+    have h1 : HasDerivAt (fun σ : ℂ => σ • v) ((1 : ℂ) • v) 0 := (hasDerivAt_id' 0).smul_const v
+    have h2 := hf.hasFDerivAt.comp_hasDerivAt_of_eq (0 : ℂ) h1 (by rw [zero_smul])
+    have e : fderiv ℂ (fun x : (hid k → ℂ) × (hid k → ℂ) =>
+        psi_gzp θ k η Z ξ ξ' (((1 : ℝ) : ℂ), x)) 0 ((1 : ℂ) • v) = 0 := by
+      rw [one_smul]
+      exact hu
+    exact h2.congr_deriv e
+  -- near `0`, `Ψ(1, σ v) = 𝓛(nW, 1; ż) − σ K`
+  obtain ⟨K, hK⟩ : ∃ K, K = fderiv ℂ (fun h' : Matrix T d ℂ => suffixC geluC θ.toC k.succ h')
+      ((n * θ.read k).map (fun x : ℝ => (x : ℂ)) * θ.toC.2.1 k)
+      ((Matrix.of fun t i => (Pi.single j 1 : hid k → ℂ) i * zd.map (fun x : ℝ => (x : ℂ)) t i)
+        * θ.toC.2.1 k) := ⟨_, rfl⟩
+  have hev : (fun σ : ℂ => psi_gzp θ k η Z ξ ξ' (((1 : ℝ) : ℂ), σ • v))
+      =ᶠ[nhds 0] fun σ => blockLHSC geluC θ k η ((n * θ.read k).map (fun x : ℝ => (x : ℂ)))
+          (wpM_gzp T 0) (zd.map (fun x : ℝ => (x : ℂ))) - σ • K := by
+    have hc : Continuous fun σ : ℂ => σ • v := continuous_id.smul continuous_const
+    have h0 := hc.tendsto 0
+    rw [zero_smul] at h0
+    filter_upwards [h0 (Metric.closedBall_mem_nhds 0 hr)] with σ hσ
+    rw [Set.mem_preimage, Metric.mem_closedBall, dist_zero_right] at hσ
+    rw [hone _ hσ, hv]
+    simp only [Prod.smul_mk, smul_zero, rowM_zero_gzp, sub_zero]
+    rw [blockLHSC_wpM_gzp, hK, ← map_smul, ← Matrix.smul_mul]
+    congr 3
+    ext t i
+    simp only [Matrix.of_apply, Matrix.smul_apply, Pi.smul_apply, smul_eq_mul]
+    ring
+  have hg : HasDerivAt (fun σ : ℂ => blockLHSC geluC θ k η
+      ((n * θ.read k).map (fun x : ℝ => (x : ℂ))) (wpM_gzp T 0)
+        (zd.map (fun x : ℝ => (x : ℂ))) - σ • K) (-((1 : ℂ) • K)) 0 :=
+    ((hasDerivAt_id' 0).smul_const K).const_sub _
+  have hK0 : K = 0 := by
+    have h := (hline.congr_of_eventuallyEq hev.symm).unique hg
+    rw [one_smul] at h
+    exact neg_eq_zero.1 h.symm
+  -- `K` is the cast of the real derivative
+  have e1 : (n * θ.read k).map (fun x : ℝ => (x : ℂ)) * θ.toC.2.1 k
+      = (n * θ.read k * θ.write k).map (fun x : ℝ => (x : ℂ)) := by
+    rw [map_mul_gzp (n * θ.read k)]
+    rfl
+  have e2 : (Matrix.of fun t i => (Pi.single j 1 : hid k → ℂ) i * zd.map (fun x : ℝ => (x : ℂ)) t i)
+        * θ.toC.2.1 k
+      = (Matrix.of fun t => zd t j • θ.write k j).map (fun x : ℝ => (x : ℂ)) := by
+    ext t l
+    simp [Matrix.mul_apply, Pi.single_apply, Params.toC]
+  rw [hK, e1, e2, fderiv_suffixC_ofReal geluC_ofReal θ k.succ hκ hhol _ _ hrow] at hK0
+  ext t l
+  have := congrFun (congrFun hK0 t) l
+  simpa using this
+
+/-- **Step 7, `𝓛_j(1) = 0`:** if the derivative of `Ψ(1, ·)` at `0` along `(e_j, 0)` vanishes,
+then the derivative at `τ = 0` of `τ ↦ 𝓛(nW − τ e_j, 1; ż(n))` (real) vanishes. Near `0`,
+`Ψ(1, (σ e_j, 0)) = G((√d/2) σ)` with `G(c) = 𝓛(nW − c e_j, 1; ż)` holomorphic; at real `τ` near
+`0`, `G(τ)` is the cast of the real `𝓛`. -/
+private theorem unit_read_gzp
+    (θ : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut) (k : Fin L)
+    [DecidableEq (hid k)] {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1)
+    (hhol : HolomorphicOnCone geluC θ k.succ κ)
+    (Z : Matrix d d ℝ) (η : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut)
+    (ξ ξ' : d → ℝ) (hP2 : PathP2 (θ.read k) (θ.write k) κ ξ ξ') (hd : 0 < Fintype.card d)
+    (j : hid k)
+    (hu : fderiv ℂ (fun x : (hid k → ℂ) × (hid k → ℂ) => psi_gzp θ k η Z ξ ξ' (((1 : ℝ) : ℂ), x))
+      0 ((Pi.single j 1 : hid k → ℂ), (0 : hid k → ℂ)) = 0) :
+    deriv (fun τ : ℝ =>
+        blockLHS θ k η
+          ((Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * θ.read k
+            - τ • Matrix.of fun _ : T => (Pi.single j 1 : hid k → ℝ))
+          (fun _ _ => 1)
+          (tangentRMS Z (Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * θ.read k
+            + (Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * η.read k)) 0 = 0 := by
+  have hsd : 0 < Real.sqrt (Fintype.card d) := Real.sqrt_pos.2 (by exact_mod_cast hd)
+  have hU := sqrt_u_pos_gzp (θ.read k) (θ.write k) hκ ξ ξ' hP2.2.1
+  have hr := rad_pos_gzp (θ.read k) (θ.write k) hκ ξ ξ' hP2.2.1
+  have hrow := rows_ne_zero_gzp (T := T) (θ.read k) (θ.write k) ξ hU hd
+  have hcone := rows_mem_cone_gzp (T := T) (θ.read k) (θ.write k) ξ hκ hU hd
+  have hone := psi_one_gzp θ k hκ hκ1 hhol Z η ξ ξ' hP2 hd
+  obtain ⟨n, hn⟩ : ∃ n : Matrix T d ℝ, n = Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ :=
+    ⟨_, rfl⟩
+  rw [← hn] at hone hrow hcone ⊢
+  obtain ⟨zd, hzd⟩ : ∃ zd : Matrix T (hid k) ℝ, zd = tangentRMS Z n * θ.read k + n * η.read k :=
+    ⟨_, rfl⟩
+  rw [← hzd] at hone ⊢
+  -- `G(c) = 𝓛(nW − c E_j, 1; ż)` is holomorphic at `0`
+  obtain ⟨E, hE⟩ : ∃ E : Matrix T (hid k) ℂ, E = rowM_gzp T (Pi.single j 1 : hid k → ℂ) :=
+    ⟨_, rfl⟩
+  obtain ⟨G, hG⟩ : ∃ G : ℂ → Matrix T dOut ℂ, ∀ c, G c = blockLHSC geluC θ k η
+      ((n * θ.read k).map (fun x : ℝ => (x : ℂ)) - c • E) (wpM_gzp T 0)
+        (zd.map (fun x : ℝ => (x : ℂ))) := ⟨_, fun _ => rfl⟩
+  have hGa : AnalyticAt ℂ G 0 := by
+    have h := analyticAt_blockLHSC_comp_gzp θ k hhol η
+      (f₁ := fun c : ℂ => (n * θ.read k).map (fun x : ℝ => (x : ℂ)) - c • E)
+      (f₂ := fun _ => wpM_gzp T 0) (f₃ := fun _ => zd.map (fun x : ℝ => (x : ℂ))) (x := 0)
+      (analyticAt_const.sub (analyticAt_id.smul analyticAt_const)) analyticAt_const
+      analyticAt_const (fun τ => by
+        show (((n * θ.read k).map (fun x : ℝ => (x : ℂ)) - (0 : ℂ) • E) * θ.toC.2.1 k) τ
+          ∈ complexCone κ
+        rw [zero_smul, sub_zero]
+        exact hcone τ)
+    exact h.congr (Filter.Eventually.of_forall fun c => (hG c).symm)
+  have hGd := hGa.differentiableAt.hasDerivAt
+  -- the line `σ ↦ σ v`, `v = (e_j, 0)`: its derivative at `0` is `𝐃Ψ(1, ·)(0) v = 0`
+  obtain ⟨v, hv⟩ : ∃ v : (hid k → ℂ) × (hid k → ℂ),
+      v = ((Pi.single j 1 : hid k → ℂ), (0 : hid k → ℂ)) := ⟨_, rfl⟩
+  rw [← hv] at hu
+  have hf : DifferentiableAt ℂ
+      (fun x : (hid k → ℂ) × (hid k → ℂ) => psi_gzp θ k η Z ξ ξ' (((1 : ℝ) : ℂ), x)) 0 :=
+    ((analyticAt_psi_poly_gzp θ k hκ hκ1 hhol Z η ξ ξ' hP2 1 zero_le_one le_rfl 0
+      (by rw [norm_zero]; exact hr.le)).comp₂ analyticAt_const analyticAt_id).differentiableAt
+  have hline : HasDerivAt (fun σ : ℂ => psi_gzp θ k η Z ξ ξ' (((1 : ℝ) : ℂ), σ • v)) 0 0 := by
+    have h1 : HasDerivAt (fun σ : ℂ => σ • v) ((1 : ℂ) • v) 0 := (hasDerivAt_id' 0).smul_const v
+    have h2 := hf.hasFDerivAt.comp_hasDerivAt_of_eq (0 : ℂ) h1 (by rw [zero_smul])
+    have e : fderiv ℂ (fun x : (hid k → ℂ) × (hid k → ℂ) =>
+        psi_gzp θ k η Z ξ ξ' (((1 : ℝ) : ℂ), x)) 0 ((1 : ℂ) • v) = 0 := by
+      rw [one_smul]
+      exact hu
+    exact h2.congr_deriv e
+  -- near `0`, `Ψ(1, σ v) = G(c σ)` with `c = √d/2`
+  have hev : (fun σ : ℂ => psi_gzp θ k η Z ξ ξ' (((1 : ℝ) : ℂ), σ • v))
+      =ᶠ[nhds 0] fun σ => G (((Real.sqrt (Fintype.card d) / 2 : ℝ) : ℂ) * σ) := by
+    have hc : Continuous fun σ : ℂ => σ • v := continuous_id.smul continuous_const
+    have h0 := hc.tendsto 0
+    rw [zero_smul] at h0
+    filter_upwards [h0 (Metric.closedBall_mem_nhds 0 hr)] with σ hσ
+    rw [Set.mem_preimage, Metric.mem_closedBall, dist_zero_right] at hσ
+    rw [hone _ hσ, hG, hv, hE]
+    simp only [Prod.smul_mk, smul_zero, rowM_smul_gzp, smul_smul]
+  have hcomp : HasDerivAt (G ∘ fun σ : ℂ => ((Real.sqrt (Fintype.card d) / 2 : ℝ) : ℂ) * σ)
+      (((Real.sqrt (Fintype.card d) / 2 : ℝ) : ℂ) • deriv G 0) 0 := by
+    have h1 : HasDerivAt (fun σ : ℂ => ((Real.sqrt (Fintype.card d) / 2 : ℝ) : ℂ) * σ)
+        ((Real.sqrt (Fintype.card d) / 2 : ℝ) : ℂ) 0 := by
+      simpa using (hasDerivAt_id' (0 : ℂ)).const_mul ((Real.sqrt (Fintype.card d) / 2 : ℝ) : ℂ)
+    exact hGd.scomp_of_eq 0 h1 (by rw [mul_zero])
+  have hG0 : deriv G 0 = 0 := by
+    have h := (hline.congr_of_eventuallyEq hev.symm).unique hcomp
+    have hc0 : ((Real.sqrt (Fintype.card d) / 2 : ℝ) : ℂ) ≠ 0 :=
+      Complex.ofReal_ne_zero.2 (by positivity)
+    exact (smul_eq_zero.1 h.symm).resolve_left hc0
+  -- at real `τ`: `G(τ)` has the derivative `0`, and so has its real part
+  have hGr : HasDerivAt (fun τ : ℝ => G (τ : ℂ)) 0 0 := by
+    have h1 : HasDerivAt (fun τ : ℝ => (τ : ℂ)) 1 0 := by
+      simpa using (hasDerivAt_id' (0 : ℝ)).ofReal_comp
+    have hGd0 : HasDerivAt G 0 0 := by
+      rw [← hG0]
+      exact hGd
+    have h2 := hGd0.scomp_of_eq (0 : ℝ) h1 (by rw [Complex.ofReal_zero])
+    exact h2.congr_deriv (smul_zero _)
+  have hre : HasDerivAt (fun τ : ℝ => reCLM_gzp T dOut (G (τ : ℂ))) 0 0 := by
+    have h := (reCLM_gzp T dOut).hasFDerivAt.comp_hasDerivAt (0 : ℝ) hGr
+    exact h.congr_deriv (map_zero _)
+  -- near `0` the rows of `(nW − τ E_j) V` do not vanish, and `G(τ)` is the cast of the real `𝓛`
+  have hrows : ∀ᶠ τ in nhds (0 : ℝ), ∀ τ', ((n * θ.read k
+      - τ • Matrix.of fun _ : T => (Pi.single j 1 : hid k → ℝ)) * θ.write k) τ' ≠ 0 := by
+    refine Filter.eventually_all.2 fun τ' => ?_
+    have e : (fun τ : ℝ => ((n * θ.read k
+        - τ • Matrix.of fun _ : T => (Pi.single j 1 : hid k → ℝ)) * θ.write k) τ')
+        = fun τ => (n * θ.read k * θ.write k) τ'
+          - τ • ((Matrix.of fun _ : T => (Pi.single j 1 : hid k → ℝ)) * θ.write k) τ' := by
+      funext τ
+      rw [Matrix.sub_mul, Matrix.smul_mul]
+      rfl
+    have hc : Continuous fun τ : ℝ => ((n * θ.read k
+        - τ • Matrix.of fun _ : T => (Pi.single j 1 : hid k → ℝ)) * θ.write k) τ' := by
+      rw [e]
+      fun_prop
+    have h0 : ((n * θ.read k - (0 : ℝ) • Matrix.of fun _ : T => (Pi.single j 1 : hid k → ℝ))
+        * θ.write k) τ' ≠ 0 := by
+      rw [zero_smul, sub_zero]
+      exact hrow τ'
+    exact hc.continuousAt.eventually_ne h0
+  have hev2 : (fun τ : ℝ => blockLHS θ k η
+      (n * θ.read k - τ • Matrix.of fun _ : T => (Pi.single j 1 : hid k → ℝ)) (fun _ _ => 1) zd)
+      =ᶠ[nhds 0] fun τ => reCLM_gzp T dOut (G (τ : ℂ)) := by
+    filter_upwards [hrows] with τ hτ
+    have h := blockLHSC_ofReal geluC_ofReal θ k hκ hhol η _ (fun _ _ => 1) zd hτ
+    have e1 : (n * θ.read k - τ • Matrix.of fun _ : T => (Pi.single j 1 : hid k → ℝ)).map
+        (fun x : ℝ => (x : ℂ)) = (n * θ.read k).map (fun x : ℝ => (x : ℂ)) - (τ : ℂ) • E := by
+      rw [hE]
+      ext a b
+      simp only [Matrix.map_apply, Matrix.sub_apply, Matrix.smul_apply, Matrix.of_apply,
+        rowM_apply_gzp, Pi.single_apply, smul_eq_mul]
+      split_ifs <;> simp
+    have e2 : Matrix.map (fun _ _ => (1 : ℝ) : Matrix T (hid k) ℝ) (fun x : ℝ => (x : ℂ))
+        = wpM_gzp T 0 := by
+      ext a b
+      show ((1 : ℝ) : ℂ) = 1 - (0 : hid k → ℂ) b
+      simp
+    rw [e1, e2, ← hG] at h
+    rw [h, reCLM_ofReal_gzp]
+  exact (hre.congr_of_eventuallyEq hev2).deriv
+
 /-- **Lemma D.19, Step 1, on the path:** `𝓛(n(t)W, 1; n(t)) = 0` for all `t ≥ 1` ("`𝓛_0(t) = 0`
 for large `t`, and then for all `t ≥ 1`"). -/
 theorem gelu_path_step_zero [Nonempty T]
@@ -806,7 +1147,33 @@ theorem gelu_path_step_zero [Nonempty T]
         (fun _ _ => 1)
         (zdotC θ k Z η
           (pathMatrix (Matrix.of fun _ : T => ξ) (Matrix.of fun _ : T => ξ') (t : ℂ))) = 0 := by
-  sorry
+  have hd := card_pos_gzp ξ hξ
+  intro t ht
+  have ht0 : 0 < t := by linarith
+  have hs0 : 0 < t⁻¹ := inv_pos.2 ht0
+  have hs1 : t⁻¹ ≤ 1 := inv_le_one_of_one_le₀ ht
+  -- Step 1 of the paper: `Ψ(1/t, 0) = 0`
+  have h0 : psi_gzp θ k η Z ξ ξ' (((t⁻¹ : ℝ) : ℂ), ((0 : hid k → ℂ), (0 : hid k → ℂ))) = 0 :=
+    psi_zero_gzp θ hθ k hκ hκ1 hhol Z η h16 ξ ξ' hξ hξ' hξξ' hP2 hd t⁻¹ hs0 hs1
+  -- the identity at `x = y = 0`: `t² Ψ(1/t, 0) = 𝓛(n(t)W, 1; n(t))`
+  have hcone : ∀ τ, (wM_gzp T (θ.toC.1 k) ξ ξ' ((t⁻¹ : ℝ) : ℂ) 0 * θ.toC.2.1 k) τ
+      ∈ complexCone κ :=
+    cone_poly_gzp (θ.read k) (θ.write k) hκ hκ1 ξ ξ' hP2.2.1 hs0.le hs1 0
+      (by rw [norm_zero]; exact (rad_pos_gzp _ _ hκ ξ ξ' hP2.2.1).le)
+  have h := psi_identity_gzp θ k hκ hκ1 hhol Z η ξ ξ' hd ht0 0 0 hcone
+  rw [h0, smul_zero, smul_wM_gzp _ ξ ξ' ht0] at h
+  have e1 : (Matrix.of fun τ i =>
+      (pathMatrix (Matrix.of fun _ : T => ξ) (Matrix.of fun _ : T => ξ') (t : ℂ) * θ.toC.1 k) τ i
+        - ((Real.sqrt (Fintype.card d) * t / 2 : ℝ) : ℂ) * (0 : hid k → ℂ) i)
+      = pathMatrix (Matrix.of fun _ : T => ξ) (Matrix.of fun _ : T => ξ') (t : ℂ)
+        * θ.toC.1 k := by
+    ext τ i
+    simp
+  have e2 : wpM_gzp T (0 : hid k → ℂ) = fun _ _ => 1 := by
+    ext τ i
+    simp [wpM_gzp]
+  rw [e1, e2] at h
+  exact h.symm
 
 /-- **Lemma D.19, Step 1, at `t = 1`:** "At `t = 1`, where `n(t)` is the row `n = √d ξ`, this reads
 `0 = 𝓛(nW, 1; n)`", with the real `𝓛` and `ż(n)` of (20). -/
@@ -822,7 +1189,28 @@ theorem gelu_path_step_zero_real [Nonempty T]
       ((Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * θ.read k) (fun _ _ => 1)
       (tangentRMS Z (Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * θ.read k
         + (Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * η.read k) = 0 := by
-  sorry
+  have hd := card_pos_gzp ξ hξ
+  have hU := sqrt_u_pos_gzp (θ.read k) (θ.write k) hκ ξ ξ' hP2.2.1
+  -- the case `t = 1` of `gelu_path_step_zero`, with `n(1) = n` real
+  have h := gelu_path_step_zero θ hθ k hκ hκ1 hhol Z η h16 ξ ξ' hξ hξ' hξξ' hP2 1 le_rfl
+  have hW : θ.toC.1 k = (θ.read k).map (fun x : ℝ => (x : ℂ)) := rfl
+  rw [pathMatrix_one_gzp, zdotC_ofReal, hW, ← map_mul_gzp] at h
+  have e1 : (fun _ _ => 1 : Matrix T (hid k) ℂ)
+      = (Matrix.of fun _ _ => (1 : ℝ) : Matrix T (hid k) ℝ).map (fun x : ℝ => (x : ℂ)) := by
+    ext τ i
+    show (1 : ℂ) = ((1 : ℝ) : ℂ)
+    simp
+  rw [e1, blockLHSC_ofReal geluC_ofReal θ k hκ hhol η _ _ _
+    (rows_ne_zero_gzp (θ.read k) (θ.write k) ξ hU hd)] at h
+  have h' : blockLHS θ k η
+      ((Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * θ.read k)
+      (Matrix.of fun _ _ => (1 : ℝ))
+      (tangentRMS Z (Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * θ.read k
+        + (Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * η.read k) = 0 := by
+    ext τ l
+    have := congrFun (congrFun h τ) l
+    simpa using this
+  exact h'
 
 /-- **Lemma D.19, Steps 2 and 4, (50) at `t = 1`:** let `𝓛(z(t) − δ, 1 − δ'; n(t)) = 0` for all
 `t ≥ 1` and all complex rows `δ, δ'` whose entries outside the set `A` of hidden units vanish, and
@@ -862,6 +1250,50 @@ theorem gelu_path_step_unit [Nonempty T]
           (tangentRMS Z (Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * θ.read k
             + (Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • ξ) * η.read k) t j
             • θ.write k j) = 0 := by
-  sorry
+  have hd := card_pos_gzp ξ hξ
+  have hsd : 0 < Real.sqrt (Fintype.card d) := Real.sqrt_pos.2 (by exact_mod_cast hd)
+  have hr := rad_pos_gzp (θ.read k) (θ.write k) hκ ξ ξ' hP2.2.1
+  -- the hypothesis on `A` for `Ψ`: `Ψ(s, x) = 0` by the identity at `t = 1/s` and `hA`
+  have hA' : ∀ s : ℝ, 0 < s → s ≤ 1 → ∀ x : (hid k → ℂ) × (hid k → ℂ),
+      ‖x‖ ≤ rad_gzp (θ.read k) (θ.write k) ξ κ → (∀ i, i ∉ A → x.1 i = 0 ∧ x.2 i = 0) →
+        psi_gzp θ k η Z ξ ξ' ((s : ℂ), x) = 0 := by
+    intro s hs0 hs1 x hx hxA
+    have ht0 : 0 < s⁻¹ := inv_pos.2 hs0
+    have ht1 : 1 ≤ s⁻¹ := (one_le_inv₀ hs0).2 hs1
+    have hcone : ∀ τ, (wM_gzp T (θ.toC.1 k) ξ ξ' ((s⁻¹⁻¹ : ℝ) : ℂ) x.1 * θ.toC.2.1 k) τ
+        ∈ complexCone κ := by
+      rw [inv_inv]
+      exact cone_poly_gzp (θ.read k) (θ.write k) hκ hκ1 ξ ξ' hP2.2.1 hs0.le hs1 x hx
+    have h := psi_identity_gzp θ k hκ hκ1 hhol Z η ξ ξ' hd ht0 x.1 x.2 hcone
+    rw [smul_wM_gzp _ ξ ξ' ht0] at h
+    have hz := hA s⁻¹ ht1
+      (fun i => ((Real.sqrt (Fintype.card d) * s⁻¹ / 2 : ℝ) : ℂ) * x.1 i) x.2
+      (fun i hi => ⟨by rw [(hxA i hi).1, mul_zero], (hxA i hi).2⟩)
+    have h2 : ((s⁻¹ : ℝ) : ℂ) ^ 2 • psi_gzp θ k η Z ξ ξ' (((s⁻¹⁻¹ : ℝ) : ℂ), (x.1, x.2)) = 0 :=
+      h.trans hz
+    rw [inv_inv] at h2
+    exact (smul_eq_zero.1 h2).resolve_left (pow_ne_zero 2 (Complex.ofReal_ne_zero.2 ht0.ne'))
+  -- the rates: `(Re ω)² − (Im ω)² = (d/4) r`
+  have hrate' : ∀ i, i ∉ A → i ≠ j →
+      (omega_gzp (θ.read k) ξ ξ' j).re ^ 2 - (omega_gzp (θ.read k) ξ ξ' j).im ^ 2
+        < (omega_gzp (θ.read k) ξ ξ' i).re ^ 2 - (omega_gzp (θ.read k) ξ ξ' i).im ^ 2 := by
+    intro i hi hij
+    have h := mul_lt_mul_of_pos_left (hrate i hi hij)
+      (by positivity : (0 : ℝ) < (Real.sqrt (Fintype.card d) / 2) ^ 2)
+    show (Real.sqrt (Fintype.card d) / 2 * (ξ ᵥ* θ.read k) j) ^ 2
+        - (Real.sqrt (Fintype.card d) / 2 * (ξ' ᵥ* θ.read k) j) ^ 2
+      < (Real.sqrt (Fintype.card d) / 2 * (ξ ᵥ* θ.read k) i) ^ 2
+        - (Real.sqrt (Fintype.card d) / 2 * (ξ' ᵥ* θ.read k) i) ^ 2
+    nlinarith [h]
+  -- Steps 2 and 4 of the paper (`gelu_path_unit`) at `s = 1`, then Step 7
+  obtain ⟨hu1, hu2⟩ := gelu_path_unit (omega_gzp (θ.read k) ξ ξ')
+    (omega_im_lt_gzp _ ξ ξ' hP2.1 hd) (c₀ := 2 / Real.sqrt (Fintype.card d))
+    (div_ne_zero two_ne_zero hsd.ne') (psi_gzp θ k η Z ξ ξ') hr
+    (analyticAt_psi_poly_gzp θ k hκ hκ1 hhol Z η ξ ξ' hP2)
+    (Filter.eventually_atTop.2 ⟨1, fun _ ht =>
+      psi_path_gzp θ hθ k hκ hκ1 hhol Z η h16 ξ ξ' hξ hξ' hξξ' hP2 hd ht⟩)
+    A j hjA hrate' hA' 1 one_pos le_rfl
+  exact ⟨unit_read_gzp θ k hκ hκ1 hhol Z η ξ ξ' hP2 hd j hu1,
+    unit_write_gzp θ k hκ hκ1 hhol Z η ξ ξ' hP2 hd j hu2⟩
 
 end Skips
