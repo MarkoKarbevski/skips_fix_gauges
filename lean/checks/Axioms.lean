@@ -615,3 +615,5 @@ import SkipsLean
 #print axioms Skips.exists_regular_claimGated_geglu_rmsNorm
 #print axioms Skips.ae_funDim_swiglu_skipless_rmsNorm
 #print axioms Skips.ae_funDim_geglu_skipless_rmsNorm
+#print axioms Skips.eventually_finrank_range_le_of_small_parameter
+#print axioms Skips.eventually_finrank_le_of_small_parameter
