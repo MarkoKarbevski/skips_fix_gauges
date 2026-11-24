@@ -303,6 +303,7 @@ private theorem analyticAt_rmsNormC_snd_css (ω₀ : CWeights d dOut hid) (h : M
     (analyticAt_snd (𝕜 := ℂ) (p := ((ω₀, h) : CWeights d dOut hid × Matrix T d ℂ)))
   exact hc
 
+omit [DecidableEq d] [Fintype dIn] in
 /-- **Lemma D.14, "`𝓑_{>L}(h) = N(h) D` is holomorphic on `C_1`: `κ_L = 1`",** at every `θ`. -/
 theorem holomorphicOnCone_last (σC : ℂ → ℂ)
     (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut) :
@@ -317,6 +318,7 @@ theorem holomorphicOnCone_last (σC : ℂ → ℂ)
   rw [hc]
   exact analyticAt_matrix_mul_css (analyticAt_rmsNormC_snd_css θ.toC h hpos) (analyticAt_D_css _)
 
+omit [DecidableEq d] [Fintype dIn] in
 /-- **Lemma D.14, the step from `k + 1` to `k`:** let `σC` extend `σ` and be holomorphic at every
 real point. If `𝓑_{>ℓ+1}` is holomorphic on a cone `C_{κ'}`, `κ' > 0`, and block `ℓ` satisfies (R2)
 (`σ(n W) V ≠ 0` for every row `n` on the sphere `‖n‖² = d`), then there is a `κ ∈ (0, 1]` such that
@@ -421,6 +423,7 @@ private theorem analyticAt_mixC_css (ω₀ : CWeights d dOut hid) (k : Fin (L + 
     · simp only [hk, ↓reduceIte]
       exact analyticAt_const
 
+omit [DecidableEq d] [Fintype dIn] in
 /-- **Lemma D.14, "The number `κ_k` depends only on the weights of the blocks `k + 1, …, L` and on
 `D`":** if `θ'` has the same reads and writes as `θ` in the blocks after the hidden state `k`, and
 the same `D`, then `𝓑_{>k}` is holomorphic on the same cones at `θ'` as at `θ`. -/
@@ -459,5 +462,25 @@ theorem HolomorphicOnCone.congr
     (θ'.toC, x)
   rw [heq]
   exact hc
+
+omit [DecidableEq d] [Fintype dIn] in
+/-- **Lemma D.14 of the dimension paper (`𝓑_{>k}` on a complex cone), with (R2) alone:** for MLP
+blocks whose activation `σ` extends to a map `σC` that is holomorphic at every real point, if every
+block satisfies (R2) (`σ(n W) V ≠ 0` for every row `n` on the sphere `‖n‖² = d`), then for every `k`
+there is a `κ_k ∈ (0, 1]` such that `𝓑_{>k}`, with its derivatives, extends to a holomorphic map
+on `C_{κ_k}`. (The paper asks (R1) and (R2); (R1) is not used.) -/
+theorem exists_holomorphicOnCone_of_ne_zero (hσ : ∀ x : ℝ, σC (x : ℂ) = ((σ x : ℝ) : ℂ))
+    (hσC : ∀ x : ℝ, AnalyticAt ℂ σC (x : ℂ))
+    (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut)
+    (hR2 : ∀ (ℓ : Fin L) (n : d → ℝ), n ⬝ᵥ n = (Fintype.card d : ℝ) →
+      (fun j : hid ℓ => σ ((n ᵥ* θ.read ℓ) j)) ᵥ* θ.write ℓ ≠ 0)
+    (k : Fin (L + 1)) :
+    ∃ κ : ℝ, 0 < κ ∧ κ ≤ 1 ∧ HolomorphicOnCone σC θ k κ := by
+  -- from the last hidden state down, one block at a time
+  induction k using Fin.reverseInduction with
+  | last => exact ⟨1, one_pos, le_rfl, holomorphicOnCone_last σC θ⟩
+  | cast ℓ ih =>
+    obtain ⟨κ', hκ', -, h⟩ := ih
+    exact exists_holomorphicOnCone_castSucc hσ hσC θ ℓ hκ' h (hR2 ℓ)
 
 end Skips
