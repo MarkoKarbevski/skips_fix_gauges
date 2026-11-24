@@ -48,12 +48,20 @@ def UnitsRescale (σ σ' : ℝ → ℝ) (k : ℕ) (n m q : Type*) [Fintype n] [F
 /-- Lemma C.3 for ReLU, in the form `UnitsRescale` with `k = 1`. -/
 theorem relu_unitsRescale (n m q : Type*) [Fintype n] [Fintype m] [Fintype q] :
     UnitsRescale relu reluDeriv 1 n m q := by
-  sorry
+  intro c β a ψM ψγ ψc ψβ ψa ha hc hcol h
+  obtain ⟨hM, hγ, lam, hlam⟩ := relu_units_flat c β a ψM ψγ ψc ψβ ψa ha hc hcol h
+  refine ⟨hM, hγ, lam, fun i => ⟨(hlam i).1, (hlam i).2.1, ?_⟩⟩
+  -- `k = 1`: the write row moves by `-λ_i a_i`
+  rw [(hlam i).2.2, Nat.cast_one, one_mul]
 
 /-- Lemma C.3 for ReLU², in the form `UnitsRescale` with `k = 2`. -/
 theorem reluSq_unitsRescale (n m q : Type*) [Fintype n] [Fintype m] [Fintype q] :
     UnitsRescale reluSq reluSqDeriv 2 n m q := by
-  sorry
+  intro c β a ψM ψγ ψc ψβ ψa ha hc hcol h
+  obtain ⟨hM, hγ, lam, hlam⟩ := reluSq_units_flat c β a ψM ψγ ψc ψβ ψa ha hc hcol h
+  refine ⟨hM, hγ, lam, fun i => ⟨(hlam i).1, (hlam i).2.1, ?_⟩⟩
+  -- `k = 2`: the write row moves by `-2 λ_i a_i`
+  rw [(hlam i).2.2, Nat.cast_ofNat]
 
 variable {T d dIn dOut : Type*} [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn]
   [Fintype dOut]
