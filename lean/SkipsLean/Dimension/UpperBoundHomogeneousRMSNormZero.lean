@@ -22,8 +22,10 @@ Here, at any depth `L`, for a skipless network under pre-RMSNorm with `ε = 0`:
   `d_in ≥ d` and blocks of width at least `d`;
 * for `d ≥ 2` and `L ≥ 1`, at almost every parameter the functional dimension is strictly below
   the bound `P − (L + 1) (d(d−1)/2 + 1) − s` of the changes of basis in `CO(d)`: the skipless
-  network does not attain it. (The paper's sentence needs `d ≥ 2`, `d_in ≥ d` and width at least
-  `d`, which Theorem A.12 does not state; for `d = 1`, `GL(1) = CO(1)`.)
+  network does not attain it. (Lean asks `d ≥ 2` and `L ≥ 1` for the strict form, and `d_in ≥ d`
+  and widths at least `d`, the conditions of Lemma A.18 under which the directions are
+  independent; Theorem A.12 and the remark after Theorem A.17 do not state them, the Scope of
+  Section 2 does; for `d = 1`, `GL(1) = CO(1)` and the two bounds are equal.)
 The case `L = 1` is `OneBlock/SkiplessHomogeneousRMSZero.lean` and its gated twin. The functional
 dimension is Lean's `funDim` (all inputs; `rmsNorm 0` maps a zero row to `0`), which is at least
 the paper's.
