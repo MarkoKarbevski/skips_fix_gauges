@@ -67,6 +67,71 @@ def CondP2 (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut
     ∀ ξ' : d → ℝ, ξ' ⬝ᵥ ξ' = 1 → ξ₀ ⬝ᵥ ξ' = 0 → PathP2 (θ.read k) (θ.write k) κ ξ₀ ξ'
 
 omit [DecidableEq d] in
+/-- Helper: a nonzero row has `x ⬝ x > 0`. -/
+private theorem dotProduct_self_pos_cp {x : d → ℝ} (hx : x ≠ 0) : 0 < x ⬝ᵥ x :=
+  lt_of_le_of_ne (Finset.sum_nonneg fun j _ => mul_self_nonneg (x j))
+    (Ne.symm (fun h => hx (dotProduct_self_eq_zero.1 h)))
+
+omit [DecidableEq d] in
+/-- Helper: `x ↦ ‖f x‖⁻¹ f x` is continuous at a point where `f` is continuous and nonzero. -/
+private theorem continuousAt_unit_cp {E : Type*} [TopologicalSpace E] {f : E → d → ℝ}
+    {x₀ : E} (hf : ContinuousAt f x₀) (h0 : f x₀ ≠ 0) :
+    ContinuousAt (fun x => (Real.sqrt (f x ⬝ᵥ f x))⁻¹ • f x) x₀ := by
+  have hdot : Continuous fun v : d → ℝ => v ⬝ᵥ v := by fun_prop
+  have hs : ContinuousAt (fun x => Real.sqrt (f x ⬝ᵥ f x)) x₀ :=
+    Real.continuous_sqrt.continuousAt.comp (hdot.continuousAt.comp hf)
+  exact (hs.inv₀ (Real.sqrt_ne_zero'.2 (dotProduct_self_pos_cp h0))).smul hf
+
+omit [DecidableEq d] in
+/-- Helper: the unit rows form a compact set. -/
+private theorem isCompact_unitRows_cp : IsCompact {ξ : d → ℝ | ξ ⬝ᵥ ξ = 1} := by
+  have hc : IsClosed {ξ : d → ℝ | ξ ⬝ᵥ ξ = 1} := isClosed_eq (by fun_prop) continuous_const
+  refine (isCompact_closedBall (0 : d → ℝ) 1).of_isClosed_subset hc fun ξ hξ => ?_
+  rw [Metric.mem_closedBall, dist_zero_right]
+  refine (pi_norm_le_iff_of_nonneg zero_le_one).2 fun a => ?_
+  have h : ξ a * ξ a ≤ ξ ⬝ᵥ ξ :=
+    Finset.single_le_sum (f := fun b => ξ b * ξ b) (fun b _ => mul_self_nonneg (ξ b))
+      (Finset.mem_univ a)
+  have h1 : ξ ⬝ᵥ ξ = 1 := hξ
+  rw [h1] at h
+  rw [Real.norm_eq_abs, abs_le]
+  constructor <;> nlinarith
+
+omit [DecidableEq d] in
+/-- Helper: the pairs `(ξ, ξ')` with the three inequalities of (P2) form an open set. -/
+private theorem isOpen_pathP2_cp {q : Type*} [Fintype q] (W : Matrix d q ℝ) (V : Matrix q d ℝ)
+    (κ : ℝ) : IsOpen {r : (d → ℝ) × (d → ℝ) | PathP2 W V κ r.1 r.2} := by
+  rw [isOpen_iff_mem_nhds]
+  rintro r₀ ⟨h1, h2, h3⟩
+  have e1 : ∀ᶠ r in nhds r₀, ∀ j, |(r.2 ᵥ* W) j| < (r.1 ᵥ* W) j := by
+    refine Filter.eventually_all.2 fun j => ?_
+    have ha : Continuous fun r : (d → ℝ) × (d → ℝ) => |(r.2 ᵥ* W) j| := by fun_prop
+    have hb : Continuous fun r : (d → ℝ) × (d → ℝ) => (r.1 ᵥ* W) j := by fun_prop
+    exact ha.continuousAt.eventually_lt hb.continuousAt (h1 j)
+  have e2 : ∀ᶠ r : (d → ℝ) × (d → ℝ) in nhds r₀,
+      Real.sqrt ((r.2 ᵥ* (W * V)) ⬝ᵥ (r.2 ᵥ* (W * V)))
+        < κ / 2 * Real.sqrt ((r.1 ᵥ* (W * V)) ⬝ᵥ (r.1 ᵥ* (W * V))) := by
+    have ha : Continuous fun r : (d → ℝ) × (d → ℝ) =>
+        Real.sqrt ((r.2 ᵥ* (W * V)) ⬝ᵥ (r.2 ᵥ* (W * V))) := by fun_prop
+    have hb : Continuous fun r : (d → ℝ) × (d → ℝ) =>
+        κ / 2 * Real.sqrt ((r.1 ᵥ* (W * V)) ⬝ᵥ (r.1 ᵥ* (W * V))) := by fun_prop
+    exact ha.continuousAt.eventually_lt hb.continuousAt h2
+  have e3 : ∀ᶠ r : (d → ℝ) × (d → ℝ) in nhds r₀,
+      ∑ j : q, Real.exp (-((Fintype.card d : ℝ) * ((r.1 ᵥ* W) j) ^ 2 / 2))
+          * Real.sqrt (V j ⬝ᵥ V j)
+        < κ * Real.sqrt (Fintype.card d) / 8
+          * Real.sqrt ((r.1 ᵥ* (W * V)) ⬝ᵥ (r.1 ᵥ* (W * V))) := by
+    have ha : Continuous fun r : (d → ℝ) × (d → ℝ) =>
+        ∑ j : q, Real.exp (-((Fintype.card d : ℝ) * ((r.1 ᵥ* W) j) ^ 2 / 2))
+          * Real.sqrt (V j ⬝ᵥ V j) := by fun_prop
+    have hb : Continuous fun r : (d → ℝ) × (d → ℝ) =>
+        κ * Real.sqrt (Fintype.card d) / 8
+          * Real.sqrt ((r.1 ᵥ* (W * V)) ⬝ᵥ (r.1 ᵥ* (W * V))) := by fun_prop
+    exact ha.continuousAt.eventually_lt hb.continuousAt h3
+  filter_upwards [e1, e2, e3] with r hr1 hr2 hr3
+  exact And.intro hr1 (And.intro hr2 hr3)
+
+omit [DecidableEq d] in
 /-- **"So there is an open set `P` of unit rows around `ξ₀` such that (P2) holds for every `ξ ∈ P`
 in the place of `ξ₀`":** the rows `x ≠ 0` whose unit row `x̂ = ‖x‖⁻¹ x` satisfies the three
 inequalities of (P2) with every unit row `ξ'` orthogonal to it form an open set. -/
@@ -74,7 +139,31 @@ theorem isOpen_setOf_pathP2 {q : Type*} [Fintype q] (W : Matrix d q ℝ) (V : Ma
     (κ : ℝ) :
     IsOpen {x : d → ℝ | x ≠ 0 ∧ ∀ ξ' : d → ℝ, ξ' ⬝ᵥ ξ' = 1 → x ⬝ᵥ ξ' = 0 →
       PathP2 W V κ ((Real.sqrt (x ⬝ᵥ x))⁻¹ • x) ξ'} := by
-  sorry
+  rw [isOpen_iff_mem_nhds]
+  rintro x₀ ⟨hx₀, h₀⟩
+  -- near `(x₀, ξ'₀)`, for every unit row `ξ'₀`, the implication "orthogonal → (P2)" holds
+  have hloc : ∀ ξ'₀ ∈ {ξ' : d → ℝ | ξ' ⬝ᵥ ξ' = 1},
+      ∀ᶠ z : (d → ℝ) × (d → ℝ) in nhds (x₀, ξ'₀),
+        z.1 ⬝ᵥ z.2 = 0 → PathP2 W V κ ((Real.sqrt (z.1 ⬝ᵥ z.1))⁻¹ • z.1) z.2 := by
+    intro ξ'₀ hξ'₀
+    by_cases h : x₀ ⬝ᵥ ξ'₀ = 0
+    · -- (P2) holds at `(x̂₀, ξ'₀)`, and the set of pairs where it holds is open
+      have hg : ContinuousAt (fun z : (d → ℝ) × (d → ℝ) =>
+          ((Real.sqrt (z.1 ⬝ᵥ z.1))⁻¹ • z.1, z.2)) (x₀, ξ'₀) :=
+        (continuousAt_unit_cp (f := Prod.fst) continuous_fst.continuousAt hx₀).prodMk
+          continuousAt_snd
+      have hmem := (isOpen_pathP2_cp W V κ).mem_nhds
+        (x := ((Real.sqrt (x₀ ⬝ᵥ x₀))⁻¹ • x₀, ξ'₀)) (h₀ ξ'₀ hξ'₀ h)
+      exact (hg.eventually_mem hmem).mono fun z hz _ => hz
+    · -- `x ⬝ ξ' ≠ 0` near `(x₀, ξ'₀)`
+      have hc : Continuous fun z : (d → ℝ) × (d → ℝ) => z.1 ⬝ᵥ z.2 := by fun_prop
+      exact (hc.continuousAt.eventually_ne h).mono fun z hz h' => absurd h' hz
+  -- the unit rows are compact: the tube lemma
+  filter_upwards [isCompact_unitRows_cp.eventually_forall_of_forall_eventually
+    (P := fun x ξ' => x ⬝ᵥ ξ' = 0 → PathP2 W V κ ((Real.sqrt (x ⬝ᵥ x))⁻¹ • x) ξ') hloc,
+    eventually_ne_nhds hx₀] with x hx hx0
+  exact ⟨hx0, fun ξ' h1 h2 => hx ξ' h1 h2⟩
+
 
 omit [DecidableEq d] in
 /-- **The rates of the hidden units are in one strict order on an open set of pairs:** let
