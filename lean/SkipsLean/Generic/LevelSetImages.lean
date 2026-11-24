@@ -25,13 +25,14 @@ finite-dimensional real spaces. `F` is the map of the outputs on a batch `X`, of
 larger batches `X ∪ {x}`: the kernel of the derivative of `g j` lies in that of `F` at every
 point, and its rank is at most `r` at every point (so `θ₀` is a point of the largest rank). The
 images of `θ₀` under the symmetries are the union of the images of countably many maps `Φ i` of
-class `C¹` on open subsets `Ω i` of a space `M` (of dimension `k`). If near `θ₀` every point with
+class `C¹` on subsets `Ω i` of a space `M` (of dimension `k`). If near `θ₀` every point with
 `g j θ = g j θ₀` for all `j` is in one of these images, then the kernel of the derivative of `F` at
 `θ₀` has dimension at most that of `M`: `P − r ≤ k`.
 
-In place of Sard's theorem the proof can use the Hausdorff dimension (Mathlib:
-`dimH_image_le_of_locally_lipschitzOn`, `dimH_iUnion`, `Real.dimH_of_nonempty_interior`): the
-level set contains the image of a ball of the kernel under a map with a Lipschitz left inverse.
+In place of Sard's theorem the proof uses the Hausdorff dimension (Mathlib:
+`DifferentiableOn.dimH_image_le`, `dimH_iUnion`, `Real.dimH_of_mem_nhds`): the level set contains
+the image of a ball of the kernel under a map with a Lipschitz left inverse. The sets `Ω i` need
+not be open.
 -/
 
 namespace Skips
@@ -212,7 +213,7 @@ private lemma finrank_le_lsi {K P M : Type*} [NormedAddCommGroup K] [NormedSpace
 identifiability to the equality condition, for maps between finite-dimensional spaces:** let `F`
 and the maps `g j` be of class `C¹`, with `ker Dg_j(θ) ⊆ ker DF(θ)` and
 `rank Dg_j(θ) ≤ rank DF(θ₀)` at every `θ`. If every `θ` near `θ₀` with `g j θ = g j θ₀` for all
-`j` lies in the image of one of countably many maps `Φ i` of class `C¹` on open subsets of `M`,
+`j` lies in the image of one of countably many maps `Φ i` of class `C¹` on subsets of `M`,
 then `dim ker DF(θ₀) ≤ dim M`. -/
 theorem finrank_ker_le_of_level_set_subset_iUnion_image
     {P Y Y' M : Type*} [NormedAddCommGroup P] [NormedSpace ℝ P] [FiniteDimensional ℝ P]
@@ -225,7 +226,7 @@ theorem finrank_ker_le_of_level_set_subset_iUnion_image
       ≤ LinearMap.ker (fderiv ℝ F θ).toLinearMap)
     (hrank : ∀ j θ, Module.finrank ℝ (LinearMap.range (fderiv ℝ (g j) θ).toLinearMap)
       ≤ Module.finrank ℝ (LinearMap.range (fderiv ℝ F θ₀).toLinearMap))
-    {ι : Type*} [Countable ι] (Φ : ι → M → P) (Ω : ι → Set M) (hΩ : ∀ i, IsOpen (Ω i))
+    {ι : Type*} [Countable ι] (Φ : ι → M → P) (Ω : ι → Set M)
     (hΦ : ∀ i, ContDiffOn ℝ 1 (Φ i) (Ω i))
     (hloc : ∃ U ∈ 𝓝 θ₀, ∀ θ ∈ U, (∀ j, g j θ = g j θ₀) → ∃ i, ∃ m ∈ Ω i, Φ i m = θ) :
     Module.finrank ℝ (LinearMap.ker (fderiv ℝ F θ₀).toLinearMap) ≤ Module.finrank ℝ M := by

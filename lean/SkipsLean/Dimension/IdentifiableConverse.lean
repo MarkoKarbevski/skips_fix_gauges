@@ -16,7 +16,7 @@ the skips paper is the same statement for skipless and residual networks, with t
 
 Stated here, once for all kinds of network (any stream matrices `S`, any real-analytic maps
 `f_ℓ` and `χ`) and any family of symmetries: the images of `θ` under the symmetries are the union
-of the images of countably many maps `Φ i` of class `C¹` on open subsets `Ω i` of a space `M` of
+of the images of countably many maps `Φ i` of class `C¹` on subsets `Ω i` of a space `M` of
 dimension `k`. If `θ` is a parameter of the largest functional dimension (as generic parameters
 are, `ae_funDim_ge`) and every `θ'` near `θ` with the same function is such an image, then
 `P ≤ fd(θ) + k`. The second statement is the form at generic parameters. With the upper bounds
@@ -40,7 +40,7 @@ omit [DecidableEq d] in
 /-- **Proof of Proposition 4.6 (dimension paper) and of Proposition 4.5 (skips paper), from local
 identifiability to the equality condition, at one parameter, for any family of symmetries:** let
 `θ` have the largest functional dimension. If every `θ'` near `θ` with the same function is
-`Φ i m` for one of countably many maps `Φ i` of class `C¹` on open subsets `Ω i` of `M`, then
+`Φ i m` for one of countably many maps `Φ i` of class `C¹` on subsets `Ω i` of `M`, then
 `P ≤ fd(θ) + dim M`. -/
 theorem finrank_le_funDim_add_of_locally_mem_iUnion_image (A : Arch T d L)
     (S : Fin L → Matrix d d ℝ)
@@ -48,7 +48,7 @@ theorem finrank_le_funDim_add_of_locally_mem_iUnion_image (A : Arch T d L)
     (θ : Params A dIn dOut) (hmax : ∀ θ' : Params A dIn dOut, funDim A S θ' ≤ funDim A S θ)
     {M : Type*} [NormedAddCommGroup M] [NormedSpace ℝ M] [FiniteDimensional ℝ M]
     {ι : Type*} [Countable ι] (Φ : ι → M → Params A dIn dOut) (Ω : ι → Set M)
-    (hΩ : ∀ i, IsOpen (Ω i)) (hΦ : ∀ i, ContDiffOn ℝ 1 (Φ i) (Ω i))
+    (hΦ : ∀ i, ContDiffOn ℝ 1 (Φ i) (Ω i))
     (hloc : ∃ U ∈ 𝓝 θ, ∀ θ' ∈ U, (∀ x : Matrix T dIn ℝ, eval A S θ' x = eval A S θ x) →
       ∃ i, ∃ m ∈ Ω i, Φ i m = θ') :
     Module.finrank ℝ (Params A dIn dOut) ≤ funDim A S θ + Module.finrank ℝ M := by
@@ -96,7 +96,7 @@ theorem finrank_le_funDim_add_of_locally_mem_iUnion_image (A : Arch T d L)
   have hk : Module.finrank ℝ (LinearMap.ker (fderiv ℝ (evalBatch A S X) θ).toLinearMap)
       ≤ Module.finrank ℝ M :=
     finrank_ker_le_of_level_set_subset_iUnion_image (hB X) θ g (fun x => hB _) hker
-      hrank Φ Ω hΩ hΦ hloc'
+      hrank Φ Ω hΦ hloc'
   -- rank–nullity: `P = rank + dim ker`, with rank `fd(θ)`
   have hrn := LinearMap.finrank_range_add_finrank_ker (fderiv ℝ (evalBatch A S X) θ).toLinearMap
   have h2 : Module.finrank ℝ (LinearMap.range (fderiv ℝ (evalBatch A S X) θ).toLinearMap)
@@ -107,7 +107,7 @@ omit [DecidableEq d] in
 /-- **Proposition 4.6 (dimension paper) and Proposition 4.5 (skips paper), from local
 identifiability to the equality condition, at generic parameters, for any family of symmetries:**
 if at almost every `θ` every `θ'` near `θ` with the same function is `Φ θ i m` for one of
-countably many maps `Φ θ i` of class `C¹` on open subsets `Ω i` of `M`, then `P ≤ fd(θ) + dim M`
+countably many maps `Φ θ i` of class `C¹` on subsets `Ω i` of `M`, then `P ≤ fd(θ) + dim M`
 at almost every `θ`. -/
 theorem ae_finrank_le_funDim_add_of_ae_locally_mem_iUnion_image (A : Arch T d L)
     (S : Fin L → Matrix d d ℝ)
@@ -115,7 +115,7 @@ theorem ae_finrank_le_funDim_add_of_ae_locally_mem_iUnion_image (A : Arch T d L)
     (μ : Measure (Params A dIn dOut)) [μ.IsAddHaarMeasure]
     {M : Type*} [NormedAddCommGroup M] [NormedSpace ℝ M] [FiniteDimensional ℝ M]
     {ι : Type*} [Countable ι] (Φ : Params A dIn dOut → ι → M → Params A dIn dOut)
-    (Ω : ι → Set M) (hΩ : ∀ i, IsOpen (Ω i)) (hΦ : ∀ θ i, ContDiffOn ℝ 1 (Φ θ i) (Ω i))
+    (Ω : ι → Set M) (hΦ : ∀ θ i, ContDiffOn ℝ 1 (Φ θ i) (Ω i))
     (hloc : ∀ᵐ θ ∂μ, ∃ U ∈ 𝓝 θ, ∀ θ' ∈ U,
       (∀ x : Matrix T dIn ℝ, eval A S θ' x = eval A S θ x) → ∃ i, ∃ m ∈ Ω i, Φ θ i m = θ') :
     ∀ᵐ θ ∂μ, Module.finrank ℝ (Params A dIn dOut) ≤ funDim A S θ + Module.finrank ℝ M := by
@@ -134,6 +134,6 @@ theorem ae_finrank_le_funDim_add_of_ae_locally_mem_iUnion_image (A : Arch T d L)
   -- generic parameters have the largest functional dimension; apply the first statement there
   filter_upwards [ae_funDim_ge A S hf hχ μ θ₀, hloc] with θ h1 h2
   exact finrank_le_funDim_add_of_locally_mem_iUnion_image A S hf hχ θ
-    (fun θ' => (hmax₀ θ').trans h1) (Φ θ) Ω hΩ (hΦ θ) h2
+    (fun θ' => (hmax₀ θ').trans h1) (Φ θ) Ω (hΦ θ) h2
 
 end Skips

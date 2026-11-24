@@ -235,3 +235,5 @@ import SkipsLean.Residual.DifferentClassesTransformer
 import SkipsLean.Residual.ExactGainTransformer
 import SkipsLean.Generic.LevelSetImages
 import SkipsLean.Dimension.IdentifiableConverse
+import SkipsLean.Generic.Cayley
+import SkipsLean.Dimension.IdentifiableConverseCob
