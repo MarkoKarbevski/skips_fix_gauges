@@ -160,6 +160,108 @@ private theorem eq_of_vecMul_eq_ba {m n : Type*} [Fintype m] [DecidableEq m]
   have hb := congrFun (h (Pi.single a 1)) b
   simpa only [single_vecMul, one_smul, Matrix.row_apply] using hb
 
+/-- Row `t` of a sum of matrices `A + B`. -/
+private theorem add_row_ba {T d : Type*} (A B : Matrix T d ℝ) (t : T) :
+    (A + B) t = A t + B t := rfl
+
+/-- **Proof of Theorem C.1 (ii), attention:** if `h M + B_θ(h) = B_θ'(h)` for every `h`, and a
+token `t₂` sees another token `t₁`, then `M = 0`. -/
+private theorem eq_zero_of_forall_ba {T d H dh H' dh' : Type*} [Fintype T] [Fintype d]
+    [Fintype H] [Fintype dh] [Fintype H'] [Fintype dh'] (sees : T → T → Prop)
+    [DecidableRel sees] {t₁ t₂ : T} (h12 : t₁ ≠ t₂) (hs : sees t₂ t₁)
+    (WQ WK WV : H → Matrix d dh ℝ) (bQ bK bV : H → dh → ℝ) (WO : H → Matrix dh d ℝ)
+    (bO : d → ℝ) (WQ' WK' WV' : H' → Matrix d dh' ℝ) (bQ' bK' bV' : H' → dh' → ℝ)
+    (WO' : H' → Matrix dh' d ℝ) (bO' : d → ℝ) (M : Matrix d d ℝ)
+    (hall : ∀ h : Matrix T d ℝ, h * M + attentionBlockB sees WQ WK WV bQ bK bV WO bO h
+      = attentionBlockB sees WQ' WK' WV' bQ' bK' bV' WO' bO' h) : M = 0 := by
+  classical
+  have ht : ∃ s, sees t₂ s := ⟨t₁, hs⟩
+  -- row `t₂` of the equation, with the rows of both blocks
+  have hrow : ∀ h : Matrix T d ℝ, h t₂ ᵥ* M
+      + (∑ i, (∑ s, attnWeights sees (scoresB_ba WQ WK bQ bK h i) t₂ s • h s) ᵥ* (WV i * WO i)
+        + (∑ i, bV i ᵥ* WO i + bO))
+      = ∑ j, (∑ s, attnWeights sees (scoresB_ba WQ' WK' bQ' bK' h j) t₂ s • h s)
+          ᵥ* (WV' j * WO' j) + (∑ j, bV' j ᵥ* WO' j + bO') := by
+    intro h
+    have e := congrFun (hall h) t₂
+    rw [add_row_ba, Matrix.mul_apply_eq_vecMul,
+      attentionBlockB_row_ba sees WQ WK WV bQ bK bV WO bO h t₂ ht,
+      attentionBlockB_row_ba sees WQ' WK' WV' bQ' bK' bV' WO' bO' h t₂ ht] at e
+    exact e
+  generalize ∑ i, bV i ᵥ* WO i + bO = κ at hrow
+  generalize ∑ j, bV' j ᵥ* WO' j + bO' = κ' at hrow
+  -- Step 1 (all rows equal `x`): the weights of a row sum to `1`, so `x M + x C + κ = x C' + κ'`
+  have h1 : ∀ x : d → ℝ, x ᵥ* M + (x ᵥ* ∑ i, WV i * WO i + κ)
+      = x ᵥ* ∑ j, WV' j * WO' j + κ' := by
+    intro x
+    have e := hrow (Matrix.of fun _ => x)
+    have hx : ∀ s, (Matrix.of fun _ : T => x) s = x := fun s => rfl
+    simp only [hx, ← Finset.sum_smul, attnWeights_sum_ba sees _ t₂ ht, one_smul,
+      ← Matrix.vecMul_sum] at e
+    exact e
+  -- at `x = 0`: `κ = κ'`
+  have hκ : κ = κ' := by simpa only [Matrix.zero_vecMul, zero_add] using h1 0
+  subst hκ
+  -- the number `n₂` of tokens that `t₂` sees is positive
+  have hN : 0 < ∑ s', if sees t₂ s' then (1 : ℝ) else 0 := by
+    refine Finset.sum_pos' (fun s' _ => ?_) ⟨t₁, Finset.mem_univ _, ?_⟩
+    · split_ifs
+      · exact zero_le_one
+      · exact le_rfl
+    · simp only [hs, ite_true]
+      exact one_pos
+  -- Steps 2 and 3: `δ C = δ C'` for every row `δ`
+  have hC : ∀ δ : d → ℝ, δ ᵥ* ∑ i, WV i * WO i = δ ᵥ* ∑ j, WV' j * WO' j := by
+    intro δ
+    -- the input `H₀` whose row `t₁` is `δ` and whose other rows are `0`
+    obtain ⟨H₀, hH₀⟩ : ∃ H₀ : Matrix T d ℝ, ∀ s, H₀ s = if s = t₁ then δ else 0 :=
+      ⟨Matrix.of fun t => if t = t₁ then δ else 0, fun s => rfl⟩
+    have hsum : ∀ (a : T → ℝ) (ε : ℝ), ∑ s, a s • (ε • H₀) s = ε • a t₁ • δ := by
+      intro a ε
+      have e : ∀ s, a s • (ε • H₀) s = if s = t₁ then ε • a t₁ • δ else 0 := by
+        intro s
+        show a s • ε • H₀ s = _
+        rw [hH₀]
+        split_ifs with hst
+        · rw [hst, smul_comm]
+        · rw [smul_zero, smul_zero]
+      simp only [e, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
+    have hrow₂ : ∀ ε : ℝ, (ε • H₀) t₂ = 0 := by
+      intro ε
+      show ε • H₀ t₂ = 0
+      simp only [hH₀, h12.symm, ite_false, smul_zero]
+    -- Step 2: at the input `ε H₀`, `ε F(ε) + κ = ε F'(ε) + κ`
+    have h2 : ∀ ε : ℝ, ε ≠ 0 →
+        ∑ i, attnWeights sees (scoresB_ba WQ WK bQ bK (ε • H₀) i) t₂ t₁ • (δ ᵥ* (WV i * WO i))
+          = ∑ j, attnWeights sees (scoresB_ba WQ' WK' bQ' bK' (ε • H₀) j) t₂ t₁
+              • (δ ᵥ* (WV' j * WO' j)) := by
+      intro ε hε
+      have e := hrow (ε • H₀)
+      simp only [hsum, hrow₂, Matrix.zero_vecMul, zero_add, Matrix.smul_vecMul,
+        ← Finset.smul_sum] at e
+      exact smul_right_injective (d → ℝ) hε (add_right_cancel e)
+    -- Step 3: both sides are continuous in `ε`, so they agree at `ε = 0`
+    have hc : Continuous fun ε : ℝ => ∑ i, attnWeights sees (scoresB_ba WQ WK bQ bK (ε • H₀) i)
+        t₂ t₁ • (δ ᵥ* (WV i * WO i)) :=
+      continuous_finsetSum _ fun i _ =>
+        (continuous_weight_ba sees WQ WK bQ bK H₀ i t₂ t₁).smul continuous_const
+    have hc' : Continuous fun ε : ℝ => ∑ j, attnWeights sees
+        (scoresB_ba WQ' WK' bQ' bK' (ε • H₀) j) t₂ t₁ • (δ ᵥ* (WV' j * WO' j)) :=
+      continuous_finsetSum _ fun j _ =>
+        (continuous_weight_ba sees WQ' WK' bQ' bK' H₀ j t₂ t₁).smul continuous_const
+    have hF := Continuous.ext_on (dense_compl_singleton (0 : ℝ)) hc hc' fun ε hε => h2 ε hε
+    have h0 := congrFun hF 0
+    -- at `ε = 0` every weight of row `t₂` is `1 / n₂`
+    simp only [zero_smul, attnWeights_scoresB_zero_ba sees _ _ _ _ _ t₂ t₁ hs,
+      ← Finset.smul_sum, ← Matrix.vecMul_sum] at h0
+    exact smul_right_injective (d → ℝ) (inv_ne_zero hN.ne') h0
+  -- `C = C'` and `κ = κ'` in Step 1 give `x M = 0` for every `x`
+  refine eq_of_vecMul_eq_ba fun x => ?_
+  have e := h1 x
+  rw [hC x] at e
+  rw [Matrix.vecMul_zero]
+  exact add_eq_right.mp e
+
 /-- **Theorem C.1 (ii) of the absorb paper for attention blocks with biases:** with a mask in which
 some token sees another token, no attention block with biases, with any number of heads and any
 head dimension, absorbs `h M` with `M ≠ 0`. -/
@@ -171,7 +273,9 @@ theorem forall_exists_ne_attentionBlockB {T d H dh H' dh' : Type*} [Fintype T] [
     (WO' : H' → Matrix dh' d ℝ) (bO' : d → ℝ) (M : Matrix d d ℝ) (hM : M ≠ 0) :
     ∃ h : Matrix T d ℝ, h * M + attentionBlockB sees WQ WK WV bQ bK bV WO bO h
       ≠ attentionBlockB sees WQ' WK' WV' bQ' bK' bV' WO' bO' h := by
-  sorry
+  obtain ⟨t₁, t₂, h12, hs⟩ := hsees
+  exact not_forall.mp fun hall => hM (eq_zero_of_forall_ba sees h12 hs WQ WK WV bQ bK bV WO bO
+    WQ' WK' WV' bQ' bK' bV' WO' bO' M hall)
 
 /-- **Theorem C.1 (ii) for attention blocks with biases, without a mask:** on at least two tokens,
 every token sees every token. -/
@@ -183,7 +287,9 @@ theorem forall_exists_ne_attentionBlockB_noMask {T d H dh H' dh' : Type*} [Finty
     ∃ h : Matrix T d ℝ,
       h * M + attentionBlockB (fun _ _ : T => True) WQ WK WV bQ bK bV WO bO h
         ≠ attentionBlockB (fun _ _ : T => True) WQ' WK' WV' bQ' bK' bV' WO' bO' h := by
-  sorry
+  obtain ⟨t₁, t₂, h12⟩ := Fintype.exists_pair_of_one_lt_card hT
+  exact forall_exists_ne_attentionBlockB _ ⟨t₁, t₂, h12, trivial⟩ WQ WK WV bQ bK bV WO bO
+    WQ' WK' WV' bQ' bK' bV' WO' bO' M hM
 
 /-- **Theorem C.1 (ii) for attention blocks with biases, with the causal mask:** on the tokens
 `0, …, n − 1`, `n ≥ 2`, token `t` sees the tokens `s ≤ t`. -/
@@ -195,6 +301,10 @@ theorem forall_exists_ne_attentionBlockB_causal {n : ℕ} (hn : 2 ≤ n) {d H dh
     ∃ h : Matrix (Fin n) d ℝ,
       h * M + attentionBlockB (fun t s : Fin n => s ≤ t) WQ WK WV bQ bK bV WO bO h
         ≠ attentionBlockB (fun t s : Fin n => s ≤ t) WQ' WK' WV' bQ' bK' bV' WO' bO' h := by
-  sorry
+  -- token `1` sees token `0`
+  have h01 : (⟨0, by omega⟩ : Fin n) ≠ ⟨1, by omega⟩ := Fin.ne_of_val_ne zero_ne_one
+  have hs : (⟨0, by omega⟩ : Fin n) ≤ ⟨1, by omega⟩ := Fin.mk_le_mk.2 zero_le_one
+  exact forall_exists_ne_attentionBlockB _ ⟨_, _, h01, hs⟩ WQ WK WV bQ bK bV WO bO
+    WQ' WK' WV' bQ' bK' bV' WO' bO' M hM
 
 end Skips
