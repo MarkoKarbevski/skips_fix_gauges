@@ -209,29 +209,30 @@ private theorem rmsRow_zero_ne_zero_hz (v : d → ℝ) (hv : v ≠ 0) : rmsRow 0
   exact smul_ne_zero (inv_ne_zero (Real.sqrt_pos.2 hx).ne') hv
 
 omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
-/-- Helper: if `G` is differentiable at `θ` and is affine along the line `θ + s η`,
-`G (θ + s η) = a + s y`, then `𝐃G(θ) η = y`. -/
-private theorem fderiv_apply_eq_of_line_hz {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-    [NormedAddCommGroup F] [NormedSpace ℝ F] {G : E → F} {θ η : E} {a y : F}
-    (hG : DifferentiableAt ℝ G θ) (hline : ∀ s : ℝ, G (θ + s • η) = a + s • y) :
-    fderiv ℝ G θ η = y := by
-  -- the line `s ↦ θ + s η` has the velocity `η`
-  have hl : HasDerivAt (fun s : ℝ => θ + s • η) η 0 := by
-    have h := ((hasDerivAt_id (0 : ℝ)).smul_const η).const_add θ
-    rw [one_smul] at h
-    exact h
-  -- the chain rule
-  have h1 : HasDerivAt (fun s : ℝ => G (θ + s • η)) (fderiv ℝ G θ η) 0 :=
-    hG.hasFDerivAt.comp_hasDerivAt_of_eq (0 : ℝ) hl (by rw [zero_smul, add_zero])
-  -- the explicit formula
-  have h2 : HasDerivAt (fun s : ℝ => G (θ + s • η)) y 0 := by
-    have h := ((hasDerivAt_id (0 : ℝ)).smul_const y).const_add a
-    rw [one_smul] at h
-    have e : (fun s : ℝ => G (θ + s • η)) = fun s => a + id s • y := funext hline
-    rw [e]
-    exact h
-  exact h1.unique h2
+/-- Helper: the line `τ ↦ a + τ b` has the velocity `b` (as in `Depth/StepZeroValues.lean`). -/
+private theorem hasDerivAt_line_hz {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (a b : E) : HasDerivAt (fun τ : ℝ => a + τ • b) b 0 := by
+  have h := ((hasDerivAt_id (0 : ℝ)).smul_const b).const_add a
+  rw [one_smul] at h
+  exact h
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: if `G` is differentiable at `θ = γ(0)`, the curve `γ` has the velocity `η` at `0`, and
+`G` is affine along it, `G (γ s) = a + s y`, then `𝐃G(θ) η = y`. -/
+private theorem fderiv_apply_eq_of_line_hz {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [NormedAddCommGroup F] [NormedSpace ℝ F] {G : E → F} {θ η : E} {a y : F} (γ : ℝ → E)
+    (hG : DifferentiableAt ℝ G θ) (hγ : HasDerivAt γ η 0) (hγ0 : γ 0 = θ)
+    (hline : ∀ s : ℝ, G (γ s) = a + s • y) :
+    fderiv ℝ G θ η = y := by
+  -- the chain rule
+  have h1 : HasDerivAt (fun s : ℝ => G (γ s)) (fderiv ℝ G θ η) 0 :=
+    hG.hasFDerivAt.comp_hasDerivAt_of_eq (0 : ℝ) hγ hγ0.symm
+  -- the explicit formula
+  have h2 : HasDerivAt (fun s : ℝ => G (γ s)) y 0 := by
+    have e : (fun s : ℝ => G (γ s)) = fun s => a + s • y := funext hline
+    rw [e]
+    exact hasDerivAt_line_hz a y
+  exact h1.unique h2
 
 /-- **"because the derivative with respect to `W_read^ℓ` is onto":** at a parameter at which no row
 of `h_0, …, h_ℓ` vanishes, the derivative in the weights of row `t` of `N(h_ℓ) W_read` is onto. -/
@@ -244,7 +245,40 @@ theorem surjective_fderiv_preactivation (hσa : AnalyticOnNhd ℝ σ Set.univ)
       (fderiv ℝ (fun θ' : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut =>
         (rmsNorm 0 (hidden (Arch.mlp σ (rmsNorm 0) hid) 0 θ' x ℓ.castSucc) * θ'.read ℓ :
           Matrix T (hid ℓ) ℝ) t) θ) := by
-  sorry
+  intro y
+  -- row `t` of `N(h_ℓ)` is not zero: `n = N(h_ℓ)_t ≠ 0`, so `n δW = y` for some `δW`
+  have hn : rmsNorm 0 (hidden (Arch.mlp σ (rmsNorm 0) hid) 0 θ x ℓ.castSucc) t ≠ 0 :=
+    rmsRow_zero_ne_zero_hz _ (h ℓ.castSucc le_rfl t)
+  obtain ⟨δW, hδW⟩ := exists_vecMul_eq_hz _ hn y
+  -- the direction `η` that changes only the read of block `ℓ`, by `δW`
+  obtain ⟨η, hηE, hηr, hηr', hηw⟩ :
+      ∃ η : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut,
+        η.E = 0 ∧ (∀ ℓ', ℓ' ≠ ℓ → η.read ℓ' = 0) ∧ η.read ℓ = δW ∧ ∀ ℓ', η.write ℓ' = 0 :=
+    ⟨⟨0, Pi.single (M := fun ℓ' => Matrix d (hid ℓ') ℝ) ℓ δW, 0, 0⟩, rfl,
+      fun _ hne => Pi.single_eq_of_ne (M := fun ℓ' => Matrix d (hid ℓ') ℝ) hne δW,
+      Pi.single_eq_same (M := fun ℓ' => Matrix d (hid ℓ') ℝ) ℓ δW, fun _ => rfl⟩
+  refine ⟨η, ?_⟩
+  -- the row is differentiable at `θ` (it is analytic there)
+  have hd := (analyticAt_preactivation_rmsNorm_zero hσa θ x ℓ h).differentiableAt
+  refine fderiv_apply_eq_of_line_hz
+    (a := (rmsNorm 0 (hidden (Arch.mlp σ (rmsNorm 0) hid) 0 θ x ℓ.castSucc) * θ.read ℓ :
+      Matrix T (hid ℓ) ℝ) t) (fun s : ℝ => θ + s • η) (differentiableAt_pi.1 hd t)
+    (hasDerivAt_line_hz θ η) (by simp) fun s => ?_
+  -- along the line, `h_ℓ` does not change: `E` and the blocks before `ℓ` are those of `θ`
+  have hc : hidden (Arch.mlp σ (rmsNorm 0) hid) 0 (θ + s • η) x ℓ.castSucc
+      = hidden (Arch.mlp σ (rmsNorm 0) hid) 0 θ x ℓ.castSucc := by
+    refine hidden_congr _ _ _ _ x ℓ.castSucc ?_ (fun ℓ' hℓ' => ?_) (fun ℓ' _ => ?_)
+    · rw [Params.add_E, Params.smul_E, hηE, smul_zero, add_zero]
+    · have hne : ℓ' ≠ ℓ := by
+        rintro rfl
+        exact lt_irrefl _ hℓ'
+      rw [Params.add_read, Params.smul_read, hηr ℓ' hne, smul_zero, add_zero]
+    · rw [Params.add_write, Params.smul_write, hηw ℓ', smul_zero, add_zero]
+  -- so row `t` is `n (W_read + s δW) = n W_read + s n δW = n W_read + s y`
+  have hrow : ∀ (M N : Matrix T (hid ℓ) ℝ) (c : ℝ), (M + c • N) t = M t + c • N t :=
+    fun _ _ _ => rfl
+  rw [hc, Params.add_read, Params.smul_read, hηr', Matrix.mul_add, Matrix.mul_smul, hrow,
+    Matrix.mul_apply_eq_vecMul _ δW, hδW]
 
 /-- **"Where `w̃_ℓ ≠ 0`, the derivative of `h_ℓ` with respect to `W_write^ℓ` is onto":** let `σ`
 vanish only at `0`. At a parameter at which no row of `h_0, …, h_ℓ` vanishes and row `t` of
@@ -260,6 +294,51 @@ theorem surjective_fderiv_hidden_succ (hσa : AnalyticOnNhd ℝ σ Set.univ)
     Function.Surjective
       (fderiv ℝ (fun θ' : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut =>
         hidden (Arch.mlp σ (rmsNorm 0) hid) 0 θ' x ℓ.succ t) θ) := by
-  sorry
+  intro y
+  -- `P = N(h_ℓ) W_read` at `θ`; `w = σ(P_t) ≠ 0` since `P_t ≠ 0` and `σ` vanishes only at `0`
+  obtain ⟨P, hP⟩ : ∃ P, (rmsNorm 0 (hidden (Arch.mlp σ (rmsNorm 0) hid) 0 θ x ℓ.castSucc) *
+      θ.read ℓ : Matrix T (hid ℓ) ℝ) = P := ⟨_, rfl⟩
+  rw [hP] at hg
+  have hw : (P.map σ) t ≠ 0 := by
+    intro h0
+    apply hg
+    funext j
+    exact hσ0 (P t j) (congr_fun h0 j)
+  -- so `w δV = y` for some `δV`
+  obtain ⟨δV, hδV⟩ := exists_vecMul_eq_hz _ hw y
+  -- the direction `η` that changes only the write of block `ℓ`, by `δV`
+  obtain ⟨η, hηE, hηr, hηw, hηw'⟩ :
+      ∃ η : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut,
+        η.E = 0 ∧ (∀ ℓ', η.read ℓ' = 0) ∧ (∀ ℓ', ℓ' ≠ ℓ → η.write ℓ' = 0) ∧ η.write ℓ = δV :=
+    ⟨⟨0, 0, Pi.single (M := fun ℓ' => Matrix (hid ℓ') d ℝ) ℓ δV, 0⟩, rfl, fun _ => rfl,
+      fun _ hne => Pi.single_eq_of_ne (M := fun ℓ' => Matrix (hid ℓ') d ℝ) hne δV,
+      Pi.single_eq_same (M := fun ℓ' => Matrix (hid ℓ') d ℝ) ℓ δV⟩
+  refine ⟨η, ?_⟩
+  -- row `t` of `h_{ℓ+1}` is differentiable at `θ` (it is analytic there)
+  have hd := (analyticAt_hidden_rmsNorm_zero hσa θ x ℓ.succ
+    fun i hi => h i (Fin.le_castSucc_iff.2 hi)).differentiableAt
+  refine fderiv_apply_eq_of_line_hz
+    (a := hidden (Arch.mlp σ (rmsNorm 0) hid) 0 θ x ℓ.succ t) (fun s : ℝ => θ + s • η)
+    (differentiableAt_pi.1 hd t) (hasDerivAt_line_hz θ η) (by simp) fun s => ?_
+  -- along the line, `h_ℓ` does not change: `E` and the blocks before `ℓ` are those of `θ`
+  have hc : hidden (Arch.mlp σ (rmsNorm 0) hid) 0 (θ + s • η) x ℓ.castSucc
+      = hidden (Arch.mlp σ (rmsNorm 0) hid) 0 θ x ℓ.castSucc := by
+    refine hidden_congr _ _ _ _ x ℓ.castSucc ?_ (fun ℓ' _ => ?_) (fun ℓ' hℓ' => ?_)
+    · rw [Params.add_E, Params.smul_E, hηE, smul_zero, add_zero]
+    · rw [Params.add_read, Params.smul_read, hηr ℓ', smul_zero, add_zero]
+    · have hne : ℓ' ≠ ℓ := by
+        rintro rfl
+        exact lt_irrefl _ hℓ'
+      rw [Params.add_write, Params.smul_write, hηw ℓ' hne, smul_zero, add_zero]
+  -- so `h_{ℓ+1} = h_ℓ 0 + σ(P) (W_write + s δV) = h_{ℓ+1}(θ) + s σ(P) δV`
+  have e : hidden (Arch.mlp σ (rmsNorm 0) hid) 0 (θ + s • η) x ℓ.succ
+      = hidden (Arch.mlp σ (rmsNorm 0) hid) 0 θ x ℓ.succ + s • (P.map σ * δV) := by
+    rw [hidden_succ, hidden_succ, hc, Params.add_read, Params.smul_read, hηr, smul_zero,
+      add_zero, Params.add_write, Params.smul_write, hηw', Matrix.mul_add, Matrix.mul_smul,
+      ← add_assoc, ← hP]
+  -- row `t`: `w δV = y`
+  have hrow : ∀ (M N : Matrix T d ℝ) (c : ℝ), (M + c • N) t = M t + c • N t :=
+    fun _ _ _ => rfl
+  rw [e, hrow, Matrix.mul_apply_eq_vecMul _ δV, hδV]
 
 end Skips
