@@ -35,6 +35,7 @@ open scoped Matrix.Norms.Elementwise
 variable {T d dIn dOut : Type*} {L : ℕ} [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn]
   [Fintype dOut]
 
+omit [DecidableEq d] in
 /-- **Proof of Proposition 4.6 (dimension paper) and of Proposition 4.5 (skips paper), from the
 equality condition to local identifiability, for any family of symmetries:** if the family
 `Φ : M → Params` passes through `θ = Φ 0`, is strictly differentiable at `0` with an injective
