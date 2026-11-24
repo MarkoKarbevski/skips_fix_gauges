@@ -69,7 +69,18 @@ theorem ae_funDim_attentionMlp_skipless_iff_ae_locally_cob_heads_perm
           ∃ G : Fin (L + 1) → GL d ℝ,
             θ' = (Params.sumOf (((θ.sumFst.permHeads q).headsQK K).headsVO K') (θ.sumSnd.permUnits
                 p)).cob G G) := by
-  sorry
+  -- the case of the statement with countably many images: the permutations of the heads of the
+  -- first part and of the hidden units of the second part, the trivial ones as the identity
+  rw [ae_funDim_attentionMlp_skipless_iff_ae_locally_cob_heads_family hσ μ hdIn hdh hW
+    (fun (j : (∀ ℓ, Equiv.Perm (H ℓ)) × (∀ ℓ, Equiv.Perm (hid ℓ))) θ =>
+      Params.sumOf (θ.sumFst.permHeads j.1) (θ.sumSnd.permUnits j.2))
+    (fun _ => 1, fun _ => 1)
+    (fun θ => by rw [permHeads_one, permUnits_one, Params.sumOf_sumFst_sumSnd])]
+  -- the existential over the pairs `(q, p)` is the existential over `q` and `p`
+  refine eventually_congr (Eventually.of_forall fun θ => ?_)
+  refine exists_congr fun U => and_congr_right fun _ =>
+    forall₂_congr fun θ' _ => imp_congr_right fun _ => ?_
+  exact ⟨fun ⟨⟨q, p⟩, h⟩ => ⟨q, p, h⟩, fun ⟨q, p, h⟩ => ⟨(q, p), h⟩⟩
 
 /-- **Proposition 4.5 of the skips paper, for skipless networks of attention blocks and MLP blocks
 with a real-analytic activation, in any order, without normalization, with the permutations of the
@@ -99,7 +110,19 @@ theorem ae_funDim_attentionMlp_skipless_iff_ae_locally_cob_heads_perm_flip
           ∃ G : Fin (L + 1) → GL d ℝ,
             θ' = (Params.sumOf (((θ.sumFst.permHeads q).headsQK K).headsVO K')
                 ((θ.sumSnd.permUnits p).flipUnits s)).cob G G) := by
-  sorry
+  -- the case of the statement with countably many images: the permutations of the heads of the
+  -- first part, the permutations and the sign flips of the hidden units of the second part, the
+  -- trivial ones as the identity
+  rw [ae_funDim_attentionMlp_skipless_iff_ae_locally_cob_heads_family hσ μ hdIn hdh hW
+    (fun (j : (∀ ℓ, Equiv.Perm (H ℓ)) × (∀ ℓ, Equiv.Perm (hid ℓ)) × (∀ ℓ, hid ℓ → ℤˣ)) θ =>
+      Params.sumOf (θ.sumFst.permHeads j.1) ((θ.sumSnd.permUnits j.2.1).flipUnits j.2.2))
+    (fun _ => 1, fun _ => 1, fun _ _ => 1)
+    (fun θ => by rw [permHeads_one, permUnits_one, flipUnits_one, Params.sumOf_sumFst_sumSnd])]
+  -- the existential over the triples `(q, p, s)` is the existential over `q`, `p` and `s`
+  refine eventually_congr (Eventually.of_forall fun θ => ?_)
+  refine exists_congr fun U => and_congr_right fun _ =>
+    forall₂_congr fun θ' _ => imp_congr_right fun _ => ?_
+  exact ⟨fun ⟨⟨q, p, s⟩, h⟩ => ⟨q, p, s, h⟩, fun ⟨q, p, s, h⟩ => ⟨(q, p, s), h⟩⟩
 
 /-- **Proposition 4.5 of the skips paper, for skipless networks of attention blocks and MLP blocks
 with a real-analytic activation, in any order, under pre-RMSNorm with `ε > 0`, with the permutations
@@ -129,7 +152,18 @@ theorem ae_funDim_attentionMlp_skipless_iff_ae_locally_cob_heads_rmsNorm_perm
             (∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ) ∧
             θ' = (Params.sumOf (((θ.sumFst.permHeads q).headsQK K).headsVO K') (θ.sumSnd.permUnits
                 p)).cob Q Q) := by
-  sorry
+  -- the case of the statement with countably many images: the permutations of the heads of the
+  -- first part and of the hidden units of the second part, the trivial ones as the identity
+  rw [ae_funDim_attentionMlp_skipless_iff_ae_locally_cob_heads_rmsNorm_family hε hσ μ hdIn hdh hW
+    (fun (j : (∀ ℓ, Equiv.Perm (H ℓ)) × (∀ ℓ, Equiv.Perm (hid ℓ))) θ =>
+      Params.sumOf (θ.sumFst.permHeads j.1) (θ.sumSnd.permUnits j.2))
+    (fun _ => 1, fun _ => 1)
+    (fun θ => by rw [permHeads_one, permUnits_one, Params.sumOf_sumFst_sumSnd])]
+  -- the existential over the pairs `(q, p)` is the existential over `q` and `p`
+  refine eventually_congr (Eventually.of_forall fun θ => ?_)
+  refine exists_congr fun U => and_congr_right fun _ =>
+    forall₂_congr fun θ' _ => imp_congr_right fun _ => ?_
+  exact ⟨fun ⟨⟨q, p⟩, h⟩ => ⟨q, p, h⟩, fun ⟨q, p, h⟩ => ⟨(q, p), h⟩⟩
 
 /-- **Proposition 4.5 of the skips paper, for skipless networks of attention blocks and MLP blocks
 with a real-analytic activation, in any order, under pre-RMSNorm with `ε > 0`, with the permutations
@@ -161,7 +195,19 @@ theorem ae_funDim_attentionMlp_skipless_iff_ae_locally_cob_heads_rmsNorm_perm_fl
             (∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ) ∧
             θ' = (Params.sumOf (((θ.sumFst.permHeads q).headsQK K).headsVO K')
                 ((θ.sumSnd.permUnits p).flipUnits s)).cob Q Q) := by
-  sorry
+  -- the case of the statement with countably many images: the permutations of the heads of the
+  -- first part, the permutations and the sign flips of the hidden units of the second part, the
+  -- trivial ones as the identity
+  rw [ae_funDim_attentionMlp_skipless_iff_ae_locally_cob_heads_rmsNorm_family hε hσ μ hdIn hdh hW
+    (fun (j : (∀ ℓ, Equiv.Perm (H ℓ)) × (∀ ℓ, Equiv.Perm (hid ℓ)) × (∀ ℓ, hid ℓ → ℤˣ)) θ =>
+      Params.sumOf (θ.sumFst.permHeads j.1) ((θ.sumSnd.permUnits j.2.1).flipUnits j.2.2))
+    (fun _ => 1, fun _ => 1, fun _ _ => 1)
+    (fun θ => by rw [permHeads_one, permUnits_one, flipUnits_one, Params.sumOf_sumFst_sumSnd])]
+  -- the existential over the triples `(q, p, s)` is the existential over `q`, `p` and `s`
+  refine eventually_congr (Eventually.of_forall fun θ => ?_)
+  refine exists_congr fun U => and_congr_right fun _ =>
+    forall₂_congr fun θ' _ => imp_congr_right fun _ => ?_
+  exact ⟨fun ⟨⟨q, p, s⟩, h⟩ => ⟨q, p, s, h⟩, fun ⟨q, p, s, h⟩ => ⟨(q, p, s), h⟩⟩
 
 /-- **Proposition 4.5 of the skips paper, for skipless networks of attention blocks and gated blocks
 with a real-analytic gate, in any order, without normalization, with the permutations of the heads
@@ -192,7 +238,18 @@ theorem ae_funDim_attentionGated_skipless_iff_ae_locally_cob_heads_rescale_perm
           ∃ G : Fin (L + 1) → GL d ℝ,
             θ' = (Params.sumOf (((θ.sumFst.permHeads q).headsQK K).headsVO K')
                 ((θ.sumSnd.permUnitsGated p).rescale c)).cob G G) := by
-  sorry
+  -- the case of the statement with countably many images: the permutations of the heads of the
+  -- first part and of the hidden units of the second part, the trivial ones as the identity
+  rw [ae_funDim_attentionGated_skipless_iff_ae_locally_cob_heads_rescale_family hσ μ hdIn hdh hW
+    (fun (j : (∀ ℓ, Equiv.Perm (H ℓ)) × (∀ ℓ, Equiv.Perm (hid ℓ))) θ =>
+      Params.sumOf (θ.sumFst.permHeads j.1) (θ.sumSnd.permUnitsGated j.2))
+    (fun _ => 1, fun _ => 1)
+    (fun θ => by rw [permHeads_one, permUnitsGated_one, Params.sumOf_sumFst_sumSnd])]
+  -- the existential over the pairs `(q, p)` is the existential over `q` and `p`
+  refine eventually_congr (Eventually.of_forall fun θ => ?_)
+  refine exists_congr fun U => and_congr_right fun _ =>
+    forall₂_congr fun θ' _ => imp_congr_right fun _ => ?_
+  exact ⟨fun ⟨⟨q, p⟩, h⟩ => ⟨q, p, h⟩, fun ⟨q, p, h⟩ => ⟨(q, p), h⟩⟩
 
 /-- **Proposition 4.5 of the skips paper, for skipless networks of attention blocks and gated blocks
 with a real-analytic gate, in any order, under pre-RMSNorm with `ε > 0`, with the permutations of
@@ -224,6 +281,18 @@ theorem ae_funDim_attentionGated_skipless_iff_ae_locally_cob_heads_rescale_rmsNo
             (∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ) ∧
             θ' = (Params.sumOf (((θ.sumFst.permHeads q).headsQK K).headsVO K')
                 ((θ.sumSnd.permUnitsGated p).rescale c)).cob Q Q) := by
-  sorry
+  -- the case of the statement with countably many images: the permutations of the heads of the
+  -- first part and of the hidden units of the second part, the trivial ones as the identity
+  rw [ae_funDim_attentionGated_skipless_iff_ae_locally_cob_heads_rescale_rmsNorm_family hε hσ μ hdIn
+    hdh hW
+    (fun (j : (∀ ℓ, Equiv.Perm (H ℓ)) × (∀ ℓ, Equiv.Perm (hid ℓ))) θ =>
+      Params.sumOf (θ.sumFst.permHeads j.1) (θ.sumSnd.permUnitsGated j.2))
+    (fun _ => 1, fun _ => 1)
+    (fun θ => by rw [permHeads_one, permUnitsGated_one, Params.sumOf_sumFst_sumSnd])]
+  -- the existential over the pairs `(q, p)` is the existential over `q` and `p`
+  refine eventually_congr (Eventually.of_forall fun θ => ?_)
+  refine exists_congr fun U => and_congr_right fun _ =>
+    forall₂_congr fun θ' _ => imp_congr_right fun _ => ?_
+  exact ⟨fun ⟨⟨q, p⟩, h⟩ => ⟨q, p, h⟩, fun ⟨q, p, h⟩ => ⟨(q, p), h⟩⟩
 
 end Skips
