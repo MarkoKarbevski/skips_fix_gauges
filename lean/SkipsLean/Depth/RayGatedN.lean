@@ -34,7 +34,9 @@ stated as `Z W_g + η_g = 0`. The second part is written with `writeLHS` for the
 In the case (n) the frozen network is homogeneous (`suffix_frozen_smul`), so that
 `𝓛^∞(t (W° + y), w̃'; t ξ) = t^{2 · 2^{L−k−1}} 𝓛^∞(W° + y, w̃'; ξ)`: the coefficients of (34) are
 constants times powers of `t`, which is fact (a) in this case. Fact (b) is Lemma D.11
-(`exists_far_frozen_bounds`), and the induction is `ray_induction_matrix`.
+(`exists_far_frozen_bounds`), and the induction is `ray_induction_matrix`. The step "one small
+factor" needs neither Lemma D.9 nor the parity (30) here: with constant coefficients, (36) for
+`α = 1_j` reads `c + ν_j(t) c' → 0` with `|ν_j(t)| → ∞` (the last clause of `GateFar`), so `c' = 0`.
 -/
 
 namespace Skips

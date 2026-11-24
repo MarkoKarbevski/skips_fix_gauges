@@ -16,7 +16,8 @@ for gated blocks (see `Depth/RayGatedPlus.lean` and `Depth/RayGatedN.lean` for t
 Lemma D.9 in the step "one small factor". Equation (38) reads: for all `n ∈ C_k` and all rows `w̃`,
 `ż(n) = 0` and `𝐃𝓑(w̃ V)(w̃ η_V) + 𝐃_θ 𝓑(w̃ V) η' = 0`.
 
-Stated here, for an MLP block whose activation `σ` has `GateFar σ σ' p`, with the step "one small
+Stated here, for an MLP block whose activation `σ` has `GateFar σ σ' p` (GELU; SiLU has it as well,
+an activation of MLP blocks that the paper does not treat), with the step "one small
 factor" as the hypothesis `hone`, and for hidden states with the rows `T`: (38) at one generic `Ξ`
 ((i) the numbers `|ξ_t c_j|^p` are independent over `ℚ`; (iii) the derivative of the network after
 the block is injective at `g°(Ξ)`; there is no (ii)); then (38) for all `n` with rows in `C_k`,

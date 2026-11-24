@@ -20,8 +20,9 @@ Stated here without the network, in the variable `s = 1/t`: `a` and `b` are real
 (they stand for the two coefficients, up to powers of `t` and signs), `u = |ξ c_j| > 0`, and
 `ν(t) = t δ'(t u)/δ(t u)` with `δ(y) = y − σ(y)`, `δ'(y) = 1 − σ'(y)`. If
 `a(1/t) + ν(t) b(1/t)` tends to `0` faster than every power of `1/t`, then `b` vanishes near `0`:
-for GELU by Lemma D.9; for SiLU if `a` and `b` are even near `0`, which is what the parity (30)
-gives in this variable.
+for GELU by Lemma D.9; for SiLU if `a` and `b` are even near `0`. For gated blocks this evenness
+is the parity (30); in the variable `s` it holds because the coefficient maps depend on `s` through
+`s²` (`scaledSuffix_neg`), for MLP blocks as well.
 -/
 
 namespace Skips

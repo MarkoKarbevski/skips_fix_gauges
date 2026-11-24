@@ -22,8 +22,9 @@ This is the longest argument of Appendix D. In the case (n) the two proofs below
 its two halves, each stated in a file of its own: from (28) to (38) on generic rays
 (`Depth/RayGatedN.lean`, which uses Lemmas D.8 and D.11, the frozen network and the induction on
 the exponents), and steps 1 to 3 (`Depth/StepsGatedN.lean`). In the case (+) the three proofs do
-the same with `Depth/RayGatedPlus.lean` and `Depth/RayMlpPlus.lean` (which use Lemmas D.8, D.9 and
-D.10 and the induction on the exponents) and `Depth/StepsPlus.lean`.
+the same with `Depth/RayGatedPlus.lean` and `Depth/RayMlpPlus.lean` (which use Lemmas D.8 and D.10,
+the induction on the exponents, and for the step "one small factor" Lemma D.9 for GELU and GeGLU
+blocks and the parity (30) for SwiGLU blocks) and `Depth/StepsPlus.lean`.
 -/
 
 namespace Skips
