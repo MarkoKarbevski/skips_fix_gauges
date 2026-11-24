@@ -275,3 +275,4 @@ import SkipsLean.Absorb.GatedBiasesLower
 import SkipsLean.Absorb.ReluSqBiasesCells
 import SkipsLean.Absorb.ReluSqBiasesCount
 import SkipsLean.Absorb.ReluSqBiasesLower
+import SkipsLean.Absorb.RotaryBiases
