@@ -1331,3 +1331,4 @@ import SkipsLean
 #print axioms Skips.funDimSkips_add_finrank_flatSkips
 #print axioms Skips.ae_funDimSkips_ge
 #print axioms Skips.funDimSkips_comp_le
+#print axioms Skips.funDimLearned_add_le_rmsNorm
