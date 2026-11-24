@@ -40,9 +40,9 @@ column `j_i` of `η°_W` and row `j_i` of `η°_V` vanish. […] `𝓛°'_j(t) =
 
 Stated here: the lemma, `claimZero_castSucc_gelu`. Step 1 is `exists_suffixFlatZero_succ_gelu`
 (`Depth/StepZeroGeluOne.lean`: (49) and (16) for `k + 1`). The conditions (P1), (P2) are
-`CondP1`, `CondP2` (`Depth/CondP.lean`); the `κ_ℓ` of Lemma D.14 is any `κ ∈ (0, 1]` such that `𝓑_{>k+1}` is
-holomorphic on `C_κ`, as a hypothesis (as for `tanh`, `Depth/StepZeroTanh.lean`). Numbering as in
-`Depth/StepTanh.lean`: the block is `k : Fin L`, the paper's block `k + 1`.
+`CondP1`, `CondP2` (`Depth/CondP.lean`); the `κ_ℓ` of Lemma D.14 is any `κ ∈ (0, 1]` such that
+`𝓑_{>k+1}` is holomorphic on `C_κ`, as a hypothesis (as for `tanh`, `Depth/StepZeroTanh.lean`).
+Numbering as in `Depth/StepTanh.lean`: the block is `k : Fin L`, the paper's block `k + 1`.
 -/
 
 namespace Skips
