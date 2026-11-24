@@ -533,6 +533,90 @@ private theorem blockLHS_ray_expansionRGP (hε : 0 < ε) (hg : GateFar σ σ' p)
   refine Finset.sum_congr rfl fun j _ => ?_
   rw [map_smul, Matrix.of_apply, rayG, smul_smul]
 
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `(s, y) ↦ v₁(y)` is analytic (affine). -/
+private theorem analyticAt_rayVRGP {q : Type*} [Fintype q] (M : Matrix T (q ⊕ q) ℝ)
+    (z₀ : ℝ × Matrix T q ℝ) : AnalyticAt ℝ (fun z : ℝ × Matrix T q ℝ => rayV M z.2) z₀ := by
+  unfold rayV
+  refine analyticAt_matrixOfRGP fun τ j => ?_
+  exact (analyticAt_const.fun_sub (analyticAt_entryRGP analyticAt_snd τ j)).fun_mul analyticAt_const
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `(s, y) ↦ R(s, y)` is analytic (polynomial). -/
+private theorem analyticAt_rayRRGP {q : Type*} [Fintype q] (M P₁ P₃ : Matrix T (q ⊕ q) ℝ)
+    (z₀ : ℝ × Matrix T q ℝ) :
+    AnalyticAt ℝ (fun z : ℝ × Matrix T q ℝ => rayR M P₁ P₃ z.1 z.2) z₀ := by
+  unfold rayR
+  refine analyticAt_matrixOfRGP fun τ j => ?_
+  exact ((analyticAt_const.fun_mul (analyticAt_const.fun_add
+    ((analyticAt_fst.fun_pow 2).fun_mul analyticAt_const))).fun_mul analyticAt_const).fun_add
+    ((analyticAt_const.fun_sub (analyticAt_entryRGP analyticAt_snd τ j)).fun_mul
+      (analyticAt_const.fun_add ((analyticAt_fst.fun_pow 2).fun_mul analyticAt_const)))
+
+/-- Helper: `G₀` is analytic at `(0, 0)` when no row of `v₁(0) V` vanishes (fact (a)). -/
+private theorem analyticAt_rayG₀RGP (hε : 0 < ε) (hg : GateFar σ σ' p)
+    (θ η : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) (k : Fin L)
+    (M P₁ P₃ : Matrix T (hid k ⊕ hid k) ℝ) (h0 : ∀ τ, (rayV M 0 * θ.write k) τ ≠ 0) :
+    AnalyticAt ℝ (rayG₀ θ η k M P₁ P₃) 0 := by
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_gated hg.analytic ℓ
+  have h := analyticAt_scaledLHSRGP (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) hε rfl hf θ η k
+    (a := fun z : ℝ × Matrix T (hid k) ℝ => z.1) (b := fun z => rayV M z.2)
+    (c := fun z => rayR M P₁ P₃ z.1 z.2) (x₀ := 0) analyticAt_fst (analyticAt_rayVRGP M 0)
+    (analyticAt_rayRRGP M P₁ P₃ 0) h0
+  exact h
+
+/-- Helper: every `G_{τ j}` is analytic at `(0, 0)` when no row of `v₁(0) V` vanishes. -/
+private theorem analyticAt_rayGRGP (hε : 0 < ε) (hg : GateFar σ σ' p)
+    (θ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) (k : Fin L)
+    [DecidableEq T] [DecidableEq (hid k)] (M P₁ P₃ : Matrix T (hid k ⊕ hid k) ℝ) (τ : T)
+    (j : hid k) (h0 : ∀ τ, (rayV M 0 * θ.write k) τ ≠ 0) :
+    AnalyticAt ℝ (rayG θ k M P₁ P₃ τ j) 0 := by
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_gated hg.analytic ℓ
+  have h1 : AnalyticAt ℝ (fun z : ℝ × Matrix T (hid k) ℝ => rayCoef M P₁ P₃ τ j z.1) 0 := by
+    unfold rayCoef
+    exact analyticAt_const.fun_mul (analyticAt_const.fun_add
+      ((analyticAt_fst.fun_pow 2).fun_mul analyticAt_const))
+  have h2 := analyticAt_fderiv_scaledSuffixRGP (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) hε
+    rfl hf 2 θ k.succ (a := fun z : ℝ × Matrix T (hid k) ℝ => z.1)
+    (b := fun z => rayV M z.2 * θ.write k) (c := fun _ => Matrix.single τ j (1 : ℝ) * θ.write k)
+    (x₀ := 0) analyticAt_fst (analyticAt_matMulRGP (analyticAt_rayVRGP M 0) analyticAt_const)
+    analyticAt_const h0
+  have h3 := h1.fun_smul h2
+  exact h3
+
+/-- Helper: `G₀` is even in `s` (equation (30) in the variable `s = 1/t`). -/
+private theorem rayG₀_negRGP
+    (θ η : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) (k : Fin L)
+    (M P₁ P₃ : Matrix T (hid k ⊕ hid k) ℝ) (S : ℝ) (y : Matrix T (hid k) ℝ) :
+    rayG₀ θ η k M P₁ P₃ (-S, y) = rayG₀ θ η k M P₁ P₃ (S, y) := by
+  show scaledLHS _ ε θ η k (-S) (rayV M y) (rayR M P₁ P₃ (-S) y)
+    = scaledLHS _ ε θ η k S (rayV M y) (rayR M P₁ P₃ S y)
+  rw [scaledLHS_negRGP]
+  unfold rayR
+  simp only [neg_sq]
+
+/-- Helper: every `G_{τ j}` is even in `s`. -/
+private theorem rayG_negRGP
+    (θ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) (k : Fin L)
+    [DecidableEq T] [DecidableEq (hid k)] (M P₁ P₃ : Matrix T (hid k ⊕ hid k) ℝ) (τ : T)
+    (j : hid k) (S : ℝ) (y : Matrix T (hid k) ℝ) :
+    rayG θ k M P₁ P₃ τ j (-S, y) = rayG θ k M P₁ P₃ τ j (S, y) := by
+  have h : (fun h' : Matrix T d ℝ =>
+      scaledSuffix (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) ε 2 θ k.succ (-S, h'))
+      = fun h' => scaledSuffix (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) ε 2 θ k.succ (S, h') :=
+    funext fun h' => scaledSuffix_neg _ 2 θ k.succ S h'
+  show rayCoef M P₁ P₃ τ j (-S) • fderiv ℝ (fun h' : Matrix T d ℝ =>
+      scaledSuffix (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) ε 2 θ k.succ (-S, h'))
+      (rayV M y * θ.write k) (Matrix.single τ j (1 : ℝ) * θ.write k)
+    = rayCoef M P₁ P₃ τ j S • fderiv ℝ (fun h' : Matrix T d ℝ =>
+      scaledSuffix (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) ε 2 θ k.succ (S, h'))
+      (rayV M y * θ.write k) (Matrix.single τ j (1 : ℝ) * θ.write k)
+  rw [h]
+  unfold rayCoef
+  rw [neg_sq]
+
 /-- **Lemma D.12 up to (38), on one generic ray, gated blocks, case (+).** Let `θ` be good for the
 cones, let `Z` and `η` satisfy (16) for `k`, and let `Ξ` have its rows in `C_k` and satisfy (i),
 (ii), (iii). Then `ż^g(Ξ) = 0`, and the second part of (38) holds at `n = Ξ` for every `w̃`. -/
