@@ -187,6 +187,27 @@ theorem relu_absorb_of_vanillaBlockB_gelu_absorb {m' : Type*} [Fintype m'] (Wr :
   -- GELU is at distance at most `1` from ReLU
   exact relu_absorb_of_vanillaBlockB_absorb ⟨1, abs_gelu_sub_relu_le⟩ Wr b Ww c Wr' b' Ww' c' M h
 
+/-- **Theorem C.1 (iii) for an activation at a bounded distance from ReLU, with finitely many
+outputs.** (The statements below do not assume `[Fintype q]`; for an infinite `q` they fail for
+some additive Haar measures, see the report of `lean-bvl`. With `[Fintype q]` each of them is this
+lemma with `κ = 0` for ReLU and `κ = 1` for GELU.) -/
+private theorem ae_not_absorbB_same_width_bvl [Fintype q] {σ : ℝ → ℝ}
+    (hσ : ∃ κ : ℝ, ∀ z, |σ z - relu z| ≤ κ) (hp : 2 ≤ Fintype.card p) (M : Matrix p q ℝ)
+    (hM : M ≠ 0) (μ : Measure (Matrix p m ℝ × (m → ℝ) × Matrix m q ℝ × (q → ℝ)))
+    [μ.IsAddHaarMeasure] :
+    ∀ᵐ θ ∂μ, ¬ ∃ (Wr' : Matrix p m ℝ) (b' : m → ℝ) (Ww' : Matrix m q ℝ) (c' : q → ℝ),
+      ∀ x : p → ℝ, x ᵥ* M + vanillaBlockB σ θ.1 θ.2.1 θ.2.2.1 θ.2.2.2 x
+        = vanillaBlockB σ Wr' b' Ww' c' x := by
+  classical
+  -- generic tuples have generic reads and writes, where no ReLU block of the same width absorbs
+  filter_upwards [ae_tuple_bvl (P := fun W : Matrix p m ℝ × Matrix m q ℝ =>
+      ¬ ∃ (Wr' : Matrix p m ℝ) (Ww' : Matrix m q ℝ),
+        ∀ x : p → ℝ, x ᵥ* M + vanillaBlock relu W.1 W.2 x = vanillaBlock relu Wr' Ww' x) μ
+      fun ν _ => ae_not_relu_absorb_same_width hp M hM ν] with θ hθ
+  -- the step along rays
+  rintro ⟨Wr', b', Ww', c', h⟩
+  exact hθ ⟨Wr', Ww', relu_absorb_of_vanillaBlockB_absorb hσ _ _ _ _ _ _ _ _ M h⟩
+
 /-- **Theorem C.1 (iii) of the absorb paper for ReLU blocks with biases:** fix `M ≠ 0`. For generic
 `θ = (W_read, b, W_write, c)` no ReLU block with biases of the same width computes
 `x M + B_θ(x)`. -/
@@ -319,7 +340,8 @@ theorem ae_relu_absorbB_add_card (hd : 2 ≤ Fintype.card d)
   classical
   -- generic reads have rank `d`: the construction gives `d` more units
   filter_upwards [ae_tuple_bvl (P := fun W : Matrix d m ℝ × Matrix m d ℝ =>
-      W.1.rank = Fintype.card d) μ fun ν _ => ae_rank_bvl hm ν, ae_not_relu_absorbB_of_card_lt hd M hM μ]
+      W.1.rank = Fintype.card d) μ fun ν _ => ae_rank_bvl hm ν,
+      ae_not_relu_absorbB_of_card_lt hd M hM μ]
     with θ hr hlt
   exact ⟨exists_vanillaBlockB_add_linear_relu_of_rank θ.1 θ.2.1 θ.2.2.1 θ.2.2.2 hr M, hlt⟩
 
@@ -340,7 +362,8 @@ theorem ae_gelu_absorbB_add_card (hd : 2 ≤ Fintype.card d)
   classical
   -- generic reads have rank `d`: the construction gives `d` more units
   filter_upwards [ae_tuple_bvl (P := fun W : Matrix d m ℝ × Matrix m d ℝ =>
-      W.1.rank = Fintype.card d) μ fun ν _ => ae_rank_bvl hm ν, ae_not_gelu_absorbB_of_card_lt hd M hM μ]
+      W.1.rank = Fintype.card d) μ fun ν _ => ae_rank_bvl hm ν,
+      ae_not_gelu_absorbB_of_card_lt hd M hM μ]
     with θ hr hlt
   exact ⟨exists_vanillaBlockB_add_linear_gelu_of_rank θ.1 θ.2.1 θ.2.2.1 θ.2.2.2 hr M, hlt⟩
 
