@@ -464,3 +464,9 @@ import SkipsLean
 #print axioms Skips.ae_jacobianRank_ge
 #print axioms Skips.ae_jacobianRank_le_funDim
 #print axioms Skips.ae_funDim_ge
+-- Activations/Analytic.lean
+#print axioms Skips.analyticOnNhd_gaussPdf
+#print axioms Skips.analyticOnNhd_gaussCdf
+#print axioms Skips.analyticOnNhd_gelu
+#print axioms Skips.analyticOnNhd_silu
+#print axioms Skips.analyticOnNhd_f_gated
