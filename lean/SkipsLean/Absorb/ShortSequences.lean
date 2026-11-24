@@ -301,6 +301,46 @@ theorem exists_residual_eq_skipless_attention_causal_short (n L L' m a b : ℕ) 
         ∧ ∃ X : Matrix (Fin n) (Fin (a + 1)) ℝ,
             eval (Arch.attention (fun t s => s ≤ t) id (fun _ => Fin 2) (fun _ => Fin 1)) 1 θ X
               ≠ 0 := by
-  sorry
+  -- the numbers: `Q(z_t) = γ z_t^{L'+1}` (10), and the factors `1 + c_ℓ z` of `Q` over `ℂ`
+  obtain ⟨Q, γ, hdeg, h0, hγ, hQ⟩ := exists_polynomial_short n L L' hn
+  obtain ⟨c, hc⟩ := exists_complex_factors L Q hdeg h0
+  -- `Q(U) = γ U^{L'+1}`, as `U` has the eigenvalues `z_t`
+  have hQU : Polynomial.aeval (attnWeights (fun t s : Fin n => s ≤ t) 0) Q
+      = γ • attnWeights (fun t s : Fin n => s ≤ t) 0 ^ (L' + 1) := by
+    have h := aeval_attnWeights_causal_eq_zero n (Q - Polynomial.C γ * Polynomial.X ^ (L' + 1))
+      fun t => by simp [hQ t]
+    rw [map_sub, sub_eq_zero] at h
+    rw [h]
+    simp [Algebra.algebraMap_eq_smul_one]
+  -- the residual network, with `V_ℓ = V(c_ℓ)`, computes `X ↦ Q(U) x = γ U^{L'+1} x`
+  have hres : ∀ X t o, eval (arch_ssq n m L) 1 (params_ssq n m a b L c) X t o
+      = γ * ((attnWeights (fun t s : Fin n => s ≤ t) 0 ^ (L' + 1)) *ᵥ fun t => X t 0) t := by
+    intro X t o
+    rw [eval_ssq n m a b L c 1 1 (fun ℓ => by rw [Pi.one_apply, one_smul]) X t o, zeta_res_ssq,
+      Finset.filter_true_of_mem fun j _ => j.isLt, ← hc, aeval_map_ssq, hQU, mulVec_ofReal_ssq]
+    simp [Matrix.smul_mulVec]
+  -- the skipless network, with `V'_0 = γ Π` and `V'_ℓ = Π` after, computes `γ U^{L'+1} x`
+  have hskip : ∀ X t o, eval (arch_ssq n m (L' + 1)) 0
+      (params_ssq n m a b (L' + 1) fun ℓ => if ℓ = 0 then (γ : ℂ) else 1) X t o
+      = γ * ((attnWeights (fun t s : Fin n => s ≤ t) 0 ^ (L' + 1)) *ᵥ fun t => X t 0) t := by
+    intro X t o
+    rw [eval_ssq n m a b (L' + 1) _ 0 0 (fun ℓ => by simp) X t o, zeta_skip_ssq]
+    simp
+  refine ⟨params_ssq n m a b L c,
+    params_ssq n m a b (L' + 1) (fun ℓ => if ℓ = 0 then (γ : ℂ) else 1), ?_, ?_, ?_⟩
+  · -- `E D ≠ 0`
+    intro h
+    have h1 := ED_ssq n m a b L c
+    rw [h] at h1
+    simp at h1
+  · -- the two networks are equal
+    intro X
+    ext t o
+    rw [hres, hskip]
+  · -- at the input `e_0 e_0ᵀ` the output at token `0` is `γ ≠ 0`
+    refine ⟨Matrix.of fun t i => if t = ⟨0, hn1⟩ ∧ i = 0 then 1 else 0, fun h => hγ ?_⟩
+    have h1 := congrFun (congrFun h ⟨0, hn1⟩) 0
+    rw [hres, pow_mulVec_zero_ssq hn1] at h1
+    simpa using h1
 
 end Skips
