@@ -598,6 +598,51 @@ theorem eventually_jacobianRank_ge_of_contDiffOn (hA : A.χ = id) (S : Fin L →
     ∀ᶠ θ' in 𝓝 θ,
       (∀ i ℓ, hidden A S θ' (X i) ℓ.castSucc * θ'.read ℓ ∈ V ℓ) ∧
       jacobianRank A S X θ ≤ jacobianRank A S X θ' := by
-  sorry
+  -- the pre-activations are continuous in the parameters at `θ`, so they stay in the `V ℓ`
+  have hpre : ∀ᶠ θ' in 𝓝 θ, ∀ i ℓ, hidden A S θ' (X i) ℓ.castSucc * θ'.read ℓ ∈ V ℓ := by
+    refine eventually_all.2 fun i => eventually_all.2 fun ℓ => ?_
+    have hR : ContDiffAt ℝ 1 (fun θ' : Params A dIn dOut => θ'.read ℓ) θ :=
+      (clmRead_swo A (dIn := dIn) (dOut := dOut) ℓ).contDiff.contDiffAt
+    have hc : ContDiffAt ℝ 1
+        (fun θ' : Params A dIn dOut => hidden A S θ' (X i) ℓ.castSucc * θ'.read ℓ) θ :=
+      contDiffAt_mul_swo (contDiffAt_hidden_swo A hA S V hVo hf θ (X i) (hX i) ℓ.castSucc) hR
+    exact hc.continuousAt.eventually_mem ((hVo ℓ).mem_nhds (hX i ℓ))
+  -- the outputs on the batch are `C¹` at `θ`, so their derivative is continuous at `θ`
+  have hEv : ContDiffAt ℝ 1 (evalBatch A S X) θ := contDiffAt_evalBatch_swo A hA S V hVo hf θ X hX
+  have hcont : ContinuousAt (fderiv ℝ (evalBatch A S X)) θ :=
+    (hEv.fderiv_right (m := 0) (by norm_num)).continuousAt
+  -- `r` directions `v j` whose images under the Jacobian at `θ` are linearly independent
+  set J := fderiv ℝ (evalBatch A S X) θ with hJ
+  let b := Module.finBasis ℝ (LinearMap.range J.toLinearMap)
+  have hb : ∀ j, ∃ v, J v = (b j : Fin n → Matrix T dOut ℝ) := fun j =>
+    LinearMap.mem_range.1 (b j).2
+  choose v hv using hb
+  have hli0 : LinearIndependent ℝ (fun j => J (v j)) := by
+    have hl := b.linearIndependent.map' (LinearMap.range J.toLinearMap).subtype
+      (Submodule.ker_subtype _)
+    convert hl using 1
+    funext j
+    exact hv j
+  -- the images `J(θ') v j` depend continuously on `θ'`, and linear independence is open
+  have htend : Tendsto (fun θ' j => fderiv ℝ (evalBatch A S X) θ' (v j)) (𝓝 θ)
+      (𝓝 fun j => J (v j)) :=
+    tendsto_pi_nhds.2 fun j => (hcont.clm_apply continuousAt_const).tendsto
+  have hev : ∀ᶠ θ' in 𝓝 θ, LinearIndependent ℝ
+      (fun j => fderiv ℝ (evalBatch A S X) θ' (v j)) :=
+    htend.eventually (isOpen_setOfPred_linearIndependent.mem_nhds hli0)
+  filter_upwards [hpre, hev] with θ' h1 h2
+  refine ⟨h1, ?_⟩
+  -- the `J(θ') v j` lie in the range of `J(θ')`
+  have hrank : Module.finrank ℝ (LinearMap.range J.toLinearMap)
+      ≤ Module.finrank ℝ (LinearMap.range (fderiv ℝ (evalBatch A S X) θ').toLinearMap) := by
+    calc Module.finrank ℝ (LinearMap.range J.toLinearMap)
+        = Fintype.card (Fin (Module.finrank ℝ (LinearMap.range J.toLinearMap))) :=
+          (Fintype.card_fin _).symm
+      _ = Module.finrank ℝ (Submodule.span ℝ
+            (Set.range fun j => fderiv ℝ (evalBatch A S X) θ' (v j))) :=
+          (finrank_span_eq_card h2).symm
+      _ ≤ Module.finrank ℝ (LinearMap.range (fderiv ℝ (evalBatch A S X) θ').toLinearMap) :=
+          Submodule.finrank_mono (Submodule.span_le.2 (by rintro _ ⟨j, rfl⟩; exact ⟨_, rfl⟩))
+  exact hrank
 
 end Skips
