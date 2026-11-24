@@ -41,13 +41,166 @@ namespace Skips
 
 open Matrix Polynomial
 
+/-- Helper: a list has fewer sign variations than entries. -/
+private theorem signVariations_le_length_ssp (l : List ℝ) :
+    l.signVariations ≤ l.length - 1 := by
+  unfold List.signVariations
+  apply Nat.sub_le_sub_right
+  exact (List.destutter_sublist _ _).length_le.trans
+    ((List.length_filter_le _ _).trans (List.length_map _).le)
+
+/-- Helper: a polynomial has at most as many sign variations as its degree. -/
+private theorem signVariations_le_natDegree_ssp (q : Polynomial ℝ) :
+    q.signVariations ≤ q.natDegree := by
+  classical
+  have h := signVariations_le_length_ssp q.coeffList
+  rw [Polynomial.length_coeffList_eq_ite] at h
+  unfold Polynomial.signVariations
+  split_ifs at h <;> omega
+
+/-- Helper, **the root count**: let `p = q − c z^m`, `deg q ≤ L`, vanish at the `n` points
+`1 / (t + 1)`. If `n ≥ L + 2`, or `n = L + 1` and `m ≤ L`, then `p = 0`. If `c = 0` or `m ≤ L`,
+`p` has degree `≤ L < n` and `n` roots. Otherwise `m > L`, `n ≥ L + 2`, and by Descartes' rule
+of signs `p ≠ 0` would have at most `L + 1` positive roots (dropping its leading term `−c z^m`
+leaves `q`, with at most `L` sign variations). -/
+private theorem poly_eq_zero_ssp {L n m : ℕ} (q : Polynomial ℝ) (c : ℝ) (hq : q.natDegree ≤ L)
+    (hroot : ∀ t : Fin n,
+      (q - Polynomial.C c * Polynomial.X ^ m).eval (((t : ℕ) + 1 : ℝ)⁻¹) = 0)
+    (hn : L + 2 ≤ n ∨ (n = L + 1 ∧ m ≤ L)) : q - Polynomial.C c * Polynomial.X ^ m = 0 := by
+  -- the points `1 / (t + 1)` are distinct
+  have hinj : Function.Injective fun t : Fin n => (((t : ℕ) + 1 : ℝ)⁻¹) := by
+    intro x y hxy
+    simp only [_root_.inv_inj, add_left_inj, Nat.cast_inj] at hxy
+    exact Fin.ext hxy
+  -- a polynomial of degree `< n` with these `n` roots is `0`
+  have hcard : (q - Polynomial.C c * Polynomial.X ^ m).natDegree < n →
+      q - Polynomial.C c * Polynomial.X ^ m = 0 := fun h =>
+    Polynomial.eq_zero_of_natDegree_lt_card_of_eval_eq_zero _ hinj hroot
+      (by rwa [Fintype.card_fin])
+  by_cases hc : c = 0
+  · apply hcard
+    rw [hc, Polynomial.C_0, zero_mul, sub_zero]
+    omega
+  by_cases hm : m ≤ L
+  · apply hcard
+    have := (Polynomial.natDegree_sub_le _ _).trans
+      (max_le hq ((Polynomial.natDegree_C_mul_X_pow_le c m).trans hm))
+    omega
+  -- `m > L`, so `n ≥ L + 2`: Descartes' rule of signs
+  have hn2 : L + 2 ≤ n := by omega
+  by_contra hp0
+  -- `p` has the `n` distinct positive roots `1 / (t + 1)`
+  have hroots : n ≤ (q - Polynomial.C c * Polynomial.X ^ m).roots.countP (0 < ·) := by
+    classical
+    have hS : (Finset.univ.image fun t : Fin n => (((t : ℕ) + 1 : ℝ)⁻¹)).card = n := by
+      rw [Finset.card_image_of_injective _ hinj, Finset.card_univ, Fintype.card_fin]
+    rw [Multiset.countP_eq_card_filter, ← hS]
+    refine Multiset.card_le_card ((Multiset.le_iff_subset (Finset.nodup _)).2 fun x hx => ?_)
+    obtain ⟨t, -, rfl⟩ := Finset.mem_image.1 (Finset.mem_def.2 hx)
+    refine Multiset.mem_filter.2 ⟨(Polynomial.mem_roots hp0).2 (hroot t), ?_⟩
+    show 0 < (((t : ℕ) + 1 : ℝ)⁻¹)
+    positivity
+  -- dropping the leading term `−c z^m` leaves `q`
+  have hlead : (q - Polynomial.C c * Polynomial.X ^ m).eraseLead = q := by
+    rw [sub_eq_add_neg, ← neg_mul, ← Polynomial.C_neg,
+      Polynomial.eraseLead_add_of_natDegree_lt_right, Polynomial.eraseLead_C_mul_X_pow, add_zero]
+    rw [Polynomial.natDegree_C_mul_X_pow m (-c) (neg_ne_zero.2 hc)]
+    omega
+  have h1 := Polynomial.roots_countP_pos_le_signVariations (q - Polynomial.C c * Polynomial.X ^ m)
+  have h2 := Polynomial.signVariations_le_eraseLead_succ (q - Polynomial.C c * Polynomial.X ^ m)
+  have h3 := signVariations_le_natDegree_ssp q
+  rw [hlead] at h2
+  omega
+
+/-- Helper: `∏_t (1 − (t + 1) z)` vanishes at the points `1/(t+1)`, has the value `1` at `0`
+and degree at most `n`. -/
+private theorem nodeProd_ssp (n : ℕ) :
+    (∀ t : Fin n, (∏ s : Fin n, (1 - C ((s : ℕ) + 1 : ℝ) * X)).eval (((t : ℕ) + 1 : ℝ)⁻¹)
+      = 0) ∧
+    (∏ s : Fin n, (1 - C ((s : ℕ) + 1 : ℝ) * X)).eval 0 = 1 ∧
+    (∏ s : Fin n, (1 - C ((s : ℕ) + 1 : ℝ) * X)).natDegree ≤ n := by
+  refine ⟨fun t => ?_, ?_, ?_⟩
+  · -- the factor at `t` vanishes
+    rw [eval_prod]
+    refine Finset.prod_eq_zero (Finset.mem_univ t) ?_
+    have ht : ((t : ℕ) + 1 : ℝ) ≠ 0 := by positivity
+    rw [eval_sub, eval_one, eval_mul, eval_C, eval_X, mul_inv_cancel₀ ht, sub_self]
+  · rw [eval_prod]
+    refine Finset.prod_eq_one fun s _ => ?_
+    rw [eval_sub, eval_one, eval_mul, eval_C, eval_X, mul_zero, sub_zero]
+  · -- each factor has degree at most `1`
+    refine (natDegree_prod_le _ _).trans ?_
+    have h1 : ∀ s : Fin n, (1 - C ((s : ℕ) + 1 : ℝ) * X).natDegree ≤ 1 := fun s =>
+      (natDegree_sub_le _ _).trans
+        (max_le (natDegree_one.le.trans zero_le_one)
+          ((natDegree_C_mul_le _ _).trans natDegree_X_le))
+    refine (Finset.sum_le_sum fun s _ => h1 s).trans ?_
+    rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul, mul_one]
+
 /-- **Proof of Theorem 4.2 (iii), equation (10):** for `n ≤ L`, or `n = L + 1` and `L ≤ L'`,
 there are a real polynomial `Q` of degree at most `L` with `Q(0) = 1` and a number `γ ≠ 0` with
 `Q(1/(t+1)) = γ (1/(t+1))^{L'+1}` for the `n` tokens `t`. -/
 theorem exists_polynomial_short (n L L' : ℕ) (hn : n ≤ L ∨ (n = L + 1 ∧ L ≤ L')) :
     ∃ (Q : ℝ[X]) (γ : ℝ), Q.natDegree ≤ L ∧ Q.eval 0 = 1 ∧ γ ≠ 0 ∧
       ∀ t : Fin n, Q.eval (((t : ℕ) + 1 : ℝ)⁻¹) = γ * (((t : ℕ) + 1 : ℝ)⁻¹) ^ (L' + 1) := by
-  sorry
+  -- the nodes `v t = 1/(t+1)` and the interpolant `P` of `v t ^ (L' + 1)`, of degree `< n`
+  set v : Fin n → ℝ := fun t => ((t : ℕ) + 1 : ℝ)⁻¹ with hv
+  have hinj : Function.Injective v := by
+    intro x y hxy
+    simp only [hv, _root_.inv_inj, add_left_inj, Nat.cast_inj] at hxy
+    exact Fin.ext hxy
+  set P := Lagrange.interpolate Finset.univ v (fun t => v t ^ (L' + 1)) with hP
+  have hPv : ∀ t, P.eval (v t) = v t ^ (L' + 1) := fun t =>
+    Lagrange.eval_interpolate_at_node _ hinj.injOn (Finset.mem_univ t)
+  have hPdeg : P.natDegree ≤ n - 1 := by
+    have h := Lagrange.degree_interpolate_le (fun t => v t ^ (L' + 1)) hinj.injOn
+      (s := Finset.univ)
+    rw [Finset.card_univ, Fintype.card_fin] at h
+    exact natDegree_le_iff_degree_le.2 h
+  rcases hn with hn | ⟨rfl, hL⟩
+  · -- `n ≤ L`: correct the value at `0` by a multiple of `∏_t (1 − (t + 1) z)`, `γ = 1`
+    obtain ⟨hN, hN0, hNdeg⟩ := nodeProd_ssp n
+    refine ⟨P + C (1 - P.eval 0) * ∏ s : Fin n, (1 - C ((s : ℕ) + 1 : ℝ) * X), 1,
+      ?_, ?_, one_ne_zero, fun t => ?_⟩
+    · exact (natDegree_add_le _ _).trans (max_le (by omega)
+        ((natDegree_C_mul_le _ _).trans (hNdeg.trans hn)))
+    · rw [eval_add, eval_mul, eval_C, hN0]
+      ring
+    · rw [eval_add, eval_mul, eval_C, hN t, mul_zero, add_zero, one_mul]
+      exact hPv t
+  -- `n = L + 1 ≤ L' + 1`: `P(0) ≠ 0`, and `Q = P / P(0)`
+  have hP0 : P.eval 0 ≠ 0 := by
+    intro h0
+    -- `P = z P₁`
+    obtain ⟨P₁, hP₁⟩ : X ∣ P := X_dvd_iff.2 (by rw [coeff_zero_eq_eval_zero, h0])
+    have hv0 : ∀ t, v t ≠ 0 := fun t => by
+      simp only [hv]
+      positivity
+    by_cases hP₁0 : P₁ = 0
+    · -- then `P = 0`, but `P(1) = 1`
+      have h := hPv 0
+      rw [hP₁, hP₁0, mul_zero, eval_zero] at h
+      exact pow_ne_zero _ (hv0 0) h.symm
+    have hdeg₁ : P₁.natDegree + 1 ≤ L := by
+      have h := natDegree_mul (X_ne_zero (R := ℝ)) hP₁0
+      rw [← hP₁, natDegree_X] at h
+      omega
+    -- `P₁ − z^{L'}` vanishes at the `L + 1` nodes and has degree `≤ L - 1`: it is zero
+    have hroot : ∀ t : Fin (L + 1),
+        (P₁ - C 1 * X ^ L').eval (((t : ℕ) + 1 : ℝ)⁻¹) = 0 := fun t => by
+      have h := hPv t
+      rw [hP₁, eval_mul, eval_X, pow_succ', mul_right_inj' (hv0 t)] at h
+      rw [eval_sub, eval_mul, eval_C, one_mul, eval_pow, eval_X]
+      exact sub_eq_zero.2 h
+    have hzero := poly_eq_zero_ssp (L := L - 1) P₁ 1 (by omega) hroot (Or.inl (by omega))
+    rw [sub_eq_zero, C_1, one_mul] at hzero
+    rw [hzero, natDegree_X_pow] at hdeg₁
+    omega
+  refine ⟨C (P.eval 0)⁻¹ * P, (P.eval 0)⁻¹, ?_, ?_, inv_ne_zero hP0, fun t => ?_⟩
+  · exact (natDegree_C_mul_le _ _).trans (by omega)
+  · rw [eval_mul, eval_C, inv_mul_cancel₀ hP0]
+  · rw [eval_mul, eval_C]
+    exact congrArg _ (hPv t)
 
 /-- Helper: `(1 − z/r)(−r) = z − r` for `r ≠ 0`. -/
 private theorem factor_eq_ssp {r : ℂ} (hr0 : r ≠ 0) :
