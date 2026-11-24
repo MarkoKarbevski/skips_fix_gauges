@@ -793,3 +793,6 @@ import SkipsLean
 #print axioms Skips.dense_setOf_linearIndependent_vecMul
 #print axioms Skips.exists_eq_smul_one_of_vecMul_parallel
 #print axioms Skips.eq_zero_of_vecMul_eq_zero_of_isOpen
+#print axioms Skips.suffix_mlp_rmsNorm_row
+#print axioms Skips.fderiv_suffix_zero_row
+#print axioms Skips.fderiv_param_suffix_zero_row
