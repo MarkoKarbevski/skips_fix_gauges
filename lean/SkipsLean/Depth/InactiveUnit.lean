@@ -155,6 +155,138 @@ theorem unitDir_mem_flat (hσ0 : ∀ z : ℝ, z ≤ 0 → σ z = 0)
   rw [hh]
   simp [η, unitDir]
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (as the private `cancel_left_of_rank` of `RescalingMlp.lean`): a matrix `M` of rank
+equal to its number of columns cancels on the left, `M X = M Y → X = Y`. -/
+private theorem cancel_left_of_rank_iu {m n k : Type*} [Fintype n] (M : Matrix m n ℝ)
+    (hM : M.rank = Fintype.card n) {X Y : Matrix n k ℝ} (h : M * X = M * Y) : X = Y := by
+  -- `v ↦ M v` is injective: `rank M + dim ker M = card n`
+  have hinj : Function.Injective M.mulVecLin := by
+    rw [← LinearMap.ker_eq_bot, ← Submodule.finrank_eq_zero]
+    have := LinearMap.finrank_range_add_finrank_ker M.mulVecLin
+    rw [Module.finrank_fintype_fun_eq_card] at this
+    rw [Matrix.rank] at hM
+    omega
+  -- compare `X` and `Y` column by column
+  ext i j
+  have hcol : M.mulVecLin (fun l => X l j) = M.mulVecLin (fun l => Y l j) := by
+    funext p
+    have := congrFun (congrFun h p) j
+    simpa [Matrix.mul_apply, Matrix.mulVec, dotProduct] using this
+  exact congrFun (hinj hcol) i
+
+omit [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper (as the private `rescaleDirMlpLin` of `RescalingMlp.lean`): `α ↦ rescaleDirMlp k θ α`
+is linear. -/
+private noncomputable def rescaleDirMlpLin_iu (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
+    (∀ ℓ, hid ℓ → ℝ) →ₗ[ℝ] Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut where
+  toFun := rescaleDirMlp k θ
+  map_add' α β := by
+    apply Params.ext'
+    · simp [rescaleDirMlp]
+    · intro ℓ
+      ext a i
+      simp only [rescaleDirMlp, Pi.add_apply, Params.add_read, Matrix.add_apply, Matrix.of_apply]
+      ring
+    · intro ℓ
+      ext i a
+      simp only [rescaleDirMlp, Pi.add_apply, Params.add_write, Matrix.add_apply, Matrix.of_apply]
+      ring
+    · simp [rescaleDirMlp]
+  map_smul' c α := by
+    apply Params.ext'
+    · simp [rescaleDirMlp]
+    · intro ℓ
+      ext a i
+      simp only [rescaleDirMlp, Pi.smul_apply, Params.smul_read, Matrix.smul_apply,
+        Matrix.of_apply, smul_eq_mul, RingHom.id_apply]
+      ring
+    · intro ℓ
+      ext i a
+      simp only [rescaleDirMlp, Pi.smul_apply, Params.smul_write, Matrix.smul_apply,
+        Matrix.of_apply, smul_eq_mul, RingHom.id_apply]
+      ring
+    · simp [rescaleDirMlp]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the read of `unitDir` at a block other than `m` is `0`. -/
+private theorem unitDir_read_ne_iu {χ : Matrix T d ℝ → Matrix T d ℝ} (m : Fin L) (j : hid m)
+    (δr δa : d → ℝ) {ℓ : Fin L} (hℓ : ℓ ≠ m) :
+    (unitDir (σ := σ) (χ := χ) (dIn := dIn) (dOut := dOut) m j δr δa).read ℓ = 0 := by
+  simp only [unitDir]
+  rw [Function.update_of_ne hℓ]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the write of `unitDir` at a block other than `m` is `0`. -/
+private theorem unitDir_write_ne_iu {χ : Matrix T d ℝ → Matrix T d ℝ} (m : Fin L) (j : hid m)
+    (δr δa : d → ℝ) {ℓ : Fin L} (hℓ : ℓ ≠ m) :
+    (unitDir (σ := σ) (χ := χ) (dIn := dIn) (dOut := dOut) m j δr δa).write ℓ = 0 := by
+  simp only [unitDir]
+  rw [Function.update_of_ne hℓ]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the read of `unitDir` at block `m`. -/
+private theorem unitDir_read_self_iu {χ : Matrix T d ℝ → Matrix T d ℝ} (m : Fin L) (j : hid m)
+    (δr δa : d → ℝ) (a : d) (i : hid m) :
+    (unitDir (σ := σ) (χ := χ) (dIn := dIn) (dOut := dOut) m j δr δa).read m a i =
+      if i = j then δr a else 0 := by
+  simp only [unitDir, Function.update_self, Matrix.of_apply]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the write of `unitDir` at block `m`. -/
+private theorem unitDir_write_self_iu {χ : Matrix T d ℝ → Matrix T d ℝ} (m : Fin L) (j : hid m)
+    (δr δa : d → ℝ) (i : hid m) (a : d) :
+    (unitDir (σ := σ) (χ := χ) (dIn := dIn) (dOut := dOut) m j δr δa).write m i a =
+      if i = j then δa a else 0 := by
+  simp only [unitDir, Function.update_self, Matrix.of_apply]
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `(δr, δa) ↦ unitDir m j δr δa` is linear. -/
+private noncomputable def unitDirLin_iu (m : Fin L) (j : hid m) :
+    ((d → ℝ) × (d → ℝ)) →ₗ[ℝ] Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut where
+  toFun p := unitDir m j p.1 p.2
+  map_add' p q := by
+    apply Params.ext'
+    · simp [unitDir]
+    · intro ℓ
+      by_cases hℓ : ℓ = m
+      · subst hℓ
+        ext a i
+        simp only [Params.add_read, Matrix.add_apply, unitDir_read_self_iu, Prod.fst_add,
+          Pi.add_apply]
+        split_ifs <;> simp
+      · simp only [Params.add_read, unitDir_read_ne_iu m j _ _ hℓ, add_zero]
+    · intro ℓ
+      by_cases hℓ : ℓ = m
+      · subst hℓ
+        ext i a
+        simp only [Params.add_write, Matrix.add_apply, unitDir_write_self_iu, Prod.snd_add,
+          Pi.add_apply]
+        split_ifs <;> simp
+      · simp only [Params.add_write, unitDir_write_ne_iu m j _ _ hℓ, add_zero]
+    · simp [unitDir]
+  map_smul' c p := by
+    apply Params.ext'
+    · simp [unitDir]
+    · intro ℓ
+      by_cases hℓ : ℓ = m
+      · subst hℓ
+        ext a i
+        simp only [Params.smul_read, Matrix.smul_apply, unitDir_read_self_iu, Prod.smul_fst,
+          Pi.smul_apply, RingHom.id_apply, smul_eq_mul]
+        split_ifs <;> simp
+      · simp only [Params.smul_read, unitDir_read_ne_iu m j _ _ hℓ, smul_zero]
+    · intro ℓ
+      by_cases hℓ : ℓ = m
+      · subst hℓ
+        ext i a
+        simp only [Params.smul_write, Matrix.smul_apply, unitDir_write_self_iu, Prod.smul_snd,
+          Pi.smul_apply, RingHom.id_apply, smul_eq_mul]
+        split_ifs <;> simp
+      · simp only [Params.smul_write, unitDir_write_ne_iu m j _ _ hℓ, smul_zero]
+    · simp [unitDir]
+
 /-- **Proposition E.1, the bound, at one parameter (ReLU and ReLU² blocks):** let `σ` be positively
 homogeneous of degree `k` and vanish on `z ≤ 0`, and let hidden unit `j` of block `m` be inactive
 at every input at all parameters near `θ`. If `E` and the writes have rank `d`, the write of block
