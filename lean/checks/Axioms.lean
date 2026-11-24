@@ -483,3 +483,12 @@ import SkipsLean
 #print axioms Skips.locallyLipschitz_f_gated
 #print axioms Skips.ae_someBlockNonzero_mlp
 #print axioms Skips.ae_someBlockNonzero_gated
+-- Absorb/RMSNormRays.lean and the rest of Absorb/RMSNormGeneric.lean
+#print axioms Skips.exists_ne_skipless_rmsNorm_of_turn
+#print axioms Skips.not_dense_eq_skipless_rmsNorm_zero_of_turn
+#print axioms Skips.ae_ne_skipless_rmsNorm
+#print axioms Skips.ae_not_dense_eq_skipless_rmsNorm_zero
+#print axioms Skips.ae_ne_skipless_rmsNorm_mlp
+#print axioms Skips.ae_not_dense_eq_skipless_rmsNorm_zero_mlp
+#print axioms Skips.ae_ne_skipless_rmsNorm_gated
+#print axioms Skips.ae_not_dense_eq_skipless_rmsNorm_zero_gated
