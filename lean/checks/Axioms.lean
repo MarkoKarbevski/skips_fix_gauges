@@ -605,3 +605,13 @@ import SkipsLean
 #print axioms Skips.claimRMS_castSucc_gelu
 #print axioms Skips.exists_regular_claimRMS_gelu
 #print axioms Skips.ae_funDim_gelu_skipless_rmsNorm
+#print axioms Skips.flat_at_generic_ray_gated_rmsNorm
+#print axioms Skips.flat_of_suffixFlat_gated_rmsNorm
+#print axioms Skips.flat_of_suffixFlat_swiglu_rmsNorm
+#print axioms Skips.flat_of_suffixFlat_geglu_rmsNorm
+#print axioms Skips.claimGated_castSucc_swiglu_rmsNorm
+#print axioms Skips.claimGated_castSucc_geglu_rmsNorm
+#print axioms Skips.exists_regular_claimGated_swiglu_rmsNorm
+#print axioms Skips.exists_regular_claimGated_geglu_rmsNorm
+#print axioms Skips.ae_funDim_swiglu_skipless_rmsNorm
+#print axioms Skips.ae_funDim_geglu_skipless_rmsNorm
