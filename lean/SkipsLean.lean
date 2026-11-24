@@ -93,3 +93,8 @@ import SkipsLean.OneBlock.ResidualRMSSteps
 import SkipsLean.OneBlock.ResidualRMSMlp
 import SkipsLean.OneBlock.ResidualRMSGated
 import SkipsLean.OneBlock.ResidualRMSGain
+import SkipsLean.Residual.SmallWritesNorm
+import SkipsLean.Residual.SmallWritesRMSSteps
+import SkipsLean.Residual.DepthMlpRMS
+import SkipsLean.Residual.DepthGatedRMS
+import SkipsLean.Residual.ExactGainRMS
