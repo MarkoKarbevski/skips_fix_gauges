@@ -1590,3 +1590,5 @@ import SkipsLean
 #print axioms Skips.cobDir_zero_mem_flat_skipless_gated_homogeneous_rmsNorm_zero
 #print axioms Skips.funDim_add_le_skipless_gated_homogeneous_rmsNorm_zero
 #print axioms Skips.ae_funDim_add_le_skipless_reglu_oneBlock_rmsNorm_zero
+#print axioms Skips.ae_exists_cob_of_eval_eq_skipless_of_ae_funDim
+#print axioms Skips.ae_exists_cob_of_eval_eq_skipless_rmsNorm_of_ae_funDim

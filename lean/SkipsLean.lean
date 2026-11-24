@@ -160,6 +160,7 @@ import SkipsLean.Depth.TanhZeroBatch
 import SkipsLean.Depth.GeluZeroBatch
 import SkipsLean.Generic.LevelSetOrbit
 import SkipsLean.Dimension.LocalIdentifiability
+import SkipsLean.Dimension.LocalIdentifiabilityUnderEquality
 import SkipsLean.Dimension.OrbitNetwork
 import SkipsLean.Dimension.RescaleAction
 import SkipsLean.Residual.LocalIdentifiability
