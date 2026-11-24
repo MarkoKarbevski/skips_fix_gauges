@@ -1,6 +1,6 @@
 .lake/
 scratch/
-# working notes of the proving runs, kept out of the repository
+# working copies of the notes of the proving runs; the master copies are in ai_notes/
 AGENTS.md
 PROGRESS.md
 ERRORS.md
