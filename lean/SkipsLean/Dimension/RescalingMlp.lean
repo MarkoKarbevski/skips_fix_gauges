@@ -237,6 +237,47 @@ theorem cobDir_add_rescaleDirMlp_injective (k : ℕ)
     | succ ℓ ih => exact (key ℓ ih).2
   exact Prod.ext (funext hX) (funext fun ℓ => (key ℓ (hX ℓ.castSucc)).1)
 
+/-- Helper: `α ↦ rescaleDirMlp k θ α` is linear. -/
+private noncomputable def rescaleDirMlpLin (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) :
+    (∀ ℓ, hid ℓ → ℝ) →ₗ[ℝ] Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut where
+  toFun := rescaleDirMlp k θ
+  map_add' α β := by
+    apply Params.ext'
+    · simp [rescaleDirMlp]
+    · intro ℓ
+      ext a i
+      simp only [rescaleDirMlp, Pi.add_apply, Params.add_read, Matrix.add_apply, Matrix.of_apply]
+      ring
+    · intro ℓ
+      ext i a
+      simp only [rescaleDirMlp, Pi.add_apply, Params.add_write, Matrix.add_apply, Matrix.of_apply]
+      ring
+    · simp [rescaleDirMlp]
+  map_smul' c α := by
+    apply Params.ext'
+    · simp [rescaleDirMlp]
+    · intro ℓ
+      ext a i
+      simp only [rescaleDirMlp, Pi.smul_apply, Params.smul_read, Matrix.smul_apply,
+        Matrix.of_apply, smul_eq_mul, RingHom.id_apply]
+      ring
+    · intro ℓ
+      ext i a
+      simp only [rescaleDirMlp, Pi.smul_apply, Params.smul_write, Matrix.smul_apply,
+        Matrix.of_apply, smul_eq_mul, RingHom.id_apply]
+      ring
+    · simp [rescaleDirMlp]
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the pairs `(X, α)` form a space of dimension `(L + 1) d² + s`. -/
+private theorem finrank_dirDomain :
+    Module.finrank ℝ ((Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ)) =
+      (L + 1) * Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ) := by
+  rw [Module.finrank_prod, Module.finrank_pi_fintype, Module.finrank_matrix,
+    Module.finrank_pi_fintype]
+  simp [sq, Module.finrank_fintype_fun_eq_card]
+
 /-- **Theorem 4.3 without normalization, for blocks with a positively homogeneous activation**
 (ReLU, ReLU²), under the conditions of the proof: `fd ≤ P - (L + 1) d² - s`, where `s` is the
 number of hidden units. -/
@@ -247,7 +288,21 @@ theorem funDim_add_le_skipless_mlp_rescale {k : ℕ}
     (hc : ∀ ℓ i, (fun a => θ.read ℓ a i) ≠ 0) :
     funDim (Arch.mlp σ id hid) 0 θ + ((L + 1) * Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
       ≤ Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  -- the linear map `(X, α) ↦ cobDir θ X + rescaleDirMlp k θ α`
+  let Φ := (cobDirLin θ).coprod (rescaleDirMlpLin k θ)
+  -- its directions are flat, since both summands are
+  have hV : LinearMap.range Φ ≤ flat (Arch.mlp σ id hid) 0 θ := by
+    rintro _ ⟨p, rfl⟩
+    rw [LinearMap.coprod_apply]
+    exact Submodule.add_mem _ (cobDir_mem_flat_skipless' θ rfl p.1)
+      (rescaleDirMlp_mem_flat hσ θ 0 p.2)
+  -- it is injective (Lemma B.1), so its range has dimension `(L + 1) d² + s`
+  have hinj : Function.Injective Φ := by
+    intro p q hpq
+    rw [LinearMap.coprod_apply, LinearMap.coprod_apply] at hpq
+    exact cobDir_add_rescaleDirMlp_injective k θ hE hw hc hpq
+  have h := funDim_add_finrank_le_of_le_flat' θ _ hV
+  rwa [LinearMap.finrank_range_of_inj hinj, finrank_dirDomain] at h
 
 /-- **Theorem 4.3 under pre-RMSNorm, for blocks with a positively homogeneous activation**, under
 the conditions of the proof: `fd ≤ P - (L + 1) d (d - 1) / 2 - s`. It holds for every real `ε`. -/
