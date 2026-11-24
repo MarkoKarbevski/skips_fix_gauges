@@ -113,9 +113,14 @@ sentence after Proposition A.33 of the skips paper (report
 `claude/lean-statement-audit-eleventh-2026-11-24.md`) and found nothing false, vacuous or drifted:
 the attention statements hold for every mask with a token that sees all tokens; (ii) of Theorems
 3.4 and A.13 is stated row by row; Proposition 4.7 has the skipless widths `≥ d` of the paper's
-Scope as a written hypothesis. Not yet compared by such a reader (written after the eleventh audit
-began): `Absorb/AttentionZero.lean`, `Absorb/AttentionNetworks.lean`,
-`Symmetry/AttentionHeads.lean`, `Dimension/UpperBoundAttention.lean`,
+Scope as a written hypothesis. A twelfth reader (part A, 24 November) compared
+`Absorb/AttentionZero.lean` and `Absorb/AttentionNetworks.lean` with Theorem 4.2 (i), (ii) of the
+absorb paper and its proof (report `claude/lean-statement-audit-twelfth-a-2026-11-24.md`) and
+found nothing false, vacuous or drifted: generic is almost every weight of the residual network,
+with one null set for all skipless networks; the conditions on the number of tokens are the
+paper's with `L′ = L' + 1`; Lean also covers `L = 0` and `ε' ≠ ε`; the paper's (ii) without a mask
+is (i). Not yet compared by such a reader (written after the eleventh audit
+began): `Symmetry/AttentionHeads.lean`, `Dimension/UpperBoundAttention.lean`,
 `Network/AttentionAnalytic.lean`, `OneBlock/Attention.lean`, `OneBlock/AttentionStepOne.lean`,
 `OneBlock/AttentionGeneric.lean`, `OneBlock/AttentionDim.lean`,
 `Absorb/ShortSequencesPoly.lean` and `Absorb/ShortSequences.lean`. A ninth reader (part A, 24 November) compared the six files on
@@ -519,8 +524,10 @@ Notes for the authors on these statements:
   of an identity submatrix (`d²`), or those below the diagonal of a triangular one
   (`card_below_diagonal`), one submatrix per hidden state.
 - Not stated yet from the main text: Example 4.2; the converse direction of Proposition 4.6
-  (from local identifiability to the equality condition); Theorem 4.3, Theorem 5.1 and
-  Proposition 4.6 for attention blocks. Proposition 4.6 is proved in one direction, at one
+  (from local identifiability to the equality condition); Proposition 4.6 for
+  attention blocks (Theorem 4.3 for attention blocks is proved,
+  `Dimension/UpperBoundAttention.lean`; Theorem 5.1 for an attention block is stated in
+  `OneBlock/AttentionDim.lean` and the three files it rests on). Proposition 4.6 is proved in one direction, at one
   parameter, and Corollary 5.3 in all its seven cases. Definitions 4.4 and 4.5 are not Lean
   definitions: the equality condition is written as the equality `fd(θ) + … = P`, and local
   identifiability with its neighborhoods (`Dimension/LocalIdentifiability.lean`,
@@ -591,7 +598,8 @@ dimension paper above, beside their twins (rows of `Residual/LocalIdentifiabilit
 `Residual/LocalIdentifiabilityGated.lean`).
 
 Not stated yet from the main text of the skips paper: Theorem 3.3 (ii), the dimensions of the
-groups; the term `s` of attention blocks in Theorem 4.2; the converse direction of Proposition 4.5 (from
+groups; Theorem 4.2 for networks that mix attention and MLP blocks (for networks of attention blocks
+it is proved, `Dimension/UpperBoundAttention.lean`); the converse direction of Proposition 4.5 (from
 local identifiability to the equality condition; the other direction is proved at one parameter,
 with Definition 4.4 written out, `Residual/LocalIdentifiability.lean`,
 `Residual/LocalIdentifiabilityGated.lean`, and for skipless networks
@@ -664,7 +672,7 @@ the named kinds of network) as instances of the general statements.
 | **A Proposition 4.7 (A lower bound from counting dimensions) and the definition of a full network before it,** given Sard's theorem (a hypothesis from the literature), for `d_in ≥ d ≥ 1`: `IsFull θ` (a finite batch on which no unit has argument `0` at `θ` and on which the Jacobian of the residual ReLU network has rank `P − d² − s`); on such a batch the rank is at most `P − d² − s` at every `θ`; the full networks form an open set; for almost every `θ`, if `θ` is full, no skipless ReLU network of `L` blocks with the same `d` and widths `m ℓ ≥ d` (the setting of the main text) with `(2d − 1) ∑ m ℓ < (2d − 1) ∑ d_hidden^ℓ + L d²` equals it; and "full networks exist": for almost every `θ` and all small `τ ≠ 0`, `θ_τ` is full (`d_in, d_out ≥ d ≥ 2`; from S Lemma A.30). Nothing is asked of `d_out` or of the widths of the residual network. Not stated: skipless blocks with fewer than `d` hidden units; "Not every network is full" (it follows from the sentence after S Proposition A.33 and the openness of the full networks) | `IsFull`, `jacobianRank_add_le_residual_relu_of_ne_zero`, `isOpen_setOf_isFull`, `ae_isFull_imp_eval_ne_skipless_relu`, `ae_eventually_isFull_smallWrites` | `Absorb/FullNetworks.lean` | proved |
 | **Attention blocks in the frame of the library** (absorb paper, equation (4); the same block in the dimension paper, Appendix C, and the skips paper, Section 2): the attention weights of a matrix of scores, row by row, over the tokens that a token sees (a token that sees no token gets the weights `0`, so its row is not a probability vector; under the paper's two masks every token sees itself) (`attnWeights sees Z`; `sees` is `fun _ _ => True` without a mask and `fun t s => s ≤ t` for the causal mask); the block as a function of the score matrices `Γ_i` and the value–output products `C_i` of its heads (`attnHeads`); equation (4) with `Γ_i = W_{Q,i} W_{K,i}^⊤ / √d_h` (`attentionBlock`); networks of attention blocks as an `Arch` (`Arch.attention`: read `[W_Q | W_K | W_V]` for all heads, write the `W_O`); the block of `Arch.attention` on a hidden state is equation (4) | `attnWeights`, `attnHeads`, `attentionBlock`, `Arch.attention`, `f_attention_mul` | `Network/Attention.lean` | proved |
 | **A Theorem 3.4 (No absorption in attention blocks) and Theorem A.13 (Attention and linear terms)**, for at least two tokens and any mask with a token that sees all tokens (the last token under the causal mask): Step 1 (equal tokens) and Step 2 (one zero token) of the proof; (ii) for every row `x` of norm at most `1`, some `h` with rows of norm at most `1` has a row in which `h M + B_θ(h)` and `B_θ'(h)` differ by at least `‖x M‖/3` (the paper: `‖M‖/3` with the spectral norm, the largest `‖x M‖`); (i) for `M ≠ 0` and almost every `h`, `h M + B_θ(h) ≠ B_θ'(h)`; (iii) with `E D ≠ 0`, the residual network of one attention block differs from every skipless network of one attention block, of any model dimension. Stated for blocks given by any score matrices and value–output products (any numbers of heads, any head dimensions), and (i), (ii) also for the blocks of equation (4); (iii) is stated for `attnHeads` only | `attnHeads_const_row`, `attnHeads_zero_row`, `exists_row_attnHeads_sub_ge`, `ae_mul_add_attnHeads_ne`, `exists_ne_residual_skipless_attnHeads`, `ae_mul_add_attentionBlock_ne`, `exists_row_attentionBlock_sub_ge` | `Absorb/AttentionBlock.lean` | proved |
-| **A proof of Theorem 4.2, the Jacobians at `X = 0`, on the inputs `a b`:** for a network of attention blocks (`Arch.attention`, any mask) with a map `χ` with `χ(0) = 0` and the derivative `ξ I` at `0`, the stream matrices `s I`, a column `a` with `U a = λ a` for `U = softmax(0)` and a row `b`: the derivative at `τ = 0` of the output at the input `τ • a b` is `a` times the row `ξ b E ∏_ℓ (s I + ξ λ V_ℓ) D`, with `V_ℓ` the sum of the value–output products of the heads of block `ℓ` (`valueOutput`) | `valueOutput`, `hasDerivAt_eval_attention_zero` | `Absorb/AttentionZero.lean` | proved |
+| **A proof of Theorem 4.2, the Jacobians at `X = 0`, on the inputs `a b`:** for a network of attention blocks (`Arch.attention`, any mask) with a map `χ` with `χ(0) = 0` and the derivative `ξ I` at `0`, the stream matrices `s I`, a column `a` with `U a = λ a` for `U = softmax(0)` and a row `b`: the derivative at `τ = 0` of the output at the input `τ • a b` is `a` times the row `ξ b E ∏_ℓ (s I + ξ λ V_ℓ) D`, with `V_ℓ` the sum of the value–output products of the heads of block `ℓ` (`valueOutput`); this is the derivative along the line `τ ↦ τ a b`, not in every direction, with the product in the order of the blocks; `ξ = 1` for the identity, `ξ = 1/√ε` for RMSNorm with `ε > 0` | `valueOutput`, `hasDerivAt_eval_attention_zero` | `Absorb/AttentionZero.lean` | proved |
 | **A Theorem 4.2 (Attention networks on long and short sequences), (i) and (ii)**, without normalization and under pre-RMSNorm (`ε, ε' > 0`): a residual network of `L` attention blocks with `E D ≠ 0` differs from every skipless network of `L' + 1` attention blocks, with any heads, head dimensions and model dimension, (i) without a mask on at least two tokens; with the causal mask on `n` tokens when `n ≥ L + 2`, and when `n = L + 1` and `L' + 1 ≤ L`; (ii) with the causal mask on `n ≥ 2` tokens, for almost every choice of weights of the residual network, whatever the skipless network. Part (iii) (short sequences) is in `Absorb/ShortSequences.lean` | `exists_ne_residual_skipless_attention_noMask`, `exists_ne_residual_skipless_attention_noMask_rmsNorm`, `exists_ne_residual_skipless_attention_causal`, `exists_ne_residual_skipless_attention_causal_rmsNorm`, `ae_forall_ne_residual_skipless_attention_causal`, `ae_forall_ne_residual_skipless_attention_causal_rmsNorm` | `Absorb/AttentionNetworks.lean` | proved |
 | **A proof of Theorem 4.2 (iii), the polynomial of the construction:** for `n ≤ L`, or `n = L + 1` and `L ≤ L'`, a real polynomial `Q` of degree at most `L` with `Q(0) = 1` and a number `γ ≠ 0` with `Q(1/(t+1)) = γ (1/(t+1))^{L'+1}` for the `n` tokens (equation (10); `γ ≠ 0` is not said in the paper); over `ℂ`, a real polynomial of degree at most `L` with `Q(0) = 1` is a product of `L` factors `1 + c z` (the paper pairs conjugate roots into real quadratic factors); a real polynomial that vanishes at the `n` points `1/(t+1)` vanishes at the matrix `U` of the causal attention weights at zero scores | `exists_polynomial_short`, `exists_complex_factors`, `aeval_attnWeights_causal_eq_zero` | `Absorb/ShortSequencesPoly.lean` | in work |
 | **A Theorem 4.2 (iii) (short sequences),** without normalization, with the causal mask on `n ≥ 1` tokens, when `n ≤ L`, or `n = L + 1` and `L ≤ L'`: for every model dimension `m + 2`, input and output dimensions `a + 1`, `b + 1`, some residual network of `L` attention blocks with `E D ≠ 0` equals, at every input, a skipless network of `L' + 1` attention blocks with the same model dimension; both have two heads of dimension one in every block; and their common function is not zero (this clause is not in the paper: for `n ≤ L` the paper's statement is also met by a residual network whose function is zero). And the sentence after the theorem: for two tokens, `I − 3U = −2U²` | `one_sub_three_smul_attnWeights_causal_two`, `exists_residual_eq_skipless_attention_causal_short` | `Absorb/ShortSequences.lean` | in work |
@@ -725,8 +733,7 @@ Notes for the authors on these statements:
 - The first sentence of Corollary A.3 (compositions without embedding and readout) is the instance
   `E = D = I` of the statements for networks. "Exactly `d_model` units" (Theorem 3.1 (ii)) is two
   statements, one for each half.
-- Not stated yet: Theorems 3.4, 4.2; Theorem 4.3 for attention blocks in the residual network;
-  Propositions 4.6, 4.7; Remarks 5.2, 5.3; Lemmas A.5,
-  A.6; Remarks A.8, A.12; Theorem A.13, Lemma A.14, Proposition A.15; Appendix C (blocks with
-  biases).
+- Not stated yet: Theorem 4.3 for attention blocks in the residual network; Remarks 5.2, 5.3;
+  Lemmas A.5, A.6; Remarks A.8, A.12; Lemma A.14, Proposition A.15; the last sentence of the
+  proof of Theorem 4.2 (rotary embeddings); Appendix C (blocks with biases).
 
