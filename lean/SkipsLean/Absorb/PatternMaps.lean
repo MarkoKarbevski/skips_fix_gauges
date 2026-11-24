@@ -167,6 +167,160 @@ theorem analyticOnNhd_maskedBatch (S : Fin L → Matrix d d ℝ) {n : ℕ}
     ((toMaskedCLM_pat (π i)).analyticOnNhd Set.univ) (Set.mapsTo_univ _ _)
   exact hc
 
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- Helper (Step 2, the rescalings of the units): the network of a pattern keeps its function when
+the read column of every hidden unit `i` is multiplied by `c_i ≠ 0` and its write row by
+`c_i⁻¹`, since its fixed map is linear in each column. -/
+private theorem eval_rescale_masked_pat (π : ∀ ℓ : Fin L, T → hid ℓ → Bool)
+    (θ θ' : Params (Arch.masked (T := T) (d := d) π) dIn dOut)
+    (c : ∀ ℓ, hid ℓ → ℝ) (hc : ∀ ℓ i, c ℓ i ≠ 0) (hE : θ'.E = θ.E) (hD : θ'.D = θ.D)
+    (hr : ∀ ℓ a i, θ'.read ℓ a i = c ℓ i * θ.read ℓ a i)
+    (hw : ∀ ℓ i a, θ'.write ℓ i a = (c ℓ i)⁻¹ * θ.write ℓ i a)
+    (S : Fin L → Matrix d d ℝ) (x : Matrix T dIn ℝ) :
+    eval (Arch.masked π) S θ' x = eval (Arch.masked π) S θ x := by
+  -- the hidden states of `θ'` and `θ` agree, by induction along the network
+  have hh : ∀ k : Fin (L + 1),
+      hidden (Arch.masked π) S θ' x k = hidden (Arch.masked π) S θ x k := by
+    intro k
+    induction k using Fin.induction with
+    | zero => rw [hidden_zero, hidden_zero, hE]
+    | succ ℓ ih =>
+      rw [hidden_succ, hidden_succ, ih]
+      congr 1
+      set h := hidden (Arch.masked π) S θ x ℓ.castSucc
+      -- the argument of hidden unit `i` is multiplied by `c_i`
+      have hu : ∀ t i, (h * θ'.read ℓ) t i = c ℓ i * (h * θ.read ℓ) t i := by
+        intro t i
+        rw [Matrix.mul_apply, Matrix.mul_apply, Finset.mul_sum]
+        refine Finset.sum_congr rfl fun j _ => ?_
+        rw [hr]
+        ring
+      -- so hidden unit `i` contributes `(c_i z_i or 0) a_i / c_i = (z_i or 0) a_i`
+      ext t a
+      rw [Matrix.mul_apply, Matrix.mul_apply]
+      refine Finset.sum_congr rfl fun i _ => ?_
+      show (if π ℓ t i then (h * θ'.read ℓ) t i else 0) * θ'.write ℓ i a
+        = (if π ℓ t i then (h * θ.read ℓ) t i else 0) * θ.write ℓ i a
+      rw [hu, hw]
+      split_ifs
+      · rw [mul_mul_mul_comm, mul_inv_cancel₀ (hc ℓ i), one_mul]
+      · rw [zero_mul, zero_mul]
+  -- hence the outputs agree
+  rw [eval, eval, hh, hD]
+
+/-- Helper (copy of a private helper of `RescalingMlp.lean`): `τ ↦ e^{τ a} b` has derivative
+`a b` at `τ = 0`. -/
+private theorem hasDerivAt_exp_mul_const_pat (a b : ℝ) :
+    HasDerivAt (fun τ : ℝ => Real.exp (τ * a) * b) (a * b) 0 := by
+  have h := ((hasDerivAt_id (0 : ℝ)).mul_const a).exp.mul_const b
+  simpa using h
+
+/-- Helper (copy of the private `rescaleCurveMlp` of `RescalingMlp.lean`): the read column of
+hidden unit `i` of block `ℓ` multiplied by `e^{τ α ℓ i}`, its write row by `e^{-τ k α ℓ i}`. -/
+private noncomputable def rescaleCurve_pat (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (α : ∀ ℓ, hid ℓ → ℝ) (τ : ℝ) :
+    Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut where
+  E := θ.E
+  read ℓ := Matrix.of fun a i => Real.exp (τ * α ℓ i) * θ.read ℓ a i
+  write ℓ := Matrix.of fun i a => Real.exp (τ * -((k : ℝ) * α ℓ i)) * θ.write ℓ i a
+  D := θ.D
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the curve passes through `θ` at `τ = 0`. -/
+private theorem rescaleCurve_zero_pat (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (α : ∀ ℓ, hid ℓ → ℝ) :
+    rescaleCurve_pat k θ α 0 = θ := by
+  apply Params.ext'
+  · rfl
+  · intro ℓ
+    ext a i
+    simp [rescaleCurve_pat]
+  · intro ℓ
+    ext i a
+    simp [rescaleCurve_pat]
+  · rfl
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: the curve has velocity `rescaleDirMlp k θ α` at `τ = 0` (entry by entry, through the
+linear equivalence of the parameters with the tuples of their components). -/
+private theorem hasDerivAt_rescaleCurve_pat (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (α : ∀ ℓ, hid ℓ → ℝ) :
+    HasDerivAt (rescaleCurve_pat k θ α) (rescaleDirMlp k θ α) 0 := by
+  have hprod : HasDerivAt (fun τ : ℝ => Params.linearEquivProd (rescaleCurve_pat k θ α τ))
+      (Params.linearEquivProd (rescaleDirMlp k θ α)) 0 := by
+    refine HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ ?_))
+    · exact hasDerivAt_const (0 : ℝ) θ.E
+    · exact hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun a => hasDerivAt_pi.2 fun i =>
+        hasDerivAt_exp_mul_const_pat (α ℓ i) (θ.read ℓ a i)
+    · exact hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun i => hasDerivAt_pi.2 fun a =>
+        hasDerivAt_exp_mul_const_pat (-((k : ℝ) * α ℓ i)) (θ.write ℓ i a)
+    · exact hasDerivAt_const (0 : ℝ) θ.D
+  exact (LinearMap.toContinuousLinearMap
+    (Params.linearEquivProd (A := Arch.mlp (T := T) (d := d) relu id hid) (dIn := dIn)
+      (dOut := dOut)).symm.toLinearMap).hasFDerivAt.comp_hasDerivAt 0 hprod
+
+omit [DecidableEq d] in
+/-- Helper (Step 2, the rescalings of the units): the direction `rescaleDirMlp 1 θ α`, read as
+weights of the network of a pattern, is flat there. -/
+private theorem rescale_mem_flat_masked_pat (π : ∀ ℓ : Fin L, T → hid ℓ → Bool)
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (α : ∀ ℓ, hid ℓ → ℝ)
+    (S : Fin L → Matrix d d ℝ) :
+    (rescaleDirMlp 1 θ α).toMasked π ∈ flat (Arch.masked π) S (θ.toMasked π) := by
+  -- the curve `τ ↦ c_i = e^{τ α ℓ i}` passes through `θ.toMasked π` with that velocity, and
+  -- keeps the function of the network of `π`
+  refine mem_flat_of_hasDerivAt' (θ.toMasked π) (fun τ => (rescaleCurve_pat 1 θ α τ).toMasked π)
+    ((rescaleDirMlp 1 θ α).toMasked π) ?_ ?_ (Filter.Eventually.of_forall fun τ x => ?_)
+  · exact (toMaskedCLM_pat π).hasFDerivAt.comp_hasDerivAt 0 (hasDerivAt_rescaleCurve_pat 1 θ α)
+  · show (rescaleCurve_pat 1 θ α 0).toMasked π = θ.toMasked π
+    rw [rescaleCurve_zero_pat]
+  · refine eval_rescale_masked_pat π (θ.toMasked π) ((rescaleCurve_pat 1 θ α τ).toMasked π)
+      (fun ℓ i => Real.exp (τ * α ℓ i))
+      (fun _ _ => (Real.exp_pos _).ne') rfl rfl (fun _ _ _ => rfl) (fun ℓ i a => ?_) S x
+    show Real.exp (τ * -(((1 : ℕ) : ℝ) * α ℓ i)) * θ.write ℓ i a
+      = (Real.exp (τ * α ℓ i))⁻¹ * θ.write ℓ i a
+    rw [Nat.cast_one, one_mul, mul_neg, Real.exp_neg]
+
+omit [DecidableEq d] in
+/-- Helper (the chain rule through `θ ↦ θ.toMasked (π i)`): component `i` of the derivative of
+`F^π_Z` at `θ` along `η` is the derivative of the output of the network of `π i` at
+`θ.toMasked (π i)` along `η.toMasked (π i)`. -/
+private theorem fderiv_maskedBatch_apply_pat (S : Fin L → Matrix d d ℝ) {n : ℕ}
+    (X : Fin n → Matrix T dIn ℝ) (π : Fin n → ∀ ℓ : Fin L, T → hid ℓ → Bool)
+    (θ η : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (i : Fin n) :
+    fderiv ℝ (maskedBatch S X π) θ η i =
+      fderiv ℝ (fun θ' : Params (Arch.masked (T := T) (d := d) (π i)) dIn dOut =>
+        eval (Arch.masked (π i)) S θ' (X i)) (θ.toMasked (π i)) (η.toMasked (π i)) := by
+  -- each component is the output of the network of `π i` after the linear map `toMasked`
+  have hc : ∀ j, HasFDerivAt (fun θ' => maskedBatch S X π θ' j)
+      ((fderiv ℝ (fun θ' : Params (Arch.masked (T := T) (d := d) (π j)) dIn dOut =>
+        eval (Arch.masked (π j)) S θ' (X j)) (θ.toMasked (π j))).comp
+          (toMaskedCLM_pat (π j))) θ := by
+    intro j
+    have hg := ((analyticOnNhd_eval_masked_pat (dOut := dOut) S (π j) (X j))
+      (θ.toMasked (π j)) (Set.mem_univ _)).differentiableAt.hasFDerivAt
+    exact hg.comp θ (toMaskedCLM_pat (π j)).hasFDerivAt
+  have hG : HasFDerivAt (maskedBatch S X π)
+      (ContinuousLinearMap.pi fun j =>
+        (fderiv ℝ (fun θ' : Params (Arch.masked (T := T) (d := d) (π j)) dIn dOut =>
+          eval (Arch.masked (π j)) S θ' (X j)) (θ.toMasked (π j))).comp
+            (toMaskedCLM_pat (π j))) θ :=
+    hasFDerivAt_pi.2 hc
+  rw [hG.fderiv]
+  rfl
+
+omit [DecidableEq d] in
+/-- Helper: a direction whose images under every `toMasked (π i)` are flat for the network of
+`π i` is in the kernel of the derivative of `F^π_Z`. -/
+private theorem fderiv_maskedBatch_eq_zero_pat (S : Fin L → Matrix d d ℝ) {n : ℕ}
+    (X : Fin n → Matrix T dIn ℝ) (π : Fin n → ∀ ℓ : Fin L, T → hid ℓ → Bool)
+    (θ η : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut)
+    (hη : ∀ i, η.toMasked (π i) ∈ flat (Arch.masked (π i)) S (θ.toMasked (π i))) :
+    fderiv ℝ (maskedBatch S X π) θ η = 0 := by
+  funext i
+  rw [fderiv_maskedBatch_apply_pat, Pi.zero_apply]
+  have h := (Submodule.mem_iInf _).1 (hη i) (X i)
+  exact LinearMap.mem_ker.1 h
+
 /-- **Proof of Proposition 4.7, Step 2, for a skipless network:** for `d_in ≥ d ≥ 1` and blocks
 of at least `d` hidden units, the Jacobian of every pattern map `F'^π_Z` of the skipless network
 has rank at most `P − (L + 1) d² − s` at every parameter, with `s` the number of hidden units. -/
