@@ -1448,3 +1448,6 @@ import SkipsLean
 #print axioms Skips.funDimLearnedTri_attention_rmsNorm_eq_residual_add
 #print axioms Skips.ae_funDimLearnedTri_attention_rmsNorm
 #print axioms Skips.ae_funDimLearnedTri_attention_rmsNorm_eq_residual_add
+#print axioms Skips.iteratedDeriv_eq_zero_of_sum_ridge_eq_zero
+#print axioms Skips.exists_polynomial_of_sum_ridge_eq_zero
+#print axioms Skips.eq_zero_of_sum_smul_scaled_eq_polynomial
