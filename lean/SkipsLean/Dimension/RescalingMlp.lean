@@ -66,7 +66,34 @@ theorem eval_rescale_mlp {k : ℕ} (hσ : ∀ lam z : ℝ, 0 < lam → σ (lam *
     (hw : ∀ ℓ i a, θ'.write ℓ i a = (c ℓ i ^ k)⁻¹ * θ.write ℓ i a)
     (S : Fin L → Matrix d d ℝ) (x : Matrix T dIn ℝ) :
     eval (Arch.mlp σ χ hid) S θ' x = eval (Arch.mlp σ χ hid) S θ x := by
-  sorry
+  -- the hidden states of `θ'` and `θ` agree, by induction along the network
+  have hh : ∀ ℓ : Fin (L + 1),
+      hidden (Arch.mlp σ χ hid) S θ' x ℓ = hidden (Arch.mlp σ χ hid) S θ x ℓ := by
+    intro ℓ
+    induction ℓ using Fin.induction with
+    | zero => rw [hidden_zero, hidden_zero, hE]
+    | succ ℓ ih =>
+      -- the stream term `h S_ℓ` is the same; compare the outputs of block `ℓ`
+      rw [hidden_succ, hidden_succ, ih]
+      congr 1
+      set h := χ (hidden (Arch.mlp σ χ hid) S θ x ℓ.castSucc)
+      -- the pre-activation of hidden unit `i` is multiplied by `c_i`
+      have hu : ∀ t i, (h * θ'.read ℓ) t i = c ℓ i * (h * θ.read ℓ) t i := by
+        intro t i
+        rw [Matrix.mul_apply, Matrix.mul_apply, Finset.mul_sum]
+        refine Finset.sum_congr rfl fun j _ => ?_
+        rw [hr]
+        ring
+      -- so hidden unit `i` contributes `σ(c_i z_i) a_i / c_i^k = σ(z_i) a_i`
+      ext t a
+      rw [Matrix.mul_apply, Matrix.mul_apply]
+      refine Finset.sum_congr rfl fun i _ => ?_
+      show σ ((h * θ'.read ℓ) t i) * θ'.write ℓ i a = σ ((h * θ.read ℓ) t i) * θ.write ℓ i a
+      have hk : c ℓ i ^ k ≠ 0 := pow_ne_zero k (hc ℓ i).ne'
+      rw [hu, hw, hσ _ _ (hc ℓ i)]
+      field_simp
+  -- hence the outputs agree
+  rw [eval, eval, hh, hD]
 
 /-- The directions of the rescalings are flat, for every map `χ` before the reads and all stream
 matrices. No differentiability of `σ` is assumed. -/
