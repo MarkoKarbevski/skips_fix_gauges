@@ -36,6 +36,7 @@ open scoped Matrix.Norms.Elementwise
 variable {T d dIn dOut : Type*} {L : ℕ} [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn]
   [Fintype dOut]
 
+omit [DecidableEq d] in
 /-- **Proof of Proposition 4.6 (dimension paper) and of Proposition 4.5 (skips paper), from local
 identifiability to the equality condition, at one parameter, for any family of symmetries:** let
 `θ` have the largest functional dimension. If every `θ'` near `θ` with the same function is
@@ -102,6 +103,7 @@ theorem finrank_le_funDim_add_of_locally_mem_iUnion_image (A : Arch T d L)
       = jacobianRank A S X θ := rfl
   omega
 
+omit [DecidableEq d] in
 /-- **Proposition 4.6 (dimension paper) and Proposition 4.5 (skips paper), from local
 identifiability to the equality condition, at generic parameters, for any family of symmetries:**
 if at almost every `θ` every `θ'` near `θ` with the same function is `Φ θ i m` for one of
