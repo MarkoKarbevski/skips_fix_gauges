@@ -23,6 +23,17 @@ open Matrix
 
 variable {p q m m' : Type*} [Fintype p] [Fintype m] [Fintype m']
 
+/-- A nonzero matrix moves some row: some row `z` and output coordinate `o` have `(z M)_o ≠ 0`
+(take `z` a row of the identity at a nonzero entry of `M`). -/
+private lemma exists_vecMul_apply_ne_zero {M : Matrix p q ℝ} (hM : M ≠ 0) :
+    ∃ (z : p → ℝ) (o : q), (z ᵥ* M) o ≠ 0 := by
+  classical
+  obtain ⟨i, j, hij⟩ : ∃ i j, M i j ≠ 0 := by
+    by_contra h
+    push Not at h
+    exact hM (Matrix.ext h)
+  exact ⟨Pi.single i 1, j, by rwa [single_one_vecMul]⟩
+
 /-- **Proposition A.1 (homogeneous blocks).** Let `B` and `B'` be positively homogeneous of degree
 `k ≠ 1`, and let `M ≠ 0`. Then `x M + B(x) = B'(x)` fails for some `x`. (The proof uses nothing else
 about `B` and `B'`, so they are arbitrary maps here.) -/
@@ -31,7 +42,23 @@ theorem exists_ne_of_homogeneous {k : ℝ} (hk : k ≠ 1) (B B' : (p → ℝ) �
     (hB' : ∀ (lam : ℝ) (x : p → ℝ), 0 < lam → B' (lam • x) = lam ^ k • B' x)
     (M : Matrix p q ℝ) (hM : M ≠ 0) :
     ∃ x : p → ℝ, x ᵥ* M + B x ≠ B' x := by
-  sorry
+  by_contra hcon
+  push Not at hcon
+  obtain ⟨x, o, hx⟩ := exists_vecMul_apply_ne_zero hM
+  -- at `x` and at `2 x`: `x M + B(x) = B'(x)` and `2 x M + 2^k B(x) = 2^k B'(x)`
+  have h1 := hcon x
+  have h2 := hcon ((2 : ℝ) • x)
+  rw [Matrix.smul_vecMul, hB 2 x two_pos, hB' 2 x two_pos, ← h1, smul_add] at h2
+  -- so `2 x M = 2^k x M`, that is `(2 - 2^k) x M = 0`
+  have h3 : ((2 : ℝ) - 2 ^ k) • (x ᵥ* M) = 0 := by
+    rw [sub_smul, add_right_cancel h2, sub_self]
+  rcases smul_eq_zero.mp h3 with h4 | h4
+  · -- `2^k = 2 = 2^1` forces `k = 1`
+    refine hk ((Real.rpow_right_inj two_pos (by norm_num)).mp ?_)
+    rw [Real.rpow_one]
+    linarith
+  · -- `x M = 0` contradicts `(x M)_o ≠ 0`
+    exact hx (by rw [h4]; rfl)
 
 /-- **Proposition A.2 (gated blocks).** Let `B` and `B'` be gated blocks without biases, of any
 widths, whose gates vanish at `0` and are differentiable there, and let `M ≠ 0`. Then
