@@ -194,6 +194,175 @@ theorem unitDirGated_mem_flat (hσ0 : ∀ z : ℝ, z ≤ 0 → σ z = 0)
   rw [eval, eval, hh, Params.add_D, Params.smul_D]
   simp [hη, unitDirGated]
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (the private `cancel_left_of_rank_gate` of `Dimension/RescalingGate.lean`): a matrix
+`M` of rank equal to its number of columns cancels on the left, `M X = M Y → X = Y`. -/
+private theorem cancel_left_of_rank_ig {m n k : Type*} [Fintype n] (M : Matrix m n ℝ)
+    (hM : M.rank = Fintype.card n) {X Y : Matrix n k ℝ} (h : M * X = M * Y) : X = Y := by
+  -- `v ↦ M v` is injective: `rank M + dim ker M = card n`
+  have hinj : Function.Injective M.mulVecLin := by
+    rw [← LinearMap.ker_eq_bot, ← Submodule.finrank_eq_zero]
+    have := LinearMap.finrank_range_add_finrank_ker M.mulVecLin
+    rw [Module.finrank_fintype_fun_eq_card] at this
+    rw [Matrix.rank] at hM
+    omega
+  -- compare `X` and `Y` column by column
+  ext i j
+  have hcol : M.mulVecLin (fun l => X l j) = M.mulVecLin (fun l => Y l j) := by
+    funext p
+    have := congrFun (congrFun h p) j
+    simpa [Matrix.mul_apply, Matrix.mulVec, dotProduct] using this
+  exact congrFun (hinj hcol) i
+
+/-- Helper: `α ↦ rescaleDir θ α` is linear (the private `rescaleDirLinValue` of
+`Dimension/RescalingGate.lean`). -/
+private noncomputable def rescaleDirLin_ig
+    (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) :
+    (∀ ℓ, hid ℓ → ℝ) →ₗ[ℝ] Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut where
+  toFun := rescaleDir θ
+  map_add' α β := by
+    apply Params.ext'
+    · simp [rescaleDir]
+    · intro ℓ
+      ext a j
+      cases j with
+      | inl i => simp [rescaleDir]
+      | inr i =>
+        simp only [rescaleDir, Pi.add_apply, Params.add_read, Matrix.add_apply, Matrix.of_apply,
+          Sum.elim_inr]
+        ring
+    · intro ℓ
+      ext i a
+      simp [rescaleDir, add_mul]
+    · simp [rescaleDir]
+  map_smul' c α := by
+    apply Params.ext'
+    · simp [rescaleDir]
+    · intro ℓ
+      ext a j
+      cases j <;> simp [rescaleDir, mul_assoc]
+    · intro ℓ
+      ext i a
+      simp [rescaleDir, mul_assoc]
+    · simp [rescaleDir]
+
+/-- Helper: `β ↦ rescaleDirGate k θ β` is linear (the private `rescaleDirGateLin` of
+`Dimension/RescalingGate.lean`). -/
+private noncomputable def rescaleDirGateLin_ig (k : ℕ)
+    (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) :
+    (∀ ℓ, hid ℓ → ℝ) →ₗ[ℝ] Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut where
+  toFun := rescaleDirGate k θ
+  map_add' α β := by
+    apply Params.ext'
+    · simp [rescaleDirGate]
+    · intro ℓ
+      ext a j
+      cases j with
+      | inl i =>
+        simp only [rescaleDirGate, Pi.add_apply, Params.add_read, Matrix.add_apply,
+          Matrix.of_apply, Sum.elim_inl]
+        ring
+      | inr i => simp [rescaleDirGate]
+    · intro ℓ
+      ext i a
+      simp only [rescaleDirGate, Pi.add_apply, Params.add_write, Matrix.add_apply,
+        Matrix.of_apply]
+      ring
+    · simp [rescaleDirGate]
+  map_smul' c α := by
+    apply Params.ext'
+    · simp [rescaleDirGate]
+    · intro ℓ
+      ext a j
+      cases j with
+      | inl i =>
+        simp only [rescaleDirGate, Pi.smul_apply, Params.smul_read, Matrix.smul_apply,
+          Matrix.of_apply, Sum.elim_inl, smul_eq_mul, RingHom.id_apply]
+        ring
+      | inr i => simp [rescaleDirGate]
+    · intro ℓ
+      ext i a
+      simp only [rescaleDirGate, Pi.smul_apply, Params.smul_write, Matrix.smul_apply,
+        Matrix.of_apply, smul_eq_mul, RingHom.id_apply]
+      ring
+    · simp [rescaleDirGate]
+
+/-- Helper: `(δg, δe, δa) ↦ unitDirGated m j δg δe δa` is linear. -/
+private noncomputable def unitDirGatedLin_ig (m : Fin L) (j : hid m) :
+    ((d → ℝ) × (d → ℝ) × (d → ℝ)) →ₗ[ℝ]
+      Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut where
+  toFun p := unitDirGated m j p.1 p.2.1 p.2.2
+  map_add' p q := by
+    apply Params.ext'
+    · simp [unitDirGated]
+    · intro ℓ
+      by_cases hℓ : ℓ = m
+      · subst hℓ
+        ext a i
+        cases i with
+        | inl i =>
+          rw [Params.add_read, Matrix.add_apply, unitDirGated_gate_ig, unitDirGated_gate_ig,
+            unitDirGated_gate_ig]
+          split_ifs <;> simp
+        | inr i =>
+          rw [Params.add_read, Matrix.add_apply, unitDirGated_value_ig, unitDirGated_value_ig,
+            unitDirGated_value_ig]
+          split_ifs <;> simp
+      · rw [Params.add_read, unitDirGated_read_ne_ig _ _ _ _ _ hℓ,
+          unitDirGated_read_ne_ig _ _ _ _ _ hℓ, unitDirGated_read_ne_ig _ _ _ _ _ hℓ, add_zero]
+    · intro ℓ
+      by_cases hℓ : ℓ = m
+      · subst hℓ
+        ext i a
+        rw [Params.add_write, Matrix.add_apply, unitDirGated_write_ig, unitDirGated_write_ig,
+          unitDirGated_write_ig]
+        split_ifs <;> simp
+      · rw [Params.add_write, unitDirGated_write_ne_ig _ _ _ _ _ hℓ,
+          unitDirGated_write_ne_ig _ _ _ _ _ hℓ, unitDirGated_write_ne_ig _ _ _ _ _ hℓ, add_zero]
+    · simp [unitDirGated]
+  map_smul' c p := by
+    apply Params.ext'
+    · simp [unitDirGated]
+    · intro ℓ
+      by_cases hℓ : ℓ = m
+      · subst hℓ
+        ext a i
+        cases i with
+        | inl i =>
+          rw [Params.smul_read, Matrix.smul_apply, unitDirGated_gate_ig, unitDirGated_gate_ig]
+          split_ifs <;> simp
+        | inr i =>
+          rw [Params.smul_read, Matrix.smul_apply, unitDirGated_value_ig, unitDirGated_value_ig]
+          split_ifs <;> simp
+      · rw [Params.smul_read, unitDirGated_read_ne_ig _ _ _ _ _ hℓ,
+          unitDirGated_read_ne_ig _ _ _ _ _ hℓ, smul_zero]
+    · intro ℓ
+      by_cases hℓ : ℓ = m
+      · subst hℓ
+        ext i a
+        rw [Params.smul_write, Matrix.smul_apply, unitDirGated_write_ig, unitDirGated_write_ig]
+        split_ifs <;> simp
+      · rw [Params.smul_write, unitDirGated_write_ne_ig _ _ _ _ _ hℓ,
+          unitDirGated_write_ne_ig _ _ _ _ _ hℓ, smul_zero]
+    · simp [unitDirGated]
+
+/-- Helper: the value `α m j` of a family of numbers on the hidden units, as a linear
+functional. -/
+private noncomputable def evalAt_ig (m : Fin L) (j : hid m) : (∀ ℓ, hid ℓ → ℝ) →ₗ[ℝ] ℝ :=
+  (LinearMap.proj j).comp (LinearMap.proj (R := ℝ) (φ := fun ℓ => hid ℓ → ℝ) m)
+
+omit [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper: the families that vanish at `(m, j)` form a space of dimension `∑ d_hidden - 1`
+(rank–nullity for the functional `α ↦ α m j`, which is onto). -/
+private theorem finrank_ker_evalAt_ig (m : Fin L) (j : hid m) :
+    Module.finrank ℝ (LinearMap.ker (evalAt_ig m j)) + 1 = ∑ ℓ, Fintype.card (hid ℓ) := by
+  have h := LinearMap.finrank_range_add_finrank_ker (evalAt_ig m j)
+  have hr : LinearMap.range (evalAt_ig m j) = ⊤ :=
+    LinearMap.range_eq_top.2 fun c => ⟨fun _ _ => c, rfl⟩
+  rw [hr, finrank_top, Module.finrank_self, Module.finrank_pi_fintype] at h
+  simp only [Module.finrank_fintype_fun_eq_card] at h
+  omega
+
 /-- **Proposition E.1, the bound, at one parameter (ReGLU blocks):** let the gate activation be
 positively homogeneous of degree `k` and vanish on `z ≤ 0`, and let the gate of hidden unit `j` of
 block `m` be closed at every input at all parameters near `θ`. If `E` and the writes have rank
@@ -214,6 +383,167 @@ theorem funDim_add_le_of_eventually_gateInactive {k : ℕ}
         + ((L + 1) * Fintype.card d ^ 2 + 2 * ∑ ℓ, Fintype.card (hid ℓ)
           + (3 * Fintype.card d - 2))
       ≤ Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  -- the families of numbers on the hidden units that vanish at `(m, j)`
+  set K := LinearMap.ker (evalAt_ig m j) with hK
+  -- the linear map `(X, α, β, δ) ↦ cobDir θ X + rescaleDir θ α + rescaleDirGate k θ β
+  -- + unitDirGated m j δ`, with `α m j = β m j = 0`
+  let Φ := (cobDirLin θ).coprod (((rescaleDirLin_ig θ).comp K.subtype).coprod
+    (((rescaleDirGateLin_ig k θ).comp K.subtype).coprod (unitDirGatedLin_ig m j)))
+  -- its directions are flat, since the four summands are
+  have hV : LinearMap.range Φ ≤ flat (Arch.gated σ id hid) 0 θ := by
+    rintro _ ⟨p, rfl⟩
+    exact Submodule.add_mem _ (cobDir_mem_flat_skipless' θ rfl p.1)
+      (Submodule.add_mem _ (rescaleDir_mem_flat' θ 0 p.2.1.1)
+        (Submodule.add_mem _ (rescaleDirGate_mem_flat hσ θ 0 p.2.2.1.1)
+          (unitDirGated_mem_flat hσ0 θ m j hθ p.2.2.2.1 p.2.2.2.2.1 p.2.2.2.2.2)))
+  -- it is injective
+  have hinj : Function.Injective Φ := by
+    refine (injective_iff_map_eq_zero Φ).2 ?_
+    rintro ⟨X, ⟨α, hα⟩, ⟨β, hβ⟩, δg, δe, δa⟩ hp
+    have hα0 : α m j = 0 := LinearMap.mem_ker.1 hα
+    have hβ0 : β m j = 0 := LinearMap.mem_ker.1 hβ
+    set U := unitDirGated (σ := σ) (dIn := dIn) (dOut := dOut) m j δg δe δa with hU
+    have h : cobDir θ X + (rescaleDir θ α + (rescaleDirGate k θ β + U)) = 0 := hp
+    -- the entries of the four summands: `E`, the gate and value columns, the write rows
+    have hE0 : θ.E * X 0 = θ.E * (0 : Matrix d d ℝ) := by
+      have h1 := congrArg Params.E h
+      change θ.E * X 0 + (0 + (0 + 0)) = 0 at h1
+      rw [Matrix.mul_zero]
+      simpa only [add_zero] using h1
+    have hgate : ∀ ℓ a i, -(X ℓ.castSucc * θ.read ℓ) a (Sum.inl i)
+        + β ℓ i * θ.read ℓ a (Sum.inl i) + U.read ℓ a (Sum.inl i) = 0 := by
+      intro ℓ a i
+      have h1 := congrFun (congrFun (congrArg (fun η => η.read ℓ) h) a) (Sum.inl i)
+      change -(X ℓ.castSucc * θ.read ℓ) a (Sum.inl i) + (0 + (β ℓ i * θ.read ℓ a (Sum.inl i)
+        + U.read ℓ a (Sum.inl i))) = 0 at h1
+      linarith
+    have hval : ∀ ℓ a i, -(X ℓ.castSucc * θ.read ℓ) a (Sum.inr i)
+        - α ℓ i * θ.read ℓ a (Sum.inr i) + U.read ℓ a (Sum.inr i) = 0 := by
+      intro ℓ a i
+      have h1 := congrFun (congrFun (congrArg (fun η => η.read ℓ) h) a) (Sum.inr i)
+      change -(X ℓ.castSucc * θ.read ℓ) a (Sum.inr i) + (-(α ℓ i) * θ.read ℓ a (Sum.inr i)
+        + (0 + U.read ℓ a (Sum.inr i))) = 0 at h1
+      linarith
+    have hwr : ∀ ℓ i a, (θ.write ℓ * X ℓ.succ) i a + α ℓ i * θ.write ℓ i a
+        - (k : ℝ) * β ℓ i * θ.write ℓ i a + U.write ℓ i a = 0 := by
+      intro ℓ i a
+      have h1 := congrFun (congrFun (congrArg (fun η => η.write ℓ) h) i) a
+      change (θ.write ℓ * X ℓ.succ) i a + (α ℓ i * θ.write ℓ i a
+        + (-((k : ℝ) * β ℓ i) * θ.write ℓ i a + U.write ℓ i a)) = 0 at h1
+      linarith
+    -- `E` has rank `d`, so `X_0 = 0`
+    have hX0 : X 0 = 0 := cancel_left_of_rank_ig θ.E hE hE0
+    -- block `ℓ`: if `X_{ℓ-1} = 0`, then `α_ℓ = 0`, `β_ℓ = 0` and `X_ℓ = 0`
+    have key : ∀ ℓ : Fin L, X ℓ.castSucc = 0 → α ℓ = 0 ∧ β ℓ = 0 ∧ X ℓ.succ = 0 := by
+      intro ℓ hℓ
+      -- the gate column of unit `i`: `β_i g_i + δ = 0`, with `δ = 0` unless `(ℓ, i) = (m, j)`
+      have hβℓ : β ℓ = 0 := by
+        funext i
+        obtain ⟨a, ha⟩ := Function.ne_iff.mp (hg ℓ i)
+        have h1 := hgate ℓ a i
+        rw [hℓ, Matrix.zero_mul, Matrix.zero_apply, neg_zero, zero_add] at h1
+        by_cases hℓm : ℓ = m
+        · subst hℓm
+          by_cases hij : i = j
+          · subst hij
+            exact hβ0
+          · rw [hU, unitDirGated_gate_ig, ite_eq_right_iff.2 fun h => absurd h hij,
+              add_zero] at h1
+            exact (mul_eq_zero.1 h1).resolve_right ha
+        · rw [hU, unitDirGated_read_ne_ig _ _ _ _ _ hℓm, Matrix.zero_apply, add_zero] at h1
+          exact (mul_eq_zero.1 h1).resolve_right ha
+      -- the value column of unit `i`: `-α_i e_i + δ = 0`
+      have hαℓ : α ℓ = 0 := by
+        funext i
+        obtain ⟨a, ha⟩ := Function.ne_iff.mp (hv ℓ i)
+        have h1 := hval ℓ a i
+        rw [hℓ, Matrix.zero_mul, Matrix.zero_apply, neg_zero, zero_sub] at h1
+        by_cases hℓm : ℓ = m
+        · subst hℓm
+          by_cases hij : i = j
+          · subst hij
+            exact hα0
+          · rw [hU, unitDirGated_value_ig, ite_eq_right_iff.2 fun h => absurd h hij,
+              add_zero, neg_eq_zero] at h1
+            exact (mul_eq_zero.1 h1).resolve_right ha
+        · rw [hU, unitDirGated_read_ne_ig _ _ _ _ _ hℓm, Matrix.zero_apply, add_zero,
+            neg_eq_zero] at h1
+          exact (mul_eq_zero.1 h1).resolve_right ha
+      refine ⟨hαℓ, hβℓ, ?_⟩
+      -- the write: `W X_ℓ + δ = 0`, with `δ` only on row `j` of block `m`
+      have hW : ∀ i a, (θ.write ℓ * X ℓ.succ) i a + U.write ℓ i a = 0 := by
+        intro i a
+        have h1 := hwr ℓ i a
+        simp only [hαℓ, hβℓ, Pi.zero_apply, zero_mul, mul_zero, add_zero, sub_zero] at h1
+        exact h1
+      by_cases hℓm : ℓ = m
+      · -- block `m`: the rows `i ≠ j` of `W X_m` vanish, and `W` without row `j` has rank `d`
+        subst hℓm
+        refine cancel_left_of_rank_ig _ hwj (Y := 0) ?_
+        ext i a
+        have h1 := hW i a
+        rw [hU, unitDirGated_write_ig, ite_eq_right_iff.2 fun h => absurd h i.2, add_zero]
+          at h1
+        rw [Matrix.mul_zero, Matrix.zero_apply]
+        exact h1
+      · -- another block: `W X_ℓ = 0`, and `W` has rank `d`
+        refine cancel_left_of_rank_ig _ (hw ℓ) (Y := 0) ?_
+        ext i a
+        have h1 := hW i a
+        rw [hU, unitDirGated_write_ne_ig _ _ _ _ _ hℓm, Matrix.zero_apply, add_zero] at h1
+        rw [Matrix.mul_zero, Matrix.zero_apply]
+        exact h1
+    -- by induction along the network, `X = 0`; then `α = 0` and `β = 0`
+    have hX : ∀ ℓ : Fin (L + 1), X ℓ = 0 := by
+      intro ℓ
+      induction ℓ using Fin.induction with
+      | zero => exact hX0
+      | succ ℓ ih => exact (key ℓ ih).2.2
+    have hα' : α = 0 := funext fun ℓ => (key ℓ (hX ℓ.castSucc)).1
+    have hβ' : β = 0 := funext fun ℓ => (key ℓ (hX ℓ.castSucc)).2.1
+    -- the gate column, the value column and the write row of unit `j` give `δ = 0`
+    have hδg : δg = 0 := by
+      funext a
+      have h1 := hgate m a j
+      rw [hX] at h1
+      simp only [hβ', Matrix.zero_mul, Matrix.zero_apply, neg_zero, Pi.zero_apply, zero_mul,
+        zero_add, hU, unitDirGated_gate_ig, ↓reduceIte] at h1
+      exact h1
+    have hδe : δe = 0 := by
+      funext a
+      have h1 := hval m a j
+      rw [hX] at h1
+      simp only [hα', Matrix.zero_mul, Matrix.zero_apply, neg_zero, Pi.zero_apply, zero_mul,
+        sub_zero, zero_add, hU, unitDirGated_value_ig, ↓reduceIte] at h1
+      exact h1
+    have hδa : δa = 0 := by
+      funext a
+      have h1 := hwr m j a
+      rw [hX] at h1
+      simp only [hα', hβ', Matrix.mul_zero, Matrix.zero_apply, Pi.zero_apply, zero_mul,
+        mul_zero, add_zero, sub_zero, zero_add, hU, unitDirGated_write_ig, ↓reduceIte] at h1
+      exact h1
+    subst hδg hδe hδa
+    have hα'' : (⟨α, hα⟩ : K) = 0 := Subtype.ext hα'
+    have hβ'' : (⟨β, hβ⟩ : K) = 0 := Subtype.ext hβ'
+    rw [hα'', hβ'', funext hX]
+    rfl
+  -- the domain has dimension `(L + 1) d² + 2 (∑ d_hidden - 1) + 3 d`
+  have hdim : Module.finrank ℝ
+        ((Fin (L + 1) → Matrix d d ℝ) × K × K × ((d → ℝ) × (d → ℝ) × (d → ℝ))) + 2
+      = (L + 1) * Fintype.card d ^ 2 + 2 * ∑ ℓ, Fintype.card (hid ℓ) + 3 * Fintype.card d := by
+    have hk := finrank_ker_evalAt_ig m j
+    rw [Module.finrank_prod, Module.finrank_prod, Module.finrank_prod, Module.finrank_prod,
+      Module.finrank_prod, finrank_cobDomain]
+    simp only [Module.finrank_fintype_fun_eq_card]
+    rw [← hK] at hk
+    omega
+  -- `d ≥ 1`: a value column is not zero
+  have hd : 1 ≤ Fintype.card d := by
+    obtain ⟨a, -⟩ := Function.ne_iff.mp (hv m j)
+    exact Fintype.card_pos_iff.2 ⟨a⟩
+  have h := funDim_add_finrank_le_of_le_flat' θ _ hV
+  rw [LinearMap.finrank_range_of_inj hinj] at h
+  omega
 
 end Skips
