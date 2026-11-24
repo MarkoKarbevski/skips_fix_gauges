@@ -69,6 +69,7 @@ noncomputable def blockLHSC (σC : ℂ → ℂ)
 noncomputable def pathMatrix (Ξ Ξ' : Matrix T d ℝ) (t : ℂ) : Matrix T d ℂ :=
   Matrix.of fun τ => pathRow (Ξ τ) (Ξ' τ) t
 
+omit [Fintype T] [DecidableEq d] in
 /-- At a real `n`, the complex `n Z − (⟨n Z, n⟩/d) n` is the real one. -/
 theorem tangentRMSC_ofReal (Z : Matrix d d ℝ) (n : Matrix T d ℝ) :
     tangentRMSC Z (n.map (fun x : ℝ => (x : ℂ)))
@@ -95,6 +96,7 @@ private theorem map_add_ofReal_cbi {m n : Type*} (A B : Matrix m n ℝ) :
       = A.map (fun x : ℝ => (x : ℂ)) + B.map (fun x : ℝ => (x : ℂ)) :=
   Matrix.map_add _ (fun a b => Complex.ofReal_add a b) A B
 
+omit [Fintype dIn] [Fintype dOut] in
 /-- At a real `n`, the complex `ż(n)` is the real `ż(n)` of equation (20). -/
 theorem zdotC_ofReal (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut)
     (k : Fin L) (Z : Matrix d d ℝ)

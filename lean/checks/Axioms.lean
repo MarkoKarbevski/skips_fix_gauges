@@ -797,3 +797,14 @@ import SkipsLean
 #print axioms Skips.fderiv_suffix_zero_row
 #print axioms Skips.fderiv_param_suffix_zero_row
 #print axioms Skips.flat_at_write_of_isOpen_rows
+#print axioms Skips.tangentRMSC_ofReal
+#print axioms Skips.zdotC_ofReal
+#print axioms Skips.fderiv_suffixC_ofReal
+#print axioms Skips.fderiv_weights_suffixC_ofReal
+#print axioms Skips.blockLHSC_ofReal
+#print axioms Skips.blockLHSC_pathMatrix_eq_zero
+#print axioms Skips.eq_zero_of_fderiv_suffixC_one_sub_sq
+#print axioms Skips.exists_batch_jacobianRank_of_claimZero
+#print axioms Skips.measure_zeroSet_of_analyticOnNhd_of_isPreconnected
+#print axioms Skips.ae_finrank_range_fderiv_ge_of_isPreconnected
+#print axioms Skips.ae_jacobianRank_ge_of_isPreconnected
