@@ -458,6 +458,145 @@ theorem gelu_path_unit [DecidableEq ι] (ω : ι → ℂ) (hω : ∀ i, |(ω i).
     ∀ s : ℝ, 0 < s → s ≤ 1 →
       fderiv ℂ (fun x : (ι → ℂ) × (ι → ℂ) => Ψ ((s : ℂ), x)) 0 (Pi.single j 1, 0) = 0 ∧
       fderiv ℂ (fun x : (ι → ℂ) × (ι → ℂ) => Ψ ((s : ℂ), x)) 0 (0, Pi.single j 1) = 0 := by
-  sorry
+  -- the rates: `ρ_m ≤ ρ_i` for all `i`, and `ρ_j + γ₁ ≤ ρ_i` for the other units outside `A`
+  obtain ⟨ρm, hρm, hρmle⟩ := exists_pos_le_gps (fun _ => True)
+    (fun i => (ω i).re ^ 2 - (ω i).im ^ 2) (fun i _ => rate_pos_gps (hω i))
+  obtain ⟨γ₁, hγ₁, hγ₁le⟩ := exists_pos_le_gps (fun i => i ∉ A ∧ i ≠ j)
+    (fun i => ((ω i).re ^ 2 - (ω i).im ^ 2) - ((ω j).re ^ 2 - (ω j).im ^ 2))
+    (fun i hi => sub_pos.2 (hrate i hi.1 hi.2))
+  have hγ : 0 < min γ₁ ρm := lt_min hγ₁ hρm
+  -- (a) the bound `M`; (b) the entry bounds, and `‖X(t)‖ ≤ r/8` for large `t`
+  obtain ⟨M, hM⟩ := exists_bound_gps Ψ hΨ
+  have hM0 : 0 ≤ M := (norm_nonneg _).trans (hM 0 le_rfl zero_le_one 0 (by simp [hr.le]))
+  obtain ⟨C, hC, hb⟩ := exists_entry_bound_gps ω hω c₀
+  have hsmall := eventually_norm_geluGap_le_gps ω hω c₀ (ε := r / 8) (by positivity)
+  -- the derivatives `a(σ)`, `b(σ)` of `Ψ(σ, ·)` at `0` along the two entries of unit `j`
+  obtain ⟨a, ha⟩ : ∃ a : ℂ → F, ∀ σ, a σ = fderiv ℂ (fun x : (ι → ℂ) × (ι → ℂ) => Ψ (σ, x)) 0
+      ((Pi.single j 1 : ι → ℂ), (0 : ι → ℂ)) := ⟨_, fun _ => rfl⟩
+  obtain ⟨b, hb'⟩ : ∃ b : ℂ → F, ∀ σ, b σ = fderiv ℂ (fun x : (ι → ℂ) × (ι → ℂ) => Ψ (σ, x)) 0
+      ((0 : ι → ℂ), (Pi.single j 1 : ι → ℂ)) := ⟨_, fun _ => rfl⟩
+  have haa : ∀ s : ℝ, 0 ≤ s → s ≤ 1 → AnalyticAt ℂ a (s : ℂ) := fun s hs0 hs1 =>
+    (analyticAt_fderiv_slice_gps Ψ hr hΨ _ hs0 hs1).congr
+      (Eventually.of_forall fun σ => (ha σ).symm)
+  have hba : ∀ s : ℝ, 0 ≤ s → s ≤ 1 → AnalyticAt ℂ b (s : ℂ) := fun s hs0 hs1 =>
+    (analyticAt_fderiv_slice_gps Ψ hr hΨ _ hs0 hs1).congr
+      (Eventually.of_forall fun σ => (hb' σ).symm)
+  -- Step 1: `‖x_j(t) a(1/t) + y_j(t) b(1/t)‖ ≤ K t² e^{−(ρ_j + γ) u/2}`
+  have hD : ∀ᶠ t : ℝ in atTop,
+      ‖(geluGap c₀ ω t).1 j • a ((t : ℂ))⁻¹ + (geluGap c₀ ω t).2 j • b ((t : ℂ))⁻¹‖
+        ≤ 16 * M / r * (C + 2 * C ^ 2 / r) * t ^ 2
+          * Real.exp (-(((ω j).re ^ 2 - (ω j).im ^ 2 + min γ₁ ρm) * (t - 1 / t) ^ 2 / 2)) := by
+    filter_upwards [eventually_ge_atTop 1, hsmall, h47] with t ht1 hts h47t
+    have hs0 : 0 ≤ t⁻¹ := inv_nonneg.2 (by linarith)
+    have hs1 : t⁻¹ ≤ 1 := inv_le_one_of_one_le₀ ht1
+    have hXA := (norm_gapPart_le_gps c₀ ω A t).trans hts
+    have hXj := (norm_gapPart_le_gps c₀ ω {j} t).trans hts
+    have hXC := (norm_gapPart_le_gps c₀ ω {i | i ∉ A ∧ i ≠ j} t).trans hts
+    have hest := estimate_gps Ψ hr hΨ hM hs0 hs1 hXA hXj hXC
+    -- `Ψ(1/t, X_A) = 0` (the hypothesis on `A`) and `Ψ(1/t, X(t)) = 0` (47)
+    have hAz : Ψ (((t⁻¹ : ℝ) : ℂ), gapPart_gps c₀ ω A t) = 0 :=
+      hA t⁻¹ (inv_pos.2 (by linarith)) hs1 _ (hXA.trans (by linarith)) fun i hi =>
+        ⟨Set.indicator_of_notMem hi _, Set.indicator_of_notMem hi _⟩
+    -- `𝐃f_s(0) X_j = x_j a(s) + y_j b(s)`
+    have hlin : fderiv ℂ (fun x : (ι → ℂ) × (ι → ℂ) => Ψ (((t⁻¹ : ℝ) : ℂ), x)) 0
+        (gapPart_gps c₀ ω {j} t)
+          = (geluGap c₀ ω t).1 j • a ((t : ℂ))⁻¹ + (geluGap c₀ ω t).2 j • b ((t : ℂ))⁻¹ := by
+      rw [gapPart_single_gps, map_add, map_smul, map_smul, ha, hb', Complex.ofReal_inv]
+    rw [← geluGap_split_gps c₀ ω A hjA t, hAz, hlin, Complex.ofReal_inv, h47t, sub_self,
+      zero_sub, norm_neg] at hest
+    refine hest.trans (step1_arith_gps
+      (Ej := Real.exp (-(((ω j).re ^ 2 - (ω j).im ^ 2) * (t - 1 / t) ^ 2 / 2)))
+      (Em := Real.exp (-(ρm * (t - 1 / t) ^ 2 / 2))) hM0 hr hC ht1 (Real.exp_pos _).le
+      (Real.exp_pos _).le ?_ ?_ ?_ ?_ ?_ (norm_nonneg _) (norm_nonneg _))
+    · -- `E_{ρ_j} E_{ρ_m} = E_{ρ_j+ρ_m} ≤ E_{ρ_j+γ}`
+      rw [← exp_add_gps]
+      exact exp_le_exp_of_le_gps t (by linarith [min_le_right γ₁ ρm])
+    · exact norm_gapPart_le_exp_gps c₀ ω hC hb _ (fun i hi => by
+        linarith [hγ₁le i hi, min_le_left γ₁ ρm]) ht1
+    · exact norm_gapPart_le_exp_gps c₀ ω hC hb _ (fun i hi => by
+        rw [Set.mem_singleton_iff.1 hi]) ht1
+    · exact norm_gapPart_le_exp_gps c₀ ω hC hb _ (fun i _ => hρmle i trivial) ht1
+    · exact norm_gapPart_le_exp_gps c₀ ω hC hb _ (fun i _ => hρmle i trivial) ht1
+  -- Step 2: `x_j a + y_j b = φ(z) (mr(z) Θ₁(t) + Θ₂(t))`, `z = z_j(t)`
+  obtain ⟨Θ₁, hΘ₁⟩ : ∃ Θ : ℝ → F, ∀ t, Θ t
+      = (((c₀ / t : ℝ) : ℂ) * unitPath (ω j) t) • a ((t : ℂ))⁻¹ + b ((t : ℂ))⁻¹ :=
+    ⟨_, fun _ => rfl⟩
+  obtain ⟨Θ₂, hΘ₂⟩ : ∃ Θ : ℝ → F, ∀ t, Θ t = (-unitPath (ω j) t) • b ((t : ℂ))⁻¹ :=
+    ⟨_, fun _ => rfl⟩
+  have hdec : ∀ t : ℝ,
+      (geluGap c₀ ω t).1 j • a ((t : ℂ))⁻¹ + (geluGap c₀ ω t).2 j • b ((t : ℂ))⁻¹
+        = gaussPdfC (unitPath (ω j) t)
+          • (millsRatioC (unitPath (ω j) t) • Θ₁ t + Θ₂ t) := by
+    intro t
+    show (((c₀ / t : ℝ) : ℂ) * (unitPath (ω j) t - geluC (unitPath (ω j) t))) • a ((t : ℂ))⁻¹
+        + (1 - deriv geluC (unitPath (ω j) t)) • b ((t : ℂ))⁻¹ = _
+    rw [sub_geluC, one_sub_deriv_geluC, hΘ₁, hΘ₂]
+    module
+  -- Step 3: dividing by `φ(z)`, `‖mr(z) Θ₁(t) + Θ₂(t)‖ ≤ K' t² e^{−γ u/2}`
+  have hW : ∀ᶠ t : ℝ in atTop,
+      ‖millsRatioC (unitPath (ω j) t) • Θ₁ t + Θ₂ t‖
+        ≤ 16 * M / r * (C + 2 * C ^ 2 / r) * Real.sqrt (2 * Real.pi)
+            / Real.exp (-(2 * (ω j).re ^ 2)) * t ^ 2
+          * Real.exp (-(min γ₁ ρm * (t - 1 / t) ^ 2 / 2)) := by
+    filter_upwards [hD, eventually_gt_atTop 0] with t hDt ht0
+    rw [hdec, norm_smul, norm_gaussPdfC_unitPath (ω j) ht0,
+      exp_add_gps ((ω j).re ^ 2 - (ω j).im ^ 2) (min γ₁ ρm) t] at hDt
+    have he := Real.exp_pos (-(2 * (ω j).re ^ 2))
+    have hEj := Real.exp_pos (-(((ω j).re ^ 2 - (ω j).im ^ 2) * (t - 1 / t) ^ 2 / 2))
+    have hs : 0 < Real.sqrt (2 * Real.pi) := Real.sqrt_pos.2 (by positivity)
+    refine le_of_mul_le_mul_left (hDt.trans_eq ?_) (by positivity)
+    field_simp
+  have hftp : FasterThanPowers fun t : ℝ =>
+      millsRatioC (ω j * (t : ℂ) + (starRingEnd ℂ) (ω j) / (t : ℂ)) • Θ₁ t + Θ₂ t :=
+    fasterThanPowers_of_le_gps hγ hW
+  -- Step 4: `Θ₁`, `Θ₂` are meromorphic at infinity; Lemma D.9
+  have ha0 : AnalyticAt ℂ a 0 := by
+    have h := haa 0 le_rfl zero_le_one
+    rwa [Complex.ofReal_zero] at h
+  have hb0 : AnalyticAt ℂ b 0 := by
+    have h := hba 0 le_rfl zero_le_one
+    rwa [Complex.ofReal_zero] at h
+  have hmer₁ : MeromorphicAtInfinityC Θ₁ := by
+    refine ⟨0, fun σ => ((c₀ : ℂ) * (ω j + (starRingEnd ℂ) (ω j) * σ ^ 2)) • a σ + b σ,
+      by fun_prop, ?_⟩
+    filter_upwards [eventually_gt_atTop 0] with t ht
+    have ht' : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 ht.ne'
+    rw [hΘ₁, pow_zero, one_smul]
+    congr 2
+    unfold unitPath
+    push_cast
+    field_simp
+  have hmer₂ : MeromorphicAtInfinityC Θ₂ := by
+    refine ⟨1, fun σ => (-(ω j + (starRingEnd ℂ) (ω j) * σ ^ 2)) • b σ, by fun_prop, ?_⟩
+    filter_upwards [eventually_gt_atTop 0] with t ht
+    have ht' : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 ht.ne'
+    rw [hΘ₂, smul_smul]
+    congr 1
+    unfold unitPath
+    field_simp
+  have hre : 0 < (ω j).re := lt_of_le_of_lt (abs_nonneg _) (hω j)
+  obtain ⟨h₁, h₂⟩ := eventually_eq_zero_of_millsRatioC_smul_add hre hmer₁ hmer₂ hftp
+  -- `z_j(t) ≠ 0`, as `Re z_j(t) > 0`
+  have hz : ∀ t : ℝ, 0 < t → unitPath (ω j) t ≠ 0 := by
+    intro t ht h0
+    have h := unitPath_re (ω j) ht
+    rw [h0, Complex.zero_re] at h
+    have : 0 < (ω j).re * (t + 1 / t) := mul_pos hre (by positivity)
+    linarith
+  have hbz : ∀ᶠ t : ℝ in atTop, b ((t : ℂ))⁻¹ = 0 := by
+    filter_upwards [h₂, eventually_gt_atTop 0] with t ht ht0
+    rw [hΘ₂] at ht
+    exact (smul_eq_zero.1 ht).resolve_left (neg_ne_zero.2 (hz t ht0))
+  have haz : ∀ᶠ t : ℝ in atTop, a ((t : ℂ))⁻¹ = 0 := by
+    filter_upwards [h₁, hbz, eventually_gt_atTop 0] with t ht hbt ht0
+    rw [hΘ₁, hbt, add_zero] at ht
+    have hq : ((c₀ / t : ℝ) : ℂ) * unitPath (ω j) t ≠ 0 :=
+      mul_ne_zero (Complex.ofReal_ne_zero.2 (div_ne_zero hc₀ ht0.ne')) (hz t ht0)
+    exact (smul_eq_zero.1 ht).resolve_left hq
+  -- Step 5: by (c), `a(s) = b(s) = 0` for `s ∈ (0, 1]`
+  intro s hs0 hs1
+  rw [← ha (s : ℂ), ← hb' (s : ℂ)]
+  exact ⟨eq_zero_of_eventually_gps haa haz s hs0 hs1,
+    eq_zero_of_eventually_gps hba hbz s hs0 hs1⟩
 
 end Skips
