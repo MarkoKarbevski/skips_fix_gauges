@@ -335,6 +335,7 @@ private theorem ae_exists_turned_row_skip_tsl [Nonempty (hid 0)] {σ : ℝ → �
   rw [hpos z hz]
   exact pow_ne_zero k hz.ne'
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReLU block turns a dense set of the active rows for the skip `ι v`, at almost every
 `(θ, v)`,** for `d ≥ 2` and a skip that depends linearly on `v` and is the identity at one
 point. -/
@@ -345,6 +346,7 @@ theorem ae_turnsActiveRowsSkip_relu_of_linear (ι : V →ₗ[ℝ] Matrix d d ℝ
     ∀ᵐ p ∂μ, TurnsActiveRowsSkip p.1 (ι p.2) := by
   exact ae_turnsActiveRowsSkip_tsl relu_pos_tsl relu_nonpos_tsl ι v₀ hι μ hd
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReLU² block turns a dense set of the active rows for the skip `ι v`, at almost every
 `(θ, v)`,** for `d ≥ 2` and a skip that depends linearly on `v` and is the identity at one
 point. -/
@@ -501,6 +503,7 @@ private theorem mem_closure_of_wPolyGated_tsl {m : Type*} [Fintype m] {p q : d}
       isPreconnected_univ (Set.mem_univ v) hz
   exact hS S hSne (h0 (Set.mem_univ _))
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReGLU block turns a dense set of the rows with an active gate for the skip `ι v`, at
 almost every `(θ, v)`,** for `d ≥ 2` and a skip that depends linearly on `v` and is the identity
 at one point. -/
@@ -517,6 +520,7 @@ theorem ae_turnsActiveRowsGatedSkip_reglu_of_linear (ι : V →ₗ[ℝ] Matrix d
   intro v hv hact
   exact mem_closure_of_wPolyGated_tsl _ _ _ _ hx v hv hact
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReLU block with a hidden unit turns some row off the kinks, for the skip `ι v`, at almost
 every `(θ, v)`,** for `d ≥ 2`. -/
 theorem ae_exists_turned_row_skip_relu_of_linear [Nonempty (hid 0)] (ι : V →ₗ[ℝ] Matrix d d ℝ)
@@ -527,6 +531,7 @@ theorem ae_exists_turned_row_skip_relu_of_linear [Nonempty (hid 0)] (ι : V →�
       LinearIndependent ℝ ![v ᵥ* ι p.2, vanillaBlock relu (p.1.read 0) (p.1.write 0) v] := by
   exact ae_exists_turned_row_skip_tsl relu_pos_tsl relu_nonpos_tsl ι v₀ hι μ hd
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReLU² block with a hidden unit turns some row off the kinks, for the skip `ι v`, at
 almost every `(θ, v)`,** for `d ≥ 2`. -/
 theorem ae_exists_turned_row_skip_reluSq_of_linear [Nonempty (hid 0)]
@@ -590,6 +595,7 @@ private theorem exists_turned_gated_of_closure_tsl {m : Type*} [Fintype m] [None
   obtain ⟨w, hw1, hw2⟩ := mem_closure_iff_nhds.1 (hturn v hv ⟨_, hact⟩) _ hO
   exact ⟨w, hw1, hw2⟩
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReGLU block with a hidden unit turns some row off the kinks of the gates, for the skip
 `ι v`, at almost every `(θ, v)`,** for `d ≥ 2`. -/
 theorem ae_exists_turned_row_skip_reglu_of_linear [Nonempty (hid 0)]

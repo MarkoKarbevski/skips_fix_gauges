@@ -1767,3 +1767,9 @@ import SkipsLean
 #print axioms Skips.ae_funDimLearned_reluSq_oneBlock_rmsNorm_zero
 #print axioms Skips.ae_exists_jacobianRankSkips_reluSq_oneBlock_rmsNorm_zero
 #print axioms Skips.ae_funDimLearned_reluSq_oneBlock_rmsNorm_zero_eq_residual_add
+#print axioms Skips.ae_turnsActiveRowsSkip_relu_of_linear
+#print axioms Skips.ae_turnsActiveRowsSkip_reluSq_of_linear
+#print axioms Skips.ae_turnsActiveRowsGatedSkip_reglu_of_linear
+#print axioms Skips.ae_exists_turned_row_skip_relu_of_linear
+#print axioms Skips.ae_exists_turned_row_skip_reluSq_of_linear
+#print axioms Skips.ae_exists_turned_row_skip_reglu_of_linear
