@@ -267,6 +267,7 @@ private theorem exists_turned_of_closure_rgq {m : Type*} [Fintype m] [Nonempty m
   obtain ⟨w, hw1, hw2⟩ := mem_closure_iff_nhds.1 (hturn v hv ⟨_, hact⟩) _ hO
   exact ⟨w, hw1, hw2⟩
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReGLU block turns a dense set of the rows with an active gate at almost every
 parameter,** for `d ≥ 2`. -/
 theorem ae_turnsActiveRowsGated_reglu
@@ -281,6 +282,7 @@ theorem ae_turnsActiveRowsGated_reglu
   intro v hv hact
   exact mem_closure_of_wPoly_rgq _ _ _ hθ v hv hact
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReGLU block with a hidden unit turns some row off the kinks of the gates at almost every
 parameter,** for `d ≥ 2`. -/
 theorem ae_exists_turned_row_reglu [Nonempty (hid 0)]
