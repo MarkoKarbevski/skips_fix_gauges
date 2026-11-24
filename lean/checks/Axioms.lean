@@ -571,3 +571,5 @@ import SkipsLean
 #print axioms Skips.analyticAt_scaledSuffix
 #print axioms Skips.fderiv_suffix_pow_smul
 #print axioms Skips.fderiv_params_suffix_pow_smul
+#print axioms Skips.claimGated_castSucc_of_flat_rmsNorm
+#print axioms Skips.claimRMS_castSucc_of_flat_rmsNorm
