@@ -148,3 +148,6 @@ import SkipsLean.Depth.SuffixFlatZeroConverse
 import SkipsLean.Depth.FlatAtMatrixRows
 import SkipsLean.Depth.CondP
 import SkipsLean.Depth.StepZeroGeluPath
+import SkipsLean.Depth.SuffixZeroRows
+import SkipsLean.Depth.StepZeroGeluOne
+import SkipsLean.Depth.StepZeroGelu
