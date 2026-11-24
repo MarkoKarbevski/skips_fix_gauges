@@ -228,3 +228,4 @@ import SkipsLean.Residual.DepthTransformer
 import SkipsLean.Residual.DepthTransformerGated
 import SkipsLean.Residual.DepthTransformerRMS
 import SkipsLean.Residual.DepthTransformerGatedRMS
+import SkipsLean.Dimension.UpperBoundTransformerRescale

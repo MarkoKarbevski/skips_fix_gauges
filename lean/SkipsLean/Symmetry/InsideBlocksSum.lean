@@ -125,6 +125,7 @@ private def sumInrLin_ibl : Params B dIn dOut →ₗ[ℝ] Params (A.sum B) dIn d
 
 variable [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut]
 
+omit [Fintype T] [DecidableEq d] in
 /-- **A symmetry inside the blocks of `A` is a symmetry inside the blocks of the sum.** -/
 theorem InsideBlocks.sumInl {θ : Params (A.sum B) dIn dOut} {η : Params A dIn dOut}
     (h : InsideBlocks A θ.sumFst η) : InsideBlocks (A.sum B) θ (Params.sumInl η) := by
@@ -180,6 +181,7 @@ theorem InsideBlocks.sumInl {θ : Params (A.sum B) dIn dOut} {η : Params A dIn 
         = (A.sum B).f ℓ (n * θ.read ℓ) * θ.write ℓ
       rw [f_sum_mul A B ℓ n, f_sum_mul A B ℓ n, hrl, hrr, hwl, hwr, hb']
 
+omit [Fintype T] [DecidableEq d] in
 /-- **A symmetry inside the blocks of `B` is a symmetry inside the blocks of the sum.** -/
 theorem InsideBlocks.sumInr {θ : Params (A.sum B) dIn dOut} {η : Params B dIn dOut}
     (h : InsideBlocks B θ.sumSnd η) : InsideBlocks (A.sum B) θ (Params.sumInr η) := by
@@ -276,6 +278,7 @@ private theorem ED_eq_zero_of_mem_span_ibl {A' : Arch T d L} {θ' v : Params A' 
   | smul a x _ hx =>
     exact ⟨by rw [Params.smul_E, hx.1, smul_zero], by rw [Params.smul_D, hx.2, smul_zero]⟩
 
+omit [Fintype T] [DecidableEq d] in
 /-- Helper: the lifts of the directions of `V_A` and `V_B` are directions of symmetries inside
 the blocks of the sum, and so is everything they span. -/
 private theorem sup_le_span_ibl (VA : Submodule ℝ (Params A dIn dOut))

@@ -1141,3 +1141,16 @@ import SkipsLean
 #print axioms Skips.ae_forall_eval_residual_ne_skipless_attention_rmsNorm
 #print axioms Skips.exists_batch_ae_exists_pos_le_norm_sub_skipless_attention_rmsNorm
 #print axioms Skips.ae_not_isPointwiseLimit_skipless_attention_rmsNorm
+#print axioms Skips.InsideBlocks.mem_flat
+#print axioms Skips.InsideBlocks.E_eq_zero
+#print axioms Skips.InsideBlocks.D_eq_zero
+#print axioms Skips.funDim_add_le_skipless_of_insideBlocks
+#print axioms Skips.funDim_add_le_skipless_of_insideBlocks_rmsNorm
+#print axioms Skips.funDim_add_le_residual_of_insideBlocks
+#print axioms Skips.funDim_add_le_residual_of_insideBlocks_rmsNorm
+#print axioms Skips.InsideBlocks.sumInl
+#print axioms Skips.InsideBlocks.sumInr
+#print axioms Skips.funDim_add_le_skipless_sum_of_insideBlocks
+#print axioms Skips.funDim_add_le_skipless_sum_of_insideBlocks_rmsNorm
+#print axioms Skips.funDim_add_le_residual_sum_of_insideBlocks
+#print axioms Skips.funDim_add_le_residual_sum_of_insideBlocks_rmsNorm

@@ -68,6 +68,7 @@ private theorem eval_eq_of_blocks_ibl (θ₁ θ₂ : Params A dIn dOut)
   -- hence the outputs agree
   rw [eval, eval, hh, hD]
 
+omit [DecidableEq d] in
 /-- **A symmetry inside the blocks preserves the function with skips and without them:** its
 direction is flat for every stream and every `χ`. -/
 theorem InsideBlocks.mem_flat (h : InsideBlocks A θ η) (S : Fin L → Matrix d d ℝ) :
@@ -106,6 +107,7 @@ theorem InsideBlocks.D_eq_zero (h : InsideBlocks A θ η) : η.D = 0 := by
 
 variable (θ)
 
+omit [DecidableEq d] in
 /-- Helper: the directions spanned by directions of symmetries inside the blocks are flat, for
 every stream (the flat directions form a subspace). -/
 private theorem span_le_flat_ibl (S : Fin L → Matrix d d ℝ) :
