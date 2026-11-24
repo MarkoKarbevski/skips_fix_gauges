@@ -1547,3 +1547,7 @@ import SkipsLean
 #print axioms Skips.eval_attentionGated_perm
 #print axioms Skips.sumFst_sumOf
 #print axioms Skips.sumOf_cob
+#print axioms Skips.exists_attentionBlockRotaryB_add_linear
+#print axioms Skips.exists_attentionBlockRotaryB_add_linear_noMask
+#print axioms Skips.exists_attentionBlockRotaryB_add_linear_causal
+#print axioms Skips.rotary_angle_one
