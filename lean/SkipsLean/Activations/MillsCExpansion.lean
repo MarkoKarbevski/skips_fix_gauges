@@ -157,6 +157,48 @@ private theorem integral_pow_mul_cexp_mce {z : ℂ} (hz : 0 < z.re) (n : ℕ) :
     rw [eq_div_iff (pow_ne_zero _ hz0), Nat.factorial_succ]; push_cast
     linear_combination h4
 
+/-- Each term of the sum is an integral:
+`∫_0^∞ ((−1/2)^l / l!) u^{2l} e^{−zu} du = (−1)^l (2l−1)!! / z^{2l+1}`, since
+`∫_0^∞ e^{−zu} u^{2l} du = (2l)! / z^{2l+1}` and `(2l)! / (2^l l!) = (2l−1)!!`. -/
+private theorem integral_term_mce {z : ℂ} (hz : 0 < z.re) (l : ℕ) :
+    ∫ u in Set.Ioi (0 : ℝ),
+        ((-1 / 2 : ℂ) ^ l / (l ! : ℂ)) * ((u : ℂ) ^ (2 * l) * Complex.exp (-(z * u)))
+      = (-1 : ℂ) ^ l * (((2 * l - 1)‼ : ℕ) : ℂ) / z ^ (2 * l + 1) := by
+  have hz0 : z ≠ 0 := fun h => by simp [h] at hz
+  have hl : (l ! : ℂ) ≠ 0 := by exact_mod_cast (Nat.factorial_pos l).ne'
+  rw [MeasureTheory.integral_const_mul, integral_pow_mul_cexp_mce hz, factorial_two_mul_mce,
+    div_pow]
+  push_cast
+  field_simp
+
+/-- The integrand of `mr(z)` minus the terms of the sum is `e^{−zu} R_m(u²/2)`, where
+`R_m(y) = e^{−y} − ∑_{l<m} (−y)^l / l!`. -/
+private theorem exp_sub_sum_eq_mce (z : ℂ) (m : ℕ) (u : ℝ) :
+    Complex.exp (-(z * u) - (u : ℂ) ^ 2 / 2)
+        - ∑ l ∈ Finset.range m,
+          ((-1 / 2 : ℂ) ^ l / (l ! : ℂ)) * ((u : ℂ) ^ (2 * l) * Complex.exp (-(z * u)))
+      = Complex.exp (-(z * u)) * ((Real.exp (-(u ^ 2 / 2))
+          - ∑ l ∈ Finset.range m, (-(u ^ 2 / 2)) ^ l / (l ! : ℝ) : ℝ) : ℂ) := by
+  push_cast
+  rw [sub_eq_add_neg (-(z * (u : ℂ))), Complex.exp_add, mul_sub, Finset.mul_sum]
+  congr 1
+  refine Finset.sum_congr rfl (fun l _ => ?_)
+  rw [show -((u : ℂ) ^ 2 / 2) = (-1 / 2) * (u : ℂ) ^ 2 by ring, mul_pow, ← pow_mul]
+  ring
+
+/-- `|e^{−zu} R_m(u²/2)| ≤ e^{−(Re z) u} (u²/2)^m / m! = u^{2m} e^{−(Re z) u} / (2^m m!)`. -/
+private theorem norm_rem_le_mce (z : ℂ) (m : ℕ) {u : ℝ} (hu : 0 < u) :
+    ‖Complex.exp (-(z * u)) * ((Real.exp (-(u ^ 2 / 2))
+          - ∑ l ∈ Finset.range m, (-(u ^ 2 / 2)) ^ l / (l ! : ℝ) : ℝ) : ℂ)‖
+      ≤ (1 / (2 ^ m * m ! : ℝ)) * (u ^ (2 * m) * Real.exp (-(z.re * u))) := by
+  rw [norm_mul, Complex.norm_exp, Complex.norm_real, Real.norm_eq_abs]
+  have hre : (-(z * (u : ℂ))).re = -(z.re * u) := by simp
+  rw [hre]
+  have h := abs_exp_neg_sub_sum_le_mce m (y := u ^ 2 / 2) (by positivity)
+  refine (mul_le_mul_of_nonneg_left h (Real.exp_pos _).le).trans (le_of_eq ?_)
+  rw [div_pow, ← pow_mul]
+  field_simp
+
 /-- **Lemma D.8 (ii), for complex `z` with `Re z > 0`:** the partial sums of
 `∑_l (−1)^l (2l−1)!! / z^{2l+1}` approximate the Mills ratio with an error of at most
 `(2m−1)!! / (Re z)^{2m+1}`. -/
@@ -164,10 +206,44 @@ theorem norm_millsRatioC_sub_sum_le {z : ℂ} (hz : 0 < z.re) (m : ℕ) :
     ‖millsRatioC z
         - ∑ l ∈ Finset.range m, (-1 : ℂ) ^ l * (((2 * l - 1)‼ : ℕ) : ℂ) / z ^ (2 * l + 1)‖
       ≤ ((2 * m - 1)‼ : ℝ) / z.re ^ (2 * m + 1) := by
-  sorry
+  -- the terms `((−1/2)^l / l!) u^{2l} e^{−zu}` of the sum, and their sum, are integrable
+  have hT : ∀ l ∈ Finset.range m, MeasureTheory.IntegrableOn (fun u : ℝ =>
+      ((-1 / 2 : ℂ) ^ l / (l ! : ℂ)) * ((u : ℂ) ^ (2 * l) * Complex.exp (-(z * u))))
+      (Set.Ioi 0) :=
+    fun l _ => (integrableOn_pow_mul_cexp_mce hz (2 * l)).const_mul _
+  have hS := MeasureTheory.integrable_finsetSum _ hT
+  -- the bound `u^{2m} e^{−(Re z) u} / (2^m m!)` of `e^{−zu} R_m(u²/2)` is integrable
+  have hg := (integrableOn_pow_mul_exp_mce hz (2 * m)).const_mul (1 / (2 ^ m * m ! : ℝ))
+  have hb := MeasureTheory.ae_restrict_of_forall_mem (μ := MeasureTheory.volume)
+    measurableSet_Ioi (fun u (hu : u ∈ Set.Ioi (0 : ℝ)) => norm_rem_le_mce z m hu)
+  have hR := MeasureTheory.Integrable.mono' hg (Continuous.aestronglyMeasurable (by fun_prop :
+    Continuous fun u : ℝ => Complex.exp (-(z * u)) * ((Real.exp (-(u ^ 2 / 2))
+      - ∑ l ∈ Finset.range m, (-(u ^ 2 / 2)) ^ l / (l ! : ℝ) : ℝ) : ℂ))) hb
+  -- `mr(z) = ∫_0^∞ (e^{−zu} R_m(u²/2) + ∑_{l<m} ((−1/2)^l / l!) u^{2l} e^{−zu}) du`
+  have hmr : millsRatioC z = ∫ u in Set.Ioi (0 : ℝ),
+      (Complex.exp (-(z * u)) * ((Real.exp (-(u ^ 2 / 2))
+        - ∑ l ∈ Finset.range m, (-(u ^ 2 / 2)) ^ l / (l ! : ℝ) : ℝ) : ℂ)
+      + ∑ l ∈ Finset.range m,
+        ((-1 / 2 : ℂ) ^ l / (l ! : ℂ)) * ((u : ℂ) ^ (2 * l) * Complex.exp (-(z * u)))) := by
+    unfold millsRatioC
+    refine MeasureTheory.setIntegral_congr_fun measurableSet_Ioi (fun u _ => ?_)
+    rw [← exp_sub_sum_eq_mce z m u, sub_add_cancel]
+  -- the sum of the expansion is the integral of the sum of the terms
+  have hsum : ∑ l ∈ Finset.range m, (-1 : ℂ) ^ l * (((2 * l - 1)‼ : ℕ) : ℂ) / z ^ (2 * l + 1)
+      = ∫ u in Set.Ioi (0 : ℝ), ∑ l ∈ Finset.range m,
+        ((-1 / 2 : ℂ) ^ l / (l ! : ℂ)) * ((u : ℂ) ^ (2 * l) * Complex.exp (-(z * u))) := by
+    rw [MeasureTheory.integral_finsetSum _ hT]
+    exact Finset.sum_congr rfl (fun l _ => (integral_term_mce hz l).symm)
+  rw [hmr, MeasureTheory.integral_add hR hS, hsum, add_sub_cancel_right]
+  -- `‖∫ e^{−zu} R_m(u²/2)‖ ≤ ∫ u^{2m} e^{−(Re z) u} / (2^m m!) = (2m−1)!! / (Re z)^{2m+1}`
+  refine (MeasureTheory.norm_integral_le_of_norm_le hg hb).trans (le_of_eq ?_)
+  rw [MeasureTheory.integral_const_mul, integral_pow_mul_exp_mce hz, factorial_two_mul_mce]
+  push_cast
+  field_simp
 
 /-- The case `m = 0` of Lemma D.8 (ii): `|mr(z)| ≤ 1 / Re z` for `Re z > 0`. -/
 theorem norm_millsRatioC_le {z : ℂ} (hz : 0 < z.re) : ‖millsRatioC z‖ ≤ 1 / z.re := by
-  sorry
+  have h := norm_millsRatioC_sub_sum_le hz 0
+  simpa using h
 
 end Skips
