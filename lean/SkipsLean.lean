@@ -211,3 +211,9 @@ import SkipsLean.Residual.DepthAttentionRMS
 import SkipsLean.Residual.DepthAttentionRMSDim
 import SkipsLean.Residual.LocalIdentifiabilityAttentionRMS
 import SkipsLean.Residual.ExactGainAttention
+import SkipsLean.Network.Sum
+import SkipsLean.Absorb.RMSNormAttention
+import SkipsLean.Residual.SkiplessEndsAttention
+import SkipsLean.Residual.DifferentClassesAttention
+import SkipsLean.Residual.BlocksAlone
+import SkipsLean.Residual.BlocksAloneAttention
