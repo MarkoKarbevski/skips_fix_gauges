@@ -346,6 +346,14 @@ theorem fderiv_suffix_castSucc_of_analytic (hχ : AnalyticOnNhd ℝ A.χ Set.uni
 /-! ### Lemma D.2 -/
 
 omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: a matrix of rank its number of columns has a left inverse. -/
+private theorem exists_left_inverse_of_rank {m n : Type*} [Fintype m] [Fintype n]
+    [DecidableEq n] (M : Matrix m n ℝ) (hM : M.rank = Fintype.card n) :
+    ∃ B : Matrix n m ℝ, B * M = 1 :=
+  Matrix.vecMul_surjective_iff_exists_left_inverse.1
+    (Matrix.vecMul_surjective_iff_rank_eq_card.2 hM)
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: a matrix of rank its number of rows has a right inverse. -/
 private theorem exists_right_inverse_of_rank {m n : Type*} [Fintype m] [Fintype n]
     [DecidableEq m] (M : Matrix m n ℝ) (hM : M.rank = Fintype.card m) :
@@ -501,7 +509,48 @@ theorem suffixFlat_of_flat_at_write_rmsNorm [Nonempty T] (hε : 0 < ε) (hχ : A
       fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ k h') (w * M) (w * ηM)
         + fderiv ℝ (fun θ' : Params A dIn dOut => suffix A 0 θ' k (w * M)) θ η = 0) :
     ∃ Z : Matrix d d ℝ, ηM = M * Z ∧ SuffixFlat A θ k Z η := by
-  sorry
+  classical
+  -- a left inverse `M⁺` of `M` (rank `d`)
+  obtain ⟨Mp, hMp⟩ := exists_left_inverse_of_rank M hM
+  -- a hidden state `h₀` at which `𝐃𝓑_{>k}` is injective (Lemma D.2)
+  obtain ⟨U, -, hUd, hU⟩ :=
+    exists_open_dense_injective_fderiv_suffix_rmsNorm A θ hε hχ hf hθ k
+  obtain ⟨h₀, hh₀⟩ := hUd.nonempty
+  have hw₀ : h₀ * Mp * M = h₀ := by rw [Matrix.mul_assoc, hMp, Matrix.mul_one]
+  -- `w M = 0` implies `w η_M = 0`: subtract the identities at `h₀ M⁺` and at `h₀ M⁺ + w`,
+  -- two preimages of `h₀`
+  have hker : ∀ w : Matrix T m ℝ, w * M = 0 → w * ηM = 0 := by
+    intro w hw
+    have hw₁ : (h₀ * Mp + w) * M = h₀ := by rw [Matrix.add_mul, hw, add_zero, hw₀]
+    have e₀ := h (h₀ * Mp)
+    have e₁ := h (h₀ * Mp + w)
+    rw [hw₀] at e₀
+    rw [hw₁, Matrix.add_mul, map_add, add_right_comm, e₀, zero_add] at e₁
+    exact hU h₀ hh₀ (by rw [e₁, map_zero])
+  -- every row of `(1 - M M⁺) η_M` vanishes (`1 - M M⁺` kills `M`; take `w` with equal rows)
+  obtain ⟨t₀⟩ := ‹Nonempty T›
+  have hP : (1 - M * Mp) * M = 0 := by
+    rw [Matrix.sub_mul, Matrix.one_mul, Matrix.mul_assoc, hMp, Matrix.mul_one, sub_self]
+  have hPη : (1 - M * Mp) * ηM = 0 := by
+    ext i c
+    have hwM : (Matrix.of fun (_ : T) j => (1 - M * Mp : Matrix m m ℝ) i j) * M = 0 := by
+      ext t c'
+      simpa only [Matrix.mul_apply, Matrix.of_apply, Matrix.zero_apply] using
+        congrFun (congrFun hP i) c'
+    simpa only [Matrix.mul_apply, Matrix.of_apply, Matrix.zero_apply] using
+      congrFun (congrFun (hker _ hwM) t₀) c
+  -- so `η_M = M Z` with `Z = M⁺ η_M`
+  have hZ : ηM = M * (Mp * ηM) := by
+    rw [Matrix.sub_mul, Matrix.one_mul, sub_eq_zero] at hPη
+    rw [← Matrix.mul_assoc]
+    exact hPη
+  refine ⟨Mp * ηM, hZ, ?_⟩
+  -- the identity (16) at `h`: the hypothesis at `w = h M⁺`, with `w M = h` and `w η_M = h Z`
+  intro h'
+  have e := h (h' * Mp)
+  have hw : h' * Mp * M = h' := by rw [Matrix.mul_assoc, hMp, Matrix.mul_one]
+  rw [hw, Matrix.mul_assoc] at e
+  exact e
 
 /-- **Lemma D.5, case (+):** if `D` has rank `d`, then `(D_L)` holds. (The identity (16) for `L` is
 `(n Z - ⟨n Z, n⟩ n / d) D + n η_D = 0` for the rows `n` of the ball; its part of degree `1` gives
