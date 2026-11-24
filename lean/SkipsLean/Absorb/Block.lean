@@ -109,6 +109,26 @@ theorem vanillaBlock_flipCols_of_subProd [DecidableEq m] (hσ : ∀ z, σ z - σ
   rw [h, hS, Matrix.vecMul_neg, one_smul]
   abel
 
+/-- A matrix with `d` rows and rank `d` has `d` columns that form an invertible matrix: a maximal
+linearly independent family of columns spans the column space, so it has `d` members. -/
+private theorem exists_isUnit_det_submatrix [DecidableEq p] (Wr : Matrix p m ℝ)
+    (hr : Wr.rank = Fintype.card p) : ∃ e : p → m, IsUnit (Wr.submatrix id e).det := by
+  obtain ⟨κ, a, -, hsp, hli⟩ := exists_linearIndependent' ℝ (fun j => Wr.col j)
+  have : Finite κ := hli.finite
+  have := Fintype.ofFinite κ
+  -- the family has `finrank (span of the columns) = rank = card p` members
+  have hcard : Fintype.card κ = Fintype.card p := by
+    have h := finrank_span_eq_card hli
+    rw [hsp] at h
+    have h2 := Wr.rank_eq_finrank_span_cols
+    have h3 : Set.range (fun j => Wr.col j) = Set.range Wr.col := rfl
+    rw [h3, ← h2] at h
+    omega
+  let f : p ≃ κ := Fintype.equivOfCardEq hcard.symm
+  refine ⟨a ∘ f, ?_⟩
+  have hK : LinearIndependent ℝ (Wr.submatrix id (a ∘ f)).col := hli.comp f f.injective
+  exact (Matrix.isUnit_iff_isUnit_det _).1 (Matrix.linearIndependent_col_iff_isUnit.1 hK)
+
 /-- **Proposition A.11 (i)** (the first half of Theorem 3.1 (ii)), "With more units": if
 `σ(z) - σ(-z) = c z` with `c ≠ 0` and the read has rank `p` (the number of its rows; `d` in the
 paper), then for every `M` a block with `p` more hidden units computes `x M + B(x)`. The new block
@@ -121,6 +141,64 @@ theorem exists_vanillaBlock_add_linear [DecidableEq p] (hσ : ∀ z, σ z - σ (
     ∃ (Wr' : Matrix p (m ⊕ p) ℝ) (Ww' : Matrix (m ⊕ p) q ℝ),
       (∀ i j, Wr' i (Sum.inl j) = Wr i j) ∧
       ∀ x : p → ℝ, x ᵥ* M + vanillaBlock σ Wr Ww x = vanillaBlock σ Wr' Ww' x := by
-  sorry
+  classical
+  -- `p` columns of the read form an invertible matrix `K`
+  obtain ⟨e, he⟩ := exists_isUnit_det_submatrix Wr hr
+  obtain ⟨K, hK⟩ : ∃ K : Matrix p p ℝ, K = Wr.submatrix id e := ⟨_, rfl⟩
+  have hKu : IsUnit K.det := hK ▸ he
+  -- `N` is the matrix of the rows `b_k`, with `c K N = M`
+  obtain ⟨N, hN⟩ : ∃ N : Matrix p q ℝ, N = c⁻¹ • (K⁻¹ * M) := ⟨_, rfl⟩
+  have hKN : M = c • (K * N) := by
+    rw [hN, Matrix.mul_smul, ← Matrix.mul_assoc, Matrix.mul_nonsing_inv _ hKu, Matrix.one_mul,
+      smul_smul, mul_inv_cancel₀ hc, one_smul]
+  -- the new read: the old units, then the mirror units with the columns `-w_{e k}`
+  obtain ⟨Wr', hWr1, hWr2⟩ : ∃ W : Matrix p (m ⊕ p) ℝ,
+      (∀ i j, W i (Sum.inl j) = Wr i j) ∧ (∀ i k, W i (Sum.inr k) = -Wr i (e k)) :=
+    ⟨Matrix.of fun i s => Sum.elim (fun j => Wr i j) (fun k => -Wr i (e k)) s,
+      fun _ _ => rfl, fun _ _ => rfl⟩
+  -- the new write: `b_k` is added to the row of unit `e k`; the mirror unit `k` has the row `-b_k`
+  obtain ⟨Ww', hWw1, hWw2⟩ : ∃ W : Matrix (m ⊕ p) q ℝ,
+      (∀ j o, W (Sum.inl j) o = Ww j o + ∑ k, if e k = j then N k o else 0) ∧
+      (∀ k o, W (Sum.inr k) o = -N k o) :=
+    ⟨Matrix.of fun s o => Sum.elim (fun j => Ww j o + ∑ k, if e k = j then N k o else 0)
+      (fun k => -N k o) s, fun _ _ => rfl, fun _ _ => rfl⟩
+  refine ⟨Wr', Ww', hWr1, fun x => ?_⟩
+  -- the pre-activations of the new units
+  have hyl : ∀ j, (x ᵥ* Wr') (Sum.inl j) = (x ᵥ* Wr) j := fun j => by
+    simp only [Matrix.vecMul, dotProduct, hWr1]
+  have hyr : ∀ k, (x ᵥ* Wr') (Sum.inr k) = -(x ᵥ* Wr) (e k) := fun k => by
+    simp only [Matrix.vecMul, dotProduct, hWr2, mul_neg, Finset.sum_neg_distrib]
+  have hout : ∀ (f : m → ℝ) (W : Matrix m q ℝ) (o : q), (f ᵥ* W) o = ∑ i, f i * W i o :=
+    fun _ _ _ => rfl
+  funext o
+  simp only [Pi.add_apply, vanillaBlock]
+  rw [hout, show ∀ (f : m ⊕ p → ℝ) (W : Matrix (m ⊕ p) q ℝ) (o : q),
+    (f ᵥ* W) o = ∑ i, f i * W i o from fun _ _ _ => rfl, Fintype.sum_sum_type]
+  simp only [hyl, hyr, hWw1, hWw2]
+  -- the units `e k` give `σ(y_{e k}) N_k`
+  have h1 : ∑ j, σ ((x ᵥ* Wr) j) * (Ww j o + ∑ k, if e k = j then N k o else 0)
+      = ∑ j, σ ((x ᵥ* Wr) j) * Ww j o + ∑ k, σ ((x ᵥ* Wr) (e k)) * N k o := by
+    simp only [mul_add, Finset.sum_add_distrib, Finset.mul_sum]
+    congr 1
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    simp only [mul_ite, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, ↓reduceIte]
+  -- `x M = c (x K) N`
+  have h2 : (x ᵥ* M) o = ∑ k, c * (x ᵥ* Wr) (e k) * N k o := by
+    have hxK : ∀ k, (x ᵥ* K) k = (x ᵥ* Wr) (e k) := fun k => by
+      simp only [hK, Matrix.vecMul, dotProduct, Matrix.submatrix_apply, id]
+    rw [hKN, Matrix.vecMul_smul, ← Matrix.vecMul_vecMul, Pi.smul_apply, smul_eq_mul]
+    rw [show ∀ (f : p → ℝ) (W : Matrix p q ℝ) (o : q), (f ᵥ* W) o = ∑ i, f i * W i o from
+      fun _ _ _ => rfl, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    rw [hxK k]; ring
+  -- `σ(y) N + σ(-y) (-N) = c y N`
+  have h3 : ∑ k, σ ((x ᵥ* Wr) (e k)) * N k o + ∑ k, σ (-(x ᵥ* Wr) (e k)) * -N k o
+      = ∑ k, c * (x ᵥ* Wr) (e k) * N k o := by
+    rw [← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    linear_combination (N k o) * hσ ((x ᵥ* Wr) (e k))
+  rw [h1, h2, ← h3]
+  ring
 
 end Skips
