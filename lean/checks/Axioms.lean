@@ -761,3 +761,17 @@ import SkipsLean
 #print axioms Skips.claimZero_last
 #print axioms Skips.eventually_eq_zero_of_sum_pow_mul_exp_path
 #print axioms Skips.path_separation
+#print axioms Skips.rmsRowC_ofReal
+#print axioms Skips.analyticAt_rmsRowC
+#print axioms Skips.rmsRowC_smul
+#print axioms Skips.rmsRowC_eq_self
+#print axioms Skips.fderiv_rmsRowC_apply
+#print axioms Skips.isOpen_complexCone
+#print axioms Skips.smul_mem_complexCone
+#print axioms Skips.ofReal_mem_complexCone
+#print axioms Skips.complexCone_mono
+#print axioms Skips.re_dotProduct_self_pos_of_mem_complexCone
+#print axioms Skips.pathRow_dotProduct_self
+#print axioms Skips.pathRow_ofReal
+#print axioms Skips.pathRow_exp_mul_I
+#print axioms Skips.pathRow_one

@@ -319,9 +319,9 @@ theorem pathRow_dotProduct_self (ξ ξ' : d → ℝ) (hξ : ξ ⬝ᵥ ξ = 1) (h
   rw [key, hA, hB, hC]
   linear_combination (s ^ 2 / 4 * (t - t⁻¹) ^ 2) * Complex.I_sq + s ^ 2 * htt + hs
 
-/-- **Equation (41):** for real `t ≠ 0`,
-`n(t) = √d ((t + t⁻¹)/2 ξ + i (t − t⁻¹)/2 ξ')`. -/
-theorem pathRow_ofReal (ξ ξ' : d → ℝ) (t : ℝ) (ht : t ≠ 0) (i : d) :
+/-- **Equation (41):** for real `t`,
+`n(t) = √d ((t + t⁻¹)/2 ξ + i (t − t⁻¹)/2 ξ')` (for `t = 0` both sides are `0` in Lean). -/
+theorem pathRow_ofReal (ξ ξ' : d → ℝ) (t : ℝ) (i : d) :
     pathRow ξ ξ' (t : ℂ) i
       = ((Real.sqrt (Fintype.card d) * ((t + t⁻¹) / 2 * ξ i) : ℝ) : ℂ)
         + Complex.I * ((Real.sqrt (Fintype.card d) * ((t - t⁻¹) / 2 * ξ' i) : ℝ) : ℂ) := by
