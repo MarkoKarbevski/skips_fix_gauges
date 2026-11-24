@@ -294,6 +294,7 @@ private theorem exists_hidden_rows_oor {A : Arch T d L} [Nonempty dIn] [Nonempty
       Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte]
     exact mul_inv_cancel_left₀ hc (v i)
 
+omit [Fintype T] [Fintype dOut] in
 /-- **Lemma A.4 on inputs whose tokens are all equal, for any blocks:** let the blocks of a
 skipless pre-RMSNorm network (`ε > 0`) map equal rows to equal rows (`hrows`), separate equal-row
 inputs (`hsep`: fact (b)) and make a nonzero hidden unit from every nonzero row (`hnz`). If the
@@ -512,6 +513,7 @@ private theorem nz_attention_oor [Nonempty T] (hsees : ∀ t, ∃ s, sees t s)
   change a ⬝ᵥ a ≠ 0
   exact fun h0 => ha (dotProduct_self_eq_zero.mp h0)
 
+omit [Fintype dOut] in
 /-- **Lemma A.4 for attention blocks:** every token sees some token, and every block has a head
 of width at least `1`. If the changes of basis `G_0, …, G_L` preserve the function of the skipless
 pre-RMSNorm network (`ε > 0`) for all values of the parameters, every `G_ℓ` is orthogonal. -/
@@ -530,6 +532,7 @@ theorem orthogonal_of_eval_cob_skipless_rmsNorm_attention [Nonempty T] [Nonempty
     (fun k a a' hW => sep_attention_oor hsees _ k (hH k) (hdh k) a a' hW)
     (fun k a ha => nz_attention_oor hsees _ k (hH k) (hdh k) a ha) G h
 
+omit [Fintype dOut] in
 /-- **Theorem 3.3 (ii), skipless, pre-RMSNorm (`ε > 0`), attention blocks:** the changes of basis
 `G_0, …, G_L` preserve the function for all values of the parameters if and only if every `G_ℓ` is
 orthogonal. -/
@@ -704,6 +707,7 @@ private theorem nz_gated_oor [Nonempty T] (hσ0 : ∃ z, σ z ≠ 0)
 
 /-! ### Attention blocks and MLP blocks -/
 
+omit [Fintype dOut] in
 /-- **Lemma A.4 for networks of attention blocks and MLP blocks, in any order:** the activation
 is continuous, not even and not constant; every token sees some token; every block has a head of
 width at least `1` or a hidden unit. If the changes of basis `G_0, …, G_L` preserve the function
@@ -734,6 +738,7 @@ theorem orthogonal_of_eval_cob_skipless_rmsNorm_attentionMlp [Nonempty T] [Nonem
     · exact nz_sum_left_oor k a (nz_attention_oor hsees _ k hHk hdhk a ha)
     · exact nz_sum_right_oor k a (nz_mlp_oor hnc _ k hk a ha)
 
+omit [Fintype dOut] in
 /-- **Theorem 3.3 (ii), skipless, pre-RMSNorm (`ε > 0`), attention blocks and MLP blocks:** the
 changes of basis `G_0, …, G_L` preserve the function for all values of the parameters if and only
 if every `G_ℓ` is orthogonal. -/
@@ -754,6 +759,7 @@ theorem eval_cob_skipless_rmsNorm_iff_attentionMlp [Nonempty T] [Nonempty dIn] [
 
 /-! ### Attention blocks and gated blocks -/
 
+omit [Fintype dOut] in
 /-- **Lemma A.4 for networks of attention blocks and gated blocks, in any order:** the gate is
 not identically zero and satisfies `σ(z) = κ σ(κ z)` for all `z` only for `κ = 1`; every token
 sees some token; every block has a head of width at least `1` or a hidden unit. If the changes of
@@ -783,6 +789,7 @@ theorem orthogonal_of_eval_cob_skipless_rmsNorm_attentionGated [Nonempty T] [Non
     · exact nz_sum_left_oor k a (nz_attention_oor hsees _ k hHk hdhk a ha)
     · exact nz_sum_right_oor k a (nz_gated_oor hσ0 _ k hk a ha)
 
+omit [Fintype dOut] in
 /-- **Theorem 3.3 (ii), skipless, pre-RMSNorm (`ε > 0`), attention blocks and gated blocks:**
 the changes of basis `G_0, …, G_L` preserve the function for all values of the parameters if and
 only if every `G_ℓ` is orthogonal. -/

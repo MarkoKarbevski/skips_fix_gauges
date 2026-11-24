@@ -1297,3 +1297,10 @@ import SkipsLean
 #print axioms Skips.dimH_cobPreservingMat_skipless_rmsNorm_attentionGated
 #print axioms Skips.dimH_cobPreservingMat_residual
 #print axioms Skips.dimH_cobPreservingMat_residual_rmsNorm
+#print axioms Skips.orthogonal_of_eval_cob_skipless_rmsNorm_of_rows
+#print axioms Skips.orthogonal_of_eval_cob_skipless_rmsNorm_attention
+#print axioms Skips.eval_cob_skipless_rmsNorm_iff_attention
+#print axioms Skips.orthogonal_of_eval_cob_skipless_rmsNorm_attentionMlp
+#print axioms Skips.eval_cob_skipless_rmsNorm_iff_attentionMlp
+#print axioms Skips.orthogonal_of_eval_cob_skipless_rmsNorm_attentionGated
+#print axioms Skips.eval_cob_skipless_rmsNorm_iff_attentionGated
