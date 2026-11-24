@@ -1,0 +1,8 @@
+tanh d_in=2 d=2 d_out=2 hidden=2: P=16, s=0, P+d-s=18
+    R generic triangular: triangular family rank 18 (gap 0.0001711 / 6.159e-41), full family rank 18 (gap 0.003982 / 7.106e-41)
+    R = I: triangular family rank 18 (gap 0.0003162 / 6.967e-41), full family rank 18 (gap 0.000676 / 9.194e-41)
+    R triangular with R_00 = 0 (singular): triangular family rank 18 (gap 0.001872 / 5.349e-41), full family rank 18 (gap 0.001868 / 8.141e-41)
+gated d_in=3 d=3 d_out=3 hidden=3: P=45, s=3, P+d-s=45
+    R generic triangular: triangular family rank 45 (gap 0.0005315 / 1.735e-40), full family rank 45 (gap 0.003371 / 2.73e-40)
+    R = I: triangular family rank 45 (gap 0.001219 / 2.59e-40), full family rank 45 (gap 0.001122 / 2.604e-40)
+    R triangular with R_00 = 0 (singular): triangular family rank 45 (gap 0.001686 / 1.857e-40), full family rank 45 (gap 0.0008371 / 1.823e-40)

@@ -1,0 +1,10 @@
+skip=1 d=2 q=1: P=14 rank=11 claim = 11 gap=2.6e+14
+skip=0 d=2 q=1: P=14 rank=8 claim <= 10 gap=8.0e+13
+skip=1 d=2 q=3: P=26 rank=19 claim = 19 gap=5.7e+13
+skip=0 d=2 q=3: P=26 rank=18 claim <= 18 gap=5.1e+12
+skip=1 d=3 q=2: P=36 rank=29 claim = 29 gap=2.0e+14
+skip=0 d=3 q=2: P=36 rank=23 claim <= 26 gap=2.2e+13
+skip=1 d=3 q=4: P=54 rank=43 claim = 43 gap=4.1e+12
+skip=0 d=3 q=4: P=54 rank=40 claim <= 40 gap=2.5e+12
+skip=1 d=4 q=6: P=104 rank=86 claim = 86 gap=2.5e+13
+skip=0 d=4 q=6: P=104 rank=80 claim <= 80 gap=2.6e+12

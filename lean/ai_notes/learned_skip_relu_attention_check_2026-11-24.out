@@ -1,0 +1,48 @@
+MLP kinds (exact derivatives, 40 digits)
+relu d_in=2 d=2 d_out=2 hidden=3 eps=0.5: P=20, s=3
+    residual (A = I, theta only): rank 16, expected 16 (last singular value 0.319, next 4.684e-40)
+    full, generic A: rank 19, expected 19 (last singular value 0.0575, next 1.381e-39)
+    full, at A = I: rank 19, expected 19 (last singular value 0.2441, next 1.06e-39)
+    triangular, generic A: rank 19, expected 19 (last singular value 0.1274, next 5.943e-40)
+relu d_in=3 d=3 d_out=3 hidden=2 eps=0.3: P=30, s=2
+    residual (A = I, theta only): rank 25, expected 25 (last singular value 0.2342, next 9.489e-40)
+    full, generic A: rank 31, expected 31 (last singular value 0.02486, next 1.608e-39)
+    full, at A = I: rank 31, expected 31 (last singular value 0.01762, next 1.475e-39)
+    triangular, generic A: rank 31, expected 31 (last singular value 0.01206, next 1.11e-39)
+relusq d_in=2 d=2 d_out=3 hidden=2 eps=0.5: P=18, s=2
+    residual (A = I, theta only): rank 15, expected 15 (last singular value 0.192, next 6.769e-40)
+    full, generic A: rank 18, expected 18 (last singular value 0.06376, next 2.311e-39)
+    full, at A = I: rank 18, expected 18 (last singular value 0.1449, next 1.195e-39)
+    triangular, generic A: rank 18, expected 18 (last singular value 0.08619, next 1.322e-39)
+relusq d_in=3 d=3 d_out=3 hidden=4 eps=0.2: P=42, s=4
+    residual (A = I, theta only): rank 35, expected 35 (last singular value 0.4628, next 2.643e-39)
+    full, generic A: rank 41, expected 41 (last singular value 0.2188, next 2.331e-39)
+    full, at A = I: rank 41, expected 41 (last singular value 0.3584, next 2.592e-39)
+    triangular, generic A: rank 41, expected 41 (last singular value 0.1939, next 2.537e-39)
+reglu d_in=2 d=2 d_out=2 hidden=2 eps=0.5: P=20, s=4
+    residual (A = I, theta only): rank 15, expected 15 (last singular value 0.0004345, next 2.399e-40)
+    full, generic A: rank 18, expected 18 (last singular value 0.008131, next 6.194e-40)
+    full, at A = I: rank 18, expected 18 (last singular value 0.03839, next 3.648e-40)
+    triangular, generic A: rank 18, expected 18 (last singular value 0.02001, next 2.606e-40)
+reglu d_in=3 d=3 d_out=3 hidden=1 eps=0.4: P=27, s=2
+    residual (A = I, theta only): rank 22, expected 22 (last singular value 0.7625, next 1.542e-39)
+    full, generic A: rank 28, expected 28 (last singular value 0.1174, next 1.866e-39)
+    full, at A = I: rank 28, expected 28 (last singular value 0.3174, next 2.441e-39)
+    triangular, generic A: rank 28, expected 28 (last singular value 0.1859, next 1.031e-39)
+attention (central differences, step 1e-20, 60 digits)
+attention mask=none T=2 d_in=2 d=2 d_out=2 H=1 d_h=1 eps=0.5: P=16, s=2
+    residual (A = I, theta only): rank 13, expected 13 (last singular value 0.00173, next 2.386e-40)
+    full, generic A: rank 16, expected 16 (last singular value 0.0006814, next 9.935e-41)
+    full, at A = I: rank 16, expected 16 (last singular value 0.000143, next 1.379e-40)
+attention mask=causal T=2 d_in=2 d=2 d_out=2 H=2 d_h=1 eps=0.5: P=24, s=4
+    residual (A = I, theta only): rank 19, expected 19 (last singular value 0.0002356, next 2.194e-40)
+    full, generic A: rank 22, expected 22 (last singular value 2.671e-5, next 4.814e-41)
+    full, at A = I: rank 22, expected 22 (last singular value 0.0001876, next 1.939e-40)
+attention mask=causal T=3 d_in=2 d=2 d_out=2 H=1 d_h=2 eps=0.4: P=24, s=8
+    residual (A = I, theta only): rank 15, expected 15 (last singular value 0.1107, next 6.889e-41)
+    full, generic A: rank 18, expected 18 (last singular value 0.1034, next 6.102e-40)
+    full, at A = I: rank 18, expected 18 (last singular value 0.07657, next 5.891e-41)
+attention mask=none T=2 d_in=3 d=3 d_out=3 H=1 d_h=2 eps=0.5: P=42, s=8
+    residual (A = I, theta only): rank 31, expected 31 (last singular value 0.04986, next 1.811e-40)
+    full, generic A: rank 37, expected 37 (last singular value 0.00521, next 1.03e-40)
+    full, at A = I: rank 37, expected 37 (last singular value 0.09414, next 5.351e-40)
