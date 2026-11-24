@@ -1328,3 +1328,6 @@ import SkipsLean
 #print axioms Skips.ae_funDim_attentionMlp_skipless_iff_ae_locally_cob_heads_rmsNorm
 #print axioms Skips.ae_funDim_attentionGated_skipless_iff_ae_locally_cob_heads_rescale
 #print axioms Skips.ae_funDim_attentionGated_skipless_iff_ae_locally_cob_heads_rescale_rmsNorm
+#print axioms Skips.funDimSkips_add_finrank_flatSkips
+#print axioms Skips.ae_funDimSkips_ge
+#print axioms Skips.funDimSkips_comp_le

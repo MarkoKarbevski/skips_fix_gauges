@@ -343,6 +343,7 @@ private theorem exists_ker_le_flatSkips_lsg [FiniteDimensional ℝ V] (A : Arch 
   rw [LinearMap.mem_ker]
   exact h0
 
+omit [DecidableEq d] in
 /-- For differentiable blocks, the functional dimension and the dimension of the flat directions
 add up to the number of parameters (weights and skips). -/
 theorem funDimSkips_add_finrank_flatSkips [FiniteDimensional ℝ V] (A : Arch T d L)
@@ -457,6 +458,7 @@ private theorem ae_finrank_range_ge_lsg
   rw [← hdimC, ← LinearMap.finrank_range_of_inj hx]
   exact Submodule.finrank_mono (LinearMap.range_comp_le_range _ _)
 
+omit [DecidableEq d] in
 /-- **The generic functional dimension is the largest,** for real-analytic blocks: at almost
 every `(θ, v)` the functional dimension is at least that at any one `p₀`. -/
 theorem ae_funDimSkips_ge [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V]
@@ -520,6 +522,7 @@ private theorem jacobianRankSkips_le_lsg (A : Arch T d L) (ι : V →L[ℝ] (Fin
       jacobianRankSkips A (ContinuousLinearMap.id ℝ _) X (p.1, ι p.2) := h
   exact h'.trans (LinearMap.finrank_range_le _)
 
+omit [DecidableEq d] in
 /-- A restricted family of skips has at most the functional dimension of the family it is
 restricted from: for `j : V' → V` linear, the family with the skips `ι (j v')` has at `(θ, v')` at
 most the functional dimension of the family with the skips `ι v` at `(θ, j v')`. -/
