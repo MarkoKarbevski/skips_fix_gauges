@@ -942,3 +942,4 @@ import SkipsLean
 #print axioms Skips.not_unitInactiveRes_of_not_folds
 #print axioms Skips.not_folds_of_norm_mul_norm_lt_one
 #print axioms Skips.funDim_add_le_residual_of_eventually_unitInactive
+#print axioms Skips.exists_isOpen_folds_unitInactiveRes_relu

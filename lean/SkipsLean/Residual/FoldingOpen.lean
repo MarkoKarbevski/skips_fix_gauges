@@ -506,7 +506,7 @@ private noncomputable def W_fopen (ℓ : Fin L) (j : hid ℓ.succ)
     (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (h : d → ℝ) : ℝ :=
   blockMapRes θ ℓ.castSucc h ⬝ᵥ col_fopen ℓ.succ θ j
 
-omit [∀ ℓ, DecidableEq (hid ℓ)] in
+omit [Fintype T] [Fintype dOut] [∀ ℓ, DecidableEq (hid ℓ)] in
 /-- Helper (part 1): unit `j` of block `ℓ.succ` reads `W` of the row of the hidden state before
 block `ℓ.castSucc`. -/
 private theorem read_eq_fopen (ℓ : Fin L) (j : hid ℓ.succ)
@@ -564,6 +564,7 @@ private theorem W_nonpos_fopen (ℓ : Fin L) (j : hid ℓ.succ)
     rw [he, W_smul_fopen ℓ j θ _ (norm_nonneg h)]
     exact mul_nonpos_of_nonneg_of_nonpos (norm_nonneg _) (hθ _ hmem).le
 
+omit [Fintype T] in
 /-- Helper (part 1): near `θ*`, unit `j` of block `ℓ.succ` is dead. -/
 private theorem eventually_inactive_fopen (ℓ : Fin L) (j : hid ℓ.succ)
     (e : d ↪ hid ℓ.castSucc) :
@@ -659,6 +660,7 @@ private theorem eventually_folds_fopen (ℓ : Fin L) (e : d ↪ hid ℓ.castSucc
   rw [blockMapRes_eq_fopen]
   exact not_injective_fopen e a₀ _ _ (fun i => (h1 i).le) h2.le h3.le h4.le
 
+omit [Fintype T] in
 /-- **Proposition A.33 (i) of the skips paper:** for `d ≥ 1` and at least `d` units in block
 `ℓ.castSucc`, there is a nonempty open set of weights of the residual ReLU network on which block
 `ℓ.castSucc` folds and unit `j` of the next block `ℓ.succ` is dead. -/
