@@ -262,3 +262,7 @@ import SkipsLean.OneBlock.LearnedSkipGain
 import SkipsLean.OneBlock.LearnedSkipRescale
 import SkipsLean.OneBlock.LearnedSkipReGLU
 import SkipsLean.OneBlock.LearnedSkipAttention
+import SkipsLean.OneBlock.LearnedSkipTriangularSmooth
+import SkipsLean.OneBlock.LearnedSkipTriangularRescale
+import SkipsLean.Absorb.RidgeFunctions
+import SkipsLean.Absorb.AttentionHeadsIdentifiable
