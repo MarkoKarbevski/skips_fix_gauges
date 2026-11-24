@@ -1,5 +1,6 @@
 import SkipsLean.Network.Attention
 import SkipsLean.Imports
+import SkipsLean.Generic.AnalyticZeroSet
 
 /-!
 # No absorption in attention blocks
@@ -207,6 +208,67 @@ theorem exists_row_attnHeads_sub_ge (sees : T → T → Prop) [DecidableRel sees
       simp only [ht, ite_false]
       exact hx
 
+/-- A coordinate `h ↦ h t j` is analytic. -/
+private theorem analyticOnNhd_coord_atb (t : T) (j : d) :
+    AnalyticOnNhd ℝ (fun h : T → d → ℝ => h t j) Set.univ :=
+  ((ContinuousLinearMap.proj (R := ℝ) j).comp
+    (ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : T => d → ℝ) t)).analyticOnNhd _
+
+/-- An entry of `h A` is analytic in `h`. -/
+private theorem analyticOnNhd_mul_entry_atb (A : Matrix d d ℝ) (t : T) (a : d) :
+    AnalyticOnNhd ℝ (fun h : T → d → ℝ => (Matrix.of h * A) t a) Set.univ := by
+  simp only [Matrix.mul_apply, Matrix.of_apply]
+  exact Finset.analyticOnNhd_fun_sum _ fun c _ =>
+    (analyticOnNhd_coord_atb t c).mul analyticOnNhd_const
+
+/-- An entry of the scores `h Γ hᵀ` is analytic in `h`. -/
+private theorem analyticOnNhd_scores_atb (Γ : Matrix d d ℝ) (t s : T) :
+    AnalyticOnNhd ℝ (fun h : T → d → ℝ => (Matrix.of h * Γ * (Matrix.of h)ᵀ) t s)
+      Set.univ := by
+  have e : (fun h : T → d → ℝ => (Matrix.of h * Γ * (Matrix.of h)ᵀ) t s)
+      = fun h => ∑ k, (Matrix.of h * Γ) t k * h s k := by
+    funext h
+    rw [Matrix.mul_apply]
+    rfl
+  rw [e]
+  exact Finset.analyticOnNhd_fun_sum _ fun k _ =>
+    (analyticOnNhd_mul_entry_atb Γ t k).mul (analyticOnNhd_coord_atb s k)
+
+omit [Fintype d] in
+/-- An entry of the weights of analytic scores is analytic: the denominator of a row is
+positive when the token sees some token, and the row is `0` otherwise. -/
+private theorem analyticOnNhd_attnWeights_atb (sees : T → T → Prop) [DecidableRel sees]
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (Z : E → Matrix T T ℝ)
+    (hZ : ∀ t s, AnalyticOnNhd ℝ (fun h => Z h t s) Set.univ) (t s : T) :
+    AnalyticOnNhd ℝ (fun h => attnWeights sees (Z h) t s) Set.univ := by
+  simp only [attnWeights, Matrix.of_apply]
+  by_cases hs : sees t s
+  · simp only [hs, ite_true]
+    refine (hZ t s).rexp.div (Finset.analyticOnNhd_fun_sum _ fun s' _ => ?_)
+      fun h _ => (attnWeights_den_pos_atb sees (Z h) t ⟨s, hs⟩).ne'
+    by_cases hs' : sees t s'
+    · simp only [hs', ite_true]
+      exact (hZ t s').rexp
+    · simp only [hs', ite_false]
+      exact analyticOnNhd_const
+  · simp only [hs, ite_false]
+    exact analyticOnNhd_const
+
+/-- An entry of the block is analytic in `h`. -/
+private theorem analyticOnNhd_attnHeads_atb (sees : T → T → Prop) [DecidableRel sees]
+    {H : Type*} [Fintype H] (Γ C : H → Matrix d d ℝ) (t : T) (a : d) :
+    AnalyticOnNhd ℝ (fun h : T → d → ℝ => attnHeads sees Γ C (Matrix.of h) t a) Set.univ := by
+  have e : ∀ h : T → d → ℝ, attnHeads sees Γ C (Matrix.of h) t a
+      = ∑ i, ∑ c, (∑ s, attnWeights sees (Matrix.of h * Γ i * (Matrix.of h)ᵀ) t s * h s c)
+        * C i c a := by
+    intro h
+    simp only [attnHeads, Matrix.sum_apply, Matrix.mul_apply, Matrix.of_apply]
+  simp only [e]
+  exact Finset.analyticOnNhd_fun_sum _ fun i _ => Finset.analyticOnNhd_fun_sum _ fun c _ =>
+    (Finset.analyticOnNhd_fun_sum _ fun s _ =>
+      (analyticOnNhd_attnWeights_atb sees _ (analyticOnNhd_scores_atb (Γ i)) t s).mul
+        (analyticOnNhd_coord_atb s c)).mul analyticOnNhd_const
+
 /-- **Theorem A.13 (i) / Theorem 3.4 (i):** with at least two tokens and a token that sees all
 tokens, for `M ≠ 0` and almost every `h`, `h M + B_θ(h) ≠ B_θ'(h)`. -/
 theorem ae_mul_add_attnHeads_ne (sees : T → T → Prop) [DecidableRel sees]
@@ -215,7 +277,79 @@ theorem ae_mul_add_attnHeads_ne (sees : T → T → Prop) [DecidableRel sees]
     (hM : M ≠ 0) (μ : Measure (T → d → ℝ)) [μ.IsAddHaarMeasure] :
     ∀ᵐ h ∂μ, (Matrix.of h) * M + attnHeads sees Γ C (Matrix.of h)
       ≠ attnHeads sees Γ' C' (Matrix.of h) := by
-  sorry
+  classical
+  -- some `h₀` with `h₀ M + B_θ(h₀) ≠ B_θ'(h₀)`, from (ii) at a row `x` with `x M ≠ 0`
+  obtain ⟨a, b, hab⟩ : ∃ a b, M a b ≠ 0 := by
+    by_contra hcon
+    exact hM (Matrix.ext fun a b => not_not.mp fun h => hcon ⟨a, b, h⟩)
+  have hx : (Pi.single a 1 : d → ℝ) ⬝ᵥ Pi.single a 1 ≤ 1 := by
+    simp only [single_dotProduct, Pi.single_eq_same, one_mul, le_refl]
+  have hxM : 0 < Real.sqrt (((Pi.single a 1 : d → ℝ) ᵥ* M) ⬝ᵥ ((Pi.single a 1 : d → ℝ) ᵥ* M)) := by
+    refine Real.sqrt_pos.2 (lt_of_le_of_ne (dotProduct_self_star_nonneg _) fun h => hab ?_)
+    have h' := dotProduct_self_eq_zero.mp h.symm
+    have hb := congrFun h' b
+    simpa only [single_vecMul, one_smul, Matrix.row_apply, Pi.zero_apply] using hb
+  obtain ⟨h₀, -, t, ht⟩ := exists_row_attnHeads_sub_ge sees hT t₀ ht₀ Γ C Γ' C' M _ hx
+  have hrow : (h₀ * M + attnHeads sees Γ C h₀ - attnHeads sees Γ' C' h₀) t ≠ 0 := by
+    intro h0
+    rw [h0, dotProduct_zero, Real.sqrt_zero] at ht
+    linarith
+  obtain ⟨c, hc⟩ : ∃ c, (h₀ * M + attnHeads sees Γ C h₀ - attnHeads sees Γ' C' h₀) t c ≠ 0 := by
+    by_contra hcon
+    exact hrow (funext fun c => not_not.mp fun h => hcon ⟨c, h⟩)
+  -- entry `(t, c)` of `h M + B_θ(h) - B_θ'(h)` is analytic in `h` and not identically zero
+  have hg : AnalyticOnNhd ℝ (fun h : T → d → ℝ => (Matrix.of h * M
+      + attnHeads sees Γ C (Matrix.of h) - attnHeads sees Γ' C' (Matrix.of h)) t c) Set.univ := by
+    simp only [Matrix.sub_apply, Matrix.add_apply]
+    exact ((analyticOnNhd_mul_entry_atb M t c).add (analyticOnNhd_attnHeads_atb sees Γ C t c)).sub
+      (analyticOnNhd_attnHeads_atb sees Γ' C' t c)
+  have hnull := measure_zeroSet_of_analytic μ hg ⟨h₀, hc⟩
+  rw [ae_iff]
+  refine measure_mono_null (fun h hh => ?_) hnull
+  have hh' : Matrix.of h * M + attnHeads sees Γ C (Matrix.of h)
+      = attnHeads sees Γ' C' (Matrix.of h) := not_not.mp hh
+  show (Matrix.of h * M + attnHeads sees Γ C (Matrix.of h)
+      - attnHeads sees Γ' C' (Matrix.of h)) t c = 0
+  rw [hh', sub_self]
+  rfl
+
+omit [Fintype T] [Fintype d] in
+/-- A matrix with all rows `u`, times `E`, has all rows `u E`. -/
+private theorem const_mul_atb {m n : Type*} [Fintype m] (u : m → ℝ) (E : Matrix m n ℝ) :
+    (Matrix.of fun _ : T => u) * E = Matrix.of fun _ : T => u ᵥ* E :=
+  rfl
+
+omit [Fintype T] [Fintype d] in
+/-- The matrix whose row `t₀` is `0` and whose other rows are `v`, times `F`, has row `t₀`
+equal to `0`. -/
+private theorem zero_row_mul_atb [DecidableEq T] {m : Type*} [Fintype m] (t₀ : T)
+    (v : m → ℝ) (F : Matrix m d ℝ) :
+    ((Matrix.of fun t => if t = t₀ then 0 else v : Matrix T m ℝ) * F) t₀ = 0 := by
+  rw [Matrix.mul_apply_eq_vecMul]
+  show (if t₀ = t₀ then (0 : m → ℝ) else v) ᵥ* F = 0
+  simp only [ite_true, Matrix.zero_vecMul]
+
+omit [Fintype d] in
+/-- The same matrix times `F`: the mean of its rows is `((T - 1)/T) v F`. -/
+private theorem zero_row_mul_sum_atb [DecidableEq T] {m : Type*} [Fintype m] (t₀ : T)
+    (v : m → ℝ) (F : Matrix m d ℝ) :
+    (Fintype.card T : ℝ)⁻¹ • ∑ s, ((Matrix.of fun t => if t = t₀ then 0 else v
+        : Matrix T m ℝ) * F) s
+      = ((Fintype.card T : ℝ)⁻¹ * ((Fintype.card T : ℝ) - 1)) • (v ᵥ* F) := by
+  have e : ∑ s, ((Matrix.of fun t => if t = t₀ then 0 else v : Matrix T m ℝ) * F) s
+      = (∑ s, (Matrix.of fun t => if t = t₀ then 0 else v : Matrix T m ℝ) s) ᵥ* F := by
+    simp only [Matrix.mul_apply_eq_vecMul]
+    exact (Matrix.sum_vecMul Finset.univ
+      (fun s => (Matrix.of fun t => if t = t₀ then 0 else v : Matrix T m ℝ) s) F).symm
+  rw [e, sum_rows_zero_row_atb, Matrix.smul_vecMul, smul_smul]
+
+omit [Fintype T] [Fintype d] in
+/-- Matrices with the same products `u A = u B` for all `u` are equal. -/
+private theorem eq_of_vecMul_eq_atb {m n : Type*} [Fintype m] [DecidableEq m]
+    {A B : Matrix m n ℝ} (h : ∀ u, u ᵥ* A = u ᵥ* B) : A = B := by
+  ext a b
+  have hb := congrFun (h (Pi.single a 1)) b
+  simpa only [single_vecMul, one_smul, Matrix.row_apply] using hb
 
 /-- **Theorem A.13 (iii):** with at least two tokens and a token that sees all tokens, an
 embedding `E` and a readout `D` with `E D ≠ 0`, the residual network
@@ -228,7 +362,47 @@ theorem exists_ne_residual_skipless_attnHeads (sees : T → T → Prop) [Decidab
     (E' : Matrix dIn d' ℝ) (D' : Matrix d' dOut ℝ) (hED : E * D ≠ 0) :
     ∃ X : Matrix T dIn ℝ,
       (X * E + attnHeads sees Γ C (X * E)) * D ≠ attnHeads sees Γ' C' (X * E') * D' := by
-  sorry
+  classical
+  by_contra hcon
+  have hall : ∀ X : Matrix T dIn ℝ, (X * E + attnHeads sees Γ C (X * E)) * D
+      = attnHeads sees Γ' C' (X * E') * D' := fun X => not_not.mp (not_exists.mp hcon X)
+  -- row `t₀` of both sides
+  have hrow : ∀ X : Matrix T dIn ℝ, ((X * E) t₀ + attnHeads sees Γ C (X * E) t₀) ᵥ* D
+      = attnHeads sees Γ' C' (X * E') t₀ ᵥ* D' := by
+    intro X
+    have h := congrFun (hall X) t₀
+    rwa [Matrix.mul_apply_eq_vecMul, Matrix.mul_apply_eq_vecMul] at h
+  -- Step 1, all rows `u`: `E D + E (∑ C_i) D = E' (∑ C'_i) D'`
+  have h1 : ∀ u : dIn → ℝ, u ᵥ* (E * D) + u ᵥ* (E * (∑ i, C i) * D)
+      = u ᵥ* (E' * (∑ i, C' i) * D') := by
+    intro u
+    have h := hrow (Matrix.of fun _ => u)
+    rw [const_mul_atb, const_mul_atb, attnHeads_const_row sees Γ C _ t₀ ⟨t₀, ht₀ t₀⟩,
+      attnHeads_const_row sees Γ' C' _ t₀ ⟨t₀, ht₀ t₀⟩] at h
+    simp only [← Matrix.vecMul_vecMul, ← Matrix.add_vecMul]
+    exact h
+  -- Step 2, row `t₀` zero and the other rows `v`: `E (∑ C_i) D = E' (∑ C'_i) D'`
+  have hT2 : (2 : ℝ) ≤ Fintype.card T := by exact_mod_cast hT
+  have hr : (Fintype.card T : ℝ)⁻¹ * ((Fintype.card T : ℝ) - 1) ≠ 0 :=
+    mul_ne_zero (inv_ne_zero (by linarith)) (by linarith)
+  have h2 : ∀ v : dIn → ℝ, v ᵥ* (E * (∑ i, C i) * D) = v ᵥ* (E' * (∑ i, C' i) * D') := by
+    intro v
+    have h := hrow (Matrix.of fun t => if t = t₀ then 0 else v)
+    rw [attnHeads_zero_row sees Γ C _ t₀ ht₀ (zero_row_mul_atb t₀ v E),
+      attnHeads_zero_row sees Γ' C' _ t₀ ht₀ (zero_row_mul_atb t₀ v E'),
+      zero_row_mul_atb t₀ v E, zero_add, zero_row_mul_sum_atb, zero_row_mul_sum_atb] at h
+    simp only [Matrix.smul_vecMul] at h
+    have h' := congrArg (fun w => ((Fintype.card T : ℝ)⁻¹ * ((Fintype.card T : ℝ) - 1))⁻¹ • w) h
+    simp only [inv_smul_smul₀ hr] at h'
+    simp only [← Matrix.vecMul_vecMul]
+    exact h'
+  -- so `E D = 0`
+  apply hED
+  refine eq_of_vecMul_eq_atb fun u => ?_
+  rw [Matrix.vecMul_zero]
+  have h := h1 u
+  rw [h2 u] at h
+  exact add_right_cancel (h.trans (zero_add _).symm)
 
 /-- **Theorem 3.4 (i), for the blocks of equation (4):** attention blocks with any numbers of
 heads and any head dimensions, `M ≠ 0`: for almost every `h`, `h M + B_θ(h) ≠ B_θ'(h)`. -/
