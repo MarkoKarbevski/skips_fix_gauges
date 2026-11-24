@@ -60,7 +60,7 @@ def Params.sumInr (η : Params B dIn dOut) : Params (A.sum B) dIn dOut where
   D := η.D
 
 /-- Helper: `Params.sumInl`, the lift of a direction of `A` to the sum, as a linear map. -/
-private def sumInlLin_ibl : Params A dIn dOut →ₗ[ℝ] Params (A.sum B) dIn dOut where
+def sumInlLin_ibl : Params A dIn dOut →ₗ[ℝ] Params (A.sum B) dIn dOut where
   toFun := Params.sumInl
   map_add' η ζ := by
     apply Params.ext'
@@ -92,7 +92,7 @@ private def sumInlLin_ibl : Params A dIn dOut →ₗ[ℝ] Params (A.sum B) dIn d
     · rfl
 
 /-- Helper: `Params.sumInr`, the lift of a direction of `B` to the sum, as a linear map. -/
-private def sumInrLin_ibl : Params B dIn dOut →ₗ[ℝ] Params (A.sum B) dIn dOut where
+def sumInrLin_ibl : Params B dIn dOut →ₗ[ℝ] Params (A.sum B) dIn dOut where
   toFun := Params.sumInr
   map_add' η ζ := by
     apply Params.ext'
@@ -281,7 +281,7 @@ private theorem ED_eq_zero_of_mem_span_ibl {A' : Arch T d L} {θ' v : Params A' 
 omit [Fintype T] [DecidableEq d] in
 /-- Helper: the lifts of the directions of `V_A` and `V_B` are directions of symmetries inside
 the blocks of the sum, and so is everything they span. -/
-private theorem sup_le_span_ibl (VA : Submodule ℝ (Params A dIn dOut))
+theorem sup_le_span_ibl (VA : Submodule ℝ (Params A dIn dOut))
     (VB : Submodule ℝ (Params B dIn dOut))
     (hVA : VA ≤ Submodule.span ℝ {η | InsideBlocks A θ.sumFst η})
     (hVB : VB ≤ Submodule.span ℝ {η | InsideBlocks B θ.sumSnd η}) :
@@ -299,7 +299,7 @@ omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: in the lifts of `V_A` and `V_B`, a direction whose read of block `ℓ` is `0` has the
 write of block `ℓ` `0`, if this holds in `V_A` and in `V_B`: the read columns and the write rows
 of the two parts are disjoint. -/
-private theorem write_eq_zero_of_read_ibl (VA : Submodule ℝ (Params A dIn dOut))
+theorem write_eq_zero_of_read_ibl (VA : Submodule ℝ (Params A dIn dOut))
     (VB : Submodule ℝ (Params B dIn dOut))
     (hrwA : ∀ η ∈ VA, ∀ ℓ, η.read ℓ = 0 → η.write ℓ = 0)
     (hrwB : ∀ η ∈ VB, ∀ ℓ, η.read ℓ = 0 → η.write ℓ = 0) :
@@ -334,7 +334,7 @@ omit [Fintype T] [DecidableEq d] in
 /-- Helper: the lifts of `V_A` and `V_B` span a space of dimension `dim V_A + dim V_B`: the lifts
 are injective, and they meet only at `0`, since a direction of `V_A` has `E = D = 0` and the two
 parts have disjoint read columns and write rows. -/
-private theorem finrank_sup_ibl (VA : Submodule ℝ (Params A dIn dOut))
+theorem finrank_sup_ibl (VA : Submodule ℝ (Params A dIn dOut))
     (VB : Submodule ℝ (Params B dIn dOut))
     (hVA : VA ≤ Submodule.span ℝ {η | InsideBlocks A θ.sumFst η}) :
     Module.finrank ℝ ↥(VA.map (sumInlLin_ibl (B := B)) ⊔ VB.map (sumInrLin_ibl (A := A)))

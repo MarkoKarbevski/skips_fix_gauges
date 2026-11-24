@@ -4,9 +4,10 @@ import SkipsLean.Residual.IdentifiableIff
 # The equality condition and local identifiability: the symmetries are close to the identity,
 residual networks of each kind of block
 
-Paper (dimension paper), Proposition 4.6: "A network satisfies the equality condition if and only
+Paper (skips paper), Proposition 4.5: "A network satisfies the equality condition if and only
 if, at generic parameters, it is locally identifiable up to its symmetries. Every symmetry that is
-needed is then close to the identity." (Skips paper, Proposition 4.5, has the same sentences.)
+needed is then close to the identity." (The dimension paper, Proposition 4.6, has the same
+sentences for skipless networks of one kind of block.)
 
 The library has the last sentence at one parameter, under the rank conditions of the proof (the
 theorems `exists_…_of_eval_eq_…`). Here it is one statement under the equality condition, for
@@ -115,7 +116,7 @@ private theorem ae_rank_QV_iu2 {χ : Matrix T d ℝ → Matrix T d ℝ}
   · exact ae_rank_read_cols_iu2 μ ℓ (c := fun k : dh ℓ => (i, Sum.inr (Sum.inr k)))
       (fun _ _ h => Sum.inr_injective (Sum.inr_injective (Prod.mk.inj h).2)) (hdh ℓ)
 
-/-- **Proposition 4.6 of the dimension paper and 4.5 of the skips paper, last sentence, under the
+/-- **Proposition 4.5 of the skips paper, last sentence, under the
 equality condition:** the form at almost every parameter of
 `exists_cob_heads_of_eval_eq_residual_attention`.
 If the bound is attained at almost every `θ`, then at almost every `θ`, for all neighborhoods of
@@ -147,7 +148,7 @@ theorem ae_exists_cob_heads_of_eval_eq_residual_attention_of_ae_funDim
   filter_upwards [ae_rank_E_iu2 μ hdIn, ae_rank_QV_iu2 μ hdh, hfd] with θ hE hQV hθfd
   exact exists_cob_heads_of_eval_eq_residual_attention θ hE hQV.1 hQV.2 hθfd
 
-/-- **Proposition 4.6 of the dimension paper and 4.5 of the skips paper, last sentence, under the
+/-- **Proposition 4.5 of the skips paper, last sentence, under the
 equality condition:** the form at almost every parameter of
 `exists_cob_of_eval_eq_residual`.
 If the bound is attained at almost every `θ`, then at almost every `θ`, for all neighborhoods of
@@ -172,7 +173,7 @@ theorem ae_exists_cob_of_eval_eq_residual_of_ae_funDim
   filter_upwards [ae_rank_E_iu2 μ hdIn, hfd] with θ hE hθfd
   exact exists_cob_of_eval_eq_residual A hA hf θ hE hθfd
 
-/-- **Proposition 4.6 of the dimension paper and 4.5 of the skips paper, last sentence, under the
+/-- **Proposition 4.5 of the skips paper, last sentence, under the
 equality condition:** the form at almost every parameter of
 `exists_cob_of_eval_eq_residual_rmsNorm`.
 If the bound is attained at almost every `θ`, then at almost every `θ`, for all neighborhoods of
@@ -198,7 +199,7 @@ theorem ae_exists_cob_of_eval_eq_residual_rmsNorm_of_ae_funDim
   filter_upwards [ae_rank_E_iu2 μ hdIn, hfd] with θ hE hθfd
   exact exists_cob_of_eval_eq_residual_rmsNorm A hε hA hf θ hE hθfd
 
-/-- **Proposition 4.6 of the dimension paper and 4.5 of the skips paper, last sentence, under the
+/-- **Proposition 4.5 of the skips paper, last sentence, under the
 equality condition:** the form at almost every parameter of
 `exists_cob_rescale_of_eval_eq_residual_gated`.
 If the bound is attained at almost every `θ`, then at almost every `θ`, for all neighborhoods of
@@ -225,7 +226,7 @@ theorem ae_exists_cob_rescale_of_eval_eq_residual_gated_of_ae_funDim
   filter_upwards [ae_rank_E_iu2 μ hdIn, ae_value_ne_zero μ, hfd] with θ hE hv hθfd
   exact exists_cob_rescale_of_eval_eq_residual_gated hσ θ hE hv hθfd
 
-/-- **Proposition 4.6 of the dimension paper and 4.5 of the skips paper, last sentence, under the
+/-- **Proposition 4.5 of the skips paper, last sentence, under the
 equality condition:** the form at almost every parameter of
 `exists_cob_rescale_of_eval_eq_residual_gated_rmsNorm`.
 If the bound is attained at almost every `θ`, then at almost every `θ`, for all neighborhoods of
@@ -253,7 +254,7 @@ theorem ae_exists_cob_rescale_of_eval_eq_residual_gated_rmsNorm_of_ae_funDim
   filter_upwards [ae_rank_E_iu2 μ hdIn, ae_value_ne_zero μ, hfd] with θ hE hv hθfd
   exact exists_cob_rescale_of_eval_eq_residual_gated_rmsNorm hε hσ θ hE hv hθfd
 
-/-- **Proposition 4.6 of the dimension paper and 4.5 of the skips paper, last sentence, under the
+/-- **Proposition 4.5 of the skips paper, last sentence, under the
 equality condition:** the form at almost every parameter of
 `exists_cob_heads_of_eval_eq_residual_attention_rmsNorm`.
 If the bound is attained at almost every `θ`, then at almost every `θ`, for all neighborhoods of
@@ -338,7 +339,7 @@ private theorem ae_value_ne_zero_sum_iu2 [Nonempty d] {A : Arch T d L}
   filter_upwards [hne] with θ h hz
   exact h (by rw [hl]; exact congrFun hz k₀)
 
-/-- **Proposition 4.6 of the dimension paper and 4.5 of the skips paper, last sentence, under the
+/-- **Proposition 4.5 of the skips paper, last sentence, under the
 equality condition:** the form at almost every parameter of
 `exists_cob_heads_of_eval_eq_residual_attentionMlp`.
 If the bound is attained at almost every `θ`, then at almost every `θ`, for all neighborhoods of
@@ -372,7 +373,7 @@ theorem ae_exists_cob_heads_of_eval_eq_residual_attentionMlp_of_ae_funDim
   filter_upwards [ae_rank_E_iu2 μ hdIn, ae_rank_QV_sum_iu2 μ hdh, hfd] with θ hE hQV hθfd
   exact exists_cob_heads_of_eval_eq_residual_attentionMlp hσ θ hE hQV.1 hQV.2 hθfd
 
-/-- **Proposition 4.6 of the dimension paper and 4.5 of the skips paper, last sentence, under the
+/-- **Proposition 4.5 of the skips paper, last sentence, under the
 equality condition:** the form at almost every parameter of
 `exists_cob_heads_of_eval_eq_residual_attentionMlp_rmsNorm`.
 If the bound is attained at almost every `θ`, then at almost every `θ`, for all neighborhoods of
@@ -406,7 +407,7 @@ theorem ae_exists_cob_heads_of_eval_eq_residual_attentionMlp_rmsNorm_of_ae_funDi
   filter_upwards [ae_rank_E_iu2 μ hdIn, ae_rank_QV_sum_iu2 μ hdh, hfd] with θ hE hQV hθfd
   exact exists_cob_heads_of_eval_eq_residual_attentionMlp_rmsNorm hε hσ θ hE hQV.1 hQV.2 hθfd
 
-/-- **Proposition 4.6 of the dimension paper and 4.5 of the skips paper, last sentence, under the
+/-- **Proposition 4.5 of the skips paper, last sentence, under the
 equality condition:** the form at almost every parameter of
 `exists_cob_heads_of_eval_eq_residual_attentionGated`.
 If the bound is attained at almost every `θ`, then at almost every `θ`, for all neighborhoods of
@@ -443,7 +444,7 @@ theorem ae_exists_cob_heads_of_eval_eq_residual_attentionGated_of_ae_funDim
     hfd] with θ hE hQV hv hθfd
   exact exists_cob_heads_of_eval_eq_residual_attentionGated hσ θ hE hQV.1 hQV.2 hv hθfd
 
-/-- **Proposition 4.6 of the dimension paper and 4.5 of the skips paper, last sentence, under the
+/-- **Proposition 4.5 of the skips paper, last sentence, under the
 equality condition:** the form at almost every parameter of
 `exists_cob_heads_of_eval_eq_residual_attentionGated_rmsNorm`.
 If the bound is attained at almost every `θ`, then at almost every `θ`, for all neighborhoods of
