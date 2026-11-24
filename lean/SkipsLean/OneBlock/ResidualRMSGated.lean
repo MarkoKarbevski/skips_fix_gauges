@@ -236,6 +236,47 @@ theorem flat_le_cobDir_const_add_rescaleDir_gated_residual_rmsNorm (hε : 0 < ε
     rw [add_zero]
     exact hYD
 
+/-- Helper (the private `rescaleDirLinG` of `OneBlock/Residual.lean`): `α ↦ rescaleDir θ α` is
+linear. -/
+private noncomputable def rescaleDirLinRG
+    (θ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) :
+    (∀ ℓ : Fin 1, hid ℓ → ℝ) →ₗ[ℝ]
+      Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut where
+  toFun := rescaleDir θ
+  map_add' α β := by
+    apply Params.ext'
+    · exact (add_zero 0).symm
+    · intro ℓ
+      ext k j
+      rcases j with i | i
+      · exact (add_zero 0).symm
+      · show -((α + β) ℓ i) * θ.read ℓ k (Sum.inr i)
+          = -(α ℓ i) * θ.read ℓ k (Sum.inr i) + -(β ℓ i) * θ.read ℓ k (Sum.inr i)
+        rw [Pi.add_apply, Pi.add_apply]
+        ring
+    · intro ℓ
+      ext i k
+      show (α + β) ℓ i * θ.write ℓ i k = α ℓ i * θ.write ℓ i k + β ℓ i * θ.write ℓ i k
+      rw [Pi.add_apply, Pi.add_apply]
+      ring
+    · exact (add_zero 0).symm
+  map_smul' c α := by
+    apply Params.ext'
+    · exact (smul_zero c).symm
+    · intro ℓ
+      ext k j
+      rcases j with i | i
+      · exact (smul_zero c).symm
+      · show -((c • α) ℓ i) * θ.read ℓ k (Sum.inr i) = c * (-(α ℓ i) * θ.read ℓ k (Sum.inr i))
+        rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+        ring
+    · intro ℓ
+      ext i k
+      show (c • α) ℓ i * θ.write ℓ i k = c * (α ℓ i * θ.write ℓ i k)
+      rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+      ring
+    · exact (smul_zero c).symm
+
 /-- **Theorem 4.6 (ii) of the skips paper, first sentence, for one gated block, under the
 conditions of its proof:** under pre-RMSNorm with `ε > 0` the residual network has the functional
 dimension `P - d(d-1)/2 - d_hidden`. -/
@@ -248,7 +289,51 @@ theorem funDim_gated_oneBlock_residual_rmsNorm (hε : 0 < ε)
         + (Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0))
       = Module.finrank ℝ
           (Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  have hσd : Differentiable ℝ σ := fun z => (hσ z).differentiableAt
+  have hdiff : ∀ x : Matrix T dIn ℝ, DifferentiableAt ℝ
+      (fun θ' : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut =>
+        eval (Arch.gated σ (rmsNorm ε) hid) 1 θ' x) θ := fun x =>
+    (differentiable_eval (A := Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) (S := 1)
+      (differentiable_f_gated hσd) (differentiable_rmsNorm hε) x).differentiableAt
+  -- Step 5: the directions of one orthogonal change of basis and of the rescalings,
+  -- `(Y, α) ↦ cobDir θ (Y, Y) + rescaleDir θ α` with `Y` antisymmetric
+  let Φ : (antisymmetric d × (∀ ℓ : Fin 1, hid ℓ → ℝ)) →ₗ[ℝ]
+      Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut :=
+    ((cobDirLin θ).comp (LinearMap.pi fun _ => (antisymmetric d).subtype)).coprod
+      (rescaleDirLinRG θ)
+  -- every flat direction is one of them (Steps 1 to 4)
+  have hle : flat (Arch.gated σ (rmsNorm ε) hid) 1 θ ≤ LinearMap.range Φ := by
+    intro η hη
+    obtain ⟨Y, α, hY, rfl⟩ :=
+      flat_le_cobDir_const_add_rescaleDir_gated_residual_rmsNorm hε hσ hσa hU θ hθ η hη
+    exact LinearMap.mem_range.2 ⟨(⟨Y, hY⟩, α), rfl⟩
+  -- the domain has dimension `d(d-1)/2 + d_hidden`
+  have hdim : Module.finrank ℝ (antisymmetric d × (∀ ℓ : Fin 1, hid ℓ → ℝ))
+      = Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0) := by
+    rw [Module.finrank_prod, finrank_antisymmetric, Module.finrank_pi_fintype]
+    simp only [Module.finrank_fintype_fun_eq_card, Finset.univ_unique, Fin.default_eq_zero,
+      Finset.sum_singleton]
+  -- `≥`: `fd(θ) = P - dim K(θ)` (Appendix C) and `dim K(θ) ≤ d(d-1)/2 + d_hidden`
+  have h1 := funDim_add_finrank_flat θ hdiff
+  have h2 := (Submodule.finrank_mono hle).trans (LinearMap.finrank_range_le Φ)
+  rw [hdim] at h2
+  -- `≤`: these directions are flat and independent (Theorem 4.2 with identity skips)
+  have hv : ∀ ℓ i, (fun a => θ.read ℓ a (Sum.inr i)) ≠ 0 := by
+    intro ℓ i
+    obtain rfl := Subsingleton.elim ℓ 0
+    exact hθ.value_ne_zero i
+  have h3 := funDim_add_le_residual_gated_rmsNorm ε θ hθ.rank_E hv
+  rw [Fin.sum_univ_one] at h3
+  omega
+
+omit [Fintype T] [Nonempty T] [Fintype dIn] [Fintype dOut] in
+/-- Helper (the private `rank_eq_of_isUnit_det_submatrix` of `Generic/Params.lean`): a matrix
+with `d` columns has rank `d` if some `d` of its rows form an invertible matrix. -/
+private theorem rank_eq_of_isUnit_det_rows_rg {m : Type*} (M : Matrix m d ℝ) (ρ : d ↪ m)
+    (h : IsUnit (M.submatrix ρ id).det) : M.rank = Fintype.card d :=
+  le_antisymm (Matrix.rank_le_card_width M)
+    ((Matrix.rank_of_isUnit _ ((Matrix.isUnit_iff_isUnit_det _).2 h)).symm.le.trans
+      (Matrix.rank_submatrix_le M ρ id))
 
 /-- The conditions of the proof hold at generic parameters, for `d_in, d_out ≥ d ≥ 2` and a block
 of any width. -/
@@ -257,7 +342,60 @@ theorem ae_oneBlockGenericGatedRMS
     [μ.IsAddHaarMeasure] (hd : 2 ≤ Fintype.card d) (hdIn : Fintype.card d ≤ Fintype.card dIn)
     (hdOut : Fintype.card d ≤ Fintype.card dOut) :
     ∀ᵐ θ ∂μ, OneBlockGenericGatedRMS θ := by
-  sorry
+  classical
+  -- two distinct coordinates `k₁ ≠ k₂` of the hidden states, `d` rows of `E`, `d` columns of `D`
+  obtain ⟨k₁, k₂, hk⟩ := Fintype.exists_pair_of_one_lt_card (show 1 < Fintype.card d by omega)
+  obtain ⟨ρE⟩ := Function.Embedding.nonempty_of_card_le hdIn
+  obtain ⟨cD⟩ := Function.Embedding.nonempty_of_card_le hdOut
+  -- the ranks of `E` and `D`: invertible `d × d` minors (`Generic/Params.lean`)
+  have h1 := ae_isUnit_det_submatrix μ
+  -- an entry of the write or of the read is a linear functional of the parameters, not zero at
+  -- the parameters with all entries `1`
+  let θ₁ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut :=
+    ⟨Matrix.of fun _ _ => 1, fun _ => Matrix.of fun _ _ => 1, fun _ => Matrix.of fun _ _ => 1,
+      Matrix.of fun _ _ => 1⟩
+  have hr : ∀ (k : d) (j : hid 0 ⊕ hid 0), AnalyticOnNhd ℝ
+      (fun θ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut =>
+        θ.read 0 k j) Set.univ := fun k j =>
+    analyticOnNhd_linear ((Matrix.entryLinearMap ℝ ℝ k j).comp
+      (Params.linRead (A := Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) (dIn := dIn)
+        (dOut := dOut) 0))
+  have hw : ∀ (i : hid 0) (k : d), AnalyticOnNhd ℝ
+      (fun θ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut =>
+        θ.write 0 i k) Set.univ := fun i k =>
+    analyticOnNhd_linear ((Matrix.entryLinearMap ℝ ℝ i k).comp
+      (Params.linWrite (A := Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) (dIn := dIn)
+        (dOut := dOut) 0))
+  have h2 : ∀ᵐ θ ∂μ, ∀ i : hid 0, θ.write 0 i k₁ ≠ 0 :=
+    ae_all_iff.2 fun i => ae_ne_zero_of_analytic μ (hw i k₁) ⟨θ₁, one_ne_zero⟩
+  have h3 : ∀ᵐ θ ∂μ, ∀ j : hid 0 ⊕ hid 0, θ.read 0 k₁ j ≠ 0 :=
+    ae_all_iff.2 fun j => ae_ne_zero_of_analytic μ (hr k₁ j) ⟨θ₁, one_ne_zero⟩
+  -- two gate columns of the read are not collinear: a `2 × 2` minor does not vanish (it is `1`
+  -- for a read `E₀ W₀` of `exists_minor_ne_zero`)
+  have h4 : ∀ᵐ θ ∂μ, ∀ i j : hid 0, i ≠ j →
+      θ.read 0 k₁ (Sum.inl i) * θ.read 0 k₂ (Sum.inl j)
+        - θ.read 0 k₁ (Sum.inl j) * θ.read 0 k₂ (Sum.inl i) ≠ 0 := by
+    refine ae_all_iff.2 fun i => ae_all_iff.2 fun j => ?_
+    by_cases hij : i = j
+    · exact Filter.Eventually.of_forall fun _ h _ => absurd hij h
+    · obtain ⟨E₀, W₀, hEW⟩ := exists_minor_ne_zero (q := hid 0 ⊕ hid 0) hk hk
+        (Sum.inl_injective.ne hij)
+      let θ₀ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut :=
+        ⟨0, fun ℓ => Fin.cases (E₀ * W₀) (fun l => l.elim0) ℓ, 0, 0⟩
+      have hg := ((hr k₁ (Sum.inl i)).mul (hr k₂ (Sum.inl j))).sub
+        ((hr k₁ (Sum.inl j)).mul (hr k₂ (Sum.inl i)))
+      exact (ae_ne_zero_of_analytic μ hg ⟨θ₀, hEW⟩).mono fun _ h _ => h
+  filter_upwards [h1, h2, h3, h4] with θ h1 h2 h3 h4
+  refine ⟨rank_eq_of_isUnit_det_rows_rg θ.E ρE (h1.2.2.1 ρE),
+    rank_eq_card_of_isUnit_det θ.D cD (h1.2.1 cD), fun i hi => h2 i (congrFun hi k₁),
+    fun i hi => h3 (Sum.inl i) (congrFun hi k₁), ?_, fun i hi => h3 (Sum.inr i) (congrFun hi k₁)⟩
+  -- if `c_i = r c_j`, the minor of the gate columns `i`, `j` vanishes
+  intro i j hij r hr
+  have e1 : θ.read 0 k₁ (Sum.inl i) = r * θ.read 0 k₁ (Sum.inl j) := congrFun hr k₁
+  have e2 : θ.read 0 k₂ (Sum.inl i) = r * θ.read 0 k₂ (Sum.inl j) := congrFun hr k₂
+  apply h4 i j hij
+  rw [e1, e2]
+  ring
 
 /-- **Theorem 4.6 (ii) of the skips paper, first sentence, for one gated block:** with
 `d_in, d_out ≥ d ≥ 2` and a block of any width, under pre-RMSNorm with `ε > 0`, at generic
@@ -272,7 +410,8 @@ theorem ae_funDim_gated_oneBlock_residual_rmsNorm (hε : 0 < ε)
         + (Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0))
       = Module.finrank ℝ
           (Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  filter_upwards [ae_oneBlockGenericGatedRMS μ hd hdIn hdOut] with θ hθ
+  exact funDim_gated_oneBlock_residual_rmsNorm hε hσ hσa hU θ hθ
 
 /-! ### The two kinds of block -/
 
@@ -287,7 +426,8 @@ theorem ae_funDim_swiglu_oneBlock_residual_rmsNorm (hε : 0 < ε)
         + (Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0))
       = Module.finrank ℝ
           (Params (Arch.gated (T := T) (d := d) silu (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  exact ae_funDim_gated_oneBlock_residual_rmsNorm hε hasDerivAt_silu analyticOnNhd_silu
+      (silu_gatedUnitsRescale _ _ _) μ hd hdIn hdOut
 
 /-- **Theorem 4.6 (ii) of the skips paper, first sentence, for a GeGLU block.** -/
 theorem ae_funDim_geglu_oneBlock_residual_rmsNorm (hε : 0 < ε)
@@ -298,6 +438,7 @@ theorem ae_funDim_geglu_oneBlock_residual_rmsNorm (hε : 0 < ε)
         + (Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0))
       = Module.finrank ℝ
           (Params (Arch.gated (T := T) (d := d) gelu (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  exact ae_funDim_gated_oneBlock_residual_rmsNorm hε hasDerivAt_gelu analyticOnNhd_gelu
+      (gelu_gatedUnitsRescale _ _ _) μ hd hdIn hdOut
 
 end Skips
