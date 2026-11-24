@@ -775,7 +775,11 @@ theorem exists_jacobianRankSkips_tri_mlp_rescale_rmsNorm
           + (Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0))
         = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
           + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the batch off the kinks of the full skip `R`, on which the two families have the same rank
+  exact exists_jacobianRankSkips_tri_ltr (A := Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) hε
+    rfl θ R hR (noKinkRMS θ) (fun x hx => differentiableAt_f_mlp_ltr hε hσ θ x hx)
+    (exists_jacobianRankSkips_mlp_rescale_rmsNorm hk hε hσ hhom hU θ hθ
+      (fun ℓ => (R ℓ : Matrix d d ℝ)) hR)
 
 /-- **No batch of inputs off the kinks has a larger rank,** for ReLU-type MLP blocks with an upper
 triangular learned skip, at one parameter: under the conditions `OneBlockGenericRMS`, for an
@@ -795,7 +799,11 @@ theorem jacobianRankSkips_tri_add_le_mlp_rescale_rmsNorm
         + (Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0))
       ≤ Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the rank of the full family on the batch, at most its value `P + d² − d (d − 1) − s`
+  exact jacobianRankSkips_tri_add_le_ltr (A := Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) hε
+    rfl θ R hR (funDimLearned_mlp_rescale_rmsNorm hk hε hσ hhom hU θ hθ
+      (fun ℓ => (R ℓ : Matrix d d ℝ)) hR) X
+    (fun i => differentiableAt_f_mlp_ltr hε hσ θ (X i) (hX i))
 
 /-- **Theorem B.1 (iii) for the upper triangular skip, for ReLU-type MLP blocks, at one parameter:**
 under the conditions `OneBlockGenericRMS`, for an invertible upper triangular skip, the functional
@@ -812,7 +820,10 @@ theorem funDimSkipsOn_tri_mlp_rescale_rmsNorm
         + (Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the set of the ranks contains its upper bound
+  exact funDimSkipsOn_add_eq_ltr _ _ _ _
+    (exists_jacobianRankSkips_tri_mlp_rescale_rmsNorm hk hε hσ hhom hU θ hθ R hR)
+    (fun _ X hX => jacobianRankSkips_tri_add_le_mlp_rescale_rmsNorm hk hε hσ hhom hU θ hθ R hR X hX)
 
 /-- **Theorem B.1 (iii) of the skips paper for one ReLU block with an upper triangular learned skip,
 `ε > 0`:** for `d_in, d_out ≥ d ≥ 2` and a block of any width with at least one hidden unit, at
@@ -827,7 +838,11 @@ theorem ae_funDimSkipsOn_tri_relu_rmsNorm (hε : 0 < ε) [Nonempty (hid 0)]
         + (Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the conditions of the proof and an invertible skip hold at almost every `(θ, A)`
+  filter_upwards [ae_generic_tri_ltr μ (ae_oneBlockGenericRMS Measure.addHaar hd hdIn hdOut)]
+    with p hp
+  exact funDimSkipsOn_tri_mlp_rescale_rmsNorm one_ne_zero hε (fun _ hz => hasDerivAt_relu hz)
+    relu_homogeneous (relu_unitsRescale d d (hid 0)) p.1 hp.1 p.2 hp.2
 
 /-- **Theorem B.1 (iii), "exceeds that of the residual network of part (ii) by exactly `d (d +
 1)/2`", for one ReLU block with an upper triangular learned skip, `ε > 0`:** at almost every `(θ,
@@ -844,7 +859,12 @@ theorem ae_funDimSkipsOn_tri_relu_rmsNorm_eq_residual_add (hε : 0 < ε) [Nonemp
         p.1)
       = funDim (Arch.mlp relu (rmsNorm ε) hid) 1 θ'
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- `fd + (d (d − 1)/2 + s) = P + d (d + 1)/2` and `fd₁ + (d (d − 1)/2 + s) = P`
+  filter_upwards [ae_funDimSkipsOn_tri_relu_rmsNorm hε μ hd hdIn hdOut] with p hp
+  filter_upwards [ae_funDim_relu_oneBlock_residual_rmsNorm hε ν hd hdIn hdOut] with θ' hθ'
+  generalize Fintype.card d * (Fintype.card d - 1) / 2 = a at hp hθ'
+  generalize Fintype.card d * (Fintype.card d + 1) / 2 = b at hp ⊢
+  omega
 
 /-- **Theorem B.1 (iii) of the skips paper for one ReLU² block with an upper triangular learned
 skip, `ε > 0`:** for `d_in, d_out ≥ d ≥ 2` and a block of any width with at least one hidden unit,
@@ -859,7 +879,11 @@ theorem ae_funDimSkipsOn_tri_reluSq_rmsNorm (hε : 0 < ε) [Nonempty (hid 0)]
         + (Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) reluSq (rmsNorm ε) hid) dIn dOut)
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the conditions of the proof and an invertible skip hold at almost every `(θ, A)`
+  filter_upwards [ae_generic_tri_ltr μ (ae_oneBlockGenericRMS Measure.addHaar hd hdIn hdOut)]
+    with p hp
+  exact funDimSkipsOn_tri_mlp_rescale_rmsNorm two_ne_zero hε (fun z _ => hasDerivAt_reluSq z)
+    reluSq_homogeneous (reluSq_unitsRescale d d (hid 0)) p.1 hp.1 p.2 hp.2
 
 /-- **Theorem B.1 (iii), "exceeds that of the residual network of part (ii) by exactly `d (d +
 1)/2`", for one ReLU² block with an upper triangular learned skip, `ε > 0`:** at almost every `(θ,
@@ -876,7 +900,12 @@ theorem ae_funDimSkipsOn_tri_reluSq_rmsNorm_eq_residual_add (hε : 0 < ε) [None
         p.1)
       = funDim (Arch.mlp reluSq (rmsNorm ε) hid) 1 θ'
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- `fd + (d (d − 1)/2 + s) = P + d (d + 1)/2` and `fd₁ + (d (d − 1)/2 + s) = P`
+  filter_upwards [ae_funDimSkipsOn_tri_reluSq_rmsNorm hε μ hd hdIn hdOut] with p hp
+  filter_upwards [ae_funDim_reluSq_oneBlock_residual_rmsNorm hε ν hd hdIn hdOut] with θ' hθ'
+  generalize Fintype.card d * (Fintype.card d - 1) / 2 = a at hp hθ'
+  generalize Fintype.card d * (Fintype.card d + 1) / 2 = b at hp ⊢
+  omega
 
 /-- **Theorem B.1 (iii) for the upper triangular skip, in the paper's own sense, for a ReGLU block,
 at one parameter:** under the conditions `OneBlockGenericReGLURMS`, for an invertible upper
@@ -892,7 +921,10 @@ theorem exists_jacobianRankSkips_tri_reglu_rmsNorm
           + (Fintype.card d * (Fintype.card d - 1) / 2 + 2 * Fintype.card (hid 0))
         = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
           + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the batch off the kinks of the full skip `R`, on which the two families have the same rank
+  exact exists_jacobianRankSkips_tri_ltr (A := Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid)
+    hε rfl θ R hR (noKinkGateRMS θ) (fun x hx => differentiableAt_f_reglu_ltr hε θ x hx)
+    (exists_jacobianRankSkips_reglu_rmsNorm hε θ hθ (fun ℓ => (R ℓ : Matrix d d ℝ)) hR)
 
 /-- **No batch of inputs off the kinks has a larger rank,** for a ReGLU block with an upper
 triangular learned skip, at one parameter: under the conditions `OneBlockGenericReGLURMS`, for an
@@ -909,7 +941,10 @@ theorem jacobianRankSkips_tri_add_le_reglu_rmsNorm
         + (Fintype.card d * (Fintype.card d - 1) / 2 + 2 * Fintype.card (hid 0))
       ≤ Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the rank of the full family on the batch, at most its value `P + d² − d (d − 1) − s`
+  exact jacobianRankSkips_tri_add_le_ltr (A := Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid)
+    hε rfl θ R hR (funDimLearned_reglu_rmsNorm hε θ hθ (fun ℓ => (R ℓ : Matrix d d ℝ)) hR) X
+    (fun i => differentiableAt_f_reglu_ltr hε θ (X i) (hX i))
 
 /-- **Theorem B.1 (iii) for the upper triangular skip, for a ReGLU block, at one parameter:** under
 the conditions `OneBlockGenericReGLURMS`, for an invertible upper triangular skip, the functional
@@ -923,7 +958,9 @@ theorem funDimSkipsOn_tri_reglu_rmsNorm
         + (Fintype.card d * (Fintype.card d - 1) / 2 + 2 * Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the set of the ranks contains its upper bound
+  exact funDimSkipsOn_add_eq_ltr _ _ _ _ (exists_jacobianRankSkips_tri_reglu_rmsNorm hε θ hθ R hR)
+    (fun _ X hX => jacobianRankSkips_tri_add_le_reglu_rmsNorm hε θ hθ R hR X hX)
 
 /-- **Theorem B.1 (iii) of the skips paper for one ReGLU block with an upper triangular learned
 skip, `ε > 0`:** for `d_in, d_out ≥ d ≥ 2` and a block of any width with at least one hidden unit,
@@ -938,7 +975,10 @@ theorem ae_funDimSkipsOn_tri_reglu_rmsNorm (hε : 0 < ε) [Nonempty (hid 0)]
         + (Fintype.card d * (Fintype.card d - 1) / 2 + 2 * Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the conditions of the proof and an invertible skip hold at almost every `(θ, A)`
+  filter_upwards [ae_generic_tri_ltr μ
+    (ae_oneBlockGenericReGLURMS (σ := relu) (ε := ε) Measure.addHaar hd hdIn hdOut)] with p hp
+  exact funDimSkipsOn_tri_reglu_rmsNorm hε p.1 hp.1 p.2 hp.2
 
 /-- **Theorem B.1 (iii), "exceeds that of the residual network of part (ii) by exactly `d (d +
 1)/2`", for one ReGLU block with an upper triangular learned skip, `ε > 0`:** at almost every `(θ,
@@ -955,6 +995,11 @@ theorem ae_funDimSkipsOn_tri_reglu_rmsNorm_eq_residual_add (hε : 0 < ε) [Nonem
         (noKinkGateRMS p.1)
       = funDim (Arch.gated relu (rmsNorm ε) hid) 1 θ'
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- `fd + (d (d − 1)/2 + s) = P + d (d + 1)/2` and `fd₁ + (d (d − 1)/2 + s) = P`
+  filter_upwards [ae_funDimSkipsOn_tri_reglu_rmsNorm hε μ hd hdIn hdOut] with p hp
+  filter_upwards [ae_funDim_reglu_oneBlock_residual_rmsNorm hε ν hd hdIn hdOut] with θ' hθ'
+  generalize Fintype.card d * (Fintype.card d - 1) / 2 = a at hp hθ'
+  generalize Fintype.card d * (Fintype.card d + 1) / 2 = b at hp ⊢
+  omega
 
 end Skips
