@@ -452,6 +452,137 @@ theorem smallWritesLimitNorm_eq_zero_attentionMlp_rmsNorm (hε : 0 < ε)
     smallWritesLimitNorm_eq_zero_attention_rmsNorm hε t₁ t₂ h12 hs2 hs1 θ.sumFst hθa η.sumFst hηA
   exact ⟨Y, Γ, Γ', hYa, hE, hD, hr, hw, hmr, hmw⟩
 
+/-! ### Helpers: the space of the flat directions of `J_0` -/
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] in
+/-- Helper (as `flatEDLin_rma` of `Residual/DepthAttentionRMS.lean`): the directions
+`Y ↦ (E Y, 0, 0, −Y D)` of one change of basis at all hidden states, as a linear map. -/
+private def flatEDLin_dtr {A : Arch T d L} (θ : Params A dIn dOut) :
+    Matrix d d ℝ →ₗ[ℝ] Params A dIn dOut where
+  toFun X := ⟨θ.E * X, 0, 0, -(X * θ.D)⟩
+  map_add' X Y := by
+    apply Params.ext'
+    · exact Matrix.mul_add _ _ _
+    · intro ℓ
+      exact (add_zero 0).symm
+    · intro ℓ
+      exact (add_zero 0).symm
+    · show -((X + Y) * θ.D) = -(X * θ.D) + -(Y * θ.D)
+      rw [Matrix.add_mul, neg_add]
+  map_smul' c X := by
+    apply Params.ext'
+    · exact Matrix.mul_smul _ _ _
+    · intro ℓ
+      exact (smul_zero c).symm
+    · intro ℓ
+      exact (smul_zero c).symm
+    · show -((c • X) * θ.D) = c • -(X * θ.D)
+      rw [Matrix.smul_mul, smul_neg]
+
+/-- Helper (as `headDirQKLin_rma`): `Γ ↦ headDirQK θ Γ` is linear. -/
+private noncomputable def headDirQKLin_dtr {χ : Matrix T d ℝ → Matrix T d ℝ}
+    (θ : Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut) :
+    (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) →ₗ[ℝ]
+      Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut where
+  toFun := headDirQK θ
+  map_add' Γ Δ := by
+    apply Params.ext'
+    · simp [headDirQK]
+    · intro ℓ
+      ext a ⟨i, k | k | k⟩
+      · simp only [headDirQK, Params.add_read, Matrix.add_apply, Matrix.of_apply, Pi.add_apply,
+          mul_add, Finset.sum_add_distrib]
+      · simp only [headDirQK, Params.add_read, Matrix.add_apply, Matrix.of_apply, Pi.add_apply,
+          mul_add, Finset.sum_add_distrib, neg_add]
+      · simp [headDirQK]
+    · intro ℓ
+      simp [headDirQK]
+    · simp [headDirQK]
+  map_smul' c Γ := by
+    apply Params.ext'
+    · simp [headDirQK]
+    · intro ℓ
+      ext a ⟨i, k | k | k⟩
+      · simp only [headDirQK, Params.smul_read, Matrix.smul_apply, Matrix.of_apply, Pi.smul_apply,
+          smul_eq_mul, RingHom.id_apply, Finset.mul_sum]
+        exact Finset.sum_congr rfl fun _ _ => by ring
+      · simp only [headDirQK, Params.smul_read, Matrix.smul_apply, Matrix.of_apply, Pi.smul_apply,
+          smul_eq_mul, RingHom.id_apply, Finset.mul_sum, mul_neg]
+        exact congrArg Neg.neg (Finset.sum_congr rfl fun _ _ => by ring)
+      · simp [headDirQK]
+    · intro ℓ
+      simp [headDirQK]
+    · simp [headDirQK]
+
+/-- Helper (as `headDirVOLin_rma`): `Γ' ↦ headDirVO θ Γ'` is linear. -/
+private noncomputable def headDirVOLin_dtr {χ : Matrix T d ℝ → Matrix T d ℝ}
+    (θ : Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut) :
+    (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) →ₗ[ℝ]
+      Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut where
+  toFun := headDirVO θ
+  map_add' Γ Δ := by
+    apply Params.ext'
+    · simp [headDirVO]
+    · intro ℓ
+      ext a ⟨i, k | k | k⟩
+      · simp [headDirVO]
+      · simp [headDirVO]
+      · simp only [headDirVO, Params.add_read, Matrix.add_apply, Matrix.of_apply, Pi.add_apply,
+          mul_add, Finset.sum_add_distrib]
+    · intro ℓ
+      ext p b
+      simp only [headDirVO, Params.add_write, Matrix.add_apply, Matrix.of_apply, Pi.add_apply,
+        add_mul, Finset.sum_add_distrib, neg_add]
+    · simp [headDirVO]
+  map_smul' c Γ := by
+    apply Params.ext'
+    · simp [headDirVO]
+    · intro ℓ
+      ext a ⟨i, k | k | k⟩
+      · simp [headDirVO]
+      · simp [headDirVO]
+      · simp only [headDirVO, Params.smul_read, Matrix.smul_apply, Matrix.of_apply, Pi.smul_apply,
+          smul_eq_mul, RingHom.id_apply, Finset.mul_sum]
+        exact Finset.sum_congr rfl fun _ _ => by ring
+    · intro ℓ
+      ext p b
+      simp only [headDirVO, Params.smul_write, Matrix.smul_apply, Matrix.of_apply, Pi.smul_apply,
+        smul_eq_mul, RingHom.id_apply, Finset.mul_sum, mul_neg]
+      exact congrArg Neg.neg (Finset.sum_congr rfl fun _ _ => by ring)
+    · simp [headDirVO]
+
+/-- Helper (as `finrank_headFun_rma`): the families `Γ` of `d_h × d_h` matrices, one for each
+head of each block, form a space of dimension `∑_ℓ H_ℓ d_{h,ℓ}²`. -/
+private theorem finrank_headFun_dtr :
+    Module.finrank ℝ (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ)
+      = ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2 := by
+  rw [Module.finrank_pi_fintype]
+  simp only [Module.finrank_pi_fintype, Module.finrank_matrix, Module.finrank_self, mul_one,
+    Finset.sum_const, Finset.card_univ, smul_eq_mul, sq]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `η ↦ Params.sumInl η` (a direction of `A` as a direction of the sum, `0` on the part
+of `B`) is linear. -/
+private def sumInlLin_dtr (A B : Arch T d L) :
+    Params A dIn dOut →ₗ[ℝ] Params (A.sum B) dIn dOut where
+  toFun η := Params.sumInl η
+  map_add' η ζ := by
+    refine Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl
+    · ext a (j | j)
+      · rfl
+      · exact (add_zero 0).symm
+    · ext (i | i) a
+      · rfl
+      · exact (add_zero 0).symm
+  map_smul' c η := by
+    refine Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl
+    · ext a (j | j)
+      · rfl
+      · exact (smul_zero c).symm
+    · ext (i | i) a
+      · rfl
+      · exact (smul_zero c).symm
+
 /-- **Lemma A.27 (Small writes), second value, for attention blocks and MLP blocks, under the
 conditions of its proof:** with `ε > 0` and a token that sees itself and another token, for all
 small `τ ≠ 0` the residual network has `fd(θ_τ) = P − d(d−1)/2 − 2 ∑_ℓ H_ℓ d_{h,ℓ}²`. -/
@@ -468,7 +599,141 @@ theorem eventually_funDim_smallWrites_attentionMlp_rmsNorm (hε : 0 < ε)
         = Module.finrank ℝ
             (Params
               (Arch.attentionMlp (T := T) (d := d) sees σ (rmsNorm ε) H dh hid) dIn dOut) := by
-  sorry
+  -- the flat directions of `J_0` lie in the range `V` of the linear map
+  -- `(Y, Γ, Γ') ↦ (E Y, 0, 0, −Y D) + (headDirQK θ_A Γ + headDirVO θ_A Γ', 0)` on antisymmetric
+  -- `Y`, with `0` at the hidden units (the first theorem)
+  let Φ := ((flatEDLin_dtr θ).comp (antisymmetric d).subtype).coprod
+    ((sumInlLin_dtr (Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh)
+      (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid)).comp
+        ((headDirQKLin_dtr θ.sumFst).coprod (headDirVOLin_dtr θ.sumFst)))
+  have hV : ∀ η, (∀ x, smallWritesLimitNorm (Arch.attentionMlp sees σ (rmsNorm ε) H dh hid) θ
+      η x = 0) → η ∈ LinearMap.range Φ := by
+    intro η hη
+    obtain ⟨Y, Γ, Γ', hYa, hE, hD, hr, hw, hmr, hmw⟩ :=
+      smallWritesLimitNorm_eq_zero_attentionMlp_rmsNorm hε hσ hσa hU t₁ t₂ h12 hs2 hs1 θ hθa
+        hθm η hη
+    refine ⟨(⟨Y, hYa⟩, Γ, Γ'), ?_⟩
+    apply Params.ext'
+    · show θ.E * Y + ((0 : Matrix dIn d ℝ) + 0) = η.E
+      rw [add_zero, add_zero, hE]
+    · intro ℓ
+      ext a (j | j)
+      · show (0 : ℝ) + (headDirQK θ.sumFst Γ + headDirVO θ.sumFst Γ').read ℓ a j
+          = η.read ℓ a (Sum.inl j)
+        rw [zero_add]
+        exact (congrFun (congrFun (hr ℓ) a) j).symm
+      · show (0 : ℝ) + 0 = η.read ℓ a (Sum.inr j)
+        rw [zero_add]
+        exact (congrFun (congrFun (hmr ℓ) a) j).symm
+    · intro ℓ
+      ext (i | i) b
+      · show (0 : ℝ) + (headDirQK θ.sumFst Γ + headDirVO θ.sumFst Γ').write ℓ i b
+          = η.write ℓ (Sum.inl i) b
+        rw [zero_add]
+        exact (congrFun (congrFun (hw ℓ) i) b).symm
+      · show (0 : ℝ) + 0 = η.write ℓ (Sum.inr i) b
+        rw [zero_add]
+        exact (congrFun (congrFun (hmw ℓ) i) b).symm
+    · show -(Y * θ.D) + ((0 : Matrix d dOut ℝ) + 0) = η.D
+      rw [add_zero, add_zero, hD]
+  -- `dim V ≤ d(d−1)/2 + 2 ∑_ℓ H_ℓ d_{h,ℓ}²`, the dimension of the domain of the map
+  have hdim : Module.finrank ℝ (LinearMap.range Φ)
+      ≤ Fintype.card d * (Fintype.card d - 1) / 2
+        + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2 := by
+    have h := LinearMap.finrank_range_le Φ
+    rwa [Module.finrank_prod, Module.finrank_prod, finrank_antisymmetric, finrank_headFun_dtr,
+      ← two_mul] at h
+  -- `≥`: "The rank" of the proof of Lemma A.27 (`N_ε` and the blocks are analytic); `≤`: the
+  -- upper bound for residual networks of attention blocks and MLP blocks under pre-RMSNorm, as
+  -- `θ ↦ θ_τ` changes neither `E` nor the reads
+  filter_upwards [eventually_funDim_smallWrites_ge_norm
+    (Arch.attentionMlp (T := T) (d := d) sees σ (rmsNorm ε) H dh hid) θ
+    (analyticOnNhd_rmsNorm hε)
+    (fun ℓ => analyticOnNhd_f_sum (analyticOnNhd_f_attention (d := d) sees (rmsNorm ε) H dh ℓ)
+      (analyticOnNhd_f_mlp hσa ℓ)) _ hV] with τ hτ
+  have hle := funDim_add_le_residual_attentionMlp_rmsNorm ε (θ.smallWrites τ) hθa.rank_E
+    hθa.rank_Q hθa.rank_V
+  generalize Fintype.card d * (Fintype.card d - 1) / 2 = N at hle hdim ⊢
+  omega
+
+/-! ### Helpers: generic parameters of the MLP part -/
+
+/-- Helper (as `rank_eq_of_isUnit_det_rows_dmr` of `Residual/DepthMlpRMS.lean`): a matrix with
+`d` columns has rank `d` if some `d` of its rows form an invertible matrix. -/
+private theorem rank_eq_of_isUnit_det_rows_dtr {m : Type*} (M : Matrix m d ℝ) (ρ : d ↪ m)
+    (h : IsUnit (M.submatrix ρ id).det) : M.rank = Fintype.card d :=
+  le_antisymm (Matrix.rank_le_card_width M)
+    ((Matrix.rank_of_isUnit _ ((Matrix.isUnit_iff_isUnit_det _).2 h)).symm.le.trans
+      (Matrix.rank_submatrix_le M ρ id))
+
+/-- Helper (a copy of `ae_smallWritesGenericRMS` of `Residual/DepthMlpRMS.lean`, whose proof
+does not use a token; that theorem carries `[Nonempty T]` from its section): the conditions of
+Lemma A.27 under pre-RMSNorm, for MLP blocks, hold at generic parameters. -/
+private theorem ae_smallWritesGenericRMS_dtr
+    (μ : Measure (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut))
+    [μ.IsAddHaarMeasure] (hd : 2 ≤ Fintype.card d) (hdIn : Fintype.card d ≤ Fintype.card dIn)
+    (hdOut : Fintype.card d ≤ Fintype.card dOut) :
+    ∀ᵐ θ ∂μ, SmallWritesGenericRMS θ := by
+  classical
+  -- two distinct coordinates of `h`, `d` rows of `E`, `d` columns of `D`
+  obtain ⟨k₁, k₂, hk⟩ := Fintype.exists_pair_of_one_lt_card (show 1 < Fintype.card d by omega)
+  obtain ⟨ρ⟩ := Function.Embedding.nonempty_of_card_le hdIn
+  obtain ⟨cD⟩ := Function.Embedding.nonempty_of_card_le hdOut
+  -- the parameters with all entries `1`
+  let θ₁ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut :=
+    ⟨Matrix.of fun _ _ => 1, fun _ => Matrix.of fun _ _ => 1, fun _ => Matrix.of fun _ _ => 1,
+      Matrix.of fun _ _ => 1⟩
+  -- the entries of the reads and of the writes are linear, hence analytic, in the parameters
+  have hR : ∀ (ℓ : Fin L) (k : d) (i : hid ℓ), AnalyticOnNhd ℝ
+      (fun θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut => θ.read ℓ k i)
+      Set.univ := fun ℓ k i =>
+    analyticOnNhd_linear ((Matrix.entryLinearMap ℝ ℝ k i).comp
+      (Params.linRead (A := Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) (dIn := dIn)
+        (dOut := dOut) ℓ))
+  have hW : ∀ (ℓ : Fin L) (i : hid ℓ) (k : d), AnalyticOnNhd ℝ
+      (fun θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut => θ.write ℓ i k)
+      Set.univ := fun ℓ i k =>
+    analyticOnNhd_linear ((Matrix.entryLinearMap ℝ ℝ i k).comp
+      (Params.linWrite (A := Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) (dIn := dIn)
+        (dOut := dOut) ℓ))
+  -- the ranks of `E` and `D`: invertible minors
+  have h1 := ae_isUnit_det_submatrix μ
+  -- the rows of the writes are nonzero: their entries at `k₁` are
+  have h2 : ∀ᵐ θ ∂μ, ∀ ℓ (i : hid ℓ), θ.write ℓ i k₁ ≠ 0 :=
+    ae_all_iff.2 fun ℓ => ae_all_iff.2 fun i =>
+      ae_ne_zero_of_analytic μ (hW ℓ i k₁) ⟨θ₁, show (1 : ℝ) ≠ 0 from one_ne_zero⟩
+  -- the columns of the reads are nonzero: their entries at `k₁` are
+  have h3 : ∀ᵐ θ ∂μ, ∀ ℓ (i : hid ℓ), θ.read ℓ k₁ i ≠ 0 :=
+    ae_all_iff.2 fun ℓ => ae_all_iff.2 fun i =>
+      ae_ne_zero_of_analytic μ (hR ℓ k₁ i) ⟨θ₁, show (1 : ℝ) ≠ 0 from one_ne_zero⟩
+  -- two columns of distinct units, of one block or of two blocks, are not collinear: a `2 × 2`
+  -- minor does not vanish
+  have h4 : ∀ᵐ θ ∂μ, ∀ p q : (Σ ℓ, hid ℓ), p ≠ q →
+      θ.read p.1 k₁ p.2 * θ.read q.1 k₂ q.2 - θ.read q.1 k₁ q.2 * θ.read p.1 k₂ p.2 ≠ 0 := by
+    refine ae_all_iff.2 fun p => ae_all_iff.2 fun q => ?_
+    by_cases hpq : p = q
+    · exact Filter.Eventually.of_forall fun _ h => absurd hpq h
+    · -- witness: the reads of all blocks side by side are `E₀ W₀`, with a nonzero minor
+      obtain ⟨E₀, W₀, hEW⟩ := exists_minor_ne_zero hk hk hpq
+      let θ₀ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut :=
+        ⟨0, fun ℓ => Matrix.of fun k i => (E₀ * W₀) k ⟨ℓ, i⟩, 0, 0⟩
+      have hg : AnalyticOnNhd ℝ
+          (fun θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut =>
+            θ.read p.1 k₁ p.2 * θ.read q.1 k₂ q.2 - θ.read q.1 k₁ q.2 * θ.read p.1 k₂ p.2)
+          Set.univ :=
+        ((hR p.1 k₁ p.2).mul (hR q.1 k₂ q.2)).sub ((hR q.1 k₁ q.2).mul (hR p.1 k₂ p.2))
+      exact (ae_ne_zero_of_analytic μ hg ⟨θ₀, hEW⟩).mono fun _ h _ => h
+  filter_upwards [h1, h2, h3, h4] with θ h1 h2 h3 h4
+  refine ⟨rank_eq_of_isUnit_det_rows_dtr θ.E ρ (h1.2.2.1 ρ),
+    rank_eq_card_of_isUnit_det θ.D cD (h1.2.1 cD), fun ℓ i hi => h2 ℓ i (congrFun hi k₁),
+    fun ℓ i hi => h3 ℓ i (congrFun hi k₁), ?_⟩
+  -- if `c_p = r c_q`, the minor of the columns `p`, `q` vanishes
+  intro p q hpq r hr
+  have e1 : θ.read p.1 k₁ p.2 = r * θ.read q.1 k₁ q.2 := congrFun hr k₁
+  have e2 : θ.read p.1 k₂ p.2 = r * θ.read q.1 k₂ q.2 := congrFun hr k₂
+  apply h4 p q hpq
+  rw [e1, e2]
+  ring
 
 /-- **The conditions of Lemma A.27 under pre-RMSNorm hold at generic parameters,** for
 `d_in, d_out ≥ d ≥ 2`, heads of width `1 ≤ d_h ≤ d` and blocks of any widths. -/
@@ -479,7 +744,12 @@ theorem ae_smallWritesGeneric_attentionMlp_rmsNorm
     (hdOut : Fintype.card d ≤ Fintype.card dOut)
     (hdh : ∀ ℓ, Fintype.card (dh ℓ) ≤ Fintype.card d) (hdh0 : ∀ ℓ, 0 < Fintype.card (dh ℓ)) :
     ∀ᵐ θ ∂μ, SmallWritesGenericAttentionRMS θ.sumFst ∧ SmallWritesGenericRMS θ.sumSnd := by
-  sorry
+  -- the conditions on the heads hold for the first part, those on the hidden units for the
+  -- second part, of generic parameters of the sum (`Generic/Sum.lean`)
+  filter_upwards [ae_sumFst μ
+      (ae_smallWritesGenericAttentionRMS Measure.addHaar hd hdIn hdOut hdh hdh0),
+    ae_sumSnd μ (ae_smallWritesGenericRMS_dtr Measure.addHaar hd hdIn hdOut)] with θ h1 h2
+  exact ⟨h1, h2⟩
 
 /-- **Theorem 4.7 of the skips paper for attention blocks and MLP blocks under pre-RMSNorm
 (`ε > 0`):** with `d_in, d_out ≥ d ≥ 2`, heads of width `1 ≤ d_h ≤ d`, blocks of any widths and a
@@ -499,7 +769,20 @@ theorem ae_funDim_attentionMlp_residual_rmsNorm (hε : 0 < ε)
           + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2)
       = Module.finrank ℝ
           (Params (Arch.attentionMlp (T := T) (d := d) sees σ (rmsNorm ε) H dh hid) dIn dOut) := by
-  sorry
+  have : Nonempty T := ⟨t₁⟩
+  -- one parameter `θ₀` with the conditions of Lemma A.27, and one small `τ ≠ 0`:
+  -- `fd(θ₀_τ) = P − d(d−1)/2 − s`
+  obtain ⟨θ₀, hθa, hθm⟩ :=
+    (ae_smallWritesGeneric_attentionMlp_rmsNorm μ hd hdIn hdOut hdh hdh0).exists
+  obtain ⟨τ, hτ⟩ := (eventually_funDim_smallWrites_attentionMlp_rmsNorm hε hσ hσa hU t₁ t₂ h12
+    hs2 hs1 θ₀ hθa hθm).exists
+  -- at almost every `θ`, `fd(θ) ≥ fd(θ₀_τ)` (analytic outputs) and `fd(θ) ≤ P − d(d−1)/2 − s`
+  filter_upwards [ae_funDim_ge (Arch.attentionMlp sees σ (rmsNorm ε) H dh hid) 1
+      (fun ℓ => analyticOnNhd_f_sum (analyticOnNhd_f_attention (d := d) sees (rmsNorm ε) H dh ℓ)
+        (analyticOnNhd_f_mlp hσa ℓ)) (analyticOnNhd_rmsNorm hε) μ (θ₀.smallWrites τ),
+    ae_funDim_add_le_residual_attentionMlp_rmsNorm ε μ hdIn hdh] with θ h1 h2
+  generalize Fintype.card d * (Fintype.card d - 1) / 2 = N at hτ h2 ⊢
+  omega
 
 /-- **Theorem 4.7, the gain, for attention blocks and MLP blocks under pre-RMSNorm
 (`ε > 0`):** if moreover every block has total width `H d_h + d_hidden ≥ d`, at almost every
@@ -518,7 +801,13 @@ theorem ae_funDim_attentionMlp_residual_rmsNorm_ge_add (hε : 0 < ε)
     ∀ᵐ θ ∂μ, funDim (Arch.attentionMlp sees σ (rmsNorm ε) H dh hid) 0 θ
         + L * (Fintype.card d * (Fintype.card d - 1) / 2)
       ≤ funDim (Arch.attentionMlp sees σ (rmsNorm ε) H dh hid) 1 θ := by
-  sorry
+  -- `fd₁ = P − d(d−1)/2 − s` and `fd₀ ≤ P − (L + 1) d(d−1)/2 − s`
+  filter_upwards [ae_funDim_attentionMlp_residual_rmsNorm hε hσ hσa hU μ hd hdIn hdOut hdh hdh0
+      t₁ t₂ h12 hs2 hs1, ae_funDim_add_le_skipless_attentionMlp_rmsNorm ε μ hdIn hdh hW]
+    with θ h1 h2
+  rw [add_one_mul] at h2
+  generalize Fintype.card d * (Fintype.card d - 1) / 2 = N at h1 h2 ⊢
+  omega
 
 /-- **Theorem 4.7 of the skips paper for attention blocks and tanh blocks under pre-RMSNorm
 (`ε > 0`):** at almost every parameter the residual network has the functional dimension
@@ -536,7 +825,8 @@ theorem ae_funDim_attention_tanh_residual_rmsNorm (hε : 0 < ε)
       = Module.finrank ℝ
           (Params
           (Arch.attentionMlp (T := T) (d := d) sees Real.tanh (rmsNorm ε) H dh hid) dIn dOut) := by
-  sorry
+  exact ae_funDim_attentionMlp_residual_rmsNorm hε hasDerivAt_tanh analyticOnNhd_tanh
+    (tanh_unitsRigid _ _ _) μ hd hdIn hdOut hdh hdh0 t₁ t₂ h12 hs2 hs1
 
 /-- **Theorem 4.7 of the skips paper for attention blocks and GELU blocks under pre-RMSNorm
 (`ε > 0`):** at almost every parameter the residual network has the functional dimension
@@ -554,6 +844,7 @@ theorem ae_funDim_attention_gelu_residual_rmsNorm (hε : 0 < ε)
       = Module.finrank ℝ
           (Params
             (Arch.attentionMlp (T := T) (d := d) sees gelu (rmsNorm ε) H dh hid) dIn dOut) := by
-  sorry
+  exact ae_funDim_attentionMlp_residual_rmsNorm hε hasDerivAt_gelu analyticOnNhd_gelu
+    (gelu_unitsRigid _ _ _) μ hd hdIn hdOut hdh hdh0 t₁ t₂ h12 hs2 hs1
 
 end Skips
