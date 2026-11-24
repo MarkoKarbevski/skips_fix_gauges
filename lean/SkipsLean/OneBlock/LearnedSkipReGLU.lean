@@ -554,6 +554,128 @@ theorem noSymmetricPart_reglu_rmsNorm (hε : 0 < ε) [Nonempty (hid 0)]
   rw [qv_lsu, div_eq_zero_iff] at h2
   exact h2.resolve_right (Nat.cast_ne_zero.2 Fintype.card_ne_zero)
 
+omit [DecidableEq d] in
+/-- Helper (the block part of Step 4 of part (ii), Lemma B.3 for ReGLU): a direction `ψ` of the
+weights of the block (`ψ.E = 0`, `ψ.D = 0`) along which the block has derivative zero at the
+inputs with no gate at its kink is a rescaling of the values plus a rescaling of the gates, so it
+lies in the span of the directions of symmetries inside the block. -/
+private theorem mem_span_lsu (hε : 0 < ε)
+    (θ : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
+    (hθ : OneBlockGenericReGLURMS θ)
+    (ψ : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
+    (hψE : ψ.E = 0) (hψD : ψ.D = 0)
+    (h : ∀ x ∈ noKinkGateRMS θ,
+      fderiv ℝ ((Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid).f 0)
+          (rmsNorm ε (x * θ.E) * θ.read 0) (rmsNorm ε (x * θ.E) * ψ.read 0) * θ.write 0
+        + (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid).f 0
+          (rmsNorm ε (x * θ.E) * θ.read 0) * ψ.write 0 = 0) :
+    ψ ∈ Submodule.span ℝ
+      {η | InsideBlocks (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) θ η} := by
+  -- the derivative of the block along `ψ` vanishes at every row with no gate at its kink
+  -- (`key_lsu` with `X = 0`)
+  have hzero : ∀ v : d → ℝ, (∀ i, v ⬝ᵥ (θ.read 0)ᵀ (Sum.inl i) ≠ 0) → ∀ k,
+      unitSum_lsu (θ.read 0) (ψ.read 0) (θ.write 0) (ψ.write 0) v k = 0 := by
+    intro v hv k
+    have h1 := key_lsu hε θ hθ.gated.rank_E 0 (ψ.read 0) (ψ.write 0) (fun x hx => by
+      rw [tangentRMS_zero_lsu, Matrix.zero_mul, zero_add]
+      exact h x hx) v hv k
+    rw [qv_zero_lsu, mul_zero, mul_zero, zero_mul, Matrix.zero_mul, zero_add] at h1
+    exact h1
+  -- Lemma B.3 for ReGLU with `E` and `D` replaced by the identity and `M = 0`: the gate column
+  -- `c_i` moves by `λ_i c_i`, the value column `e_i` by `-α_i e_i` and the write row `a_i` by
+  -- `(α_i - λ_i) a_i`
+  obtain ⟨-, -, lam, α, hlam⟩ := relu_gated_units_flat
+    (fun i => (θ.read 0)ᵀ (Sum.inl i)) 0 (fun i => (θ.read 0)ᵀ (Sum.inr i)) 0
+    (fun i => θ.write 0 i) 0 0 (fun i => (ψ.read 0)ᵀ (Sum.inl i)) 0
+    (fun i => (ψ.read 0)ᵀ (Sum.inr i)) 0 (fun i => ψ.write 0 i)
+    (fun i => hθ.gated.row_ne_zero i) (fun i => hθ.gated.gate_ne_zero i)
+    (fun i j hij => hθ.gated.gate_not_collinear i j hij) (fun i => hθ.gated.value_ne_zero i)
+    (fun i r h => hθ.value_not_gate i r (by have h1 := congrArg Prod.fst h; exact h1)) (by
+      intro v hv
+      have hv' : ∀ i, v ⬝ᵥ (θ.read 0)ᵀ (Sum.inl i) ≠ 0 := fun i => by
+        have h := hv i
+        simp only [Pi.zero_apply, add_zero] at h
+        exact h
+      funext k
+      have h := hzero v hv' k
+      simp only [Matrix.vecMul_zero, Pi.add_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul,
+        Pi.zero_apply, add_zero, zero_add]
+      exact h)
+  -- `ψ = rescaleDir θ α + rescaleDirGate 1 θ λ`, component by component (one block)
+  obtain ⟨α', hα'⟩ : ∃ α' : ∀ ℓ : Fin 1, hid ℓ → ℝ, α' 0 = α :=
+    ⟨fun ℓ => Fin.cases α (fun l => l.elim0) ℓ, rfl⟩
+  obtain ⟨β', hβ'⟩ : ∃ β' : ∀ ℓ : Fin 1, hid ℓ → ℝ, β' 0 = lam :=
+    ⟨fun ℓ => Fin.cases lam (fun l => l.elim0) ℓ, rfl⟩
+  have hψ : ψ = rescaleDir θ α' + rescaleDirGate 1 θ β' := by
+    refine Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_
+    · show ψ.E = 0 + 0
+      rw [add_zero]
+      exact hψE
+    · obtain rfl := Subsingleton.elim ℓ 0
+      ext k j
+      rcases j with i | i
+      · have h1 : ψ.read 0 k (Sum.inl i) = lam i * θ.read 0 k (Sum.inl i) :=
+          congrFun (hlam i).1 k
+        show ψ.read 0 k (Sum.inl i) = 0 + β' 0 i * θ.read 0 k (Sum.inl i)
+        rw [hβ', zero_add]
+        exact h1
+      · have h1 : ψ.read 0 k (Sum.inr i) = -(α i) * θ.read 0 k (Sum.inr i) :=
+          congrFun (hlam i).2.2.1 k
+        show ψ.read 0 k (Sum.inr i) = -(α' 0 i) * θ.read 0 k (Sum.inr i) + 0
+        rw [hα', add_zero]
+        exact h1
+    · obtain rfl := Subsingleton.elim ℓ 0
+      ext i k
+      have h1 : ψ.write 0 i k = (α i - lam i) * θ.write 0 i k := congrFun (hlam i).2.2.2.2 k
+      show ψ.write 0 i k = α' 0 i * θ.write 0 i k + -(((1 : ℕ) : ℝ) * β' 0 i) * θ.write 0 i k
+      rw [hα', hβ', Nat.cast_one, h1]
+      ring
+    · show ψ.D = 0 + 0
+      rw [add_zero]
+      exact hψD
+  -- each part is the direction of a symmetry inside the block
+  rw [hψ]
+  exact Submodule.add_mem _ (Submodule.subset_span (insideBlocks_rescaleDir θ α'))
+    (Submodule.subset_span (insideBlocks_rescaleDirGate relu_homogeneous θ β'))
+
+/-- Helper (Steps 3 and 5, `funDimLearned_eq_funDim_residual_add_of_noSymmetricPart_on` with the
+open cone `V` of pre-activations with no gate at its kink): under the conditions
+`OneBlockGenericReGLURMS`, for an invertible skip, the functional dimension with the full learned
+skip is that of the residual network plus `d (d + 1)/2`, and a batch of inputs of
+`noKinkGateRMS θ` has a Jacobian of this rank. -/
+private theorem learned_on_lsu (hε : 0 < ε) [Nonempty (hid 0)]
+    (θ : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
+    (hθ : OneBlockGenericReGLURMS θ) (R : Fin 1 → Matrix d d ℝ) (hR : IsUnit (R 0).det) :
+    funDimLearned (Arch.gated relu (rmsNorm ε) hid) (θ, R)
+        = funDim (Arch.gated relu (rmsNorm ε) hid) 1 θ
+          + Fintype.card d * (Fintype.card d + 1) / 2 ∧
+      ∃ (n : ℕ) (X : Fin n → Matrix T dIn ℝ), (∀ i, X i ∈ noKinkGateRMS θ) ∧
+        jacobianRankSkips (Arch.gated relu (rmsNorm ε) hid)
+            (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) X (θ, R)
+          = funDimLearned (Arch.gated relu (rmsNorm ε) hid) (θ, R) :=
+  funDimLearned_eq_funDim_residual_add_of_noSymmetricPart_on
+    (A := Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) hε rfl
+    {M | ∀ t i, M t (Sum.inl i) ≠ 0} isOpen_gateSet_lsu
+    (fun _ hM _ hc t i => mul_ne_zero (hc t).ne' (hM t i)) contDiffOn_f_lsu θ R
+    hθ.gated.rank_E hθ.gated.rank_D hR (exists_input_lsu θ hθ.gated)
+    (noSymmetricPart_reglu_rmsNorm hε θ hθ)
+    (mem_span_lsu hε θ hθ)
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (the private `half_add_half_lsk` of `OneBlock/LearnedSkipKinds.lean`):
+`d (d + 1)/2 + d (d − 1)/2 = d²` (both products are even). -/
+private theorem half_add_half_lsu (n : ℕ) : n * (n + 1) / 2 + n * (n - 1) / 2 = n ^ 2 := by
+  have h1 := Nat.two_mul_div_two_of_even (Nat.even_mul_succ_self n)
+  have h2 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self n)
+  have h3 : n * (n + 1) + n * (n - 1) = 2 * n ^ 2 := by
+    cases n with
+    | zero => rfl
+    | succ m => rw [Nat.add_sub_cancel]; ring
+  generalize n * (n + 1) = y at h1 h3 ⊢
+  generalize n * (n - 1) = x at h2 h3 ⊢
+  generalize n ^ 2 = q at h3 ⊢
+  omega
+
 /-- **Theorem 4.6 (ii), "A learned skip raises it by exactly `d (d + 1)/2` more than an identity
 skip", for a ReGLU block, at one parameter:** under the conditions `OneBlockGenericReGLURMS`, for
 an invertible skip `A = R 0`, the network with the full learned skip has at `(θ, A)` the functional
@@ -564,7 +686,7 @@ theorem funDimLearned_reglu_rmsNorm_eq_residual_add (hε : 0 < ε) [Nonempty (hi
     funDimLearned (Arch.gated relu (rmsNorm ε) hid) (θ, R)
       = funDim (Arch.gated relu (rmsNorm ε) hid) 1 θ
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  exact (learned_on_lsu hε θ hθ R hR).1
 
 /-- **Theorem B.1 (iii) for a ReGLU block with a full learned skip, at one parameter:** under the
 conditions `OneBlockGenericReGLURMS`, for an invertible skip,
@@ -576,7 +698,17 @@ theorem funDimLearned_reglu_rmsNorm (hε : 0 < ε) [Nonempty (hid 0)]
         + (Fintype.card d * (Fintype.card d - 1) + 2 * Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
         + Fintype.card d ^ 2 := by
-  sorry
+  -- the value with the learned skip, `fd_res + d(d+1)/2`, and the residual value
+  -- `fd_res + d(d-1)/2 + 2 d_hidden = P`; `d(d+1)/2 + d(d-1)/2 = d²`
+  have h1 := (learned_on_lsu hε θ hθ R hR).1
+  have h2 := funDim_reglu_oneBlock_residual_rmsNorm hε θ hθ
+  have h3 := half_add_half_lsu (Fintype.card d)
+  have h4 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self (Fintype.card d))
+  rw [h1]
+  generalize Fintype.card d * (Fintype.card d + 1) = y at h3 ⊢
+  generalize Fintype.card d * (Fintype.card d - 1) = x at h2 h3 h4 ⊢
+  generalize Fintype.card d ^ 2 = q at h3 ⊢
+  omega
 
 /-- **Theorem B.1 (iii) in the paper's own sense, for a ReGLU block, at one parameter:** a finite
 batch of inputs with no gate at its kink on which the Jacobian in the weights and the skip has the
@@ -591,7 +723,97 @@ theorem exists_jacobianRankSkips_reglu_rmsNorm (hε : 0 < ε) [Nonempty (hid 0)]
         = Module.finrank ℝ
             (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
           + Fintype.card d ^ 2 := by
-  sorry
+  -- the batch of `learned_on_lsu`, whose rank is the functional dimension
+  obtain ⟨n, X, hX, hJ⟩ := (learned_on_lsu hε θ hθ R hR).2
+  exact ⟨n, X, hX, by rw [hJ]; exact funDimLearned_reglu_rmsNorm hε θ hθ R hR⟩
+
+/-! ### Helpers: almost every `(θ, A)` -/
+
+omit [DecidableEq d] in
+/-- Helper (the private `borelSpace_skips_lsk` of `OneBlock/LearnedSkipKinds.lean`): the skips
+`Fin 1 → Matrix d d ℝ` carry the Borel σ-algebra of their norm topology. -/
+private theorem borelSpace_skips_lsu : BorelSpace (Fin 1 → Matrix d d ℝ) :=
+  inferInstanceAs (BorelSpace (Fin 1 → d → d → ℝ))
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper (the private `ae_fst_lsk` of `OneBlock/LearnedSkipKinds.lean`): a condition on the
+weights that holds at almost every `θ` holds at almost every `(θ, v)`. -/
+private theorem ae_fst_lsu {A : Arch T d 1} {V : Type*} [NormedAddCommGroup V]
+    [NormedSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] (hB : BorelSpace V)
+    (μ : Measure (Params A dIn dOut × V)) (hμ : μ.IsAddHaarMeasure) {Q : Params A dIn dOut → Prop}
+    (h : ∀ᵐ θ ∂(Measure.addHaar : Measure (Params A dIn dOut)), Q θ) :
+    ∀ᵐ p ∂μ, Q p.1 := by
+  -- a measurable null set `N` outside which `Q` holds
+  rw [ae_iff] at h
+  obtain ⟨N, hsub, hN, hN0⟩ := exists_measurable_superset_of_null h
+  have hc : ∀ᵐ θ ∂(Measure.addHaar : Measure (Params A dIn dOut)), θ ∈ Nᶜ :=
+    measure_eq_zero_iff_ae_notMem.1 hN0
+  have h1 := (ae_comp_linearMap_mem_iff (LinearMap.fst ℝ (Params A dIn dOut) V) μ
+    Measure.addHaar (LinearMap.fst_surjective) hN.compl).2 hc
+  refine h1.mono fun p hp => ?_
+  by_contra hq
+  exact hp (hsub hq)
+
+/-- Helper (the private `ae_isUnit_det_lst` of `OneBlock/LearnedSkipTriangular.lean`): if a square
+matrix that depends linearly on a point of `E` is the identity at one point, it is invertible at
+almost every point (its determinant is analytic and not identically zero). -/
+private theorem ae_isUnit_det_lsu {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [FiniteDimensional ℝ E] [MeasurableSpace E] (hB : BorelSpace E) (μ : Measure E)
+    (hμ : μ.IsAddHaarMeasure) (Φ : E →ₗ[ℝ] Matrix d d ℝ) (x₀ : E) (h₀ : Φ x₀ = 1) :
+    ∀ᵐ x ∂μ, IsUnit (Φ x).det := by
+  -- the entries are linear, so the determinant is analytic
+  have hentry : ∀ i j, AnalyticOnNhd ℝ (fun x => Φ x i j) Set.univ := fun i j =>
+    (LinearMap.toContinuousLinearMap ((Matrix.entryLinearMap ℝ ℝ i j) ∘ₗ Φ)).analyticOnNhd _
+  have hφ : AnalyticOnNhd ℝ (fun x => (Φ x).det) Set.univ := by
+    simp only [Matrix.det_apply']
+    exact Finset.analyticOnNhd_fun_sum _ fun σ _ => analyticOnNhd_const.mul
+      (Finset.analyticOnNhd_fun_prod _ fun i _ => hentry (σ i) i)
+  -- it is `1` at `x₀`, so its zero set is null
+  have hnull := measure_zeroSet_of_analytic μ hφ ⟨x₀, by rw [h₀, Matrix.det_one]; exact one_ne_zero⟩
+  rw [ae_iff]
+  simpa only [isUnit_iff_ne_zero, not_not] using hnull
+
+/-- Helper: at almost every `(θ, A)` the conditions `OneBlockGenericReGLURMS θ` hold
+(`ae_oneBlockGenericReGLURMS` on the first factor) and the skip `A 0` is invertible. -/
+private theorem ae_generic_lsu
+    (μ : Measure (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut
+      × (Fin 1 → Matrix d d ℝ)))
+    [hμ : μ.IsAddHaarMeasure] (hd : 2 ≤ Fintype.card d)
+    (hdIn : Fintype.card d ≤ Fintype.card dIn) (hdOut : Fintype.card d ≤ Fintype.card dOut) :
+    ∀ᵐ p ∂μ, OneBlockGenericReGLURMS p.1 ∧ IsUnit (p.2 0).det := by
+  have hBs : BorelSpace (Fin 1 → Matrix d d ℝ) := borelSpace_skips_lsu
+  have hBp : BorelSpace (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut
+      × (Fin 1 → Matrix d d ℝ)) := Prod.borelSpace
+  have h1 := ae_fst_lsu hBs μ hμ
+    (ae_oneBlockGenericReGLURMS (σ := relu) (ε := ε) Measure.addHaar hd hdIn hdOut)
+  have h2 : ∀ᵐ p ∂μ, IsUnit (p.2 0).det := ae_isUnit_det_lsu hBp μ hμ
+    ((LinearMap.proj (R := ℝ) (φ := fun _ : Fin 1 => Matrix d d ℝ) 0)
+      ∘ₗ (LinearMap.snd ℝ (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
+        (Fin 1 → Matrix d d ℝ))) (0, fun _ => 1) rfl
+  exact h1.and h2
+
+omit [Fintype T] [Nonempty T] in
+/-- Helper (the private `ae_eq_residual_add_lsk` of `OneBlock/LearnedSkipKinds.lean`): from the
+value `fd + (d (d − 1) + s) = P + d²` with the learned skip and the value
+`fd₁ + (d (d − 1)/2 + s) = P` of the residual network, the difference is `d (d + 1)/2`. -/
+private theorem ae_eq_residual_add_lsu {A : Arch T d 1}
+    (μ : Measure (Params A dIn dOut × (Fin 1 → Matrix d d ℝ))) (ν : Measure (Params A dIn dOut))
+    {k₁ k₂ s : ℕ}
+    (hval : ∀ᵐ p ∂μ, funDimLearned A p + k₁
+      = Module.finrank ℝ (Params A dIn dOut) + Fintype.card d ^ 2)
+    (hres : ∀ᵐ θ' ∂ν, funDim A 1 θ' + k₂ = Module.finrank ℝ (Params A dIn dOut))
+    (hk₁ : k₁ = Fintype.card d * (Fintype.card d - 1) + s)
+    (hk₂ : k₂ = Fintype.card d * (Fintype.card d - 1) / 2 + s) :
+    ∀ᵐ p ∂μ, ∀ᵐ θ' ∂ν, funDimLearned A p
+      = funDim A 1 θ' + Fintype.card d * (Fintype.card d + 1) / 2 := by
+  have h := half_add_half_lsu (Fintype.card d)
+  have h2 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self (Fintype.card d))
+  filter_upwards [hval] with p hp
+  filter_upwards [hres] with θ' hθ'
+  generalize Fintype.card d * (Fintype.card d + 1) = y at h ⊢
+  generalize Fintype.card d * (Fintype.card d - 1) = x at h h2 hk₁ hk₂
+  generalize Fintype.card d ^ 2 = q at h hp
+  omega
 
 /-- **Theorem B.1 (iii) of the skips paper for one ReGLU block with a full learned skip,
 `ε > 0`:** for `d_in, d_out ≥ d ≥ 2` and a block of any width with at least one hidden unit, at
@@ -605,7 +827,9 @@ theorem ae_funDimLearned_reglu_rmsNorm (hε : 0 < ε) [Nonempty (hid 0)]
         + (Fintype.card d * (Fintype.card d - 1) + 2 * Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
         + Fintype.card d ^ 2 := by
-  sorry
+  -- the conditions and an invertible skip at almost every `(θ, A)`
+  filter_upwards [ae_generic_lsu μ hd hdIn hdOut] with p hp
+  exact funDimLearned_reglu_rmsNorm hε p.1 hp.1 p.2 hp.2
 
 /-- **Theorem B.1 (iii) in the paper's own sense, for one ReGLU block with a full learned skip:**
 at almost every `(θ, A)` there is a finite batch of inputs with no gate at its kink on which the
@@ -622,7 +846,9 @@ theorem ae_exists_jacobianRankSkips_reglu_rmsNorm (hε : 0 < ε) [Nonempty (hid 
         = Module.finrank ℝ
             (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
           + Fintype.card d ^ 2 := by
-  sorry
+  -- the conditions and an invertible skip at almost every `(θ, A)`
+  filter_upwards [ae_generic_lsu μ hd hdIn hdOut] with p hp
+  exact exists_jacobianRankSkips_reglu_rmsNorm hε p.1 hp.1 p.2 hp.2
 
 /-- **Theorem 4.6 (ii) of the skips paper, "A learned skip raises it by exactly `d (d + 1)/2` more
 than an identity skip", for one ReGLU block, `ε > 0`:** at almost every `(θ, A)` and almost every
@@ -638,6 +864,8 @@ theorem ae_funDimLearned_reglu_rmsNorm_eq_residual_add (hε : 0 < ε) [Nonempty 
     ∀ᵐ p ∂μ, ∀ᵐ θ' ∂ν, funDimLearned (Arch.gated relu (rmsNorm ε) hid) p
       = funDim (Arch.gated relu (rmsNorm ε) hid) 1 θ'
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the value with the learned skip and the residual value, at almost every point
+  exact ae_eq_residual_add_lsu μ ν (ae_funDimLearned_reglu_rmsNorm hε μ hd hdIn hdOut)
+    (ae_funDim_reglu_oneBlock_residual_rmsNorm hε ν hd hdIn hdOut) rfl rfl
 
 end Skips
