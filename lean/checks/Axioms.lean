@@ -1035,3 +1035,15 @@ import SkipsLean
 #print axioms Skips.differentiable_f_attention
 #print axioms Skips.exists_cobDir_add_headDir_of_keeps
 #print axioms Skips.ae_oneBlockGenericAttention
+#print axioms Skips.hasDerivAt_attnScore
+#print axioms Skips.hasDerivAt_attnValue
+#print axioms Skips.eval_attention_oneBlock
+#print axioms Skips.eval_attention_two_tokens
+#print axioms Skips.flat_attention_oneBlock_keeps
+#print axioms Skips.flat_attention_oneBlock
+#print axioms Skips.flat_attention_oneBlock_residual
+#print axioms Skips.funDim_attention_oneBlock
+#print axioms Skips.ae_funDim_attention_oneBlock
+#print axioms Skips.funDim_attention_oneBlock_residual
+#print axioms Skips.ae_funDim_attention_oneBlock_residual
+#print axioms Skips.ae_funDim_attention_oneBlock_residual_eq_add

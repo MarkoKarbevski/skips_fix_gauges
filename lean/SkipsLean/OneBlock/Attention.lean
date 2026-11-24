@@ -125,6 +125,7 @@ private theorem hasDerivAt_transpose_ob2 {m n : Type*} [Fintype m] [Fintype n]
     HasDerivAt (fun τ => (A τ)ᵀ) A'ᵀ 0 :=
   hasDerivAt_pi.2 fun b => hasDerivAt_pi.2 fun a => hasDerivAt_pi.1 (hasDerivAt_pi.1 hA a) b
 
+omit [DecidableEq d] [Fintype dOut] in
 /-- `dAttnScore θ η i` is the derivative of `B_i` along the line `θ + τ η`. -/
 theorem hasDerivAt_attnScore (θ η : Params (Arch.attention sees χ H dh) dIn dOut) (i : H 0) :
     HasDerivAt (fun τ : ℝ => attnScore (θ + τ • η) i) (dAttnScore θ η i) 0 := by
@@ -136,6 +137,7 @@ theorem hasDerivAt_attnScore (θ η : Params (Arch.attention sees χ H dh) dIn d
     (hasDerivAt_transpose_ob2 hE)).const_smul (Real.sqrt (Fintype.card (dh 0)))⁻¹
   exact h.congr_deriv (by simp only [zero_smul, add_zero, Matrix.add_mul, dAttnScore])
 
+omit [DecidableEq d] in
 /-- `dAttnValue θ η i` is the derivative of `C_i` along the line `θ + τ η`. -/
 theorem hasDerivAt_attnValue (θ η : Params (Arch.attention sees χ H dh) dIn dOut) (i : H 0) :
     HasDerivAt (fun τ : ℝ => attnValue (θ + τ • η) i) (dAttnValue θ η i) 0 := by
@@ -145,6 +147,7 @@ theorem hasDerivAt_attnValue (θ η : Params (Arch.attention sees χ H dh) dIn d
     (hasDerivAt_line_ob2 (attnO θ i) (attnO η i))) (hasDerivAt_line_ob2 θ.D η.D)
   exact h.congr_deriv (by simp only [zero_smul, add_zero, Matrix.add_mul, dAttnValue])
 
+omit [DecidableEq d] [Fintype dOut] in
 /-- **Proof of Theorem C.1 for attention blocks, the reduction:** without normalization, the
 network of one attention block with the stream matrix `S 0` gives the output
 `x E S_0 D + ∑_i P_i(x) x C_i`, where `P_i(x)` holds the weights of the scores `x B_i x^⊤`: "the
@@ -270,6 +273,7 @@ private theorem row_add_sum_ob2 {ι m n : Type*} [Fintype ι] (A : Matrix m n �
   ext o
   rw [Matrix.add_apply, Matrix.sum_apply, Pi.add_apply, Finset.sum_apply]
 
+omit [DecidableEq d] [Fintype dOut] in
 /-- **Equation (8):** let token `t₂` see itself and another token `t₁`, and let `k` be the number
 of tokens other than `t₂` that `t₂` sees. At the input with the row `u` at `t₂` and the row
 `u − v` at every other token, the output at `t₂` is
@@ -384,6 +388,7 @@ private theorem eq_zero_of_vecMul_ob2 {m n : Type*} [Fintype m] [Fintype n] [Dec
     rw [Matrix.mulVec_transpose]
     exact h v hv)
 
+omit [DecidableEq d] in
 /-- **Proof of Theorem C.1 for attention blocks, Step 2, for any stream matrix:** let token `t₂`
 see itself and another token `t₁`, and let some `v` have the columns `B_i v^⊤` nonzero and
 pairwise non-collinear and every row `v C_i` nonzero. Then a flat direction `η` of the network
