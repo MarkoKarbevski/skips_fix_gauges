@@ -22,8 +22,9 @@ Here the half "at most" for ReLU, ReLU² and ReGLU blocks and a full learned ski
   rotations only);
 * with `U` the rescalings of the hidden units (`s` dimensions) and the value for the residual
   network (`OneBlock/ResidualRMSZeroRescaleGeneric.lean`,
-  `OneBlock/ResidualRMSZeroReGLUGeneric.lean`): at almost every weights and skip `(θ, A)` the functional dimension with the learned skip `A`
-  exceeds that of the residual network with the weights `θ` by at most `d(d+1)/2 − 1`.
+  `OneBlock/ResidualRMSZeroReGLUGeneric.lean`): at almost every weights and skip `(θ, A)` the
+  functional dimension with the learned skip `A` exceeds that of the residual network with the
+  weights `θ` by at most `d(d+1)/2 − 1`.
 
 The functional dimensions are Lean's `funDimLearned` and `funDim` (all inputs). For the residual
 network `funDim` is the paper's functional dimension (a batch of the paper's inputs has the same
