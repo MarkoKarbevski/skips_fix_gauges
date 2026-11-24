@@ -303,6 +303,7 @@ private theorem preact_eq (x : dIn → ℝ) (k : Fin L) (i : hid k) :
   rw [hrow_eq, Matrix.vecMul_vecMul]
   rfl
 
+omit [Fintype T] in
 /-- The vectors `E Θ_k w_i` are nonzero: `E` has a left inverse, `Θ_k` is invertible and
 `w_i ≠ 0`. -/
 private theorem resVec_ne_zero (hθ : FirstBlockGeneric θ) {B : Matrix d dIn ℝ}
@@ -349,6 +350,7 @@ private theorem eval_skipless_congr {σ : ℝ → ℝ} {L' : ℕ} {d' : Type*} [
 
 /-! ### ReLU: the argument at a generic row -/
 
+omit [Fintype T] in
 /-- **The heart of the proof for ReLU.** Let `x₀` be a row off the hyperplanes of the residual
 network and off those of the first block of the skipless one, at which fewer than `d` units of
 the first skipless block are active. Then the two networks differ. -/
@@ -628,7 +630,7 @@ private theorem tendsto_hidden_gelu_ray {m : Type*} [Fintype m] (S : Fin L → M
     refine (h1.add h2).congr' (Eventually.of_forall fun t => ?_)
     exact (mul_add _ _ _).symm
 
-omit [∀ ℓ, DecidableEq (hid ℓ)] in
+omit [Fintype T] [Fintype dOut] [∀ ℓ, DecidableEq (hid ℓ)] in
 /-- `F(t X)/t → F^ReLU(X)`, for any model dimension (a universe-polymorphic form of
 `tendsto_eval_gelu_ray`). -/
 private theorem tendsto_eval_gelu_ray' {m : Type*} [Fintype m] (S : Fin L → Matrix m m ℝ)
