@@ -31,7 +31,8 @@ Here:
 
 `Matrix.PosDef` is Mathlib's notion: Hermitian (for real matrices: symmetric) and positive on
 nonzero vectors; Mathlib defines it with finitely supported vectors, and for a finite index type
-it is `0 < x ⬝ᵥ (M *ᵥ x)` for every `x ≠ 0` (`Matrix.posDef_iff_dotProduct_mulVec`). `BlockTriangular id` is "upper triangular" (entries below
+it is `0 < x ⬝ᵥ (M *ᵥ x)` for every `x ≠ 0` (`Matrix.posDef_iff_dotProduct_mulVec`).
+`BlockTriangular id` is "upper triangular" (entries below
 the diagonal vanish), as in `exists_cob_learned_upperTriangular` of
 `Residual/OneChangeOfBasis.lean`, which is the first network below without "positive diagonal" and
 for skips that need not be invertible.
