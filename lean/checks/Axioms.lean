@@ -1274,3 +1274,7 @@ import SkipsLean
 #print axioms Skips.cayley_mem_orthogonalGroup
 #print axioms Skips.exists_det_one_add_mul_diagonal_ne_zero
 #print axioms Skips.exists_cayley_mul_diagonal_of_mem_orthogonalGroup
+#print axioms Skips.ae_finrank_le_funDim_add_of_ae_locally_cob
+#print axioms Skips.ae_finrank_le_funDim_add_of_ae_locally_cob_const
+#print axioms Skips.ae_finrank_le_funDim_add_of_ae_locally_cob_orthogonal
+#print axioms Skips.ae_finrank_le_funDim_add_of_ae_locally_cob_const_orthogonal
