@@ -200,8 +200,9 @@ private theorem exists_input_ss {E : Matrix dIn d ℝ} {Ep : Matrix d dIn ℝ} (
     rw [vecMul_vecMul, hEp, vecMul_one]⟩
 
 omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
-private theorem eq_zero_of_forall_mul_eq_zero_ss {m n : Type*} [Fintype m] [DecidableEq m]
+private theorem eq_zero_of_forall_mul_eq_zero_ss {m n : Type*} [Fintype m]
     {M : Matrix m n ℝ} (h : ∀ w : Matrix T m ℝ, w * M = 0) : M = 0 := by
+  classical
   obtain ⟨t₀⟩ := ‹Nonempty T›
   refine Matrix.ext_of_single_vecMul fun i => ?_
   rw [Matrix.vecMul_zero]
@@ -236,6 +237,118 @@ theorem exists_antisymm_of_smallWritesLimitNorm_rmsNorm {A : Arch T d L} {ε : �
         ∑ ℓ, (fderiv ℝ (A.f ℓ) (rmsNorm ε (x * θ.E) * θ.read ℓ)
                 (rmsNorm ε (x * θ.E) * η.read ℓ) * θ.write ℓ
               + A.f ℓ (rmsNorm ε (x * θ.E) * θ.read ℓ) * η.write ℓ) = 0 := by
-  sorry
+  -- the hypothesis with `N = N_ε` and the block term `S(x) = blockDirSS A θ η (N (x E))`
+  have hη' : ∀ x : Matrix T dIn ℝ,
+      fderiv ℝ (rmsNorm ε : Matrix T d ℝ → Matrix T d ℝ) (x * θ.E)
+          (x * η.E + blockDirSS A θ η (rmsNorm ε (x * θ.E))) * θ.D
+        + rmsNorm ε (x * θ.E) * η.D = 0 := by
+    intro x
+    have e := hη x
+    rw [smallWritesLimitNorm, hA] at e
+    exact e
+  -- Step 1: a right inverse `D⁺` of `D` and a left inverse `E⁺` of `E`
+  obtain ⟨Dp, hDp⟩ : ∃ B : Matrix dOut d ℝ, θ.D * B = 1 :=
+    Matrix.mulVec_surjective_iff_exists_right_inverse.1
+      (Matrix.mulVec_surjective_iff_rank_eq_card.2 hD)
+  obtain ⟨Ep, hEp⟩ : ∃ B : Matrix d dIn ℝ, B * θ.E = 1 :=
+    Matrix.vecMul_surjective_iff_exists_left_inverse.1
+      (Matrix.vecMul_surjective_iff_rank_eq_card.2 hE)
+  obtain ⟨Y, hY⟩ : ∃ Y : Matrix d d ℝ, Y = -(η.D * Dp) := ⟨_, rfl⟩
+  -- multiplying by `D⁺`: `𝐃N(h) k(x) = N(h) Y`
+  have h1 : ∀ x : Matrix T dIn ℝ,
+      fderiv ℝ (rmsNorm ε : Matrix T d ℝ → Matrix T d ℝ) (x * θ.E)
+          (x * η.E + blockDirSS A θ η (rmsNorm ε (x * θ.E)))
+        = rmsNorm ε (x * θ.E) * Y := by
+    intro x
+    have e := congrArg (· * Dp) (hη' x)
+    simp only [Matrix.add_mul, Matrix.mul_assoc, hDp, Matrix.mul_one, Matrix.zero_mul] at e
+    rw [hY, Matrix.mul_neg]
+    exact eq_neg_of_add_eq_zero_left e
+  -- substituting back: `N(h) (Y D + η_D) = 0` for every `x`, so `η_D = -Y D`
+  have hDeq : η.D = -(Y * θ.D) := by
+    have e : ∀ x : Matrix T dIn ℝ, rmsNorm ε (x * θ.E) * (Y * θ.D + η.D) = 0 := by
+      intro x
+      have e := hη' x
+      rw [h1 x] at e
+      rw [Matrix.mul_add, ← Matrix.mul_assoc]
+      exact e
+    exact eq_neg_of_add_eq_zero_right (eq_zero_of_rmsNorm_mul_eq_zero_ss hε hEp e)
+  -- row `t` of `k(x)`: `k(x)_t = h_t Y + μ_t h_t`, `μ_t = ⟨h_t Y, h_t⟩ / (d ε)`
+  have hrow : ∀ (x : Matrix T dIn ℝ) (t : T),
+      (x * η.E + blockDirSS A θ η (rmsNorm ε (x * θ.E))) t
+        = (x * θ.E) t ᵥ* Y
+          + ((((x * θ.E) t ᵥ* Y) ⬝ᵥ (x * θ.E) t) / ((Fintype.card d : ℝ) * ε)) • (x * θ.E) t :=
+    fun x t => rows_of_fderiv_rmsNorm_ss hε _ _ Y (h1 x) t
+  -- the block term is bounded, since `‖N_ε(h)‖ ≤ √d`
+  obtain ⟨B, hB⟩ := exists_bound_blockDirSS A θ η hf hε
+  obtain ⟨t₀⟩ := ‹Nonempty T›
+  -- Step 2: along a ray `x = s w`, the cubic term must vanish, so `⟨u Y, u⟩ = 0` for every row `u`
+  have hq : ∀ u : d → ℝ, (u ᵥ* Y) ⬝ᵥ u = 0 := by
+    intro u
+    obtain ⟨w, hw⟩ := exists_input_ss (T := T) hEp u
+    have key : ∀ s : ℝ, 1 ≤ s →
+        ‖s ^ 3 • ((((u ᵥ* Y) ⬝ᵥ u) / ((Fintype.card d : ℝ) * ε)) • u)
+          + s • (u ᵥ* Y - (w * η.E) t₀)‖ ≤ B := by
+      intro s _
+      have e := hrow (s • w) t₀
+      have e1 : (s • w * η.E + blockDirSS A θ η (rmsNorm ε (s • w * θ.E))) t₀
+          = s • (w * η.E) t₀ + blockDirSS A θ η (rmsNorm ε (s • w * θ.E)) t₀ := by
+        rw [Matrix.smul_mul]
+        rfl
+      have e2 : (s • w * θ.E) t₀ = s • u := by
+        rw [Matrix.smul_mul, ← hw t₀]
+        rfl
+      rw [e1, e2, smul_vecMul, smul_dotProduct, dotProduct_smul, smul_eq_mul, smul_eq_mul] at e
+      have e3 : blockDirSS A θ η (rmsNorm ε (s • w * θ.E)) t₀
+          = s ^ 3 • ((((u ᵥ* Y) ⬝ᵥ u) / ((Fintype.card d : ℝ) * ε)) • u)
+            + s • (u ᵥ* Y - (w * η.E) t₀) := by
+        funext i
+        have ei := congrFun e i
+        simp only [Pi.add_apply, Pi.smul_apply, Pi.sub_apply, smul_eq_mul] at ei ⊢
+        linear_combination ei
+      rw [← e3]
+      exact (norm_le_pi_norm _ t₀).trans (hB _)
+    have ha := eq_zero_of_norm_cube_smul_add_le_ss key
+    rcases smul_eq_zero.1 ha with h0 | h0
+    · rcases div_eq_zero_iff.1 h0 with h0 | h0
+      · exact h0
+      · have hD0 : (Fintype.card d : ℝ) = 0 := (mul_eq_zero.1 h0).resolve_right hε.ne'
+        have : IsEmpty d := Fintype.card_eq_zero_iff.1 (by exact_mod_cast hD0)
+        rw [dotProduct, Finset.univ_eq_empty, Finset.sum_empty]
+    · rw [h0, dotProduct_zero]
+  -- polarisation: `Y` is antisymmetric
+  have hYt : Yᵀ = -Y := by
+    ext i j
+    rw [Matrix.transpose_apply, Matrix.neg_apply]
+    have hi := hq (Pi.single i 1)
+    have hj := hq (Pi.single j 1)
+    have hij := hq (Pi.single i 1 + Pi.single j 1)
+    simp only [add_vecMul, dotProduct_add, single_one_vecMul, dotProduct_single, Pi.add_apply,
+      Matrix.row_apply, mul_one] at hi hj hij
+    linarith
+  -- with `μ = 0`, Step 1 reads `k(x) = x E Y`
+  have hk : ∀ x : Matrix T dIn ℝ,
+      x * η.E + blockDirSS A θ η (rmsNorm ε (x * θ.E)) = x * θ.E * Y := by
+    intro x
+    funext t
+    rw [hrow x t, hq, zero_div, zero_smul, add_zero]
+    rfl
+  -- Step 3: along a ray, `s w (E Y - η_E) = S(s w)` is bounded, so `η_E = E Y`
+  have hEeq : η.E = θ.E * Y := by
+    have hM : ∀ w : Matrix T dIn ℝ, w * (θ.E * Y - η.E) = 0 := by
+      intro w
+      refine eq_zero_of_norm_smul_le_ss (B := B) fun s _ => ?_
+      have e := hk (s • w)
+      have e' : s • (w * (θ.E * Y - η.E)) = blockDirSS A θ η (rmsNorm ε (s • w * θ.E)) := by
+        rw [eq_sub_of_add_eq' e, Matrix.mul_sub, smul_sub, Matrix.smul_mul, Matrix.smul_mul,
+          Matrix.smul_mul, Matrix.mul_assoc]
+      rw [e']
+      exact hB _
+    exact (sub_eq_zero.1 (eq_zero_of_forall_mul_eq_zero_ss hM)).symm
+  refine ⟨Y, hYt, hEeq, hDeq, fun x => ?_⟩
+  -- so `S(x) = 0` for every `x`
+  have e := hk x
+  rw [hEeq, ← Matrix.mul_assoc] at e
+  exact add_eq_left.1 e
 
 end Skips
