@@ -149,6 +149,15 @@ theorem dense_setOf_linearIndependent_mul {q : Type*} [Fintype q] (W : Matrix d 
     exact Finset.sum_eq_zero fun j _ => by rw [Matrix.single_mul_apply_of_ne _ _ _ _ _ ht, mul_zero]
   · intro h; exact absurd (Finset.mem_univ t₀) h
 
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `y ↦ y M`, as a continuous linear map. -/
+private noncomputable def rightMulCLM {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    (M : Matrix n p ℝ) : Matrix m n ℝ →L[ℝ] Matrix m p ℝ :=
+  LinearMap.toContinuousLinearMap
+    { toFun := fun y => y * M
+      map_add' := fun a b => Matrix.add_mul a b M
+      map_smul' := fun c a => Matrix.smul_mul c a M }
+
 variable (θ : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut)
 
 /-- **The fact in the proof of Lemma D.7.** Let `θ` be regular and let no row of the write `V` of
@@ -160,7 +169,47 @@ theorem eq_zero_of_fderiv_suffix_one_sub_sq
       fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.mlp Real.tanh id hid) 0 θ k.succ h')
         (w * θ.write k) ((Matrix.of fun t j => (1 - w t j ^ 2) * b t j) * θ.write k) = 0) :
     b = 0 := by
-  sorry
+  classical
+  -- Lemma D.2 at the hidden state after the block: `𝐃𝓑` is injective on an open dense set `U`
+  obtain ⟨U, -, hUd, hU⟩ := exists_open_dense_injective_fderiv_suffix
+    (Arch.mlp Real.tanh id hid) θ rfl (fun ℓ => analyticOnNhd_f_mlp analyticOnNhd_tanh ℓ) hθ k.succ
+  -- `V` has rank `d`, so `V⁺ V = 1` for some `V⁺`, and `w ↦ w V` is onto, hence open
+  obtain ⟨Vp, hVp⟩ : ∃ Vp : Matrix d (hid k) ℝ, Vp * θ.write k = 1 :=
+    Matrix.vecMul_surjective_iff_exists_left_inverse.1
+      (Matrix.vecMul_surjective_iff_rank_eq_card.2 (hθ.rank_write k))
+  have hopen : IsOpenMap (rightMulCLM (m := T) (θ.write k)) :=
+    (rightMulCLM (m := T) (θ.write k)).isOpenMap fun y =>
+      ⟨y * Vp, by show y * Vp * θ.write k = y; rw [Matrix.mul_assoc, hVp, Matrix.mul_one]⟩
+  -- so the `w` with `w V ∈ U` are dense, and there `((1 - w²) ⊙ b) V = 0`
+  have hdense : Dense {w : Matrix T (hid k) ℝ | w * θ.write k ∈ U} := hUd.preimage hopen
+  let F : Matrix T (hid k) ℝ → Matrix T d ℝ :=
+    fun w => (Matrix.of fun t j => (1 - w t j ^ 2) * b t j) * θ.write k
+  have hF : ∀ w ∈ {w : Matrix T (hid k) ℝ | w * θ.write k ∈ U}, F w = 0 :=
+    fun w hw => hU _ hw (by rw [h w, map_zero])
+  -- `F` is continuous (a polynomial in `w`), so it vanishes everywhere
+  have hFc : Continuous F := by fun_prop
+  have hF0 : F = fun _ => 0 := Continuous.ext_on hdense hFc continuous_const hF
+  -- at `w = 0` and at `w = single t j 1`, row `t` of the difference is `b_{t j} a_j`
+  ext t j
+  obtain ⟨i, hi⟩ : ∃ i, θ.write k j i ≠ 0 := by
+    by_contra hne
+    push Not at hne
+    exact hT1 j (funext hne)
+  have e0 := congrFun (congrFun (congrFun hF0 0) t) i
+  have e1 := congrFun (congrFun (congrFun hF0 (Matrix.single t j (1 : ℝ))) t) i
+  simp only [F, Matrix.mul_apply, Matrix.of_apply, Matrix.zero_apply] at e0 e1
+  have hdiff : ∑ j', (1 - (0 : ℝ) ^ 2) * b t j' * θ.write k j' i
+      - ∑ j', (1 - Matrix.single t j (1 : ℝ) t j' ^ 2) * b t j' * θ.write k j' i
+      = b t j * θ.write k j i := by
+    rw [← Finset.sum_sub_distrib, Finset.sum_eq_single j]
+    · rw [Matrix.single_apply_same]
+      ring
+    · intro j' _ hj'
+      rw [Matrix.single_apply_of_ne _ _ _ _ _ (fun h => hj' h.2.symm)]
+      ring
+    · intro hj; exact absurd (Finset.mem_univ j) hj
+  rw [e0, e1, sub_zero] at hdiff
+  exact (mul_eq_zero.1 hdiff.symm).resolve_right hi
 
 /-- **Lemma D.7 (the step for `tanh` on rays), case (n).** Let `θ` be regular, and let block `k`
 satisfy (T1), no row of its write vanishes, and (T2), the columns of its read are linearly
