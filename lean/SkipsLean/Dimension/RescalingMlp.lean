@@ -95,6 +95,62 @@ theorem eval_rescale_mlp {k : ℕ} (hσ : ∀ lam z : ℝ, 0 < lam → σ (lam *
   -- hence the outputs agree
   rw [eval, eval, hh, hD]
 
+/-- Helper: `τ ↦ e^{τ a} b` has derivative `a b` at `τ = 0`. -/
+private theorem hasDerivAt_exp_mul_const (a b : ℝ) :
+    HasDerivAt (fun τ : ℝ => Real.exp (τ * a) * b) (a * b) 0 := by
+  have h := ((hasDerivAt_id (0 : ℝ)).mul_const a).exp.mul_const b
+  simpa using h
+
+/-- Helper: the curve of the rescalings `λ_i = e^{τ α ℓ i}`: the read column of hidden unit `i`
+of block `ℓ` is multiplied by `e^{τ α ℓ i}`, its write row by `e^{-τ k α ℓ i}`. -/
+private noncomputable def rescaleCurveMlp (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) (α : ∀ ℓ, hid ℓ → ℝ) (τ : ℝ) :
+    Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut where
+  E := θ.E
+  read ℓ := Matrix.of fun a i => Real.exp (τ * α ℓ i) * θ.read ℓ a i
+  write ℓ := Matrix.of fun i a => Real.exp (τ * -((k : ℝ) * α ℓ i)) * θ.write ℓ i a
+  D := θ.D
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the curve passes through `θ` at `τ = 0`. -/
+private theorem rescaleCurveMlp_zero (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) (α : ∀ ℓ, hid ℓ → ℝ) :
+    rescaleCurveMlp k θ α 0 = θ := by
+  apply Params.ext'
+  · rfl
+  · intro ℓ
+    ext a i
+    simp [rescaleCurveMlp]
+  · intro ℓ
+    ext i a
+    simp [rescaleCurveMlp]
+  · rfl
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: the curve has velocity `rescaleDirMlp k θ α` at `τ = 0`. The derivative is taken
+entry by entry, through the linear equivalence of the parameters with the tuples of their
+components. -/
+private theorem hasDerivAt_rescaleCurveMlp (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) (α : ∀ ℓ, hid ℓ → ℝ) :
+    HasDerivAt (rescaleCurveMlp k θ α) (rescaleDirMlp k θ α) 0 := by
+  have hprod : HasDerivAt (fun τ : ℝ => Params.linearEquivProd (rescaleCurveMlp k θ α τ))
+      (Params.linearEquivProd (rescaleDirMlp k θ α)) 0 := by
+    refine HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ ?_))
+    · -- the embedding does not move
+      exact hasDerivAt_const (0 : ℝ) θ.E
+    · -- the read entries are `e^{τ α} c`
+      exact hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun a => hasDerivAt_pi.2 fun i =>
+        hasDerivAt_exp_mul_const (α ℓ i) (θ.read ℓ a i)
+    · -- the write entries are `e^{-τ k α} a`
+      exact hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun i => hasDerivAt_pi.2 fun a =>
+        hasDerivAt_exp_mul_const (-((k : ℝ) * α ℓ i)) (θ.write ℓ i a)
+    · -- the readout does not move
+      exact hasDerivAt_const (0 : ℝ) θ.D
+  -- back from the tuples of components to the parameters
+  exact (LinearMap.toContinuousLinearMap
+    (Params.linearEquivProd (A := Arch.mlp (T := T) (d := d) σ χ hid) (dIn := dIn)
+      (dOut := dOut)).symm.toLinearMap).hasFDerivAt.comp_hasDerivAt 0 hprod
+
 /-- The directions of the rescalings are flat, for every map `χ` before the reads and all stream
 matrices. No differentiability of `σ` is assumed. -/
 theorem rescaleDirMlp_mem_flat {k : ℕ}
@@ -102,7 +158,18 @@ theorem rescaleDirMlp_mem_flat {k : ℕ}
     (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) (S : Fin L → Matrix d d ℝ)
     (α : ∀ ℓ, hid ℓ → ℝ) :
     rescaleDirMlp k θ α ∈ flat (Arch.mlp σ χ hid) S θ := by
-  sorry
+  -- the curve passes through `θ` with velocity `rescaleDirMlp k θ α`, and at every `τ` it is the
+  -- rescaling `c_i = e^{τ α ℓ i}`, which preserves the function
+  refine mem_flat_of_hasDerivAt' θ (rescaleCurveMlp k θ α) (rescaleDirMlp k θ α)
+    (hasDerivAt_rescaleCurveMlp k θ α) (rescaleCurveMlp_zero k θ α)
+    (Filter.Eventually.of_forall fun τ x => ?_)
+  refine eval_rescale_mlp hσ θ (rescaleCurveMlp k θ α τ) (fun ℓ i => Real.exp (τ * α ℓ i))
+    (fun _ _ => Real.exp_pos _) rfl rfl (fun _ _ _ => rfl) (fun ℓ i a => ?_) S x
+  -- the write rows: `e^{-τ k α} = (e^{τ α}^k)⁻¹`
+  show Real.exp (τ * -((k : ℝ) * α ℓ i)) * θ.write ℓ i a =
+    (Real.exp (τ * α ℓ i) ^ k)⁻¹ * θ.write ℓ i a
+  rw [show τ * -((k : ℝ) * α ℓ i) = -((k : ℝ) * (τ * α ℓ i)) by ring, Real.exp_neg,
+    Real.exp_nat_mul]
 
 /-- **Lemma B.1 for these blocks, in the form for directions.** If `E` and every write have rank
 `d` and no column of a read vanishes, the matrices `X_0, …, X_L` of the changes of basis and the
