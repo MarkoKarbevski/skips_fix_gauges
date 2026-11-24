@@ -1352,3 +1352,7 @@ import SkipsLean
 #print axioms Skips.ae_funDimLearnedTri_swiglu_rmsNorm_eq_residual_add
 #print axioms Skips.ae_funDimLearnedTri_geglu_rmsNorm
 #print axioms Skips.ae_funDimLearnedTri_geglu_rmsNorm_eq_residual_add
+#print axioms Skips.flatSkips_le_flatSkipsOn
+#print axioms Skips.funDimSkips_add_finrank_flatSkips'
+#print axioms Skips.exists_jacobianRankSkips_add_finrank_flatSkipsOn
+#print axioms Skips.funDimLearned_add_le_rmsNorm'

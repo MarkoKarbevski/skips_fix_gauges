@@ -45,6 +45,7 @@ noncomputable def flatSkipsOn (A : Arch T d L) (ι : V →L[ℝ] (Fin L → Matr
   ⨅ x ∈ U,
     LinearMap.ker (fderiv ℝ (fun p' : Params A dIn dOut × V => evalSkips A ι p' x) p).toLinearMap
 
+omit [Fintype T] [DecidableEq d] in
 /-- A flat direction is flat at every input of `U`. -/
 theorem flatSkips_le_flatSkipsOn (A : Arch T d L) (ι : V →L[ℝ] (Fin L → Matrix d d ℝ))
     (p : Params A dIn dOut × V) (U : Set (Matrix T dIn ℝ)) :
@@ -203,6 +204,7 @@ private theorem exists_rank_add_finrank_flatSkipsOn_lso [FiniteDimensional ℝ V
   rw [← le_antisymm hle hge]
   exact LinearMap.finrank_range_add_finrank_ker _
 
+omit [DecidableEq d] in
 /-- `fd = (number of parameters) − dim K`, for the network whose skips are parameters, with no
 hypothesis of differentiability. -/
 theorem funDimSkips_add_finrank_flatSkips' [FiniteDimensional ℝ V] (A : Arch T d L)
@@ -240,6 +242,7 @@ theorem funDimSkips_add_finrank_flatSkips' [FiniteDimensional ℝ V] (A : Arch T
   unfold jacobianRankSkips at hX hge h₀
   omega
 
+omit [DecidableEq d] in
 /-- On a set `U` of inputs at which `(θ, v) ↦ F_{θ,v}(x)` is differentiable at `p`, some finite
 batch of inputs of `U` has a Jacobian of rank `(number of parameters) − dim K_U(p)`, where `K_U(p)`
 are the directions that are flat at every input of `U`. -/
