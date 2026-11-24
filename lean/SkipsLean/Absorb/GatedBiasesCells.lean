@@ -46,15 +46,68 @@ def NearReLU (σ : ℝ → ℝ) : Prop := ∃ K : ℝ, ∀ z, (1 + |z|) * |σ z 
 
 /-- ReLU is at a distance `O(1/|z|)` from ReLU. -/
 theorem nearReLU_relu : NearReLU relu := by
-  sorry
+  refine ⟨0, fun z => ?_⟩
+  rw [sub_self, abs_zero, mul_zero]
+
+/-- `|SiLU(z) − ReLU(z)| = |z| / (1 + e^{|z|})`. -/
+private theorem abs_silu_sub_relu_gbc (z : ℝ) :
+    |silu z - relu z| = |z| / (1 + Real.exp |z|) := by
+  have hE := Real.exp_pos |z|
+  rcases le_total 0 z with hz | hz
+  · -- `z ≥ 0`: `SiLU(z) − z = −z/(1 + e^z)`
+    have e : silu z - relu z = -(z / (1 + Real.exp z)) := by
+      rw [relu, max_eq_left hz, silu, Real.exp_neg]
+      have := Real.exp_pos z
+      field_simp
+      ring
+    rw [e, abs_neg, abs_of_nonneg hz, abs_of_nonneg (div_nonneg hz (by positivity))]
+  · -- `z ≤ 0`: `SiLU(z) = z/(1 + e^{−z})`
+    rw [relu, max_eq_right hz, sub_zero, silu, abs_of_nonpos hz, abs_div,
+      abs_of_nonpos hz, abs_of_pos (by positivity)]
 
 /-- SiLU is at a distance `O(1/|z|)` from ReLU: `|SiLU(z) − ReLU(z)| = |z| / (1 + e^{|z|})`. -/
 theorem nearReLU_silu : NearReLU silu := by
-  sorry
+  refine ⟨2, fun z => ?_⟩
+  rw [abs_silu_sub_relu_gbc]
+  -- `(1 + y) y ≤ 2 (1 + y + y²/2) ≤ 2 e^y < 2 (1 + e^y)` for `y = |z| ≥ 0`
+  have hy := abs_nonneg z
+  have hE := Real.quadratic_le_exp_of_nonneg hy
+  rw [mul_div_assoc', div_le_iff₀ (by positivity)]
+  nlinarith
+
+/-- `|z| |GELU(z) − ReLU(z)| ≤ 1`: with `y = |z|`, `y · y Φ(−y) ≤ y φ(y) ≤ y e^{−y²/2} ≤ 1`. -/
+private theorem abs_mul_gelu_sub_relu_le_gbc (z : ℝ) :
+    |z| * |gelu z - relu z| ≤ 1 := by
+  rw [gelu_sub_relu, abs_neg]
+  rcases (abs_nonneg z).eq_or_lt with h0 | hpos
+  · rw [← h0, zero_mul]
+    exact zero_le_one
+  · rw [abs_of_pos (mul_pos hpos (gaussCdf_pos _)), gaussCdf_neg]
+    -- `1 − Φ(y) ≤ φ(y)/y`, and `y φ(y) ≤ y e^{−y²/2} ≤ 1` since `e^{y²/2} ≥ 1 + y²/2 + y⁴/8`
+    have h1 := one_sub_gaussCdf_le hpos
+    have h2 : |z| * gaussPdf |z| ≤ 1 := by
+      have hs1 : (1 : ℝ) ≤ Real.sqrt (2 * Real.pi) := by
+        rw [← Real.sqrt_one]
+        exact Real.sqrt_le_sqrt (by linarith [Real.pi_gt_three])
+      have hE := Real.quadratic_le_exp_of_nonneg (by positivity : (0 : ℝ) ≤ |z| ^ 2 / 2)
+      have hE' : Real.exp (-|z| ^ 2 / 2) * Real.exp (|z| ^ 2 / 2) = 1 := by
+        rw [← Real.exp_add]; ring_nf; exact Real.exp_zero
+      have hEp := Real.exp_pos (-|z| ^ 2 / 2)
+      have hyE : |z| * Real.exp (-|z| ^ 2 / 2) ≤ 1 := by
+        nlinarith [sq_nonneg (|z| - 1)]
+      rw [gaussPdf, mul_div_assoc', div_le_one (by linarith)]
+      linarith
+    calc |z| * (|z| * (1 - gaussCdf |z|)) ≤ |z| * (|z| * (gaussPdf |z| / |z|)) := by gcongr
+      _ = |z| * gaussPdf |z| := by field_simp
+      _ ≤ 1 := h2
 
 /-- GELU is at a distance `O(1/|z|)` from ReLU: `|GELU(z) − ReLU(z)| = |z| Φ(−|z|)`. -/
 theorem nearReLU_gelu : NearReLU gelu := by
-  sorry
+  -- `|GELU(z) − ReLU(z)| ≤ 1` and `|z| |GELU(z) − ReLU(z)| ≤ 1`
+  refine ⟨2, fun z => ?_⟩
+  have h1 := abs_gelu_sub_relu_le z
+  have h2 := abs_mul_gelu_sub_relu_le_gbc z
+  linarith
 
 /-- **The matrix `Δ_j = (b^g_j v_j + b^v_j g_j) ŵ_j` of a unit of a gated block with biases**
 (absorb paper, Appendix C.2), of rank at most one: the column `b^g_j v_j + b^v_j g_j` times the
