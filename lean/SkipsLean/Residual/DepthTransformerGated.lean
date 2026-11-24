@@ -489,6 +489,204 @@ theorem smallWritesLimit_eq_zero_attentionGated (hσ : ∀ z, HasDerivAt σ (σ'
   · rw [hwrite ℓ]
     rfl
 
+/-! ### Helpers: the space of the flat directions of `J_0` -/
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] in
+/-- Helper (as `flatEDLin_dpa` of `Residual/DepthAttention.lean`): the directions
+`X ↦ (E X, 0, 0, −X D)` of one change of basis at all hidden states, as a linear map. -/
+private def flatEDLin_dtg {A : Arch T d L} (θ : Params A dIn dOut) :
+    Matrix d d ℝ →ₗ[ℝ] Params A dIn dOut where
+  toFun X := ⟨θ.E * X, 0, 0, -(X * θ.D)⟩
+  map_add' X Y := by
+    apply Params.ext'
+    · exact Matrix.mul_add _ _ _
+    · intro ℓ
+      exact (add_zero 0).symm
+    · intro ℓ
+      exact (add_zero 0).symm
+    · show -((X + Y) * θ.D) = -(X * θ.D) + -(Y * θ.D)
+      rw [Matrix.add_mul, neg_add]
+  map_smul' c X := by
+    apply Params.ext'
+    · exact Matrix.mul_smul _ _ _
+    · intro ℓ
+      exact (smul_zero c).symm
+    · intro ℓ
+      exact (smul_zero c).symm
+    · show -((c • X) * θ.D) = c • -(X * θ.D)
+      rw [Matrix.smul_mul, smul_neg]
+
+/-- Helper (as `headDirQKLin_dpa` of `Residual/DepthAttention.lean`): `Γ ↦ headDirQK θ Γ` is
+linear. -/
+private noncomputable def headDirQKLin_dtg
+    (θ : Params (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut) :
+    (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) →ₗ[ℝ]
+      Params (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut where
+  toFun := headDirQK θ
+  map_add' Γ Δ := by
+    apply Params.ext'
+    · simp [headDirQK]
+    · intro ℓ
+      ext a ⟨i, k | k | k⟩
+      · simp only [headDirQK, Params.add_read, Matrix.add_apply, Matrix.of_apply, Pi.add_apply,
+          mul_add, Finset.sum_add_distrib]
+      · simp only [headDirQK, Params.add_read, Matrix.add_apply, Matrix.of_apply, Pi.add_apply,
+          mul_add, Finset.sum_add_distrib, neg_add]
+      · simp [headDirQK]
+    · intro ℓ
+      simp [headDirQK]
+    · simp [headDirQK]
+  map_smul' c Γ := by
+    apply Params.ext'
+    · simp [headDirQK]
+    · intro ℓ
+      ext a ⟨i, k | k | k⟩
+      · simp only [headDirQK, Params.smul_read, Matrix.smul_apply, Matrix.of_apply, Pi.smul_apply,
+          smul_eq_mul, RingHom.id_apply, Finset.mul_sum]
+        exact Finset.sum_congr rfl fun _ _ => by ring
+      · simp only [headDirQK, Params.smul_read, Matrix.smul_apply, Matrix.of_apply, Pi.smul_apply,
+          smul_eq_mul, RingHom.id_apply, Finset.mul_sum, mul_neg]
+        exact congrArg Neg.neg (Finset.sum_congr rfl fun _ _ => by ring)
+      · simp [headDirQK]
+    · intro ℓ
+      simp [headDirQK]
+    · simp [headDirQK]
+
+/-- Helper (as `headDirVOLin_dpa` of `Residual/DepthAttention.lean`): `Γ' ↦ headDirVO θ Γ'` is
+linear. -/
+private noncomputable def headDirVOLin_dtg
+    (θ : Params (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut) :
+    (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) →ₗ[ℝ]
+      Params (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut where
+  toFun := headDirVO θ
+  map_add' Γ Δ := by
+    apply Params.ext'
+    · simp [headDirVO]
+    · intro ℓ
+      ext a ⟨i, k | k | k⟩
+      · simp [headDirVO]
+      · simp [headDirVO]
+      · simp only [headDirVO, Params.add_read, Matrix.add_apply, Matrix.of_apply, Pi.add_apply,
+          mul_add, Finset.sum_add_distrib]
+    · intro ℓ
+      ext p b
+      simp only [headDirVO, Params.add_write, Matrix.add_apply, Matrix.of_apply, Pi.add_apply,
+        add_mul, Finset.sum_add_distrib, neg_add]
+    · simp [headDirVO]
+  map_smul' c Γ := by
+    apply Params.ext'
+    · simp [headDirVO]
+    · intro ℓ
+      ext a ⟨i, k | k | k⟩
+      · simp [headDirVO]
+      · simp [headDirVO]
+      · simp only [headDirVO, Params.smul_read, Matrix.smul_apply, Matrix.of_apply, Pi.smul_apply,
+          smul_eq_mul, RingHom.id_apply, Finset.mul_sum]
+        exact Finset.sum_congr rfl fun _ _ => by ring
+    · intro ℓ
+      ext p b
+      simp only [headDirVO, Params.smul_write, Matrix.smul_apply, Matrix.of_apply, Pi.smul_apply,
+        smul_eq_mul, RingHom.id_apply, Finset.mul_sum, mul_neg]
+      exact congrArg Neg.neg (Finset.sum_congr rfl fun _ _ => by ring)
+    · simp [headDirVO]
+
+/-- Helper (as `rescaleDirLin_ubt` of `Dimension/UpperBoundTransformer.lean`):
+`α ↦ rescaleDir θ α` is linear. -/
+private noncomputable def rescaleDirLin_dtg
+    (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) :
+    (∀ ℓ, hid ℓ → ℝ) →ₗ[ℝ] Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut where
+  toFun := rescaleDir θ
+  map_add' α β := by
+    apply Params.ext'
+    · simp [rescaleDir]
+    · intro ℓ
+      ext k j
+      cases j with
+      | inl i => simp [rescaleDir]
+      | inr i =>
+        simp only [rescaleDir, Pi.add_apply, Params.add_read, Matrix.add_apply, Matrix.of_apply,
+          Sum.elim_inr]
+        ring
+    · intro ℓ
+      ext i k
+      simp [rescaleDir, add_mul]
+    · simp [rescaleDir]
+  map_smul' c α := by
+    apply Params.ext'
+    · simp [rescaleDir]
+    · intro ℓ
+      ext k j
+      cases j <;> simp [rescaleDir, mul_assoc]
+    · intro ℓ
+      ext i k
+      simp [rescaleDir, mul_assoc]
+    · simp [rescaleDir]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `η ↦ sumInl η`, a direction of `A` as a direction of `A.sum B`, is linear. -/
+private def sumInlLin_dtg {A B : Arch T d L} :
+    Params A dIn dOut →ₗ[ℝ] Params (A.sum B) dIn dOut where
+  toFun := Params.sumInl
+  map_add' η ζ := by
+    refine Params.ext' rfl (fun ℓ => Matrix.ext fun a p => ?_)
+      (fun ℓ => Matrix.ext fun p a => ?_) rfl
+    · rcases p with j | j
+      · rfl
+      · exact (add_zero (0 : ℝ)).symm
+    · rcases p with i | i
+      · rfl
+      · exact (add_zero (0 : ℝ)).symm
+  map_smul' c η := by
+    refine Params.ext' rfl (fun ℓ => Matrix.ext fun a p => ?_)
+      (fun ℓ => Matrix.ext fun p a => ?_) rfl
+    · rcases p with j | j
+      · rfl
+      · exact (smul_zero c).symm
+    · rcases p with i | i
+      · rfl
+      · exact (smul_zero c).symm
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `η ↦ sumInr η`, a direction of `B` as a direction of `A.sum B`, is linear. -/
+private def sumInrLin_dtg {A B : Arch T d L} :
+    Params B dIn dOut →ₗ[ℝ] Params (A.sum B) dIn dOut where
+  toFun := Params.sumInr
+  map_add' η ζ := by
+    refine Params.ext' rfl (fun ℓ => Matrix.ext fun a p => ?_)
+      (fun ℓ => Matrix.ext fun p a => ?_) rfl
+    · rcases p with j | j
+      · exact (add_zero (0 : ℝ)).symm
+      · rfl
+    · rcases p with i | i
+      · exact (add_zero (0 : ℝ)).symm
+      · rfl
+  map_smul' c η := by
+    refine Params.ext' rfl (fun ℓ => Matrix.ext fun a p => ?_)
+      (fun ℓ => Matrix.ext fun p a => ?_) rfl
+    · rcases p with j | j
+      · exact (smul_zero c).symm
+      · rfl
+    · rcases p with i | i
+      · exact (smul_zero c).symm
+      · rfl
+
+/-- Helper (as `finrank_headFun_dpa` of `Residual/DepthAttention.lean`): the families `Γ` of
+`d_h × d_h` matrices, one for each head of each block, form a space of dimension
+`∑_ℓ H_ℓ d_{h,ℓ}²`. -/
+private theorem finrank_headFun_dtg :
+    Module.finrank ℝ (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ)
+      = ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2 := by
+  rw [Module.finrank_pi_fintype]
+  simp only [Module.finrank_pi_fintype, Module.finrank_matrix, Module.finrank_self, mul_one,
+    Finset.sum_const, Finset.card_univ, smul_eq_mul, sq]
+
+/-- Helper: the families `α` of numbers, one for each hidden unit of each block, form a space of
+dimension `∑_ℓ d_hidden,ℓ`. -/
+private theorem finrank_hidFun_dtg :
+    Module.finrank ℝ (∀ ℓ, hid ℓ → ℝ) = ∑ ℓ, Fintype.card (hid ℓ) := by
+  rw [Module.finrank_pi_fintype]
+  simp only [Module.finrank_fintype_fun_eq_card]
+
 /-- **Lemma A.27 (Small writes), first value, for attention blocks and gated blocks, under the
 conditions of its proof:** with a token that sees itself and another token, for all small `τ ≠ 0`
 the residual network has `fd(θ_τ) = P − d² − 2 ∑_ℓ H_ℓ d_{h,ℓ}² − ∑_ℓ d_hidden,ℓ`. -/
@@ -504,7 +702,78 @@ theorem eventually_funDim_smallWrites_attentionGated (hσ : ∀ z, HasDerivAt σ
               + ∑ ℓ, Fintype.card (hid ℓ)))
         = Module.finrank ℝ
             (Params (Arch.attentionGated (T := T) (d := d) sees σ id H dh hid) dIn dOut) := by
-  sorry
+  classical
+  -- the flat directions of `J_0` lie in the range `V` of the linear map
+  -- `(X, (Γ, Γ'), α) ↦ (E X, 0, 0, −X D) + sumInl (headDirQK θ_A Γ + headDirVO θ_A Γ')
+  -- + sumInr (rescaleDir θ_B α)` (the first theorem)
+  let Φ := (flatEDLin_dtg θ).coprod
+    ((sumInlLin_dtg.comp ((headDirQKLin_dtg θ.sumFst).coprod (headDirVOLin_dtg θ.sumFst))).coprod
+      (sumInrLin_dtg.comp (rescaleDirLin_dtg θ.sumSnd)))
+  have hV : ∀ η, (∀ x, smallWritesLimit (Arch.attentionGated sees σ id H dh hid) θ η x = 0) →
+      η ∈ LinearMap.range Φ := by
+    intro η hη
+    obtain ⟨X, Γ, Γ', α, hE, hD, hr, hw, hg, hv, hwr⟩ :=
+      smallWritesLimit_eq_zero_attentionGated hσ hU t₁ t₂ h12 hs2 hs1 θ hθa hθm η hη
+    refine ⟨(X, (Γ, Γ'), α), ?_⟩
+    apply Params.ext'
+    · show θ.E * X + ((0 + 0 : Matrix dIn d ℝ) + 0) = η.E
+      rw [add_zero, add_zero, add_zero, hE]
+    · intro ℓ
+      ext a p
+      rcases p with j | i | i
+      · -- a column of a head
+        show (0 : ℝ) + ((headDirQK θ.sumFst Γ + headDirVO θ.sumFst Γ').read ℓ a j + 0)
+          = η.read ℓ a (Sum.inl j)
+        rw [zero_add, add_zero]
+        exact (congrFun (congrFun (hr ℓ) a) j).symm
+      · -- the gate column of a hidden unit
+        show (0 : ℝ) + (0 + 0) = η.read ℓ a (Sum.inr (Sum.inl i))
+        rw [add_zero, add_zero]
+        exact (hg ℓ i a).symm
+      · -- the value column of a hidden unit
+        show (0 : ℝ) + (0 + -(α ℓ i) * θ.sumSnd.read ℓ a (Sum.inr i))
+          = η.read ℓ a (Sum.inr (Sum.inr i))
+        rw [zero_add, zero_add]
+        exact (hv ℓ i a).symm
+    · intro ℓ
+      ext p b
+      rcases p with j | i
+      · show (0 : ℝ) + ((headDirQK θ.sumFst Γ + headDirVO θ.sumFst Γ').write ℓ j b + 0)
+          = η.write ℓ (Sum.inl j) b
+        rw [zero_add, add_zero]
+        exact (congrFun (congrFun (hw ℓ) j) b).symm
+      · show (0 : ℝ) + (0 + α ℓ i * θ.sumSnd.write ℓ i b) = η.write ℓ (Sum.inr i) b
+        rw [zero_add, zero_add]
+        exact (hwr ℓ i b).symm
+    · show -(X * θ.D) + ((0 + 0 : Matrix d dOut ℝ) + 0) = η.D
+      rw [add_zero, add_zero, add_zero, hD]
+  -- `dim V ≤ d² + 2 ∑_ℓ H_ℓ d_{h,ℓ}² + ∑_ℓ d_hidden,ℓ`, the dimension of the domain of the map
+  have hdim : Module.finrank ℝ (LinearMap.range Φ)
+      ≤ Fintype.card d ^ 2 + (2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2
+        + ∑ ℓ, Fintype.card (hid ℓ)) := by
+    have h := LinearMap.finrank_range_le Φ
+    rwa [Module.finrank_prod, Module.finrank_prod, Module.finrank_prod, Module.finrank_matrix,
+      Module.finrank_self, mul_one, ← sq, finrank_headFun_dtg, ← two_mul,
+      finrank_hidFun_dtg] at h
+  -- `≥`: "The rank" of the proof of Lemma A.27, with analytic blocks
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ
+      ((Arch.attentionGated (T := T) (d := d) sees σ id H dh hid).f ℓ) Set.univ := fun ℓ =>
+    analyticOnNhd_f_sum (analyticOnNhd_f_attention (d := d) sees id H dh ℓ)
+      (analyticOnNhd_f_gated hσa ℓ)
+  -- `≤`: the upper bound for residual networks, as `θ ↦ θ_τ` changes neither `E` nor the reads;
+  -- no value column of a read vanishes since no value column of `E W_read^ℓ` does
+  have hval : ∀ ℓ i, (fun k => θ.sumSnd.read ℓ k (Sum.inr i)) ≠ 0 := by
+    intro ℓ i h0
+    apply hθm.value_ne_zero ℓ i
+    funext a
+    show ∑ k, θ.sumSnd.E a k * θ.sumSnd.read ℓ k (Sum.inr i) = 0
+    exact Finset.sum_eq_zero fun k _ => by
+      rw [show θ.sumSnd.read ℓ k (Sum.inr i) = 0 from congrFun h0 k, mul_zero]
+  filter_upwards [eventually_funDim_smallWrites_ge
+    (Arch.attentionGated (T := T) (d := d) sees σ id H dh hid) θ rfl hf _ hV] with τ hτ
+  have hle := funDim_add_le_residual_attentionGated (θ.smallWrites τ) hθa.rank_E hθa.rank_Q
+    hθa.rank_V hval
+  omega
 
 /-- **The conditions of Lemma A.27 hold at generic parameters,** for `d_in, d_out ≥ d ≥ 2`,
 heads of width `1 ≤ d_h ≤ d` and blocks of any widths. -/
