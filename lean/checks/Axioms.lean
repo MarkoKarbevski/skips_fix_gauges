@@ -562,3 +562,5 @@ import SkipsLean
 #print axioms Skips.fderiv_suffix_frozen_smul
 #print axioms Skips.fderiv_params_suffix_frozen_smul
 #print axioms Skips.writeLHS_frozen_smul
+#print axioms Skips.one_small_factor_gelu
+#print axioms Skips.one_small_factor_silu
