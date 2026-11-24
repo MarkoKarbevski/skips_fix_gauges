@@ -322,8 +322,8 @@ private theorem fderiv_maskedBatch_eq_zero_pat (S : Fin L → Matrix d d ℝ) {n
   exact LinearMap.mem_ker.1 h
 
 omit [Fintype T] [DecidableEq d] in
-/-- Helper (copy of the private `rescaleDirMlpLin` of `RescalingMlp.lean`): `α ↦ rescaleDirMlp k θ α`
-is linear. -/
+/-- Helper (copy of the private `rescaleDirMlpLin` of `RescalingMlp.lean`):
+`α ↦ rescaleDirMlp k θ α` is linear. -/
 private noncomputable def rescaleDirLin_pat (k : ℕ)
     (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) :
     (∀ ℓ, hid ℓ → ℝ) →ₗ[ℝ] Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut where
