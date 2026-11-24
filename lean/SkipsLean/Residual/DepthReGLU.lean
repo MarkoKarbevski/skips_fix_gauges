@@ -333,6 +333,138 @@ theorem smallWritesLimit_eq_zero_reglu
     exact eq_neg_of_add_eq_zero_right hm
   exact ⟨-(η.D * R), fun ℓ i => α ⟨ℓ, i⟩, fun ℓ i => lam ⟨ℓ, i⟩, hE, hD, hread, hwrite⟩
 
+/-! ### Helpers: the batch and the flat directions -/
+
+omit [Nonempty T] in
+/-- Helper (the private `limitLin_SW` of `Residual/SmallWrites.lean`): `η ↦ J_0 η` at one input
+`x` is linear in `η`. -/
+private noncomputable def limitLin_drg (A : Arch T d L) (θ : Params A dIn dOut)
+    (x : Matrix T dIn ℝ) : Params A dIn dOut →ₗ[ℝ] Matrix T dOut ℝ where
+  toFun η := smallWritesLimit A θ η x
+  map_add' η η' := by
+    simp only [smallWritesLimit, Params.add_E, Params.add_D, Params.add_read, Params.add_write,
+      Matrix.add_mul, Matrix.mul_add, map_add, Finset.sum_add_distrib]
+    abel
+  map_smul' c η := by
+    simp only [smallWritesLimit, Params.smul_E, Params.smul_D, Params.smul_read,
+      Params.smul_write, Matrix.smul_mul, Matrix.mul_smul, map_smul, ← Finset.smul_sum,
+      ← smul_add, RingHom.id_apply]
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (the private `exists_batch_ker_SW` of `Residual/SmallWrites.lean`, kernel
+stabilisation): for a family of linear maps on a finite-dimensional space, finitely many of them
+have the common kernel of all of them. -/
+private theorem exists_batch_ker_drg {ι P F : Type*} [AddCommGroup P] [Module ℝ P]
+    [FiniteDimensional ℝ P] [AddCommGroup F] [Module ℝ F] (Λ : ι → P →ₗ[ℝ] F) :
+    ∃ (n : ℕ) (X : Fin n → ι), ∀ η, (∀ i, Λ (X i) η = 0) → ∀ x, Λ x η = 0 := by
+  -- the common kernel of a batch
+  let K : ∀ n : ℕ, (Fin n → ι) → Submodule ℝ P := fun n X => ⨅ i, LinearMap.ker (Λ (X i))
+  have hmem : ∀ n (X : Fin n → ι) η, η ∈ K n X ↔ ∀ i, Λ (X i) η = 0 := by
+    intro n X η
+    simp only [K, Submodule.mem_iInf, LinearMap.mem_ker]
+  -- a batch whose common kernel has least dimension
+  obtain ⟨n, X, hX⟩ := Nat.sInf_mem (s := {k : ℕ | ∃ (n : ℕ) (X : Fin n → ι),
+      k = Module.finrank ℝ (K n X)}) ⟨_, 0, Fin.elim0, rfl⟩
+  refine ⟨n, X, fun η hη x => ?_⟩
+  -- adding the input `x` can only shrink the kernel, and not its dimension: it stays the same
+  have hle : K (n + 1) (Fin.cons x X) ≤ K n X := by
+    intro ξ hξ
+    rw [hmem] at hξ ⊢
+    intro i
+    simpa only [Fin.cons_succ] using hξ i.succ
+  have heq := Submodule.eq_of_le_of_finrank_le hle (by
+    rw [← hX]
+    exact Nat.sInf_le ⟨n + 1, Fin.cons x X, rfl⟩)
+  have hηK : η ∈ K (n + 1) (Fin.cons x X) := by
+    rw [heq, hmem]
+    exact hη
+  rw [hmem] at hηK
+  simpa only [Fin.cons_zero] using hηK 0
+
+omit [Nonempty T] in
+/-- Helper (as `limitFlatLin` of `DepthGated.lean`): the flat directions of `J_0` found in
+`smallWritesLimit_eq_zero_reglu`, `(X, α, β) ↦ (E X, the reads and writes of
+rescaleDir θ α + rescaleDirGate 1 θ β, -X D)`, as a linear map. -/
+private noncomputable def flatLin_drg
+    (θ : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut) :
+    (Matrix d d ℝ × (∀ ℓ, hid ℓ → ℝ) × (∀ ℓ, hid ℓ → ℝ)) →ₗ[ℝ]
+      Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut where
+  toFun p := ⟨θ.E * p.1, (rescaleDir θ p.2.1 + rescaleDirGate 1 θ p.2.2).read,
+    (rescaleDir θ p.2.1 + rescaleDirGate 1 θ p.2.2).write, -(p.1 * θ.D)⟩
+  map_add' p q := by
+    apply Params.ext'
+    · exact Matrix.mul_add _ _ _
+    · intro ℓ
+      ext k j
+      rcases j with i | i
+      · show 0 + (p.2.2 + q.2.2) ℓ i * θ.read ℓ k (Sum.inl i)
+          = (0 + p.2.2 ℓ i * θ.read ℓ k (Sum.inl i)) + (0 + q.2.2 ℓ i * θ.read ℓ k (Sum.inl i))
+        simp only [Pi.add_apply]
+        ring
+      · show -((p.2.1 + q.2.1) ℓ i) * θ.read ℓ k (Sum.inr i) + 0
+          = (-(p.2.1 ℓ i) * θ.read ℓ k (Sum.inr i) + 0)
+            + (-(q.2.1 ℓ i) * θ.read ℓ k (Sum.inr i) + 0)
+        simp only [Pi.add_apply]
+        ring
+    · intro ℓ
+      ext i k
+      show (p.2.1 + q.2.1) ℓ i * θ.write ℓ i k
+          + -(((1 : ℕ) : ℝ) * (p.2.2 + q.2.2) ℓ i) * θ.write ℓ i k
+        = (p.2.1 ℓ i * θ.write ℓ i k + -(((1 : ℕ) : ℝ) * p.2.2 ℓ i) * θ.write ℓ i k)
+          + (q.2.1 ℓ i * θ.write ℓ i k + -(((1 : ℕ) : ℝ) * q.2.2 ℓ i) * θ.write ℓ i k)
+      simp only [Pi.add_apply]
+      ring
+    · show -((p.1 + q.1) * θ.D) = -(p.1 * θ.D) + -(q.1 * θ.D)
+      rw [Matrix.add_mul, neg_add]
+  map_smul' c p := by
+    apply Params.ext'
+    · exact Matrix.mul_smul _ _ _
+    · intro ℓ
+      ext k j
+      rcases j with i | i
+      · show 0 + (c • p.2.2) ℓ i * θ.read ℓ k (Sum.inl i)
+          = c * (0 + p.2.2 ℓ i * θ.read ℓ k (Sum.inl i))
+        simp only [Pi.smul_apply, smul_eq_mul]
+        ring
+      · show -((c • p.2.1) ℓ i) * θ.read ℓ k (Sum.inr i) + 0
+          = c * (-(p.2.1 ℓ i) * θ.read ℓ k (Sum.inr i) + 0)
+        simp only [Pi.smul_apply, smul_eq_mul]
+        ring
+    · intro ℓ
+      ext i k
+      show (c • p.2.1) ℓ i * θ.write ℓ i k + -(((1 : ℕ) : ℝ) * (c • p.2.2) ℓ i) * θ.write ℓ i k
+        = c * (p.2.1 ℓ i * θ.write ℓ i k + -(((1 : ℕ) : ℝ) * p.2.2 ℓ i) * θ.write ℓ i k)
+      simp only [Pi.smul_apply, smul_eq_mul]
+      ring
+    · show -((c • p.1) * θ.D) = c • -(p.1 * θ.D)
+      rw [Matrix.smul_mul, smul_neg]
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the triples `(X, α, β)` of a `d × d` matrix and two numbers per hidden unit form a
+space of dimension `d² + 2 s`. -/
+private theorem finrank_flatDomain_drg :
+    Module.finrank ℝ (Matrix d d ℝ × (∀ ℓ, hid ℓ → ℝ) × (∀ ℓ, hid ℓ → ℝ))
+      = Fintype.card d ^ 2 + 2 * ∑ ℓ, Fintype.card (hid ℓ) := by
+  rw [Module.finrank_prod, Module.finrank_prod, Module.finrank_matrix, Module.finrank_self,
+    mul_one, ← sq, Module.finrank_pi_fintype]
+  simp only [Module.finrank_fintype_fun_eq_card]
+  ring
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] in
+/-- Helper: the gate and value columns of the reads are nonzero when those of `E W_read^ℓ` are. -/
+private theorem read_cols_ne_zero_drg
+    (θ : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut)
+    (hθ : SmallWritesGenericGated θ) :
+    (∀ ℓ i, (fun a => θ.read ℓ a (Sum.inr i)) ≠ 0)
+      ∧ ∀ ℓ i, (fun a => θ.read ℓ a (Sum.inl i)) ≠ 0 := by
+  have h : ∀ ℓ (j : hid ℓ ⊕ hid ℓ), (fun a => θ.read ℓ a j) = 0 → (θ.E * θ.read ℓ)ᵀ j = 0 := by
+    intro ℓ j h0
+    funext a
+    show ∑ k, θ.E a k * θ.read ℓ k j = 0
+    exact Finset.sum_eq_zero fun k _ => by rw [show θ.read ℓ k j = 0 from congrFun h0 k, mul_zero]
+  exact ⟨fun ℓ i h0 => hθ.value_ne_zero ℓ i (h ℓ _ h0),
+    fun ℓ i h0 => hθ.gate_ne_zero ℓ i (h ℓ _ h0)⟩
+
 /-- **Lemma A.30 for ReGLU blocks, first sentence, at one parameter:** under the conditions
 `SmallWritesGenericReGLU` there is a finite batch of inputs at which no limit pre-activation of a
 gate vanishes such that, for all small `τ ≠ 0`, no gate pre-activation on the batch vanishes at
@@ -349,7 +481,41 @@ theorem exists_eventually_jacobianRank_smallWrites_reglu
         jacobianRank (Arch.gated relu id hid) 1 X (θ.smallWrites τ)
             + (Fintype.card d ^ 2 + 2 * ∑ ℓ, Fintype.card (hid ℓ))
           = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut) := by
-  sorry
+  -- a finite batch of inputs with no gate at its kink on which a direction flat for `J_0` is flat
+  -- at every such input
+  obtain ⟨n, Y, hY⟩ := exists_batch_ker_drg
+    (fun x : noKinkGateAll θ => limitLin_drg (Arch.gated relu id hid) θ (dOut := dOut) x.1)
+  refine ⟨n, fun i => (Y i).1, fun i => (Y i).2, ?_⟩
+  -- the kernel of `J_0`: the directions flat for `J_0` on the batch lie in the range of
+  -- `flatLin_drg θ`, of dimension at most `d² + 2 s`
+  have hW : ∀ η : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut,
+      (∀ i, smallWritesLimit (Arch.gated relu id hid) θ η (Y i).1 = 0) →
+      η ∈ LinearMap.range (flatLin_drg θ) := by
+    intro η hη
+    obtain ⟨X, α, β, hE, hD, hr, hw⟩ :=
+      smallWritesLimit_eq_zero_reglu θ hθ η fun x hx => hY η hη ⟨x, hx⟩
+    exact ⟨(X, α, β), Params.ext' hE.symm (fun ℓ => (hr ℓ).symm) (fun ℓ => (hw ℓ).symm) hD.symm⟩
+  have hdim : Module.finrank ℝ (LinearMap.range (flatLin_drg θ))
+      ≤ Fintype.card d ^ 2 + 2 * ∑ ℓ, Fintype.card (hid ℓ) := by
+    have h := LinearMap.finrank_range_le (flatLin_drg θ)
+    rw [finrank_flatDomain_drg] at h
+    exact h
+  -- `≥`: for small `τ ≠ 0` the pre-activations on the batch stay off the kinks, where the block
+  -- maps are `C²`, and the rank on the batch is at least `P − d² − 2 s`
+  have hge := eventually_jacobianRank_smallWrites_ge_of_contDiffOn (Arch.gated relu id hid) θ rfl
+    (fun ℓ => {M : Matrix T (hid ℓ ⊕ hid ℓ) ℝ | ∀ t i, M t (Sum.inl i) ≠ 0})
+    (fun ℓ => isOpen_gateSet_drg ℓ) (fun ℓ => contDiffOn_f_drg ℓ) (fun i => (Y i).1)
+    (fun i ℓ => (Y i).2 ℓ) _ hW
+  -- `≤`: the symmetries at `θ_τ`, whose embedding and reads are those of `θ`
+  obtain ⟨hv, hg⟩ := read_cols_ne_zero_drg θ hθ.gated
+  filter_upwards [hge] with τ hτ
+  refine ⟨fun i ℓ t j => hτ.1 i ℓ t j, ?_⟩
+  have h1 := jacobianRank_le_funDim (A := Arch.gated relu id hid) (S := 1) (θ.smallWrites τ)
+    (fun i => (Y i).1)
+  have h2 := funDim_add_le_residual_gated_gate relu_homogeneous (θ.smallWrites τ)
+    hθ.gated.rank_E hv hg
+  have h3 := hτ.2
+  omega
 
 /-- **Lemma A.30 for ReGLU blocks, the functional dimension at `θ_τ`:** under the conditions
 `SmallWritesGenericReGLU`, for all small `τ ≠ 0` the residual network has
@@ -361,7 +527,15 @@ theorem eventually_funDim_smallWrites_reglu
       funDim (Arch.gated relu id hid) 1 (θ.smallWrites τ)
           + (Fintype.card d ^ 2 + 2 * ∑ ℓ, Fintype.card (hid ℓ))
         = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut) := by
-  sorry
+  -- the rank on the batch is at most `funDim`, which is at most `P − d² − 2 s`
+  obtain ⟨n, X, -, h⟩ := exists_eventually_jacobianRank_smallWrites_reglu θ hθ
+  obtain ⟨hv, hg⟩ := read_cols_ne_zero_drg θ hθ.gated
+  filter_upwards [h] with τ hτ
+  have h1 := jacobianRank_le_funDim (A := Arch.gated relu id hid) (S := 1) (θ.smallWrites τ) X
+  have h2 := funDim_add_le_residual_gated_gate relu_homogeneous (θ.smallWrites τ)
+    hθ.gated.rank_E hv hg
+  have h3 := hτ.2
+  omega
 
 /-- **Lemma A.30 for ReGLU blocks, second sentence, near `θ_τ`:** under the conditions
 `SmallWritesGenericReGLU`, for all small `τ ≠ 0` the residual network has
