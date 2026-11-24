@@ -410,6 +410,15 @@ private theorem analyticOnNhd_writeLHS_zero (Ar : Arch T d L)
     (analyticOnNhd_const.prod (analyticOnNhd_const.add
       (analyticOnNhd_matrix_mul analyticOnNhd_id analyticOnNhd_const)))
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `w ↦ W − w/t` tends to `0` at `t W`. -/
+private theorem tendsto_sub_inv_smul {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (W : E)
+    {t : ℝ} (ht : t ≠ 0) : Tendsto (fun w : E => W - t⁻¹ • w) (𝓝 (t • W)) (𝓝 0) := by
+  have hc : Continuous fun w : E => W - t⁻¹ • w := by fun_prop
+  have h := hc.tendsto (t • W)
+  simp only [inv_smul_smul₀ ht, sub_self] at h
+  exact h
+
 /-- **Lemma D.12 up to (38), on one generic ray, MLP blocks, case (+).** Let `θ` be good for the
 cones, let `Z` and `η` satisfy (16) for `k`, and let `Ξ` have its rows in `C_k` and satisfy (i) and
 (iii). Then `ż(Ξ) = 0`, and `𝐃𝓑(w̃ V)(w̃ η_V) + 𝐃_θ 𝓑(w̃ V) η = 0` for every `w̃`. -/
@@ -431,7 +440,299 @@ theorem flat_at_generic_ray_mlp_rmsNorm (hε : 0 < ε) (hg : GateFar σ σ' p)
         (Matrix.of fun t => frozenMlp θ k (A k) (Ξ t)))) :
     tangentRMS Z Ξ * θ.read k + Ξ * η.read k = 0 ∧
       ∀ w : Matrix T (hid k) ℝ, writeLHS (Arch.mlp σ (rmsNorm ε) hid) θ k η w 0 = 0 := by
-  sorry
+  classical
+  -- the blocks are real-analytic
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_mlp hg.analytic ℓ
+  -- (K1) on the rows of `Ξ`: the gates `g = Ξ W` are positive on `A k` and negative off it
+  have hgate : ∀ τ j, (j ∈ A k → 0 < (Ξ * θ.read k) τ j) ∧
+      (j ∉ A k → (Ξ * θ.read k) τ j < 0) := fun τ j =>
+    ⟨fun hj => hθ.gate_pos k (Ξ τ) (hΞ τ) j hj, fun hj => hθ.gate_neg k (Ξ τ) (hΞ τ) j hj⟩
+  -- `u = |g| > 0`
+  obtain ⟨u, hu_def⟩ : ∃ u : Matrix T (hid k) ℝ, ∀ τ j, u τ j = |(Ξ * θ.read k) τ j| :=
+    ⟨fun τ j => |(Ξ * θ.read k) τ j|, fun _ _ => rfl⟩
+  have hu : ∀ τ j, 0 < u τ j := fun τ j => by
+    rw [hu_def]
+    refine abs_pos.2 ?_
+    by_cases hj : j ∈ A k
+    · exact ((hgate τ j).1 hj).ne'
+    · exact ((hgate τ j).2 hj).ne
+  -- `W°` (the gates on `A k`), the signs `s_j`, and `ż(t Ξ) = t P₁ + t³ P₃`
+  obtain ⟨Wo, hWo⟩ : ∃ Wo : Matrix T (hid k) ℝ, ∀ τ j,
+      Wo τ j = if j ∈ A k then (Ξ * θ.read k) τ j else 0 :=
+    ⟨fun τ j => if j ∈ A k then (Ξ * θ.read k) τ j else 0, fun _ _ => rfl⟩
+  obtain ⟨sg, hsg⟩ : ∃ sg : hid k → ℝ, ∀ j, sg j = if j ∈ A k then 1 else -1 :=
+    ⟨fun j => if j ∈ A k then 1 else -1, fun _ => rfl⟩
+  have hsg0 : ∀ j, sg j ≠ 0 := fun j => by
+    rw [hsg]
+    split_ifs <;> norm_num
+  obtain ⟨P₁, hP₁⟩ : ∃ P₁ : Matrix T (hid k) ℝ, P₁ = Ξ * (Z * θ.read k + η.read k) := ⟨_, rfl⟩
+  obtain ⟨P₃, hP₃⟩ : ∃ P₃ : Matrix T (hid k) ℝ, P₃ = -(Matrix.of fun τ j =>
+      ((Ξ * Z) τ ⬝ᵥ Ξ τ / (Fintype.card d : ℝ)) * (Ξ * θ.read k) τ j) := ⟨_, rfl⟩
+  have hzd : ∀ t : ℝ,
+      tangentRMS Z (t • Ξ) * θ.read k + (t • Ξ) * η.read k = t • P₁ + t ^ 3 • P₃ := fun t => by
+    rw [hP₁, hP₃]
+    exact tangentRMS_smul_mul Z Ξ _ _ t
+  -- the matrices `M₀ = 1_A ⊙ P₃`, `M₂ = 1_A ⊙ P₁` and the coefficients `c = −s ⊙ P`
+  obtain ⟨M₀, hM₀⟩ : ∃ M₀ : Matrix T (hid k) ℝ, ∀ τ j, M₀ τ j = if j ∈ A k then P₃ τ j else 0 :=
+    ⟨fun τ j => if j ∈ A k then P₃ τ j else 0, fun _ _ => rfl⟩
+  obtain ⟨M₂, hM₂⟩ : ∃ M₂ : Matrix T (hid k) ℝ, ∀ τ j, M₂ τ j = if j ∈ A k then P₁ τ j else 0 :=
+    ⟨fun τ j => if j ∈ A k then P₁ τ j else 0, fun _ _ => rfl⟩
+  obtain ⟨c₀, hc₀⟩ : ∃ c₀ : Matrix T (hid k) ℝ, ∀ τ j, c₀ τ j = -(sg j) * P₃ τ j :=
+    ⟨fun τ j => -(sg j) * P₃ τ j, fun _ _ => rfl⟩
+  obtain ⟨c₂, hc₂⟩ : ∃ c₂ : Matrix T (hid k) ℝ, ∀ τ j, c₂ τ j = -(sg j) * P₁ τ j :=
+    ⟨fun τ j => -(sg j) * P₁ τ j, fun _ _ => rfl⟩
+  -- the maps `G₀` and `G_{τj}` of step 3
+  set G₀ := rayG0 (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) ε θ η k Wo M₀ M₂ with hG₀
+  set G := rayG (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) ε θ k Wo c₀ c₂ with hG
+  -- `W° V = g°(Ξ)`, whose rows lie in `C_{k+1}`, so none vanishes
+  have hWoV : Wo * θ.write k = Matrix.of fun τ => frozenMlp θ k (A k) (Ξ τ) := by
+    ext τ i
+    simp only [Matrix.mul_apply, hWo, Matrix.of_apply, frozenMlp, Finset.sum_apply, Pi.smul_apply,
+      smul_eq_mul, ite_mul, zero_mul]
+    rw [Finset.sum_ite_mem, Finset.univ_inter]
+    rfl
+  have hH : ∀ τ, (Wo * θ.write k) τ ≠ 0 := fun τ h0 => by
+    have hm := hθ.frozen_mem k (Ξ τ) (hΞ τ)
+    rw [hWoV] at h0
+    rw [show frozenMlp θ k (A k) (Ξ τ) = 0 from h0] at hm
+    exact (hθ.cone k.succ).zero_notMem hm
+  have hG₀an : AnalyticAt ℝ G₀ 0 := analyticAt_rayG0 _ hε rfl hf θ η k Wo M₀ M₂ hH
+  have hGan : ∀ τ j, AnalyticAt ℝ (G τ j) 0 := fun τ j =>
+    analyticAt_rayG _ hε rfl hf θ k Wo c₀ c₂ τ j hH
+  -- step 5: if `G_{τj}(s, 0) = 0` near `0`, then both coefficients vanish
+  have hcoef : ∀ τ j, (∀ᶠ s in 𝓝 (0 : ℝ), G τ j (s, 0) = 0) → c₀ τ j = 0 ∧ c₂ τ j = 0 := by
+    intro τ j h
+    refine eq_zero_of_eventually_smul_eq_zero (β := fun s => fderiv ℝ (fun h' : Matrix T d ℝ =>
+        scaledSuffix (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) ε 1 θ k.succ (s, h'))
+        ((Wo - 0) * θ.write k) (Matrix.single τ j (1 : ℝ) * θ.write k)) ?_ ?_ h
+    · -- `β` is analytic on `ℝ`
+      intro S₀ _
+      exact analyticAt_fderiv_scaledSuffix _ hε rfl hf θ k.succ analyticAt_id analyticAt_const
+        analyticAt_const (by simpa only [sub_zero] using hH)
+    · -- `β(1) = 𝐃𝓑(g°(Ξ))(E_{τj} V) ≠ 0`, by (iii) and `a_j ≠ 0`
+      have hfun : (fun h' : Matrix T d ℝ =>
+          scaledSuffix (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) ε 1 θ k.succ (1, h'))
+          = fun h' => suffix (Arch.mlp σ (rmsNorm ε) hid) 0 θ k.succ h' := by
+        funext h'
+        have e := suffix_pow_smul_eq_scaledSuffix (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid)
+          (dIn := dIn) (dOut := dOut) rfl θ k.succ one_pos 1 h'
+        rw [one_pow, one_smul, div_one] at e
+        exact e.symm
+      show fderiv ℝ (fun h' : Matrix T d ℝ =>
+          scaledSuffix (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) ε 1 θ k.succ (1, h'))
+          ((Wo - 0) * θ.write k) (Matrix.single τ j (1 : ℝ) * θ.write k) ≠ 0
+      rw [hfun, sub_zero, hWoV]
+      intro h0
+      have h1 := hiii (h0.trans (map_zero _).symm)
+      apply hθ.write_ne_zero k j
+      funext i
+      have e := congrFun (congrFun h1 τ) i
+      rw [Matrix.single_mul_apply_same, one_mul] at e
+      exact e
+  -- the small terms `ζ`, `ν` of step 2 and the rates `r = u^p/p`
+  obtain ⟨ζ, hζ⟩ : ∃ ζ : ℝ → Matrix T (hid k) ℝ, ∀ t τ j,
+      ζ t τ j = (t * u τ j - σ (t * u τ j)) / t :=
+    ⟨fun t τ j => (t * u τ j - σ (t * u τ j)) / t, fun _ _ _ => rfl⟩
+  obtain ⟨ν, hν⟩ : ∃ ν : ℝ → Matrix T (hid k) ℝ, ∀ t τ j,
+      ν t τ j = t * (1 - σ' (t * u τ j)) / (t * u τ j - σ (t * u τ j)) :=
+    ⟨fun t τ j => t * (1 - σ' (t * u τ j)) / (t * u τ j - σ (t * u τ j)), fun _ _ _ => rfl⟩
+  obtain ⟨r, hr⟩ : ∃ r : Matrix T (hid k) ℝ, ∀ τ j, r τ j = u τ j ^ p / p :=
+    ⟨fun τ j => u τ j ^ p / p, fun _ _ => rfl⟩
+  -- step 1 on the ray, entry by entry: `σ(t g) = t W° − δ(t u)` and
+  -- `σ'(t g) = 1_A − s δ'(t u)`, by (24)
+  have hent : ∀ t : ℝ, t ≠ 0 → ∀ τ j,
+      σ (((t • Ξ) * θ.read k) τ j) = t * (Wo τ j - ζ t τ j) ∧
+      σ' (((t • Ξ) * θ.read k) τ j) * (t * P₁ τ j + t ^ 3 * P₃ τ j)
+        = t ^ 3 * ((M₀ τ j + (1 / t) ^ 2 * M₂ τ j)
+          + (-(sg j) * (1 - σ' (t * u τ j))) * (P₃ τ j + (1 / t) ^ 2 * P₁ τ j)) := by
+    intro t ht τ j
+    have e : ((t • Ξ) * θ.read k) τ j = t * (Ξ * θ.read k) τ j := by
+      rw [Matrix.smul_mul]
+      rfl
+    rw [e, hζ, hWo, hsg, hM₀, hM₂]
+    by_cases hj : j ∈ A k
+    · have hu' : u τ j = (Ξ * θ.read k) τ j := by rw [hu_def, abs_of_pos ((hgate τ j).1 hj)]
+      simp only [hj, ite_true, hu']
+      constructor
+      · field_simp
+        ring
+      · field_simp
+        ring
+    · have hu' : (Ξ * θ.read k) τ j = -u τ j := by
+        rw [hu_def, abs_of_neg ((hgate τ j).2 hj), neg_neg]
+      obtain ⟨hn1, hn2⟩ := hg.neg (t * u τ j)
+      have e2 : t * (Ξ * θ.read k) τ j = -(t * u τ j) := by rw [hu']; ring
+      simp only [hj, ite_false]
+      rw [e2, hn1, hn2]
+      constructor
+      · field_simp
+        ring
+      · field_simp
+        ring
+  have hR1 : ∀ t : ℝ, t ≠ 0 → ((t • Ξ) * θ.read k).map σ = t • (Wo - ζ t) := fun t ht => by
+    ext τ j
+    rw [Matrix.map_apply, (hent t ht τ j).1]
+    rfl
+  have hR2 : ∀ t : ℝ, t ≠ 0 → (Matrix.of fun τ j => ((t • Ξ) * θ.read k).map σ' τ j
+        * (tangentRMS Z (t • Ξ) * θ.read k + (t • Ξ) * η.read k) τ j)
+      = t ^ 3 • ((M₀ + (1 / t) ^ 2 • M₂) + Matrix.of fun τ j =>
+          (-(sg j) * (1 - σ' (t * u τ j))) * (P₃ τ j + (1 / t) ^ 2 * P₁ τ j)) := fun t ht => by
+    ext τ j
+    rw [hzd t]
+    simp only [Matrix.of_apply, Matrix.map_apply, Matrix.add_apply, Matrix.smul_apply, smul_eq_mul]
+    exact (hent t ht τ j).2
+  -- step 3: `G₀(1/t, ζ) + ∑ (ν ζ) G_{τj}(1/t, ζ) = t^{-2} 𝓛(v(t), v̇(t)) = 0`
+  have hzero : ∀ t : ℝ, 0 < t → (∀ τ j, t * u τ j - σ (t * u τ j) ≠ 0) →
+      G₀ (1 / t, ζ t) + ∑ a, ∑ j, (ν t a j * ζ t a j) • G a j (1 / t, ζ t) = 0 := by
+    intro t ht hδ
+    -- (16) at `n = t Ξ`, by Lemma D.6
+    have e := (suffixFlat_castSucc_iff_mlp_rmsNorm hε hg.hasDerivAt hg.analytic θ k Z η).1
+      hflat (t • Ξ)
+    have e2 : writeLHS (Arch.mlp σ (rmsNorm ε) hid) θ k η (t • (Wo - ζ t))
+        (t ^ 3 • ((M₀ + (1 / t) ^ 2 • M₂) + Matrix.of fun τ j =>
+          (-(sg j) * (1 - σ' (t * u τ j))) * (P₃ τ j + (1 / t) ^ 2 * P₁ τ j))) = 0 := by
+      rw [← hR1 t ht.ne', ← hR2 t ht.ne']
+      exact e
+    rw [writeLHS_ray_eq _ hε rfl hf θ η k ht, fderiv_mul_eq_sum] at e2
+    have e3 := (smul_eq_zero.1 e2).resolve_left (pow_ne_zero 2 ht.ne')
+    refine Eq.trans ?_ e3
+    congr 1
+    refine Finset.sum_congr rfl fun a _ => Finset.sum_congr rfl fun j _ => ?_
+    simp only [hG, rayG, smul_smul, Matrix.of_apply]
+    congr 1
+    rw [hν, hζ, hc₀, hc₂]
+    have ht' := ht.ne'
+    have hδ' := hδ a j
+    field_simp
+    ring
+  -- step 2: the bounds on the small terms, with one constant `A₀` and `N = 2`
+  obtain ⟨A₀, hA₀⟩ : ∃ A₀ : ℝ, A₀ = 6 + 4 * ∑ a, ∑ j, u a j := ⟨_, rfl⟩
+  have hsum0 : 0 ≤ ∑ a, ∑ j, u a j :=
+    Finset.sum_nonneg fun a _ => Finset.sum_nonneg fun j _ => (hu a j).le
+  have hsum : ∀ a j, u a j ≤ ∑ a, ∑ j, u a j := fun a j =>
+    (Finset.single_le_sum (fun j _ => (hu a j).le) (Finset.mem_univ j)).trans
+      (Finset.single_le_sum (f := fun a => ∑ j, u a j)
+        (fun a _ => Finset.sum_nonneg fun j _ => (hu a j).le) (Finset.mem_univ a))
+  have hA6 : 6 ≤ A₀ := by rw [hA₀]; linarith
+  have hAu : ∀ a j, 4 * u a j ≤ A₀ := fun a j => by rw [hA₀]; linarith [hsum a j]
+  have hbnd : ∀ᶠ t in atTop, ∀ a j,
+      Real.exp (-(u a j ^ p / p * t ^ p)) ≤ A₀ * t ^ 2 * ((t * u a j - σ (t * u a j)) / t) ∧
+      |(t * u a j - σ (t * u a j)) / t| ≤ A₀ * t ^ 2 * Real.exp (-(u a j ^ p / p * t ^ p)) ∧
+      |t * (1 - σ' (t * u a j)) / (t * u a j - σ (t * u a j))| ≤ A₀ * t ^ 2 ∧
+      0 < t * u a j - σ (t * u a j) :=
+    Filter.eventually_all.2 fun a => Filter.eventually_all.2 fun j => by
+      filter_upwards [eventually_ge_atTop 1, eventually_ge_atTop (2 / u a j)] with t ht1 ht2
+      exact gap_bounds hg (hu a j) ht1 ((div_le_iff₀ (hu a j)).1 ht2) hA6 (hAu a j)
+  have hζl : ∀ᶠ t : ℝ in atTop, ∀ a j, Real.exp (-(r a j * t ^ p)) ≤ A₀ * t ^ 2 * ζ t a j :=
+    hbnd.mono fun t h a j => by rw [hr, hζ]; exact (h a j).1
+  have hζu : ∀ᶠ t : ℝ in atTop, ∀ a j, |ζ t a j| ≤ A₀ * t ^ 2 * Real.exp (-(r a j * t ^ p)) :=
+    hbnd.mono fun t h a j => by rw [hr, hζ]; exact (h a j).2.1
+  have hνb : ∀ᶠ t : ℝ in atTop, ∀ a j, |ν t a j| ≤ A₀ * t ^ 2 :=
+    hbnd.mono fun t h a j => by rw [hν]; exact (h a j).2.2.1
+  -- fact (b): the left side vanishes for all large `t`
+  have hidt : ∀ R : ℝ, ∀ᶠ t : ℝ in atTop,
+      ‖G₀ (1 / t, ζ t) + ∑ a, ∑ j, (ν t a j * ζ t a j) • G a j (1 / t, ζ t)‖
+        ≤ Real.exp (-(R * t ^ p)) := by
+    intro R
+    filter_upwards [hbnd, eventually_gt_atTop 0] with t h ht
+    rw [hzero t ht fun a j => (h a j).2.2.2.ne', norm_zero]
+    exact (Real.exp_pos _).le
+  -- the rates are positive and independent over `ℚ` (by (i), up to the factor `1/p`)
+  have hp0 : p ≠ 0 := by have := hg.one_le; omega
+  have hrpos : ∀ a j, 0 < r a j := fun a j => by
+    rw [hr]
+    exact div_pos (pow_pos (hu a j) p) (Nat.cast_pos.2 (Nat.pos_of_ne_zero hp0))
+  have hrQ : LinearIndependent ℚ (fun i : T × hid k => r i.1 i.2) := by
+    have hpQ : (p : ℚ) ≠ 0 := Nat.cast_ne_zero.2 hp0
+    have h := hi.units_smul (fun _ => Units.mk0 ((p : ℚ)⁻¹) (inv_ne_zero hpQ))
+    convert h using 1
+    funext i
+    rw [hr, hu_def, Pi.smul_apply', Units.smul_def, Units.val_mk0, Rat.smul_def, Rat.cast_inv,
+      Rat.cast_natCast]
+    ring
+  -- step 4: `G₀` and `G_{τj}` are even in `s`
+  have hG₀even : ∀ s y, G₀ (-s, y) = G₀ (s, y) := fun s y => rayG0_neg _ θ η k Wo M₀ M₂ s y
+  have hGeven : ∀ τ j s y, G τ j (-s, y) = G τ j (s, y) := fun τ j s y =>
+    rayG_neg _ θ k Wo c₀ c₂ τ j s y
+  -- step 5: the step "one small factor"
+  have hstep : ∀ a j,
+      FasterThanPowers (fun t : ℝ =>
+        fderiv ℝ (fun y : Matrix T (hid k) ℝ => G₀ (1 / t, y)) 0 (Matrix.single a j 1)
+          + ν t a j • G a j (1 / t, 0)) →
+      ∀ᶠ z in 𝓝 (0 : ℝ × Matrix T (hid k) ℝ), G a j z = 0 := by
+    intro a j hfast
+    have hfast' : FasterThanPowers (fun t : ℝ =>
+        (fun s => fderiv ℝ (fun y : Matrix T (hid k) ℝ => G₀ (s, y)) 0 (Matrix.single a j 1))
+          (1 / t)
+        + (t * (1 - σ' (t * u a j)) / (t * u a j - σ (t * u a j)))
+          • (fun s => G a j (s, 0)) (1 / t)) :=
+      hfast.congr (Eventually.of_forall fun t => by rw [hν])
+    have hb0 := hone (u a j) (hu a j)
+      (fun s => fderiv ℝ (fun y : Matrix T (hid k) ℝ => G₀ (s, y)) 0 (Matrix.single a j 1))
+      (fun s => G a j (s, 0))
+      (analyticAt_fderiv_partial_snd (x₀ := (0 : ℝ)) (y₀ := (0 : Matrix T (hid k) ℝ)) hG₀an _)
+      ((hGan a j).comp_of_eq (analyticAt_id.prod analyticAt_const) rfl)
+      (Eventually.of_forall fun s => ⟨by simp only [hG₀even], hGeven a j s 0⟩) hfast'
+    obtain ⟨h0, h2⟩ := hcoef a j hb0
+    exact Eventually.of_forall fun z => by
+      simp only [hG, rayG, h0, h2, mul_zero, zero_add, zero_smul]
+  -- the induction on the exponents
+  have hRI := ray_induction_matrix (T := T) (q := hid k) (F := Matrix T dOut ℝ) p hg.one_le r
+    hrpos hrQ ζ ν A₀ 2 hζl hζu hνb G₀ G hG₀an hGan
+  obtain ⟨hG₀0, hG0⟩ := hRI hidt hstep
+  -- step 6: `P₁ = 0` and `P₃ = 0`
+  have hP0 : ∀ a j, P₃ a j = 0 ∧ P₁ a j = 0 := fun a j => by
+    have h := ((continuous_id.prodMk continuous_const).tendsto' (0 : ℝ)
+      ((0 : ℝ), (0 : Matrix T (hid k) ℝ)) rfl).eventually (hG0 a j)
+    obtain ⟨h0, h2⟩ := hcoef a j h
+    rw [hc₀] at h0
+    rw [hc₂] at h2
+    exact ⟨(mul_eq_zero.1 h0).resolve_left (neg_ne_zero.2 (hsg0 j)),
+      (mul_eq_zero.1 h2).resolve_left (neg_ne_zero.2 (hsg0 j))⟩
+  have hP₁0 : P₁ = 0 := by ext a j; exact (hP0 a j).2
+  have hP₃0 : P₃ = 0 := by ext a j; exact (hP0 a j).1
+  refine ⟨?_, ?_⟩
+  · -- `ż(Ξ) = P₁ + P₃ = 0`
+    have e := hzd 1
+    simp only [one_smul, one_pow, hP₁0, hP₃0, add_zero] at e
+    exact e
+  · -- `M₀ = 0`, `M₂ = 0`, and `G₀(s₀, y) = 0` for some `s₀ > 0` and all `y` near `0`
+    have hM₀0 : M₀ = 0 := by
+      ext a j
+      rw [hM₀, hP₃0]
+      split_ifs <;> rfl
+    have hM₂0 : M₂ = 0 := by
+      ext a j
+      rw [hM₂, hP₁0]
+      split_ifs <;> rfl
+    have hcur : ∀ᶠ S in 𝓝 (0 : ℝ), ∀ᶠ Y in 𝓝 (0 : Matrix T (hid k) ℝ), G₀ (S, Y) = 0 := by
+      have h := hG₀0
+      rw [← Prod.mk_zero_zero, nhds_prod_eq] at h
+      exact h.curry
+    have h1 : ∀ᶠ S in 𝓝[>] (0 : ℝ), ∀ᶠ Y in 𝓝 (0 : Matrix T (hid k) ℝ), G₀ (S, Y) = 0 :=
+      nhdsWithin_le_nhds hcur
+    obtain ⟨S₀, hS₀, hS₀pos⟩ := (h1.and eventually_mem_nhdsWithin).exists
+    have hS₀' : (0 : ℝ) < S₀ := hS₀pos
+    obtain ⟨t₀, ht₀⟩ : ∃ t₀ : ℝ, t₀ = S₀⁻¹ := ⟨_, rfl⟩
+    have ht₀pos : 0 < t₀ := by rw [ht₀]; exact inv_pos.2 hS₀'
+    have hts : 1 / t₀ = S₀ := by rw [ht₀, one_div, inv_inv]
+    -- so `𝓛(w, 0) = t₀² G₀(s₀, W° − w/t₀) = 0` for `w` near `t₀ W°`
+    have hloc : (fun w : Matrix T (hid k) ℝ =>
+        writeLHS (Arch.mlp σ (rmsNorm ε) hid) θ k η w 0) =ᶠ[𝓝 (t₀ • Wo)] 0 := by
+      filter_upwards [(tendsto_sub_inv_smul Wo ht₀pos.ne').eventually hS₀] with w hw
+      have hw' : w = t₀ • (Wo - (Wo - t₀⁻¹ • w)) := by
+        rw [sub_sub_cancel, smul_inv_smul₀ ht₀pos.ne']
+      have h0 : (0 : Matrix T (hid k) ℝ) = t₀ ^ 3 • ((M₀ + (1 / t₀) ^ 2 • M₂) + 0) := by
+        rw [hM₀0, hM₂0, smul_zero, add_zero, add_zero, smul_zero]
+      show writeLHS _ θ k η w 0 = 0
+      rw [h0, hw', writeLHS_ray_eq _ hε rfl hf θ η k ht₀pos, ← hG₀, hts, hw, Matrix.zero_mul,
+        map_zero, add_zero, smul_zero]
+    -- the identity theorem on the whole space
+    intro w
+    exact (analyticOnNhd_writeLHS_zero _ (analyticOnNhd_rmsNorm hε) hf θ η k
+      ).eqOn_zero_of_preconnected_of_eventuallyEq_zero isPreconnected_univ
+      (Set.mem_univ (t₀ • Wo)) hloc (Set.mem_univ w)
 
 /-- **Lemma D.12 up to (38), MLP blocks, case (+).** Let `θ` be good for the cones and regular, and
 let the `Ξ` with (i) be dense. If `Z` and `η` satisfy (16) for `k`, then `ż(n) = 0` for every `n`
