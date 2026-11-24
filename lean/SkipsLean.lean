@@ -233,3 +233,5 @@ import SkipsLean.Residual.LocalIdentifiabilityTransformer
 import SkipsLean.Residual.SkiplessEndsTransformer
 import SkipsLean.Residual.DifferentClassesTransformer
 import SkipsLean.Residual.ExactGainTransformer
+import SkipsLean.Generic.LevelSetImages
+import SkipsLean.Dimension.IdentifiableConverse
