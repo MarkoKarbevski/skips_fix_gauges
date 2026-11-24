@@ -1196,7 +1196,29 @@ theorem flat_of_suffixFlat_swiglu_rmsNorm (hε : 0 < ε) {C : Fin (L + 1) → Se
           (Matrix.of fun t j => w t j * (n * θ.read k) t (Sum.inr j))
           (Matrix.of fun t j =>
             w t j * (tangentRMS Z n * θ.read k + n * η.read k) t (Sum.inr j)) = 0 := by
-  sorry
+  rcases isEmpty_or_nonempty T with hT | hT
+  · -- no token: both parts of (38) hold trivially
+    intro n _
+    refine ⟨fun t => isEmptyElim t, fun w => ?_⟩
+    ext t
+    exact isEmptyElim t
+  · -- (i) is dense: the numbers `|ξ_t c_j|` are independent over `ℚ` for a dense set of `Ξ`
+    have hdense : Dense {Ξ : Matrix T d ℝ |
+        LinearIndependent ℚ (fun i : T × hid k => |(Ξ * θ.read k) i.1 (Sum.inl i.2)| ^ 1)} := by
+      have hset : {Ξ : Matrix T d ℝ |
+          LinearIndependent ℚ (fun i : T × hid k => |(Ξ * θ.read k) i.1 (Sum.inl i.2)| ^ 1)}
+          = {Ξ : Matrix T d ℝ | LinearIndependent ℚ
+              (fun i : T × hid k => |Ξ i.1 ⬝ᵥ (θ.read k)ᵀ (Sum.inl i.2)|)} := by
+        ext Ξ
+        simp only [pow_one]
+        rfl
+      rw [hset]
+      exact dense_setOf_linearIndependent_abs_dotProduct (T := T)
+        (fun j : hid k => (θ.read k)ᵀ (Sum.inl j)) hQ
+    -- "one small factor" for SiLU is the parity (30)
+    exact flat_of_suffixFlat_gated_rmsNorm hε gateFar_silu
+      (fun u hu a b ha hb heven h => one_small_factor_silu hu ha hb heven h) hθ
+      (regular_of_goodForConesGated_swiglu hθ) k hdense Z η hflat
 
 /-- **Lemma D.12 up to (38), GeGLU blocks, case (+):** with the matrices `c_j c_j^⊤` of the gate
 columns of block `k` linearly independent over `ℚ`. -/
@@ -1215,6 +1237,28 @@ theorem flat_of_suffixFlat_geglu_rmsNorm (hε : 0 < ε) {C : Fin (L + 1) → Set
           (Matrix.of fun t j => w t j * (n * θ.read k) t (Sum.inr j))
           (Matrix.of fun t j =>
             w t j * (tangentRMS Z n * θ.read k + n * η.read k) t (Sum.inr j)) = 0 := by
-  sorry
+  rcases isEmpty_or_nonempty T with hT | hT
+  · -- no token: both parts of (38) hold trivially
+    intro n _
+    refine ⟨fun t => isEmptyElim t, fun w => ?_⟩
+    ext t
+    exact isEmptyElim t
+  · -- (i) is dense: the numbers `(ξ_t c_j)²` are independent over `ℚ` for a dense set of `Ξ`
+    have hdense : Dense {Ξ : Matrix T d ℝ |
+        LinearIndependent ℚ (fun i : T × hid k => |(Ξ * θ.read k) i.1 (Sum.inl i.2)| ^ 2)} := by
+      have hset : {Ξ : Matrix T d ℝ |
+          LinearIndependent ℚ (fun i : T × hid k => |(Ξ * θ.read k) i.1 (Sum.inl i.2)| ^ 2)}
+          = {Ξ : Matrix T d ℝ | LinearIndependent ℚ
+              (fun i : T × hid k => (Ξ i.1 ⬝ᵥ (θ.read k)ᵀ (Sum.inl i.2)) ^ 2)} := by
+        ext Ξ
+        simp only [sq_abs]
+        rfl
+      rw [hset]
+      exact dense_setOf_linearIndependent_sq_dotProduct (T := T)
+        (fun j : hid k => (θ.read k)ᵀ (Sum.inl j)) hQ
+    -- "one small factor" for GELU is Lemma D.9
+    exact flat_of_suffixFlat_gated_rmsNorm hε gateFar_gelu
+      (fun u hu a b ha hb _ h => one_small_factor_gelu hu ha hb h) hθ
+      (regular_of_goodForConesGated_geglu hθ) k hdense Z η hflat
 
 end Skips
