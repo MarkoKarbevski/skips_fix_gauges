@@ -59,7 +59,8 @@ theorem ae_eventually_funDim_smallWrites_attention_rmsNorm (hε : 0 < ε)
             + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2)
         = Module.finrank ℝ
             (Params (Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh) dIn dOut) := by
-  sorry
+  filter_upwards [ae_smallWritesGenericAttentionRMS μ hd hdIn hdOut hdh hdh0] with θ hθ
+  exact eventually_funDim_smallWrites_attention_rmsNorm hε t₁ t₂ h12 hs2 hs1 θ hθ
 
 /-- **Theorem 4.7 of the skips paper for attention blocks under pre-RMSNorm:** with
 `d_in, d_out ≥ d ≥ 2`, `ε > 0`, `L` attention blocks with heads of width `1 ≤ d_h ≤ d`, and a
@@ -76,7 +77,19 @@ theorem ae_funDim_attention_residual_rmsNorm (hε : 0 < ε)
           + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2)
       = Module.finrank ℝ
           (Params (Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh) dIn dOut) := by
-  sorry
+  classical
+  -- one parameter `θ₀` with the conditions of Lemma A.27, and one small `τ ≠ 0`:
+  -- `fd(θ₀_τ) = P - d(d-1)/2 - s`
+  obtain ⟨θ₀, hθ₀⟩ := (ae_smallWritesGenericAttentionRMS μ hd hdIn hdOut hdh hdh0).exists
+  obtain ⟨τ, hτ⟩ :=
+    (eventually_funDim_smallWrites_attention_rmsNorm hε t₁ t₂ h12 hs2 hs1 θ₀ hθ₀).exists
+  -- at almost every `θ`, `fd(θ) ≥ fd(θ₀_τ)` (analytic outputs) and `fd(θ) ≤ P - d(d-1)/2 - s`
+  filter_upwards [ae_funDim_ge (Arch.attention sees (rmsNorm ε) H dh) 1
+      (fun ℓ => analyticOnNhd_f_attention sees (rmsNorm ε) H dh ℓ) (analyticOnNhd_rmsNorm hε) μ
+      (θ₀.smallWrites τ),
+    ae_funDim_add_le_residual_attention_rmsNorm ε μ hdIn hdh] with θ h1 h2
+  generalize Fintype.card d * (Fintype.card d - 1) / 2 = N at hτ h2 ⊢
+  omega
 
 /-- **Theorem 4.7, the gain, for attention blocks under pre-RMSNorm:** if moreover every block
 has total width `H d_h ≥ d`, at almost every parameter the skips raise the functional dimension
@@ -91,6 +104,12 @@ theorem ae_funDim_attention_residual_rmsNorm_ge_add (hε : 0 < ε)
     ∀ᵐ θ ∂μ, funDim (Arch.attention sees (rmsNorm ε) H dh) 0 θ
         + L * (Fintype.card d * (Fintype.card d - 1) / 2)
       ≤ funDim (Arch.attention sees (rmsNorm ε) H dh) 1 θ := by
-  sorry
+  classical
+  -- `fd₁ = P - d(d-1)/2 - s` and `fd₀ ≤ P - (L + 1) d(d-1)/2 - s`
+  filter_upwards [ae_funDim_attention_residual_rmsNorm hε μ hd hdIn hdOut hdh hdh0 t₁ t₂ h12 hs2
+      hs1, ae_funDim_add_le_skipless_attention_rmsNorm ε μ hdIn hdh hH] with θ h1 h2
+  rw [add_one_mul] at h2
+  generalize Fintype.card d * (Fintype.card d - 1) / 2 = N at h1 h2 ⊢
+  omega
 
 end Skips
