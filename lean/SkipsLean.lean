@@ -78,3 +78,5 @@ import SkipsLean.Depth.FrozenFar
 import SkipsLean.Depth.SuffixFlatConverse
 import SkipsLean.Depth.RayGatedN
 import SkipsLean.Depth.StepsGatedN
+import SkipsLean.Activations.OneSmallFactor
+import SkipsLean.Depth.ScaledSuffix
