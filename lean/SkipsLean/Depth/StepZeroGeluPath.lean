@@ -461,6 +461,335 @@ private theorem psi_identity_gzp
   simp only [psi_gzp, smul_sub, smul_smul, hts, one_smul]
   rfl
 
+/-! ### `Ψ` is holomorphic near `[0, 1] × {‖x‖ ≤ r}`, and (47) -/
+
+omit [Fintype d] [DecidableEq d] in
+/-- Helper: `s ↦ m(s)_l` is a polynomial. -/
+private theorem analyticAt_mrow_gzp (ξ ξ' : d → ℝ) (l : d) (s₀ : ℂ) :
+    AnalyticAt ℂ (fun s => mrow_gzp ξ ξ' s l) s₀ := by
+  unfold mrow_gzp
+  fun_prop
+
+omit [DecidableEq d] in
+/-- Helper: `s ↦ (m(s) M)_i` is a polynomial. -/
+private theorem analyticAt_mrow_vecMul_gzp {ι : Type*} (ξ ξ' : d → ℝ) (M : Matrix d ι ℂ) (i : ι)
+    (s₀ : ℂ) : AnalyticAt ℂ (fun s => (mrow_gzp ξ ξ' s ᵥ* M) i) s₀ := by
+  show AnalyticAt ℂ (fun s => ∑ l, mrow_gzp ξ ξ' s l * M l i) s₀
+  exact Finset.analyticAt_fun_sum _ fun l _ =>
+    (analyticAt_mrow_gzp ξ ξ' l s₀).mul analyticAt_const
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: a matrix with the same analytic row at every token is analytic. -/
+private theorem analyticAt_of_gzp {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (T' : Type*) [Fintype T'] {ι : Type*} [Fintype ι] {f : E → ι → ℂ} {x : E}
+    (hf : ∀ i, AnalyticAt ℂ (fun y => f y i) x) :
+    AnalyticAt ℂ (fun y => (Matrix.of fun (_ : T') i => f y i : Matrix T' ι ℂ)) x := by
+  show AnalyticAt ℂ (fun y => fun (_ : T') => fun i => f y i) x
+  exact AnalyticAt.pi fun _ => AnalyticAt.pi fun i => hf i
+
+/-- Helper: `y ↦ 𝓛(f₁(y), f₂(y); f₃(y))` is analytic where the rows of `f₁(y) V` are in the cone
+(`analyticAt_blockLHSC`). -/
+private theorem analyticAt_blockLHSC_comp_gzp
+    (θ : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut) (k : Fin L)
+    {κ : ℝ} (hhol : HolomorphicOnCone geluC θ k.succ κ)
+    (η : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut)
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E] {f₁ f₂ f₃ : E → Matrix T (hid k) ℂ}
+    {x : E} (h₁ : AnalyticAt ℂ f₁ x) (h₂ : AnalyticAt ℂ f₂ x) (h₃ : AnalyticAt ℂ f₃ x)
+    (hcone : ∀ τ, (f₁ x * θ.toC.2.1 k) τ ∈ complexCone κ) :
+    AnalyticAt ℂ (fun y => blockLHSC geluC θ k η (f₁ y) (f₂ y) (f₃ y)) x := by
+  have hG := analyticAt_blockLHSC θ k hhol η (f₁ x) (f₂ x) (f₃ x) hcone
+  have hP : AnalyticAt ℂ (fun y => (f₁ y, f₂ y, f₃ y)) x := h₁.prod (h₂.prod h₃)
+  exact AnalyticAt.comp (f := fun y => (f₁ y, f₂ y, f₃ y)) hG hP
+
+/-- **Step 3, `Ψ` is holomorphic** at every point `(s, (x, y))` where the rows of `(m(s)W − x)V`
+lie in the cone. -/
+private theorem analyticAt_psi_gzp
+    (θ : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut) (k : Fin L)
+    {κ : ℝ} (hhol : HolomorphicOnCone geluC θ k.succ κ)
+    (η : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut) (Z : Matrix d d ℝ)
+    (ξ ξ' : d → ℝ) (p₀ : ℂ × ((hid k → ℂ) × (hid k → ℂ)))
+    (hcone : ∀ τ, (wM_gzp T (θ.toC.1 k) ξ ξ' p₀.1 p₀.2.1 * θ.toC.2.1 k) τ ∈ complexCone κ) :
+    AnalyticAt ℂ (psi_gzp θ k η Z ξ ξ') p₀ := by
+  -- the coordinates `s`, `x_i`, `y_i`
+  have hs : AnalyticAt ℂ (fun p : ℂ × ((hid k → ℂ) × (hid k → ℂ)) => p.1) p₀ := analyticAt_fst
+  have hx : ∀ i, AnalyticAt ℂ (fun p : ℂ × ((hid k → ℂ) × (hid k → ℂ)) => p.2.1 i) p₀ :=
+    fun i => ((ContinuousLinearMap.proj (R := ℂ) (φ := fun _ : hid k => ℂ) i).comp
+      ((ContinuousLinearMap.fst ℂ _ _).comp (ContinuousLinearMap.snd ℂ _ _))).analyticAt p₀
+  have hy : ∀ i, AnalyticAt ℂ (fun p : ℂ × ((hid k → ℂ) × (hid k → ℂ)) => p.2.2 i) p₀ :=
+    fun i => ((ContinuousLinearMap.proj (R := ℂ) (φ := fun _ : hid k => ℂ) i).comp
+      ((ContinuousLinearMap.snd ℂ _ _).comp (ContinuousLinearMap.snd ℂ _ _))).analyticAt p₀
+  have hm : ∀ (M : Matrix d (hid k) ℂ) i, AnalyticAt ℂ
+      (fun p : ℂ × ((hid k → ℂ) × (hid k → ℂ)) => (mrow_gzp ξ ξ' p.1 ᵥ* M) i) p₀ :=
+    fun M i => (analyticAt_mrow_vecMul_gzp ξ ξ' M i p₀.1).comp hs
+  -- the matrices `w`, `w'`, `a`, `b` and the number `q/4`
+  have hw : AnalyticAt ℂ (fun p : ℂ × ((hid k → ℂ) × (hid k → ℂ)) =>
+      wM_gzp T (θ.toC.1 k) ξ ξ' p.1 p.2.1) p₀ :=
+    analyticAt_of_gzp T fun i => (hm _ i).sub (hx i)
+  have hwp : AnalyticAt ℂ (fun p : ℂ × ((hid k → ℂ) × (hid k → ℂ)) => wpM_gzp T p.2.2) p₀ :=
+    analyticAt_of_gzp T fun i => analyticAt_const.sub (hy i)
+  have ha : AnalyticAt ℂ (fun p : ℂ × ((hid k → ℂ) × (hid k → ℂ)) => rowM_gzp T
+      (mrow_gzp ξ ξ' p.1 ᵥ* (Z.map (fun x : ℝ => (x : ℂ)) * θ.toC.1 k + η.toC.1 k))) p₀ :=
+    analyticAt_of_gzp T fun i => hm _ i
+  have hb : AnalyticAt ℂ (fun p : ℂ × ((hid k → ℂ) × (hid k → ℂ)) =>
+      rowM_gzp T (mrow_gzp ξ ξ' p.1 ᵥ* θ.toC.1 k)) p₀ :=
+    analyticAt_of_gzp T fun i => hm _ i
+  have hq : AnalyticAt ℂ (fun p : ℂ × ((hid k → ℂ) × (hid k → ℂ)) =>
+      (mrow_gzp ξ ξ' p.1 ᵥ* Z.map (fun x : ℝ => (x : ℂ))) ⬝ᵥ mrow_gzp ξ ξ' p.1 / 4) p₀ := by
+    refine AnalyticAt.div_const ?_
+    show AnalyticAt ℂ (fun p : ℂ × ((hid k → ℂ) × (hid k → ℂ)) =>
+      ∑ i, (mrow_gzp ξ ξ' p.1 ᵥ* Z.map (fun x : ℝ => (x : ℂ))) i * mrow_gzp ξ ξ' p.1 i) p₀
+    exact Finset.analyticAt_fun_sum _ fun i _ =>
+      ((analyticAt_mrow_vecMul_gzp ξ ξ' _ i p₀.1).comp hs).mul
+        ((analyticAt_mrow_gzp ξ ξ' i p₀.1).comp hs)
+  -- the three values of `𝓛`
+  have hA := analyticAt_blockLHSC_comp_gzp θ k hhol η hw hwp ha hcone
+  have hB := analyticAt_blockLHSC_comp_gzp θ k hhol η hw hwp hb hcone
+  have hC := analyticAt_blockLHSC_comp_gzp θ k hhol η hw hwp
+    (analyticAt_const (v := (0 : Matrix T (hid k) ℂ))) hcone
+  exact ((hs.pow 2).fun_smul hA).fun_sub (hq.fun_smul (hB.fun_sub hC))
+
+omit [DecidableEq d] in
+/-- Step 2: `‖ξWV‖ > 0`, from the second inequality of (P2). -/
+private theorem sqrt_u_pos_gzp {ι : Type*} [Fintype ι] (W : Matrix d ι ℝ) (V : Matrix ι d ℝ)
+    {κ : ℝ} (hκ : 0 < κ) (ξ ξ' : d → ℝ)
+    (h2 : Real.sqrt ((ξ' ᵥ* (W * V)) ⬝ᵥ (ξ' ᵥ* (W * V)))
+      < κ / 2 * Real.sqrt ((ξ ᵥ* (W * V)) ⬝ᵥ (ξ ᵥ* (W * V)))) :
+    0 < Real.sqrt ((ξ ᵥ* (W * V)) ⬝ᵥ (ξ ᵥ* (W * V))) := by
+  have := Real.sqrt_nonneg ((ξ' ᵥ* (W * V)) ⬝ᵥ (ξ' ᵥ* (W * V)))
+  by_contra h
+  push Not at h
+  nlinarith
+
+/-- The radius `r = κ ‖ξWV‖ / (8 (1 + ∑_j ‖a_j‖))` of the polydisc. -/
+private noncomputable def rad_gzp {ι : Type*} [Fintype ι] (W : Matrix d ι ℝ) (V : Matrix ι d ℝ)
+    (ξ : d → ℝ) (κ : ℝ) : ℝ :=
+  κ * Real.sqrt ((ξ ᵥ* (W * V)) ⬝ᵥ (ξ ᵥ* (W * V))) / (8 * (1 + ∑ j, Real.sqrt (V j ⬝ᵥ V j)))
+
+omit [DecidableEq d] in
+/-- Step 2: `r > 0`. -/
+private theorem rad_pos_gzp {ι : Type*} [Fintype ι] (W : Matrix d ι ℝ) (V : Matrix ι d ℝ)
+    {κ : ℝ} (hκ : 0 < κ) (ξ ξ' : d → ℝ)
+    (h2 : Real.sqrt ((ξ' ᵥ* (W * V)) ⬝ᵥ (ξ' ᵥ* (W * V)))
+      < κ / 2 * Real.sqrt ((ξ ᵥ* (W * V)) ⬝ᵥ (ξ ᵥ* (W * V)))) :
+    0 < rad_gzp W V ξ κ := by
+  have hU := sqrt_u_pos_gzp W V hκ ξ ξ' h2
+  have hS : 0 ≤ ∑ j, Real.sqrt (V j ⬝ᵥ V j) := Finset.sum_nonneg fun j _ => Real.sqrt_nonneg _
+  unfold rad_gzp
+  positivity
+
+omit [Fintype T] [DecidableEq d] in
+/-- **Step 2, the polydisc:** for real `s ∈ [0, 1]` and `‖(x, y)‖ ≤ r`, the rows of `(m(s)W − x)V`
+lie in `C_κ`. -/
+private theorem cone_poly_gzp {ι : Type*} [Fintype ι] (W : Matrix d ι ℝ) (V : Matrix ι d ℝ)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1) (ξ ξ' : d → ℝ)
+    (h2 : Real.sqrt ((ξ' ᵥ* (W * V)) ⬝ᵥ (ξ' ᵥ* (W * V)))
+      < κ / 2 * Real.sqrt ((ξ ᵥ* (W * V)) ⬝ᵥ (ξ ᵥ* (W * V))))
+    {s : ℝ} (hs0 : 0 ≤ s) (hs1 : s ≤ 1) (x : (ι → ℂ) × (ι → ℂ)) (hx : ‖x‖ ≤ rad_gzp W V ξ κ)
+    (τ : T) :
+    (wM_gzp T (W.map (fun x : ℝ => (x : ℂ))) ξ ξ' (s : ℂ) x.1 * V.map (fun x : ℝ => (x : ℂ))) τ
+      ∈ complexCone κ := by
+  refine cone_gzp W V hκ hκ1 ξ ξ' h2 hs0 hs1 x.1 ?_
+  have hU := sqrt_u_pos_gzp W V hκ ξ ξ' h2
+  have hr0 := (rad_pos_gzp W V hκ ξ ξ' h2).le
+  have hS : 0 ≤ ∑ j, Real.sqrt (V j ⬝ᵥ V j) := Finset.sum_nonneg fun j _ => Real.sqrt_nonneg _
+  have hxj : ∀ j, ‖x.1 j‖ ≤ rad_gzp W V ξ κ := fun j =>
+    (norm_le_pi_norm x.1 j).trans ((norm_fst_le x).trans hx)
+  have hrS : rad_gzp W V ξ κ * (1 + ∑ j, Real.sqrt (V j ⬝ᵥ V j))
+      = κ * Real.sqrt ((ξ ᵥ* (W * V)) ⬝ᵥ (ξ ᵥ* (W * V))) / 8 := by
+    unfold rad_gzp
+    field_simp
+  calc ∑ j, ‖x.1 j‖ * Real.sqrt (V j ⬝ᵥ V j)
+      ≤ ∑ j, rad_gzp W V ξ κ * Real.sqrt (V j ⬝ᵥ V j) :=
+        Finset.sum_le_sum fun j _ => mul_le_mul_of_nonneg_right (hxj j) (Real.sqrt_nonneg _)
+    _ = rad_gzp W V ξ κ * ∑ j, Real.sqrt (V j ⬝ᵥ V j) := (Finset.mul_sum _ _ _).symm
+    _ ≤ rad_gzp W V ξ κ * (1 + ∑ j, Real.sqrt (V j ⬝ᵥ V j)) :=
+        mul_le_mul_of_nonneg_left (by linarith) hr0
+    _ = κ * Real.sqrt ((ξ ᵥ* (W * V)) ⬝ᵥ (ξ ᵥ* (W * V))) / 8 := hrS
+    _ ≤ κ / 4 * (s + 1 / 2) * Real.sqrt ((ξ ᵥ* (W * V)) ⬝ᵥ (ξ ᵥ* (W * V))) := by
+        nlinarith [mul_nonneg (mul_nonneg hκ.le hs0) hU.le]
+
+omit [DecidableEq d] in
+/-- Step 1: `|Im ω_j| < Re ω_j`, from the first inequality of (P2). -/
+private theorem omega_im_lt_gzp {ι : Type*} (W : Matrix d ι ℝ) (ξ ξ' : d → ℝ)
+    (h1 : ∀ j, |(ξ' ᵥ* W) j| < (ξ ᵥ* W) j) (hd : 0 < Fintype.card d) (j : ι) :
+    |(omega_gzp W ξ ξ' j).im| < (omega_gzp W ξ ξ' j).re := by
+  have hsd : 0 < Real.sqrt (Fintype.card d) / 2 :=
+    div_pos (Real.sqrt_pos.2 (by exact_mod_cast hd)) two_pos
+  show |Real.sqrt (Fintype.card d) / 2 * (ξ' ᵥ* W) j| < Real.sqrt (Fintype.card d) / 2 * (ξ ᵥ* W) j
+  rw [abs_mul, abs_of_pos hsd]
+  exact mul_lt_mul_of_pos_left (h1 j) hsd
+
+omit [Fintype T] [DecidableEq d] in
+/-- **Step 2, the path:** for `t ≥ 1`, the rows of `(m(1/t)W − c₀δ(t)/t)V` lie in `C_κ`
+(`c₀ = 2/√d`; by (45) and the third inequality of (P2)). -/
+private theorem cone_path_gzp {ι : Type*} [Fintype ι] (W : Matrix d ι ℝ) (V : Matrix ι d ℝ)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1) (ξ ξ' : d → ℝ) (hP2 : PathP2 W V κ ξ ξ')
+    (hd : 0 < Fintype.card d) {t : ℝ} (ht : 1 ≤ t) (τ : T) :
+    (wM_gzp T (W.map (fun x : ℝ => (x : ℂ))) ξ ξ' ((t⁻¹ : ℝ) : ℂ)
+        (geluGap (2 / Real.sqrt (Fintype.card d)) (omega_gzp W ξ ξ') t).1
+      * V.map (fun x : ℝ => (x : ℂ))) τ ∈ complexCone κ := by
+  obtain ⟨h1, h2, h3⟩ := hP2
+  have ht0 : 0 < t := by linarith
+  have hsd : 0 < Real.sqrt (Fintype.card d) := Real.sqrt_pos.2 (by exact_mod_cast hd)
+  refine cone_gzp W V hκ hκ1 ξ ξ' h2 (inv_nonneg.2 ht0.le) (inv_le_one_of_one_le₀ ht) _ ?_
+  -- `‖c₀ δ_j(t)/t‖ ≤ (c₀/t) e^{−d (ξc_j)²/2}`
+  have hxj : ∀ j, ‖(geluGap (2 / Real.sqrt (Fintype.card d)) (omega_gzp W ξ ξ') t).1 j‖
+      * Real.sqrt (V j ⬝ᵥ V j)
+      ≤ 2 / Real.sqrt (Fintype.card d) / t
+        * (Real.exp (-((Fintype.card d : ℝ) * ((ξ ᵥ* W) j) ^ 2 / 2)) * Real.sqrt (V j ⬝ᵥ V j)) := by
+    intro j
+    have hω := omega_im_lt_gzp W ξ ξ' h1 hd j
+    have h := norm_sub_geluC_unitPath_le hω ht
+    have hrate : 0 ≤ (omega_gzp W ξ ξ' j).re ^ 2 - (omega_gzp W ξ ξ' j).im ^ 2 := by
+      obtain ⟨ha, hb⟩ := abs_lt.1 hω
+      nlinarith
+    have he1 : Real.exp (-(((omega_gzp W ξ ξ' j).re ^ 2 - (omega_gzp W ξ ξ' j).im ^ 2)
+        * (t - 1 / t) ^ 2 / 2)) ≤ 1 :=
+      Real.exp_le_one_iff.2 (by have := sq_nonneg (t - 1 / t); nlinarith)
+    have hre : Real.exp (-(2 * (omega_gzp W ξ ξ' j).re ^ 2))
+        = Real.exp (-((Fintype.card d : ℝ) * ((ξ ᵥ* W) j) ^ 2 / 2)) := by
+      congr 1
+      show -(2 * (Real.sqrt (Fintype.card d) / 2 * (ξ ᵥ* W) j) ^ 2) = _
+      rw [mul_pow, div_pow, Real.sq_sqrt (Nat.cast_nonneg _)]
+      ring
+    have hgap : (geluGap (2 / Real.sqrt (Fintype.card d)) (omega_gzp W ξ ξ') t).1 j
+        = ((2 / Real.sqrt (Fintype.card d) / t : ℝ) : ℂ)
+          * (unitPath (omega_gzp W ξ ξ' j) t - geluC (unitPath (omega_gzp W ξ ξ' j) t)) := rfl
+    rw [hgap, norm_mul, Complex.norm_real, Real.norm_of_nonneg (by positivity), mul_assoc]
+    refine mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_right ?_ (Real.sqrt_nonneg _))
+      (by positivity)
+    rw [← hre]
+    calc _ ≤ _ := h
+      _ ≤ Real.exp (-(2 * (omega_gzp W ξ ξ' j).re ^ 2)) * 1 :=
+          mul_le_mul_of_nonneg_left he1 (Real.exp_pos _).le
+      _ = _ := mul_one _
+  have hU := sqrt_u_pos_gzp W V hκ ξ ξ' h2
+  calc _ ≤ ∑ j, 2 / Real.sqrt (Fintype.card d) / t
+        * (Real.exp (-((Fintype.card d : ℝ) * ((ξ ᵥ* W) j) ^ 2 / 2))
+          * Real.sqrt (V j ⬝ᵥ V j)) := Finset.sum_le_sum fun j _ => hxj j
+    _ = 2 / Real.sqrt (Fintype.card d) / t
+        * ∑ j, Real.exp (-((Fintype.card d : ℝ) * ((ξ ᵥ* W) j) ^ 2 / 2))
+          * Real.sqrt (V j ⬝ᵥ V j) := (Finset.mul_sum _ _ _).symm
+    _ ≤ 2 / Real.sqrt (Fintype.card d) / t
+        * (κ * Real.sqrt (Fintype.card d) / 8 * Real.sqrt ((ξ ᵥ* (W * V)) ⬝ᵥ (ξ ᵥ* (W * V)))) :=
+        mul_le_mul_of_nonneg_left h3.le (by positivity)
+    _ = κ / 4 * t⁻¹ * Real.sqrt ((ξ ᵥ* (W * V)) ⬝ᵥ (ξ ᵥ* (W * V))) := by
+        field_simp
+        ring
+    _ ≤ κ / 4 * (t⁻¹ + 1 / 2) * Real.sqrt ((ξ ᵥ* (W * V)) ⬝ᵥ (ξ ᵥ* (W * V))) := by
+        nlinarith [mul_pos hκ hU]
+
+omit [Fintype T] [DecidableEq d] in
+/-- Step 4: on the path, `σ(n(t)W) = λ (m(1/t)W − c₀δ(t)/t)` (as `λ c₀/t = 1`) and
+`σ'(n(t)W) = 1 − δ'(t)`. -/
+private theorem path_gelu_gzp {ι : Type*} (W : Matrix d ι ℝ) (ξ ξ' : d → ℝ) {t : ℝ} (ht : 0 < t)
+    (hd : 0 < Fintype.card d) :
+    (pathMatrix (Matrix.of fun _ : T => ξ) (Matrix.of fun _ : T => ξ') (t : ℂ)
+        * W.map (fun x : ℝ => (x : ℂ))).map geluC
+      = ((Real.sqrt (Fintype.card d) * t / 2 : ℝ) : ℂ)
+        • wM_gzp T (W.map (fun x : ℝ => (x : ℂ))) ξ ξ' ((t⁻¹ : ℝ) : ℂ)
+          (geluGap (2 / Real.sqrt (Fintype.card d)) (omega_gzp W ξ ξ') t).1 ∧
+    (pathMatrix (Matrix.of fun _ : T => ξ) (Matrix.of fun _ : T => ξ') (t : ℂ)
+        * W.map (fun x : ℝ => (x : ℂ))).map (deriv geluC)
+      = wpM_gzp T (geluGap (2 / Real.sqrt (Fintype.card d)) (omega_gzp W ξ ξ') t).2 := by
+  have hsd : 0 < Real.sqrt (Fintype.card d) := Real.sqrt_pos.2 (by exact_mod_cast hd)
+  have hc : ((Real.sqrt (Fintype.card d) * t / 2 : ℝ) : ℂ)
+      * ((2 / Real.sqrt (Fintype.card d) / t : ℝ) : ℂ) = 1 := by
+    rw [← Complex.ofReal_mul, ← Complex.ofReal_one]
+    congr 1
+    field_simp
+  refine ⟨?_, ?_⟩
+  · rw [smul_wM_gzp _ ξ ξ' ht]
+    ext τ j
+    simp only [Matrix.map_apply, Matrix.of_apply, geluGap, path_entry_gzp W ξ ξ' ht τ j]
+    linear_combination (unitPath (omega_gzp W ξ ξ' j) t
+      - geluC (unitPath (omega_gzp W ξ ξ' j) t)) * hc
+  · ext τ j
+    simp only [Matrix.map_apply, wpM_gzp, Matrix.of_apply, geluGap, path_entry_gzp W ξ ξ' ht τ j]
+    ring
+
+/-- **(47):** for `t ≥ 1`, `Ψ(1/t, (c₀δ(t)/t, δ'(t))) = 0` (Lemma D.15 and the identity). -/
+private theorem psi_path_gzp [Nonempty T]
+    (θ : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut)
+    (hθ : RegularZero (Arch.mlp gelu (rmsNorm 0) hid) θ) (k : Fin L)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1) (hhol : HolomorphicOnCone geluC θ k.succ κ)
+    (Z : Matrix d d ℝ) (η : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut)
+    (h16 : SuffixFlatZero (Arch.mlp gelu (rmsNorm 0) hid) θ k.castSucc Z η)
+    (ξ ξ' : d → ℝ) (hξ : ξ ⬝ᵥ ξ = 1) (hξ' : ξ' ⬝ᵥ ξ' = 1) (hξξ' : ξ ⬝ᵥ ξ' = 0)
+    (hP2 : PathP2 (θ.read k) (θ.write k) κ ξ ξ') (hd : 0 < Fintype.card d) {t : ℝ}
+    (ht : 1 ≤ t) :
+    psi_gzp θ k η Z ξ ξ' (((t : ℂ))⁻¹,
+      geluGap (2 / Real.sqrt (Fintype.card d)) (omega_gzp (θ.read k) ξ ξ') t) = 0 := by
+  have : Nonempty d := Fintype.card_pos_iff.1 hd
+  have ht0 : 0 < t := by linarith
+  have ht' : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 ht0.ne'
+  -- the hypothesis of Lemma D.15: `σ` is holomorphic, and the rows of `σ(n(t)W)V` are in `C_κ`
+  have hpath : ∀ t' : ℝ, 1 ≤ t' →
+      (∀ τ j, AnalyticAt ℂ geluC ((pathMatrix (Matrix.of fun _ : T => ξ)
+        (Matrix.of fun _ : T => ξ') (t' : ℂ) * θ.toC.1 k) τ j)) ∧
+      ∀ τ, ((pathMatrix (Matrix.of fun _ : T => ξ) (Matrix.of fun _ : T => ξ') (t' : ℂ)
+        * θ.toC.1 k).map geluC * θ.toC.2.1 k) τ ∈ complexCone κ := by
+    intro t' ht'
+    refine ⟨fun _ _ => analyticAt_geluC _, fun τ => ?_⟩
+    have e : (pathMatrix (Matrix.of fun _ : T => ξ) (Matrix.of fun _ : T => ξ') (t' : ℂ)
+        * θ.toC.1 k).map geluC
+        = ((Real.sqrt (Fintype.card d) * t' / 2 : ℝ) : ℂ)
+          • wM_gzp T (θ.toC.1 k) ξ ξ' ((t'⁻¹ : ℝ) : ℂ)
+            (geluGap (2 / Real.sqrt (Fintype.card d)) (omega_gzp (θ.read k) ξ ξ') t').1 :=
+      (path_gelu_gzp (θ.read k) ξ ξ' (by linarith) hd).1
+    rw [e, Matrix.smul_mul]
+    exact smul_mem_complexCone (cone_path_gzp (θ.read k) (θ.write k) hκ hκ1 ξ ξ' hP2 hd ht' τ)
+      _ (by have := Real.sqrt_pos.2 (show (0 : ℝ) < Fintype.card d by exact_mod_cast hd)
+            positivity)
+  -- (47) in the form of Lemma D.15, then the identity
+  have h := blockLHSC_pathMatrix_eq_zero hasDerivAt_gelu analyticOnNhd_gelu geluC_ofReal
+    (fun x => analyticAt_geluC _) θ hθ k hκ hhol Z η h16 (Matrix.of fun _ : T => ξ)
+    (Matrix.of fun _ : T => ξ') (fun _ => hξ) (fun _ => hξ') (fun _ => hξξ') hpath t ht
+  have e1' : (pathMatrix (Matrix.of fun _ : T => ξ) (Matrix.of fun _ : T => ξ') (t : ℂ)
+      * θ.toC.1 k).map geluC
+      = ((Real.sqrt (Fintype.card d) * t / 2 : ℝ) : ℂ)
+        • wM_gzp T (θ.toC.1 k) ξ ξ' ((t⁻¹ : ℝ) : ℂ)
+          (geluGap (2 / Real.sqrt (Fintype.card d)) (omega_gzp (θ.read k) ξ ξ') t).1 :=
+    (path_gelu_gzp (θ.read k) ξ ξ' ht0 hd).1
+  have e2' : (pathMatrix (Matrix.of fun _ : T => ξ) (Matrix.of fun _ : T => ξ') (t : ℂ)
+      * θ.toC.1 k).map (deriv geluC)
+      = wpM_gzp T (geluGap (2 / Real.sqrt (Fintype.card d)) (omega_gzp (θ.read k) ξ ξ') t).2 :=
+    (path_gelu_gzp (θ.read k) ξ ξ' ht0 hd).2
+  rw [e1', e2', ← psi_identity_gzp θ k hκ hκ1 hhol Z η ξ ξ' hd ht0 _ _
+    (cone_path_gzp (θ.read k) (θ.write k) hκ hκ1 ξ ξ' hP2 hd ht)] at h
+  have h3 := (smul_eq_zero.1 h).resolve_left (pow_ne_zero 2 ht')
+  rw [Complex.ofReal_inv] at h3
+  exact h3
+
+/-- Step 3: `Ψ` is holomorphic at the points `(s, x)` with `s ∈ [0, 1]` and `‖x‖ ≤ r`. -/
+private theorem analyticAt_psi_poly_gzp
+    (θ : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut) (k : Fin L)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1) (hhol : HolomorphicOnCone geluC θ k.succ κ)
+    (Z : Matrix d d ℝ) (η : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut)
+    (ξ ξ' : d → ℝ) (hP2 : PathP2 (θ.read k) (θ.write k) κ ξ ξ') :
+    ∀ s : ℝ, 0 ≤ s → s ≤ 1 → ∀ x : (hid k → ℂ) × (hid k → ℂ),
+      ‖x‖ ≤ rad_gzp (θ.read k) (θ.write k) ξ κ →
+        AnalyticAt ℂ (psi_gzp θ k η Z ξ ξ') ((s : ℂ), x) :=
+  fun _ hs0 hs1 x hx => analyticAt_psi_gzp θ k hhol η Z ξ ξ' _
+    (cone_poly_gzp (θ.read k) (θ.write k) hκ hκ1 ξ ξ' hP2.2.1 hs0 hs1 x hx)
+
+/-- **Step 5 (Step 1 of the paper):** `Ψ(s, 0) = 0` for `s ∈ (0, 1]` (`gelu_path_zero`). -/
+private theorem psi_zero_gzp [Nonempty T]
+    (θ : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut)
+    (hθ : RegularZero (Arch.mlp gelu (rmsNorm 0) hid) θ) (k : Fin L)
+    {κ : ℝ} (hκ : 0 < κ) (hκ1 : κ ≤ 1) (hhol : HolomorphicOnCone geluC θ k.succ κ)
+    (Z : Matrix d d ℝ) (η : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut)
+    (h16 : SuffixFlatZero (Arch.mlp gelu (rmsNorm 0) hid) θ k.castSucc Z η)
+    (ξ ξ' : d → ℝ) (hξ : ξ ⬝ᵥ ξ = 1) (hξ' : ξ' ⬝ᵥ ξ' = 1) (hξξ' : ξ ⬝ᵥ ξ' = 0)
+    (hP2 : PathP2 (θ.read k) (θ.write k) κ ξ ξ') (hd : 0 < Fintype.card d) :
+    ∀ s : ℝ, 0 < s → s ≤ 1 → psi_gzp θ k η Z ξ ξ' ((s : ℂ), 0) = 0 :=
+  gelu_path_zero (omega_gzp (θ.read k) ξ ξ') (omega_im_lt_gzp _ ξ ξ' hP2.1 hd)
+    (2 / Real.sqrt (Fintype.card d)) (psi_gzp θ k η Z ξ ξ')
+    (rad_pos_gzp (θ.read k) (θ.write k) hκ ξ ξ' hP2.2.1)
+    (analyticAt_psi_poly_gzp θ k hκ hκ1 hhol Z η ξ ξ' hP2)
+    (Filter.eventually_atTop.2 ⟨1, fun _ ht =>
+      psi_path_gzp θ hθ k hκ hκ1 hhol Z η h16 ξ ξ' hξ hξ' hξξ' hP2 hd ht⟩)
+
 /-- **Lemma D.19, Step 1, on the path:** `𝓛(n(t)W, 1; n(t)) = 0` for all `t ≥ 1` ("`𝓛_0(t) = 0`
 for large `t`, and then for all `t ≥ 1`"). -/
 theorem gelu_path_step_zero [Nonempty T]
