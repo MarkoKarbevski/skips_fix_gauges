@@ -159,6 +159,92 @@ theorem finrank_upperTriangular :
   generalize Fintype.card d * (Fintype.card d - 1) = x at h2 ⊢
   omega
 
+section Copies
+
+variable {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the product of two differentiable matrix-valued maps is differentiable (a copy of the
+private `differentiable_matMul` of `Dimension/Functional.lean`). -/
+private theorem differentiable_matMul_lst {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    {f : E → Matrix m n ℝ} {g : E → Matrix n p ℝ}
+    (hf : Differentiable ℝ f) (hg : Differentiable ℝ g) :
+    Differentiable ℝ (fun y => f y * g y) := by
+  -- matrix multiplication as a bilinear map
+  let B : Matrix m n ℝ →ₗ[ℝ] Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ :=
+    LinearMap.mk₂ ℝ (fun a b => a * b) Matrix.add_mul (fun c a b => Matrix.smul_mul c a b)
+      Matrix.mul_add (fun c a b => Matrix.mul_smul a c b)
+  -- the same map with continuous linear maps (all spaces are finite-dimensional)
+  let B' : Matrix m n ℝ →L[ℝ] Matrix n p ℝ →L[ℝ] Matrix m p ℝ :=
+    LinearMap.toContinuousLinearMap
+      ((LinearMap.toContinuousLinearMap :
+        (Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ) ≃ₗ[ℝ] (Matrix n p ℝ →L[ℝ] Matrix m p ℝ)).toLinearMap ∘ₗ B)
+  have hB : (fun y => f y * g y) = fun y => B' (f y) (g y) := rfl
+  rw [hB]
+  exact (B'.differentiable.comp hf).clm_apply hg
+
+omit [Fintype T] [DecidableEq d] [LinearOrder d] in
+/-- Helper: a linear function of the weights `θ`, as a continuous linear map of `(θ, v)` (the
+space of weights is finite-dimensional). -/
+private noncomputable def fstLin_lst {A : Arch T d L} {F : Type*} [NormedAddCommGroup F]
+    [NormedSpace ℝ F] (l : Params A dIn dOut →ₗ[ℝ] F) : Params A dIn dOut × V →L[ℝ] F :=
+  (LinearMap.toContinuousLinearMap l).comp (ContinuousLinearMap.fst ℝ (Params A dIn dOut) V)
+
+omit [LinearOrder d] in
+/-- Helper: the skip of block `ℓ`, `(θ, v) ↦ (ι v)_ℓ`, as a continuous linear map. -/
+private noncomputable def skipLin_lst (A : Arch T d L) (ι : V →L[ℝ] (Fin L → Matrix d d ℝ))
+    (ℓ : Fin L) : Params A dIn dOut × V →L[ℝ] Matrix d d ℝ :=
+  (ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : Fin L => Matrix d d ℝ) ℓ).comp
+    (ι.comp (ContinuousLinearMap.snd ℝ (Params A dIn dOut) V))
+
+omit [DecidableEq d] [LinearOrder d] in
+/-- **The output is differentiable in the weights and the skips jointly:** for differentiable
+maps `f_ℓ` and `χ`, the map `(θ, v) ↦ F_{θ, ι v}(x)` is differentiable. -/
+private theorem differentiable_evalSkips_lst (A : Arch T d L)
+    (ι : V →L[ℝ] (Fin L → Matrix d d ℝ)) (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ))
+    (hχ : Differentiable ℝ A.χ) (x : Matrix T dIn ℝ) :
+    Differentiable ℝ (fun p : Params A dIn dOut × V => evalSkips A ι p x) := by
+  -- the weights and the skips are continuous linear functions of `(θ, v)`
+  have hE : Differentiable ℝ (fun p : Params A dIn dOut × V => p.1.E) :=
+    (fstLin_lst (V := V) (F := Matrix dIn d ℝ)
+      { toFun := fun θ : Params A dIn dOut => θ.E, map_add' := fun _ _ => rfl,
+        map_smul' := fun _ _ => rfl }).differentiable
+  have hr : ∀ ℓ, Differentiable ℝ (fun p : Params A dIn dOut × V => p.1.read ℓ) := fun ℓ =>
+    (fstLin_lst (V := V) (F := Matrix d (A.r ℓ) ℝ)
+      { toFun := fun θ : Params A dIn dOut => θ.read ℓ, map_add' := fun _ _ => rfl,
+        map_smul' := fun _ _ => rfl }).differentiable
+  have hw : ∀ ℓ, Differentiable ℝ (fun p : Params A dIn dOut × V => p.1.write ℓ) := fun ℓ =>
+    (fstLin_lst (V := V) (F := Matrix (A.w ℓ) d ℝ)
+      { toFun := fun θ : Params A dIn dOut => θ.write ℓ, map_add' := fun _ _ => rfl,
+        map_smul' := fun _ _ => rfl }).differentiable
+  have hD : Differentiable ℝ (fun p : Params A dIn dOut × V => p.1.D) :=
+    (fstLin_lst (V := V) (F := Matrix d dOut ℝ)
+      { toFun := fun θ : Params A dIn dOut => θ.D, map_add' := fun _ _ => rfl,
+        map_smul' := fun _ _ => rfl }).differentiable
+  have hS : ∀ ℓ, Differentiable ℝ (fun p : Params A dIn dOut × V => ι p.2 ℓ) := fun ℓ =>
+    (skipLin_lst (dIn := dIn) (dOut := dOut) A ι ℓ).differentiable
+  -- every hidden state is differentiable in `(θ, v)`, by induction on `ℓ`
+  have hh : ∀ ℓ : Fin (L + 1), Differentiable ℝ
+      (fun p : Params A dIn dOut × V => hidden A (ι p.2) p.1 x ℓ) := by
+    intro ℓ
+    induction ℓ using Fin.induction with
+    | zero =>
+      -- `h_0 = x E`
+      simp only [hidden_zero]
+      exact differentiable_matMul_lst (differentiable_const x) hE
+    | succ ℓ ih =>
+      -- `h_{ℓ+1} = h_ℓ (ι v)_ℓ + f_ℓ (χ(h_ℓ) W_read) W_write`
+      simp only [hidden_succ]
+      exact (differentiable_matMul_lst ih (hS ℓ)).add
+        (differentiable_matMul_lst ((hf ℓ).comp (differentiable_matMul_lst (hχ.comp ih)
+          (hr ℓ))) (hw ℓ))
+  -- the output `χ(h_L) D`
+  simp only [evalSkips, eval]
+  exact differentiable_matMul_lst (hχ.comp (hh (Fin.last L))) hD
+
+end Copies
+
 /-- **One block under pre-RMSNorm (`ε > 0`), at an invertible upper triangular skip `R`:** the
 family of upper triangular skips has the functional dimension of the family of all skips. -/
 theorem funDimLearnedTri_eq_funDimLearned {A : Arch T d 1} {ε : ℝ} (hε : 0 < ε)
@@ -167,6 +253,96 @@ theorem funDimLearnedTri_eq_funDimLearned {A : Arch T d 1} {ε : ℝ} (hε : 0 <
     funDimLearnedTri A (θ, R) = funDimLearned A (θ, fun ℓ => (R ℓ : Matrix d d ℝ)) := by
   sorry
 
+omit [Fintype T] [Fintype dOut] [LinearOrder d] in
+/-- Helper: the orthogonal change of basis of the weights and the skips,
+`(θ, S) ↦ (θ.cob Q Q, cobSkip S Q)`, is linear. -/
+private noncomputable def cobLin_lst {A : Arch T d L} (Q : Fin (L + 1) → GL d ℝ) :
+    (Params A dIn dOut × (Fin L → Matrix d d ℝ))
+      →ₗ[ℝ] (Params A dIn dOut × (Fin L → Matrix d d ℝ)) where
+  toFun p := (p.1.cob Q Q, cobSkip p.2 Q)
+  map_add' p q := by
+    refine Prod.ext (Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_) (funext fun ℓ => ?_) <;>
+      simp only [Prod.fst_add, Prod.snd_add, Params.cob, cobSkip, Params.add_E, Params.add_read,
+        Params.add_write, Params.add_D, Pi.add_apply, Matrix.add_mul, Matrix.mul_add]
+  map_smul' c p := by
+    refine Prod.ext (Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_) (funext fun ℓ => ?_) <;>
+      simp only [Prod.smul_fst, Prod.smul_snd, Params.cob, cobSkip, Params.smul_E,
+        Params.smul_read, Params.smul_write, Params.smul_D, Pi.smul_apply, Matrix.smul_mul,
+        Matrix.mul_smul, RingHom.id_apply]
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] [LinearOrder d] in
+private theorem cobLin_lst_apply {A : Arch T d L} (Q : Fin (L + 1) → GL d ℝ)
+    (p : Params A dIn dOut × (Fin L → Matrix d d ℝ)) :
+    cobLin_lst Q p = (p.1.cob Q Q, cobSkip p.2 Q) := rfl
+
+omit [Fintype T] [Fintype dOut] [LinearOrder d] in
+/-- Helper: under pre-RMSNorm the orthogonal change of basis keeps the function. -/
+private theorem evalSkips_cobLin_lst {A : Arch T d L} {ε : ℝ} (hA : A.χ = rmsNorm ε)
+    (Q : Fin (L + 1) → GL d ℝ) (hQ : ∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ)
+    (p : Params A dIn dOut × (Fin L → Matrix d d ℝ)) (x : Matrix T dIn ℝ) :
+    evalSkips A (ContinuousLinearMap.id ℝ (Fin L → Matrix d d ℝ)) (cobLin_lst Q p) x
+      = evalSkips A (ContinuousLinearMap.id ℝ (Fin L → Matrix d d ℝ)) p x := by
+  -- pre-RMSNorm commutes with every orthogonal `Q_ℓ`
+  have hχ : ∀ ℓ (h : Matrix T d ℝ),
+      A.χ (h * (Q ℓ : Matrix d d ℝ)) = A.χ h * (Q ℓ : Matrix d d ℝ) := by
+    intro ℓ h
+    rw [hA]
+    exact rmsNorm_mul_orthogonal ε (hQ ℓ) h
+  exact eval_cob (M := p.2) (θ := p.1) (G := Q) (K := Q) (x := x) hχ
+
+omit [LinearOrder d] in
+/-- Helper: the functional dimension does not drop under an orthogonal change of basis: on every
+batch the Jacobian at `p` is that at `g p` composed with `g` (the chain rule for `F ∘ g = F`). -/
+private theorem funDimLearned_le_cobLin_lst {A : Arch T d L} {ε : ℝ} (hε : 0 < ε)
+    (hA : A.χ = rmsNorm ε) (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ)) (Q : Fin (L + 1) → GL d ℝ)
+    (hQ : ∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ)
+    (p : Params A dIn dOut × (Fin L → Matrix d d ℝ)) :
+    funDimLearned A p ≤ funDimLearned A (cobLin_lst Q p) := by
+  have hχ : Differentiable ℝ A.χ := by
+    rw [hA]
+    exact differentiable_rmsNorm hε
+  -- `g`, as a continuous linear map
+  let g := LinearMap.toContinuousLinearMap (cobLin_lst (A := A) (dIn := dIn) (dOut := dOut) Q)
+  -- the ranks at `g p` are bounded by the number of parameters
+  have hbdd : BddAbove {r : ℕ | ∃ (n : ℕ) (X : Fin n → Matrix T dIn ℝ),
+      r = jacobianRankSkips A (ContinuousLinearMap.id ℝ (Fin L → Matrix d d ℝ)) X (g p)} :=
+    ⟨Module.finrank ℝ (Params A dIn dOut × (Fin L → Matrix d d ℝ)), by
+      rintro _ ⟨n, X, rfl⟩
+      exact LinearMap.finrank_range_le _⟩
+  unfold funDimLearned funDimSkips
+  refine csSup_le ⟨_, 0, fun i => i.elim0, rfl⟩ ?_
+  rintro _ ⟨n, X, rfl⟩
+  refine le_trans ?_ (le_csSup hbdd ⟨n, X, rfl⟩)
+  -- the outputs on the batch: `G ∘ g = G`
+  let G : Params A dIn dOut × (Fin L → Matrix d d ℝ) → Fin n → Matrix T dOut ℝ :=
+    fun p' i => evalSkips A (ContinuousLinearMap.id ℝ (Fin L → Matrix d d ℝ)) p' (X i)
+  have hG : Differentiable ℝ G :=
+    differentiable_pi.2 fun i => differentiable_evalSkips_lst A _ hf hχ (X i)
+  have hcomp : G ∘ g = G := funext fun p' => funext fun i => evalSkips_cobLin_lst hA Q hQ p' (X i)
+  have hd : fderiv ℝ (G ∘ g) p = (fderiv ℝ G (g p)).comp g :=
+    ((hG (g p)).hasFDerivAt.comp p g.hasFDerivAt).fderiv
+  rw [hcomp] at hd
+  -- the range of a composition lies in the range of the outer map
+  show Module.finrank ℝ (LinearMap.range (fderiv ℝ G p).toLinearMap)
+    ≤ Module.finrank ℝ (LinearMap.range (fderiv ℝ G (g p)).toLinearMap)
+  rw [hd]
+  exact Submodule.finrank_mono (LinearMap.range_comp_le_range _ _)
+
+omit [Fintype T] [Fintype dOut] [LinearOrder d] in
+/-- Helper: `a (a⁻¹ B) = B` for `a : GL d ℝ` and a rectangular `B`. -/
+private theorem gl_mul_inv_mul_lst {n : Type*} (a : GL d ℝ) (B : Matrix d n ℝ) :
+    (a : Matrix d d ℝ) * ((↑a⁻¹ : Matrix d d ℝ) * B) = B := by
+  rw [← Matrix.mul_assoc, Units.mul_inv, Matrix.one_mul]
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] [LinearOrder d] in
+/-- Helper: the change of basis by `Q⁻¹` undoes that by `Q`. -/
+private theorem cobLin_inv_cobLin_lst {A : Arch T d L} (Q : Fin (L + 1) → GL d ℝ)
+    (p : Params A dIn dOut × (Fin L → Matrix d d ℝ)) :
+    cobLin_lst (fun ℓ => (Q ℓ)⁻¹) (cobLin_lst Q p) = p := by
+  refine Prod.ext (Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_) (funext fun ℓ => ?_) <;>
+    simp only [cobLin_lst_apply, Params.cob, cobSkip, inv_inv, Matrix.mul_assoc, Units.mul_inv,
+      Matrix.mul_one, gl_mul_inv_mul_lst]
+
 /-- **The functional dimension with full learned skips is invariant under orthogonal changes of
 basis** (pre-RMSNorm, `ε > 0`): at `(θ.cob Q Q, (Q_{ℓ-1}⁻¹ A_ℓ Q_ℓ))` it is the same as at
 `(θ, (A_ℓ))`. -/
@@ -174,7 +350,19 @@ theorem funDimLearned_cob {A : Arch T d L} {ε : ℝ} (hε : 0 < ε) (hA : A.χ 
     (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ)) (θ : Params A dIn dOut) (S : Fin L → Matrix d d ℝ)
     (Q : Fin (L + 1) → GL d ℝ) (hQ : ∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ) :
     funDimLearned A (θ.cob Q Q, cobSkip S Q) = funDimLearned A (θ, S) := by
-  sorry
+  -- the inverses `Q_ℓ⁻¹ = Q_ℓᵀ` are orthogonal too
+  have hQ' : ∀ ℓ, ((Q ℓ)⁻¹ : GL d ℝ).val ∈ Matrix.orthogonalGroup d ℝ := by
+    intro ℓ
+    rw [coe_inv_of_mem_orthogonalGroup (Q ℓ) (hQ ℓ)]
+    refine (Matrix.mem_orthogonalGroup_iff d ℝ).2 ?_
+    rw [Matrix.transpose_transpose]
+    exact (Matrix.mem_orthogonalGroup_iff' d ℝ).1 (hQ ℓ)
+  apply le_antisymm
+  · -- the change of basis by `Q⁻¹` brings `(θ.cob Q Q, cobSkip S Q)` back to `(θ, S)`
+    have h := funDimLearned_le_cobLin_lst hε hA hf (fun ℓ => (Q ℓ)⁻¹) hQ' (cobLin_lst Q (θ, S))
+    rw [cobLin_inv_cobLin_lst] at h
+    exact h
+  · exact funDimLearned_le_cobLin_lst hε hA hf Q hQ (θ, S)
 
 variable {hid : Fin 1 → Type} [∀ ℓ, Fintype (hid ℓ)] {ε : ℝ}
 
