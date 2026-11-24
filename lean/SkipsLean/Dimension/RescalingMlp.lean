@@ -380,7 +380,10 @@ theorem ae_funDim_add_le_skipless_relu [Nonempty d]
     ∀ᵐ θ ∂μ, funDim (Arch.mlp relu id hid) 0 θ
         + ((L + 1) * Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
       ≤ Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) := by
-  sorry
+  -- the pointwise bound holds wherever `E` and the writes have rank `d` and no column of a read
+  -- vanishes
+  filter_upwards [ae_rank_E_write μ hdIn hhid, ae_read_col_ne_zero μ] with θ h1 h2
+  exact funDim_add_le_skipless_mlp_rescale relu_homogeneous θ h1.1 h1.2 h2
 
 /-- **Theorem 4.3 for ReLU² blocks at generic parameters, without normalization.** -/
 theorem ae_funDim_add_le_skipless_reluSq [Nonempty d]
