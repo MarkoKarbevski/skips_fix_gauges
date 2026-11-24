@@ -40,11 +40,52 @@ structure Nondegenerate (Wr : Matrix p m ℝ) (Ww : Matrix m q ℝ) : Prop where
 
 /-- `GELU(y) - ReLU(y) = -|y| Φ(-|y|)` (proof of Theorem 4.5). -/
 theorem gelu_sub_relu (y : ℝ) : gelu y - relu y = -(|y| * gaussCdf (-|y|)) := by
-  sorry
+  rcases le_total 0 y with hy | hy
+  · -- `y ≥ 0`: `y Φ(y) - y = -y (1 - Φ(y)) = -y Φ(-y)`
+    rw [abs_of_nonneg hy, gaussCdf_neg, gelu, relu, max_eq_left hy]
+    ring
+  · -- `y ≤ 0`: `y Φ(y) - 0 = -|y| Φ(-|y|)`, with `|y| = -y`
+    rw [abs_of_nonpos hy, neg_neg, gelu, relu, max_eq_right hy]
+    ring
+
+/-- `φ(u) ≤ 1`: `e^{-u²/2} ≤ 1 ≤ √(2π)`. -/
+private theorem gaussPdf_le_one (u : ℝ) : gaussPdf u ≤ 1 := by
+  have h1 : Real.exp (-u ^ 2 / 2) ≤ 1 :=
+    Real.exp_le_one_iff.2 (div_nonpos_of_nonpos_of_nonneg (neg_nonpos.2 (sq_nonneg u)) two_pos.le)
+  have h2 : (1 : ℝ) ≤ Real.sqrt (2 * Real.pi) := by
+    rw [← Real.sqrt_one]
+    exact Real.sqrt_le_sqrt (by linarith [Real.pi_gt_three])
+  rw [gaussPdf, div_le_one (by linarith)]
+  linarith
 
 /-- `|GELU(y) - ReLU(y)|` is bounded. (The paper's bound is `κ < 0.17`; any bound serves.) -/
 theorem abs_gelu_sub_relu_le (y : ℝ) : |gelu y - relu y| ≤ 1 := by
-  sorry
+  rw [gelu_sub_relu, abs_neg]
+  rcases (abs_nonneg y).eq_or_lt with h0 | hpos
+  · rw [← h0, zero_mul, abs_zero]
+    exact zero_le_one
+  · -- `u Φ(-u) = u (1 - Φ(u)) ≤ φ(u) ≤ 1` for `u = |y| > 0`
+    rw [abs_of_pos (mul_pos hpos (gaussCdf_pos _)), gaussCdf_neg]
+    calc |y| * (1 - gaussCdf |y|) ≤ |y| * (gaussPdf |y| / |y|) :=
+          mul_le_mul_of_nonneg_left (one_sub_gaussCdf_le hpos) hpos.le
+      _ = gaussPdf |y| := by field_simp
+      _ ≤ 1 := gaussPdf_le_one _
+
+/-- An output coordinate of a vanilla block. -/
+private theorem vanillaBlock_apply {k : Type*} [Fintype k] (σ : ℝ → ℝ) (W : Matrix p k ℝ)
+    (V : Matrix k q ℝ) (z : p → ℝ) (o : q) :
+    vanillaBlock σ W V z o = ∑ i, σ ((z ᵥ* W) i) * V i o := rfl
+
+/-- ReLU is positively homogeneous: `ReLU(t y) = t ReLU(y)` for `t > 0`. -/
+private theorem relu_mul_of_pos {t : ℝ} (ht : 0 < t) (y : ℝ) : relu (t * y) = t * relu y := by
+  rw [relu, relu, mul_max_of_nonneg _ _ ht.le, mul_zero]
+
+/-- `|∑ᵢ (GELU(t yᵢ) - t ReLU(yᵢ)) wᵢ| ≤ ∑ᵢ |wᵢ|` for `t > 0`. -/
+private theorem abs_sum_gelu_sub_le {ι : Type*} [Fintype ι] {t : ℝ} (ht : 0 < t) (y w : ι → ℝ) :
+    |∑ i, (gelu (t * y i) - t * relu (y i)) * w i| ≤ ∑ i, |w i| := by
+  refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun i _ => ?_)
+  rw [abs_mul, ← relu_mul_of_pos ht]
+  exact mul_le_of_le_one_left (abs_nonneg _) (abs_gelu_sub_relu_le _)
 
 /-- **GELU to ReLU along rays** (proof of Theorem 4.5, for one block): if a GELU block absorbs
 `x M` into a GELU block, of any width, then the ReLU blocks with the same weights satisfy the same
@@ -53,7 +94,43 @@ theorem relu_absorb_of_gelu_absorb {m' : Type*} [Fintype m'] (Wr : Matrix p m �
     (Ww : Matrix m q ℝ) (Wr' : Matrix p m' ℝ) (Ww' : Matrix m' q ℝ) (M : Matrix p q ℝ)
     (h : ∀ x : p → ℝ, x ᵥ* M + vanillaBlock gelu Wr Ww x = vanillaBlock gelu Wr' Ww' x) :
     ∀ x : p → ℝ, x ᵥ* M + vanillaBlock relu Wr Ww x = vanillaBlock relu Wr' Ww' x := by
-  sorry
+  intro x
+  funext o
+  -- the GELU equation at `t x`, coordinate `o`
+  have hG : ∀ t : ℝ, t * (x ᵥ* M) o + ∑ i, gelu (t * (x ᵥ* Wr) i) * Ww i o
+      = ∑ j, gelu (t * (x ᵥ* Wr') j) * Ww' j o := by
+    intro t
+    have h1 := congrFun (h (t • x)) o
+    simpa only [Pi.add_apply, vanillaBlock_apply, Matrix.smul_vecMul, Pi.smul_apply,
+      smul_eq_mul] using h1
+  -- the defect `D` of the ReLU equation at `o` has `|t D| ≤ C` for all `t > 0`
+  obtain ⟨D, hD⟩ : ∃ D, D = (x ᵥ* M) o + ∑ i, relu ((x ᵥ* Wr) i) * Ww i o
+      - ∑ j, relu ((x ᵥ* Wr') j) * Ww' j o := ⟨_, rfl⟩
+  obtain ⟨C, hC⟩ : ∃ C, C = ∑ i, |Ww i o| + ∑ j, |Ww' j o| := ⟨_, rfl⟩
+  have hbound : ∀ t : ℝ, 0 < t → |t * D| ≤ C := by
+    intro t ht
+    -- `t D = ∑ⱼ (GELU(t y'ⱼ) - t ReLU(y'ⱼ)) ŵ'ⱼ - ∑ᵢ (GELU(t yᵢ) - t ReLU(yᵢ)) ŵᵢ`
+    have e : t * D = ∑ j, (gelu (t * (x ᵥ* Wr') j) - t * relu ((x ᵥ* Wr') j)) * Ww' j o
+        - ∑ i, (gelu (t * (x ᵥ* Wr) i) - t * relu ((x ᵥ* Wr) i)) * Ww i o := by
+      simp only [sub_mul, Finset.sum_sub_distrib, hD, mul_add, mul_sub, Finset.mul_sum,
+        mul_assoc]
+      linarith [hG t]
+    rw [e, hC]
+    refine (abs_sub _ _).trans ?_
+    linarith [abs_sum_gelu_sub_le ht (fun j => (x ᵥ* Wr') j) (fun j => Ww' j o),
+      abs_sum_gelu_sub_le ht (fun i => (x ᵥ* Wr) i) (fun i => Ww i o)]
+  -- hence `D = 0`: else `t = (C + 1)/|D|` gives `|t D| = C + 1`
+  have hD0 : D = 0 := by
+    by_contra hne
+    have hC0 : 0 ≤ C := hC ▸ add_nonneg (Finset.sum_nonneg fun _ _ => abs_nonneg _)
+      (Finset.sum_nonneg fun _ _ => abs_nonneg _)
+    have hDpos : 0 < |D| := abs_pos.2 hne
+    have ht : 0 < (C + 1) / |D| := div_pos (by linarith) hDpos
+    have h1 := hbound _ ht
+    rw [abs_mul, abs_of_pos ht, div_mul_cancel₀ _ hDpos.ne'] at h1
+    linarith
+  rw [Pi.add_apply, vanillaBlock_apply, vanillaBlock_apply]
+  linarith
 
 /-! ### Corollary A.9 and Theorem 3.1 (i) -/
 
