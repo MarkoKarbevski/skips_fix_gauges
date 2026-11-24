@@ -1332,3 +1332,11 @@ import SkipsLean
 #print axioms Skips.ae_funDimSkips_ge
 #print axioms Skips.funDimSkips_comp_le
 #print axioms Skips.funDimLearned_add_le_rmsNorm
+#print axioms Skips.ae_funDimLearned_tanh_rmsNorm
+#print axioms Skips.ae_funDimLearned_tanh_rmsNorm_eq_residual_add
+#print axioms Skips.ae_funDimLearned_gelu_rmsNorm
+#print axioms Skips.ae_funDimLearned_gelu_rmsNorm_eq_residual_add
+#print axioms Skips.ae_funDimLearned_swiglu_rmsNorm
+#print axioms Skips.ae_funDimLearned_swiglu_rmsNorm_eq_residual_add
+#print axioms Skips.ae_funDimLearned_geglu_rmsNorm
+#print axioms Skips.ae_funDimLearned_geglu_rmsNorm_eq_residual_add
