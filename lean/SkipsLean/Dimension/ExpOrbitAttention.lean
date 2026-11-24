@@ -40,9 +40,51 @@ noncomputable def cobExpHeads (θ : Params (Arch.attention sees χ H dh) dIn dOu
 
 variable (θ : Params (Arch.attention sees χ H dh) dIn dOut)
 
+/-- Helper: `exp 0 = 1` in `GL`. -/
+private theorem expGL_zero_eoa {n : Type*} [Fintype n] [DecidableEq n] :
+    expGL (0 : Matrix n n ℝ) = 1 :=
+  Units.ext (by rw [coe_expGL, NormedSpace.exp_zero, Units.val_one])
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the change of basis `1` between queries and keys is the identity. -/
+private theorem headsQK_one_eoa : θ.headsQK (fun _ _ => 1) = θ := by
+  refine Params.ext' rfl (fun ℓ => ?_) (fun ℓ => rfl) rfl
+  ext a ⟨i, k | k | k⟩
+  · show ∑ k', θ.read ℓ a (i, Sum.inl k') * ((1 : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+      = θ.read ℓ a (i, Sum.inl k)
+    simp only [Units.val_one, Matrix.one_apply, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq',
+      Finset.mem_univ, ite_true]
+  · show ∑ k', θ.read ℓ a (i, Sum.inr (Sum.inl k'))
+        * (((1 : GL (dh ℓ) ℝ)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k'
+      = θ.read ℓ a (i, Sum.inr (Sum.inl k))
+    simp only [inv_one, Units.val_one, Matrix.one_apply, mul_ite, mul_one, mul_zero,
+      Finset.sum_ite_eq, Finset.mem_univ, ite_true]
+  · rfl
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the change of basis `1` between values and outputs is the identity. -/
+private theorem headsVO_one_eoa : θ.headsVO (fun _ _ => 1) = θ := by
+  refine Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl
+  · ext a ⟨i, k | k | k⟩
+    · rfl
+    · rfl
+    · show ∑ k', θ.read ℓ a (i, Sum.inr (Sum.inr k'))
+          * ((1 : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+        = θ.read ℓ a (i, Sum.inr (Sum.inr k))
+      simp only [Units.val_one, Matrix.one_apply, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq',
+        Finset.mem_univ, ite_true]
+  · ext ⟨i, k⟩ b
+    show ∑ k', (((1 : GL (dh ℓ) ℝ)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k'
+        * θ.write ℓ (i, k') b = θ.write ℓ (i, k) b
+    simp only [inv_one, Units.val_one, Matrix.one_apply, ite_mul, one_mul, zero_mul,
+      Finset.sum_ite_eq, Finset.mem_univ, ite_true]
+
 /-- The orbit map passes through `θ` at `0`. -/
 theorem cobExpHeads_zero : cobExpHeads θ 0 = θ := by
-  sorry
+  -- `exp 0 = 1` in every head, then `exp 0 = 1` at every hidden state
+  simp only [cobExpHeads, Prod.snd_zero, Prod.fst_zero, Pi.zero_apply, expGL_zero_eoa,
+    headsQK_one_eoa, headsVO_one_eoa]
+  exact cobExp_zero θ
 
 /-- The orbit map `(m, Γ, Γ') ↦ cobExpHeads θ (m, Γ, Γ')` is strictly differentiable at `0`, with
 the derivative `(m, Γ, Γ') ↦ cobDir θ m + headDirQK θ Γ + headDirVO θ Γ'`. -/
