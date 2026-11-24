@@ -147,6 +147,64 @@ theorem exists_suffixFlatZero_succ_gelu [Nonempty T]
       Z * (θ.read k * θ.write k) + η.read k * θ.write k + θ.read k * η.write k
         = θ.read k * θ.write k * Z' ∧
       SuffixFlatZero (Arch.mlp gelu (rmsNorm 0) hid) θ k.succ Z' η := by
-  sorry
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid).f ℓ)
+      Set.univ := fun ℓ => analyticOnNhd_f_mlp analyticOnNhd_gelu ℓ
+  -- (P1): `W V` is invertible, so it has rank `d` and `x W V ≠ 0` for every row `x ≠ 0`
+  obtain ⟨-, -, hdet⟩ := hP1
+  have hrank : (θ.read k * θ.write k).rank = Fintype.card d :=
+    Matrix.rank_of_isUnit _ ((Matrix.isUnit_iff_isUnit_det _).2 hdet)
+  have hrow : ∀ x : d → ℝ, x ≠ 0 → ∀ t,
+      ((Matrix.of fun _ : T => x) * (θ.read k * θ.write k)) t ≠ 0 :=
+    fun x hx _ h0 => hx (Matrix.eq_zero_of_vecMul_eq_zero hdet.ne_zero h0)
+  have hcard : (0 : ℝ) < Fintype.card d := Nat.cast_pos.2 (by omega)
+  -- (P2): the open set `P` of rows `x ≠ 0` whose unit row `x̂` satisfies (P2), around `ξ₀`
+  obtain ⟨ξ₀, hξ₀, hξ₀P⟩ := hP2
+  let U := {x : d → ℝ | x ≠ 0 ∧ ∀ ξ' : d → ℝ, ξ' ⬝ᵥ ξ' = 1 → x ⬝ᵥ ξ' = 0 →
+    PathP2 (θ.read k) (θ.write k) κ ((Real.sqrt (x ⬝ᵥ x))⁻¹ • x) ξ'}
+  have hUo : IsOpen U := isOpen_setOf_pathP2 (θ.read k) (θ.write k) κ
+  have hξ₀U : ξ₀ ∈ U := by
+    have hu : (Real.sqrt (ξ₀ ⬝ᵥ ξ₀))⁻¹ • ξ₀ = ξ₀ := by
+      rw [hξ₀, Real.sqrt_one, inv_one, one_smul]
+    refine ⟨fun h0 => ?_, fun ξ' h1 h2 => ?_⟩
+    · rw [h0, zero_dotProduct] at hξ₀
+      exact zero_ne_one hξ₀
+    · rw [hu]
+      exact hξ₀P ξ' h1 h2
+  -- "At `t = 1`, where `n(t)` is the row `n = √d ξ`, this reads `0 = 𝓛(nW, 1; n)`", for `ξ = x̂`;
+  -- by homogeneity it holds at the row `x` itself
+  have hO : ∀ x ∈ U,
+      fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.mlp gelu (rmsNorm 0) hid) 0 θ k.succ h')
+          ((Matrix.of fun _ : T => x) * (θ.read k * θ.write k))
+          ((Matrix.of fun _ : T => x)
+            * (Z * (θ.read k * θ.write k) + η.read k * θ.write k + θ.read k * η.write k))
+        + fderiv ℝ (fun θ' : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut =>
+            suffix (Arch.mlp gelu (rmsNorm 0) hid) 0 θ' k.succ
+              ((Matrix.of fun _ : T => x) * (θ.read k * θ.write k))) θ η = 0 := by
+    intro x hx
+    obtain ⟨hx0, hxP⟩ := hx
+    have hxx := dotProduct_self_pos_one hx0
+    -- a unit row `ξ'` orthogonal to `x`, hence to `x̂`
+    obtain ⟨ξ', h1, h2⟩ := exists_unit_orth_one hd x
+    have h2' : ((Real.sqrt (x ⬝ᵥ x))⁻¹ • x) ⬝ᵥ ξ' = 0 := by
+      rw [smul_dotProduct, h2, smul_zero]
+    have e := gelu_path_step_zero_real θ hθ k hκ hκ1 hhol Z η h16 _ ξ'
+      (unitRow_dot_self_one hxx) h1 h2' (hxP ξ' h1 h2)
+    -- `n = √d x̂ = a x` with `a = √d / ‖x‖ > 0`
+    have hn : (Matrix.of fun _ : T =>
+          Real.sqrt (Fintype.card d) • ((Real.sqrt (x ⬝ᵥ x))⁻¹ • x))
+        = (Real.sqrt (Fintype.card d) * (Real.sqrt (x ⬝ᵥ x))⁻¹) • Matrix.of fun _ : T => x := by
+      ext t i
+      rw [smul_smul]
+      rfl
+    have ha : 0 < Real.sqrt (Fintype.card d) * (Real.sqrt (x ⬝ᵥ x))⁻¹ :=
+      mul_pos (Real.sqrt_pos.2 hcard) (inv_pos.2 (Real.sqrt_pos.2 hxx))
+    rw [hn, blockLHS_eq_one θ hθ k Z η x ha (hrow x hx0)] at e
+    exact e
+  -- "hence for all `n ≠ 0`. With `h = n W V`, which takes every value by (P1), this is (16) for
+  -- `k + 1`" (Lemma D.3 at the matrix `W V`)
+  have hflat := flat_at_matrix_of_isOpen_rows analyticOnNhd_gelu θ hθ hd k.succ
+    (θ.read k * θ.write k) hrank _ η U hUo ⟨ξ₀, hξ₀U⟩ hO
+  exact suffixFlatZero_of_flat_at_write (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) θ rfl
+    hf hθ hd k.succ (θ.read k * θ.write k) hrank _ η hflat
 
 end Skips
