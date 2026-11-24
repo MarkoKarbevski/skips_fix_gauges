@@ -1,6 +1,7 @@
 import SkipsLean.Absorb.PatternMaps
 import SkipsLean.Dimension.RankCriterionOn
 import SkipsLean.Residual.DepthRescale
+import SkipsLean.Dimension.ParameterCount
 
 /-!
 # Full residual ReLU networks and a lower bound from counting dimensions
@@ -228,6 +229,33 @@ theorem isOpen_setOf_isFull [Nonempty d] (hdIn : Fintype.card d ≤ Fintype.card
   have h3 := jacobianRank_add_le_residual_relu_of_ne_zero hdIn θ' X (fun i ℓ => h1 i ℓ)
   exact ⟨n, X, fun i ℓ => h1 i ℓ, by omega⟩
 
+/-! ### Helpers: the competitors and the count -/
+
+/-- Helper: the widths `m` of the skipless networks of the proposition: `m ℓ ≥ d` in every block
+and `(2d − 1) ∑_ℓ m ℓ < (2d − 1) ∑_ℓ d_hidden^ℓ + L d²`. -/
+private def widths_full (d : Type*) [Fintype d] (hid : Fin L → Type) [∀ ℓ, Fintype (hid ℓ)] :
+    Set (Fin L → ℕ) :=
+  {m | (∀ ℓ, Fintype.card d ≤ m ℓ) ∧
+    (2 * Fintype.card d - 1) * ∑ ℓ, m ℓ
+      < (2 * Fintype.card d - 1) * ∑ ℓ, Fintype.card (hid ℓ) + L * Fintype.card d ^ 2}
+
+/-- Helper, the count of the proof of Proposition 4.7: with `P = d_in D + 2 D s + D d_out`
+parameters and `s` units for the residual network, `P' = d_in D + 2 D a + D d_out` and `a` units
+for the skipless one, a rank `k ≤ P' − (L + 1) D² − a` of the skipless network is below the rank
+`r = P − D² − s` of the residual one when `(2D − 1) a < (2D − 1) s + L D²`. -/
+private theorem rank_lt_full {D s a L P P' Din Dout k r : ℕ} (hD : 1 ≤ D)
+    (hP : P = Din * D + 2 * D * s + D * Dout) (hP' : P' = Din * D + 2 * D * a + D * Dout)
+    (hk : k + ((L + 1) * D ^ 2 + a) ≤ P') (hr : r + (D ^ 2 + s) = P)
+    (hc : (2 * D - 1) * a < (2 * D - 1) * s + L * D ^ 2) : k < r := by
+  -- write `2D = e + 1`, so that `2D a = e a + a` and `2D s = e s + s`
+  obtain ⟨e, he⟩ : ∃ e, 2 * D = e + 1 := ⟨2 * D - 1, by omega⟩
+  rw [show 2 * D - 1 = e by omega] at hc
+  rw [he] at hP hP'
+  have h1 : (L + 1) * D ^ 2 = L * D ^ 2 + D ^ 2 := by ring
+  have h2 : (e + 1) * a = e * a + a := by ring
+  have h3 : (e + 1) * s = e * s + s := by ring
+  omega
+
 /-- **Proposition 4.7, second sentence, given Sard's theorem:** for `d_in ≥ d ≥ 1`, for almost
 every residual ReLU network `θ` of `L` blocks: if `θ` is full, no skipless ReLU network of `L`
 blocks with the same `d` and at least `d` hidden units in every block equals it unless it has, in
@@ -242,7 +270,75 @@ theorem ae_isFull_imp_eval_ne_skipless_relu [Nonempty d]
           < (2 * Fintype.card d - 1) * ∑ ℓ, Fintype.card (hid ℓ) + L * Fintype.card d ^ 2 →
       ∀ η : Params (Arch.mlp (T := T) (d := d) relu id (fun ℓ => Fin (m ℓ))) dIn dOut,
         eval (Arch.mlp relu id hid) 1 θ ≠ eval (Arch.mlp relu id (fun ℓ => Fin (m ℓ))) 0 η := by
-  sorry
+  -- the bad set: full networks that equal a skipless network with the widths of `widths_full`
+  set B : Set (Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) :=
+    {θ | IsFull θ ∧ ∃ m ∈ widths_full d hid,
+      ∃ η : Params (Arch.mlp (T := T) (d := d) relu id (fun ℓ => Fin (m ℓ))) dIn dOut,
+        eval (Arch.mlp relu id hid) 1 θ = eval (Arch.mlp relu id (fun ℓ => Fin (m ℓ))) 0 η}
+    with hB
+  have hP := finrank_params_mlp (T := T) (d := d) (dIn := dIn) (dOut := dOut) relu id hid
+  have hD : 1 ≤ Fintype.card d := Fintype.card_pos
+  -- it is null near each of its points
+  have hB0 : μ B = 0 := by
+    refine measure_null_of_locally_null B fun θ₀ hθ₀ => ?_
+    obtain ⟨⟨n, X, hX, hr⟩, m₀, hm₀, -⟩ := hθ₀
+    -- near `θ₀` no unit has argument `0` on `X` and the rank on `X` is at least its value
+    -- `r = P − d² − s` at `θ₀`: an open `U ∋ θ₀` where this holds
+    have hev := eventually_jacobianRank_ge_of_contDiffOn (Arch.mlp relu id hid) θ₀ rfl 1
+      (fun ℓ => noZero_full T (hid ℓ)) (fun ℓ => isOpen_noZero_full)
+      (fun ℓ => contDiffOn_map_relu_full) X (fun i ℓ => hX i ℓ)
+    obtain ⟨U, hUsub, hUo, hθ₀U⟩ := mem_nhds_iff.1 hev
+    refine ⟨B ∩ U, inter_mem_nhdsWithin B (hUo.mem_nhds hθ₀U), ?_⟩
+    set r := jacobianRank (Arch.mlp relu id hid) 1 X θ₀ with hr_def
+    -- on `U` the outputs on `X` are `C¹`
+    have hF : ContDiffOn ℝ 1 (evalBatch (Arch.mlp relu id hid) 1 X) U := fun θ hθ =>
+      (contDiffAt_evalBatch_full (Arch.mlp relu id hid) rfl 1 (fun ℓ => noZero_full T (hid ℓ))
+        (fun ℓ => isOpen_noZero_full) (fun ℓ => contDiffOn_map_relu_full) θ X
+        (hUsub hθ).1).contDiffWithinAt
+    -- the count: every pattern map of a competitor has rank below `r`
+    have hcount : ∀ m ∈ widths_full d hid, ∀ k, k + ((L + 1) * Fintype.card d ^ 2
+        + ∑ ℓ, Fintype.card (Fin (m ℓ)))
+          ≤ Module.finrank ℝ
+            (Params (Arch.mlp (T := T) (d := d) relu id (fun ℓ => Fin (m ℓ))) dIn dOut) →
+        k < r := by
+      intro m hm k hk
+      have hP' := finrank_params_mlp (T := T) (d := d) (dIn := dIn) (dOut := dOut) relu id
+        (fun ℓ => Fin (m ℓ))
+      simp only [Fintype.card_fin] at hk hP'
+      exact rank_lt_full hD hP hP' hk hr hm.2
+    have hhid : ∀ m ∈ widths_full d hid, ∀ ℓ, Fintype.card d ≤ Fintype.card (Fin (m ℓ)) :=
+      fun m hm ℓ => (Fintype.card_fin (m ℓ)).symm ▸ hm.1 ℓ
+    -- `r ≥ 1`, from the competitor `m₀`
+    have hr1 : 1 ≤ r := by
+      have h := hcount m₀ hm₀ _ (finrank_range_fderiv_maskedBatch_skipless_add_le hdIn
+        (hhid m₀ hm₀) X (fun _ _ _ _ => true) 0)
+      omega
+    -- the competitors: widths and patterns on `X`, countably many
+    let ι := Σ m : widths_full d hid, (Fin n → ∀ ℓ : Fin L, T → Fin (m.1 ℓ) → Bool)
+    have hcrit := ae_notMem_iUnion_range_of_rank_lt_on (ι := ι)
+      (P' := fun i => Params (Arch.mlp (T := T) (d := d) relu id (fun ℓ => Fin (i.1.1 ℓ)))
+        dIn dOut)
+      (fun i r => hSard i.1.1 r) (evalBatch (Arch.mlp relu id hid) 1 X) U hUo hF
+      (fun i => maskedBatch (d := d) (dOut := dOut) 0 X i.2)
+      (fun i => analyticOnNhd_maskedBatch 0 X i.2) (r - 1)
+      (fun i η => by
+        have h := hcount i.1.1 i.1.2 _ (finrank_range_fderiv_maskedBatch_skipless_add_le hdIn
+          (hhid i.1.1 i.1.2) X i.2 η)
+        exact Nat.le_sub_one_of_lt h)
+      (fun θ hθ => by
+        have h : r ≤ jacobianRank (Arch.mlp relu id hid) 1 X θ := (hUsub hθ).2
+        exact lt_of_lt_of_le (by omega) h)
+      μ
+    -- on `B ∩ U` the outputs on `X` are a value of the pattern map of the competitor
+    refine measure_mono_null ?_ (ae_iff.1 hcrit)
+    rintro θ ⟨⟨-, m, hm, η, heq⟩, hθU⟩ h
+    refine h hθU ⟨⟨m, hm⟩, fun i => reluPattern 0 η (X i)⟩ ⟨η, ?_⟩
+    rw [← evalBatch_relu_eq_maskedBatch]
+    funext i
+    exact (congrFun heq (X i)).symm
+  -- from the null set to the statement
+  filter_upwards [measure_eq_zero_iff_ae_notMem.1 hB0] with θ hθ hfull m hm hc η heq
+  exact hθ ⟨hfull, m, ⟨hm, hc⟩, η, heq⟩
 
 /-- **"Full networks exist: every network with generic weights is full once all its writes are
 scaled by a small enough factor":** with `d_in, d_out ≥ d ≥ 2` and blocks of any widths, for
