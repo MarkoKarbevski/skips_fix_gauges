@@ -65,10 +65,99 @@ noncomputable abbrev funDimLearnedTri (A : Arch T d L)
   funDimSkips A (triSkips d L) p
 
 omit [DecidableEq d] in
+/-- Helper: the pairs `(i, j)` with `i < j` and those with `j < i` are as many (swap them). -/
+private theorem card_gt_eq_card_lt_lst :
+    Fintype.card {p : d × d // p.2 < p.1} = Fintype.card {p : d × d // p.1 < p.2} :=
+  Fintype.card_congr ((Equiv.prodComm d d).subtypeEquiv fun _ => Iff.rfl)
+
+omit [DecidableEq d] in
+/-- Helper: the pairs `(i, j)` with `i ≤ j` are those with `i < j` and the `n` pairs `(i, i)`,
+and with the pairs `j < i` they make all `n²` pairs. -/
+private theorem card_le_lt_lst :
+    Fintype.card {p : d × d // p.1 ≤ p.2} = Fintype.card {p : d × d // p.1 < p.2} + Fintype.card d
+    ∧ Fintype.card {p : d × d // p.1 ≤ p.2} + Fintype.card {p : d × d // p.1 < p.2}
+      = Fintype.card d * Fintype.card d := by
+  classical
+  -- `i ≤ j` is `i < j` or `i = j`, never both
+  have h1 : Fintype.card {p : d × d // p.1 ≤ p.2}
+      = Fintype.card {p : d × d // p.1 < p.2} + Fintype.card {p : d × d // p.1 = p.2} := by
+    rw [← Fintype.card_subtype_or_disjoint _ _ (fun r hr hq x hx => (hr x hx).ne (hq x hx))]
+    exact Fintype.card_congr (Equiv.subtypeEquivRight fun p => le_iff_lt_or_eq)
+  -- the pairs `(i, i)` are numbered by `i`
+  have h2 : Fintype.card {p : d × d // p.1 = p.2} = Fintype.card d :=
+    Fintype.card_congr
+      { toFun := fun p => p.1.1
+        invFun := fun i => ⟨(i, i), rfl⟩
+        left_inv := fun p => by
+          obtain ⟨⟨a, b⟩, h⟩ := p
+          change a = b at h
+          subst h
+          rfl
+        right_inv := fun _ => rfl }
+  -- the complement of `i ≤ j` is `j < i`
+  have h3 : Fintype.card {p : d × d // ¬ p.1 ≤ p.2} = Fintype.card {p : d × d // p.2 < p.1} :=
+    Fintype.card_congr (Equiv.subtypeEquivRight fun _ => not_le)
+  have h4 := Fintype.card_subtype_compl (fun p : d × d => p.1 ≤ p.2)
+  have h5 := Fintype.card_subtype_le (fun p : d × d => p.1 ≤ p.2)
+  rw [Fintype.card_prod] at h4 h5
+  rw [h3, card_gt_eq_card_lt_lst] at h4
+  refine ⟨h1.trans (by rw [h2]), ?_⟩
+  omega
+
+omit [DecidableEq d] in
+/-- Helper: there are `n (n - 1)/2` pairs `(i, j)` with `i < j`. -/
+private theorem card_lt_lst :
+    Fintype.card {p : d × d // p.1 < p.2} = Fintype.card d * (Fintype.card d - 1) / 2 := by
+  obtain ⟨h1, h2⟩ := card_le_lt_lst (d := d)
+  have h3 : Fintype.card d * (Fintype.card d - 1) + Fintype.card d
+      = Fintype.card d * Fintype.card d := by
+    cases h : Fintype.card d with
+    | zero => rfl
+    | succ m => rw [Nat.add_sub_cancel]; ring
+  generalize Fintype.card d * (Fintype.card d - 1) = x at h3 ⊢
+  generalize Fintype.card d * Fintype.card d = q at h2 h3
+  omega
+
+omit [DecidableEq d] in
+/-- Helper: an upper triangular matrix is a free choice of its entries `(i, j)`, `i ≤ j`. -/
+private def upperTriangularEquiv_lst :
+    upperTriangular d ≃ₗ[ℝ] ({p : d × d // p.1 ≤ p.2} → ℝ) where
+  toFun M p := (M : Matrix d d ℝ) p.1.1 p.1.2
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+  invFun f := ⟨Matrix.of fun i j => if h : i ≤ j then f ⟨(i, j), h⟩ else 0, fun i j hij => by
+    -- the entries below the diagonal are `0`
+    simp only [of_apply]
+    exact dite_eq_right (not_le.2 hij)⟩
+  left_inv M := by
+    apply Subtype.ext
+    ext i j
+    simp only [of_apply]
+    by_cases h : i ≤ j
+    · rw [dite_eq_left h]
+    · rw [dite_eq_right h]
+      exact (M.2 (not_le.1 h)).symm
+  right_inv f := by
+    funext p
+    simp only [of_apply]
+    rw [dite_eq_left p.2]
+
+omit [DecidableEq d] in
 /-- The upper triangular `d × d` matrices have dimension `d (d + 1)/2`. -/
 theorem finrank_upperTriangular :
     Module.finrank ℝ (upperTriangular d) = Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the dimension is the number of pairs `i ≤ j`, that is `n (n - 1)/2 + n`
+  rw [upperTriangularEquiv_lst.finrank_eq, Module.finrank_fintype_fun_eq_card,
+    (card_le_lt_lst (d := d)).1, card_lt_lst]
+  have h2 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self (Fintype.card d))
+  have h3 : Fintype.card d * (Fintype.card d + 1)
+      = Fintype.card d * (Fintype.card d - 1) + 2 * Fintype.card d := by
+    cases h : Fintype.card d with
+    | zero => rfl
+    | succ m => rw [Nat.add_sub_cancel]; ring
+  rw [h3]
+  generalize Fintype.card d * (Fintype.card d - 1) = x at h2 ⊢
+  omega
 
 /-- **One block under pre-RMSNorm (`ε > 0`), at an invertible upper triangular skip `R`:** the
 family of upper triangular skips has the functional dimension of the family of all skips. -/
