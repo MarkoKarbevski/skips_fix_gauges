@@ -197,6 +197,14 @@ inputs, `q` outputs), which contains the paper's `p = q = d`.
 | A Section 3.1, "At the same width": for `σ(z) − σ(−z) = cz`, flipping the reads of the units in `S` changes the block by `−c x W_read[:,S] W_write[S,:]` | `flipCols`, `subProd`, `vanillaBlock_flipCols` | `Absorb/Block.lean` | proved |
 | A Theorem 3.1 (i), "if": `W_read[:,S] W_write[S,:] = −M` gives a block of the same width that computes `xM + B(x)` | `vanillaBlock_flipCols_of_subProd` | `Absorb/Block.lean` | proved |
 | A Proposition A.11 (i) / Theorem 3.1 (ii), first half: read of rank `d` ⇒ a block with `d` more hidden units computes `xM + B(x)` (stated for every `M` and for `σ(z) − σ(−z) = cz`, `c ≠ 0`) | `exists_vanillaBlock_add_linear` | `Absorb/Block.lean` | proved |
+| A "nondegenerate": the columns of `W_read` nonzero and pairwise non-collinear, the rows of `W_write` nonzero; generic blocks are nondegenerate (`p ≥ 2`) | `Nondegenerate`, `ae_nondegenerate` | `Absorb/SameWidth.lean` | in work |
+| A proof of Theorem 4.5, "GELU": `GELU(y) − ReLU(y) = −|y|Φ(−|y|)`, bounded; a GELU block equation `xM + B(x) = B′(x)` implies the ReLU equation with the same weights (along rays) | `gelu_sub_relu`, `abs_gelu_sub_relu_le`, `relu_absorb_of_gelu_absorb` | `Absorb/SameWidth.lean` | in work |
+| A Corollary A.9 / Theorem A.4, "only if" (ReLU, GELU; `p ≥ 2`, nondegenerate): a block of the same width that computes `xM + B(x)` gives a set `S` with `W_read[:,S] W_write[S,:] = −M` | `exists_subProd_eq_neg_of_relu_absorb`, `exists_subProd_eq_neg_of_gelu_absorb` | `Absorb/SameWidth.lean` | in work |
+| A Theorem 3.1 (i), first sentence / Corollary A.9: the equivalence | `relu_absorb_same_width_iff`, `gelu_absorb_same_width_iff` | `Absorb/SameWidth.lean` | in work |
+| A Theorem 3.1 (i), second sentence: for `M ≠ 0` and generic `θ`, no block of the same width | `ae_forall_subProd_ne_neg`, `ae_not_relu_absorb_same_width`, `ae_not_gelu_absorb_same_width` | `Absorb/SameWidth.lean` | in work |
+| A Proposition 3.2 (ReLU, GELU; `d_in, d_out, d_hidden ≥ d ≥ 2`): at generic weights a residual network of one block equals no skipless network of one block of the same width, of any model dimension | `ae_ne_skipless_oneBlock_relu`, `ae_ne_skipless_oneBlock_gelu` | `Absorb/SameWidth.lean` | in work |
+| A Proposition A.11 (ii) under the conditions of its proof (nondegenerate; `M + W_read[:,S] W_write[S,:]` invertible for every `S`): no block with fewer than `m + d` hidden units computes `xM + B(x)` | `exists_ne_of_relu_card_lt`, `exists_ne_of_gelu_card_lt` | `Absorb/FewerUnits.lean` | in work |
+| A Theorem 3.1 (ii), second half / Proposition A.11 (ii): `M` invertible, generic `θ`: none with fewer than `d` more hidden units | `ae_forall_isUnit_det_add_subProd`, `ae_not_relu_absorb_of_card_lt`, `ae_not_gelu_absorb_of_card_lt` | `Absorb/FewerUnits.lean` | in work |
 | A Proposition A.1 (homogeneous blocks, degree `k ≠ 1`) | `exists_ne_of_homogeneous` | `Absorb/NoWidth.lean` | in work |
 | A Proposition A.2 (gated blocks whose gates vanish at `0` and are differentiable there) | `exists_ne_of_gated` | `Absorb/NoWidth.lean` | in work |
 | A Theorem 3.3 (a): ReLU² and ReGLU blocks (homogeneous of degree 2) | `vanillaBlock_reluSq_smul`, `gatedBlock_relu_smul`, `exists_ne_reluSq`, `exists_ne_reglu` | `Absorb/NoWidth.lean` | in work |
@@ -217,4 +225,12 @@ Notes for the authors on these statements:
   the Lean lemma `hasFDerivAt_zero_of_homogeneous` carries this hypothesis. ReLU² and ReGLU blocks
   satisfy it. The two networks may have different `ε > 0`, and blocks of different kinds.
 - Proposition A.11 (i) does not use that `M` is invertible.
+- Theorem 3.1 for GELU: the paper proves the "only if" of (i) through ridge functions (Lemmas A.5,
+  A.6, Theorem A.7). The Lean statements for GELU are to be proved from the case of ReLU by the
+  paper's reduction along rays (proof of Theorem 4.5). Lemmas A.5 and A.6, and the further
+  conclusion of Theorem A.7 (`W_write′ = W_write`), are not stated yet.
+- "Generic `θ`" for one block is `∀ᵐ` for an additive Haar measure on the pairs
+  `(W_read, W_write)`.
+- Not stated yet: Corollary A.10, second half; Theorems 3.4, 4.2, 4.3, 4.5; Propositions 4.6, 4.7,
+  5.1; Appendix C.
 

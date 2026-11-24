@@ -182,3 +182,22 @@ import SkipsLean
 #print axioms Skips.eval_skipless_eq_learned_flipReads
 #print axioms Skips.ae_exists_learned_skips_eq_skipless
 #print axioms Skips.ae_exists_residual_eq_skipless
+-- Absorb paper: Theorem 3.1 (i) and (ii), Corollary A.9, Proposition A.11 (ii), Proposition 3.2
+#print axioms Skips.gelu_sub_relu
+#print axioms Skips.abs_gelu_sub_relu_le
+#print axioms Skips.relu_absorb_of_gelu_absorb
+#print axioms Skips.exists_subProd_eq_neg_of_relu_absorb
+#print axioms Skips.exists_subProd_eq_neg_of_gelu_absorb
+#print axioms Skips.relu_absorb_same_width_iff
+#print axioms Skips.gelu_absorb_same_width_iff
+#print axioms Skips.ae_nondegenerate
+#print axioms Skips.ae_forall_subProd_ne_neg
+#print axioms Skips.ae_not_relu_absorb_same_width
+#print axioms Skips.ae_not_gelu_absorb_same_width
+#print axioms Skips.ae_ne_skipless_oneBlock_relu
+#print axioms Skips.ae_ne_skipless_oneBlock_gelu
+#print axioms Skips.exists_ne_of_relu_card_lt
+#print axioms Skips.exists_ne_of_gelu_card_lt
+#print axioms Skips.ae_forall_isUnit_det_add_subProd
+#print axioms Skips.ae_not_relu_absorb_of_card_lt
+#print axioms Skips.ae_not_gelu_absorb_of_card_lt

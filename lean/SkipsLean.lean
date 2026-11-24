@@ -42,3 +42,5 @@ import SkipsLean.Depth.Tanh
 import SkipsLean.Absorb.Block
 import SkipsLean.Absorb.NoWidth
 import SkipsLean.Absorb.Networks
+import SkipsLean.Absorb.SameWidth
+import SkipsLean.Absorb.FewerUnits
