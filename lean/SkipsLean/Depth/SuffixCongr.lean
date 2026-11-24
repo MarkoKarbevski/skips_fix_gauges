@@ -78,6 +78,7 @@ theorem fderiv_param_suffix_eq_zero (A : Arch T d L) (S : Fin L → Matrix d d �
 
 variable {hid : Fin L → Type} [∀ ℓ, Fintype (hid ℓ)] {σ : ℝ → ℝ} {σC : ℂ → ℂ}
 
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
 /-- **`𝓑_{>j}` at complex weights depends only on the blocks after `h_j` and on `D`.** -/
 theorem suffixC_congr (σC : ℂ → ℂ) (ω ω' : CWeights d dOut hid) (j : Fin (L + 1))
     (h : Matrix T d ℂ)
@@ -96,6 +97,7 @@ theorem suffixC_congr (σC : ℂ → ℂ) (ω ω' : CWeights d dOut hid) (j : Fi
     exact ih _ (fun ℓ' hℓ' => hr ℓ' ((Fin.castSucc_le_succ ℓ).trans hℓ'))
       (fun ℓ' hℓ' => hw ℓ' ((Fin.castSucc_le_succ ℓ).trans hℓ'))
 
+omit [DecidableEq d] in
 /-- **The complex derivative of `𝓑_{>j}` in the weights vanishes along a direction that is zero at
 the blocks after `h_j` and at `D`.** -/
 theorem fderiv_weights_suffixC_eq_zero (σC : ℂ → ℂ) (ω ζ : CWeights d dOut hid)
@@ -189,6 +191,7 @@ private theorem fderiv_partial_add_sc {E₁ E₂ F : Type*} [NormedAddCommGroup 
     ContinuousLinearMap.inl_apply, ContinuousLinearMap.inr_apply, ← map_add, Prod.mk_add_mk,
     zero_add, add_zero]
 
+omit [DecidableEq d] [Fintype dIn] in
 /-- **"`𝓛` is holomorphic in `w̃`, affine in `w̃'`"** (and in `ż`): if `𝓑_{>k+1}` is holomorphic on
 the cone `C_κ` and the rows of `w̃₀V` lie in `C_κ`, then `(w̃, w̃', ż) ↦ 𝓛(w̃, w̃'; ż)` is
 holomorphic at `(w̃₀, w̃'₀, ż₀)`. -/
@@ -245,6 +248,7 @@ theorem analyticAt_blockLHSC
   exact (fderiv_partial_add_sc (Φ := fun ω h' => suffixC σC ω k.succ h') hp'.differentiableAt
     _ _).symm
 
+omit [DecidableEq d] [Fintype dIn] in
 /-- **`𝓛(c w̃, w̃'; c ż) = 𝓛(w̃, w̃'; ż)` for `c > 0`:** if `𝓑_{>k+1}` is holomorphic on the cone
 `C_κ`, `0 < κ ≤ 1`, and the rows of `w̃V` lie in `C_κ`. (`𝐃𝓑(ch)(cv) = 𝐃𝓑(h)v` and
 `𝐃_θ𝓑(ch) = 𝐃_θ𝓑(h)`, the derivatives of `𝓑(ch) = 𝓑(h)`.) -/
