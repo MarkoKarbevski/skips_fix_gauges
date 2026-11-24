@@ -517,3 +517,9 @@ import SkipsLean
 #print axioms Skips.ae_not_dense_eq_skipless_rmsNorm_zero_geglu
 #print axioms Skips.ae_ne_skipless_rmsNorm_reglu
 #print axioms Skips.ae_not_dense_eq_skipless_rmsNorm_zero_reglu
+#print axioms Skips.regular_of_goodForConesGated_swiglu
+#print axioms Skips.regular_of_goodForConesGated_geglu
+#print axioms Skips.regular_of_goodForConesMlp_gelu
+#print axioms Skips.exists_goodForConesGated_cols
+#print axioms Skips.exists_goodForConesGated_outer
+#print axioms Skips.exists_goodForConesMlp_outer
