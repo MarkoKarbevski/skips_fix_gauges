@@ -356,7 +356,34 @@ theorem gelu_path_zero (ω : ι → ℂ) (hω : ∀ i, |(ω i).im| < (ω i).re) 
       AnalyticAt ℂ Ψ ((s : ℂ), x))
     (h47 : ∀ᶠ t : ℝ in atTop, Ψ (((t : ℂ))⁻¹, geluGap c₀ ω t) = 0) :
     ∀ s : ℝ, 0 < s → s ≤ 1 → Ψ ((s : ℂ), 0) = 0 := by
-  sorry
+  -- (a) the bound `M`, (b) the decay of `X(t)`
+  obtain ⟨M, hM⟩ := exists_bound_gps Ψ hΨ
+  have hr8 : ‖(0 : (ι → ℂ) × (ι → ℂ))‖ ≤ r / 8 := by rw [norm_zero]; positivity
+  have hM0 : 0 ≤ M := (norm_nonneg _).trans (hM 0 le_rfl zero_le_one 0 (by simp [hr.le]))
+  obtain ⟨C, ρ, hρ, hX⟩ := exists_norm_geluGap_le_gps ω hω c₀
+  have hsmall := eventually_norm_geluGap_le_gps ω hω c₀ (ε := r / 8) (by positivity)
+  -- the estimate with `x = y = 0`, `w = X(t)`: `‖Ψ(1/t, 0)‖ ≤ 16 M ‖X(t)‖ / r`
+  have hΘ : FasterThanPowers fun t : ℝ => Ψ (((t : ℂ))⁻¹, 0) := by
+    refine fasterThanPowers_of_le_gps (A := 16 * M / r * C) (N := 1) hρ ?_
+    filter_upwards [eventually_ge_atTop 1, hsmall, h47] with t ht1 hts h47t
+    have hs0 : 0 ≤ t⁻¹ := inv_nonneg.2 (by linarith)
+    have hest := estimate_gps Ψ hr hΨ hM hs0 (inv_le_one_of_one_le₀ ht1) hr8 hr8 hts
+    simp only [zero_add, map_zero, sub_zero, Complex.ofReal_inv, h47t, zero_sub, norm_neg,
+      norm_zero, zero_div, zero_mul, add_zero] at hest
+    calc ‖Ψ (((t : ℂ))⁻¹, 0)‖ ≤ 16 * M * (‖geluGap c₀ ω t‖ / r) := hest
+      _ ≤ 16 * M * (C * t ^ 1 * Real.exp (-(ρ * (t - 1 / t) ^ 2 / 2)) / r) := by
+          gcongr
+          exact hX t ht1
+      _ = 16 * M / r * C * t ^ 1 * Real.exp (-(ρ * (t - 1 / t) ^ 2 / 2)) := by ring
+  -- `t ↦ Ψ(1/t, 0)` is meromorphic at infinity, so it vanishes for large `t`; then (c)
+  have hg : ∀ s : ℝ, 0 ≤ s → s ≤ 1 → AnalyticAt ℂ (fun σ : ℂ => Ψ (σ, 0)) (s : ℂ) :=
+    fun s hs0 hs1 =>
+      (hΨ s hs0 hs1 0 (hr8.trans (by linarith))).comp₂ analyticAt_id analyticAt_const
+  have hmer : MeromorphicAtInfinityC fun t : ℝ => Ψ (((t : ℂ))⁻¹, 0) := by
+    refine ⟨0, fun σ => Ψ (σ, 0), ?_, Eventually.of_forall fun t => by simp⟩
+    have h := hg 0 le_rfl zero_le_one
+    rwa [Complex.ofReal_zero] at h
+  exact eq_zero_of_eventually_gps hg (hmer.eventually_eq_zero hΘ)
 
 /-- **Lemma D.19, Steps 2 and 4 (analytic part), (50):** let `Ψ` be as in `gelu_path_zero`, with
 `c₀ ≠ 0`. Let `A` be a set of hidden units such that `Ψ(s, x) = 0` for `s ∈ (0, 1]` and every `x`
