@@ -297,6 +297,348 @@ private theorem flat_eq_rz0 {A : Arch T d 1} (hA : A.χ = rmsNorm 0)
   rw [e] at h1
   exact h2.unique h1
 
+/-! ### Step 1: the rows of `𝐃N_0(h) k = N_0(h) M` -/
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `⟨v, v⟩ > 0` and `⟨v, v⟩ / d > 0` for a row `v ≠ 0`. -/
+private theorem dot_self_pos_rz0 {v : d → ℝ} (hv : v ≠ 0) :
+    0 < v ⬝ᵥ v ∧ 0 < (v ⬝ᵥ v) / (Fintype.card d : ℝ) := by
+  have h1 : 0 < v ⬝ᵥ v :=
+    lt_of_le_of_ne (Finset.sum_nonneg fun j _ => mul_self_nonneg (v j))
+      (fun h => hv (dotProduct_self_eq_zero.1 h.symm))
+  obtain ⟨j, -⟩ := Function.ne_iff.1 hv
+  have h2 : (0 : ℝ) < Fintype.card d := Nat.cast_pos.2 (Fintype.card_pos_iff.2 ⟨j⟩)
+  exact ⟨h1, div_pos h1 h2⟩
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the real identity behind the rows of Step 1: from
+`ρ⁻¹ a − (K/n) ρ⁻³ c = ρ⁻¹ b` with `ρ² = H/n` follows `a = b + (K/H) c`. -/
+private theorem real_row_rz0 {a b c K H n ρ : ℝ} (hρ : 0 < ρ) (hH : 0 < H) (hn : 0 < n)
+    (h2 : ρ ^ 2 = H / n) (e : ρ⁻¹ * a - (K / n * ρ⁻¹ ^ 3) * c = ρ⁻¹ * b) :
+    a = b + K / H * c := by
+  have hρn : ρ ^ 2 * n = H := by rw [h2]; field_simp
+  have e1 : ρ ^ 2 * n * a - K * c = ρ ^ 2 * n * b := by
+    have e2 := congrArg (fun z => z * (ρ ^ 3 * n)) e
+    simp only [sub_mul] at e2
+    field_simp at e2
+    linear_combination e2
+  rw [hρn] at e1
+  field_simp
+  linear_combination e1
+
+omit [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (Step 1): at `h` without a zero row, `𝐃N_0(h) k = N_0(h) M` gives, row by row,
+`k_t = h_t M + μ_t h_t` with `μ_t = ⟨h_t, k_t⟩ / ⟨h_t, h_t⟩`. -/
+private theorem row_of_fderiv_rmsNorm_zero_rz0 {h k : Matrix T d ℝ} (hh : ∀ t, h t ≠ 0)
+    {M : Matrix d d ℝ}
+    (e : fderiv ℝ (rmsNorm 0 : Matrix T d ℝ → Matrix T d ℝ) h k = rmsNorm 0 h * M) (t : T) :
+    k t = h t ᵥ* M + ((h t ⬝ᵥ k t) / (h t ⬝ᵥ h t)) • h t := by
+  rw [fderiv_rmsNorm_zero_apply h k hh] at e
+  obtain ⟨hH, hq⟩ := dot_self_pos_rz0 (hh t)
+  have hn : (0 : ℝ) < Fintype.card d := by
+    obtain ⟨j, -⟩ := Function.ne_iff.1 (hh t)
+    exact Nat.cast_pos.2 (Fintype.card_pos_iff.2 ⟨j⟩)
+  have hs2 := Real.sq_sqrt hq.le
+  have hs := Real.sqrt_pos.2 hq
+  funext i
+  have ei := congrFun (congrFun e t) i
+  have hR : (rmsNorm 0 h * M) t i
+      = (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)))⁻¹ * (h t ᵥ* M) i := by
+    rw [Matrix.mul_apply_eq_vecMul]
+    show (rmsRow 0 (h t) ᵥ* M) i = _
+    rw [rmsRow, add_zero, Matrix.smul_vecMul]
+    rfl
+  rw [hR] at ei
+  simp only [Matrix.of_apply, Pi.sub_apply, Pi.smul_apply, smul_eq_mul] at ei
+  simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+  exact real_row_rz0 hs hH hn hs2 ei
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (Step 1): if `k = h M + μ h` with `h ≠ 0`, then `⟨h M, h⟩ = 0`. -/
+private theorem quad_of_row_rz0 {h k : d → ℝ} (hh : h ≠ 0) {M : Matrix d d ℝ}
+    (e : k = h ᵥ* M + ((h ⬝ᵥ k) / (h ⬝ᵥ h)) • h) : h ᵥ* M ⬝ᵥ h = 0 := by
+  have hH := (dot_self_pos_rz0 hh).1
+  have e1 := congrArg (fun v => h ⬝ᵥ v) e
+  simp only [dotProduct_add, dotProduct_smul, smul_eq_mul] at e1
+  rw [div_mul_cancel₀ _ hH.ne'] at e1
+  rw [dotProduct_comm]
+  linarith
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `N_0(h) Z = 0` implies `h Z = 0` at `h` without a zero row (each row is rescaled by a
+positive number). -/
+private theorem mul_eq_zero_of_rmsNorm_zero_mul_rz0 {m : Type*} [Fintype m]
+    {h : Matrix T d ℝ} (hh : ∀ t, h t ≠ 0) (Z : Matrix d m ℝ) (hZ : rmsNorm 0 h * Z = 0) :
+    h * Z = 0 := by
+  funext t
+  have hq := (dot_self_pos_rz0 (hh t)).2
+  have hrow : (rmsNorm 0 h * Z) t
+      = (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)))⁻¹ • (h t ᵥ* Z) := by
+    rw [Matrix.mul_apply_eq_vecMul]
+    show rmsRow 0 (h t) ᵥ* Z = _
+    rw [rmsRow, add_zero, Matrix.smul_vecMul]
+  have h0 : (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)))⁻¹ • (h t ᵥ* Z) = 0 := by
+    rw [← hrow]
+    exact congrFun hZ t
+  rw [Matrix.mul_apply_eq_vecMul]
+  exact (smul_eq_zero.1 h0).resolve_left (inv_ne_zero (Real.sqrt_pos.2 hq).ne')
+
+/-! ### The rays `x = s w`, `s > 0` -/
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: `h_1(s w) = s (w E) + g(w E)` for `s > 0` (`N_0(s w E) = N_0(w E)`). -/
+private theorem hOne_smul_rz0 {A : Arch T d 1} (θ : Params A dIn dOut) (w : Matrix T dIn ℝ)
+    {s : ℝ} (hs : 0 < s) : hOne_rz0 A θ (s • w) = s • (w * θ.E) + gOne_rz0 A θ (w * θ.E) := by
+  unfold hOne_rz0 gOne_rz0
+  rw [Matrix.smul_mul, rmsNorm_zero_smul_rz0 hs]
+
+omit [Nonempty T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: `k(s w) = s (w η_E) + γ(w E, w η_E)` for `s > 0`, if no row of `w E` vanishes. -/
+private theorem kOne_smul_rz0 {A : Arch T d 1} (θ η : Params A dIn dOut) (w : Matrix T dIn ℝ)
+    (hw : ∀ t, (w * θ.E) t ≠ 0) {s : ℝ} (hs : 0 < s) :
+    kOne_rz0 A θ η (s • w) = s • (w * η.E) + gam_rz0 A θ η (w * θ.E) (w * η.E) := by
+  unfold kOne_rz0 gam_rz0
+  rw [Matrix.smul_mul, Matrix.smul_mul, rmsNorm_zero_smul_rz0 hs,
+    fderiv_rmsNorm_zero_smul_rz0 hs hw]
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: if, for every token, the rows of `w E` and of `g(w E)` are linearly independent, then
+`s w ∈ U` for every `s > 0`. -/
+private theorem smul_mem_domain_rz0 {A : Arch T d 1} {θ : Params A dIn dOut}
+    {w : Matrix T dIn ℝ}
+    (hw : ∀ t, LinearIndependent ℝ ![(w * θ.E) t, gOne_rz0 A θ (w * θ.E) t]) {s : ℝ}
+    (hs : 0 < s) : s • w ∈ residualZeroDomain A θ := by
+  refine ⟨fun t => ?_, fun t => ?_⟩
+  · rw [Matrix.smul_mul]
+    exact smul_ne_zero hs.ne' ((hw t).ne_zero 0)
+  · show hOne_rz0 A θ (s • w) t ≠ 0
+    rw [hOne_smul_rz0 θ w hs]
+    intro h0
+    have := (LinearIndependent.pair_iff.1 (hw t)) s 1 (by rw [one_smul]; exact h0)
+    exact hs.ne' this.1
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (Step 1 on a ray): a quadratic polynomial `s ↦ ⟨(s a + b) Y, s a + b⟩` that vanishes
+for `s > 0` has leading coefficient `⟨a Y, a⟩ = 0`. -/
+private theorem quad_ray_rz0 {a b : d → ℝ} {Y : Matrix d d ℝ}
+    (h : ∀ s : ℝ, 0 < s → (s • a + b) ᵥ* Y ⬝ᵥ (s • a + b) = 0) : a ᵥ* Y ⬝ᵥ a = 0 := by
+  have h1 := h 1 one_pos
+  have h2 := h 2 two_pos
+  have h3 := h 3 three_pos
+  simp only [Matrix.add_vecMul, Matrix.smul_vecMul, dotProduct_add, add_dotProduct,
+    dotProduct_smul, smul_dotProduct, smul_eq_mul, one_smul] at h1 h2 h3
+  linear_combination (h3 - 2 * h2 + h1) / 2
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (Step 1 on a ray): `(s a + b) Z = 0` for `s > 0` gives `a Z = 0`. -/
+private theorem lin_ray_rz0 {m : Type*} [Fintype m] {a b : d → ℝ} {Z : Matrix d m ℝ}
+    (h : ∀ s : ℝ, 0 < s → (s • a + b) ᵥ* Z = 0) : a ᵥ* Z = 0 := by
+  have h1 := h 1 one_pos
+  have h2 := h 2 two_pos
+  rw [Matrix.add_vecMul, Matrix.smul_vecMul] at h1 h2
+  linear_combination (norm := module) h2 - h1
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (Step 3 on a ray): if `a, b` are linearly independent and `s p + q` is a multiple of
+`s a + b` for every `s > 0`, then `p = c a` and `q = c b` for one number `c`. -/
+private theorem three_ray_rz0 {V : Type*} [AddCommGroup V] [Module ℝ V] {a b p q : V}
+    (hab : LinearIndependent ℝ ![a, b])
+    (h : ∀ s : ℝ, 0 < s → ∃ μ : ℝ, s • p + q = μ • (s • a + b)) :
+    ∃ c : ℝ, p = c • a ∧ q = c • b := by
+  obtain ⟨μ₁, h1⟩ := h 1 one_pos
+  obtain ⟨μ₂, h2⟩ := h 2 two_pos
+  obtain ⟨μ₃, h3⟩ := h 3 three_pos
+  have key : (3 * μ₃ - 4 * μ₂ + μ₁) • a + (μ₃ - 2 * μ₂ + μ₁) • b = 0 := by
+    linear_combination (norm := module) (2 : ℝ) • h2 - h3 - h1
+  obtain ⟨k1, k2⟩ := LinearIndependent.pair_iff.1 hab _ _ key
+  obtain rfl : μ₂ = μ₁ := by linarith
+  refine ⟨μ₂, ?_, ?_⟩
+  · linear_combination (norm := module) h2 - h1
+  · linear_combination (norm := module) (2 : ℝ) • h1 - h2
+
+/-! ### Linear algebra on an open set of inputs -/
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: around a point `w₀` of an open set `G`, the points `w₀ ± δ v` lie in `G` for some
+`δ > 0`. -/
+private theorem exists_add_sub_mem_rz0 {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
+    {G : Set X} (hG : IsOpen G) {w₀ : X} (hw₀ : w₀ ∈ G) (v : X) :
+    ∃ δ : ℝ, 0 < δ ∧ w₀ + δ • v ∈ G ∧ w₀ - δ • v ∈ G := by
+  have hc : Continuous fun δ : ℝ => w₀ + δ • v :=
+    continuous_const.add (continuous_id.smul continuous_const)
+  have hmem : (fun δ : ℝ => w₀ + δ • v) ⁻¹' G ∈ 𝓝 (0 : ℝ) :=
+    hc.continuousAt.preimage_mem_nhds (by simpa using hG.mem_nhds hw₀)
+  obtain ⟨r, hr, hball⟩ := Metric.mem_nhds_iff.1 hmem
+  have hr2 := half_pos hr
+  refine ⟨r / 2, hr2, hball ?_, ?_⟩
+  · rw [Metric.mem_ball, dist_zero_right, Real.norm_eq_abs, abs_of_pos hr2]
+    linarith
+  · have h := hball (show -(r / 2) ∈ Metric.ball (0 : ℝ) r by
+      rw [Metric.mem_ball, dist_zero_right, norm_neg, Real.norm_eq_abs, abs_of_pos hr2]
+      linarith)
+    rwa [Set.mem_preimage, neg_smul, ← sub_eq_add_neg] at h
+    
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: a matrix `Z` with `u Z = 0` for every row vector `u` is `0`. -/
+private theorem eq_zero_of_vecMul_rz0 {m n : Type*} [Fintype m] [DecidableEq m]
+    {Z : Matrix m n ℝ} (h : ∀ u : m → ℝ, u ᵥ* Z = 0) : Z = 0 := by
+  ext i j
+  have := congrFun (h (Pi.single i 1)) j
+  rwa [Matrix.single_one_vecMul, Matrix.row_apply] at this
+
+omit [Fintype T] [Nonempty T] [Fintype dIn] [Fintype dOut] in
+/-- Helper (polarisation): if `⟨u Y, u⟩ = 0` for every `u`, then `Yᵀ = -Y`. -/
+private theorem transpose_eq_neg_rz0 {Y : Matrix d d ℝ} (h : ∀ u : d → ℝ, u ᵥ* Y ⬝ᵥ u = 0) :
+    Yᵀ = -Y := by
+  ext i j
+  have hii := h (Pi.single i 1)
+  have hjj := h (Pi.single j 1)
+  have hij := h (Pi.single i 1 + Pi.single j 1)
+  simp only [Matrix.add_vecMul, dotProduct_add, Matrix.single_one_vecMul,
+    dotProduct_single_one, Pi.add_apply, Matrix.row_apply] at hii hjj hij
+  simp only [Matrix.transpose_apply, Matrix.neg_apply]
+  linarith
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: row `t` of `(w + δ V) M` is `(w M)_t + δ (V M)_t`. -/
+private theorem row_add_mul_rz0 {m n : Type*} [Fintype m] (w V : Matrix T m ℝ)
+    (M : Matrix m n ℝ) (δ : ℝ) (t : T) :
+    ((w + δ • V) * M) t = (w * M) t + δ • (V * M) t := by
+  rw [Matrix.add_mul, Matrix.smul_mul]
+  rfl
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: row `t` of `(w - δ V) M` is `(w M)_t - δ (V M)_t`. -/
+private theorem row_sub_mul_rz0 {m n : Type*} [Fintype m] (w V : Matrix T m ℝ)
+    (M : Matrix m n ℝ) (δ : ℝ) (t : T) :
+    ((w - δ • V) * M) t = (w * M) t - δ • (V * M) t := by
+  rw [Matrix.sub_mul, Matrix.smul_mul]
+  rfl
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: row `t` of `V M`, for the matrix `V` whose rows all equal `u`, is `u M`. -/
+private theorem constRows_mul_rz0 {m n : Type*} [Fintype m] (u : m → ℝ) (M : Matrix m n ℝ)
+    (t : T) : ((Matrix.of fun _ : T => u) * M) t = u ᵥ* M := by
+  rw [Matrix.mul_apply_eq_vecMul]
+  rfl
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (Step 1): a matrix `K` with `w K = 0` for every `w` of a nonempty open set is `0`. -/
+private theorem eq_zero_of_mul_on_rz0 {m n : Type*} [Fintype m] [DecidableEq m]
+    {O : Set (Matrix T m ℝ)} (hO : IsOpen O) {w₀ : Matrix T m ℝ} (hw₀ : w₀ ∈ O)
+    {K : Matrix m n ℝ} (h : ∀ w ∈ O, w * K = 0) : K = 0 := by
+  refine eq_zero_of_vecMul_rz0 fun u => ?_
+  obtain ⟨δ, hδ, hp, -⟩ := exists_add_sub_mem_rz0 hO hw₀ (Matrix.of fun _ : T => u)
+  have e := congrFun (h _ hp) (Classical.arbitrary T)
+  rw [row_add_mul_rz0, h w₀ hw₀, constRows_mul_rz0] at e
+  have e2 : δ • (u ᵥ* K) = 0 := by
+    rw [← zero_add (δ • (u ᵥ* K))]
+    exact e
+  exact (smul_eq_zero.1 e2).resolve_left hδ.ne'
+
+omit [Nonempty T] [Fintype dOut] in
+/-- Helper (Step 1): if `⟨(w E)_t Y, (w E)_t⟩ = 0` for every `w` of a nonempty open set and one
+token `t`, and `E` has a left inverse, then `⟨u Y, u⟩ = 0` for every `u`
+(`q(a + δ x) + q(a - δ x) = 2 q(a) + 2 δ² q(x)`). -/
+private theorem quad_zero_on_rz0 {O : Set (Matrix T dIn ℝ)} (hO : IsOpen O)
+    {w₀ : Matrix T dIn ℝ} (hw₀ : w₀ ∈ O) (t : T) {E : Matrix dIn d ℝ} {Ep : Matrix d dIn ℝ}
+    (hEp : Ep * E = 1) {Y : Matrix d d ℝ} (h : ∀ w ∈ O, (w * E) t ᵥ* Y ⬝ᵥ (w * E) t = 0)
+    (u : d → ℝ) : u ᵥ* Y ⬝ᵥ u = 0 := by
+  obtain ⟨δ, hδ, hp, hm⟩ := exists_add_sub_mem_rz0 hO hw₀ (Matrix.of fun _ : T => u ᵥ* Ep)
+  have e0 := h w₀ hw₀
+  have ep := h _ hp
+  have em := h _ hm
+  rw [row_add_mul_rz0, constRows_mul_rz0, Matrix.vecMul_vecMul, hEp, Matrix.vecMul_one] at ep
+  rw [row_sub_mul_rz0, constRows_mul_rz0, Matrix.vecMul_vecMul, hEp, Matrix.vecMul_one] at em
+  simp only [Matrix.add_vecMul, Matrix.sub_vecMul, Matrix.smul_vecMul, dotProduct_add,
+    add_dotProduct, dotProduct_sub, sub_dotProduct, dotProduct_smul, smul_dotProduct,
+    smul_eq_mul] at ep em
+  have e : (2 * δ ^ 2) * (u ᵥ* Y ⬝ᵥ u) = 0 := by
+    linear_combination ep + em - 2 * e0
+  have hδ2 : 2 * δ ^ 2 ≠ 0 := by positivity
+  exact (mul_eq_zero.1 e).resolve_left hδ2
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (Step 3): the algebra at `w₀ ± δ V`: if `p₀ = c₀ a`, `p₀ ± δ y = c± (a ± δ x)` and
+`x, a` are linearly independent, then `y = c₀ x`. -/
+private theorem prop_aux_rz0 {V : Type*} [AddCommGroup V] [Module ℝ V] {a x p₀ y : V}
+    {c₀ cp cm δ : ℝ} (hδ : δ ≠ 0) (hxa : LinearIndependent ℝ ![x, a]) (h0 : p₀ = c₀ • a)
+    (hp : p₀ + δ • y = cp • (a + δ • x)) (hm : p₀ - δ • y = cm • (a - δ • x)) :
+    y = c₀ • x := by
+  have key : (δ * (cp - cm)) • x + (cp + cm - 2 * c₀) • a = 0 := by
+    linear_combination (norm := module) (2 : ℝ) • h0 - hp - hm
+  obtain ⟨k1, k2⟩ := LinearIndependent.pair_iff.1 hxa _ _ key
+  have hc : cp = cm := by
+    have := (mul_eq_zero.1 k1).resolve_left hδ
+    linarith
+  subst hc
+  have hc0 : cp = c₀ := by linarith
+  subst hc0
+  have e : δ • (y - cp • x) = 0 := by
+    linear_combination (norm := module) hp - h0
+  rw [smul_eq_zero] at e
+  exact sub_eq_zero.1 (e.resolve_left hδ)
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: for `d ≥ 2` and `a ≠ 0` there is a row `b` that is not a multiple of `a`. -/
+private theorem exists_not_mul_rz0 (hd : 2 ≤ Fintype.card d) {a : d → ℝ} (ha : a ≠ 0) :
+    ∃ b : d → ℝ, ∀ μ : ℝ, μ • a ≠ b := by
+  by_contra hcon
+  push Not at hcon
+  have htop : Submodule.span ℝ {a} = ⊤ :=
+    Submodule.eq_top_iff'.2 fun b => by
+      obtain ⟨μ, hμ⟩ := hcon b
+      exact Submodule.mem_span_singleton.2 ⟨μ, hμ⟩
+  have h1 := finrank_span_singleton (K := ℝ) ha
+  rw [htop, finrank_top, Module.finrank_fintype_fun_eq_card] at h1
+  omega
+
+omit [Nonempty T] [Fintype dOut] in
+/-- Helper (Step 3): if, for every `w` of an open set containing `w₀` and one token `t`,
+`(w M)_t` is a multiple of `(w E)_t`, with `(w₀ E)_t ≠ 0`, `d ≥ 2` and `E` with a left inverse,
+then `M = c E` for one number `c`. -/
+private theorem exists_eq_smul_on_rz0 (hd : 2 ≤ Fintype.card d) {O : Set (Matrix T dIn ℝ)}
+    (hO : IsOpen O) {w₀ : Matrix T dIn ℝ} (hw₀ : w₀ ∈ O) (t : T) {E M : Matrix dIn d ℝ}
+    {Ep : Matrix d dIn ℝ} (hEp : Ep * E = 1) (ha : (w₀ * E) t ≠ 0)
+    (h : ∀ w ∈ O, ∃ c : ℝ, (w * M) t = c • (w * E) t) : ∃ c : ℝ, M = c • E := by
+  classical
+  obtain ⟨c₀, h0⟩ := h w₀ hw₀
+  -- at every `V` with `(V E)_t` independent of `a = (w₀ E)_t`: `(V M)_t = c₀ (V E)_t`
+  have good : ∀ V : Matrix T dIn ℝ, (∀ μ : ℝ, μ • (w₀ * E) t ≠ (V * E) t) →
+      (V * M) t = c₀ • (V * E) t := by
+    intro V hV
+    obtain ⟨δ, hδ, hp, hm⟩ := exists_add_sub_mem_rz0 hO hw₀ V
+    obtain ⟨cp, ep⟩ := h _ hp
+    obtain ⟨cm, em⟩ := h _ hm
+    rw [row_add_mul_rz0, row_add_mul_rz0] at ep
+    rw [row_sub_mul_rz0, row_sub_mul_rz0] at em
+    refine prop_aux_rz0 hδ.ne' ?_ h0 ep em
+    rw [linearIndependent_fin2]
+    exact ⟨ha, hV⟩
+  -- a row `b` that is not a multiple of `a`, and `V_b` with `(V_b E)_t = b`
+  obtain ⟨b, hb⟩ := exists_not_mul_rz0 hd ha
+  have hVb : ((Matrix.of fun _ : T => b ᵥ* Ep) * E) t = b := by
+    rw [constRows_mul_rz0, Matrix.vecMul_vecMul, hEp, Matrix.vecMul_one]
+  refine ⟨c₀, sub_eq_zero.1 (eq_zero_of_vecMul_rz0 fun u => ?_)⟩
+  rw [Matrix.vecMul_sub, Matrix.vecMul_smul, sub_eq_zero]
+  by_cases hu : ∀ μ : ℝ, μ • (w₀ * E) t ≠ u ᵥ* E
+  · -- `u E` is not a multiple of `a`
+    have e := good (Matrix.of fun _ : T => u) (by rw [constRows_mul_rz0]; exact hu)
+    rwa [constRows_mul_rz0, constRows_mul_rz0] at e
+  · -- `u E = μ a`: then `(u + b Ep) E = μ a + b` is not a multiple of `a`, nor is `b`
+    push Not at hu
+    obtain ⟨μ, hμ⟩ := hu
+    have e1 := good (Matrix.of fun _ : T => u + b ᵥ* Ep) (by
+      intro ν hν
+      rw [constRows_mul_rz0, Matrix.add_vecMul, Matrix.vecMul_vecMul, hEp, Matrix.vecMul_one,
+        ← hμ] at hν
+      exact hb (ν - μ) (by rw [sub_smul, hν]; abel))
+    have e2 := good (Matrix.of fun _ : T => b ᵥ* Ep) (by rw [hVb]; exact hb)
+    rw [constRows_mul_rz0, constRows_mul_rz0, Matrix.add_vecMul, Matrix.add_vecMul] at e1
+    rw [constRows_mul_rz0, constRows_mul_rz0] at e2
+    rw [e2, smul_add] at e1
+    exact add_right_cancel e1
+
 end HelpersRz0
 
 /-- **Proof of Theorem B.1 (v) of the skips paper, "The residual network":** let `ε = 0`, `d ≥ 2`,
