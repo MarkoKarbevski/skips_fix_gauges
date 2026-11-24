@@ -1054,3 +1054,4 @@ import SkipsLean
 #print axioms Skips.exists_residual_eq_skipless_attention_causal_short
 #print axioms Skips.attnFamily_two_tokens
 #print axioms Skips.attnFamily_rigid
+#print axioms Skips.ae_smallWritesGenericAttention
