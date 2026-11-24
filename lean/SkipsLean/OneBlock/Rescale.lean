@@ -207,6 +207,83 @@ theorem differentiableAt_eval_of_mem_noKink (hσ : ∀ z, z ≠ 0 → HasDerivAt
   exact DifferentiableAt.fun_sum fun i _ =>
     ((hσ _ (noKink_apply hx t i)).differentiableAt.comp θ (hxC t i)).mul (hA i o)
 
+/-- Helper (Step 3 of the paper, the chain rule, at an input of `noKink θ`): the derivative of
+`θ ↦ F_θ(x)` along `η` has the entries `∑_i [σ(z_i) (∂A)_{i o} + σ'(z_i) (x ∂C)_{t i} A_{i o}]`,
+`z_i = (x C)_{t i}`. -/
+private theorem fderiv_eval_apply_of_mem (hσ : ∀ z, z ≠ 0 → HasDerivAt σ (σ' z) z)
+    (θ η : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)
+    (x : Matrix T dIn ℝ) (hx : x ∈ noKink θ) (t : T) (o : dOut) :
+    fderiv ℝ (fun θ' => eval (Arch.mlp σ id hid) 0 θ' x) θ η t o = ∑ i : hid 0,
+      (σ ((x * Cm θ) t i) * dAm θ η i o
+        + σ' ((x * Cm θ) t i) * (x * dCm θ η) t i * Am θ i o) := by
+  -- the chain rule along the line `τ ↦ θ + τ η`
+  have h1 := hasDerivAt_eval_line (A := Arch.mlp (T := T) (d := d) σ id hid) 0 θ η x
+    (differentiableAt_eval_of_mem_noKink hσ θ x hx)
+  have h2 := hasDerivAt_pi.1 (hasDerivAt_pi.1 h1 t) o
+  -- the same derivative computed entrywise: products and sums of real functions of `τ`
+  have h3 : HasDerivAt (fun τ : ℝ => eval (Arch.mlp σ id hid) 0 (θ + τ • η) x t o)
+      (∑ i : hid 0, (σ ((x * Cm θ) t i) * dAm θ η i o
+        + σ' ((x * Cm θ) t i) * (x * dCm θ η) t i * Am θ i o)) 0 := by
+    rw [funext fun τ => eval_line_apply θ η x t o τ]
+    refine HasDerivAt.fun_sum fun i _ => ?_
+    have hu := hasDerivAt_quad ((x * Cm θ) t i) ((x * dCm θ η) t i) ((x * Cm η) t i)
+    have hv := hasDerivAt_quad (Am θ i o) (dAm θ η i o) (Am η i o)
+    -- `σ` is differentiable at `(x C)_{t i}`, which is not `0`
+    have h := ((hσ _ (noKink_apply hx t i)).comp_of_eq (0 : ℝ) hu
+      (by simp only [zero_mul, add_zero])).mul hv
+    convert h using 1
+    · rfl
+    · simp only [Function.comp_apply, zero_mul, mul_zero, add_zero]
+      ring
+  exact h2.unique h3
+
+/-! ### Helpers: the derivative of `C` and `A` along a rescaling (as in `Gated.lean`) -/
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `∂C` is linear in the direction. -/
+private theorem dCm_sub (θ η ρ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
+    dCm θ (η - ρ) = dCm θ η - dCm θ ρ := by
+  show (η.E - ρ.E) * rd θ + θ.E * (rd η - rd ρ)
+    = (η.E * rd θ + θ.E * rd η) - (ρ.E * rd θ + θ.E * rd ρ)
+  rw [Matrix.sub_mul, Matrix.mul_sub]
+  abel
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `∂A` is linear in the direction. -/
+private theorem dAm_sub (θ η ρ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
+    dAm θ (η - ρ) = dAm θ η - dAm θ ρ := by
+  show (wr η - wr ρ) * θ.D + wr θ * (η.D - ρ.D)
+    = (wr η * θ.D + wr θ * η.D) - (wr ρ * θ.D + wr θ * ρ.D)
+  rw [Matrix.sub_mul, Matrix.mul_sub]
+  abel
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: along a rescaling, the column `c_i` of `C` moves by `α_i c_i`. -/
+private theorem dCm_rescale (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) (α : ∀ ℓ, hid ℓ → ℝ)
+    (a : dIn) (i : hid 0) :
+    dCm θ (rescaleDirMlp k θ α) a i = α 0 i * Cm θ a i := by
+  show ((0 : Matrix dIn d ℝ) * rd θ + θ.E * rd (rescaleDirMlp k θ α)) a i
+    = α 0 i * (θ.E * rd θ) a i
+  rw [Matrix.zero_mul, zero_add, Matrix.mul_apply, Matrix.mul_apply, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  show θ.E a j * (α 0 i * θ.read 0 j i) = α 0 i * (θ.E a j * θ.read 0 j i)
+  ring
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: along a rescaling, the row `a_i` of `A` moves by `-k α_i a_i`. -/
+private theorem dAm_rescale (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) (α : ∀ ℓ, hid ℓ → ℝ)
+    (i : hid 0) (o : dOut) :
+    dAm θ (rescaleDirMlp k θ α) i o = -((k : ℝ) * α 0 i) * Am θ i o := by
+  show (wr (rescaleDirMlp k θ α) * θ.D + wr θ * (0 : Matrix d dOut ℝ)) i o
+    = -((k : ℝ) * α 0 i) * (wr θ * θ.D) i o
+  rw [Matrix.mul_zero, add_zero, Matrix.mul_apply, Matrix.mul_apply, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  show -((k : ℝ) * α 0 i) * θ.write 0 i j * θ.D j o
+    = -((k : ℝ) * α 0 i) * (θ.write 0 i j * θ.D j o)
+  ring
+
 /-- **Steps 1 to 3 of the proof of Theorem 5.1 for an activation with the rescalings.** Under the
 conditions `OneBlockGeneric`, a direction that is flat at every input with no hidden unit at its
 kink is the sum of a direction of the changes of basis at the two hidden states and a direction
@@ -218,7 +295,47 @@ theorem flatOn_noKink_le_mlp_rescale {k : ℕ} (hσ : ∀ z, z ≠ 0 → HasDeri
     (hη : η ∈ flatOn (Arch.mlp σ id hid) 0 θ (noKink θ)) :
     ∃ (X : Fin 2 → Matrix d d ℝ) (α : ∀ ℓ, hid ℓ → ℝ),
       η = cobDir θ X + rescaleDirMlp k θ α := by
-  sorry
+  -- Step 3: at every input with no hidden unit at its kink, the derivative of `F(θ, x)` along
+  -- `η` vanishes, entry by entry
+  have hzero : ∀ x ∈ noKink θ, ∀ (t : T) (o : dOut), ∑ i : hid 0,
+      (σ ((x * Cm θ) t i) * dAm θ η i o
+        + σ' ((x * Cm θ) t i) * (x * dCm θ η) t i * Am θ i o) = 0 := by
+    intro x hx t o
+    rw [← fderiv_eval_apply_of_mem hσ θ η x hx t o]
+    have h := LinearMap.mem_ker.1 ((Submodule.mem_iInf _).1 ((Submodule.mem_iInf _).1 hη x) hx)
+    exact congrFun (congrFun h t) o
+  -- Step 2, Lemma C.3 (inputs `x` with all rows equal to a `v` with `v c_i ≠ 0` for all `i`):
+  -- every unit is only rescaled, `∂c_i = λ_i c_i` and `∂a_i = -k λ_i a_i`
+  obtain ⟨-, -, lam, hlam⟩ := hU (fun i => (Cm θ)ᵀ i) 0 (fun i => Am θ i)
+    0 0 (fun i => (dCm θ η)ᵀ i) 0 (fun i => dAm θ η i) (fun i => hθ.row_ne_zero i)
+    (fun i => hθ.col_ne_zero i) (fun i j hij => hθ.col_not_collinear i j hij) (by
+      intro v hv
+      have hx : (Matrix.of fun _ : T => v) ∈ noKink θ := by
+        intro t i
+        have h := hv i
+        simp only [Pi.zero_apply, add_zero] at h
+        rw [Matrix.mul_assoc]
+        exact h
+      funext o
+      have h := hzero _ hx (Classical.arbitrary T) o
+      simp only [Matrix.vecMul_zero, Pi.add_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul,
+        Pi.zero_apply, add_zero, zero_add]
+      exact h)
+  -- the rescaling with these `λ_i` (one block: `ℓ = 0`)
+  let α' : ∀ ℓ : Fin 1, hid ℓ → ℝ := fun ℓ => Fin.cases lam (fun l => l.elim0) ℓ
+  -- `η - rescaleDirMlp k θ α'` keeps `C` and `A` to first order
+  have hC : dCm θ (η - rescaleDirMlp k θ α') = 0 := by
+    ext a i
+    rw [dCm_sub, Matrix.sub_apply, dCm_rescale, Matrix.zero_apply, sub_eq_zero]
+    exact congrFun (hlam i).1 a
+  have hA : dAm θ (η - rescaleDirMlp k θ α') = 0 := by
+    ext i o
+    rw [dAm_sub, Matrix.sub_apply, dAm_rescale, Matrix.zero_apply, sub_eq_zero]
+    exact congrFun (hlam i).2.2 o
+  -- Step 1, Lemma C.2: a direction that keeps `C` and `A` is that of two changes of basis
+  obtain ⟨X, hX⟩ := (keeps_products_iff_mem_range_cobDir θ (η - rescaleDirMlp k θ α')
+    hθ.rank_E hθ.rank_D hθ.rank_read hθ.rank_write).1 ⟨hC, hA⟩
+  exact ⟨X, α', sub_eq_iff_eq_add.1 hX⟩
 
 /-- **Theorem 5.1 / C.1 for an activation with the rescalings, under the conditions of the
 proof:** `fd = P - 2 d² - d_hidden`. -/
