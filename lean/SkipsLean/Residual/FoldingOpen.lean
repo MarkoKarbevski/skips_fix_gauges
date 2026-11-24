@@ -367,6 +367,298 @@ private theorem not_injective_fopen {n ι : Type*} [Fintype n] [DecidableEq n] [
   simp only [P1_fopen, P2_fopen, ite_true] at h1 h2
   linarith [(abs_le.1 h1).1, (abs_le.1 h2).2]
 
+/-- Helper: the read column of unit `i` of block `m`. -/
+private def col_fopen (m : Fin (L + 1))
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (i : hid m) : d → ℝ :=
+  fun a => θ.read m a i
+
+/-- Helper: the write row of unit `i` of block `m`. -/
+private def row_fopen (m : Fin (L + 1))
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (i : hid m) : d → ℝ :=
+  θ.write m i
+
+/-- Helper: the weights `θ*`. In block `ℓ.castSucc`, unit `e a` has the read column `-e_a` and
+the write row `2 e_a`, the other units read and write `0`; every read column of block `ℓ.succ`
+has all entries `-1`; all other weights are `0`. -/
+private noncomputable def star_fopen (ℓ : Fin L) (e : d ↪ hid ℓ.castSucc) :
+    Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut where
+  E := 0
+  read := Function.update
+    (Function.update (fun _ => 0) ℓ.succ (Matrix.of fun _ _ => -1))
+    ℓ.castSucc (Matrix.of fun a i => c0_fopen e i a)
+  write := Function.update (fun _ => 0) ℓ.castSucc (Matrix.of fun i b => r0_fopen e i b)
+  D := 0
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the read columns of block `ℓ.castSucc` at `θ*`. -/
+private theorem col_star_fopen (ℓ : Fin L) (e : d ↪ hid ℓ.castSucc) :
+    col_fopen ℓ.castSucc (star_fopen (T := T) (dIn := dIn) (dOut := dOut) ℓ e)
+      = c0_fopen e := by
+  funext i a
+  simp only [col_fopen, star_fopen, Function.update_self, Matrix.of_apply]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the write rows of block `ℓ.castSucc` at `θ*`. -/
+private theorem row_star_fopen (ℓ : Fin L) (e : d ↪ hid ℓ.castSucc) :
+    row_fopen ℓ.castSucc (star_fopen (T := T) (dIn := dIn) (dOut := dOut) ℓ e)
+      = r0_fopen e := by
+  funext i b
+  simp only [row_fopen, star_fopen, Function.update_self, Matrix.of_apply]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the read column of unit `j` of block `ℓ.succ` at `θ*` has all entries `-1`. -/
+private theorem col_succ_star_fopen (ℓ : Fin L) (e : d ↪ hid ℓ.castSucc) (j : hid ℓ.succ) :
+    col_fopen ℓ.succ (star_fopen (T := T) (dIn := dIn) (dOut := dOut) ℓ e) j
+      = fun _ => -1 := by
+  have hne : ℓ.succ ≠ ℓ.castSucc := Fin.castSucc_lt_succ.ne'
+  funext a
+  simp only [col_fopen, star_fopen]
+  rw [Function.update_of_ne hne, Function.update_self]
+  rfl
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper: `Φ_m(h) = h + ∑_i ReLU (h c_i) r_i`. -/
+private theorem blockMapRes_eq_fopen (m : Fin (L + 1))
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) :
+    blockMapRes θ m = F_fopen (col_fopen m θ) (row_fopen m θ) := by
+  funext h b
+  simp only [blockMapRes, F_fopen, Pi.add_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+  rfl
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: at `θ*`, `Φ(h) = |h|` entrywise. -/
+private theorem blockMapRes_star_fopen (ℓ : Fin L) (e : d ↪ hid ℓ.castSucc) (h : d → ℝ) :
+    blockMapRes (star_fopen (T := T) (dIn := dIn) (dOut := dOut) ℓ e) ℓ.castSucc h
+      = fun b => |h b| := by
+  rw [blockMapRes_eq_fopen, col_star_fopen, row_star_fopen, F_c0_fopen]
+
+omit [Fintype T] [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper: an entry of a read is a continuous function of the parameters. -/
+private theorem continuous_read_fopen (m : Fin (L + 1)) (a : d) (i : hid m) :
+    Continuous fun θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut =>
+      θ.read m a i :=
+  LinearMap.continuous_of_finiteDimensional
+    ({ toFun := fun θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut => θ.read m a i
+       map_add' := fun _ _ => rfl
+       map_smul' := fun _ _ => rfl } :
+      Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut →ₗ[ℝ] ℝ)
+
+omit [Fintype T] [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper: an entry of a write is a continuous function of the parameters. -/
+private theorem continuous_write_fopen (m : Fin (L + 1)) (i : hid m) (b : d) :
+    Continuous fun θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut =>
+      θ.write m i b :=
+  LinearMap.continuous_of_finiteDimensional
+    ({ toFun := fun θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut => θ.write m i b
+       map_add' := fun _ _ => rfl
+       map_smul' := fun _ _ => rfl } :
+      Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut →ₗ[ℝ] ℝ)
+
+omit [Fintype T] [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper: a read column is continuous in the parameters. -/
+private theorem continuous_col_fopen (m : Fin (L + 1)) (i : hid m) :
+    Continuous fun θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut =>
+      col_fopen m θ i :=
+  continuous_pi fun a => continuous_read_fopen m a i
+
+omit [Fintype T] [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper: a write row is continuous in the parameters. -/
+private theorem continuous_row_fopen (m : Fin (L + 1)) (i : hid m) :
+    Continuous fun θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut =>
+      row_fopen m θ i :=
+  continuous_pi fun b => continuous_write_fopen m i b
+
+omit [Fintype T] [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper: `Φ_m(h)` is continuous in the parameters and the row. -/
+private theorem continuous_F_fopen (m : Fin (L + 1)) :
+    Continuous fun p : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut × (d → ℝ) =>
+      F_fopen (col_fopen m p.1) (row_fopen m p.1) p.2 := by
+  have hterm : ∀ i : hid m, Continuous fun p : Params (Arch.mlp (T := T) (d := d) relu id hid)
+      dIn dOut × (d → ℝ) => relu (p.2 ⬝ᵥ col_fopen m p.1 i) • row_fopen m p.1 i := fun i =>
+    (continuous_relu_fopen.comp (continuous_snd.dotProduct
+      ((continuous_col_fopen m i).comp continuous_fst))).smul
+      ((continuous_row_fopen m i).comp continuous_fst)
+  have hsum : Continuous fun p : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut
+      × (d → ℝ) => ∑ i, relu (p.2 ⬝ᵥ col_fopen m p.1 i) • row_fopen m p.1 i :=
+    continuous_finsetSum _ fun i _ => hterm i
+  exact continuous_snd.add hsum
+
+omit [Fintype T] [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper: `θ ↦ Φ_m(b)` is continuous for a fixed row `b`. -/
+private theorem continuous_blockMapRes_fopen (m : Fin (L + 1)) (b : d → ℝ) :
+    Continuous fun θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut =>
+      blockMapRes θ m b := by
+  simp only [blockMapRes_eq_fopen]
+  have h1 : Continuous fun θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut =>
+      (θ, b) := continuous_id.prodMk continuous_const
+  have hc := (continuous_F_fopen m).comp h1
+  exact hc
+
+/-- Helper: `Φ` is positively homogeneous: `Φ(t h) = t Φ(h)` for `t ≥ 0`. -/
+private theorem F_smul_fopen {n ι : Type*} [Fintype n] [Fintype ι] (c r : ι → n → ℝ)
+    (h : n → ℝ) {t : ℝ} (ht : 0 ≤ t) : F_fopen c r (t • h) = t • F_fopen c r h := by
+  simp only [F_fopen, smul_dotProduct, smul_eq_mul, relu_mul_fopen ht, mul_smul, smul_add,
+    Finset.smul_sum]
+
+/-- Helper (part 1): the number `Φ(h) r` that unit `j` of block `ℓ.succ` reads when the row `h`
+enters block `ℓ.castSucc`. -/
+private noncomputable def W_fopen (ℓ : Fin L) (j : hid ℓ.succ)
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (h : d → ℝ) : ℝ :=
+  blockMapRes θ ℓ.castSucc h ⬝ᵥ col_fopen ℓ.succ θ j
+
+omit [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper (part 1): unit `j` of block `ℓ.succ` reads `W` of the row of the hidden state before
+block `ℓ.castSucc`. -/
+private theorem read_eq_fopen (ℓ : Fin L) (j : hid ℓ.succ)
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (x : Matrix T dIn ℝ)
+    (t : T) :
+    (hidden (Arch.mlp relu id hid) 1 θ x ℓ.succ.castSucc * θ.read ℓ.succ) t j
+      = W_fopen ℓ j θ (hidden (Arch.mlp relu id hid) 1 θ x ℓ.castSucc.castSucc t) := by
+  rw [W_fopen, ← hidden_succ_eq_blockMapRes]
+  rfl
+
+omit [Fintype T] [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper (part 1): `W` is continuous in the parameters and the row. -/
+private theorem continuous_W_fopen (ℓ : Fin L) (j : hid ℓ.succ) :
+    Continuous fun p : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut × (d → ℝ) =>
+      W_fopen ℓ j p.1 p.2 := by
+  simp only [W_fopen, blockMapRes_eq_fopen]
+  exact (continuous_F_fopen ℓ.castSucc).dotProduct
+    ((continuous_col_fopen ℓ.succ j).comp continuous_fst)
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper (part 1): `W` is positively homogeneous in the row. -/
+private theorem W_smul_fopen (ℓ : Fin L) (j : hid ℓ.succ)
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (h : d → ℝ) {t : ℝ}
+    (ht : 0 ≤ t) : W_fopen ℓ j θ (t • h) = t * W_fopen ℓ j θ h := by
+  rw [W_fopen, W_fopen, blockMapRes_eq_fopen, F_smul_fopen _ _ _ ht, smul_dotProduct,
+    smul_eq_mul]
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (part 1): at `θ*`, `W(h) = -∑_b |h b|`, which is `< 0` for `h ≠ 0`. -/
+private theorem W_star_neg_fopen (ℓ : Fin L) (j : hid ℓ.succ) (e : d ↪ hid ℓ.castSucc)
+    (h : d → ℝ) (hh : h ≠ 0) :
+    W_fopen ℓ j (star_fopen (T := T) (dIn := dIn) (dOut := dOut) ℓ e) h < 0 := by
+  rw [W_fopen, blockMapRes_star_fopen, col_succ_star_fopen]
+  simp only [dotProduct, mul_neg, mul_one, Finset.sum_neg_distrib, Left.neg_neg_iff]
+  obtain ⟨b, hb⟩ := Function.ne_iff.1 hh
+  exact Finset.sum_pos' (fun b _ => abs_nonneg _) ⟨b, Finset.mem_univ b, abs_pos.2 hb⟩
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper (part 1): `W < 0` on the unit sphere gives `W ≤ 0` at every row, by homogeneity. -/
+private theorem W_nonpos_fopen (ℓ : Fin L) (j : hid ℓ.succ)
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut)
+    (hθ : ∀ h ∈ Metric.sphere (0 : d → ℝ) 1, W_fopen ℓ j θ h < 0) (h : d → ℝ) :
+    W_fopen ℓ j θ h ≤ 0 := by
+  by_cases hh : h = 0
+  · -- `W(0) = 0 W(0) = 0`
+    subst hh
+    have h0 := W_smul_fopen ℓ j θ (0 : d → ℝ) (le_refl (0 : ℝ))
+    rw [zero_smul, zero_mul] at h0
+    exact h0.le
+  · -- `h = ‖h‖ (h / ‖h‖)`, and `h / ‖h‖` is on the unit sphere
+    have hn : 0 < ‖h‖ := norm_pos_iff.2 hh
+    have hmem : ‖h‖⁻¹ • h ∈ Metric.sphere (0 : d → ℝ) 1 := by
+      rw [mem_sphere_zero_iff_norm, norm_smul, norm_inv, norm_norm, inv_mul_cancel₀ hn.ne']
+    have he : h = ‖h‖ • (‖h‖⁻¹ • h) := (smul_inv_smul₀ hn.ne' h).symm
+    rw [he, W_smul_fopen ℓ j θ _ (norm_nonneg h)]
+    exact mul_nonpos_of_nonneg_of_nonpos (norm_nonneg _) (hθ _ hmem).le
+
+/-- Helper (part 1): near `θ*`, unit `j` of block `ℓ.succ` is dead. -/
+private theorem eventually_inactive_fopen (ℓ : Fin L) (j : hid ℓ.succ)
+    (e : d ↪ hid ℓ.castSucc) :
+    ∀ᶠ θ in 𝓝 (star_fopen (T := T) (dIn := dIn) (dOut := dOut) ℓ e),
+      UnitInactiveRes θ ℓ.succ j := by
+  set θs := star_fopen (T := T) (dIn := dIn) (dOut := dOut) ℓ e
+  -- the tube lemma: near `θ*`, `W < 0` on the unit sphere
+  have hev : ∀ᶠ θ in 𝓝 θs, ∀ h ∈ Metric.sphere (0 : d → ℝ) 1, W_fopen ℓ j θ h < 0 :=
+    (isCompact_sphere 0 1).eventually_forall_of_forall_eventually fun h hh =>
+      ((continuous_W_fopen ℓ j).tendsto (θs, h)).eventually_lt_const
+        (W_star_neg_fopen ℓ j e h (Metric.ne_of_mem_sphere hh one_ne_zero))
+  filter_upwards [hev] with θ hθ
+  intro x t
+  rw [read_eq_fopen]
+  exact W_nonpos_fopen ℓ j θ hθ _
+
+/-- Helper (part 2): the distance `‖c_i - c₀_i‖₁` of a read column of block `ℓ.castSucc` from its
+value at `θ*`. -/
+private noncomputable def dcol_fopen (ℓ : Fin L) (e : d ↪ hid ℓ.castSucc)
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (i : hid ℓ.castSucc) : ℝ :=
+  ∑ a, |col_fopen ℓ.castSucc θ i a - c0_fopen e i a|
+
+/-- Helper (part 2): the constant `K(θ)` of the estimates. -/
+private noncomputable def K_fopen (ℓ : Fin L) (e : d ↪ hid ℓ.castSucc)
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) : ℝ :=
+  ∑ i, (dcol_fopen ℓ e θ i * ‖row_fopen ℓ.castSucc θ i‖
+    + (∑ a, |c0_fopen e i a|) * ‖row_fopen ℓ.castSucc θ i - r0_fopen e i‖)
+
+omit [Fintype T] [DecidableEq d] in
+private theorem continuous_dcol_fopen (ℓ : Fin L) (e : d ↪ hid ℓ.castSucc)
+    (i : hid ℓ.castSucc) :
+    Continuous fun θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut =>
+      dcol_fopen ℓ e θ i :=
+  continuous_finsetSum _ fun a _ =>
+    (((continuous_apply a).comp (continuous_col_fopen ℓ.castSucc i)).sub continuous_const).abs
+
+omit [Fintype T] [DecidableEq d] in
+private theorem continuous_K_fopen (ℓ : Fin L) (e : d ↪ hid ℓ.castSucc) :
+    Continuous fun θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut =>
+      K_fopen ℓ e θ := by
+  have hterm : ∀ i : hid ℓ.castSucc, Continuous fun θ : Params (Arch.mlp (T := T) (d := d)
+      relu id hid) dIn dOut => dcol_fopen ℓ e θ i * ‖row_fopen ℓ.castSucc θ i‖
+        + (∑ a, |c0_fopen e i a|) * ‖row_fopen ℓ.castSucc θ i - r0_fopen e i‖ := by
+    intro i
+    have h1 : Continuous fun θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut =>
+        ‖row_fopen ℓ.castSucc θ i‖ := (continuous_row_fopen ℓ.castSucc i).norm
+    have h2 : Continuous fun θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut =>
+        ‖row_fopen ℓ.castSucc θ i - r0_fopen e i‖ :=
+      ((continuous_row_fopen ℓ.castSucc i).sub continuous_const).norm
+    exact ((continuous_dcol_fopen ℓ e i).mul h1).add (continuous_const.mul h2)
+  exact continuous_finsetSum _ fun i _ => hterm i
+
+omit [Fintype T] in
+/-- Helper (part 2): near `θ*`, block `ℓ.castSucc` folds. -/
+private theorem eventually_folds_fopen (ℓ : Fin L) (e : d ↪ hid ℓ.castSucc) (a₀ : d) :
+    ∀ᶠ θ in 𝓝 (star_fopen (T := T) (dIn := dIn) (dOut := dOut) ℓ e), Folds θ ℓ.castSucc := by
+  set θs := star_fopen (T := T) (dIn := dIn) (dOut := dOut) ℓ e with hθs
+  -- every read column of block `ℓ.castSucc` stays within `1/2` of its value at `θ*`
+  have hE1 : ∀ i, ∀ᶠ θ in 𝓝 θs, dcol_fopen ℓ e θ i < 1 / 2 := by
+    intro i
+    have h0 : dcol_fopen ℓ e θs i = 0 := by
+      simp only [dcol_fopen, hθs, col_star_fopen, sub_self, abs_zero, Finset.sum_const_zero]
+    exact ((continuous_dcol_fopen ℓ e i).tendsto θs).eventually_lt_const
+      (by rw [h0]; norm_num)
+  -- the constant `K` tends to `0`
+  have hE2 : ∀ᶠ θ in 𝓝 θs, K_fopen ℓ e θ < 1 / 2 := by
+    have h0 : K_fopen ℓ e θs = 0 := by
+      simp only [K_fopen, dcol_fopen, hθs, col_star_fopen, row_star_fopen, sub_self, abs_zero,
+        Finset.sum_const_zero, zero_mul, norm_zero, mul_zero, add_zero]
+    exact ((continuous_K_fopen ℓ e).tendsto θs).eventually_lt_const (by rw [h0]; norm_num)
+  -- `Φ(P1) → |P1| = P1` and `Φ(P2) → |P2| = P1`
+  have hP1 : blockMapRes θs ℓ.castSucc P1_fopen = P1_fopen := by
+    rw [blockMapRes_star_fopen]
+    funext b
+    simp [P1_fopen]
+  have hP2 : blockMapRes θs ℓ.castSucc (P2_fopen a₀) = P1_fopen := by
+    rw [blockMapRes_star_fopen]
+    funext b
+    simp only [P2_fopen, P1_fopen]
+    split_ifs <;> norm_num
+  have hE3 : ∀ᶠ θ in 𝓝 θs, dist (blockMapRes θ ℓ.castSucc P1_fopen) P1_fopen < 1 / 8 := by
+    have h := (continuous_blockMapRes_fopen ℓ.castSucc P1_fopen).tendsto θs
+    rw [hP1] at h
+    exact Metric.tendsto_nhds.1 h _ (by norm_num)
+  have hE4 : ∀ᶠ θ in 𝓝 θs,
+      dist (blockMapRes θ ℓ.castSucc (P2_fopen a₀)) P1_fopen < 1 / 8 := by
+    have h := (continuous_blockMapRes_fopen ℓ.castSucc (P2_fopen a₀)).tendsto θs
+    rw [hP2] at h
+    exact Metric.tendsto_nhds.1 h _ (by norm_num)
+  filter_upwards [Filter.eventually_all.2 hE1, hE2, hE3, hE4] with θ h1 h2 h3 h4
+  rw [dist_comm, blockMapRes_eq_fopen] at h3 h4
+  unfold Folds
+  rw [blockMapRes_eq_fopen]
+  exact not_injective_fopen e a₀ _ _ (fun i => (h1 i).le) h2.le h3.le h4.le
+
 /-- **Proposition A.33 (i) of the skips paper:** for `d ≥ 1` and at least `d` units in block
 `ℓ.castSucc`, there is a nonempty open set of weights of the residual ReLU network on which block
 `ℓ.castSucc` folds and unit `j` of the next block `ℓ.succ` is dead. -/
@@ -374,6 +666,15 @@ theorem exists_isOpen_folds_unitInactiveRes_relu [Nonempty d] (ℓ : Fin L) (j :
     (hq : Fintype.card d ≤ Fintype.card (hid ℓ.castSucc)) :
     ∃ U : Set (Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut),
       IsOpen U ∧ U.Nonempty ∧ ∀ θ ∈ U, Folds θ ℓ.castSucc ∧ UnitInactiveRes θ ℓ.succ j := by
-  sorry
+  -- an embedding `e` of `d` into the units of block `ℓ.castSucc`, and an index `a₀`
+  obtain ⟨e⟩ := Function.Embedding.nonempty_of_card_le hq
+  obtain ⟨a₀⟩ := ‹Nonempty d›
+  set θs := star_fopen (T := T) (dIn := dIn) (dOut := dOut) ℓ e
+  -- parts 1 and 2: near `θ*` the block folds and the unit is dead
+  have hev : ∀ᶠ θ in 𝓝 θs, Folds θ ℓ.castSucc ∧ UnitInactiveRes θ ℓ.succ j :=
+    (eventually_folds_fopen ℓ e a₀).and (eventually_inactive_fopen ℓ j e)
+  -- the open set: the interior of the weights at which both hold
+  exact ⟨interior {θ | Folds θ ℓ.castSucc ∧ UnitInactiveRes θ ℓ.succ j}, isOpen_interior,
+    ⟨θs, mem_interior_iff_mem_nhds.2 hev⟩, fun θ hθ => interior_subset hθ⟩
 
 end Skips
