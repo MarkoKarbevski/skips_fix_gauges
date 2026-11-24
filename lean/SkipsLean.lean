@@ -151,3 +151,6 @@ import SkipsLean.Depth.StepZeroGeluPath
 import SkipsLean.Depth.SuffixZeroRows
 import SkipsLean.Depth.StepZeroGeluOne
 import SkipsLean.Depth.StepZeroGelu
+import SkipsLean.Depth.GeluPathBlock
+import SkipsLean.Depth.RegularZeroGelu
+import SkipsLean.Depth.GeluZero
