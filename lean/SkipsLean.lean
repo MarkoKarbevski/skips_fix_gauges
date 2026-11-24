@@ -306,6 +306,8 @@ import SkipsLean.OneBlock.LearnedSkipRMSZeroRescale
 import SkipsLean.OneBlock.LearnedSkipRMSZeroRescaleGeneric
 import SkipsLean.OneBlock.UnitsRescaleSphereReGLU
 import SkipsLean.Residual.LearnedSkipsConverse
+import SkipsLean.OneBlock.LearnedSkipRMSZeroReGLU
+import SkipsLean.OneBlock.LearnedSkipRMSZeroReGLUGeneric
 import SkipsLean.Symmetry.InsideBlocksRMSNormZero
 import SkipsLean.Dimension.UpperBoundSymmetriesRMSNormZero
 import SkipsLean.OneBlock.ResidualRMSZeroGain
