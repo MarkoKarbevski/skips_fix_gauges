@@ -27,6 +27,11 @@ step "one small factor" depends on the gate (Lemma D.9 for GELU, parity for SiLU
 block (equation (29)); it is the hypothesis `hstep`: if (36) holds for `α = 1_j`, then `G_j`
 vanishes. The conclusion is that `G₀` and every `G_j` vanish near `(0, 0)`: all coefficients of the
 expansion vanish. Fact (c), the bound on the terms with a larger exponent, is part of the proof.
+
+The values lie in a complete normed space `F` (in the paper, `ℝ^{1×d_out}`). Completeness is
+needed: for a space that is not complete, a map that is real-analytic at `(0, 0)` need not be
+differentiable at nearby points, and the derivative `∂G₀/∂y_j (1/t, 0)` in `hstep` loses its
+meaning.
 -/
 
 namespace Skips
@@ -42,7 +47,7 @@ Suppose that `G₀(1/t, ζ(t)) + ∑_j ν_j(t) ζ_j(t) G_j(1/t, ζ(t))` is, for 
 `∂G₀/∂y_j (1/t, 0) + ν_j(t) G_j(1/t, 0)` tends to `0` faster than every power of `1/t`. Then `G₀`
 and every `G_j` vanish near `(0, 0)`. -/
 theorem ray_induction {ι : Type*} [Fintype ι] [DecidableEq ι] {F : Type*} [NormedAddCommGroup F]
-    [NormedSpace ℝ F] (p : ℕ) (hp : 1 ≤ p) (r : ι → ℝ) (hr : ∀ j, 0 < r j)
+    [NormedSpace ℝ F] [CompleteSpace F] (p : ℕ) (hp : 1 ≤ p) (r : ι → ℝ) (hr : ∀ j, 0 < r j)
     (hrQ : LinearIndependent ℚ r) (ζ ν : ℝ → ι → ℝ) (A : ℝ) (N : ℕ)
     (hζl : ∀ᶠ t : ℝ in atTop, ∀ j, Real.exp (-(r j * t ^ p)) ≤ A * t ^ N * ζ t j)
     (hζu : ∀ᶠ t : ℝ in atTop, ∀ j, |ζ t j| ≤ A * t ^ N * Real.exp (-(r j * t ^ p)))
@@ -62,7 +67,7 @@ theorem ray_induction {ι : Type*} [Fintype ι] [DecidableEq ι] {F : Type*} [No
 /-- **The induction on the exponents, for the hidden units of several tokens:** the same statement
 with the small terms arranged in a matrix (one row per token, one column per hidden unit). -/
 theorem ray_induction_matrix {T q : Type*} [Fintype T] [Fintype q] [DecidableEq T] [DecidableEq q]
-    {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F] (p : ℕ) (hp : 1 ≤ p)
+    {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F] (p : ℕ) (hp : 1 ≤ p)
     (r : Matrix T q ℝ) (hr : ∀ a j, 0 < r a j)
     (hrQ : LinearIndependent ℚ (fun i : T × q => r i.1 i.2)) (ζ ν : ℝ → Matrix T q ℝ) (A : ℝ)
     (N : ℕ)
