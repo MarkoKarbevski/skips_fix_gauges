@@ -1706,3 +1706,5 @@ import SkipsLean
 #print axioms Skips.eval_learned_eq_residual_rmsNorm_zero
 #print axioms Skips.eval_learned_eq_residual_rmsNorm_zero_fwd
 #print axioms Skips.eval_learned_eq_residual_rmsNorm_fwd
+#print axioms Skips.skipProdFwd_zero
+#print axioms Skips.skipProdFwd_succ

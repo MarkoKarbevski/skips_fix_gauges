@@ -162,7 +162,7 @@ Rules, so that the file stays small:
   inner map is `a + τ b + τ² c` (`by simp only [zero_mul, add_zero]`). Timeout at `(hG _).hasDerivAt.scomp 0 hl` (point `b ⬝ᵥ (x + 0 • u)`): name the inner map, `HasDerivAt.scomp (h := fun s => …)`. **Where:** `Absorb/Networks.lean`, `OneBlock/Rescale.lean`, `Absorb/RidgeFunctions.lean`.
 - **Error** `failed to synthesize HMul (Matrix T d ℝ) ℕ …` on `h * 1`, `h * 0` or `Matrix.single a k 1 * M` in a `have`/`show`.
   **Cause** a numeral without an expected type defaults to `ℕ`. **Fix** `h * (1 : Matrix d d ℝ)`, `Matrix.single a k (1 : ℝ)`.
-- `y₊`, `y₋`, `X♭`, `hλ`, `hg°` are not identifiers (`expected token`; every later declaration is then lost); `Pi.single` in a helper needs `classical` (`DecidableEq n`).
+- `y₊`, `y₋`, `X♭`, `hλ`, `hΠ`, `Π'`, `hg°` are not identifiers (`expected token`; every later declaration is then lost); `Pi.single` in a helper needs `classical` (`DecidableEq n`).
 - `have := hasSum_sum_of_ne_finset_zero …` with no stated type: `stuck SummationFilter.LeAtTop`; state the `HasSum` type. Nonnegative reals: `Finset.prod_le_prod₀ h0 h1` (`prod_le_prod` is the ordered-monoid lemma). A fibre of a sigma-sum is at most the total: `Summable.le_tsum'` + `Summable.tsum_sigma'`. **Where:** `Depth/RayInduction.lean`.
 - `simp only [ite_apply]` and `split_ifs` leave a vector `if` applied to a coordinate, `(if c then f else 0) o` (from unfolding `reluSqCell`), untouched: `rw [ite_apply]` works (`Absorb/ReluSqBiasesCount.lean`).
 - `simp [Matrix.of_zero]` leaves `of fun t j => 0`: add a private `rfl` lemma `(of fun (_ : m) (_ : n) => (0 : ℝ)) = 0` to the simp set.
