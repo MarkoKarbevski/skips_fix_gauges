@@ -1,5 +1,6 @@
 import SkipsLean.Activations.FarFromZero
 import Mathlib.Analysis.Asymptotics.SuperpolynomialDecay
+import Mathlib.Analysis.Normed.Module.HahnBanach
 
 /-!
 # Maps that are meromorphic at infinity, and the Mills ratio
@@ -165,6 +166,207 @@ theorem MeromorphicAtInfinity.eventually_eq_zero {Θ : ℝ → F} (hΘ : Meromor
     (eventually_nhds_eq_zero_of_fasterThanPowers hΘ₀ h₀)] with t ht ht0
   rw [ht, ht0, smul_zero]
 
+/-! ### Helpers for Lemma D.9 -/
+
+/-- A polynomial `∑_{j<M} q_j s^j` that is `O(s^M)` as `s → 0⁺` has only zero coefficients
+(uniqueness of the asymptotic expansion). -/
+private lemma eq_zero_of_abs_sum_le : ∀ (M : ℕ) (q : ℕ → ℝ) (C : ℝ),
+    (∀ᶠ s in 𝓝[>] (0 : ℝ), |∑ j ∈ Finset.range M, q j * s ^ j| ≤ C * s ^ M) →
+      ∀ j < M, q j = 0
+  | 0, _, _, _, j, hj => absurd hj (Nat.not_lt_zero j)
+  | M + 1, q, C, h, j, hj => by
+    -- the constant term is the limit at `0⁺` of the polynomial, which is `0`
+    have hcont : Continuous fun s : ℝ => ∑ j ∈ Finset.range (M + 1), q j * s ^ j := by
+      fun_prop
+    have hT : Tendsto (fun s : ℝ => ∑ j ∈ Finset.range (M + 1), q j * s ^ j) (𝓝[>] 0)
+        (𝓝 (q 0)) :=
+      (hcont.tendsto' 0 (q 0) (by simp [Finset.sum_range_succ'])).mono_left
+        nhdsWithin_le_nhds
+    have hb : Tendsto (fun s : ℝ => C * s ^ (M + 1)) (𝓝[>] 0) (𝓝 0) :=
+      ((continuous_const.mul (continuous_pow (M + 1))).tendsto' 0 0 (by simp)).mono_left
+        nhdsWithin_le_nhds
+    have hZ : Tendsto (fun s : ℝ => ∑ j ∈ Finset.range (M + 1), q j * s ^ j) (𝓝[>] 0) (𝓝 0) :=
+      squeeze_zero_norm' (h.mono fun s hs => by rwa [Real.norm_eq_abs]) hb
+    have h0 : q 0 = 0 := tendsto_nhds_unique hT hZ
+    -- divided by `s`, the remaining polynomial is `O(s^M)`
+    have h' : ∀ᶠ s in 𝓝[>] (0 : ℝ), |∑ j ∈ Finset.range M, q (j + 1) * s ^ j| ≤ C * s ^ M := by
+      filter_upwards [h, self_mem_nhdsWithin] with s hs (hs0 : 0 < s)
+      have hsum : ∑ j ∈ Finset.range (M + 1), q j * s ^ j
+          = s * ∑ j ∈ Finset.range M, q (j + 1) * s ^ j := by
+        rw [Finset.sum_range_succ', h0, zero_mul, add_zero, Finset.mul_sum]
+        exact Finset.sum_congr rfl fun j _ => by ring
+      rw [hsum, abs_mul, abs_of_pos hs0] at hs
+      refine le_of_mul_le_mul_left ?_ hs0
+      calc s * |∑ j ∈ Finset.range M, q (j + 1) * s ^ j| ≤ C * s ^ (M + 1) := hs
+        _ = s * (C * s ^ M) := by ring
+    cases j with
+    | zero => exact h0
+    | succ j => exact eq_zero_of_abs_sum_le M (fun i => q (i + 1)) C h' j (by omega)
+
+/-- The coefficients of `∑_{i<m} c_i s^{e+2i+1}` as a polynomial in `s`. -/
+private def oddShift (e : ℕ) (c : ℕ → ℝ) (j : ℕ) : ℝ :=
+  if e < j ∧ (j - e - 1) % 2 = 0 then c ((j - e - 1) / 2) else 0
+
+private lemma oddShift_odd (e : ℕ) (c : ℕ → ℝ) (i : ℕ) : oddShift e c (e + 2 * i + 1) = c i := by
+  have h1 : e < e + 2 * i + 1 ∧ (e + 2 * i + 1 - e - 1) % 2 = 0 := by omega
+  have h2 : (e + 2 * i + 1 - e - 1) / 2 = i := by omega
+  rw [oddShift, ite_eq_left h1, h2]
+
+private lemma oddShift_even (e : ℕ) (c : ℕ → ℝ) (i : ℕ) : oddShift e c (e + 2 * i + 2) = 0 := by
+  have h1 : ¬(e < e + 2 * i + 2 ∧ (e + 2 * i + 2 - e - 1) % 2 = 0) := by omega
+  rw [oddShift, ite_eq_right h1]
+
+private lemma oddShift_of_le (e : ℕ) (c : ℕ → ℝ) {j : ℕ} (hj : j ≤ e) : oddShift e c j = 0 := by
+  have h1 : ¬(e < j ∧ (j - e - 1) % 2 = 0) := by omega
+  rw [oddShift, ite_eq_right h1]
+
+/-- `∑_{i<m} c_i s^{e+2i+1} = ∑_{j<e+2m+1} d_j s^j` with `d = oddShift e c`. -/
+private lemma sum_oddShift (e : ℕ) (c : ℕ → ℝ) (s : ℝ) (m : ℕ) :
+    ∑ i ∈ Finset.range m, c i * s ^ (e + 2 * i + 1) =
+      ∑ j ∈ Finset.range (e + 2 * m + 1), oddShift e c j * s ^ j := by
+  induction m with
+  | zero =>
+    rw [Finset.sum_range_zero, eq_comm]
+    exact Finset.sum_eq_zero fun j hj => by
+      rw [oddShift_of_le e c (by rw [Finset.mem_range] at hj; omega), zero_mul]
+  | succ m ih =>
+    have hR : ∑ j ∈ Finset.range (e + 2 * (m + 1) + 1), oddShift e c j * s ^ j =
+        ∑ j ∈ Finset.range (e + 2 * m + 1), oddShift e c j * s ^ j
+          + oddShift e c (e + 2 * m + 1) * s ^ (e + 2 * m + 1)
+          + oddShift e c (e + 2 * m + 2) * s ^ (e + 2 * m + 2) := by
+      rw [show e + 2 * (m + 1) + 1 = e + 2 * m + 2 + 1 by ring,
+        Finset.sum_range_succ _ (e + 2 * m + 2), show e + 2 * m + 2 = e + 2 * m + 1 + 1 by ring,
+        Finset.sum_range_succ _ (e + 2 * m + 1)]
+    rw [hR, oddShift_odd, oddShift_even, Finset.sum_range_succ _ m, ih, zero_mul, add_zero]
+
+/-- The coefficient `(−1)^i (2i−1)!! / ω^{2i+1}` of the expansion of `mr(ω/s)` in powers of `s`. -/
+private noncomputable def millsCoeff (ω : ℝ) (i : ℕ) : ℝ :=
+  (-1 : ℝ) ^ i * (Nat.doubleFactorial (2 * i - 1) : ℝ) / ω ^ (2 * i + 1)
+
+/-- Lemma D.8 (ii) at `z = ω/s`, multiplied by `s^e`. -/
+private lemma abs_pow_mul_millsRatio_sub_le {ω s : ℝ} (hω : 0 < ω) (hs : 0 < s) (e m : ℕ) :
+    |s ^ e * millsRatio (ω * s⁻¹) - ∑ i ∈ Finset.range m, millsCoeff ω i * s ^ (e + 2 * i + 1)|
+      ≤ (Nat.doubleFactorial (2 * m - 1) : ℝ) / ω ^ (2 * m + 1) * s ^ (e + 2 * m + 1) := by
+  have hz : 0 < ω * s⁻¹ := mul_pos hω (inv_pos.2 hs)
+  have h := abs_millsRatio_sub_sum_le hz m
+  have hse : 0 < s ^ e := pow_pos hs e
+  have hsum : ∑ i ∈ Finset.range m, millsCoeff ω i * s ^ (e + 2 * i + 1)
+      = s ^ e * ∑ l ∈ Finset.range m,
+          (-1 : ℝ) ^ l * (Nat.doubleFactorial (2 * l - 1) : ℝ) / (ω * s⁻¹) ^ (2 * l + 1) := by
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [millsCoeff, mul_pow, inv_pow, ← div_eq_mul_inv, div_div_eq_mul_div]
+    ring
+  rw [hsum, ← mul_sub, abs_mul, abs_of_pos hse]
+  refine (mul_le_mul_of_nonneg_left h hse.le).trans_eq ?_
+  rw [mul_pow, inv_pow, ← div_eq_mul_inv, div_div_eq_mul_div]
+  ring
+
+/-- `l! ≤ (2l−1)!!`. -/
+private lemma factorial_le_doubleFactorial : ∀ l : ℕ, Nat.factorial l ≤ Nat.doubleFactorial (2 * l - 1)
+  | 0 => le_rfl
+  | 1 => le_rfl
+  | l + 2 => by
+    have h := factorial_le_doubleFactorial (l + 1)
+    rw [show 2 * (l + 2) - 1 = 2 * (l + 1) - 1 + 2 by omega, Nat.doubleFactorial_add_two,
+      Nat.factorial_succ]
+    exact Nat.mul_le_mul (by omega) h
+
+/-- `(2l−1)!! x^{2l}` is unbounded for `x > 0`: "the numbers `(2l−1)!!` grow faster than every
+geometric sequence". -/
+private lemma exists_lt_doubleFactorial_mul_pow {x R : ℝ} (hx : 0 < x) (hR : 0 < R) (C : ℝ) :
+    ∃ l : ℕ, C < (Nat.doubleFactorial (2 * l - 1) : ℝ) * x ^ (2 * l) * R := by
+  rcases le_or_gt C 0 with hC | hC
+  · exact ⟨0, by simp; linarith⟩
+  -- `(1/x²)^l / l! → 0`, so `C < l! x^{2l} R` for some `l`
+  obtain ⟨l, hl⟩ := ((FloorSemiring.tendsto_pow_div_factorial_atTop ((x ^ 2)⁻¹)).eventually
+    (gt_mem_nhds (div_pos hR hC))).exists
+  refine ⟨l, ?_⟩
+  have hf : (0 : ℝ) < Nat.factorial l := by exact_mod_cast Nat.factorial_pos l
+  have hd : (Nat.factorial l : ℝ) ≤ Nat.doubleFactorial (2 * l - 1) := by
+    exact_mod_cast factorial_le_doubleFactorial l
+  have hx2 : 0 < x ^ (2 * l) := pow_pos hx _
+  rw [div_lt_div_iff₀ hf hC] at hl
+  have h1 : (x ^ 2)⁻¹ ^ l * x ^ (2 * l) = 1 := by
+    rw [inv_pow, ← pow_mul, inv_mul_cancel₀ (pow_ne_zero _ hx.ne')]
+  calc C = (x ^ 2)⁻¹ ^ l * C * x ^ (2 * l) := by
+        rw [mul_comm _ C, mul_assoc, h1, mul_one]
+    _ < R * Nat.factorial l * x ^ (2 * l) := mul_lt_mul_of_pos_right hl hx2
+    _ ≤ R * Nat.doubleFactorial (2 * l - 1) * x ^ (2 * l) := by gcongr
+    _ = _ := by ring
+
+/-- Taylor's formula at `0` for a real function with the power series `p`. -/
+private lemma abs_sub_sum_coeff_le {k : ℝ → ℝ} {p : FormalMultilinearSeries ℝ ℝ ℝ}
+    (hp : HasFPowerSeriesAt k p 0) (M : ℕ) :
+    ∃ C, ∀ᶠ s in 𝓝 (0 : ℝ), |k s - ∑ j ∈ Finset.range M, p.coeff j * s ^ j| ≤ C * |s| ^ M := by
+  obtain ⟨C, hC⟩ := (hp.isBigO_sub_partialSum_pow M).bound
+  refine ⟨C, hC.mono fun s hs => ?_⟩
+  have hsum : p.partialSum M s = ∑ j ∈ Finset.range M, p.coeff j * s ^ j :=
+    Finset.sum_congr rfl fun j _ => by
+      rw [FormalMultilinearSeries.apply_eq_pow_smul_coeff, smul_eq_mul, mul_comm]
+  simp only [zero_add, hsum, Real.norm_eq_abs, abs_pow, abs_abs] at hs
+  exact hs
+
+/-- **The scalar core of Lemma D.9.** If `k` is real-analytic at `0`, then
+`(1/t)^e mr(ω t) − k(1/t)` does not tend to `0` faster than every power of `1/t`. -/
+private lemma not_fasterThanPowers_millsRatio_sub {ω : ℝ} (hω : 0 < ω) (e : ℕ) {k : ℝ → ℝ}
+    (hk : AnalyticAt ℝ k 0)
+    (h : FasterThanPowers fun t => (1 / t) ^ e * millsRatio (ω * t) - k (1 / t)) : False := by
+  -- `|s^e mr(ω/s) − k(s)| ≤ s^M` for small `s > 0`, for every `M`
+  have hb : ∀ M : ℕ, ∀ᶠ s in 𝓝[>] (0 : ℝ), |s ^ e * millsRatio (ω * s⁻¹) - k s| ≤ s ^ M := by
+    intro M
+    filter_upwards [eventually_norm_inv_le_pow h M] with s hs
+    simpa only [one_div, inv_inv, Real.norm_eq_abs] using hs
+  obtain ⟨p, hp⟩ := hk
+  -- "Asymptotic expansions are unique, so the two series have the same coefficients":
+  -- the Taylor coefficient of `k` of order `e + 2l + 1` is `(−1)^l (2l−1)!! / ω^{2l+1}`
+  have hcoef : ∀ l, p.coeff (e + 2 * l + 1) = millsCoeff ω l := by
+    intro l
+    obtain ⟨C, hC⟩ := abs_sub_sum_coeff_le hp (e + 2 * (l + 1) + 1)
+    have hq := eq_zero_of_abs_sum_le (e + 2 * (l + 1) + 1)
+      (fun j => p.coeff j - oddShift e (millsCoeff ω) j)
+      (C + 1 + (Nat.doubleFactorial (2 * (l + 1) - 1) : ℝ) / ω ^ (2 * (l + 1) + 1)) ?_
+      (e + 2 * l + 1) (by omega)
+    · rw [oddShift_odd] at hq
+      linarith
+    filter_upwards [nhdsWithin_le_nhds hC, hb (e + 2 * (l + 1) + 1), self_mem_nhdsWithin]
+      with s hs1 hs2 (hs0 : 0 < s)
+    have hs3 := abs_pow_mul_millsRatio_sub_le hω hs0 e (l + 1)
+    rw [sum_oddShift] at hs3
+    rw [abs_of_pos hs0] at hs1
+    have hsplit : ∑ j ∈ Finset.range (e + 2 * (l + 1) + 1),
+          (p.coeff j - oddShift e (millsCoeff ω) j) * s ^ j
+        = -(k s - ∑ j ∈ Finset.range (e + 2 * (l + 1) + 1), p.coeff j * s ^ j)
+          - (s ^ e * millsRatio (ω * s⁻¹) - k s)
+          + (s ^ e * millsRatio (ω * s⁻¹) - ∑ j ∈ Finset.range (e + 2 * (l + 1) + 1),
+              oddShift e (millsCoeff ω) j * s ^ j) := by
+      simp only [sub_mul, Finset.sum_sub_distrib]
+      ring
+    have tri : ∀ a b c : ℝ, |-a - b + c| ≤ |a| + |b| + |c| := fun a b c => by
+      have e1 := abs_add_le (-a - b) c
+      have e2 := abs_sub (-a) b
+      rw [abs_neg] at e2
+      linarith
+    rw [hsplit]
+    refine (tri _ _ _).trans ?_
+    rw [add_mul, add_mul, one_mul]
+    linarith
+  -- the radius of convergence of `p` is positive: `|a_n| r^n ≤ C` for some `r > 0`
+  obtain ⟨r, hr0, hr⟩ := ENNReal.lt_iff_exists_nnreal_btwn.1 hp.radius_pos
+  obtain ⟨C, -, hC⟩ := p.norm_mul_pow_le_of_lt_radius hr
+  have hr0' : (0 : ℝ) < r := by exact_mod_cast hr0
+  -- "But the numbers `(2l−1)!!` grow faster than every geometric sequence"
+  obtain ⟨l, hl⟩ := exists_lt_doubleFactorial_mul_pow (div_pos hr0' hω)
+    (by positivity : (0 : ℝ) < r ^ (e + 1) / ω) C
+  have h1 := hC (e + 2 * l + 1)
+  rw [FormalMultilinearSeries.norm_apply_eq_norm_coef, hcoef l, Real.norm_eq_abs] at h1
+  have h2 : |millsCoeff ω l| * (r : ℝ) ^ (e + 2 * l + 1)
+      = (Nat.doubleFactorial (2 * l - 1) : ℝ) * ((r : ℝ) / ω) ^ (2 * l) * ((r : ℝ) ^ (e + 1) / ω) := by
+    rw [millsCoeff, abs_div, abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul, Nat.abs_cast,
+      abs_pow, abs_of_pos hω, div_pow]
+    ring
+  linarith
+
 /-- **Lemma D.9 (the Mills ratio at infinity), for real `ω > 0` and `ω' = 0`.** If `Θ₁` and `Θ₂`
 are meromorphic at infinity and `Θ₁(t) mr(ω t) + Θ₂(t)` tends to `0` faster than every power of
 `1/t`, then `Θ₁` and `Θ₂` vanish for all large `t`. -/
@@ -172,6 +374,68 @@ theorem eventually_eq_zero_of_millsRatio_smul_add {ω : ℝ} (hω : 0 < ω) {Θ�
     (h₁ : MeromorphicAtInfinity Θ₁) (h₂ : MeromorphicAtInfinity Θ₂)
     (h : FasterThanPowers fun t => millsRatio (ω * t) • Θ₁ t + Θ₂ t) :
     (∀ᶠ t in atTop, Θ₁ t = 0) ∧ ∀ᶠ t in atTop, Θ₂ t = 0 := by
-  sorry
+  obtain ⟨l₁, f₁, hf₁, hΘ₁⟩ := h₁
+  -- "Suppose that a component of `Θ₁` is not zero": then `f₁(s) = s^n g(s)` near `0` with
+  -- `g(0) ≠ 0`, and we take the component `ψ` with `ψ(g(0)) = ‖g(0)‖ ≠ 0`
+  have key : ∀ᶠ s in 𝓝 (0 : ℝ), f₁ s = 0 := by
+    by_contra hne
+    obtain ⟨l₂, f₂, hf₂, hΘ₂⟩ := h₂
+    obtain ⟨n, g, hg, hg0, hfg⟩ := hf₁.exists_eventuallyEq_pow_smul_ne_zero_iff.2 hne
+    obtain ⟨ψ, hψ1, hψg⟩ := exists_dual_vector ℝ (g 0) (norm_ne_zero_iff.2 hg0)
+    have hpos : 0 < ‖g 0‖ := norm_pos_iff.2 hg0
+    have hγ : AnalyticAt ℝ (fun s => ψ (g s)) 0 := (ψ.analyticAt (g 0)).comp hg
+    have hβ : AnalyticAt ℝ (fun s => ψ (f₂ s)) 0 := (ψ.analyticAt (f₂ 0)).comp hf₂
+    have hγ0 : ψ (g 0) ≠ 0 := by rw [hψg]; simpa using hg0
+    have hγnear : ∀ᶠ s in 𝓝 (0 : ℝ), ‖g 0‖ / 2 < |ψ (g s)| := by
+      have hv : |ψ (g 0)| = ‖g 0‖ := by rw [hψg]; simp
+      have ht : Tendsto (fun s => |ψ (g s)|) (𝓝 0) (𝓝 ‖g 0‖) := by
+        rw [← hv]; exact hγ.continuousAt.abs
+      exact ht.eventually_const_lt (half_lt_self hpos)
+    -- the component `φ(t) = mr(ω t) ψ(Θ₁(t)) + ψ(Θ₂(t))` tends to `0` faster than every power
+    have hφ : FasterThanPowers fun t => ψ (millsRatio (ω * t) • Θ₁ t + Θ₂ t) :=
+      h.mono (Eventually.of_forall fun t => (ψ.le_opNorm _).trans (by rw [hψ1, one_mul]))
+    -- multiplied by `(1/t)^{l₁+l₂} / ψ(g(1/t))`, it is `(1/t)^{l₂+n} mr(ω t) − k(1/t)` with
+    -- `k(s) = −s^{l₁} ψ(f₂(s)) / ψ(g(s))` analytic at `0`
+    have hk : AnalyticAt ℝ (fun s => -(s ^ l₁ * ψ (f₂ s) / ψ (g s))) 0 :=
+      (((analyticAt_id.pow l₁).mul hβ).div hγ hγ0).neg
+    have hS : FasterThanPowers fun t => (1 / t) ^ (l₂ + n) * millsRatio (ω * t)
+        - (fun s => -(s ^ l₁ * ψ (f₂ s) / ψ (g s))) (1 / t) := by
+      refine (hφ.smul_of_le_pow (c := fun t => (1 / t) ^ (l₁ + l₂) / ψ (g (1 / t)))
+        (A := 2 / ‖g 0‖) (N := 0) ?_).congr ?_
+      · filter_upwards [eventually_ge_atTop 1, tendsto_one_div_atTop_nhds_zero'.eventually hγnear]
+          with t ht hγt
+        have ht0 : 0 < 1 / t := one_div_pos.2 (by linarith)
+        have hpow : (1 / t) ^ (l₁ + l₂) ≤ 1 :=
+          pow_le_one₀ ht0.le ((div_le_one (by linarith)).2 ht)
+        rw [pow_zero, mul_one, abs_div, abs_of_pos (pow_pos ht0 _)]
+        calc (1 / t) ^ (l₁ + l₂) / |ψ (g (1 / t))| ≤ 1 / (‖g 0‖ / 2) := by
+              gcongr
+          _ = 2 / ‖g 0‖ := by ring
+      · filter_upwards [eventually_gt_atTop 0, hΘ₁, hΘ₂,
+          tendsto_one_div_atTop_nhds_zero'.eventually hfg,
+          tendsto_one_div_atTop_nhds_zero'.eventually hγnear] with t ht h1 h2 h3 h4
+        have hγt : ψ (g (1 / t)) ≠ 0 := by
+          intro h0
+          rw [h0, abs_zero] at h4
+          linarith
+        have hu : ∀ l : ℕ, t ^ l * (1 / t) ^ l = 1 := fun l => by
+          rw [← mul_pow, mul_one_div_cancel ht.ne', one_pow]
+        have hγinv : ψ (g (1 / t)) * (ψ (g (1 / t)))⁻¹ = 1 := mul_inv_cancel₀ hγt
+        simp only [smul_eq_mul, map_add, map_smul, h1, h2, h3, sub_zero]
+        linear_combination
+          ((1 / t) ^ l₂ * (1 / t) ^ n * millsRatio (ω * t) * (ψ (g (1 / t)) * (ψ (g (1 / t)))⁻¹))
+            * hu l₁
+          + ((1 / t) ^ l₂ * (1 / t) ^ n * millsRatio (ω * t)) * hγinv
+          + ((1 / t) ^ l₁ * ψ (f₂ (1 / t)) * (ψ (g (1 / t)))⁻¹) * hu l₂
+    exact not_fasterThanPowers_millsRatio_sub hω (l₂ + n) hk hS
+  -- "Hence `Θ₁ = 0`"
+  have hΘ₁0 : ∀ᶠ t in atTop, Θ₁ t = 0 := by
+    filter_upwards [hΘ₁, tendsto_one_div_atTop_nhds_zero'.eventually key] with t h1 h2
+    rw [h1, h2, smul_zero]
+  refine ⟨hΘ₁0, ?_⟩
+  -- "then `Θ₂` tends to `0` faster than every power, and `Θ₂ = 0`"
+  refine h₂.eventually_eq_zero (h.congr ?_)
+  filter_upwards [hΘ₁0] with t ht
+  rw [ht, smul_zero, zero_add]
 
 end Skips
