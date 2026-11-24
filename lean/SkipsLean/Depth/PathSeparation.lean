@@ -328,7 +328,181 @@ theorem eventually_eq_zero_of_sum_pow_mul_exp_path {ι : Type*} [Fintype ι]
         Complex.exp (-(((t + t⁻¹) * u j : ℝ) : ℂ) - Complex.I * (((t - t⁻¹) * u' j : ℝ) : ℂ)))
         = 0) :
     ∀ i, ∀ᶠ ζ in 𝓝 (0 : ι → ℂ), G i ζ = 0 := by
-  sorry
+  classical
+  -- Power series `p i` of the `G i` at `0`, on a common ball of radius `R`.
+  have hG' : ∀ i, ∃ p : FormalMultilinearSeries ℂ (ι → ℂ) ℂ, ∃ r,
+      HasFPowerSeriesOnBall (G i) p 0 r := fun i => by
+    obtain ⟨p, r, hr⟩ := hG i
+    exact ⟨p, r, hr⟩
+  choose p r hr using hG'
+  let R := Finset.univ.inf' Finset.univ_nonempty r
+  have hR : 0 < R := (Finset.lt_inf'_iff _).2 fun i _ => (hr i).r_pos
+  have hRr : ∀ i, R ≤ r i := fun i => Finset.inf'_le _ (Finset.mem_univ i)
+  have hr' : ∀ i, HasFPowerSeriesOnBall (G i) (p i) 0 R := fun i => (hr i).mono hR (hRr i)
+  obtain ⟨ρ, hρ0, hρR⟩ := ENNReal.lt_iff_exists_nnreal_btwn.1 hR
+  have hρ0' : (0 : ℝ) < ρ := by exact_mod_cast hρ0
+  -- The point `ζ(t)` of the path; with `τ(t) = t + t⁻¹`, `|ζ_j(t)| = e^{-u_j τ(t)}` (the phase
+  -- `e^{-i (t - t⁻¹) u'_j}` has modulus one).
+  let τ : ℝ → ℝ := fun t => t + t⁻¹
+  let ζ : ℝ → ι → ℂ := fun t j =>
+    Complex.exp (-(((t + t⁻¹) * u j : ℝ) : ℂ) - Complex.I * (((t - t⁻¹) * u' j : ℝ) : ℂ))
+  have hζn : ∀ t j, ‖ζ t j‖ = Real.exp (-(u j * τ t)) := by
+    intro t j
+    simp only [ζ, τ, Complex.norm_exp]
+    congr 1
+    simp only [Complex.sub_re, Complex.neg_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re,
+      Complex.I_im, Complex.ofReal_im]
+    ring
+  have hτ : Tendsto τ atTop atTop := tendsto_id.atTop_add tendsto_inv_atTop_zero
+  have hS : Tendsto (fun t => ∑ j, ‖ζ t j‖) atTop (𝓝 0) := by
+    have := tendsto_finsetSum (Finset.univ : Finset ι) fun j _ =>
+      Real.tendsto_exp_neg_atTop_nhds_zero.comp (hτ.const_mul_atTop (hpos j))
+    simp only [Finset.sum_const_zero] at this
+    exact this.congr fun t => Finset.sum_congr rfl fun j _ => (hζn t j).symm
+  obtain ⟨t₀, ht₀⟩ := eventually_atTop.1
+    ((((tendsto_order.1 hS).2 ρ hρ0').and h).and (eventually_ge_atTop 1))
+  have ht₀1 : 1 ≤ t₀ := (ht₀ t₀ le_rfl).2
+  -- `τ` is nondecreasing on `[1, ∞)` and `τ(t) ≥ t` there.
+  have hτmono : ∀ t, t₀ ≤ t → τ t₀ ≤ τ t := by
+    intro t ht
+    have h1 : 0 < t₀ := by linarith
+    have h2 : 0 < t := by linarith
+    have h3 : t⁻¹ ≤ t₀⁻¹ := inv_anti₀ h1 ht
+    have h4 : t₀⁻¹ - t⁻¹ = (t - t₀) * (t₀⁻¹ * t⁻¹) := by field_simp
+    have h5 : t₀⁻¹ * t⁻¹ ≤ 1 := by
+      calc t₀⁻¹ * t⁻¹ ≤ 1 * 1 :=
+            mul_le_mul (inv_le_one_of_one_le₀ ht₀1) (inv_le_one_of_one_le₀ (ht₀1.trans ht))
+              (by positivity) zero_le_one
+        _ = 1 := one_mul 1
+    simp only [τ]
+    nlinarith
+  have hτt : ∀ t, t₀ ≤ t → t ≤ τ t := fun t ht =>
+    le_add_of_nonneg_right (inv_nonneg.2 (by linarith))
+  have hζball : ∀ t, t₀ ≤ t → ζ t ∈ Metric.eball (0 : ι → ℂ) R := by
+    intro t ht
+    have hle : ‖ζ t‖ ≤ ∑ j, ‖ζ t j‖ := by
+      refine (pi_norm_le_iff_of_nonneg (Finset.sum_nonneg fun j _ => norm_nonneg _)).2 fun j => ?_
+      exact Finset.single_le_sum (f := fun j => ‖ζ t j‖) (fun j _ => norm_nonneg _)
+        (Finset.mem_univ j)
+    have hlt : ‖ζ t‖₊ < ρ := by
+      rw [← NNReal.coe_lt_coe, coe_nnNorm]
+      exact hle.trans_lt (ht₀ t ht).1.1
+    rw [mem_eball_zero_iff, eNorm_eq_nnNorm]
+    exact (ENNReal.coe_lt_coe.2 hlt).trans hρR
+  -- Words `⟨n, r⟩`, their rates `μ`, their monomials `w` and the coefficients `c`.
+  let A := Σ n : ℕ, (Fin n → ι)
+  let μ : A → ℝ := fun a => ∑ k, u (a.2 k)
+  let w : A → ℝ → ℂ := fun a t => ∏ k, ζ t (a.2 k)
+  let c : A → Fin (K + 1) → ℂ := fun a i => p i a.1 (fun k => Pi.single (a.2 k) (1 : ℂ))
+  have hμ : ∀ a, 0 ≤ μ a := fun a => Finset.sum_nonneg fun k _ => (hpos _).le
+  have hw : ∀ a t, ‖w a t‖ = Real.exp (-(μ a * τ t)) := by
+    intro a t
+    simp only [w, μ, norm_prod, hζn]
+    rw [← Real.exp_sum, Finset.sum_mul, ← Finset.sum_neg_distrib]
+  -- Words with the same rate have the same letters (`ℚ`-independence), hence the same monomial.
+  have hweq : ∀ a b t, μ a = μ b → w a t = w b t := fun a b t hab =>
+    prod_eq_of_sum_eq_ps hu a.2 b.2 hab (ζ t)
+  -- Finitely many rates lie below any bound.
+  obtain ⟨δ, hδ, hδle⟩ : ∃ δ > 0, ∀ j, δ ≤ u j := by
+    rcases isEmpty_or_nonempty ι with hι | hι
+    · exact ⟨1, one_pos, fun j => isEmptyElim j⟩
+    · obtain ⟨j₀, hj₀⟩ := Finite.exists_min u
+      exact ⟨u j₀, hpos j₀, hj₀⟩
+  have hfin : ∀ B, {a : A | μ a ≤ B}.Finite := by
+    intro B
+    refine ((Finset.range (⌊B / δ⌋₊ + 1)).sigma fun n => (Finset.univ : Finset (Fin n → ι))
+      ).finite_toSet.subset fun a ha => ?_
+    obtain ⟨n, r⟩ := a
+    replace ha : ∑ k, u (r k) ≤ B := ha
+    simp only [Finset.coe_sigma, Set.mem_sigma_iff, Finset.coe_range, Set.mem_Iio,
+      Finset.coe_univ, Set.mem_univ, and_true]
+    have hn : (n : ℝ) * δ ≤ B := by
+      have : ∑ k : Fin n, δ ≤ ∑ k, u (r k) := Finset.sum_le_sum fun k _ => hδle _
+      simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul] at this
+      exact this.trans ha
+    have : n ≤ ⌊B / δ⌋₊ := Nat.le_floor (by rw [le_div_iff₀ hδ]; exact hn)
+    omega
+  -- An absolutely summable majorant at `t₀`.
+  have hsum : ∀ i, Summable fun a : A => ‖c a i‖ * Real.exp (-(μ a * τ t₀)) := by
+    intro i
+    have hρp : (ρ : ENNReal) < (p i).radius := hρR.trans_le ((hRr i).trans (hr i).r_le)
+    refine (summable_sigma_of_nonneg fun a => by positivity).2 ⟨fun n => Summable.of_finite, ?_⟩
+    refine Summable.of_nonneg_of_le (fun n => tsum_nonneg fun r => by positivity) (fun n => ?_)
+      ((p i).summable_norm_mul_pow hρp)
+    rw [tsum_fintype]
+    calc ∑ r : Fin n → ι, ‖c ⟨n, r⟩ i‖ * Real.exp (-(μ ⟨n, r⟩ * τ t₀))
+        ≤ ∑ r : Fin n → ι, ‖p i n‖ * ∏ k, ‖ζ t₀ (r k)‖ := by
+          refine Finset.sum_le_sum fun r _ => ?_
+          rw [← hw ⟨n, r⟩ t₀]
+          simp only [w, norm_prod]
+          refine mul_le_mul_of_nonneg_right ?_ (Finset.prod_nonneg fun k _ => norm_nonneg _)
+          refine ((p i n).le_opNorm _).trans (le_of_eq ?_)
+          simp only [Pi.norm_single, norm_one, Finset.prod_const_one, mul_one]
+      _ = ‖p i n‖ * (∑ j, ‖ζ t₀ j‖) ^ n := by
+          rw [← Finset.mul_sum, ← Fintype.prod_sum (fun (_ : Fin n) j => ‖ζ t₀ j‖),
+            Finset.prod_const, Finset.card_univ, Fintype.card_fin]
+      _ ≤ ‖p i n‖ * (ρ : ℝ) ^ n := by
+          refine mul_le_mul_of_nonneg_left (pow_le_pow_left₀ (Finset.sum_nonneg fun j _ =>
+            norm_nonneg _) (ht₀ t₀ le_rfl).1.1.le n) (norm_nonneg _)
+  -- On the path, the series of `G i (ζ(t))` regrouped by words.
+  have htsum : ∀ t, t₀ ≤ t → ∀ i, ∑' a, c a i * w a t = G i (ζ t) := by
+    intro t ht i
+    have hsm := summable_mul_of_norm_ps μ (fun a => c a i) (fun a => w a t) hμ (hτmono t ht)
+      (fun a => hw a t) (hsum i)
+    have h1 := hsm.hasSum.sigma fun n => hasSum_fintype _
+    have h2 : HasSum (fun n => p i n (fun _ => ζ t)) (G i (ζ t)) := by
+      simpa only [zero_add] using (hr' i).hasSum (hζball t ht)
+    have h3 : ∀ n, ∑ r : Fin n → ι, c ⟨n, r⟩ i * w ⟨n, r⟩ t = p i n (fun _ => ζ t) := by
+      intro n
+      rw [cmm_apply_diag_eq_sum_ps]
+    simp only [h3] at h1
+    exact h1.unique h2
+  have hzero : ∀ t, t₀ ≤ t →
+      ∑ i : Fin (K + 1), (t : ℂ) ^ (i : ℕ) * ∑' a, c a i * w a t = 0 := by
+    intro t ht
+    simp only [htsum t ht]
+    exact (ht₀ t ht).1.2
+  -- The leading-term argument: the coefficients of every rate sum to zero.
+  have hfib := fiber_sum_eq_zero_ps μ c w τ t₀ (by linarith) hμ hfin hw hweq hτmono hτt hsum
+    hzero
+  -- Hence every homogeneous part of every `G i` vanishes, and `G i = 0` on the ball.
+  intro i
+  filter_upwards [Metric.eball_mem_nhds (0 : ι → ℂ) hR] with z hz
+  have h2 : HasSum (fun n => p i n (fun _ => z)) (G i z) := by
+    simpa only [zero_add] using (hr' i).hasSum hz
+  have h3 : ∀ n, p i n (fun _ => z) = 0 := by
+    intro n
+    rw [cmm_apply_diag_eq_sum_ps, ← Finset.sum_fiberwise_of_maps_to
+      (g := fun r : Fin n → ι => μ ⟨n, r⟩) (t := Finset.univ.image fun r => μ ⟨n, r⟩)
+      (fun r _ => Finset.mem_image_of_mem _ (Finset.mem_univ r))]
+    refine Finset.sum_eq_zero fun m hm => ?_
+    obtain ⟨r₀, -, rfl⟩ := Finset.mem_image.1 hm
+    -- Words with the same rate have the same monomial.
+    have hmono : ∀ r ∈ Finset.univ.filter (fun r : Fin n → ι => μ ⟨n, r⟩ = μ ⟨n, r₀⟩),
+        ∏ k, z (r k) = ∏ k, z (r₀ k) := fun r hr =>
+      prod_eq_of_sum_eq_ps hu r r₀ (Finset.mem_filter.1 hr).2 z
+    rw [Finset.sum_congr rfl fun r hr => by rw [hmono r hr], ← Finset.sum_mul]
+    have hs : ∀ a : A, a ∈ (Finset.univ.filter fun r : Fin n → ι => μ ⟨n, r⟩ = μ ⟨n, r₀⟩).map
+        ⟨Sigma.mk n, sigma_mk_injective⟩ ↔ μ a = μ ⟨n, r₀⟩ := by
+      rintro ⟨n', r'⟩
+      simp only [Finset.mem_map, Finset.mem_filter, Finset.mem_univ, true_and,
+        Function.Embedding.coeFn_mk]
+      constructor
+      · rintro ⟨r, hr, he⟩
+        rw [← he]
+        exact hr
+      · intro he
+        have hn : n' = n := by
+          rw [card_eq_sum_card_fiber_ps r', card_eq_sum_card_fiber_ps r₀]
+          exact Finset.sum_congr rfl fun j _ => card_fiber_eq_of_sum_eq_ps hu r' r₀ he j
+        subst hn
+        exact ⟨r', he, rfl⟩
+    have := hfib (μ ⟨n, r₀⟩) _ hs i
+    rw [Finset.sum_map] at this
+    simp only [Function.Embedding.coeFn_mk] at this
+    rw [this, zero_mul]
+  simp only [h3] at h2
+  exact h2.unique hasSum_zero
 
 /-- **Lemma D.16 of the dimension paper (Separation on the path).** Let `u_1, …, u_q > 0` be
 linearly independent over `ℚ`, let `u'_j` be real, let `ρ₀ > e^{−2 u_j}` for every `j`, and let
@@ -345,6 +519,40 @@ theorem path_separation {ι : Type*} [Fintype ι] {F : Type*} [NormedAddCommGrou
         Complex.exp (-(((t + t⁻¹) * u j : ℝ) : ℂ) - Complex.I * (((t - t⁻¹) * u' j : ℝ) : ℂ)))
         = 0) :
     ∀ i, ∀ ζ : ι → ℂ, (∀ j, ‖ζ j‖ < ρ₀) → 𝒯 i ζ = 0 := by
-  sorry
+  intro i ζ₀ hζ₀
+  -- The polydisc `D` is a product of discs, hence preconnected, and it contains `0`.
+  set D := {ζ : ι → ℂ | ∀ j, ‖ζ j‖ < ρ₀} with hD
+  have hD' : D = Set.univ.pi fun _ : ι => Metric.ball (0 : ℂ) ρ₀ := by
+    ext ζ
+    simp only [hD, Set.mem_ofPred_eq, Set.mem_univ_pi, mem_ball_zero_iff]
+  have hDconn : IsPreconnected D := by
+    rw [hD']
+    exact isPreconnected_univ_pi fun j => (convex_ball (0 : ℂ) ρ₀).isPreconnected
+  have h0D : (0 : ι → ℂ) ∈ D := fun j => by
+    simpa only [Pi.zero_apply, norm_zero] using (Real.exp_pos _).trans (hρ j)
+  -- It suffices that `φ (𝒯_i ζ₀) = 0` for every continuous linear functional `φ`.
+  refine SeparatingDual.eq_zero_of_forall_dual_eq_zero (R := ℂ) fun φ => ?_
+  have hG : ∀ i, AnalyticAt ℂ (fun ζ => φ (𝒯 i ζ)) 0 := fun i =>
+    (φ.analyticAt _).comp (h𝒯 i 0 h0D)
+  -- Multiplied by `t^K`, the identity has only nonnegative powers of `t`.
+  have hpath : ∀ᶠ t : ℝ in atTop, ∑ i : Fin (2 * K + 1), (t : ℂ) ^ (i : ℕ) * φ (𝒯 i (fun j =>
+      Complex.exp (-(((t + t⁻¹) * u j : ℝ) : ℂ) - Complex.I * (((t - t⁻¹) * u' j : ℝ) : ℂ))))
+      = 0 := by
+    filter_upwards [eventually_ge_atTop 1] with t ht
+    have ht0 : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 (by linarith)
+    have := congrArg (fun v => φ ((t : ℂ) ^ K • v)) (h t ht)
+    simp only [smul_zero, map_zero, Finset.smul_sum, map_sum, smul_smul, map_smul,
+      smul_eq_mul] at this
+    refine (Finset.sum_congr rfl fun i _ => ?_).trans this
+    congr 1
+    rw [← zpow_natCast (t : ℂ) (i : ℕ), ← zpow_natCast (t : ℂ) K, ← zpow_add₀ ht0]
+    congr 1
+    ring
+  -- The middle step: `φ ∘ 𝒯_i` vanishes near `0`.
+  have h0 := eventually_eq_zero_of_sum_pow_mul_exp_path u hpos hu u' (2 * K) _ hG hpath i
+  -- Identity principle on the polydisc.
+  have han : AnalyticOnNhd ℂ (fun ζ => φ (𝒯 i ζ)) D := fun x hx =>
+    (φ.analyticAt _).comp (h𝒯 i x hx)
+  exact han.eqOn_zero_of_preconnected_of_eventuallyEq_zero hDconn h0D h0 hζ₀
 
 end Skips
