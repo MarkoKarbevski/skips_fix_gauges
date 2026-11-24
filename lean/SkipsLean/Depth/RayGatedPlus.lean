@@ -432,6 +432,106 @@ private theorem ray_formulaRGP (Z : Matrix d d ℝ) (Ξ : Matrix T d ℝ) {r : T
     Matrix.mul_assoc]
   ring
 
+/-- The outputs of the hidden units on a ray, divided by `t²`: `v₁(y) = (W° − y) ⊙ ι`, where `M`
+holds the gates (`Sum.inl`) and the values `ι` (`Sum.inr`) of `Ξ W`, and `W°` is the gate where it is
+positive and `0` otherwise. -/
+private noncomputable def rayV {q : Type*} (M : Matrix T (q ⊕ q) ℝ) (y : Matrix T q ℝ) :
+    Matrix T q ℝ :=
+  Matrix.of fun τ j =>
+    ((if 0 < M τ (Sum.inl j) then M τ (Sum.inl j) else 0) - y τ j) * M τ (Sum.inr j)
+
+/-- Their derivative divided by `t⁴`, without the small terms of the gate derivatives:
+`R(s, y) = 1_A ⊙ (P₃^g + s² P₁^g) ⊙ ι + (W° − y) ⊙ (P₃^v + s² P₁^v)`. -/
+private noncomputable def rayR {q : Type*} (M P₁ P₃ : Matrix T (q ⊕ q) ℝ) (S : ℝ)
+    (y : Matrix T q ℝ) : Matrix T q ℝ :=
+  Matrix.of fun τ j =>
+    (if 0 < M τ (Sum.inl j) then 1 else 0) * (P₃ τ (Sum.inl j) + S ^ 2 * P₁ τ (Sum.inl j))
+        * M τ (Sum.inr j)
+      + ((if 0 < M τ (Sum.inl j) then M τ (Sum.inl j) else 0) - y τ j)
+        * (P₃ τ (Sum.inr j) + S ^ 2 * P₁ τ (Sum.inr j))
+
+/-- The coefficient of the small term `δ'_{τ j}` of a gate derivative:
+`−s_j ι_{τ j} (P₃^g + s² P₁^g)_{τ j}`. -/
+private noncomputable def rayCoef {q : Type*} (M P₁ P₃ : Matrix T (q ⊕ q) ℝ) (τ : T) (j : q)
+    (S : ℝ) : ℝ :=
+  (-(if 0 < M τ (Sum.inl j) then 1 else -1) * M τ (Sum.inr j))
+    * (P₃ τ (Sum.inl j) + S ^ 2 * P₁ τ (Sum.inl j))
+
+/-- The small terms `ζ_{τ j}(t) = δ(t u_{τ j})/t`, `u_{τ j} = |g_{τ j}|`. -/
+private noncomputable def rayζ (σ : ℝ → ℝ) {q : Type*} (M : Matrix T (q ⊕ q) ℝ) (t : ℝ) :
+    Matrix T q ℝ :=
+  Matrix.of fun τ j => (t * |M τ (Sum.inl j)| - σ (t * |M τ (Sum.inl j)|)) / t
+
+/-- The factors `ν_{τ j}(t) = t δ'(t u_{τ j})/δ(t u_{τ j})`. -/
+private noncomputable def rayν (σ σ' : ℝ → ℝ) {q : Type*} (M : Matrix T (q ⊕ q) ℝ) (t : ℝ) :
+    Matrix T q ℝ :=
+  Matrix.of fun τ j =>
+    t * (1 - σ' (t * |M τ (Sum.inl j)|)) / (t * |M τ (Sum.inl j)| - σ (t * |M τ (Sum.inl j)|))
+
+/-- The map `G₀(s, y) = Ψ(s, v₁(y), R(s, y))` of the induction (the coefficient-free part). -/
+private noncomputable def rayG₀ (θ η : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
+    (k : Fin L) (M P₁ P₃ : Matrix T (hid k ⊕ hid k) ℝ) (z : ℝ × Matrix T (hid k) ℝ) :
+    Matrix T dOut ℝ :=
+  scaledLHS (Arch.gated σ (rmsNorm ε) hid) ε θ η k z.1 (rayV M z.2) (rayR M P₁ P₃ z.1 z.2)
+
+/-- The maps `G_{τ j}(s, y) = c_{τ j}(s) 𝐃_hΦ(s, v₁(y) V)(E_{τ j} V)` of the induction. -/
+private noncomputable def rayG (θ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
+    (k : Fin L) [DecidableEq T] [DecidableEq (hid k)] (M P₁ P₃ : Matrix T (hid k ⊕ hid k) ℝ)
+    (τ : T) (j : hid k) (z : ℝ × Matrix T (hid k) ℝ) : Matrix T dOut ℝ :=
+  rayCoef M P₁ P₃ τ j z.1 • fderiv ℝ (fun h' : Matrix T d ℝ =>
+      scaledSuffix (Arch.gated σ (rmsNorm ε) hid) ε 2 θ k.succ (z.1, h'))
+    (rayV M z.2 * θ.write k) (Matrix.single τ j (1 : ℝ) * θ.write k)
+
+/-- Helper: **the expansion on a ray** (equations (33), (34)): for `t > 0` where no `δ(t u)`
+vanishes, the left side of (28) at `n = t Ξ` is
+`t² (G₀(1/t, ζ(t)) + ∑_{τ j} ν_{τ j}(t) ζ_{τ j}(t) G_{τ j}(1/t, ζ(t)))`. -/
+private theorem blockLHS_ray_expansionRGP (hε : 0 < ε) (hg : GateFar σ σ' p)
+    (θ η : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) (k : Fin L)
+    [DecidableEq T] [DecidableEq (hid k)] (M P₁ P₃ : Matrix T (hid k ⊕ hid k) ℝ)
+    (hM : ∀ τ j, M τ (Sum.inl j) ≠ 0) {t : ℝ} (ht : 0 < t)
+    (hδ : ∀ τ j, t * |M τ (Sum.inl j)| - σ (t * |M τ (Sum.inl j)|) ≠ 0) :
+    blockLHSGated θ k η (Matrix.of fun τ j => σ ((t • M) τ (Sum.inl j)))
+        (Matrix.of fun τ j => σ' ((t • M) τ (Sum.inl j))) (t • M) (t • P₁ + t ^ 3 • P₃)
+      = t ^ 2 • (rayG₀ θ η k M P₁ P₃ (1 / t, rayζ σ M t)
+          + ∑ τ, ∑ j, (rayν σ σ' M t τ j * rayζ σ M t τ j)
+            • rayG θ k M P₁ P₃ τ j (1 / t, rayζ σ M t)) := by
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_gated hg.analytic ℓ
+  have ht' := ht.ne'
+  rw [blockLHSGated_eq_writeLHS]
+  -- the outputs of the hidden units are `t² v₁(ζ)`
+  have hv : (Matrix.of fun τ j => (Matrix.of fun τ j => σ ((t • M) τ (Sum.inl j))) τ j
+      * (t • M) τ (Sum.inr j)) = t ^ 2 • rayV M (rayζ σ M t) := by
+    ext τ j
+    obtain ⟨h1, -⟩ := gate_on_rayRGP hg (hM τ j) t
+    simp only [Matrix.of_apply, Matrix.smul_apply, smul_eq_mul, rayV, rayζ]
+    rw [h1]
+    field_simp
+  -- their derivative is `t⁴ (R(1/t, ζ) + X)`, with `X_{τ j} = ν ζ c_{τ j}(1/t)`
+  have hvd : (Matrix.of fun τ j => (Matrix.of fun τ j => σ' ((t • M) τ (Sum.inl j))) τ j
+        * (t • P₁ + t ^ 3 • P₃) τ (Sum.inl j) * (t • M) τ (Sum.inr j)
+        + (Matrix.of fun τ j => σ ((t • M) τ (Sum.inl j))) τ j * (t • P₁ + t ^ 3 • P₃) τ (Sum.inr j))
+      = t ^ 4 • (rayR M P₁ P₃ (1 / t) (rayζ σ M t) + Matrix.of fun τ j =>
+          (rayν σ σ' M t τ j * rayζ σ M t τ j) * rayCoef M P₁ P₃ τ j (1 / t)) := by
+    ext τ j
+    obtain ⟨h1, h2⟩ := gate_on_rayRGP hg (hM τ j) t
+    have hνζ : rayν σ σ' M t τ j * rayζ σ M t τ j = 1 - σ' (t * |M τ (Sum.inl j)|) := by
+      simp only [rayν, rayζ, Matrix.of_apply]
+      field_simp [hδ τ j]
+    simp only [Matrix.of_apply, Matrix.smul_apply, Matrix.add_apply, smul_eq_mul]
+    rw [hνζ]
+    simp only [rayR, rayCoef, rayζ, Matrix.of_apply]
+    rw [h1, h2]
+    field_simp
+    ring
+  rw [hv, hvd, writeLHS_pow_smulRGP _ hε rfl hf θ η k ht, scaledLHS_addRGP,
+    mul_eq_sum_singleRGP (Matrix.of fun τ j => rayν σ σ' M t τ j * rayζ σ M t τ j
+      * rayCoef M P₁ P₃ τ j (1 / t)) (θ.write k), map_sum]
+  congr 2
+  refine Finset.sum_congr rfl fun τ _ => ?_
+  rw [map_sum]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  rw [map_smul, Matrix.of_apply, rayG, smul_smul]
 
 /-- **Lemma D.12 up to (38), on one generic ray, gated blocks, case (+).** Let `θ` be good for the
 cones, let `Z` and `η` satisfy (16) for `k`, and let `Ξ` have its rows in `C_k` and satisfy (i),
