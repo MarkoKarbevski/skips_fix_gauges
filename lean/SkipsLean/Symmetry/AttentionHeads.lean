@@ -200,15 +200,180 @@ theorem eval_headsVO (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (S : Fin L → Mat
   -- `E` and `D` do not move, and every block computes the same map
   exact eval_eq_of_blocks_ath θ (θ.headsVO K) rfl rfl (block_headsVO_ath θ K) S x
 
+/-- Helper (the private `expGL` of `Dimension/UpperBound.lean`): the change of basis `exp (τ X)`,
+an element of `GL n ℝ` with inverse `exp (-τ X)`. -/
+private noncomputable def expGL_ath {n : Type*} [Fintype n] [DecidableEq n] (X : Matrix n n ℝ)
+    (τ : ℝ) : GL n ℝ where
+  val := NormedSpace.exp (τ • X)
+  inv := NormedSpace.exp (τ • (-X))
+  val_inv := by
+    rw [← Matrix.exp_add_of_commute _ _ (((Commute.refl X).neg_right.smul_left τ).smul_right τ),
+      smul_neg, add_neg_cancel, NormedSpace.exp_zero]
+  inv_val := by
+    rw [← Matrix.exp_add_of_commute _ _ (((Commute.refl X).neg_left.smul_left τ).smul_right τ),
+      smul_neg, neg_add_cancel, NormedSpace.exp_zero]
+
+/-- Helper: at `τ = 0` the change of basis `exp (τ X)` is the identity. -/
+private theorem expGL_zero_ath {n : Type*} [Fintype n] [DecidableEq n] (X : Matrix n n ℝ) :
+    expGL_ath X 0 = 1 :=
+  Units.ext (by simp [expGL_ath])
+
+/-- Helper: the entry `(a, b)` of `exp (τ X)` has derivative `X a b` at `τ = 0`. The derivative
+only sees the topology, so it may be computed with the operator norm, under which matrices form a
+Banach algebra: there the derivative of `exp (τ X)` is `exp (τ X) X`, which is `X` at `τ = 0`. -/
+private theorem hasDerivAt_exp_entry_ath {n : Type*} [Fintype n] [DecidableEq n]
+    (X : Matrix n n ℝ) (a b : n) :
+    HasDerivAt (fun τ : ℝ => NormedSpace.exp (τ • X) a b) (X a b) 0 := by
+  have h := open scoped Matrix.Norms.Operator in hasDerivAt_exp_smul_const (𝕂 := ℝ) X (0 : ℝ)
+  rw [zero_smul, NormedSpace.exp_zero, one_mul] at h
+  have h' : HasDerivAt (fun τ : ℝ => NormedSpace.exp (τ • X)) X 0 := h
+  -- entry by entry
+  exact hasDerivAt_pi.1 (hasDerivAt_pi.1 h' a) b
+
+/-- Helper: `τ ↦ ∑_{k'} c_{k'} exp(τ X)_{k' k}` has derivative `∑_{k'} c_{k'} X_{k' k}` at `0`. -/
+private theorem hasDerivAt_sum_mul_expGL_ath {n : Type*} [Fintype n] [DecidableEq n]
+    (X : Matrix n n ℝ) (c : n → ℝ) (k : n) :
+    HasDerivAt (fun τ => ∑ k', c k' * (expGL_ath X τ : Matrix n n ℝ) k' k)
+      (∑ k', c k' * X k' k) 0 :=
+  HasDerivAt.fun_sum fun k' _ => (hasDerivAt_exp_entry_ath X k' k).const_mul (c k')
+
+/-- Helper: `τ ↦ ∑_{k'} c_{k'} (exp(τ X)⁻¹)_{k k'}` has derivative `-∑_{k'} c_{k'} X_{k k'}` at
+`0`, since `exp(τ X)⁻¹ = exp(-τ X)`. -/
+private theorem hasDerivAt_sum_mul_expGL_inv_ath {n : Type*} [Fintype n] [DecidableEq n]
+    (X : Matrix n n ℝ) (c : n → ℝ) (k : n) :
+    HasDerivAt (fun τ => ∑ k', c k' * (((expGL_ath X τ)⁻¹ : GL n ℝ) : Matrix n n ℝ) k k')
+      (-∑ k', c k' * X k k') 0 := by
+  have h := HasDerivAt.fun_sum (u := Finset.univ) fun k' _ =>
+    (hasDerivAt_exp_entry_ath (-X) k k').const_mul (c k')
+  refine h.congr_deriv ?_
+  simp only [Matrix.neg_apply, mul_neg, Finset.sum_neg_distrib]
+
+/-- Helper: `τ ↦ ∑_{k'} (exp(τ X)⁻¹)_{k k'} c_{k'}` has derivative `-∑_{k'} X_{k k'} c_{k'}` at
+`0`. -/
+private theorem hasDerivAt_sum_expGL_inv_mul_ath {n : Type*} [Fintype n] [DecidableEq n]
+    (X : Matrix n n ℝ) (c : n → ℝ) (k : n) :
+    HasDerivAt (fun τ => ∑ k', (((expGL_ath X τ)⁻¹ : GL n ℝ) : Matrix n n ℝ) k k' * c k')
+      (-∑ k', X k k' * c k') 0 := by
+  have h := HasDerivAt.fun_sum (u := Finset.univ) fun k' _ =>
+    (hasDerivAt_exp_entry_ath (-X) k k').mul_const (c k')
+  refine h.congr_deriv ?_
+  simp only [Matrix.neg_apply, neg_mul, Finset.sum_neg_distrib]
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the curve `τ ↦ θ.headsQK (exp (τ Γ))` passes through `θ` at `τ = 0`. -/
+private theorem headsQK_expGL_zero_ath (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
+    θ.headsQK (fun ℓ i => expGL_ath (Γ ℓ i) 0) = θ := by
+  simp only [expGL_zero_ath]
+  apply Params.ext'
+  · rfl
+  · intro ℓ
+    ext a ⟨i, k | k | k⟩
+    · show ∑ k', θ.read ℓ a (i, Sum.inl k') * ((1 : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+        = θ.read ℓ a (i, Sum.inl k)
+      simp [Matrix.one_apply]
+    · show ∑ k', θ.read ℓ a (i, Sum.inr (Sum.inl k'))
+          * (((1 : GL (dh ℓ) ℝ)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k'
+        = θ.read ℓ a (i, Sum.inr (Sum.inl k))
+      simp [Matrix.one_apply]
+    · rfl
+  · intro ℓ
+    rfl
+  · rfl
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the curve `τ ↦ θ.headsVO (exp (τ Γ))` passes through `θ` at `τ = 0`. -/
+private theorem headsVO_expGL_zero_ath (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
+    θ.headsVO (fun ℓ i => expGL_ath (Γ ℓ i) 0) = θ := by
+  simp only [expGL_zero_ath]
+  apply Params.ext'
+  · rfl
+  · intro ℓ
+    ext a ⟨i, k | k | k⟩
+    · rfl
+    · rfl
+    · show ∑ k', θ.read ℓ a (i, Sum.inr (Sum.inr k'))
+          * ((1 : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+        = θ.read ℓ a (i, Sum.inr (Sum.inr k))
+      simp [Matrix.one_apply]
+  · intro ℓ
+    ext ⟨i, k⟩ b
+    show ∑ k', (((1 : GL (dh ℓ) ℝ)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k'
+        * θ.write ℓ (i, k') b = θ.write ℓ (i, k) b
+    simp [Matrix.one_apply]
+  · rfl
+
+omit [DecidableEq d] in
+/-- Helper: the curve `τ ↦ θ.headsQK (exp (τ Γ))` has velocity `headDirQK θ Γ` at `τ = 0`. The
+derivative is taken entry by entry, through the linear equivalence of the parameters with the
+tuples of their components. -/
+private theorem hasDerivAt_headsQK_ath (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
+    HasDerivAt (fun τ : ℝ => θ.headsQK fun ℓ i => expGL_ath (Γ ℓ i) τ) (headDirQK θ Γ) 0 := by
+  have hprod : HasDerivAt
+      (fun τ : ℝ => Params.linearEquivProd (θ.headsQK fun ℓ i => expGL_ath (Γ ℓ i) τ))
+      (Params.linearEquivProd (headDirQK θ Γ)) 0 := by
+    refine HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ ?_))
+    · -- the embedding does not move
+      exact hasDerivAt_const (0 : ℝ) θ.E
+    · -- the queries are `W_Q exp(τ Γ)`, the keys `W_K exp(-τ Γ)ᵀ`, the values do not move
+      refine hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun a => hasDerivAt_pi.2 fun p => ?_
+      obtain ⟨i, k | k | k⟩ := p
+      · exact hasDerivAt_sum_mul_expGL_ath (Γ ℓ i) (fun k' => θ.read ℓ a (i, Sum.inl k')) k
+      · exact hasDerivAt_sum_mul_expGL_inv_ath (Γ ℓ i)
+          (fun k' => θ.read ℓ a (i, Sum.inr (Sum.inl k'))) k
+      · exact hasDerivAt_const (0 : ℝ) (θ.read ℓ a (i, Sum.inr (Sum.inr k)))
+    · -- the writes and the readout do not move
+      exact hasDerivAt_const (0 : ℝ) θ.write
+    · exact hasDerivAt_const (0 : ℝ) θ.D
+  -- back from the tuples of components to the parameters
+  exact (LinearMap.toContinuousLinearMap
+    (Params.linearEquivProd (A := Arch.attention sees χ H dh) (dIn := dIn)
+      (dOut := dOut)).symm.toLinearMap).hasFDerivAt.comp_hasDerivAt 0 hprod
+
+omit [DecidableEq d] in
+/-- Helper: the curve `τ ↦ θ.headsVO (exp (τ Γ))` has velocity `headDirVO θ Γ` at `τ = 0`. -/
+private theorem hasDerivAt_headsVO_ath (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
+    HasDerivAt (fun τ : ℝ => θ.headsVO fun ℓ i => expGL_ath (Γ ℓ i) τ) (headDirVO θ Γ) 0 := by
+  have hprod : HasDerivAt
+      (fun τ : ℝ => Params.linearEquivProd (θ.headsVO fun ℓ i => expGL_ath (Γ ℓ i) τ))
+      (Params.linearEquivProd (headDirVO θ Γ)) 0 := by
+    refine HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ ?_))
+    · -- the embedding does not move
+      exact hasDerivAt_const (0 : ℝ) θ.E
+    · -- the queries and keys do not move, the values are `W_V exp(τ Γ)`
+      refine hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun a => hasDerivAt_pi.2 fun p => ?_
+      obtain ⟨i, k | k | k⟩ := p
+      · exact hasDerivAt_const (0 : ℝ) (θ.read ℓ a (i, Sum.inl k))
+      · exact hasDerivAt_const (0 : ℝ) (θ.read ℓ a (i, Sum.inr (Sum.inl k)))
+      · exact hasDerivAt_sum_mul_expGL_ath (Γ ℓ i)
+          (fun k' => θ.read ℓ a (i, Sum.inr (Sum.inr k'))) k
+    · -- the outputs are `exp(-τ Γ) W_O`
+      refine hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun p => hasDerivAt_pi.2 fun b => ?_
+      obtain ⟨i, k⟩ := p
+      exact hasDerivAt_sum_expGL_inv_mul_ath (Γ ℓ i) (fun k' => θ.write ℓ (i, k') b) k
+    · -- the readout does not move
+      exact hasDerivAt_const (0 : ℝ) θ.D
+  -- back from the tuples of components to the parameters
+  exact (LinearMap.toContinuousLinearMap
+    (Params.linearEquivProd (A := Arch.attention sees χ H dh) (dIn := dIn)
+      (dOut := dOut)).symm.toLinearMap).hasFDerivAt.comp_hasDerivAt 0 hprod
+
 /-- The directions of the changes of basis between queries and keys are flat. -/
 theorem headDirQK_mem_flat (S : Fin L → Matrix d d ℝ) (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
     headDirQK θ Γ ∈ flat (Arch.attention sees χ H dh) S θ := by
-  sorry
+  -- the curve `τ ↦ θ.headsQK (exp (τ Γ))` passes through `θ` with velocity `headDirQK θ Γ`, and
+  -- it preserves the function at every `τ`
+  exact mem_flat_of_hasDerivAt' θ (fun τ => θ.headsQK fun ℓ i => expGL_ath (Γ ℓ i) τ)
+    (headDirQK θ Γ) (hasDerivAt_headsQK_ath θ Γ) (headsQK_expGL_zero_ath θ Γ)
+    (Filter.Eventually.of_forall fun τ x => eval_headsQK θ _ S x)
 
 /-- The directions of the changes of basis between values and outputs are flat. -/
 theorem headDirVO_mem_flat (S : Fin L → Matrix d d ℝ) (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
     headDirVO θ Γ ∈ flat (Arch.attention sees χ H dh) S θ := by
-  sorry
+  -- the curve `τ ↦ θ.headsVO (exp (τ Γ))` passes through `θ` with velocity `headDirVO θ Γ`, and
+  -- it preserves the function at every `τ`
+  exact mem_flat_of_hasDerivAt' θ (fun τ => θ.headsVO fun ℓ i => expGL_ath (Γ ℓ i) τ)
+    (headDirVO θ Γ) (hasDerivAt_headsVO_ath θ Γ) (headsVO_expGL_zero_ath θ Γ)
+    (Filter.Eventually.of_forall fun τ x => eval_headsVO θ _ S x)
 
 /-- **Lemma B.1 for attention blocks, in infinitesimal form:** if `E` and every write have rank
 `d` and the query matrix and the value matrix of every head have rank `d_h`, the changes of basis
