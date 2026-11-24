@@ -536,3 +536,13 @@ import SkipsLean
 #print axioms Skips.gelu_gap_bounds
 #print axioms Skips.silu_gap_bounds
 #print axioms Skips.silu_gap_bounds'
+#print axioms Skips.fasterThanPowers_iff
+#print axioms Skips.FasterThanPowers.congr
+#print axioms Skips.FasterThanPowers.mono
+#print axioms Skips.FasterThanPowers.add
+#print axioms Skips.FasterThanPowers.smul_of_le_pow
+#print axioms Skips.fasterThanPowers_of_le_pow_mul_exp
+#print axioms Skips.eventually_nhds_eq_zero_of_fasterThanPowers
+#print axioms Skips.MeromorphicAtInfinity.eventually_eq_zero
+#print axioms Skips.eventually_eq_zero_of_millsRatio_smul_add
+#print axioms Skips.blockLHSGated_eq_writeLHS

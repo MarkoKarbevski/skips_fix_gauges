@@ -71,3 +71,6 @@ import SkipsLean.Activations.FarFromZero
 import SkipsLean.Activations.MillsAtInfinity
 import SkipsLean.Depth.RayInduction
 import SkipsLean.Depth.BlockIdentityGated
+import SkipsLean.Activations.GateFar
+import SkipsLean.Depth.RayDense
+import SkipsLean.Depth.Frozen
