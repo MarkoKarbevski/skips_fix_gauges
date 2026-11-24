@@ -523,7 +523,12 @@ theorem orthogonal_of_eval_cob_skipless_rmsNorm_attention [Nonempty T] [Nonempty
       eval (Arch.attention sees (rmsNorm ε) H dh) 0 (θ.cob G G) x
         = eval (Arch.attention sees (rmsNorm ε) H dh) 0 θ x) :
     ∀ ℓ, (G ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ := by
-  sorry
+  -- the lemma on equal rows: an attention block maps equal rows `a` to the rows `a S`
+  exact orthogonal_of_eval_cob_skipless_rmsNorm_of_rows
+    (A := Arch.attention sees (rmsNorm ε) H dh) hε rfl
+    (fun k a W => rows_attention_oor hsees _ k a W)
+    (fun k a a' hW => sep_attention_oor hsees _ k (hH k) (hdh k) a a' hW)
+    (fun k a ha => nz_attention_oor hsees _ k (hH k) (hdh k) a ha) G h
 
 /-- **Theorem 3.3 (ii), skipless, pre-RMSNorm (`ε > 0`), attention blocks:** the changes of basis
 `G_0, …, G_L` preserve the function for all values of the parameters if and only if every `G_ℓ` is
@@ -536,7 +541,166 @@ theorem eval_cob_skipless_rmsNorm_iff_attention [Nonempty T] [Nonempty dIn] [Non
         eval (Arch.attention sees (rmsNorm ε) H dh) 0 (θ.cob G G) x
           = eval (Arch.attention sees (rmsNorm ε) H dh) 0 θ x)
       ↔ ∀ ℓ, (G ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ := by
-  sorry
+  -- "only if" is Lemma A.4; "if" is Proposition 3.2 under pre-RMSNorm
+  exact ⟨orthogonal_of_eval_cob_skipless_rmsNorm_attention hε hsees hH hdh G,
+    fun hG θ x => eval_cob_rmsNorm θ x ε rfl G hG⟩
+
+/-! ### Helpers: blocks of a sum, MLP blocks and gated blocks -/
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: a block of a sum maps equal rows to equal rows if both parts do. -/
+private theorem rows_sum_oor {A B : Arch T d L} (k : Fin L)
+    (hA : ∀ (a : d → ℝ) (W : Matrix d (A.r k) ℝ), ∃ b : A.w k → ℝ,
+      A.f k ((Matrix.of fun _ : T => a) * W) = Matrix.of fun _ : T => b)
+    (hB : ∀ (a : d → ℝ) (W : Matrix d (B.r k) ℝ), ∃ b : B.w k → ℝ,
+      B.f k ((Matrix.of fun _ : T => a) * W) = Matrix.of fun _ : T => b)
+    (a : d → ℝ) (W : Matrix d ((A.sum B).r k) ℝ) :
+    ∃ b : (A.sum B).w k → ℝ,
+      (A.sum B).f k ((Matrix.of fun _ : T => a) * W) = Matrix.of fun _ : T => b := by
+  -- the two parts of the read give the two parts of the output
+  obtain ⟨b₁, h₁⟩ := hA a (W.submatrix id Sum.inl)
+  obtain ⟨b₂, h₂⟩ := hB a (W.submatrix id Sum.inr)
+  refine ⟨Sum.elim b₁ b₂, ?_⟩
+  ext t p
+  cases p with
+  | inl c => exact congrFun (congrFun h₁ t) c
+  | inr c => exact congrFun (congrFun h₂ t) c
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper, fact (b) for a sum: a block of a sum separates equal-row inputs if its first part
+does (the reads that are `0` on the second part). -/
+private theorem sep_sum_left_oor {A B : Arch T d L} (k : Fin L)
+    (hA : ∀ a a' : d → ℝ, (∀ W : Matrix d (A.r k) ℝ, A.f k ((Matrix.of fun _ : T => a') * W)
+      = A.f k ((Matrix.of fun _ : T => a) * W)) → a' = a)
+    (a a' : d → ℝ)
+    (h : ∀ W : Matrix d ((A.sum B).r k) ℝ, (A.sum B).f k ((Matrix.of fun _ : T => a') * W)
+      = (A.sum B).f k ((Matrix.of fun _ : T => a) * W)) : a' = a := by
+  refine hA a a' fun W => ?_
+  ext t c
+  exact congrFun (congrFun (h (Matrix.of fun r p => Sum.elim (W r) (fun _ => 0) p)) t)
+    (Sum.inl c)
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper, fact (b) for a sum: a block of a sum separates equal-row inputs if its second part
+does. -/
+private theorem sep_sum_right_oor {A B : Arch T d L} (k : Fin L)
+    (hB : ∀ a a' : d → ℝ, (∀ W : Matrix d (B.r k) ℝ, B.f k ((Matrix.of fun _ : T => a') * W)
+      = B.f k ((Matrix.of fun _ : T => a) * W)) → a' = a)
+    (a a' : d → ℝ)
+    (h : ∀ W : Matrix d ((A.sum B).r k) ℝ, (A.sum B).f k ((Matrix.of fun _ : T => a') * W)
+      = (A.sum B).f k ((Matrix.of fun _ : T => a) * W)) : a' = a := by
+  refine hB a a' fun W => ?_
+  ext t c
+  exact congrFun (congrFun (h (Matrix.of fun r p => Sum.elim (fun _ => 0) (W r) p)) t)
+    (Sum.inr c)
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper, for fact (c): a nonzero unit of the first part is a nonzero unit of the sum. -/
+private theorem nz_sum_left_oor {A B : Arch T d L} (k : Fin L) (a : d → ℝ)
+    (hA : ∃ (W : Matrix d (A.r k) ℝ) (t : T) (j : A.w k),
+      A.f k ((Matrix.of fun _ : T => a) * W) t j ≠ 0) :
+    ∃ (W : Matrix d ((A.sum B).r k) ℝ) (t : T) (j : (A.sum B).w k),
+      (A.sum B).f k ((Matrix.of fun _ : T => a) * W) t j ≠ 0 := by
+  obtain ⟨W, t, j, hj⟩ := hA
+  exact ⟨Matrix.of fun r p => Sum.elim (W r) (fun _ => 0) p, t, Sum.inl j, hj⟩
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper, for fact (c): a nonzero unit of the second part is a nonzero unit of the sum. -/
+private theorem nz_sum_right_oor {A B : Arch T d L} (k : Fin L) (a : d → ℝ)
+    (hB : ∃ (W : Matrix d (B.r k) ℝ) (t : T) (j : B.w k),
+      B.f k ((Matrix.of fun _ : T => a) * W) t j ≠ 0) :
+    ∃ (W : Matrix d ((A.sum B).r k) ℝ) (t : T) (j : (A.sum B).w k),
+      (A.sum B).f k ((Matrix.of fun _ : T => a) * W) t j ≠ 0 := by
+  obtain ⟨W, t, j, hj⟩ := hB
+  exact ⟨Matrix.of fun r p => Sum.elim (fun _ => 0) (W r) p, t, Sum.inr j, hj⟩
+
+omit [DecidableEq d] in
+/-- Helper (copy of `dotProduct_smul_self_div`): a nonzero row `b` takes every value `z` as a
+dot product: `b ⬝ ((z/‖b‖²) b) = z`. -/
+private theorem dotProduct_smul_self_div_oor {b : d → ℝ} (hb : b ≠ 0) (z : ℝ) :
+    b ⬝ᵥ ((z / (b ⬝ᵥ b)) • b) = z := by
+  have hbb : b ⬝ᵥ b ≠ 0 := fun h0 => hb (dotProduct_self_eq_zero.mp h0)
+  rw [dotProduct_smul, smul_eq_mul, div_mul_cancel₀ z hbb]
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: an MLP block acts row by row, so it maps equal rows to equal rows. -/
+private theorem rows_mlp_oor (χ : Matrix T d ℝ → Matrix T d ℝ) (k : Fin L) (a : d → ℝ)
+    (W : Matrix d (hid k) ℝ) :
+    ∃ b : hid k → ℝ, (Arch.mlp σ χ hid).f k ((Matrix.of fun _ : T => a) * W)
+      = Matrix.of fun _ : T => b :=
+  ⟨fun j => σ ((a ᵥ* W) j), rfl⟩
+
+omit [Fintype T] in
+/-- Helper, fact (b) for an MLP block on equal rows: `σ(a′ w) = σ(a w)` for every column `w`. -/
+private theorem sep_mlp_oor [Nonempty T] (hσc : Continuous σ) (hne : ¬ ∀ z, σ (-z) = σ z)
+    (hnc : ¬ ∀ z, σ z = σ 0) (χ : Matrix T d ℝ → Matrix T d ℝ) (k : Fin L)
+    (hk : Nonempty (hid k)) (a a' : d → ℝ)
+    (h : ∀ W : Matrix d (hid k) ℝ, (Arch.mlp σ χ hid).f k ((Matrix.of fun _ : T => a') * W)
+      = (Arch.mlp σ χ hid).f k ((Matrix.of fun _ : T => a) * W)) : a' = a := by
+  obtain ⟨j₀⟩ := hk
+  obtain ⟨t⟩ := ‹Nonempty T›
+  -- a read whose columns all equal `w`
+  refine eq_of_forall_map_dotProduct_eq hσc hne hnc fun w => ?_
+  exact congrFun (congrFun (h (Matrix.of fun r _ => w r)) t) j₀
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper, for fact (c), MLP block: `σ(z) ≠ 0` for some `z`, and the read column `(z/‖a‖²) a`
+gives the unit the value `σ(z)`. -/
+private theorem nz_mlp_oor [Nonempty T] (hnc : ¬ ∀ z, σ z = σ 0)
+    (χ : Matrix T d ℝ → Matrix T d ℝ) (k : Fin L) (hk : Nonempty (hid k)) (a : d → ℝ)
+    (ha : a ≠ 0) :
+    ∃ (W : Matrix d (hid k) ℝ) (t : T) (j : hid k),
+      (Arch.mlp σ χ hid).f k ((Matrix.of fun _ : T => a) * W) t j ≠ 0 := by
+  obtain ⟨j₀⟩ := hk
+  obtain ⟨t⟩ := ‹Nonempty T›
+  obtain ⟨z, hz⟩ : ∃ z, σ z ≠ 0 := by
+    by_contra hcon
+    simp only [not_exists, not_not] at hcon
+    exact hnc fun z => by rw [hcon z, hcon 0]
+  refine ⟨Matrix.of fun r _ => ((z / (a ⬝ᵥ a)) • a) r, t, j₀, ?_⟩
+  show σ (a ⬝ᵥ ((z / (a ⬝ᵥ a)) • a)) ≠ 0
+  rwa [dotProduct_smul_self_div_oor ha]
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: a gated block acts row by row, so it maps equal rows to equal rows. -/
+private theorem rows_gated_oor (χ : Matrix T d ℝ → Matrix T d ℝ) (k : Fin L) (a : d → ℝ)
+    (W : Matrix d (hid k ⊕ hid k) ℝ) :
+    ∃ b : hid k → ℝ, (Arch.gated σ χ hid).f k ((Matrix.of fun _ : T => a) * W)
+      = Matrix.of fun _ : T => b :=
+  ⟨fun j => σ ((a ᵥ* W) (Sum.inl j)) * (a ᵥ* W) (Sum.inr j), rfl⟩
+
+omit [Fintype T] in
+/-- Helper, fact (b) for a gated block on equal rows: `σ(a′ g)(a′ v) = σ(a g)(a v)` for all gate
+columns `g` and value columns `v`. -/
+private theorem sep_gated_oor [Nonempty T] (hσ0 : ∃ z, σ z ≠ 0)
+    (hκ : ∀ κ : ℝ, (∀ z, σ z = κ * σ (κ * z)) → κ = 1) (χ : Matrix T d ℝ → Matrix T d ℝ)
+    (k : Fin L) (hk : Nonempty (hid k)) (a a' : d → ℝ)
+    (h : ∀ W : Matrix d (hid k ⊕ hid k) ℝ,
+      (Arch.gated σ χ hid).f k ((Matrix.of fun _ : T => a') * W)
+        = (Arch.gated σ χ hid).f k ((Matrix.of fun _ : T => a) * W)) : a' = a := by
+  obtain ⟨j₀⟩ := hk
+  obtain ⟨t⟩ := ‹Nonempty T›
+  -- a read whose gate columns all equal `g` and whose value columns all equal `v`
+  refine eq_of_forall_gate_mul_eq hσ0 hκ fun g v => ?_
+  exact congrFun (congrFun
+    (h (Matrix.of fun r c => Sum.elim (fun _ => g r) (fun _ => v r) c)) t) j₀
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper, for fact (c), gated block: the gate column `(z/‖a‖²) a` with `σ(z) ≠ 0` and the value
+column `a/‖a‖²`. -/
+private theorem nz_gated_oor [Nonempty T] (hσ0 : ∃ z, σ z ≠ 0)
+    (χ : Matrix T d ℝ → Matrix T d ℝ) (k : Fin L) (hk : Nonempty (hid k)) (a : d → ℝ)
+    (ha : a ≠ 0) :
+    ∃ (W : Matrix d (hid k ⊕ hid k) ℝ) (t : T) (j : hid k),
+      (Arch.gated σ χ hid).f k ((Matrix.of fun _ : T => a) * W) t j ≠ 0 := by
+  obtain ⟨j₀⟩ := hk
+  obtain ⟨t⟩ := ‹Nonempty T›
+  obtain ⟨z, hz⟩ := hσ0
+  refine ⟨Matrix.of fun r c => Sum.elim (fun _ => ((z / (a ⬝ᵥ a)) • a) r)
+    (fun _ => ((1 / (a ⬝ᵥ a)) • a) r) c, t, j₀, ?_⟩
+  show σ (a ⬝ᵥ ((z / (a ⬝ᵥ a)) • a)) * (a ⬝ᵥ ((1 / (a ⬝ᵥ a)) • a)) ≠ 0
+  rw [dotProduct_smul_self_div_oor ha, dotProduct_smul_self_div_oor ha, mul_one]
+  exact hz
 
 /-! ### Attention blocks and MLP blocks -/
 
@@ -556,7 +720,19 @@ theorem orthogonal_of_eval_cob_skipless_rmsNorm_attentionMlp [Nonempty T] [Nonem
       eval (Arch.attentionMlp sees σ (rmsNorm ε) H dh hid) 0 (θ.cob G G) x
         = eval (Arch.attentionMlp sees σ (rmsNorm ε) H dh hid) 0 θ x) :
     ∀ ℓ, (G ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ := by
-  sorry
+  -- the lemma on equal rows; both parts of a block map equal rows to equal rows, and a block
+  -- separates by its heads if it has one, by its hidden units otherwise
+  refine orthogonal_of_eval_cob_skipless_rmsNorm_of_rows
+    (A := Arch.attentionMlp sees σ (rmsNorm ε) H dh hid) hε rfl
+    (fun k => rows_sum_oor k (rows_attention_oor hsees _ k) (rows_mlp_oor _ k)) ?_ ?_ G h
+  · intro k
+    rcases hblk k with ⟨hHk, hdhk⟩ | hk
+    · exact sep_sum_left_oor k (sep_attention_oor hsees _ k hHk hdhk)
+    · exact sep_sum_right_oor k (sep_mlp_oor hσc hne hnc _ k hk)
+  · intro k a ha
+    rcases hblk k with ⟨hHk, hdhk⟩ | hk
+    · exact nz_sum_left_oor k a (nz_attention_oor hsees _ k hHk hdhk a ha)
+    · exact nz_sum_right_oor k a (nz_mlp_oor hnc _ k hk a ha)
 
 /-- **Theorem 3.3 (ii), skipless, pre-RMSNorm (`ε > 0`), attention blocks and MLP blocks:** the
 changes of basis `G_0, …, G_L` preserve the function for all values of the parameters if and only
@@ -572,7 +748,9 @@ theorem eval_cob_skipless_rmsNorm_iff_attentionMlp [Nonempty T] [Nonempty dIn] [
         eval (Arch.attentionMlp sees σ (rmsNorm ε) H dh hid) 0 (θ.cob G G) x
           = eval (Arch.attentionMlp sees σ (rmsNorm ε) H dh hid) 0 θ x)
       ↔ ∀ ℓ, (G ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ := by
-  sorry
+  -- "only if" is Lemma A.4; "if" is Proposition 3.2 under pre-RMSNorm
+  exact ⟨orthogonal_of_eval_cob_skipless_rmsNorm_attentionMlp hε hσc hne hnc hsees hblk G,
+    fun hG θ x => eval_cob_rmsNorm θ x ε rfl G hG⟩
 
 /-! ### Attention blocks and gated blocks -/
 
@@ -592,7 +770,18 @@ theorem orthogonal_of_eval_cob_skipless_rmsNorm_attentionGated [Nonempty T] [Non
       eval (Arch.attentionGated sees σ (rmsNorm ε) H dh hid) 0 (θ.cob G G) x
         = eval (Arch.attentionGated sees σ (rmsNorm ε) H dh hid) 0 θ x) :
     ∀ ℓ, (G ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ := by
-  sorry
+  -- as for MLP blocks, with the gated part
+  refine orthogonal_of_eval_cob_skipless_rmsNorm_of_rows
+    (A := Arch.attentionGated sees σ (rmsNorm ε) H dh hid) hε rfl
+    (fun k => rows_sum_oor k (rows_attention_oor hsees _ k) (rows_gated_oor _ k)) ?_ ?_ G h
+  · intro k
+    rcases hblk k with ⟨hHk, hdhk⟩ | hk
+    · exact sep_sum_left_oor k (sep_attention_oor hsees _ k hHk hdhk)
+    · exact sep_sum_right_oor k (sep_gated_oor hσ0 hκ _ k hk)
+  · intro k a ha
+    rcases hblk k with ⟨hHk, hdhk⟩ | hk
+    · exact nz_sum_left_oor k a (nz_attention_oor hsees _ k hHk hdhk a ha)
+    · exact nz_sum_right_oor k a (nz_gated_oor hσ0 _ k hk a ha)
 
 /-- **Theorem 3.3 (ii), skipless, pre-RMSNorm (`ε > 0`), attention blocks and gated blocks:**
 the changes of basis `G_0, …, G_L` preserve the function for all values of the parameters if and
@@ -608,6 +797,8 @@ theorem eval_cob_skipless_rmsNorm_iff_attentionGated [Nonempty T] [Nonempty dIn]
         eval (Arch.attentionGated sees σ (rmsNorm ε) H dh hid) 0 (θ.cob G G) x
           = eval (Arch.attentionGated sees σ (rmsNorm ε) H dh hid) 0 θ x)
       ↔ ∀ ℓ, (G ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ := by
-  sorry
+  -- "only if" is Lemma A.4; "if" is Proposition 3.2 under pre-RMSNorm
+  exact ⟨orthogonal_of_eval_cob_skipless_rmsNorm_attentionGated hε hσ0 hκ hsees hblk G,
+    fun hG θ x => eval_cob_rmsNorm θ x ε rfl G hG⟩
 
 end Skips
