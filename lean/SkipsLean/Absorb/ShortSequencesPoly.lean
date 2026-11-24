@@ -57,12 +57,52 @@ theorem exists_complex_factors (L : ℕ) (Q : ℝ[X]) (hdeg : Q.natDegree ≤ L)
     ∃ c : Fin L → ℂ, Q.map (algebraMap ℝ ℂ) = ∏ ℓ, (1 + C (c ℓ) * X) := by
   sorry
 
+/-- Helper: under the causal mask row `t` of `U` is uniform on the `t + 1` tokens `s ≤ t`. -/
+private theorem attnWeights_causal_ssp {n : ℕ} (t s : Fin n) :
+    attnWeights (fun t s : Fin n => s ≤ t) 0 t s
+      = if s ≤ t then ((t : ℕ) + 1 : ℝ)⁻¹ else 0 := by
+  simp only [attnWeights, Matrix.of_apply, Matrix.zero_apply, Real.exp_zero]
+  split_ifs with h
+  · rw [Finset.sum_boole, Finset.filter_ge_eq_Iic, Fin.card_Iic]
+    push_cast
+    rw [one_div]
+  · rfl
+
+/-- Helper: the characteristic polynomial of `U` is `∏_t (X − 1/(t+1))`, since `U` is lower
+triangular with these diagonal entries. -/
+private theorem charpoly_causal_ssp (n : ℕ) :
+    (attnWeights (fun t s : Fin n => s ≤ t) (0 : Matrix (Fin n) (Fin n) ℝ)).charpoly
+      = ∏ t : Fin n, (X - C (((t : ℕ) + 1 : ℝ)⁻¹)) := by
+  -- `Uᵀ` is upper triangular with the same diagonal
+  rw [← Matrix.charpoly_transpose, Matrix.charpoly_of_isUpperTriangular]
+  · refine Finset.prod_congr rfl fun t _ => ?_
+    rw [Matrix.transpose_apply, attnWeights_causal_ssp, ite_eq_left le_rfl]
+  · intro i j hij
+    rw [Matrix.transpose_apply, attnWeights_causal_ssp,
+      ite_eq_right (not_le.2 (show j < i from hij))]
+
+/-- Helper: a polynomial that vanishes at the `n` distinct points `1/(t+1)` is a multiple of
+`∏_t (X − 1/(t+1))`. -/
+private theorem prod_dvd_ssp {n : ℕ} (p : ℝ[X])
+    (hp : ∀ t : Fin n, p.eval (((t : ℕ) + 1 : ℝ)⁻¹) = 0) :
+    ∏ t : Fin n, (X - C (((t : ℕ) + 1 : ℝ)⁻¹)) ∣ p := by
+  have hinj : Function.Injective fun t : Fin n => (((t : ℕ) + 1 : ℝ)⁻¹) := by
+    intro x y hxy
+    simp only [_root_.inv_inj, add_left_inj, Nat.cast_inj] at hxy
+    exact Fin.ext hxy
+  -- the factors `X − 1/(t+1)` are pairwise coprime and each divides `p`
+  refine Finset.prod_dvd_of_coprime ((pairwise_coprime_X_sub_C hinj).set_pairwise _)
+    fun t _ => ?_
+  exact dvd_iff_isRoot.2 (hp t)
+
 /-- **Proof of Theorem 4.2 (iii), "`U` is diagonalizable with the eigenvalues `z_t`":** a real
 polynomial that vanishes at the points `1/(t+1)`, `t : Fin n`, vanishes at the matrix of the
 attention weights of the causal mask at zero scores. -/
 theorem aeval_attnWeights_causal_eq_zero (n : ℕ) (p : ℝ[X])
     (hp : ∀ t : Fin n, p.eval (((t : ℕ) + 1 : ℝ)⁻¹) = 0) :
     aeval (attnWeights (fun t s : Fin n => s ≤ t) (0 : Matrix (Fin n) (Fin n) ℝ)) p = 0 := by
-  sorry
+  -- the characteristic polynomial of `U` divides `p`, and vanishes at `U` (Cayley–Hamilton)
+  obtain ⟨r, hr⟩ := prod_dvd_ssp p hp
+  rw [hr, ← charpoly_causal_ssp, map_mul, Matrix.aeval_self_charpoly, zero_mul]
 
 end Skips
