@@ -1444,3 +1444,7 @@ import SkipsLean
 #print axioms Skips.funDimLearned_attention_rmsNorm_eq_residual_add
 #print axioms Skips.ae_funDimLearned_attention_rmsNorm
 #print axioms Skips.ae_funDimLearned_attention_rmsNorm_eq_residual_add
+#print axioms Skips.funDimLearnedTri_eq_funDim_residual_add_of_noSymmetricPart
+#print axioms Skips.funDimLearnedTri_attention_rmsNorm_eq_residual_add
+#print axioms Skips.ae_funDimLearnedTri_attention_rmsNorm
+#print axioms Skips.ae_funDimLearnedTri_attention_rmsNorm_eq_residual_add
