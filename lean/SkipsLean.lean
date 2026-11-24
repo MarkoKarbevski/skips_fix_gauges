@@ -175,3 +175,4 @@ import SkipsLean.Literature.InvarianceOfDomain
 import SkipsLean.Residual.Folding
 import SkipsLean.Residual.DeadUnits
 import SkipsLean.Residual.FoldingOpen
+import SkipsLean.Symmetry.HomogeneousRMSNorm
