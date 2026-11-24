@@ -479,6 +479,7 @@ private theorem exists_sub_mem_flatSkips_ltk {ε : ℝ} {A : Arch T d 1}
   rw [heq]
   exact hrot
 
+omit [Nonempty T] in
 /-- **One block under pre-RMSNorm (every real `ε`), at an invertible upper triangular skip `R`,
 on a batch:** if at every input of the batch the output with a full skip is a differentiable
 function of the weights and the skip at `(θ, R)`, the Jacobian of the family of upper triangular
@@ -518,6 +519,7 @@ theorem jacobianRankSkips_tri_eq_of_differentiableAt {A : Arch T d 1} {ε : ℝ}
   rw [map_sub] at h0
   exact (sub_eq_zero.1 h0).symm
 
+omit [Nonempty T] in
 /-- **One block under pre-RMSNorm with `ε = 0`, at an invertible upper triangular skip `R`, on a
 batch of inputs at which no normalized row vanishes and the fixed map of the block is
 differentiable at the normalized read:** the Jacobian of the family of upper triangular skips has

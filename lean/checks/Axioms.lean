@@ -1752,3 +1752,5 @@ import SkipsLean
 #print axioms Skips.reglu_unitsRescaleSphere
 #print axioms Skips.skipProdFwd_conformal_of_residual_rmsNorm_zero
 #print axioms Skips.skipProdFwd_orthogonal_of_residual_rmsNorm
+#print axioms Skips.jacobianRankSkips_tri_eq_of_differentiableAt
+#print axioms Skips.jacobianRankSkips_tri_eq_learned_rmsNorm_zero
