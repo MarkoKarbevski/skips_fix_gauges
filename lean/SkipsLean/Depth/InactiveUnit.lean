@@ -69,6 +69,55 @@ def unitDir {χ : Matrix T d ℝ → Matrix T d ℝ} (m : Fin L) (j : hid m) (δ
     (Matrix.of fun (i : hid m) (a : d) => if i = j then δa a else 0)
   D := 0
 
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: two parameters that differ only in the read column and the write row of hidden unit
+`j` of block `m`, at both of which this unit is inactive at every input, have the same hidden
+states at every input. -/
+private theorem hidden_eq_of_unitInactive_iu (hσ0 : ∀ z : ℝ, z ≤ 0 → σ z = 0)
+    (θ θ' : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) (m : Fin L) (j : hid m)
+    (h1 : UnitInactive θ m j) (h2 : UnitInactive θ' m j) (hE : θ'.E = θ.E)
+    (hr : ∀ ℓ, ℓ ≠ m → θ'.read ℓ = θ.read ℓ) (hw : ∀ ℓ, ℓ ≠ m → θ'.write ℓ = θ.write ℓ)
+    (hrm : ∀ a i, i ≠ j → θ'.read m a i = θ.read m a i)
+    (hwm : ∀ i a, i ≠ j → θ'.write m i a = θ.write m i a)
+    (x : Matrix T dIn ℝ) (ℓ : Fin (L + 1)) :
+    hidden (Arch.mlp σ id hid) 0 θ' x ℓ = hidden (Arch.mlp σ id hid) 0 θ x ℓ := by
+  induction ℓ using Fin.induction with
+  | zero => rw [hidden_zero, hidden_zero, hE]
+  | succ ℓ ih =>
+    -- the stream term is the same; compare the outputs of block `ℓ`
+    rw [hidden_succ, hidden_succ, ih]
+    congr 1
+    show (hidden (Arch.mlp σ id hid) 0 θ x ℓ.castSucc * θ'.read ℓ).map σ * θ'.write ℓ =
+      (hidden (Arch.mlp σ id hid) 0 θ x ℓ.castSucc * θ.read ℓ).map σ * θ.write ℓ
+    by_cases hℓ : ℓ = m
+    · -- block `m`: the terms of the hidden units `i ≠ j` agree, the term of `j` is `0`
+      subst hℓ
+      ext t a
+      rw [Matrix.mul_apply, Matrix.mul_apply]
+      refine Finset.sum_congr rfl fun i _ => ?_
+      rw [Matrix.map_apply, Matrix.map_apply]
+      by_cases hi : i = j
+      · subst hi
+        have e1 := h1 x t
+        have e2 := h2 x t
+        rw [ih] at e2
+        rw [hσ0 _ e1, hσ0 _ e2, zero_mul, zero_mul]
+      · have hu : (hidden (Arch.mlp σ id hid) 0 θ x ℓ.castSucc * θ'.read ℓ) t i =
+            (hidden (Arch.mlp σ id hid) 0 θ x ℓ.castSucc * θ.read ℓ) t i := by
+          rw [Matrix.mul_apply, Matrix.mul_apply]
+          exact Finset.sum_congr rfl fun b _ => by rw [hrm b i hi]
+        rw [hu, hwm i a hi]
+    · -- another block: nothing changed
+      rw [hr ℓ hℓ, hw ℓ hℓ]
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: the line `τ ↦ θ + τ η` passes through `θ` at `τ = 0` with velocity `η`. -/
+private theorem hasDerivAt_line_iu {A : Arch T d L} (θ η : Params A dIn dOut) :
+    HasDerivAt (fun τ : ℝ => θ + τ • η) η 0 := by
+  have h := ((hasDerivAt_id (0 : ℝ)).smul_const η).const_add θ
+  rw [one_smul] at h
+  exact h
+
 /-- **Proof of Proposition E.1, "The columns of the Jacobian that belong to the weights of the
 inactive hidden unit vanish":** if `σ` vanishes on `z ≤ 0` and hidden unit `j` of block `m` is
 inactive at every input at all parameters near `θ`, then every direction that moves only the read
@@ -77,7 +126,34 @@ theorem unitDir_mem_flat (hσ0 : ∀ z : ℝ, z ≤ 0 → σ z = 0)
     (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) (m : Fin L) (j : hid m)
     (hθ : ∀ᶠ θ' in 𝓝 θ, UnitInactive θ' m j) (δr δa : d → ℝ) :
     unitDir m j δr δa ∈ flat (Arch.mlp σ id hid) 0 θ := by
-  sorry
+  set η : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut := unitDir m j δr δa
+  -- the line `τ ↦ θ + τ η` passes through `θ` with velocity `η`
+  have hline := hasDerivAt_line_iu θ η
+  have h0 : θ + (0 : ℝ) • η = θ := by rw [zero_smul, add_zero]
+  -- near `τ = 0` the hidden unit is inactive at every input along the line
+  have hnear : ∀ᶠ τ in 𝓝 (0 : ℝ), UnitInactive (θ + τ • η) m j := by
+    have ht := hline.continuousAt.tendsto
+    rw [h0] at ht
+    exact ht.eventually hθ
+  refine mem_flat_of_hasDerivAt' θ (fun τ => θ + τ • η) η hline h0
+    (hnear.mono fun τ hτ x => ?_)
+  -- the line moves only the read column and the write row of the unit, so the hidden states, and
+  -- then the outputs, are those of `θ`
+  have hh := hidden_eq_of_unitInactive_iu hσ0 θ (θ + τ • η) m j hθ.self_of_nhds hτ
+    (by simp [η, unitDir])
+    (fun ℓ hℓ => by
+      simp [η, unitDir, Function.update_of_ne hℓ])
+    (fun ℓ hℓ => by
+      simp [η, unitDir, Function.update_of_ne hℓ])
+    (fun a i hi => by
+      simp [η, unitDir, hi])
+    (fun i a hi => by
+      simp [η, unitDir, hi])
+    x (Fin.last L)
+  show (Arch.mlp σ id hid).χ (hidden _ 0 (θ + τ • η) x (Fin.last L)) * (θ + τ • η).D =
+    (Arch.mlp σ id hid).χ (hidden _ 0 θ x (Fin.last L)) * θ.D
+  rw [hh]
+  simp [η, unitDir]
 
 /-- **Proposition E.1, the bound, at one parameter (ReLU and ReLU² blocks):** let `σ` be positively
 homogeneous of degree `k` and vanish on `z ≤ 0`, and let hidden unit `j` of block `m` be inactive
