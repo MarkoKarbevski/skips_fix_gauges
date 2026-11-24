@@ -201,7 +201,7 @@ theorem exists_rank_add_card_le_of_gateLinear_gateQuadratic (σ : ℝ → ℝ)
       ≤ Fintype.card m' := by
   classical
   -- `Jp i j` (`Jn i j`): the gate read of unit `j` of `B_{θ′}` is `r g_i` with `r > 0` (`r < 0`);
-  -- `J_i` of the brief is the set of `j` with `Jp i j ∨ Jn i j`
+  -- `J_i` of the proof is the set of `j` with `Jp i j ∨ Jn i j`
   obtain ⟨Jp, hJp⟩ : ∃ Jp : m → m' → Prop,
       ∀ i j, Jp i j ↔ ∃ r : ℝ, 0 < r ∧ Wg'ᵀ j = r • Wgᵀ i := ⟨_, fun _ _ => Iff.rfl⟩
   obtain ⟨Jn, hJn⟩ : ∃ Jn : m → m' → Prop,

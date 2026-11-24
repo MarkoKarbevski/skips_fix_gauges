@@ -1768,3 +1768,33 @@
 'Skips.ae_linearIndependent_sqTarget' depends on axioms: [propext, Classical.choice, Quot.sound]
 'Skips.ae_not_reluSq_absorbB_of_card_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
 'Skips.ae_reluSq_absorbB_add_card' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_antisymm_scale_of_flatOn_residual_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.finrank_le_funDimOn_residual_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.funDimOn_add_le_skipless_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.funDimOn_skipless_add_le_funDimOn_residual_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_exists_linearIndependent_rows_mlp' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_exists_linearIndependent_rows_gated' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_exists_linearIndependent_rows_attention' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimOn_skipless_add_le_mlp_oneBlock_residual_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimOn_skipless_add_le_tanh_oneBlock_residual_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimOn_skipless_add_le_gelu_oneBlock_residual_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimOn_skipless_add_le_gated_oneBlock_residual_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimOn_skipless_add_le_swiglu_oneBlock_residual_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimOn_skipless_add_le_geglu_oneBlock_residual_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimOn_skipless_add_le_attention_oneBlock_residual_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]

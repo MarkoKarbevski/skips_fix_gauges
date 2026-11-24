@@ -28,7 +28,11 @@ its kink:
   symmetries of dimension `d (d − 1)/2 + s`), with `s = d_hidden` for ReLU and ReLU² and
   `s = 2 d_hidden` for ReGLU;
 * for `d_in, d_out ≥ d ≥ 2`: the same at almost every `(θ, A)`, `A` upper triangular, and
-  `d (d + 1)/2` more than the residual network at almost every `θ'`.
+  `d (d + 1)/2` more than the residual network at almost every `θ'`. In these statements the
+  residual network is measured by Lean's `funDim` (all batches); at almost every `θ'` it is also
+  the largest rank over the batches of inputs off the kinks
+  (`ae_exists_jacobianRank_relu_oneBlock_residual_rmsNorm` and its siblings), so both sides are
+  the paper's functional dimension.
 
 The route: on a batch of inputs off the kinks both families are differentiable, the Jacobian of the
 triangular family is that of the full family restricted to triangular directions of the skip, and
