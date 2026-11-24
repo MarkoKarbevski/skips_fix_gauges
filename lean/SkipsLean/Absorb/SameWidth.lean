@@ -134,6 +134,172 @@ theorem relu_absorb_of_gelu_absorb {m' : Type*} [Fintype m'] (Wr : Matrix p m �
 
 /-! ### Corollary A.9 and Theorem 3.1 (i) -/
 
+/-- ReLU satisfies `σ(z) + σ(-z) = |z|`: the even part of ReLU is `|z|/2`. -/
+private theorem relu_add_relu_neg (z : ℝ) : relu z + relu (-z) = |z| := by
+  simp only [relu]
+  rcases le_total z 0 with h | h
+  · rw [max_eq_right h, max_eq_left (neg_nonneg.2 h), abs_of_nonpos h]; ring
+  · rw [max_eq_left h, max_eq_right (neg_nonpos.2 h), abs_of_nonneg h]; ring
+
+/-- **A point on a hyperplane and off finitely many others.** If no vector `u k` is a multiple of
+`c`, some `x` has `x ⬝ᵥ c = 0` and `x ⬝ᵥ u k ≠ 0` for every `k`: the hyperplane `x c = 0` is not
+contained in the union of the hyperplanes `x u_k = 0`, which are different from it (as
+`exists_on_hyperplane` in `OneBlock/UnitsReLU.lean`, without the biases). The family `u` may
+collect the columns of the reads of two blocks of different widths. -/
+theorem exists_dotProduct_eq_zero_and_ne_zero {n ι : Type*} [Fintype n] [Finite ι]
+    (c : n → ℝ) (u : ι → n → ℝ) (hu : ∀ k, ∀ r : ℝ, u k ≠ r • c) :
+    ∃ x : n → ℝ, x ⬝ᵥ c = 0 ∧ ∀ k, x ⬝ᵥ u k ≠ 0 := by
+  -- `w k`: the component of `u k` orthogonal to `c`; it is nonzero
+  obtain ⟨w, hw_def⟩ : ∃ w : ι → n → ℝ, ∀ k, w k = u k - ((c ⬝ᵥ u k) / (c ⬝ᵥ c)) • c :=
+    ⟨_, fun _ => rfl⟩
+  have hw : ∀ k, w k ≠ 0 := fun k h0 => hu k _ (sub_eq_zero.1 ((hw_def k).symm.trans h0))
+  -- the kernels of `ν ↦ ν w_k` are proper subspaces, so some `ν` avoids all of them
+  let K : ι → Submodule ℝ (n → ℝ) := fun k =>
+    { carrier := {ν | ν ⬝ᵥ w k = 0}
+      add_mem' := fun {x y} hx hy => by
+        simp only [Set.mem_ofPred_eq] at hx hy ⊢; rw [add_dotProduct, hx, hy, add_zero]
+      zero_mem' := by simp
+      smul_mem' := fun s x hx => by
+        simp only [Set.mem_ofPred_eq] at hx ⊢; rw [smul_dotProduct, hx, smul_zero] }
+  obtain ⟨ν, hν⟩ : ∃ ν : n → ℝ, ∀ k, ν ⬝ᵥ w k ≠ 0 := by
+    by_contra hcon
+    push Not at hcon
+    obtain ⟨k, hk⟩ := Subspace.exists_eq_top_of_iUnion_eq_univ (p := K) (by
+      ext ν
+      simp only [Set.mem_iUnion, Set.mem_univ, iff_true]
+      obtain ⟨k, h0⟩ := hcon ν
+      exact ⟨k, h0⟩)
+    have hmem : w k ∈ K k := hk ▸ Submodule.mem_top
+    exact hw k (dotProduct_self_eq_zero.1 hmem)
+  rcases eq_or_ne c 0 with rfl | hc
+  · -- `c = 0`: every `x` lies on its "hyperplane"
+    exact ⟨ν, dotProduct_zero ν, fun k => by
+      have := hν k
+      rwa [hw_def, zero_dotProduct, zero_div, zero_smul, sub_zero] at this⟩
+  · -- `x = ν - (ν c / c c) c` has `x c = 0` and `x u_k = ν w_k`
+    have hcc : c ⬝ᵥ c ≠ 0 := dotProduct_self_eq_zero.not.2 hc
+    refine ⟨ν - ((ν ⬝ᵥ c) / (c ⬝ᵥ c)) • c, ?_, fun k => ?_⟩
+    · rw [sub_dotProduct, smul_dotProduct, smul_eq_mul, div_mul_cancel₀ _ hcc, sub_self]
+    · have : (ν - ((ν ⬝ᵥ c) / (c ⬝ᵥ c)) • c) ⬝ᵥ u k = ν ⬝ᵥ w k := by
+        rw [hw_def]
+        simp only [sub_dotProduct, dotProduct_sub, smul_dotProduct, dotProduct_smul, smul_eq_mul,
+          dotProduct_comm c (u k)]
+        ring
+      rw [this]
+      exact hν k
+
+/-- `|a + b| + |a - b| = 2 |a|` when `|b| ≤ |a|`: no sign change between `a - b` and `a + b`. -/
+private theorem abs_add_add_abs_sub_of_le {a b : ℝ} (h : |b| ≤ |a|) :
+    |a + b| + |a - b| = 2 * |a| := by
+  rcases le_total 0 a with ha | ha
+  · rw [abs_of_nonneg ha] at h ⊢
+    obtain ⟨h1, h2⟩ := abs_le.1 h
+    rw [abs_of_nonneg (by linarith), abs_of_nonneg (by linarith)]
+    ring
+  · rw [abs_of_nonpos ha] at h ⊢
+    obtain ⟨h1, h2⟩ := abs_le.1 h
+    rw [abs_of_nonpos (by linarith), abs_of_nonpos (by linarith)]
+    ring
+
+open Filter Topology in
+/-- Near `s = 0`, `|s b| ≤ a` for `a > 0`. -/
+private theorem eventually_abs_mul_le {a : ℝ} (ha : 0 < a) (b : ℝ) :
+    ∀ᶠ s in 𝓝 (0 : ℝ), |s * b| ≤ a := by
+  have hc : Continuous fun s : ℝ => |s * b| := by fun_prop
+  have h0 : Tendsto (fun s : ℝ => |s * b|) (𝓝 0) (𝓝 0) := by simpa using hc.tendsto 0
+  exact (h0.eventually (eventually_lt_nhds ha)).mono fun _ h => h.le
+
+open Filter Topology in
+/-- **The kink of one unit** (Theorem A.4, Steps 1 and 2, in the form of (★)). Let
+`∑_k |x w_k| ŵ_k = ∑_j |x w'_j| ŵ'_j` for all `x`, for two blocks of widths `m` and `m'`, and let
+the column `w_i` be nonzero and not collinear with any other column `w_k` of the first read. Let
+`J` be the set of units `j` of the second block whose column `w'_j` is a multiple `r_j w_i` of `w_i`
+(a zero column included). Then `ŵ_i = ∑_{j ∈ J} |r_j| ŵ'_j`. Proof: at a point `x₀` with
+`x₀ w_i = 0` and on no other hyperplane of the two blocks, and a direction `v` with `v w_i = 1`,
+the second difference `G(x₀ + s v) + G(x₀ - s v) - 2 G(x₀)` of both sides at a small `s > 0` keeps
+only the terms on the hyperplane of `w_i`: `2 s ŵ_i` on the left, `2 s ∑_{j ∈ J} |r_j| ŵ'_j` on
+the right. -/
+theorem write_eq_sum_of_abs_eq {m' : Type*} [Fintype m'] (Wr : Matrix p m ℝ) (Ww : Matrix m q ℝ)
+    (Wr' : Matrix p m' ℝ) (Ww' : Matrix m' q ℝ)
+    (h : ∀ x : p → ℝ, (fun k => |(x ᵥ* Wr) k|) ᵥ* Ww = (fun j => |(x ᵥ* Wr') j|) ᵥ* Ww')
+    (i : m) (hc : Wrᵀ i ≠ 0) (hcol : ∀ k, k ≠ i → ∀ r : ℝ, Wrᵀ k ≠ r • Wrᵀ i)
+    (J : Finset m') (r : m' → ℝ) (hJ : ∀ j ∈ J, Wr'ᵀ j = r j • Wrᵀ i)
+    (hJc : ∀ j ∉ J, ∀ t : ℝ, Wr'ᵀ j ≠ t • Wrᵀ i) :
+    Ww i = ∑ j ∈ J, |r j| • Ww' j := by
+  classical
+  -- a point `x₀` of the hyperplane `x w_i = 0` on no other hyperplane of the two blocks
+  obtain ⟨x₀, hx₀i, hx₀⟩ := exists_dotProduct_eq_zero_and_ne_zero (Wrᵀ i)
+    (Sum.elim (fun k : {k // k ≠ i} => Wrᵀ k.1) (fun j : {j // j ∉ J} => Wr'ᵀ j.1))
+    (by rintro (⟨k, hk⟩ | ⟨j, hj⟩) t; exacts [hcol k hk t, hJc j hj t])
+  have hx₁ : ∀ k, k ≠ i → x₀ ⬝ᵥ Wrᵀ k ≠ 0 := fun k hk => hx₀ (Sum.inl ⟨k, hk⟩)
+  have hx₂ : ∀ j, j ∉ J → x₀ ⬝ᵥ Wr'ᵀ j ≠ 0 := fun j hj => hx₀ (Sum.inr ⟨j, hj⟩)
+  -- a direction `v` with `v w_i = 1`
+  have hii : Wrᵀ i ⬝ᵥ Wrᵀ i ≠ 0 := dotProduct_self_eq_zero.not.2 hc
+  obtain ⟨v, hv⟩ : ∃ v : p → ℝ, v ⬝ᵥ Wrᵀ i = 1 :=
+    ⟨(Wrᵀ i ⬝ᵥ Wrᵀ i)⁻¹ • Wrᵀ i, by rw [smul_dotProduct, smul_eq_mul, inv_mul_cancel₀ hii]⟩
+  -- a small `s > 0`: off the hyperplane of `w_i`, no term changes sign between `x₀ ± s v`
+  have hev : ∀ᶠ s in 𝓝 (0 : ℝ), (∀ k, k ≠ i → |s * (v ⬝ᵥ Wrᵀ k)| ≤ |x₀ ⬝ᵥ Wrᵀ k|) ∧
+      (∀ j, j ∉ J → |s * (v ⬝ᵥ Wr'ᵀ j)| ≤ |x₀ ⬝ᵥ Wr'ᵀ j|) := by
+    refine (Filter.eventually_all.2 fun k => ?_).and (Filter.eventually_all.2 fun j => ?_)
+    · by_cases hk : k = i
+      · exact Filter.Eventually.of_forall fun _ h => absurd hk h
+      · exact (eventually_abs_mul_le (abs_pos.2 (hx₁ k hk)) _).mono fun _ h _ => h
+    · by_cases hj : j ∈ J
+      · exact Filter.Eventually.of_forall fun _ h => absurd hj h
+      · exact (eventually_abs_mul_le (abs_pos.2 (hx₂ j hj)) _).mono fun _ h _ => h
+  obtain ⟨s, ⟨hs1, hs2⟩, hs⟩ := ((hev.filter_mono nhdsWithin_le_nhds).and
+    (eventually_mem_nhdsWithin (s := Set.Ioi 0))).exists
+  have hs0 : 0 < s := hs
+  -- `δ u`: the second difference of `x ↦ |x u|` at `x₀` along `s v`
+  obtain ⟨δ, hδ⟩ : ∃ δ : (p → ℝ) → ℝ, ∀ u, δ u =
+      |(x₀ + s • v) ⬝ᵥ u| + |(x₀ - s • v) ⬝ᵥ u| - 2 * |x₀ ⬝ᵥ u| := ⟨_, fun _ => rfl⟩
+  have hδ0 : ∀ u, |s * (v ⬝ᵥ u)| ≤ |x₀ ⬝ᵥ u| → δ u = 0 := by
+    intro u hu
+    rw [hδ, add_dotProduct, sub_dotProduct, smul_dotProduct, smul_eq_mul,
+      abs_add_add_abs_sub_of_le hu, sub_self]
+  have hδi : ∀ t : ℝ, δ (t • Wrᵀ i) = 2 * s * |t| := by
+    intro t
+    rw [hδ]
+    simp only [add_dotProduct, sub_dotProduct, dotProduct_smul, smul_dotProduct, smul_eq_mul, hx₀i,
+      hv, mul_zero, zero_add, zero_sub, mul_one, abs_neg, abs_zero, abs_mul, abs_of_pos hs0]
+    ring
+  -- the second difference of both sides, at the output coordinate `o`
+  funext o
+  have hsum : ∀ x : p → ℝ, ∑ k, |x ⬝ᵥ Wrᵀ k| * Ww k o = ∑ j, |x ⬝ᵥ Wr'ᵀ j| * Ww' j o :=
+    fun x => congrFun (h x) o
+  have hL : ∑ k, |(x₀ + s • v) ⬝ᵥ Wrᵀ k| * Ww k o + ∑ k, |(x₀ - s • v) ⬝ᵥ Wrᵀ k| * Ww k o
+      - 2 * ∑ k, |x₀ ⬝ᵥ Wrᵀ k| * Ww k o = 2 * s * Ww i o := by
+    rw [Finset.mul_sum, ← Finset.sum_add_distrib, ← Finset.sum_sub_distrib,
+      Finset.sum_eq_single i]
+    · have := hδi 1
+      rw [one_smul, abs_one, mul_one, hδ] at this
+      rw [← this]
+      ring
+    · intro k _ hk
+      have := hδ0 _ (hs1 k hk)
+      rw [hδ] at this
+      linear_combination (Ww k o) * this
+    · intro hi
+      exact absurd (Finset.mem_univ i) hi
+  have hR : ∑ j, |(x₀ + s • v) ⬝ᵥ Wr'ᵀ j| * Ww' j o + ∑ j, |(x₀ - s • v) ⬝ᵥ Wr'ᵀ j| * Ww' j o
+      - 2 * ∑ j, |x₀ ⬝ᵥ Wr'ᵀ j| * Ww' j o = 2 * s * ∑ j ∈ J, |r j| * Ww' j o := by
+    rw [Finset.mul_sum, Finset.mul_sum, ← Finset.sum_add_distrib, ← Finset.sum_sub_distrib,
+      ← Finset.sum_subset (Finset.subset_univ J)]
+    · refine Finset.sum_congr rfl fun j hj => ?_
+      have := hδi (r j)
+      rw [← hJ j hj, hδ] at this
+      linear_combination (Ww' j o) * this
+    · intro j _ hj
+      have := hδ0 _ (hs2 j hj)
+      rw [hδ] at this
+      linear_combination (Ww' j o) * this
+  have key : 2 * s * Ww i o = 2 * s * ∑ j ∈ J, |r j| * Ww' j o := by
+    rw [← hL, ← hR, hsum, hsum, hsum]
+  have h2s : (2 * s) ≠ 0 := by positivity
+  rw [Finset.sum_apply]
+  simp only [Pi.smul_apply, smul_eq_mul]
+  exact mul_left_cancel₀ h2s key
+
 variable [DecidableEq m]
 
 /-- **Corollary A.9 / Theorem A.4, "only if", for ReLU.** Let `p ≥ 2` and let the block be
@@ -144,7 +310,129 @@ theorem exists_subProd_eq_neg_of_relu_absorb (hp : 2 ≤ Fintype.card p) (Wr : M
     (Ww' : Matrix m q ℝ)
     (h : ∀ x : p → ℝ, x ᵥ* M + vanillaBlock relu Wr Ww x = vanillaBlock relu Wr' Ww' x) :
     ∃ S : Finset m, subProd S Wr Ww = -M := by
-  sorry
+  classical
+  -- the equation at `x` and at `-x`, at the output coordinate `o`
+  have hpre : ∀ (x : p → ℝ) (o : q), (x ᵥ* M) o + ∑ k, relu (x ⬝ᵥ Wrᵀ k) * Ww k o
+      = ∑ j, relu (x ⬝ᵥ Wr'ᵀ j) * Ww' j o := fun x o => congrFun (h x) o
+  have hpm : ∀ (x : p → ℝ) (o : q), -(x ᵥ* M) o + ∑ k, relu (-(x ⬝ᵥ Wrᵀ k)) * Ww k o
+      = ∑ j, relu (-(x ⬝ᵥ Wr'ᵀ j)) * Ww' j o := by
+    intro x o
+    have h2 := hpre (-x) o
+    simp only [Matrix.neg_vecMul, Pi.neg_apply, neg_dotProduct] at h2
+    exact h2
+  -- the even part (`ReLU(z) + ReLU(-z) = |z|`): `|x W_read| W_write = |x W_read'| W_write'`
+  have hEven : ∀ x : p → ℝ,
+      (fun k => |(x ᵥ* Wr) k|) ᵥ* Ww = (fun j => |(x ᵥ* Wr') j|) ᵥ* Ww' := by
+    intro x
+    funext o
+    show ∑ k, |x ⬝ᵥ Wrᵀ k| * Ww k o = ∑ j, |x ⬝ᵥ Wr'ᵀ j| * Ww' j o
+    simp only [← relu_add_relu_neg, add_mul, Finset.sum_add_distrib]
+    linarith [hpre x o, hpm x o]
+  -- the odd part (`ReLU(z) - ReLU(-z) = z`): `x W_read W_write + 2 x M = x W_read' W_write'`
+  have hOdd : ∀ (x : p → ℝ) (o : q), 2 * (x ᵥ* M) o + ∑ k, (x ⬝ᵥ Wrᵀ k) * Ww k o
+      = ∑ j, (x ⬝ᵥ Wr'ᵀ j) * Ww' j o := by
+    intro x o
+    have e1 : ∑ k, (x ⬝ᵥ Wrᵀ k) * Ww k o
+        = ∑ k, relu (x ⬝ᵥ Wrᵀ k) * Ww k o - ∑ k, relu (-(x ⬝ᵥ Wrᵀ k)) * Ww k o := by
+      rw [← Finset.sum_sub_distrib]
+      exact Finset.sum_congr rfl fun k _ => by rw [← sub_mul, relu_sub_relu_neg]
+    have e2 : ∑ j, (x ⬝ᵥ Wr'ᵀ j) * Ww' j o
+        = ∑ j, relu (x ⬝ᵥ Wr'ᵀ j) * Ww' j o - ∑ j, relu (-(x ⬝ᵥ Wr'ᵀ j)) * Ww' j o := by
+      rw [← Finset.sum_sub_distrib]
+      exact Finset.sum_congr rfl fun j _ => by rw [← sub_mul, relu_sub_relu_neg]
+    linarith [hpre x o, hpm x o]
+  -- Steps 1 and 2 at unit `i`, with `J` the units `j` whose `w'_j` is a multiple `r_j w_i`
+  have hJr : ∀ i, ∃ (J : Finset m) (r : m → ℝ), (∀ j ∈ J, Wr'ᵀ j = r j • Wrᵀ i) ∧
+      (∀ j ∉ J, ∀ t : ℝ, Wr'ᵀ j ≠ t • Wrᵀ i) := by
+    intro i
+    have hr : ∀ j, ∃ t : ℝ, (∃ t' : ℝ, Wr'ᵀ j = t' • Wrᵀ i) → Wr'ᵀ j = t • Wrᵀ i := fun j => by
+      by_cases hj : ∃ t' : ℝ, Wr'ᵀ j = t' • Wrᵀ i
+      · obtain ⟨t', ht'⟩ := hj
+        exact ⟨t', fun _ => ht'⟩
+      · exact ⟨0, fun h' => absurd h' hj⟩
+    choose r hr using hr
+    exact ⟨Finset.univ.filter (fun j => ∃ t' : ℝ, Wr'ᵀ j = t' • Wrᵀ i), r,
+      fun j hj => hr j (Finset.mem_filter.1 hj).2,
+      fun j hj t ht => hj (Finset.mem_filter.2 ⟨Finset.mem_univ _, t, ht⟩)⟩
+  have hstar : ∀ i (J : Finset m) (r : m → ℝ), (∀ j ∈ J, Wr'ᵀ j = r j • Wrᵀ i) →
+      (∀ j ∉ J, ∀ t : ℝ, Wr'ᵀ j ≠ t • Wrᵀ i) → Ww i = ∑ j ∈ J, |r j| • Ww' j :=
+    fun i J r hJ hJc => write_eq_sum_of_abs_eq Wr Ww Wr' Ww' hEven i (hnd.col_ne_zero i)
+      (fun k hk t => hnd.col_not_collinear k i hk t) J r hJ hJc
+  -- since `ŵ_i ≠ 0`, some `w'_j` is a nonzero multiple of `w_i`
+  have hex : ∀ i, ∃ j, ∃ ρ : ℝ, ρ ≠ 0 ∧ Wr'ᵀ j = ρ • Wrᵀ i := by
+    intro i
+    obtain ⟨J, r, hJ, hJc⟩ := hJr i
+    have hne : ∑ j ∈ J, |r j| • Ww' j ≠ 0 := hstar i J r hJ hJc ▸ hnd.row_ne_zero i
+    obtain ⟨j, hj, hj0⟩ := Finset.exists_ne_zero_of_sum_ne_zero hne
+    exact ⟨j, r j, fun h0 => hj0 (by rw [h0, abs_zero, zero_smul]), hJ j hj⟩
+  choose f ρ hρ hf using hex
+  -- two columns of the read that are collinear are the same column
+  have hsame : ∀ a b (r₁ r₂ : ℝ), r₁ ≠ 0 → r₁ • Wrᵀ a = r₂ • Wrᵀ b → a = b := by
+    intro a b r₁ r₂ h1 h12
+    by_contra hab
+    apply hnd.col_not_collinear a b hab (r₁⁻¹ * r₂)
+    rw [mul_smul, ← h12, smul_smul, inv_mul_cancel₀ h1, one_smul]
+  -- `i ↦ f i` is injective, hence a bijection of the units: each hyperplane gets one unit
+  have hinj : Function.Injective f := by
+    intro a b hab
+    exact hsame a b (ρ a) (ρ b) (hρ a) (by rw [← hf a, ← hf b, hab])
+  have hsurj : Function.Surjective f := Finite.injective_iff_surjective.1 hinj
+  -- a column `w'_j` that is a nonzero multiple of `w_i` is the column of `j = f i`
+  have huniq : ∀ i j (t : ℝ), t ≠ 0 → Wr'ᵀ j = t • Wrᵀ i → j = f i := by
+    intro i j t ht hj
+    obtain ⟨i', rfl⟩ := hsurj j
+    rw [hsame i i' t (ρ i') ht (by rw [← hj, hf])]
+  -- (★) becomes `ŵ_i = |ρ_i| ŵ'_{f i}`: no kinks cancel
+  have hw : ∀ i, Ww i = |ρ i| • Ww' (f i) := by
+    intro i
+    obtain ⟨J, r, hJ, hJc⟩ := hJr i
+    have hfi : f i ∈ J := by
+      by_contra hn
+      exact hJc (f i) hn (ρ i) (hf i)
+    have hr : r (f i) = ρ i :=
+      smul_left_injective ℝ (hnd.col_ne_zero i) ((hJ (f i) hfi).symm.trans (hf i))
+    rw [hstar i J r hJ hJc, Finset.sum_eq_single_of_mem (f i) hfi, hr]
+    intro j hj hne
+    have hr0 : r j = 0 := by
+      by_contra h0
+      exact hne (huniq i j (r j) h0 (hJ j hj))
+    rw [hr0, abs_zero, zero_smul]
+  -- Step 3, signs: `S` is the set of units whose read changes sign
+  refine ⟨Finset.univ.filter (fun i => ρ i < 0), ?_⟩
+  ext a o
+  -- the odd part at the row `x = e_a`
+  have hO := hOdd (Pi.single a 1) o
+  have hxa : ∀ u : p → ℝ, Pi.single a (1 : ℝ) ⬝ᵥ u = u a := fun u => by
+    rw [single_dotProduct, one_mul]
+  have hxM : (Pi.single a (1 : ℝ) ᵥ* M) o = M a o := by
+    rw [Matrix.single_one_vecMul]
+    rfl
+  simp only [hxa, hxM, Matrix.transpose_apply] at hO
+  -- reindex the new units by `f`
+  have hre : ∑ j, Wr' a j * Ww' j o = ∑ i, Wr' a (f i) * Ww' (f i) o :=
+    ((Function.Bijective.sum_comp ⟨hinj, hsurj⟩ (fun j => Wr' a j * Ww' j o))).symm
+  -- unit `f i` contributes `±` the term of unit `i`, with `-` exactly for `i ∈ S`
+  have hterm : ∀ i, Wr' a (f i) * Ww' (f i) o - Wr a i * Ww i o
+      = -2 * (Wr a i * (if ρ i < 0 then 1 else 0) * Ww i o) := by
+    intro i
+    have e1 : Wr' a (f i) = ρ i * Wr a i := congrFun (hf i) a
+    have e2 : Ww i o = |ρ i| * Ww' (f i) o := congrFun (hw i) o
+    rw [e1, e2]
+    rcases lt_or_gt_of_ne (hρ i) with hneg | hpos
+    · simp only [abs_of_neg hneg, hneg, ↓reduceIte]
+      ring
+    · simp only [abs_of_pos hpos, not_lt.2 hpos.le, ↓reduceIte]
+      ring
+  have hsum : ∑ i, Wr' a (f i) * Ww' (f i) o - ∑ i, Wr a i * Ww i o
+      = -2 * ∑ i, Wr a i * (if ρ i < 0 then 1 else 0) * Ww i o := by
+    rw [← Finset.sum_sub_distrib, Finset.mul_sum]
+    exact Finset.sum_congr rfl fun i _ => hterm i
+  have hsp : subProd (Finset.univ.filter (fun i => ρ i < 0)) Wr Ww a o
+      = ∑ i, Wr a i * (if ρ i < 0 then 1 else 0) * Ww i o := by
+    rw [subProd, Matrix.mul_apply]
+    simp only [Matrix.mul_diagonal, Finset.mem_filter, Finset.mem_univ, true_and]
+  rw [hsp, Matrix.neg_apply]
+  linarith
 
 /-- **Corollary A.9, "only if", for GELU.** -/
 theorem exists_subProd_eq_neg_of_gelu_absorb (hp : 2 ≤ Fintype.card p) (Wr : Matrix p m ℝ)
