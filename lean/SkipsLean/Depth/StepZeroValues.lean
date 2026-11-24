@@ -244,6 +244,115 @@ theorem suffixFlatZero_castSucc_iff_mlp_sphere [Nonempty d] (hσ : ∀ z, HasDer
   have e := hval n hn0
   rwa [rmsNorm_zero_eq_self_szv n hn] at e
 
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `y ↦ y M`, as a continuous linear map (as in `Depth/StepTanhRMS.lean`). -/
+private noncomputable def mulRightCLM_szv {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    (M : Matrix n p ℝ) : Matrix m n ℝ →L[ℝ] Matrix m p ℝ :=
+  LinearMap.toContinuousLinearMap
+    { toFun := fun y => y * M
+      map_add' := fun a b => Matrix.add_mul a b M
+      map_smul' := fun c a => Matrix.smul_mul c a M }
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: two rows `a_j`, `a_l` that are linearly independent (S1) have a nonzero `2 × 2` minor
+(else `a_j ≠ 0`, with `a_{j i} ≠ 0`, gives `a_{l i} a_j - a_{j i} a_l = 0`). -/
+private theorem exists_minor_ne_zero_szv {q n : Type*} (a : q → n → ℝ)
+    (hS1 : ∀ i j : q, i ≠ j → ∀ p r : ℝ, p • a i + r • a j = 0 → p = 0 ∧ r = 0)
+    {j l : q} (hjl : j ≠ l) : ∃ i i' : n, a j i * a l i' - a j i' * a l i ≠ 0 := by
+  by_contra hcon
+  push Not at hcon
+  -- `a_j ≠ 0` ((S1) with the coefficients `(1, 0)`): pick `i` with `a_{j i} ≠ 0`
+  have hj : a j ≠ 0 := fun h0 =>
+    one_ne_zero (hS1 j l hjl 1 0 (by rw [h0, smul_zero, zero_smul, add_zero])).1
+  obtain ⟨i, hi⟩ := Function.ne_iff.1 hj
+  -- then `a_{l i} a_j - a_{j i} a_l = 0`, against (S1)
+  have hlin : a l i • a j + (-(a j i)) • a l = 0 := funext fun i' => by
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul, Pi.zero_apply]
+    linear_combination -(hcon i i')
+  exact hi (neg_eq_zero.1 (hS1 j l hjl _ _ hlin).2)
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (step (iv)): the minor identity at the row `x = s (e_j + r e_l)`, `j ≠ l`: the two sums
+become `β - s² (c_j a_j + r² c_l a_l)` with `β = Σ_m c_m a_m`, and `s (a_j + r a_l)`. -/
+private theorem minor_at_two_szv {q n : Type*} [Fintype q] (a : q → n → ℝ) (c : q → ℝ)
+    (hF : ∀ (x : q → ℝ) (i i' : n),
+      (∑ m, (1 - x m ^ 2) * c m * a m i) * (∑ m, x m * a m i')
+        - (∑ m, (1 - x m ^ 2) * c m * a m i') * (∑ m, x m * a m i) = 0)
+    {j l : q} (hjl : j ≠ l) (s r : ℝ) (i i' : n) :
+    ((∑ m, c m * a m i) - (s ^ 2 * c j * a j i + (s * r) ^ 2 * c l * a l i))
+        * (s * a j i' + s * r * a l i')
+      - ((∑ m, c m * a m i') - (s ^ 2 * c j * a j i' + (s * r) ^ 2 * c l * a l i'))
+        * (s * a j i + s * r * a l i) = 0 := by
+  classical
+  -- the row `x = s (e_j + r e_l)`
+  obtain ⟨x, hx0, hxj, hxl⟩ : ∃ x : q → ℝ,
+      (∀ m, m ≠ j ∧ m ≠ l → x m = 0) ∧ x j = s ∧ x l = s * r :=
+    ⟨fun m => if m = j then s else if m = l then s * r else 0,
+      fun m hm => by simp only [hm.1, hm.2, ↓reduceIte],
+      by simp only [↓reduceIte],
+      by simp only [hjl.symm, ↓reduceIte]⟩
+  have hQ : ∀ i, ∑ m, x m * a m i = s * a j i + s * r * a l i := fun i => by
+    rw [Fintype.sum_eq_add (f := fun m => x m * a m i) j l hjl
+      fun m hm => by rw [hx0 m hm, zero_mul], hxj, hxl]
+  have hP : ∀ i, ∑ m, (1 - x m ^ 2) * c m * a m i
+      = (∑ m, c m * a m i) - (s ^ 2 * c j * a j i + (s * r) ^ 2 * c l * a l i) := fun i => by
+    have e : ∀ m, (1 - x m ^ 2) * c m * a m i = c m * a m i - x m ^ 2 * c m * a m i :=
+      fun m => by ring
+    rw [Finset.sum_congr rfl fun m _ => e m, Finset.sum_sub_distrib,
+      Fintype.sum_eq_add (f := fun m => x m ^ 2 * c m * a m i) j l hjl
+        fun m hm => by rw [hx0 m hm]; ring, hxj, hxl]
+  have e := hF x i i'
+  rwa [hP, hP, hQ, hQ] at e
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (step (iv)): if the minor identity holds at every row `x` and (S1) holds, then `c = 0`:
+at `x = s (e_j + r e_l)` it reads `s (X + r Y) - s³ (r c_j - r² c_l) w = 0`, `w` a minor of `a_j`,
+`a_l`, and the values at `s = 1, 2`, `r = ±1` give `12 c_j w = 0`. -/
+private theorem eq_zero_of_forall_minor_szv {q n : Type*} [Fintype q] (a : q → n → ℝ)
+    (c : q → ℝ) (hq : 2 ≤ Fintype.card q)
+    (hS1 : ∀ i j : q, i ≠ j → ∀ p r : ℝ, p • a i + r • a j = 0 → p = 0 ∧ r = 0)
+    (hF : ∀ (x : q → ℝ) (i i' : n),
+      (∑ m, (1 - x m ^ 2) * c m * a m i) * (∑ m, x m * a m i')
+        - (∑ m, (1 - x m ^ 2) * c m * a m i') * (∑ m, x m * a m i) = 0) :
+    c = 0 := by
+  funext j
+  -- a second unit `l ≠ j`, and a nonzero minor `w` of `a_j`, `a_l` (S1)
+  obtain ⟨l, hlj⟩ := Fintype.exists_ne_of_one_lt_card (by omega) j
+  obtain ⟨i, i', hW⟩ := exists_minor_ne_zero_szv a hS1 hlj.symm
+  have e11 := minor_at_two_szv a c hF hlj.symm 1 1 i i'
+  have e1m := minor_at_two_szv a c hF hlj.symm 1 (-1) i i'
+  have e21 := minor_at_two_szv a c hF hlj.symm 2 1 i i'
+  have e2m := minor_at_two_szv a c hF hlj.symm 2 (-1) i i'
+  have hcW : c j * (a j i * a l i' - a j i' * a l i) = 0 := by
+    linear_combination (2 * e11 - 2 * e1m - e21 + e2m) / 12
+  exact (mul_eq_zero.1 hcW).resolve_right hW
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (step (iii)): a `2 × 2` minor of the rows `t` of `((1 - w²) ⊙ c) a` and `w a` is a
+polynomial in the entries of `w`; if it vanishes on a nonempty open set, it vanishes everywhere
+(the identity theorem). -/
+private theorem minor_eq_zero_of_open_szv {q : Type*} [Fintype q] (c : q → ℝ) (a : q → d → ℝ)
+    (t : T) (i i' : d) {O : Set (Matrix T q ℝ)} (hO : IsOpen O) (hne : O.Nonempty)
+    (hval : ∀ w ∈ O, (∑ j, (1 - w t j ^ 2) * c j * a j i) * (∑ l, w t l * a l i')
+        - (∑ j, (1 - w t j ^ 2) * c j * a j i') * (∑ l, w t l * a l i) = 0)
+    (w : Matrix T q ℝ) :
+    (∑ j, (1 - w t j ^ 2) * c j * a j i) * (∑ l, w t l * a l i')
+      - (∑ j, (1 - w t j ^ 2) * c j * a j i') * (∑ l, w t l * a l i) = 0 := by
+  obtain ⟨w₀, hw₀⟩ := hne
+  -- the sums are polynomials in the entries of `w`, hence analytic
+  have hP : ∀ i : d, AnalyticOnNhd ℝ
+      (fun w : Matrix T q ℝ => ∑ j, (1 - w t j ^ 2) * c j * a j i) Set.univ := fun i =>
+    Finset.analyticOnNhd_fun_sum _ fun j _ =>
+      ((analyticOnNhd_const.sub ((analyticOnNhd_matrix_entry t j).pow 2)).mul
+        analyticOnNhd_const).mul analyticOnNhd_const
+  have hQ : ∀ i : d, AnalyticOnNhd ℝ (fun w : Matrix T q ℝ => ∑ l, w t l * a l i) Set.univ :=
+    fun i => Finset.analyticOnNhd_fun_sum _ fun l _ =>
+      (analyticOnNhd_matrix_entry t l).mul analyticOnNhd_const
+  have hG := ((hP i).mul (hQ i')).sub ((hP i').mul (hQ i))
+  -- the identity theorem on the (connected) whole space, from the open set `O ∋ w₀`
+  exact hG.eqOn_zero_of_preconnected_of_eventuallyEq_zero isPreconnected_univ (Set.mem_univ w₀)
+    (Filter.eventually_of_mem (hO.mem_nhds hw₀) hval) (Set.mem_univ w)
+
 /-- **Lemma D.17 of the dimension paper (a change of the reads moves the output), for a real `b`.**
 In the case (0), let the blocks be real-analytic MLP blocks, `d ≥ 2`, `θ` regular, and let any two
 rows of the write `V` of block `k` be linearly independent (S1). If
@@ -259,6 +368,47 @@ theorem eq_zero_of_fderiv_suffix_one_sub_sq_zero (hσa : AnalyticOnNhd ℝ σ Se
         (fun h' : Matrix T d ℝ => suffix (Arch.mlp σ (rmsNorm 0) hid) 0 θ k.succ h')
         (w * θ.write k) ((Matrix.of fun t j => (1 - w t j ^ 2) * b t j) * θ.write k) = 0) :
     b = 0 := by
-  sorry
+  classical
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_mlp hσa ℓ
+  -- Lemma D.2 after block `k`: the open dense set `U`
+  obtain ⟨U, hUo, hUd, -, -, hU⟩ := exists_open_dense_fderiv_suffix_zero
+    (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) θ rfl hf hθ hd k.succ
+  -- at least two hidden units: `V` has rank `d ≥ 2`, at most its number of rows
+  have hq : 2 ≤ Fintype.card (hid k) := by
+    have h1 : (θ.write k).rank ≤ Fintype.card (hid k) := Matrix.rank_le_card_height _
+    rw [hθ.rank_write k] at h1
+    omega
+  -- (i) `V` has rank `d`, so `V⁺ V = 1` for some `V⁺`, and `w ↦ w V` is onto, hence open
+  obtain ⟨Vp, hVp⟩ : ∃ Vp : Matrix d (hid k) ℝ, Vp * θ.write k = 1 :=
+    Matrix.vecMul_surjective_iff_exists_left_inverse.1
+      (Matrix.vecMul_surjective_iff_rank_eq_card.2 (hθ.rank_write k))
+  have hopen : IsOpenMap (mulRightCLM_szv (m := T) (θ.write k)) :=
+    (mulRightCLM_szv (m := T) (θ.write k)).isOpenMap fun y =>
+      ⟨y * Vp, by show y * Vp * θ.write k = y; rw [Matrix.mul_assoc, hVp, Matrix.mul_one]⟩
+  -- so the `w ∈ O` with `w V ∈ U` form a nonempty open set `O'`
+  have hO' : IsOpen (O ∩ {w : Matrix T (hid k) ℝ | w * θ.write k ∈ U}) :=
+    hO.inter (hUo.preimage (mulRightCLM_szv (m := T) (θ.write k)).continuous)
+  have hne' : (O ∩ {w : Matrix T (hid k) ℝ | w * θ.write k ∈ U}).Nonempty :=
+    dense_iff_inter_open.1 (hUd.preimage hopen) O hO hne
+  -- (ii) on `O'`, row `t` of `((1 - w²) ⊙ b) V` is a multiple of row `t` of `w V` (Lemma D.2),
+  -- so their `2 × 2` minors vanish
+  have hpar : ∀ w ∈ O ∩ {w : Matrix T (hid k) ℝ | w * θ.write k ∈ U}, ∀ (t : T) (i i' : d),
+      (∑ j, (1 - w t j ^ 2) * b t j * θ.write k j i) * (∑ l, w t l * θ.write k l i')
+        - (∑ j, (1 - w t j ^ 2) * b t j * θ.write k j i') * (∑ l, w t l * θ.write k l i)
+        = 0 := by
+    rintro w ⟨hwO, hwU⟩ t i i'
+    obtain ⟨a, ha⟩ := hU _ hwU _ (h w hwO) t
+    have e1 := congrFun ha i
+    have e2 := congrFun ha i'
+    simp only [Matrix.mul_apply, Matrix.of_apply, Pi.smul_apply, smul_eq_mul] at e1 e2
+    linear_combination (∑ l, w t l * θ.write k l i') * e1 - (∑ l, w t l * θ.write k l i) * e2
+  -- (iii) the minors are polynomials in `w`, so they vanish at every `w`, in particular at the
+  -- matrix with all rows `x`; (iv) then `b_t = 0` by (S1)
+  ext t j
+  have hbt := eq_zero_of_forall_minor_szv (θ.write k) (b t) hq hS1 fun x i i' =>
+    minor_eq_zero_of_open_szv (b t) (θ.write k) t i i' hO' hne' (fun w hw => hpar w hw t i i')
+      (Matrix.of fun _ => x)
+  exact congrFun hbt j
 
 end Skips
