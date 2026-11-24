@@ -433,6 +433,133 @@ private theorem step1_rsn (Wr : Matrix p m ℝ) (b : m → ℝ) (Ww : Matrix m q
     rw [← hL, ← hR, ← e1, ← e2, add_sub_add_left_eq_sub]
   exact smul_left_injective ℝ (sqForm_ne_zero_rsn (hr i) (b i)) key
 
+
+/-! ### Step 2: the classes, and two opposite cells far away -/
+
+/-- **The units of `B_{θ′}` by class:** a sum over the units, with zero terms on the units with
+`Z j` (read `0`), is the sum over the disjoint classes `J_i` plus the sum over the other units. -/
+private theorem sum_split_rsn {β : Type*} [AddCommMonoid β] (J : m → Finset m') (F : Finset m')
+    (Z : m' → Prop) (hdisj : ∀ i i' j, j ∈ J i → j ∈ J i' → i = i')
+    (hF : ∀ j, j ∈ F ↔ ¬ Z j ∧ ∀ i, j ∉ J i) (g : m' → β) (hg : ∀ j, Z j → g j = 0) :
+    ∑ j, g j = ∑ i, ∑ j ∈ J i, g j + ∑ j ∈ F, g j := by
+  classical
+  have hpt : ∀ j, g j = ∑ i, (if j ∈ J i then g j else 0) + if j ∈ F then g j else 0 := by
+    intro j
+    by_cases hZ : Z j
+    · simp [hg j hZ]
+    by_cases hex : ∃ i, j ∈ J i
+    · obtain ⟨i, hi⟩ := hex
+      have hjF : j ∉ F := fun h => ((hF j).1 h).2 i hi
+      rw [Finset.sum_eq_single i, ite_eq_left hi, ite_eq_right hjF, add_zero]
+      · intro i' _ hi'
+        exact ite_eq_right fun h => hi' (hdisj i' i j h hi)
+      · intro h; exact absurd (Finset.mem_univ i) h
+    · push Not at hex
+      have hjF : j ∈ F := (hF j).2 ⟨hZ, hex⟩
+      simp [hex, hjF]
+  calc ∑ j, g j = ∑ j, (∑ i, (if j ∈ J i then g j else 0) + if j ∈ F then g j else 0) :=
+        Finset.sum_congr rfl fun j _ => hpt j
+    _ = ∑ i, ∑ j ∈ J i, g j + ∑ j ∈ F, g j := by
+        rw [Finset.sum_add_distrib, Finset.sum_comm]
+        congr 1
+        · exact Finset.sum_congr rfl fun i _ => by rw [Finset.sum_ite_mem, Finset.univ_inter]
+        · rw [Finset.sum_ite_mem, Finset.univ_inter]
+
+/-- **Step 2.** At an input `x` off all hyperplanes, (C) and (K) give
+`(0, M_{:,o}) = ∑_i N_{i,o} φ_i + ∑_{j ∈ F open at x} ŵ'_{j,o} φ'_j`, with
+`N_{i,o} = ∑_{j ∈ J_i, λ_j < 0} λ_j² ŵ'_{j,o}` (the `μ_i` of the paper): the units of the class of
+`i` contribute `P_{i,o} φ_i` if `i` is open at `x` and `N_{i,o} φ_i` if not, and
+`P_{i,o} − ŵ_{i,o} = N_{i,o}`. -/
+private theorem step2_rsn (Wr : Matrix p m ℝ) (b : m → ℝ) (Ww : Matrix m q ℝ)
+    (Wr' : Matrix p m' ℝ) (b' : m' → ℝ) (Ww' : Matrix m' q ℝ) (M : Matrix p q ℝ)
+    (J : m → Finset m') (lam : m → m' → ℝ) (F : Finset m') (P N : m → q → ℝ)
+    (hlam : ∀ i, ∀ j ∈ J i, lam i j ≠ 0 ∧ Wr'ᵀ j = lam i j • Wrᵀ i ∧ b' j = lam i j * b i)
+    (hdisj : ∀ i i' j, j ∈ J i → j ∈ J i' → i = i')
+    (hF : ∀ j, j ∈ F ↔ ¬ Wr'ᵀ j = 0 ∧ ∀ i, j ∉ J i)
+    (hP : ∀ i o, P i o = ∑ j ∈ J i, (if 0 < lam i j then lam i j ^ 2 * Ww' j o else 0))
+    (hN : ∀ i o, N i o = ∑ j ∈ J i, (if 0 < lam i j then 0 else lam i j ^ 2 * Ww' j o))
+    (hK : ∀ i o, Ww i o = P i o - N i o)
+    (x : p → ℝ) (hx : ∀ i, x ⬝ᵥ Wrᵀ i + b i ≠ 0) (o : q)
+    (e : ((0 : Matrix p p ℝ), fun a => M a o)
+          + ∑ i, (if 0 < x ⬝ᵥ Wrᵀ i + b i then Ww i o else 0) • sqForm (Wrᵀ i) (b i)
+        = ∑ j, (if 0 < x ⬝ᵥ Wr'ᵀ j + b' j then Ww' j o else 0) • sqForm (Wr'ᵀ j) (b' j)) :
+    ((0 : Matrix p p ℝ), fun a => M a o)
+      = ∑ i, N i o • sqForm (Wrᵀ i) (b i)
+        + ∑ j ∈ F.filter (fun j => 0 < x ⬝ᵥ Wr'ᵀ j + b' j), Ww' j o • sqForm (Wr'ᵀ j) (b' j) := by
+  classical
+  rw [sum_split_rsn J F (fun j => Wr'ᵀ j = 0) hdisj hF _
+    (fun j hj => by simp only [hj, sqForm_zero_rsn, smul_zero])] at e
+  -- the class of `i` contributes `P_{i,o} φ_i` or `N_{i,o} φ_i`, as `i` is open at `x` or not
+  have hcls : ∀ i, ∑ j ∈ J i, (if 0 < x ⬝ᵥ Wr'ᵀ j + b' j then Ww' j o else 0)
+        • sqForm (Wr'ᵀ j) (b' j)
+      = (if 0 < x ⬝ᵥ Wrᵀ i + b i then P i o else N i o) • sqForm (Wrᵀ i) (b i) := by
+    intro i
+    have hterm : ∀ j ∈ J i, (if 0 < x ⬝ᵥ Wr'ᵀ j + b' j then Ww' j o else 0)
+          • sqForm (Wr'ᵀ j) (b' j)
+        = ((if 0 < lam i j * (x ⬝ᵥ Wrᵀ i + b i) then Ww' j o else 0) * lam i j ^ 2)
+          • sqForm (Wrᵀ i) (b i) := by
+      intro j hj
+      obtain ⟨-, hw', hb'⟩ := hlam i j hj
+      have harg : x ⬝ᵥ Wr'ᵀ j + b' j = lam i j * (x ⬝ᵥ Wrᵀ i + b i) := by
+        rw [hw', hb', dotProduct_smul, smul_eq_mul]; ring
+      rw [harg, hw', hb', sqForm_smul_rsn, smul_smul]
+    rw [Finset.sum_congr rfl hterm, ← Finset.sum_smul]
+    congr 1
+    rcases lt_or_gt_of_ne (hx i) with hneg | hpos
+    · rw [ite_eq_right (not_lt.2 hneg.le), hN]
+      exact Finset.sum_congr rfl fun j hj => ite_mul_neg_rsn (hlam i j hj).1 hneg
+    · rw [ite_eq_left hpos, hP]
+      exact Finset.sum_congr rfl fun j hj => ite_mul_pos_rsn (hlam i j hj).1 hpos
+  rw [Finset.sum_congr rfl fun i _ => hcls i] at e
+  rw [eq_sub_of_add_eq e, add_sub_right_comm, ← Finset.sum_sub_distrib]
+  congr 1
+  · -- by (K), what is left of the class of `i` is `N_{i,o} φ_i`
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [← sub_smul]
+    congr 1
+    have := hK i o
+    split_ifs <;> linarith
+  · rw [Finset.sum_filter]
+    exact Finset.sum_congr rfl fun j _ => by split_ifs <;> simp
+
+/-- **Two opposite cells far away:** `x₁ = t v` and `x₂ = −t v`, for a direction `v` seen by every
+nonzero read and a large `t`, lie on no hyperplane, and no unit with a nonzero read is open at
+both. -/
+private theorem exists_far_rsn (Wr : Matrix p m ℝ) (b : m → ℝ) (Wr' : Matrix p m' ℝ)
+    (b' : m' → ℝ) (hr : ∀ i, Wrᵀ i ≠ 0) :
+    ∃ x₁ x₂ : p → ℝ,
+      ((∀ i, x₁ ⬝ᵥ Wrᵀ i + b i ≠ 0) ∧ (∀ j, x₁ ⬝ᵥ Wr'ᵀ j + b' j = 0 → Wr'ᵀ j = 0)) ∧
+      ((∀ i, x₂ ⬝ᵥ Wrᵀ i + b i ≠ 0) ∧ (∀ j, x₂ ⬝ᵥ Wr'ᵀ j + b' j = 0 → Wr'ᵀ j = 0)) ∧
+      ∀ j, Wr'ᵀ j ≠ 0 → ¬ (0 < x₁ ⬝ᵥ Wr'ᵀ j + b' j ∧ 0 < x₂ ⬝ᵥ Wr'ᵀ j + b' j) := by
+  classical
+  -- a direction seen by every nonzero read
+  obtain ⟨v, -, hv⟩ := exists_dotProduct_eq_zero_and_ne_zero_rsn (0 : p → ℝ)
+    (Sum.elim (fun i => Wrᵀ i) (fun j : {j : m' // Wr'ᵀ j ≠ 0} => Wr'ᵀ j.1)) (by
+      rintro (i | j) r h <;> rw [smul_zero] at h
+      · exact hr i h
+      · exact j.2 h)
+  have hv1 : ∀ i, v ⬝ᵥ Wrᵀ i ≠ 0 := fun i => hv (Sum.inl i)
+  have hv2 : ∀ j, Wr'ᵀ j ≠ 0 → v ⬝ᵥ Wr'ᵀ j ≠ 0 := fun j hj => hv (Sum.inr ⟨j, hj⟩)
+  obtain ⟨t, -, ht⟩ := exists_large_rsn
+    (Sum.elim (fun _ : m => True) (fun j : m' => Wr'ᵀ j ≠ 0))
+    (Sum.elim (fun i => v ⬝ᵥ Wrᵀ i) (fun j => v ⬝ᵥ Wr'ᵀ j)) (Sum.elim b b') (by
+      rintro (i | j) hk
+      · exact hv1 i
+      · exact hv2 j hk)
+  have ht1 : ∀ i, |b i| < t * |v ⬝ᵥ Wrᵀ i| := fun i => ht (Sum.inl i) trivial
+  have ht2 : ∀ j, Wr'ᵀ j ≠ 0 → |b' j| < t * |v ⬝ᵥ Wr'ᵀ j| := fun j hj => ht (Sum.inr j) hj
+  have e1 : ∀ w : p → ℝ, (t • v) ⬝ᵥ w = t * (v ⬝ᵥ w) := fun w => by
+    rw [smul_dotProduct, smul_eq_mul]
+  have e2 : ∀ w : p → ℝ, ((-t) • v) ⬝ᵥ w = -t * (v ⬝ᵥ w) := fun w => by
+    rw [smul_dotProduct, smul_eq_mul]
+  refine ⟨t • v, (-t) • v, ⟨fun i => ?_, fun j h0 => ?_⟩, ⟨fun i => ?_, fun j h0 => ?_⟩,
+    fun j hj => ?_⟩
+  · rw [e1]; exact (far_sign_rsn (ht1 i)).1
+  · by_contra hj; rw [e1] at h0; exact (far_sign_rsn (ht2 j hj)).1 h0
+  · rw [e2]; exact (far_sign_rsn (ht1 i)).2.1
+  · by_contra hj; rw [e2] at h0; exact (far_sign_rsn (ht2 j hj)).2.1 h0
+  · rw [e1, e2]; exact (far_sign_rsn (ht2 j hj)).2.2
+
 /-! ### Dimensions -/
 
 /-- A linearly independent family in a subspace has at most its dimension many vectors. -/
