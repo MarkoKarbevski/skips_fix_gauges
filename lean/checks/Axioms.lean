@@ -1486,3 +1486,12 @@ import SkipsLean
 #print axioms Skips.exists_vanillaBlockB_add_linear_gelu_of_rank
 #print axioms Skips.forall_exists_ne_vanillaBlockB_of_bounded
 #print axioms Skips.forall_exists_ne_vanillaBlockB_tanh
+#print axioms Skips.relu_absorb_of_vanillaBlockB_absorb
+#print axioms Skips.relu_absorb_of_vanillaBlockB_relu_absorb
+#print axioms Skips.relu_absorb_of_vanillaBlockB_gelu_absorb
+#print axioms Skips.ae_not_relu_absorbB_same_width
+#print axioms Skips.ae_not_gelu_absorbB_same_width
+#print axioms Skips.ae_not_relu_absorbB_of_card_lt
+#print axioms Skips.ae_not_gelu_absorbB_of_card_lt
+#print axioms Skips.ae_relu_absorbB_add_card
+#print axioms Skips.ae_gelu_absorbB_add_card

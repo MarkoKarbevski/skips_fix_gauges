@@ -187,10 +187,9 @@ theorem relu_absorb_of_vanillaBlockB_gelu_absorb {m' : Type*} [Fintype m'] (Wr :
   -- GELU is at distance at most `1` from ReLU
   exact relu_absorb_of_vanillaBlockB_absorb ⟨1, abs_gelu_sub_relu_le⟩ Wr b Ww c Wr' b' Ww' c' M h
 
-/-- **Theorem C.1 (iii) for an activation at a bounded distance from ReLU, with finitely many
-outputs.** (The statements below do not assume `[Fintype q]`; for an infinite `q` they fail for
-some additive Haar measures, see the report of `lean-bvl`. With `[Fintype q]` each of them is this
-lemma with `κ = 0` for ReLU and `κ = 1` for GELU.) -/
+/-- **Theorem C.1 (iii) for an activation at a bounded distance from ReLU.** The two statements
+below are this lemma with `κ = 0` for ReLU and `κ = 1` for GELU. (The outputs are finitely many:
+for an infinite index type `q` the statement fails for some additive Haar measures.) -/
 private theorem ae_not_absorbB_same_width_bvl [Fintype q] {σ : ℝ → ℝ}
     (hσ : ∃ κ : ℝ, ∀ z, |σ z - relu z| ≤ κ) (hp : 2 ≤ Fintype.card p) (M : Matrix p q ℝ)
     (hM : M ≠ 0) (μ : Measure (Matrix p m ℝ × (m → ℝ) × Matrix m q ℝ × (q → ℝ)))
@@ -211,20 +210,22 @@ private theorem ae_not_absorbB_same_width_bvl [Fintype q] {σ : ℝ → ℝ}
 /-- **Theorem C.1 (iii) of the absorb paper for ReLU blocks with biases:** fix `M ≠ 0`. For generic
 `θ = (W_read, b, W_write, c)` no ReLU block with biases of the same width computes
 `x M + B_θ(x)`. -/
-theorem ae_not_relu_absorbB_same_width (hp : 2 ≤ Fintype.card p) (M : Matrix p q ℝ) (hM : M ≠ 0)
+theorem ae_not_relu_absorbB_same_width [Fintype q] (hp : 2 ≤ Fintype.card p) (M : Matrix p q ℝ)
+    (hM : M ≠ 0)
     (μ : Measure (Matrix p m ℝ × (m → ℝ) × Matrix m q ℝ × (q → ℝ))) [μ.IsAddHaarMeasure] :
     ∀ᵐ θ ∂μ, ¬ ∃ (Wr' : Matrix p m ℝ) (b' : m → ℝ) (Ww' : Matrix m q ℝ) (c' : q → ℝ),
       ∀ x : p → ℝ, x ᵥ* M + vanillaBlockB relu θ.1 θ.2.1 θ.2.2.1 θ.2.2.2 x
-        = vanillaBlockB relu Wr' b' Ww' c' x := by
-  sorry
+        = vanillaBlockB relu Wr' b' Ww' c' x :=
+  ae_not_absorbB_same_width_bvl ⟨0, fun z => by rw [sub_self, abs_zero]⟩ hp M hM μ
 
 /-- **Theorem C.1 (iii) of the absorb paper for GELU blocks with biases.** -/
-theorem ae_not_gelu_absorbB_same_width (hp : 2 ≤ Fintype.card p) (M : Matrix p q ℝ) (hM : M ≠ 0)
+theorem ae_not_gelu_absorbB_same_width [Fintype q] (hp : 2 ≤ Fintype.card p) (M : Matrix p q ℝ)
+    (hM : M ≠ 0)
     (μ : Measure (Matrix p m ℝ × (m → ℝ) × Matrix m q ℝ × (q → ℝ))) [μ.IsAddHaarMeasure] :
     ∀ᵐ θ ∂μ, ¬ ∃ (Wr' : Matrix p m ℝ) (b' : m → ℝ) (Ww' : Matrix m q ℝ) (c' : q → ℝ),
       ∀ x : p → ℝ, x ᵥ* M + vanillaBlockB gelu θ.1 θ.2.1 θ.2.2.1 θ.2.2.2 x
-        = vanillaBlockB gelu Wr' b' Ww' c' x := by
-  sorry
+        = vanillaBlockB gelu Wr' b' Ww' c' x :=
+  ae_not_absorbB_same_width_bvl ⟨1, abs_gelu_sub_relu_le⟩ hp M hM μ
 
 end Rays
 
