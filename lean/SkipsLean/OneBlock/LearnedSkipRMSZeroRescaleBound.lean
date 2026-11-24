@@ -499,8 +499,8 @@ private noncomputable def scaleSkipLin_lzr {L : ℕ} (S : Fin L → Matrix d d �
 omit [Nonempty T] in
 /-- **Proof of Theorem B.1 (iii) of the skips paper, "The case `ε = 0`", the bound for the learned
 skip with symmetries inside the block:** for one block with a full learned skip `A` that is
-invertible, under pre-RMSNorm with `ε = 0`, if `E` has rank `d ≥ 1` and `U` is a space spanned by
-directions of symmetries inside the block, then `fd + (d(d−1) + 2) + dim U ≤ P + d²`, where `P`
+invertible, under pre-RMSNorm with `ε = 0`, if `E` has rank `d ≥ 1` and `U` is a subspace of the
+span of the directions of symmetries inside the block, then `fd + (d(d−1) + 2) + dim U ≤ P + d²`, where `P`
 counts the weights without the skip. -/
 theorem funDimLearned_add_le_rmsNorm_zero' {A : Arch T d 1} [Nonempty d] (hA : A.χ = rmsNorm 0)
     (p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ))
