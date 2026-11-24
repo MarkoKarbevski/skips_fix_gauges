@@ -57,3 +57,5 @@ import SkipsLean.Absorb.FirstBlock
 import SkipsLean.Residual.UpperBoundSymmetries
 import SkipsLean.OneBlock.ResidualRescale
 import SkipsLean.OneBlock.ReGLU
+import SkipsLean.Absorb.RMSNormRays
+import SkipsLean.Absorb.RMSNormGeneric
