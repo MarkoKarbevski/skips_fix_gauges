@@ -199,3 +199,5 @@ import SkipsLean.OneBlock.Attention
 import SkipsLean.OneBlock.AttentionStepOne
 import SkipsLean.OneBlock.AttentionGeneric
 import SkipsLean.OneBlock.AttentionDim
+import SkipsLean.Absorb.ShortSequencesPoly
+import SkipsLean.Absorb.ShortSequences
