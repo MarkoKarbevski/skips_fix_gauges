@@ -183,3 +183,4 @@ import SkipsLean.Residual.SmallParameterOn
 import SkipsLean.Residual.SmallWritesOn
 import SkipsLean.Residual.DepthRescale
 import SkipsLean.Residual.DepthReGLU
+import SkipsLean.Absorb.InjectiveBlocks
