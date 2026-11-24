@@ -103,7 +103,46 @@ theorem eventually_finrank_range_le_of_small_parameter (G : ℝ → P → Y)
           ((fderiv ℝ (G 0) θ).comp (ContinuousLinearMap.id ℝ P - π)
             + (fderiv ℝ (fun θ' => deriv (fun τ => G τ θ') 0) θ).comp π).toLinearMap)
         ≤ Module.finrank ℝ (LinearMap.range (fderiv ℝ (G τ) θ).toLinearMap) := by
-  sorry
+  -- the limit `J_0`
+  set K0 : P →L[ℝ] Y := (fderiv ℝ (G 0) θ).comp (ContinuousLinearMap.id ℝ P - π)
+      + (fderiv ℝ (fun θ' => deriv (fun τ => G τ θ') 0) θ).comp π with hK0
+  set r := Module.finrank ℝ (LinearMap.range K0.toLinearMap) with hr
+  -- step 5: `r` directions `v i` whose images `J_0 v i` are linearly independent
+  let b := Module.finBasis ℝ (LinearMap.range K0.toLinearMap)
+  have hb : ∀ i, ∃ v, K0 v = (b i : Y) := fun i => LinearMap.mem_range.1 (b i).2
+  choose v hv using hb
+  have hli0 : LinearIndependent ℝ (fun i => K0 (v i)) := by
+    have hl := b.linearIndependent.map' (LinearMap.range K0.toLinearMap).subtype
+      (Submodule.ker_subtype _)
+    convert hl using 1
+    funext i
+    exact hv i
+  -- step 4: `J_τ S_τ v i → J_0 v i` as `τ → 0`, `τ ≠ 0`
+  set f : ℝ → Fin r → Y := fun τ i => fderiv ℝ (G τ) θ ((v i - π (v i)) + τ⁻¹ • π (v i))
+    with hf
+  have htend : Tendsto f (𝓝[≠] 0) (𝓝 (fun i => K0 (v i))) := by
+    refine tendsto_pi_nhds.2 fun i => ?_
+    -- the part `η - π η`: continuity at `0`
+    have ha := ((hasDerivAt_fderiv_small_parameter G hG θ (v i - π (v i))).continuousAt.tendsto
+      ).mono_left (nhdsWithin_le_nhds (s := {(0 : ℝ)}ᶜ))
+    -- the part `τ⁻¹ π η`: a slope, since `D_θ G(0, θ) (π η) = 0`
+    have hs := (hasDerivAt_fderiv_small_parameter G hG θ (π (v i))).tendsto_slope_zero
+    simp only [zero_add, h0, sub_zero] at hs
+    have hsum := ha.add hs
+    convert hsum using 1
+    · funext τ
+      simp only [hf, map_add, map_smul]
+    · simp only [hK0, _root_.add_apply, ContinuousLinearMap.comp_apply,
+        _root_.sub_apply, ContinuousLinearMap.id_apply]
+  -- linear independence is an open condition
+  have hev : ∀ᶠ τ in 𝓝[≠] (0 : ℝ), LinearIndependent ℝ (f τ) :=
+    htend.eventually (isOpen_setOfPred_linearIndependent.mem_nhds hli0)
+  filter_upwards [hev] with τ hτ
+  -- the `f τ i` lie in the range of `D_θ G(τ, θ)`
+  calc r = Fintype.card (Fin r) := (Fintype.card_fin r).symm
+    _ = Module.finrank ℝ (Submodule.span ℝ (Set.range (f τ))) := (finrank_span_eq_card hτ).symm
+    _ ≤ Module.finrank ℝ (LinearMap.range (fderiv ℝ (G τ) θ).toLinearMap) :=
+      Submodule.finrank_mono (Submodule.span_le.2 (by rintro _ ⟨i, rfl⟩; exact ⟨_, rfl⟩))
 
 /-- **The same step in the form used for Lemma A.27,** by the kernel of the limit: if every
 direction `η` with `J_0 η = 0` lies in a subspace `V`, then for all small `τ ≠ 0` the rank of
@@ -117,6 +156,14 @@ theorem eventually_finrank_le_of_small_parameter (G : ℝ → P → Y)
       Module.finrank ℝ P
         ≤ Module.finrank ℝ (LinearMap.range (fderiv ℝ (G τ) θ).toLinearMap)
           + Module.finrank ℝ V := by
-  sorry
+  filter_upwards [eventually_finrank_range_le_of_small_parameter G hG π θ h0] with τ hτ
+  set K0 : P →L[ℝ] Y := (fderiv ℝ (G 0) θ).comp (ContinuousLinearMap.id ℝ P - π)
+      + (fderiv ℝ (fun θ' => deriv (fun τ => G τ θ') 0) θ).comp π with hK0
+  -- the kernel of `J_0` lies in `V`
+  have hker : LinearMap.ker K0.toLinearMap ≤ V := fun η hη => hV η hη
+  -- rank–nullity for `J_0`
+  have h1 := LinearMap.finrank_range_add_finrank_ker K0.toLinearMap
+  have h2 := Submodule.finrank_mono hker
+  omega
 
 end Skips
