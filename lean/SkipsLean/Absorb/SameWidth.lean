@@ -336,6 +336,116 @@ variable {T dIn dOut : Type*} {d : Type*} [Fintype T] [Fintype d] [DecidableEq d
   [Fintype dOut]
 variable {hid : Fin 1 → Type} [∀ ℓ, Fintype (hid ℓ)]
 
+omit [Fintype T] [Fintype dOut] in
+/-- A row of a residual network of one MLP block: `x E D + σ(x E W_read) W_write D`. -/
+private theorem eval_residual_row (σ : ℝ → ℝ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) (X : Matrix T dIn ℝ) (t : T) :
+    eval (Arch.mlp σ id hid) 1 θ X t
+      = X t ᵥ* (θ.E * θ.D) + vanillaBlock σ (θ.E * θ.read 0) (θ.write 0 * θ.D) (X t) := by
+  have h1 : (Fin.last 1 : Fin 2) = (0 : Fin 1).succ := rfl
+  have hχ : (Arch.mlp (T := T) (d := d) σ id hid).χ = id := rfl
+  have hf : (Arch.mlp (T := T) (d := d) σ id hid).f 0 = fun M => M.map σ := rfl
+  -- `h_1 = h_0 + σ(h_0 W_read) W_write` with `h_0 = X E`
+  rw [eval, h1, hidden_succ, Fin.castSucc_zero, hidden_zero, hχ, hf]
+  simp only [id_eq, Pi.one_apply, Matrix.mul_one]
+  have e : (X * θ.E + (X * θ.E * θ.read 0).map σ * θ.write 0) * θ.D
+      = X * (θ.E * θ.D) + (X * (θ.E * θ.read 0)).map σ * (θ.write 0 * θ.D) := by
+    rw [Matrix.add_mul, Matrix.mul_assoc X θ.E θ.D, Matrix.mul_assoc X θ.E (θ.read 0),
+      Matrix.mul_assoc]
+  rw [e]
+  exact congrArg₂ (· + ·) (Matrix.mul_apply_eq_vecMul X _ t)
+    (map_mul_mul_row σ (θ.E * θ.read 0) (θ.write 0 * θ.D) X t)
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dOut] in
+/-- A row of a skipless network of one MLP block: `σ(x E' W_read') W_write' D'`. -/
+private theorem eval_skipless_row (σ : ℝ → ℝ) {d' : Type*} [Fintype d']
+    (θ' : Params (Arch.mlp (T := T) (d := d') σ id hid) dIn dOut) (X : Matrix T dIn ℝ) (t : T) :
+    eval (Arch.mlp σ id hid) 0 θ' X t
+      = vanillaBlock σ (θ'.E * θ'.read 0) (θ'.write 0 * θ'.D) (X t) := by
+  have h1 : (Fin.last 1 : Fin 2) = (0 : Fin 1).succ := rfl
+  have hχ : (Arch.mlp (T := T) (d := d') σ id hid).χ = id := rfl
+  have hf : (Arch.mlp (T := T) (d := d') σ id hid).f 0 = fun M => M.map σ := rfl
+  rw [eval, h1, hidden_succ, Fin.castSucc_zero, hidden_zero, hχ, hf]
+  simp only [Pi.zero_apply, Matrix.mul_zero, zero_add, id_eq]
+  rw [Matrix.mul_assoc X θ'.E (θ'.read 0), Matrix.mul_assoc _ (θ'.write 0) θ'.D]
+  exact map_mul_mul_row σ _ _ X t
+
+omit [Fintype T] [DecidableEq d] in
+/-- At generic parameters of one MLP block, `E W_read[:,S] W_write[S,:] D ≠ -E D` for every set
+`S` of units, if `E D` can be nonzero: an entry of the difference is a polynomial in the weights,
+equal to `(E D)_{a o} ≠ 0` when the write vanishes. -/
+private theorem ae_subProd_ne_neg_oneBlock {σ : ℝ → ℝ} [DecidableEq (hid 0)]
+    (μ : Measure (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)) [μ.IsAddHaarMeasure]
+    (hd : 2 ≤ Fintype.card d) (hdIn : Fintype.card d ≤ Fintype.card dIn)
+    (hdOut : Fintype.card d ≤ Fintype.card dOut) :
+    ∀ᵐ θ ∂μ, ∀ S : Finset (hid 0),
+      subProd S (θ.E * θ.read 0) (θ.write 0 * θ.D) ≠ -(θ.E * θ.D) := by
+  obtain ⟨a⟩ : Nonempty dIn := Fintype.card_pos_iff.1 (by omega)
+  obtain ⟨o⟩ : Nonempty dOut := Fintype.card_pos_iff.1 (by omega)
+  refine ae_all_iff.2 fun S => ?_
+  -- the entry `(a, o)` of `E W_read Π_S W_write D + E D` is a polynomial in the parameters
+  have hg : AnalyticOnNhd ℝ (fun θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut =>
+      subProd S (θ.E * θ.read 0) (θ.write 0 * θ.D) a o + (θ.E * θ.D) a o) Set.univ := by
+    have hED : AnalyticOnNhd ℝ (fun θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut =>
+        (θ.E * θ.D) a o) Set.univ :=
+      analyticOnNhd_mul_apply (Params.linE (A := Arch.mlp (T := T) (d := d) σ id hid) (dIn := dIn) (dOut := dOut))
+        Params.linD a o
+    refine AnalyticOnNhd.add ?_ hED
+    have h1 : ∀ a k, AnalyticOnNhd ℝ
+        (fun θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut =>
+          (θ.E * θ.read 0 * Matrix.diagonal (fun j => if j ∈ S then (1 : ℝ) else 0)) a k)
+        Set.univ :=
+      analyticOnNhd_mul_entry
+        (F := fun θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut => θ.E * θ.read 0)
+        (G := fun _ => Matrix.diagonal (fun j => if j ∈ S then (1 : ℝ) else 0))
+        (fun a i => analyticOnNhd_E_mul_read (A := Arch.mlp (T := T) (d := d) σ id hid) (dOut := dOut) 0 a i)
+        (fun _ _ => analyticOnNhd_const)
+    exact analyticOnNhd_mul_entry
+      (F := fun θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut =>
+        θ.E * θ.read 0 * Matrix.diagonal (fun j => if j ∈ S then (1 : ℝ) else 0))
+      (G := fun θ => θ.write 0 * θ.D) h1
+      (fun i o => analyticOnNhd_write_mul_D (A := Arch.mlp (T := T) (d := d) σ id hid) (dIn := dIn) 0 i o) a o
+  -- at the parameters with `W_write = 0` and `E`, `D` of ones it is `card d ≠ 0`
+  let θ₀ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut :=
+    ⟨Matrix.of fun _ _ => 1, fun _ => 0, fun _ => 0, Matrix.of fun _ _ => 1⟩
+  have h0 : subProd S (θ₀.E * θ₀.read 0) (θ₀.write 0 * θ₀.D) a o + (θ₀.E * θ₀.D) a o ≠ 0 := by
+    simp only [θ₀, subProd, Matrix.zero_mul, Matrix.mul_zero, Matrix.zero_apply, zero_add]
+    simp only [Matrix.mul_apply, Matrix.of_apply]
+    exact sum_one_mul_one_ne_zero hd
+  filter_upwards [ae_ne_zero_of_analytic μ hg ⟨θ₀, h0⟩] with θ hθ hS
+  exact hθ (by rw [hS, Matrix.neg_apply, neg_add_cancel])
+
+/-- Proposition 3.2 for an activation for which Corollary A.9 holds. -/
+private theorem ae_ne_skipless_oneBlock_of {σ : ℝ → ℝ} [Nonempty T] [DecidableEq (hid 0)]
+    (hσ : ∀ (Wr : Matrix dIn (hid 0) ℝ) (Ww : Matrix (hid 0) dOut ℝ), Nondegenerate Wr Ww →
+      ∀ (M : Matrix dIn dOut ℝ) (Wr' : Matrix dIn (hid 0) ℝ) (Ww' : Matrix (hid 0) dOut ℝ),
+        (∀ x : dIn → ℝ, x ᵥ* M + vanillaBlock σ Wr Ww x = vanillaBlock σ Wr' Ww' x) →
+        ∃ S : Finset (hid 0), subProd S Wr Ww = -M)
+    (μ : Measure (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)) [μ.IsAddHaarMeasure]
+    (hd : 2 ≤ Fintype.card d) (hdIn : Fintype.card d ≤ Fintype.card dIn)
+    (hdOut : Fintype.card d ≤ Fintype.card dOut) (hhid : Fintype.card d ≤ Fintype.card (hid 0)) :
+    ∀ᵐ θ ∂μ, ∀ (d' : Type) [Fintype d']
+      (θ' : Params (Arch.mlp (T := T) (d := d') σ id hid) dIn dOut),
+      ∃ X : Matrix T dIn ℝ,
+        eval (Arch.mlp σ id hid) 1 θ X ≠ eval (Arch.mlp σ id hid) 0 θ' X := by
+  filter_upwards [ae_oneBlockGeneric μ hd hdIn hdOut hhid,
+    ae_subProd_ne_neg_oneBlock μ hd hdIn hdOut] with θ hθ hS
+  intro d' _ θ'
+  by_contra hall
+  have heq : ∀ X : Matrix T dIn ℝ,
+      eval (Arch.mlp σ id hid) 1 θ X = eval (Arch.mlp σ id hid) 0 θ' X :=
+    fun X => by_contra fun hne => hall ⟨X, hne⟩
+  -- on an input whose rows all equal `x`, the networks are the blocks of Corollary A.9, with the
+  -- reads `E W_read`, the writes `W_write D` and `M = E D`
+  have hrow : ∀ x : dIn → ℝ, x ᵥ* (θ.E * θ.D)
+      + vanillaBlock σ (θ.E * θ.read 0) (θ.write 0 * θ.D) x
+      = vanillaBlock σ (θ'.E * θ'.read 0) (θ'.write 0 * θ'.D) x := by
+    intro x
+    have h := congrFun (heq (Matrix.of fun _ => x)) (Classical.arbitrary T)
+    rwa [eval_residual_row, eval_skipless_row] at h
+  obtain ⟨S, hS'⟩ := hσ _ _ ⟨hθ.col_ne_zero, hθ.col_not_collinear, hθ.row_ne_zero⟩ _ _ _ hrow
+  exact hS S hS'
+
 /-- **Proposition 3.2 for ReLU:** for almost every choice of weights, a residual network of one
 ReLU block equals no skipless network of one ReLU block of the same width (with its own model
 dimension, embedding, read, write and readout). Scope of the paper: `d_in, d_out, d_hidden ≥ d ≥ 2`. -/
@@ -347,7 +457,10 @@ theorem ae_ne_skipless_oneBlock_relu [Nonempty T]
       (θ' : Params (Arch.mlp (T := T) (d := d') relu id hid) dIn dOut),
       ∃ X : Matrix T dIn ℝ,
         eval (Arch.mlp relu id hid) 1 θ X ≠ eval (Arch.mlp relu id hid) 0 θ' X := by
-  sorry
+  classical
+  -- Corollary A.9 with `p = d_in` (`d_in ≥ d ≥ 2`)
+  exact ae_ne_skipless_oneBlock_of (fun Wr Ww hnd M Wr' Ww' h =>
+    exists_subProd_eq_neg_of_relu_absorb (by omega) Wr Ww hnd M Wr' Ww' h) μ hd hdIn hdOut hhid
 
 /-- **Proposition 3.2 for GELU.** -/
 theorem ae_ne_skipless_oneBlock_gelu [Nonempty T]
@@ -358,7 +471,10 @@ theorem ae_ne_skipless_oneBlock_gelu [Nonempty T]
       (θ' : Params (Arch.mlp (T := T) (d := d') gelu id hid) dIn dOut),
       ∃ X : Matrix T dIn ℝ,
         eval (Arch.mlp gelu id hid) 1 θ X ≠ eval (Arch.mlp gelu id hid) 0 θ' X := by
-  sorry
+  classical
+  -- Corollary A.9 with `p = d_in` (`d_in ≥ d ≥ 2`)
+  exact ae_ne_skipless_oneBlock_of (fun Wr Ww hnd M Wr' Ww' h =>
+    exists_subProd_eq_neg_of_gelu_absorb (by omega) Wr Ww hnd M Wr' Ww' h) μ hd hdIn hdOut hhid
 
 end OneBlock
 
