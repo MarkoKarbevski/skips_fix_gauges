@@ -1611,3 +1611,5 @@ import SkipsLean
 #print axioms Skips.ae_exists_cob_heads_of_eval_eq_skipless_attentionGated_of_ae_funDim
 #print axioms Skips.ae_exists_cob_heads_of_eval_eq_skipless_attentionGated_rmsNorm_of_ae_funDim
 #print axioms Skips.exists_antisymm_scale_of_flatOn_residual_rmsNorm_zero_on
+#print axioms Skips.cob_eq_of_eval_cob_residual_rmsNorm_zero
+#print axioms Skips.eval_cob_residual_rmsNorm_zero_iff
