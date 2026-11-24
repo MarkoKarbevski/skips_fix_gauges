@@ -13,7 +13,7 @@ state `h_k` is set to `h`:
   `𝓑_{>L}(h) = χ(h) D`,   `𝓑_{>k-1}(h) = 𝓑_{>k}(g_k(χ(h)))`,   so that `F_θ(x) = 𝓑_{>0}(x E)`.
 
 It depends on the weights of the blocks `k+1, …, L` and on `D`. For a `d × d` matrix `Z` and a
-direction `η` of the parameters, the identity (18) of the paper is
+direction `η` of the parameters, the identity (16) of the paper is
 
   `𝐃𝓑_{>k}(h) (h Z) + 𝐃_θ 𝓑_{>k}(h) η = 0`   for all `h`,
 
@@ -78,7 +78,7 @@ theorem eval_eq_suffix_zero (x : Matrix T dIn ℝ) :
     eval A S θ x = suffix A S θ 0 (x * θ.E) := by
   rw [← suffix_hidden A S θ x 0, hidden_zero]
 
-/-- The identity (18) of the paper for `k`, `Z` and `η`, in a network without skips:
+/-- The identity (16) of the paper for `k`, `Z` and `η`, in a network without skips:
 `𝐃𝓑_{>k}(h) (h Z) + 𝐃_θ 𝓑_{>k}(h) η = 0` for all `h`. -/
 def SuffixFlat (k : Fin (L + 1)) (Z : Matrix d d ℝ) (η : Params A dIn dOut) : Prop :=
   ∀ h : Matrix T d ℝ,
@@ -86,7 +86,7 @@ def SuffixFlat (k : Fin (L + 1)) (Z : Matrix d d ℝ) (η : Params A dIn dOut) :
       + fderiv ℝ (fun θ' : Params A dIn dOut => suffix A 0 θ' k h) θ η = 0
 
 /-- **Claim `(D_k)`,** in the case (n), for blocks without symmetries inside: every `Z` and `η`
-that satisfy the identity (18) for `k` come from changes of basis `Z_k = Z, Z_{k+1}, …, Z_L` at the
+that satisfy the identity (16) for `k` come from changes of basis `Z_k = Z, Z_{k+1}, …, Z_L` at the
 hidden states `h_k, …, h_L`. -/
 def Claim (k : Fin (L + 1)) : Prop :=
   ∀ (Z : Matrix d d ℝ) (η : Params A dIn dOut), SuffixFlat A θ k Z η →
@@ -456,7 +456,7 @@ theorem exists_open_dense_injective_fderiv_suffix (hχ : A.χ = id)
 
 /-- **Lemma D.3, case (n) (a direction at a write).** Let `θ` be regular, and let `M` be a matrix
 with `d` columns and rank `d`. If `𝐃𝓑_{>k}(w M) (w η_M) + 𝐃_θ 𝓑_{>k}(w M) η = 0` for all `w`, then
-`η_M = M Z` for a `d × d` matrix `Z`, and the identity (18) holds for `k`, `Z` and `η`. -/
+`η_M = M Z` for a `d × d` matrix `Z`, and the identity (16) holds for `k`, `Z` and `η`. -/
 theorem suffixFlat_of_flat_at_write [Nonempty T] (hχ : A.χ = id)
     (hf : ∀ ℓ, AnalyticOnNhd ℝ (A.f ℓ) Set.univ) (hθ : Regular A θ) (k : Fin (L + 1))
     {m : Type*} [Fintype m] (M : Matrix m d ℝ) (hM : M.rank = Fintype.card d)
@@ -500,7 +500,7 @@ theorem suffixFlat_of_flat_at_write [Nonempty T] (hχ : A.χ = id)
     rw [← Matrix.mul_assoc]
     exact hPη
   refine ⟨Mp * ηM, hZ, ?_⟩
-  -- the identity (18) at `h`: the hypothesis at `w = h M⁺`, with `w M = h` and `w η_M = h Z`
+  -- the identity (16) at `h`: the hypothesis at `w = h M⁺`, with `w M = h` and `w η_M = h Z`
   intro h'
   have e := h (h' * Mp)
   have hw : h' * Mp * M = h' := by rw [Matrix.mul_assoc, hMp, Matrix.mul_one]
@@ -522,7 +522,7 @@ theorem flat_le_range_cobDir_of_claim [Nonempty T] (hχ : A.χ = id)
     intro x
     rw [← fderiv_eval_eq_fderiv_suffix A θ hχ hfd x η]
     exact LinearMap.mem_ker.1 ((Submodule.mem_iInf _).1 hη x)
-  -- Lemma D.3 at the embedding (rank `d` by (R1)): `η_E = E Z` and the identity (18) for `k = 0`
+  -- Lemma D.3 at the embedding (rank `d` by (R1)): `η_E = E Z` and the identity (16) for `k = 0`
   obtain ⟨Z, hEZ, hZ⟩ := suffixFlat_of_flat_at_write A θ hχ hf hθ 0 θ.E hθ.rank_E η.E η hx
   -- the claim `(D_0)` gives the changes of basis `X` with `X_0 = Z`
   obtain ⟨X, hX0, hX, hXD⟩ := h0 Z η hZ
