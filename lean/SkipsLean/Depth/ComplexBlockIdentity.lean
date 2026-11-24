@@ -268,6 +268,232 @@ theorem blockLHSC_ofReal (hσ : ∀ x : ℝ, σC (x : ℂ) = ((σ x : ℝ) : ℂ
   rw [e1, e2, fderiv_suffixC_ofReal hσ θ k.succ hκ hhol _ _ hw,
     fderiv_weights_suffixC_ofReal hσ θ k.succ hκ hhol _ hw η, map_add_ofReal_cbi]
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (as `analyticAt_matrix_mul_cs` of `Depth/ComplexSuffix.lean`): the matrix product of
+two analytic matrix-valued maps is analytic. -/
+private theorem analyticAt_matrix_mul_cbi {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    {f : E → Matrix m n ℂ} {g : E → Matrix n p ℂ} {x : E}
+    (hf : AnalyticAt ℂ f x) (hg : AnalyticAt ℂ g x) :
+    AnalyticAt ℂ (fun y => f y * g y) x := by
+  -- matrix multiplication as a bilinear map
+  let B : Matrix m n ℂ →ₗ[ℂ] Matrix n p ℂ →ₗ[ℂ] Matrix m p ℂ :=
+    LinearMap.mk₂ ℂ (fun a b => a * b) Matrix.add_mul (fun c a b => Matrix.smul_mul c a b)
+      Matrix.mul_add (fun c a b => Matrix.mul_smul a c b)
+  -- the same map with continuous linear maps (all spaces are finite-dimensional)
+  let B' : Matrix m n ℂ →L[ℂ] Matrix n p ℂ →L[ℂ] Matrix m p ℂ :=
+    LinearMap.toContinuousLinearMap
+      ((LinearMap.toContinuousLinearMap :
+        (Matrix n p ℂ →ₗ[ℂ] Matrix m p ℂ) ≃ₗ[ℂ] (Matrix n p ℂ →L[ℂ] Matrix m p ℂ)).toLinearMap ∘ₗ B)
+  have hB : (fun y => f y * g y) = fun y => B' (f y) (g y) := rfl
+  rw [hB]
+  exact (B'.analyticAt_bilinear (f x, g x)).comp₂ hf hg
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: an entry of an analytic matrix-valued map is analytic. -/
+private theorem analyticAt_entry_cbi {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    {m n : Type*} [Fintype m] [Fintype n] {F : E → Matrix m n ℂ} {x : E}
+    (hF : AnalyticAt ℂ F x) (i : m) (j : n) : AnalyticAt ℂ (fun y => F y i j) x := by
+  have he : AnalyticAt ℂ (fun M : Matrix m n ℂ => M i j) (F x) :=
+    ((ContinuousLinearMap.proj (R := ℂ) (φ := fun _ : n => ℂ) j).comp
+      (ContinuousLinearMap.proj (R := ℂ) (φ := fun _ : m => n → ℂ) i)).analyticAt _
+  exact AnalyticAt.comp (f := F) he hF
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: if `F` is analytic at `x` and `s` is analytic at every entry of `F x`, then
+`y ↦ s(F y)` (entrywise) is analytic at `x`. -/
+private theorem analyticAt_map_cbi {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    {m n : Type*} [Fintype m] [Fintype n] {s : ℂ → ℂ} {F : E → Matrix m n ℂ} {x : E}
+    (hF : AnalyticAt ℂ F x) (hs : ∀ i j, AnalyticAt ℂ s (F x i j)) :
+    AnalyticAt ℂ (fun y => (F y).map s) x := by
+  show AnalyticAt ℂ (fun y => fun i => fun j => s (F y i j)) x
+  exact AnalyticAt.pi fun i => AnalyticAt.pi fun j =>
+    AnalyticAt.comp (f := fun y => F y i j) (hs i j) (analyticAt_entry_cbi hF i j)
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the entrywise product of two analytic matrix-valued maps is analytic. -/
+private theorem analyticAt_hadamard_cbi {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    {m n : Type*} [Fintype m] [Fintype n] {A B : E → Matrix m n ℂ} {x : E}
+    (hA : AnalyticAt ℂ A x) (hB : AnalyticAt ℂ B x) :
+    AnalyticAt ℂ (fun y => Matrix.of fun i j => A y i j * B y i j) x := by
+  show AnalyticAt ℂ (fun y => fun i => fun j => A y i j * B y i j) x
+  exact AnalyticAt.pi fun i => AnalyticAt.pi fun j =>
+    (analyticAt_entry_cbi hA i j).mul (analyticAt_entry_cbi hB i j)
+
+omit [DecidableEq d] in
+/-- Helper: the path `t ↦ n(t)` is analytic at every `t₀ ≠ 0` (its entries are polynomials in `t`
+and `t⁻¹`). -/
+private theorem analyticAt_pathMatrix_cbi (Ξ Ξ' : Matrix T d ℝ) {t₀ : ℂ} (ht₀ : t₀ ≠ 0) :
+    AnalyticAt ℂ (pathMatrix Ξ Ξ') t₀ := by
+  show AnalyticAt ℂ (fun t => fun τ => fun i => pathRow (Ξ τ) (Ξ' τ) t i) t₀
+  refine AnalyticAt.pi fun τ => AnalyticAt.pi fun i => ?_
+  exact analyticAt_const.mul ((analyticAt_id.mul analyticAt_const).add
+    ((analyticAt_id.inv ht₀).mul analyticAt_const))
+
+omit [DecidableEq d] in
+/-- Helper: `n ↦ n Z − (⟨n Z, n⟩/d) n` after an analytic map is analytic (a polynomial). -/
+private theorem analyticAt_tangentRMSC_cbi {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (Z : Matrix d d ℝ) {N : E → Matrix T d ℂ} {x : E} (hN : AnalyticAt ℂ N x) :
+    AnalyticAt ℂ (fun y => tangentRMSC Z (N y)) x := by
+  have hNZ : AnalyticAt ℂ (fun y => N y * Z.map (fun x : ℝ => (x : ℂ))) x :=
+    analyticAt_matrix_mul_cbi hN analyticAt_const
+  show AnalyticAt ℂ (fun y => fun τ => fun i => (N y * Z.map (fun x : ℝ => (x : ℂ))) τ i
+    - ((N y * Z.map (fun x : ℝ => (x : ℂ))) τ ⬝ᵥ N y τ) / (Fintype.card d : ℂ) * N y τ i) x
+  refine AnalyticAt.pi fun τ => AnalyticAt.pi fun i => ?_
+  have hdot : AnalyticAt ℂ (fun y => (N y * Z.map (fun x : ℝ => (x : ℂ))) τ ⬝ᵥ N y τ) x :=
+    Finset.analyticAt_fun_sum _ fun j _ =>
+      (analyticAt_entry_cbi hNZ τ j).mul (analyticAt_entry_cbi hN τ j)
+  exact (analyticAt_entry_cbi hNZ τ i).sub (hdot.div_const.mul (analyticAt_entry_cbi hN τ i))
+
+/-- Helper (the complex copy of `fderiv_partial_add_szv` of `Depth/StepZeroValues.lean`): the two
+partial derivatives of a map of `(x, y)` that is differentiable at `(x, y)` add up to its
+derivative. -/
+private theorem fderiv_partial_add_cbi {E₁ E₂ F : Type*} [NormedAddCommGroup E₁]
+    [NormedSpace ℂ E₁] [NormedAddCommGroup E₂] [NormedSpace ℂ E₂] [NormedAddCommGroup F]
+    [NormedSpace ℂ F] {Φ : E₁ → E₂ → F} {x : E₁} {y : E₂}
+    (hΦ : DifferentiableAt ℂ (fun p : E₁ × E₂ => Φ p.1 p.2) (x, y)) (a : E₁) (b : E₂) :
+    fderiv ℂ (fun y' => Φ x y') y b + fderiv ℂ (fun x' => Φ x' y) x a
+      = fderiv ℂ (fun p : E₁ × E₂ => Φ p.1 p.2) (x, y) (a, b) := by
+  have h1 : HasFDerivAt (fun x' => Φ x' y)
+      ((fderiv ℂ (fun p : E₁ × E₂ => Φ p.1 p.2) (x, y)).comp
+        (ContinuousLinearMap.inl ℂ E₁ E₂)) x := by
+    have hc := hΦ.hasFDerivAt.comp x (hasFDerivAt_prodMk_left (𝕜 := ℂ) x y)
+    exact hc
+  have h2 : HasFDerivAt (fun y' => Φ x y')
+      ((fderiv ℂ (fun p : E₁ × E₂ => Φ p.1 p.2) (x, y)).comp
+        (ContinuousLinearMap.inr ℂ E₁ E₂)) y := by
+    have hc := hΦ.hasFDerivAt.comp y (hasFDerivAt_prodMk_right (𝕜 := ℂ) x y)
+    exact hc
+  rw [h1.fderiv, h2.fderiv, ContinuousLinearMap.comp_apply, ContinuousLinearMap.comp_apply,
+    ContinuousLinearMap.inl_apply, ContinuousLinearMap.inr_apply, ← map_add, Prod.mk_add_mk,
+    zero_add, add_zero]
+
+omit [DecidableEq d] [Fintype dIn] in
+/-- Helper, step (a) of the proof of Lemma D.15: at a real `t₀ ≥ 1` where `σC` is holomorphic at
+the entries of `n(t₀) W` and the rows of `σC(n(t₀) W) V` are in the cone, `t ↦ 𝓛(t)` is analytic.
+Near `t₀`, `𝓑_{>k+1}` is holomorphic at `(θ, σC(n(t) W) V)`, so `𝓛(t)` is its joint derivative
+applied to `(η, (w̃' ⊙ ż) V + w̃ η_V)`, which is analytic in `t`. -/
+private theorem analyticAt_blockLHSC_path_cbi
+    (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut) (k : Fin L)
+    {κ : ℝ} (hhol : HolomorphicOnCone σC θ k.succ κ)
+    (Z : Matrix d d ℝ) (η : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut)
+    (Ξ Ξ' : Matrix T d ℝ) (t₀ : ℝ) (ht₀ : 1 ≤ t₀)
+    (hσan : ∀ τ j, AnalyticAt ℂ σC ((pathMatrix Ξ Ξ' (t₀ : ℂ) * θ.toC.1 k) τ j))
+    (hcone : ∀ τ, ((pathMatrix Ξ Ξ' (t₀ : ℂ) * θ.toC.1 k).map σC * θ.toC.2.1 k) τ
+      ∈ complexCone κ) :
+    AnalyticAt ℂ (fun t : ℂ => blockLHSC σC θ k η ((pathMatrix Ξ Ξ' t * θ.toC.1 k).map σC)
+        ((pathMatrix Ξ Ξ' t * θ.toC.1 k).map (deriv σC))
+        (zdotC θ k Z η (pathMatrix Ξ Ξ' t))) (t₀ : ℂ) := by
+  have ht0 : (t₀ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 (by linarith)
+  -- the path, the inputs of the hidden units and their outputs are analytic at `t₀`
+  have hN := analyticAt_pathMatrix_cbi Ξ Ξ' ht0
+  have hM : AnalyticAt ℂ (fun t => pathMatrix Ξ Ξ' t * θ.toC.1 k) (t₀ : ℂ) :=
+    analyticAt_matrix_mul_cbi hN analyticAt_const
+  have hw : AnalyticAt ℂ (fun t => (pathMatrix Ξ Ξ' t * θ.toC.1 k).map σC) (t₀ : ℂ) :=
+    analyticAt_map_cbi hM hσan
+  have hw' : AnalyticAt ℂ (fun t => (pathMatrix Ξ Ξ' t * θ.toC.1 k).map (deriv σC)) (t₀ : ℂ) :=
+    analyticAt_map_cbi hM fun τ j => (hσan τ j).deriv
+  have hz : AnalyticAt ℂ (fun t => zdotC θ k Z η (pathMatrix Ξ Ξ' t)) (t₀ : ℂ) :=
+    (analyticAt_matrix_mul_cbi (analyticAt_tangentRMSC_cbi Z hN) analyticAt_const).add
+      (analyticAt_matrix_mul_cbi hN analyticAt_const)
+  have hwV : AnalyticAt ℂ (fun t => (pathMatrix Ξ Ξ' t * θ.toC.1 k).map σC * θ.toC.2.1 k)
+      (t₀ : ℂ) := analyticAt_matrix_mul_cbi hw analyticAt_const
+  have hdir : AnalyticAt ℂ (fun t =>
+      (Matrix.of fun τ j => (pathMatrix Ξ Ξ' t * θ.toC.1 k).map (deriv σC) τ j
+        * zdotC θ k Z η (pathMatrix Ξ Ξ' t) τ j) * θ.toC.2.1 k
+      + (pathMatrix Ξ Ξ' t * θ.toC.1 k).map σC * η.toC.2.1 k) (t₀ : ℂ) :=
+    (analyticAt_matrix_mul_cbi (analyticAt_hadamard_cbi hw' hz) analyticAt_const).add
+      (analyticAt_matrix_mul_cbi hw analyticAt_const)
+  -- `𝓑_{>k+1}` is holomorphic at `(θ, σ(n(t₀) W) V)`
+  have hΦ0 : AnalyticAt ℂ (fun p : CWeights d dOut hid × Matrix T d ℂ => suffixC σC p.1 k.succ p.2)
+      (θ.toC, (pathMatrix Ξ Ξ' (t₀ : ℂ) * θ.toC.1 k).map σC * θ.toC.2.1 k) := hhol _ hcone
+  have hp : AnalyticAt ℂ (fun t : ℂ => ((θ.toC, (pathMatrix Ξ Ξ' t * θ.toC.1 k).map σC
+      * θ.toC.2.1 k) : CWeights d dOut hid × Matrix T d ℂ)) (t₀ : ℂ) := analyticAt_const.prod hwV
+  -- the right side `𝐃Φ(θ, w̃V)(η, (w̃' ⊙ ż) V + w̃ η_V)` is analytic at `t₀`
+  have hDp := hΦ0.fderiv.comp_of_eq hp rfl
+  have hq : AnalyticAt ℂ (fun t : ℂ => ((η.toC,
+      (Matrix.of fun τ j => (pathMatrix Ξ Ξ' t * θ.toC.1 k).map (deriv σC) τ j
+        * zdotC θ k Z η (pathMatrix Ξ Ξ' t) τ j) * θ.toC.2.1 k
+      + (pathMatrix Ξ Ξ' t * θ.toC.1 k).map σC * η.toC.2.1 k) : CWeights d dOut hid × Matrix T d ℂ))
+      (t₀ : ℂ) := analyticAt_const.prod hdir
+  have hR := ((ContinuousLinearMap.id ℂ _).analyticAt_bilinear _).comp₂ hDp hq
+  -- near `t₀`, `𝓑_{>k+1}` is holomorphic at `(θ, w̃V)`, and the two partial derivatives of `𝓛`
+  -- add up to this derivative
+  have hev := hp.continuousAt.eventually hΦ0.eventually_analyticAt
+  refine hR.congr (hev.mono fun t ht => ?_)
+  exact (fderiv_partial_add_cbi (Φ := fun ω h' => suffixC σC ω k.succ h') ht.differentiableAt
+    _ _).symm
+
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: at a real point the complex derivative of `σC` is `σ'` (the restriction of `σC` to
+the reals is `σ`; uniqueness of the derivative). -/
+private theorem deriv_ofReal_cbi (hσd : ∀ z, HasDerivAt σ (σ' z) z)
+    (hσ : ∀ x : ℝ, σC (x : ℂ) = ((σ x : ℝ) : ℂ)) (hσC : ∀ x : ℝ, AnalyticAt ℂ σC (x : ℂ))
+    (x : ℝ) : deriv σC (x : ℂ) = ((σ' x : ℝ) : ℂ) := by
+  have h1 : HasDerivAt (fun y : ℝ => σC (y : ℂ)) (deriv σC (x : ℂ)) x :=
+    (hσC x).differentiableAt.hasDerivAt.comp_ofReal
+  have h2 : HasDerivAt (fun y : ℝ => ((σ y : ℝ) : ℂ)) ((σ' x : ℝ) : ℂ) x := (hσd x).ofReal_comp
+  have e : (fun y : ℝ => σC (y : ℂ)) = fun y => ((σ y : ℝ) : ℂ) := funext hσ
+  rw [e] at h1
+  exact h1.unique h2
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: on the unit circle the path is real: `n(e^{iφ})` has the rows
+`√d (cos φ ξ − sin φ ξ')`. -/
+private theorem pathMatrix_exp_mul_I_cbi (Ξ Ξ' : Matrix T d ℝ) (φ : ℝ) :
+    pathMatrix Ξ Ξ' (Complex.exp (φ * Complex.I))
+      = (Matrix.of fun τ i => Real.sqrt (Fintype.card d)
+          * (Real.cos φ * Ξ τ i - Real.sin φ * Ξ' τ i)).map (fun x : ℝ => (x : ℂ)) := by
+  ext τ i
+  exact pathRow_exp_mul_I (Ξ τ) (Ξ' τ) φ i
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: for orthonormal `ξ, ξ'` the row `√d (cos φ ξ − sin φ ξ')` is on the sphere
+`‖n‖² = d`. -/
+private theorem circle_dotProduct_self_cbi (ξ ξ' : d → ℝ) (hξ : ξ ⬝ᵥ ξ = 1)
+    (hξ' : ξ' ⬝ᵥ ξ' = 1) (hξξ' : ξ ⬝ᵥ ξ' = 0) (φ : ℝ) :
+    (fun i => Real.sqrt (Fintype.card d) * (Real.cos φ * ξ i - Real.sin φ * ξ' i))
+      ⬝ᵥ (fun i => Real.sqrt (Fintype.card d) * (Real.cos φ * ξ i - Real.sin φ * ξ' i))
+      = (Fintype.card d : ℝ) := by
+  -- expand the square: `d (cos² ⟨ξ, ξ⟩ − 2 cos sin ⟨ξ, ξ'⟩ + sin² ⟨ξ', ξ'⟩)`
+  have key : (fun i => Real.sqrt (Fintype.card d) * (Real.cos φ * ξ i - Real.sin φ * ξ' i))
+      ⬝ᵥ (fun i => Real.sqrt (Fintype.card d) * (Real.cos φ * ξ i - Real.sin φ * ξ' i))
+      = Real.sqrt (Fintype.card d) ^ 2 * (Real.cos φ ^ 2 * (ξ ⬝ᵥ ξ)
+        - 2 * Real.cos φ * Real.sin φ * (ξ ⬝ᵥ ξ') + Real.sin φ ^ 2 * (ξ' ⬝ᵥ ξ')) := by
+    simp only [dotProduct, Finset.mul_sum, ← Finset.sum_sub_distrib, ← Finset.sum_add_distrib]
+    exact Finset.sum_congr rfl fun i _ => by ring
+  rw [key, hξ, hξ', hξξ', Real.sq_sqrt (Nat.cast_nonneg _)]
+  linear_combination (Fintype.card d : ℝ) * Real.cos_sq_add_sin_sq φ
+
+/-- Helper, step (c) of the proof of Lemma D.15: the points `e^{i/(m+1)}` of the unit circle tend
+to `1` and differ from `1` (their imaginary part `sin (1/(m+1))` is positive). -/
+private theorem tendsto_exp_mul_I_cbi :
+    Filter.Tendsto (fun m : ℕ => Complex.exp ((((1 : ℝ) / ((m : ℝ) + 1) : ℝ) : ℂ) * Complex.I))
+      Filter.atTop (nhdsWithin (1 : ℂ) {1}ᶜ) := by
+  refine tendsto_nhdsWithin_iff.2 ⟨?_, Filter.Eventually.of_forall fun m => ?_⟩
+  · -- `1/(m+1) → 0` and `φ ↦ e^{iφ}` is continuous, with `e^0 = 1`
+    have h0 : Filter.Tendsto (fun m : ℕ => (1 : ℝ) / ((m : ℝ) + 1)) Filter.atTop (nhds 0) :=
+      tendsto_one_div_add_atTop_nhds_zero_nat
+    have hc : Continuous fun φ : ℝ => Complex.exp ((φ : ℂ) * Complex.I) := by fun_prop
+    have h1 := (hc.tendsto 0).comp h0
+    have e : Complex.exp (((0 : ℝ) : ℂ) * Complex.I) = 1 := by simp
+    rw [e] at h1
+    exact h1
+  · -- `0 < 1/(m+1) ≤ 1 < π`, so `Im e^{i/(m+1)} = sin (1/(m+1)) > 0`
+    simp only [Set.mem_compl_iff, Set.mem_singleton_iff]
+    intro h
+    have him := congrArg Complex.im h
+    rw [Complex.exp_ofReal_mul_I_im, Complex.one_im] at him
+    have hm : (0 : ℝ) < (m : ℝ) + 1 := by positivity
+    have hle : (1 : ℝ) / ((m : ℝ) + 1) ≤ 1 := by
+      rw [div_le_one hm]
+      linarith [(Nat.cast_nonneg m : (0 : ℝ) ≤ m)]
+    have hpos : 0 < Real.sin ((1 : ℝ) / ((m : ℝ) + 1)) :=
+      Real.sin_pos_of_pos_of_lt_pi (by positivity)
+        (lt_of_le_of_lt hle (by linarith [Real.pi_gt_three]))
+    linarith
+
 /-- **Lemma D.15 of the dimension paper (Continuation).** In the case (0), for an MLP block with a
 real-analytic activation `σ` (derivative `σ'`) that extends to a map `σC` holomorphic at every real
 point, let `θ` be regular, let `𝓑_{>k+1}` be holomorphic on the cone `C_κ`, and let the identity
@@ -292,6 +518,66 @@ theorem blockLHSC_pathMatrix_eq_zero [Nonempty d] (hσd : ∀ z, HasDerivAt σ (
       blockLHSC σC θ k η ((pathMatrix Ξ Ξ' (t : ℂ) * θ.toC.1 k).map σC)
         ((pathMatrix Ξ Ξ' (t : ℂ) * θ.toC.1 k).map (deriv σC))
         (zdotC θ k Z η (pathMatrix Ξ Ξ' (t : ℂ))) = 0 := by
-  sorry
+  -- `𝓛` along the path, as a function of the complex variable `t`
+  obtain ⟨G, hG⟩ : ∃ G : ℂ → Matrix T dOut ℂ, G = fun t =>
+      blockLHSC σC θ k η ((pathMatrix Ξ Ξ' t * θ.toC.1 k).map σC)
+        ((pathMatrix Ξ Ξ' t * θ.toC.1 k).map (deriv σC)) (zdotC θ k Z η (pathMatrix Ξ Ξ' t)) :=
+    ⟨_, rfl⟩
+  -- (a) `G` is analytic at every real `t₀ ≥ 1`
+  have hGan : AnalyticOnNhd ℂ G ((fun t : ℝ => (t : ℂ)) '' Set.Ici 1) := by
+    rintro _ ⟨t₀, ht₀, rfl⟩
+    rw [hG]
+    exact analyticAt_blockLHSC_path_cbi θ k hhol Z η Ξ Ξ' t₀ ht₀ (hpath t₀ ht₀).1
+      (hpath t₀ ht₀).2
+  -- (b) `G` vanishes on the unit circle, where the path is real and on the sphere: (22)
+  have hb : ∀ φ : ℝ, G (Complex.exp (φ * Complex.I)) = 0 := by
+    intro φ
+    obtain ⟨n, hn_def⟩ : ∃ n : Matrix T d ℝ, n = Matrix.of fun τ i =>
+        Real.sqrt (Fintype.card d) * (Real.cos φ * Ξ τ i - Real.sin φ * Ξ' τ i) := ⟨_, rfl⟩
+    have hN : pathMatrix Ξ Ξ' (Complex.exp (φ * Complex.I)) = n.map (fun x : ℝ => (x : ℂ)) := by
+      rw [hn_def]
+      exact pathMatrix_exp_mul_I_cbi Ξ Ξ' φ
+    have hn : ∀ τ, n τ ⬝ᵥ n τ = (Fintype.card d : ℝ) := fun τ => by
+      rw [hn_def]
+      exact circle_dotProduct_self_cbi (Ξ τ) (Ξ' τ) (hΞ τ) (hΞ' τ) (hΞΞ' τ) φ
+    have hNW : pathMatrix Ξ Ξ' (Complex.exp (φ * Complex.I)) * θ.toC.1 k
+        = (n * θ.read k).map (fun x : ℝ => (x : ℂ)) := by
+      rw [hN, map_mul_ofReal_cbi]
+      rfl
+    have h1 : (pathMatrix Ξ Ξ' (Complex.exp (φ * Complex.I)) * θ.toC.1 k).map σC
+        = ((n * θ.read k).map σ).map (fun x : ℝ => (x : ℂ)) := by
+      rw [hNW]
+      ext τ j
+      simp only [Matrix.map_apply, hσ]
+    have h2 : (pathMatrix Ξ Ξ' (Complex.exp (φ * Complex.I)) * θ.toC.1 k).map (deriv σC)
+        = ((n * θ.read k).map σ').map (fun x : ℝ => (x : ℂ)) := by
+      rw [hNW]
+      ext τ j
+      simp only [Matrix.map_apply, deriv_ofReal_cbi hσd hσ hσC]
+    have h3 : zdotC θ k Z η (pathMatrix Ξ Ξ' (Complex.exp (φ * Complex.I)))
+        = (tangentRMS Z n * θ.read k + n * η.read k).map (fun x : ℝ => (x : ℂ)) := by
+      rw [hN]
+      exact zdotC_ofReal θ k Z η n
+    rw [hG]
+    dsimp only
+    rw [h1, h2, h3, blockLHSC_ofReal hσ θ k hκ hhol η ((n * θ.read k).map σ)
+      ((n * θ.read k).map σ') (tangentRMS Z n * θ.read k + n * η.read k)
+      (hθ.block_ne_zero k n hn),
+      (suffixFlatZero_castSucc_iff_mlp_sphere hσd hσa θ hθ k Z η).1 h16 n hn]
+    ext τ j
+    simp
+  -- (c) identity theorem on the connected set `[1, ∞) ⊂ ℂ`, from the zeros `e^{i/(m+1)} → 1`
+  have hS : IsPreconnected ((fun t : ℝ => (t : ℂ)) '' Set.Ici 1) :=
+    isPreconnected_Ici.image _ Complex.continuous_ofReal.continuousOn
+  have h1S : (1 : ℂ) ∈ (fun t : ℝ => (t : ℂ)) '' Set.Ici 1 :=
+    ⟨1, Set.self_mem_Ici, Complex.ofReal_one⟩
+  have hfreq : ∃ᶠ z in nhdsWithin (1 : ℂ) {1}ᶜ, G z = 0 :=
+    tendsto_exp_mul_I_cbi.frequently (Filter.Frequently.of_forall fun m => hb _)
+  have hzero := hGan.eqOn_zero_of_preconnected_of_frequently_eq_zero hS h1S hfreq
+  intro t ht
+  have e := hzero ⟨t, ht, rfl⟩
+  rw [hG] at e
+  exact e
+
 
 end Skips
