@@ -328,6 +328,70 @@ theorem eq_zero_of_fderiv_suffix_one_sub_sq
   rw [e0, e1, sub_zero] at hdiff
   exact (mul_eq_zero.1 hdiff.symm).resolve_right hi
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the product of two analytic matrix-valued maps is analytic (matrix multiplication is a
+continuous bilinear map). -/
+private theorem analyticOnNhd_matMul {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    {f : E → Matrix m n ℝ} {g : E → Matrix n p ℝ} {s : Set E}
+    (hf : AnalyticOnNhd ℝ f s) (hg : AnalyticOnNhd ℝ g s) :
+    AnalyticOnNhd ℝ (fun y => f y * g y) s := by
+  -- matrix multiplication as a bilinear map
+  let B : Matrix m n ℝ →ₗ[ℝ] Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ :=
+    LinearMap.mk₂ ℝ (fun a b => a * b) Matrix.add_mul (fun c a b => Matrix.smul_mul c a b)
+      Matrix.mul_add (fun c a b => Matrix.mul_smul a c b)
+  -- the same map with continuous linear maps (all spaces are finite-dimensional)
+  let B' : Matrix m n ℝ →L[ℝ] Matrix n p ℝ →L[ℝ] Matrix m p ℝ :=
+    LinearMap.toContinuousLinearMap
+      ((LinearMap.toContinuousLinearMap :
+        (Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ) ≃ₗ[ℝ] (Matrix n p ℝ →L[ℝ] Matrix m p ℝ)).toLinearMap ∘ₗ B)
+  have hB : (fun y => f y * g y) = fun y => B' (f y) (g y) := rfl
+  rw [hB]
+  exact fun y hy => (B'.analyticAt_bilinear (f y, g y)).comp₂ (hf y hy) (hg y hy)
+
+/-- Helper: an analytic family of continuous linear maps, applied to an analytic family of vectors,
+is analytic. -/
+private theorem analyticOnNhd_clm_apply {X E F : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
+    [NormedAddCommGroup E] [NormedSpace ℝ E] [NormedAddCommGroup F] [NormedSpace ℝ F]
+    {J : X → E →L[ℝ] F} {v : X → E} {s : Set X} (hJ : AnalyticOnNhd ℝ J s)
+    (hv : AnalyticOnNhd ℝ v s) : AnalyticOnNhd ℝ (fun x => J x (v x)) s :=
+  fun x hx => ((ContinuousLinearMap.id ℝ (E →L[ℝ] F)).analyticAt_bilinear (J x, v x)).comp₂
+    (hJ x hx) (hv x hx)
+
+/-- In the case (n), with analytic blocks, `(θ, h) ↦ 𝓑_{>k}(h)` (with the weights `θ`) is jointly
+analytic. (The same reverse induction as `analyticOnNhd_suffix` and `differentiable_suffix_prod`;
+the weights are continuous linear functions of the parameters.) -/
+theorem analyticOnNhd_suffix_prod (A : Arch T d L) (hχ : A.χ = id)
+    (hf : ∀ ℓ, AnalyticOnNhd ℝ (A.f ℓ) Set.univ) (k : Fin (L + 1)) :
+    AnalyticOnNhd ℝ (fun p : Params A dIn dOut × Matrix T d ℝ => suffix A 0 p.1 k p.2)
+      Set.univ := by
+  -- the weights are linear, hence analytic, functions of the parameters
+  have hD : AnalyticOnNhd ℝ (fun θ' : Params A dIn dOut => θ'.D) Set.univ :=
+    (LinearMap.toContinuousLinearMap
+      (Params.linD (A := A) (dIn := dIn) (dOut := dOut))).analyticOnNhd _
+  have hr : ∀ ℓ, AnalyticOnNhd ℝ (fun θ' : Params A dIn dOut => θ'.read ℓ) Set.univ := fun ℓ =>
+    (LinearMap.toContinuousLinearMap
+      (Params.linRead (A := A) (dIn := dIn) (dOut := dOut) ℓ)).analyticOnNhd _
+  have hw : ∀ ℓ, AnalyticOnNhd ℝ (fun θ' : Params A dIn dOut => θ'.write ℓ) Set.univ := fun ℓ =>
+    (LinearMap.toContinuousLinearMap
+      (Params.linWrite (A := A) (dIn := dIn) (dOut := dOut) ℓ)).analyticOnNhd _
+  have hfst : AnalyticOnNhd ℝ (fun p : Params A dIn dOut × Matrix T d ℝ => p.1) Set.univ :=
+    analyticOnNhd_fst
+  have hsnd : AnalyticOnNhd ℝ (fun p : Params A dIn dOut × Matrix T d ℝ => p.2) Set.univ :=
+    analyticOnNhd_snd
+  induction k using Fin.reverseInduction with
+  | last =>
+    -- `(θ, h) ↦ h D`
+    simp only [suffix_last, hχ, id_eq]
+    exact analyticOnNhd_matMul hsnd (hD.comp hfst (Set.mapsTo_univ _ _))
+  | cast ℓ ih =>
+    -- `(θ, h) ↦ 𝓑_{>ℓ}(f_ℓ(h W_read) W_write)`, with the weights `θ`
+    simp only [suffix_castSucc, hχ, id_eq, Pi.zero_apply, Matrix.mul_zero, zero_add]
+    exact ih.comp (hfst.prod (analyticOnNhd_matMul
+      ((hf ℓ).comp (analyticOnNhd_matMul hsnd ((hr ℓ).comp hfst (Set.mapsTo_univ _ _)))
+        (Set.mapsTo_univ _ _))
+      ((hw ℓ).comp hfst (Set.mapsTo_univ _ _)))) (Set.mapsTo_univ _ _)
+
 /-- **Lemma D.7 (the step for `tanh` on rays), case (n).** Let `θ` be regular, and let block `k`
 satisfy (T1), no row of its write vanishes, and (T2), the columns of its read are linearly
 independent over `ℚ`. Then the claim for the hidden state after the block implies the claim for the
@@ -338,6 +402,127 @@ theorem claim_castSucc_tanh [Nonempty T]
     (hT2 : LinearIndependent ℚ (fun j : hid k => fun i : d => θ.read k i j))
     (hk : Claim (Arch.mlp Real.tanh id hid) θ k.succ) :
     Claim (Arch.mlp Real.tanh id hid) θ k.castSucc := by
-  sorry
+  classical
+  intro Z η hZη
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.mlp (T := T) (d := d) Real.tanh id hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_mlp analyticOnNhd_tanh ℓ
+  -- the identity for one block (22), with `σ = tanh` and `ż(n) = n C`, `C = Z W + η_W`
+  have h22 := (suffixFlat_castSucc_iff_mlp hasDerivAt_tanh θ k Z η).1 hZη
+  obtain ⟨C, hC⟩ : ∃ C : Matrix d (hid k) ℝ, C = Z * θ.read k + η.read k := ⟨_, rfl⟩
+  rw [← hC] at h22
+  -- the maps `𝒯_1 Ξ` and `𝒯_0` of the outputs `w` of the hidden units
+  let T1 : Matrix T d ℝ → Matrix T (hid k) ℝ → Matrix T dOut ℝ := fun Ξ w =>
+    fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.mlp Real.tanh id hid) 0 θ k.succ h')
+      (w * θ.write k) ((Matrix.of fun t j => (1 - w t j ^ 2) * (Ξ * C) t j) * θ.write k)
+  let T0 : Matrix T (hid k) ℝ → Matrix T dOut ℝ := fun w =>
+    fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.mlp Real.tanh id hid) 0 θ k.succ h')
+        (w * θ.write k) (w * η.write k)
+      + fderiv ℝ (fun θ' : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut =>
+          suffix (Arch.mlp Real.tanh id hid) 0 θ' k.succ (w * θ.write k)) θ η
+  -- both are analytic: `𝓑` and `(θ', h') ↦ 𝓑(h')` are, hence so are their derivatives
+  have hB := analyticOnNhd_suffix (Arch.mlp (T := T) (d := d) Real.tanh id hid) θ rfl hf k.succ
+  have hΦ := analyticOnNhd_suffix_prod (Arch.mlp (T := T) (d := d) Real.tanh id hid)
+    (dIn := dIn) (dOut := dOut) rfl hf k.succ
+  -- `w ↦ 𝐃𝓑(w V)` (stated without a type: the normed structure on the derivatives comes from
+  -- `AnalyticOnNhd.fderiv`)
+  have hJ :=
+    hB.fderiv.comp ((rightMulCLM (m := T) (θ.write k)).analyticOnNhd Set.univ)
+      (Set.mapsTo_univ _ _)
+  have hT1an : ∀ Ξ, AnalyticOnNhd ℝ (T1 Ξ) Set.univ := by
+    intro Ξ
+    -- the direction `((1 - w²) ⊙ Ξ C) V` is a polynomial in `w`
+    have hdir : AnalyticOnNhd ℝ (fun w : Matrix T (hid k) ℝ =>
+        (Matrix.of fun t j => (1 - w t j ^ 2) * (Ξ * C) t j) * θ.write k) Set.univ := by
+      refine analyticOnNhd_matMul ?_ analyticOnNhd_const
+      show AnalyticOnNhd ℝ (fun w : Matrix T (hid k) ℝ => fun t j => (1 - w t j ^ 2) * (Ξ * C) t j)
+        Set.univ
+      exact AnalyticOnNhd.pi fun t => AnalyticOnNhd.pi fun j =>
+        (analyticOnNhd_const.sub ((analyticOnNhd_matrix_entry t j).pow 2)).mul analyticOnNhd_const
+    exact analyticOnNhd_clm_apply hJ hdir
+  have hT0eq : T0 = fun w => fderiv ℝ
+      (fun p : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut × Matrix T d ℝ =>
+        suffix (Arch.mlp Real.tanh id hid) 0 p.1 k.succ p.2) (θ, w * θ.write k) (η, w * η.write k) := by
+    funext w
+    exact fderiv_partial_add
+      (Φ := fun θ' h' => suffix (Arch.mlp (T := T) (d := d) Real.tanh id hid) 0 θ' k.succ h')
+      (hΦ _ (Set.mem_univ _)).differentiableAt η (w * η.write k)
+  have hT0an : AnalyticOnNhd ℝ T0 Set.univ := by
+    rw [hT0eq]
+    exact analyticOnNhd_clm_apply (hΦ.fderiv.comp (analyticOnNhd_const.prod
+        ((rightMulCLM (m := T) (θ.write k)).analyticOnNhd Set.univ)) (Set.mapsTo_univ _ _))
+      (analyticOnNhd_const.prod ((rightMulCLM (m := T) (η.write k)).analyticOnNhd Set.univ))
+  -- on the ray `n = t Ξ` the outputs are `w = tanh(t Ξ W)`, and (22) reads `𝒯_0(w) + t 𝒯_1(w) = 0`
+  have hray : ∀ (Ξ : Matrix T d ℝ) (t : ℝ),
+      T0 ((t • (Ξ * θ.read k)).map Real.tanh)
+        + t • T1 Ξ ((t • (Ξ * θ.read k)).map Real.tanh) = 0 := by
+    intro Ξ t
+    have e := h22 (t • Ξ)
+    unfold blockLHS at e
+    simp only [Matrix.smul_mul] at e
+    have hdir : (Matrix.of fun a j =>
+        ((t • (Ξ * θ.read k)).map fun z => 1 - Real.tanh z ^ 2) a j * (t • (Ξ * C)) a j)
+        = t • Matrix.of fun a j =>
+          (1 - ((t • (Ξ * θ.read k)).map Real.tanh) a j ^ 2) * (Ξ * C) a j := by
+      ext a j
+      simp only [Matrix.of_apply, Matrix.map_apply, Matrix.smul_apply, smul_eq_mul]
+      ring
+    rw [hdir, Matrix.smul_mul, map_add, map_smul] at e
+    show (_ + _) + t • _ = 0
+    rw [add_comm, ← add_assoc]
+    exact e
+  -- for `Ξ` in the dense set of (T2) on a ray, Lemma D.1 makes `𝒯_0` and `𝒯_1 Ξ` vanish
+  have hsep : ∀ Ξ ∈ {Ξ : Matrix T d ℝ |
+      LinearIndependent ℚ (fun p : T × hid k => (Ξ * θ.read k) p.1 p.2)},
+      (∀ w, T0 w = 0) ∧ ∀ w, T1 Ξ w = 0 := by
+    intro Ξ hΞ
+    have hs := tanh_ray_separation_matrix (Ξ * θ.read k) hΞ 1 ![T0, T1 Ξ]
+      (Fin.forall_fin_two.2 ⟨hT0an, hT1an Ξ⟩) (fun t _ => by simpa using hray Ξ t)
+    exact ⟨hs 0, hs 1⟩
+  have hD := dense_setOf_linearIndependent_mul (T := T) (θ.read k) hT2
+  -- (b): `Ξ C = 0` on the dense set (by the fact), so for every `Ξ`, so `C = 0`
+  have hΞC : ∀ Ξ ∈ {Ξ : Matrix T d ℝ |
+      LinearIndependent ℚ (fun p : T × hid k => (Ξ * θ.read k) p.1 p.2)}, Ξ * C = 0 :=
+    fun Ξ hΞ => eq_zero_of_fderiv_suffix_one_sub_sq θ hθ k hT1 (Ξ * C) (hsep Ξ hΞ).2
+  have hall : (fun Ξ : Matrix T d ℝ => Ξ * C) = fun _ => 0 :=
+    Continuous.ext_on hD (continuous_id.matrix_mul continuous_const) continuous_const hΞC
+  have hC0 : C = 0 := by
+    obtain ⟨t₀⟩ := ‹Nonempty T›
+    ext i j
+    have e := congrFun (congrFun (congrFun hall (Matrix.single t₀ i (1 : ℝ))) t₀) j
+    simpa only [Matrix.single_mul_apply_same, one_mul, Matrix.zero_apply] using e
+  have hread : η.read k = -(Z * θ.read k) := by
+    rw [hC] at hC0
+    rw [eq_neg_iff_add_eq_zero, add_comm]
+    exact hC0
+  -- (c): `𝒯_0 = 0` is the hypothesis of Lemma D.3 at the write `V` (rank `d`)
+  obtain ⟨Ξ₀, hΞ₀⟩ := hD.nonempty
+  obtain ⟨Z', hZ', hflat'⟩ := suffixFlat_of_flat_at_write
+    (Arch.mlp (T := T) (d := d) Real.tanh id hid) θ rfl hf hθ k.succ (θ.write k)
+    (hθ.rank_write k) (η.write k) η (hsep Ξ₀ hΞ₀).1
+  -- `(D_{k+1})` gives the changes of basis after the block
+  obtain ⟨X, hXk, hX, hXD⟩ := hk Z' η hflat'
+  -- put `Z` at the hidden state before the block
+  refine ⟨Function.update X k.castSucc Z, Function.update_self _ _ _, fun ℓ hℓ => ?_, ?_⟩
+  · rcases eq_or_ne ℓ k with rfl | hne
+    · -- the block itself: (b) and (c)
+      rw [Function.update_self, Function.update_of_ne (Fin.castSucc_lt_succ).ne', hXk]
+      exact ⟨hread, hZ'⟩
+    · -- a later block: `(D_{k+1})`
+      have hlt : k < ℓ := lt_of_le_of_ne (Fin.castSucc_le_castSucc_iff.1 hℓ) (Ne.symm hne)
+      have hle : k.succ ≤ ℓ.castSucc := by
+        rw [Fin.le_def, Fin.val_succ, Fin.val_castSucc]
+        exact hlt
+      have h1 : ℓ.castSucc ≠ k.castSucc := fun h => hne (Fin.castSucc_injective _ h)
+      have h2 : ℓ.succ ≠ k.castSucc := by
+        intro h
+        have := congrArg Fin.val h
+        rw [Fin.val_succ, Fin.val_castSucc] at this
+        have := Fin.lt_def.1 hlt
+        omega
+      rw [Function.update_of_ne h1, Function.update_of_ne h2]
+      exact hX ℓ hle
+  · -- the readout
+    rw [Function.update_of_ne (Fin.castSucc_lt_last k).ne']
+    exact hXD
 
 end Skips
