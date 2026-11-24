@@ -223,3 +223,6 @@ import SkipsLean.Symmetry.InsideBlocks
 import SkipsLean.Symmetry.InsideBlocksSum
 import SkipsLean.Symmetry.InsideBlocksKinds
 import SkipsLean.Dimension.UpperBoundTransformer
+import SkipsLean.Generic.Sum
+import SkipsLean.Residual.DepthTransformer
+import SkipsLean.Residual.DepthTransformerGated

@@ -1105,3 +1105,6 @@ import SkipsLean
 #print axioms Skips.isPointwiseLimit_of_tendstoLocallyUniformly
 #print axioms Skips.not_tendstoLocallyUniformly_of_not_isPointwiseLimit
 #print axioms Skips.not_tendstoUniformlyOn_isCompact_of_not_isPointwiseLimit
+#print axioms Skips.insideBlocks_headDirQK
+#print axioms Skips.insideBlocks_headDirVO
+#print axioms Skips.insideBlocks_rescaleDir

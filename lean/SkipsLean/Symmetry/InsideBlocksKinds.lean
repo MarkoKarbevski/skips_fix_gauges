@@ -274,6 +274,7 @@ private theorem hasDerivAt_headsVO_ibk (θ : Params (Arch.attention sees χ H dh
 
 end HeadHelpers
 
+omit [DecidableEq d] in
 /-- **The changes of basis between the queries and the keys of the heads are symmetries inside
 the blocks.** -/
 theorem insideBlocks_headDirQK (θ : Params (Arch.attention sees χ H dh) dIn dOut)
@@ -286,6 +287,7 @@ theorem insideBlocks_headDirQK (θ : Params (Arch.attention sees χ H dh) dIn dO
     hasDerivAt_headsQK_ibk θ Γ,
     Filter.Eventually.of_forall fun τ => ⟨rfl, rfl, fun ℓ n => block_headsQK_ibk θ _ ℓ n⟩⟩
 
+omit [DecidableEq d] in
 /-- **The changes of basis between the values and the outputs of the heads are symmetries inside
 the blocks.** -/
 theorem insideBlocks_headDirVO (θ : Params (Arch.attention sees χ H dh) dIn dOut)
@@ -395,6 +397,7 @@ private theorem block_rescaleCurve_ibk
         ring
     _ = _ := by rw [he, one_mul]
 
+omit [Fintype T] [DecidableEq d] in
 /-- **The rescalings of the values of gated units are symmetries inside the blocks.** -/
 theorem insideBlocks_rescaleDir (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut)
     (α : ∀ ℓ, hid ℓ → ℝ) :
