@@ -116,7 +116,7 @@ private theorem ae_funDimLearned_of_skipless_lsk [Nonempty T] {A : Arch T d 1} (
   change _ ≤ funDimLearned A (θ₀, 0) at hz
   -- generic `(θ, A)` have at least this functional dimension
   have hχ : AnalyticOnNhd ℝ A.χ Set.univ := by rw [hA]; exact analyticOnNhd_rmsNorm hε
-  have hge := @ae_funDimSkips_ge _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ borelSpace_skips_lsk A
+  have hge := @ae_funDimSkips_ge _ _ _ _ _ _ _ _ _ _ _ _ _ _ borelSpace_skips_lsk A
     (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) hf hχ μ hμ (θ₀, 0)
   filter_upwards [hge, hub] with p h1 h2
   change funDimLearned A (θ₀, 0) ≤ funDimLearned A p at h1
