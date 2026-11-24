@@ -1495,3 +1495,7 @@ import SkipsLean
 #print axioms Skips.ae_not_gelu_absorbB_of_card_lt
 #print axioms Skips.ae_relu_absorbB_add_card
 #print axioms Skips.ae_gelu_absorbB_add_card
+#print axioms Skips.nearReLU_relu
+#print axioms Skips.nearReLU_silu
+#print axioms Skips.nearReLU_gelu
+#print axioms Skips.gateLinear_gateQuadratic_of_gatedBlockB_absorb
