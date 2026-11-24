@@ -1024,3 +1024,9 @@ import SkipsLean
 #print axioms Skips.ae_funDim_add_le_skipless_attention_rmsNorm
 #print axioms Skips.ae_funDim_add_le_residual_attention
 #print axioms Skips.ae_funDim_add_le_residual_attention_rmsNorm
+#print axioms Skips.exists_ne_residual_skipless_attention_noMask
+#print axioms Skips.exists_ne_residual_skipless_attention_noMask_rmsNorm
+#print axioms Skips.exists_ne_residual_skipless_attention_causal
+#print axioms Skips.exists_ne_residual_skipless_attention_causal_rmsNorm
+#print axioms Skips.ae_forall_ne_residual_skipless_attention_causal
+#print axioms Skips.ae_forall_ne_residual_skipless_attention_causal_rmsNorm
