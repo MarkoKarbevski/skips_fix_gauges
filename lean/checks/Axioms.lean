@@ -1225,3 +1225,10 @@ import SkipsLean
 #print axioms Skips.ae_not_isPointwiseLimit_skipless_attention_geglu
 #print axioms Skips.ae_forall_eval_residual_ne_skipless_attention_geglu_rmsNorm
 #print axioms Skips.ae_not_isPointwiseLimit_skipless_attention_geglu_rmsNorm
+#print axioms Skips.smallWritesLimit_eq_zero_attentionMlp
+#print axioms Skips.eventually_funDim_smallWrites_attentionMlp
+#print axioms Skips.ae_smallWritesGeneric_attentionMlp
+#print axioms Skips.ae_funDim_attentionMlp_residual
+#print axioms Skips.ae_funDim_attentionMlp_residual_ge_add
+#print axioms Skips.ae_funDim_attention_tanh_residual
+#print axioms Skips.ae_funDim_attention_gelu_residual
