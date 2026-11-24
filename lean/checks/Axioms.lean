@@ -755,3 +755,7 @@ import SkipsLean
 #print axioms Skips.ae_funDim_add_le_skipless_rmsNorm_zero
 #print axioms Skips.funDim_add_le_skipless_gated_rmsNorm_zero
 #print axioms Skips.ae_funDim_add_le_skipless_gated_rmsNorm_zero
+#print axioms Skips.analyticAt_rmsNorm_zero
+#print axioms Skips.fderiv_rmsNorm_zero_apply
+#print axioms Skips.fderiv_rmsNorm_zero_self
+#print axioms Skips.claimZero_last

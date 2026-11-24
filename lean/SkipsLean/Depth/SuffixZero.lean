@@ -58,6 +58,7 @@ private theorem analyticAt_entry_sz {m n : Type*} [Fintype m] [Fintype n] (t : m
   ((ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : n => ℝ) i).comp
     (ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : m => n → ℝ) t)).analyticAt _
 
+omit [DecidableEq d] in
 /-- RMSNorm with `ε = 0` is real-analytic at every matrix without a zero row. -/
 theorem analyticAt_rmsNorm_zero (h : Matrix T d ℝ) (hh : ∀ t, h t ≠ 0) :
     AnalyticAt ℝ (rmsNorm 0 : Matrix T d ℝ → Matrix T d ℝ) h := by
@@ -85,6 +86,7 @@ private theorem hasDerivAt_matrix_sz {m n : Type*} [Fintype m] [Fintype n]
     (h : ∀ i j, HasDerivAt (fun τ => f τ i j) (f' i j) x) : HasDerivAt f f' x :=
   hasDerivAt_pi.2 fun i => hasDerivAt_pi.2 (h i)
 
+omit [DecidableEq d] in
 /-- **The derivative of RMSNorm with `ε = 0`** at a matrix `h` without a zero row: on every row,
 `𝐃N(h) u = u/ρ − ⟨h, u⟩ h/(d ρ³)` with `ρ = ‖h‖/√d` (the formula of the case `ε > 0` with
 `ε = 0`). -/
@@ -136,6 +138,7 @@ theorem fderiv_rmsNorm_zero_apply (h U : Matrix T d ℝ) (hh : ∀ t, h t ≠ 0)
   simp only [Pi.inv_apply, zero_smul, add_zero, zero_mul]
   ring
 
+omit [DecidableEq d] in
 /-- **Equation (15) of the dimension paper for the normalization:** RMSNorm with `ε = 0` does not
 change along `h`: `𝐃N(h) h = 0` at every matrix `h` without a zero row. -/
 theorem fderiv_rmsNorm_zero_self (h : Matrix T d ℝ) (hh : ∀ t, h t ≠ 0) :
