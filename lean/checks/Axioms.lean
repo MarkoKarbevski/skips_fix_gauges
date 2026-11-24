@@ -1708,3 +1708,5 @@ import SkipsLean
 #print axioms Skips.eval_learned_eq_residual_rmsNorm_fwd
 #print axioms Skips.skipProdFwd_zero
 #print axioms Skips.skipProdFwd_succ
+#print axioms Skips.relu_unitsParallel
+#print axioms Skips.reluSq_unitsParallel
