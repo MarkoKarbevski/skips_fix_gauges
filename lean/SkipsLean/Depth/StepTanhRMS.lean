@@ -290,6 +290,97 @@ theorem suffixFlat_castSucc_iff_mlp_rmsNorm_values (hε : 0 < ε)
         (hΦ _) η _).symm
 
 
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `y ↦ y M`, as a continuous linear map (as in `Depth/StepTanh.lean`). -/
+private noncomputable def mulRightCLM' {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    (M : Matrix n p ℝ) : Matrix m n ℝ →L[ℝ] Matrix m p ℝ :=
+  LinearMap.toContinuousLinearMap
+    { toFun := fun y => y * M
+      map_add' := fun a b => Matrix.add_mul a b M
+      map_smul' := fun c a => Matrix.smul_mul c a M }
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the product of two analytic matrix-valued maps is analytic (as in
+`Depth/StepTanh.lean`). -/
+private theorem analyticOnNhd_matMul' {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    {f : E → Matrix m n ℝ} {g : E → Matrix n p ℝ} {s : Set E}
+    (hf : AnalyticOnNhd ℝ f s) (hg : AnalyticOnNhd ℝ g s) :
+    AnalyticOnNhd ℝ (fun y => f y * g y) s := by
+  let B : Matrix m n ℝ →ₗ[ℝ] Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ :=
+    LinearMap.mk₂ ℝ (fun a b => a * b) Matrix.add_mul (fun c a b => Matrix.smul_mul c a b)
+      Matrix.mul_add (fun c a b => Matrix.mul_smul a c b)
+  let B' : Matrix m n ℝ →L[ℝ] Matrix n p ℝ →L[ℝ] Matrix m p ℝ :=
+    LinearMap.toContinuousLinearMap
+      ((LinearMap.toContinuousLinearMap :
+        (Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ) ≃ₗ[ℝ] (Matrix n p ℝ →L[ℝ] Matrix m p ℝ)).toLinearMap ∘ₗ B)
+  have hB : (fun y => f y * g y) = fun y => B' (f y) (g y) := rfl
+  rw [hB]
+  exact fun y hy => (B'.analyticAt_bilinear (f y, g y)).comp₂ (hf y hy) (hg y hy)
+
+/-- Helper: an analytic family of continuous linear maps, applied to an analytic family of vectors,
+is analytic (as in `Depth/StepTanh.lean`). -/
+private theorem analyticOnNhd_clm_apply' {X E F : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
+    [NormedAddCommGroup E] [NormedSpace ℝ E] [NormedAddCommGroup F] [NormedSpace ℝ F]
+    {J : X → E →L[ℝ] F} {v : X → E} {s : Set X} (hJ : AnalyticOnNhd ℝ J s)
+    (hv : AnalyticOnNhd ℝ v s) : AnalyticOnNhd ℝ (fun x => J x (v x)) s :=
+  fun x hx => ((ContinuousLinearMap.id ℝ (E →L[ℝ] F)).analyticAt_bilinear (J x, v x)).comp₂
+    (hJ x hx) (hv x hx)
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `M ↦ σ(M)`, entry by entry, is analytic if `σ` is (as `analyticOnNhd_f_mlp`). -/
+private theorem analyticOnNhd_map' {m n : Type*} [Fintype m] [Fintype n]
+    (hσ : AnalyticOnNhd ℝ σ Set.univ) :
+    AnalyticOnNhd ℝ (fun M : Matrix m n ℝ => M.map σ) Set.univ := by
+  show AnalyticOnNhd ℝ (fun M : Matrix m n ℝ => fun t => fun i => σ (M t i)) Set.univ
+  exact AnalyticOnNhd.pi fun t => AnalyticOnNhd.pi fun i =>
+    hσ.comp (analyticOnNhd_matrix_entry t i) (Set.mapsTo_univ _ _)
+
+omit [DecidableEq d] in
+/-- Helper: `n ↦ n Z - ⟨n Z, n⟩ n / d` (equation (14)) is a polynomial in the entries of `n`, hence
+analytic. -/
+private theorem analyticOnNhd_tangentRMS (Z : Matrix d d ℝ) :
+    AnalyticOnNhd ℝ (tangentRMS (T := T) Z) Set.univ := by
+  have hZ : ∀ t i, AnalyticOnNhd ℝ (fun n : Matrix T d ℝ => (n * Z) t i) Set.univ := fun t i =>
+    (analyticOnNhd_matrix_entry t i).comp ((mulRightCLM' (m := T) Z).analyticOnNhd Set.univ)
+      (Set.mapsTo_univ _ _)
+  show AnalyticOnNhd ℝ (fun n : Matrix T d ℝ => fun t i =>
+    (n * Z) t i - ((n * Z) t ⬝ᵥ n t / (Fintype.card d : ℝ)) * n t i) Set.univ
+  refine AnalyticOnNhd.pi fun t => AnalyticOnNhd.pi fun i =>
+    (hZ t i).sub (AnalyticOnNhd.mul ?_ (analyticOnNhd_matrix_entry t i))
+  show AnalyticOnNhd ℝ
+    (fun n : Matrix T d ℝ => (∑ l, (n * Z) t l * n t l) / (Fintype.card d : ℝ)) Set.univ
+  exact (Finset.analyticOnNhd_fun_sum _ fun l _ =>
+    (hZ t l).mul (analyticOnNhd_matrix_entry t l)).div_const
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: the values of `N_ε` (`ε > 0`) include every `n` whose rows have `‖n_t‖² / d < 1`: the
+paper's inverse `h_t = √ε (1 - ‖n_t‖² / d)^{-1/2} n_t`. -/
+private theorem exists_rmsNorm_eq (hε : 0 < ε) (n : Matrix T d ℝ)
+    (hn : ∀ t, n t ⬝ᵥ n t / (Fintype.card d : ℝ) < 1) : ∃ h, rmsNorm ε h = n := by
+  refine ⟨Matrix.of fun t =>
+    (Real.sqrt ε / Real.sqrt (1 - n t ⬝ᵥ n t / (Fintype.card d : ℝ))) • n t, ?_⟩
+  ext t j
+  -- with `a = ‖n_t‖² / d < 1` and `c = √ε / √(1 - a)`: `‖c n_t‖² / d + ε = c²`
+  obtain ⟨a, ha⟩ : ∃ a, a = n t ⬝ᵥ n t / (Fintype.card d : ℝ) := ⟨_, rfl⟩
+  have h1a : 0 < 1 - a := by have := hn t; rw [← ha] at this; linarith
+  obtain ⟨c, hc⟩ : ∃ c, c = Real.sqrt ε / Real.sqrt (1 - a) := ⟨_, rfl⟩
+  have hc0 : 0 < c := by rw [hc]; exact div_pos (Real.sqrt_pos.2 hε) (Real.sqrt_pos.2 h1a)
+  have hc2 : c ^ 2 = ε / (1 - a) := by
+    rw [hc, div_pow, Real.sq_sqrt hε.le, Real.sq_sqrt h1a.le]
+  have hε' : ε = c ^ 2 * (1 - a) := by rw [hc2]; field_simp
+  have hrad : (c • n t) ⬝ᵥ (c • n t) / (Fintype.card d : ℝ) + ε = c ^ 2 := by
+    rw [smul_dotProduct, dotProduct_smul, smul_eq_mul, smul_eq_mul]
+    have : c * (c * (n t ⬝ᵥ n t)) / (Fintype.card d : ℝ) = c ^ 2 * a := by rw [ha]; ring
+    rw [this, hε']
+    ring
+  -- so `N_ε(c n_t) = c⁻¹ c n_t = n_t`
+  show rmsRow ε ((Real.sqrt ε / Real.sqrt (1 - n t ⬝ᵥ n t / (Fintype.card d : ℝ))) • n t) j
+    = n t j
+  rw [← ha, ← hc]
+  unfold rmsRow
+  rw [hrad, Real.sqrt_sq hc0.le, smul_smul, inv_mul_cancel₀ hc0.ne', one_smul]
+
 /-- **Lemma D.6 (the identity at every real row), case (+):** for a real-analytic activation, the
 identity (16) before block `k` holds if and only if `𝓛(σ(n W), σ'(n W); n) = 0` for every
 `n` (equation (23)): the left side is real-analytic in `n`, and the values of `N_ε` form an open
@@ -302,16 +393,76 @@ theorem suffixFlat_castSucc_iff_mlp_rmsNorm (hε : 0 < ε) (hσ : ∀ z, HasDeri
       ∀ n : Matrix T d ℝ,
         blockLHS θ k η ((n * θ.read k).map σ) ((n * θ.read k).map σ')
           (tangentRMS Z n * θ.read k + n * η.read k) = 0 := by
-  sorry
-
-omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
-/-- Helper: `y ↦ y M`, as a continuous linear map (as in `Depth/StepTanh.lean`). -/
-private noncomputable def mulRightCLM' {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
-    (M : Matrix n p ℝ) : Matrix m n ℝ →L[ℝ] Matrix m p ℝ :=
-  LinearMap.toContinuousLinearMap
-    { toFun := fun y => y * M
-      map_add' := fun a b => Matrix.add_mul a b M
-      map_smul' := fun c a => Matrix.smul_mul c a M }
+  rw [suffixFlat_castSucc_iff_mlp_rmsNorm_values hε hσ θ k Z η]
+  refine ⟨fun hval => ?_, fun hG h => hG (rmsNorm ε h)⟩
+  -- the left side `G(n)` of (23), as a function of the row `n`
+  let G : Matrix T d ℝ → Matrix T dOut ℝ := fun n =>
+    blockLHS θ k η ((n * θ.read k).map σ) ((n * θ.read k).map σ')
+      (tangentRMS Z n * θ.read k + n * η.read k)
+  -- `σ' = deriv σ` is analytic, `N_ε` and the blocks are analytic, hence so is
+  -- `(θ', h') ↦ 𝓑_{>k+1}(h')`
+  have hσ'a : AnalyticOnNhd ℝ σ' Set.univ := by
+    rw [show σ' = deriv σ from funext fun z => (hσ z).deriv.symm]
+    exact hσa.deriv
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_mlp hσa ℓ
+  have hΦ := analyticOnNhd_suffix_prod_of_analytic (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid)
+    (dIn := dIn) (dOut := dOut) (analyticOnNhd_rmsNorm hε) hf k.succ
+  -- the outputs `σ(n W)` of the hidden units, and the direction `(σ'(n W) ⊙ ż(n)) V + σ(n W) η_V`
+  have hnW := (mulRightCLM' (m := T) (θ.read k)).analyticOnNhd Set.univ
+  have hw : AnalyticOnNhd ℝ (fun n : Matrix T d ℝ => (n * θ.read k).map σ) Set.univ :=
+    (analyticOnNhd_map' hσa).comp hnW (Set.mapsTo_univ _ _)
+  have hzdot : AnalyticOnNhd ℝ
+      (fun n : Matrix T d ℝ => tangentRMS Z n * θ.read k + n * η.read k) Set.univ :=
+    (analyticOnNhd_matMul' (analyticOnNhd_tangentRMS Z) analyticOnNhd_const).add
+      ((mulRightCLM' (m := T) (η.read k)).analyticOnNhd Set.univ)
+  have hdir : AnalyticOnNhd ℝ (fun n : Matrix T d ℝ =>
+      (Matrix.of fun t j => ((n * θ.read k).map σ') t j
+          * (tangentRMS Z n * θ.read k + n * η.read k) t j) * θ.write k
+        + (n * θ.read k).map σ * η.write k) Set.univ := by
+    refine (analyticOnNhd_matMul' ?_ analyticOnNhd_const).add
+      (analyticOnNhd_matMul' hw analyticOnNhd_const)
+    show AnalyticOnNhd ℝ (fun n : Matrix T d ℝ => fun t j => ((n * θ.read k).map σ') t j
+      * (tangentRMS Z n * θ.read k + n * η.read k) t j) Set.univ
+    exact AnalyticOnNhd.pi fun t => AnalyticOnNhd.pi fun j =>
+      ((analyticOnNhd_matrix_entry t j).comp ((analyticOnNhd_map' hσ'a).comp hnW
+        (Set.mapsTo_univ _ _)) (Set.mapsTo_univ _ _)).mul
+      ((analyticOnNhd_matrix_entry t j).comp hzdot (Set.mapsTo_univ _ _))
+  -- `G(n)` is the derivative of `(θ', h') ↦ 𝓑_{>k+1}(h')` at `(θ, σ(n W) V)` along `(η, ·)`
+  have hGeq : G = fun n => fderiv ℝ
+      (fun p : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut × Matrix T d ℝ =>
+        suffix (Arch.mlp σ (rmsNorm ε) hid) 0 p.1 k.succ p.2)
+      (θ, (n * θ.read k).map σ * θ.write k)
+      (η, (Matrix.of fun t j => ((n * θ.read k).map σ') t j
+          * (tangentRMS Z n * θ.read k + n * η.read k) t j) * θ.write k
+        + (n * θ.read k).map σ * η.write k) := by
+    funext n
+    exact fderiv_partial_add'
+      (Φ := fun θ' h' => suffix (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) 0 θ' k.succ h')
+      (hΦ _ (Set.mem_univ _)).differentiableAt η _
+  -- so `G` is analytic on the whole space
+  have hG : AnalyticOnNhd ℝ G Set.univ := by
+    rw [hGeq]
+    exact analyticOnNhd_clm_apply' (hΦ.fderiv.comp (analyticOnNhd_const.prod
+        (analyticOnNhd_matMul' hw analyticOnNhd_const)) (Set.mapsTo_univ _ _))
+      (analyticOnNhd_const.prod hdir)
+  -- `G` vanishes on the open set of the `n` with `‖n_t‖² / d < 1`, values of `N_ε`, around `0`
+  have hUo : IsOpen {n : Matrix T d ℝ | ∀ t, n t ⬝ᵥ n t / (Fintype.card d : ℝ) < 1} := by
+    rw [Set.ofPred_forall]
+    refine isOpen_iInter_of_finite fun t => isOpen_lt ?_ continuous_const
+    show Continuous fun n : Matrix T d ℝ => (∑ i, n t i * n t i) / (Fintype.card d : ℝ)
+    fun_prop
+  have h0 : (0 : Matrix T d ℝ) ∈ {n : Matrix T d ℝ | ∀ t, n t ⬝ᵥ n t / (Fintype.card d : ℝ) < 1} :=
+    fun t => by
+      rw [show (0 : Matrix T d ℝ) t = 0 from rfl, zero_dotProduct, zero_div]
+      exact zero_lt_one
+  have hzero : G =ᶠ[𝓝 0] 0 := Filter.eventually_of_mem (hUo.mem_nhds h0) fun n hn => by
+    obtain ⟨h, rfl⟩ := exists_rmsNorm_eq hε n hn
+    exact hval h
+  -- the identity principle on the (connected) whole space
+  intro n
+  exact hG.eqOn_zero_of_preconnected_of_eventuallyEq_zero isPreconnected_univ (Set.mem_univ 0)
+    hzero (Set.mem_univ n)
 
 variable (θ : Params (Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm ε) hid) dIn dOut)
 
