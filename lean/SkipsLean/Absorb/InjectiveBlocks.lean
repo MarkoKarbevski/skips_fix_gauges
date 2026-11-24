@@ -207,6 +207,169 @@ theorem two_mul_card_le_of_injective_vanillaBlock_relu {m : Type*} [Fintype m]
   rw [Finset.card_union_of_disjoint hdisj] at h3
   omega
 
+/-- The output row of a network as a function of its hidden row after block `k`, for the blocks
+`B k` on rows and the readout `D`: `H_n v = v D` and `H_k = H_{k+1} ∘ B_k`. -/
+private noncomputable def suffixMap_inj {n : ℕ} (B : Fin n → (d → ℝ) → (d → ℝ))
+    (D : Matrix d dOut ℝ) : Fin (n + 1) → (d → ℝ) → (dOut → ℝ) :=
+  Fin.reverseInduction (motive := fun _ => (d → ℝ) → (dOut → ℝ)) (fun v => v ᵥ* D)
+    (fun k H => H ∘ B k)
+
+omit [DecidableEq d] [Fintype dOut] in
+private theorem suffixMap_last_inj {n : ℕ} (B : Fin n → (d → ℝ) → (d → ℝ))
+    (D : Matrix d dOut ℝ) : suffixMap_inj B D (Fin.last n) = fun v => v ᵥ* D := by
+  simp only [suffixMap_inj, Fin.reverseInduction_last]
+
+omit [DecidableEq d] [Fintype dOut] in
+private theorem suffixMap_castSucc_inj {n : ℕ} (B : Fin n → (d → ℝ) → (d → ℝ))
+    (D : Matrix d dOut ℝ) (k : Fin n) :
+    suffixMap_inj B D k.castSucc = suffixMap_inj B D k.succ ∘ B k := by
+  simp only [suffixMap_inj, Fin.reverseInduction_castSucc]
+
+omit [DecidableEq d] [Fintype dOut] in
+/-- Along the hidden rows `r k` of a network (`r (k+1) = B_k (r k)`), `H_k (r k)` is the output
+row `r n D`. -/
+private theorem suffixMap_rows_inj {n : ℕ} (B : Fin n → (d → ℝ) → (d → ℝ))
+    (D : Matrix d dOut ℝ) (r : Fin (n + 1) → d → ℝ)
+    (hr : ∀ k : Fin n, r k.succ = B k (r k.castSucc)) (k : Fin (n + 1)) :
+    suffixMap_inj B D k (r k) = r (Fin.last n) ᵥ* D := by
+  induction k using Fin.reverseInduction with
+  | last => rw [suffixMap_last_inj]
+  | cast k ih => rw [suffixMap_castSucc_inj, Function.comp_apply, ← hr, ih]
+
+omit [Fintype T] [Fintype dOut] in
+/-- A row of the output of the residual network is `G_0` of the row `x_t E`, with the block maps
+`Φ_ℓ` of `Residual/Folding.lean`. -/
+private theorem eval_res_row_inj (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut)
+    (X : Matrix T dIn ℝ) (t : T) :
+    eval (Arch.mlp relu id hid) 1 θ X t
+      = suffixMap_inj (blockMapRes θ) θ.D 0 (X t ᵥ* θ.E) := by
+  have h : suffixMap_inj (blockMapRes θ) θ.D 0 (hidden (Arch.mlp relu id hid) 1 θ X 0 t)
+      = hidden (Arch.mlp relu id hid) 1 θ X (Fin.last L) t ᵥ* θ.D :=
+    suffixMap_rows_inj (blockMapRes θ) θ.D (fun k => hidden (Arch.mlp relu id hid) 1 θ X k t)
+      (fun k => hidden_succ_eq_blockMapRes θ X k t) 0
+  rw [hidden_zero, Matrix.mul_apply_eq_vecMul] at h
+  rw [h]
+  show (hidden (Arch.mlp relu id hid) 1 θ X (Fin.last L) * θ.D) t = _
+  rw [Matrix.mul_apply_eq_vecMul]
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- A row of the hidden state after block `k` of a skipless network (stream matrix `0`) is the
+block of the row before it. -/
+private theorem hidden_succ_skipless_inj
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (X : Matrix T dIn ℝ)
+    (k : Fin L) (t : T) :
+    hidden (Arch.mlp relu id hid) 0 θ X k.succ t
+      = vanillaBlock relu (θ.read k) (θ.write k)
+          (hidden (Arch.mlp relu id hid) 0 θ X k.castSucc t) := by
+  rw [hidden_succ]
+  show (hidden (Arch.mlp relu id hid) 0 θ X k.castSucc * (0 : Matrix d d ℝ)
+    + (hidden (Arch.mlp relu id hid) 0 θ X k.castSucc * θ.read k).map relu * θ.write k) t = _
+  rw [Matrix.mul_zero, zero_add]
+  exact map_mul_mul_row relu (θ.read k) (θ.write k) _ t
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- A row of the output of the skipless network is `H_0` of the row `x_t E'`. -/
+private theorem eval_skipless_row_inj
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (X : Matrix T dIn ℝ) (t : T) :
+    eval (Arch.mlp relu id hid) 0 θ X t
+      = suffixMap_inj (fun k => vanillaBlock relu (θ.read k) (θ.write k)) θ.D 0
+          (X t ᵥ* θ.E) := by
+  have h : suffixMap_inj (fun k => vanillaBlock relu (θ.read k) (θ.write k)) θ.D 0
+      (hidden (Arch.mlp relu id hid) 0 θ X 0 t)
+      = hidden (Arch.mlp relu id hid) 0 θ X (Fin.last L) t ᵥ* θ.D :=
+    suffixMap_rows_inj _ θ.D (fun k => hidden (Arch.mlp relu id hid) 0 θ X k t)
+      (fun k => hidden_succ_skipless_inj θ X k t) 0
+  rw [hidden_zero, Matrix.mul_apply_eq_vecMul] at h
+  rw [h]
+  show (hidden (Arch.mlp relu id hid) 0 θ X (Fin.last L) * θ.D) t = _
+  rw [Matrix.mul_apply_eq_vecMul]
+
+/-- **Step 1:** if `D` has rank `d` and every block is injective, every `H_k` is injective. -/
+private theorem suffixMap_injective_inj {n : ℕ} (B : Fin n → (d → ℝ) → (d → ℝ))
+    (D : Matrix d dOut ℝ) (hD : D.rank = Fintype.card d) (hB : ∀ k, Function.Injective (B k))
+    (k : Fin (n + 1)) : Function.Injective (suffixMap_inj B D k) := by
+  induction k using Fin.reverseInduction with
+  | last =>
+    -- `D` has a right inverse
+    obtain ⟨R, hR⟩ : ∃ R : Matrix dOut d ℝ, D * R = 1 :=
+      Matrix.mulVec_surjective_iff_exists_right_inverse.1
+        (Matrix.mulVec_surjective_iff_rank_eq_card.2 hD)
+    rw [suffixMap_last_inj]
+    intro v v' hv
+    have h := congrArg (fun w => w ᵥ* R) hv
+    simpa only [Matrix.vecMul_vecMul, hR, Matrix.vecMul_one] using h
+  | cast k ih =>
+    rw [suffixMap_castSucc_inj]
+    exact ih.comp (hB k)
+
+omit [DecidableEq d] in
+/-- **Step 2, the embeddings:** if `E` has rank `d` and the kernel of `x ↦ x E'` lies in that of
+`x ↦ x E`, then `x ↦ x E'` is onto `ℝ^d` and the two kernels are equal. -/
+private theorem vecMul_surjective_of_ker_le_inj {E E' : Matrix dIn d ℝ}
+    (hE : E.rank = Fintype.card d) (hker : ∀ x : dIn → ℝ, x ᵥ* E' = 0 → x ᵥ* E = 0) :
+    Function.Surjective (fun x : dIn → ℝ => x ᵥ* E') ∧
+      ∀ x : dIn → ℝ, x ᵥ* E = 0 → x ᵥ* E' = 0 := by
+  have hle : LinearMap.ker E'.vecMulLinear ≤ LinearMap.ker E.vecMulLinear := fun x hx =>
+    LinearMap.mem_ker.2 (hker x (LinearMap.mem_ker.1 hx))
+  -- `x ↦ x E` is onto: its kernel has dimension `d_in - d`
+  have hrange : LinearMap.range E.vecMulLinear = ⊤ :=
+    LinearMap.range_eq_top.2 ((Matrix.vecMul_surjective_iff_rank_eq_card).2 hE)
+  have h1 := LinearMap.finrank_range_add_finrank_ker E.vecMulLinear
+  have h2 := LinearMap.finrank_range_add_finrank_ker E'.vecMulLinear
+  rw [hrange, finrank_top] at h1
+  have h3 := Submodule.finrank_le (LinearMap.range E'.vecMulLinear)
+  have h4 := Submodule.finrank_mono hle
+  -- so the kernel of `x ↦ x E'` has dimension `d_in - d` too, and its range is everything
+  have hkeq : LinearMap.ker E'.vecMulLinear = LinearMap.ker E.vecMulLinear :=
+    Submodule.eq_of_le_of_finrank_le hle (by omega)
+  have hr' : LinearMap.range E'.vecMulLinear = ⊤ := Submodule.eq_top_of_finrank_eq (by omega)
+  refine ⟨LinearMap.range_eq_top.1 hr', fun x hx => ?_⟩
+  have h5 : x ∈ LinearMap.ker E.vecMulLinear := LinearMap.mem_ker.2 hx
+  rw [← hkeq] at h5
+  exact LinearMap.mem_ker.1 h5
+
+omit [Fintype dOut] in
+/-- **Step 2, the induction:** if `H_0` is injective and every block is continuous and
+positively homogeneous, then every block is injective: `H_k = H_{k+1} ∘ B_k` injective makes `B_k`
+injective, hence onto (invariance of domain), hence `H_{k+1}` injective. -/
+private theorem injective_blocks_inj (hinv : InvarianceOfDomain d) {n : ℕ}
+    (B : Fin n → (d → ℝ) → (d → ℝ)) (D : Matrix d dOut ℝ) (hc : ∀ k, Continuous (B k))
+    (hh : ∀ k (c : ℝ) (u : d → ℝ), 0 < c → B k (c • u) = c • B k u)
+    (h0 : Function.Injective (suffixMap_inj B D 0)) : ∀ k, Function.Injective (B k) := by
+  have hall : ∀ k : Fin (n + 1), Function.Injective (suffixMap_inj B D k) := by
+    intro k
+    induction k using Fin.induction with
+    | zero => exact h0
+    | succ k ih =>
+      rw [suffixMap_castSucc_inj] at ih
+      have hs := surjective_of_injective_of_posHomogeneous hinv (B k) (hc k) (hh k) ih.of_comp
+      exact ih.of_comp_right hs
+  intro k
+  have h := hall k.castSucc
+  rw [suffixMap_castSucc_inj] at h
+  exact h.of_comp
+
+omit [DecidableEq d] in
+/-- A ReLU block is continuous. -/
+private theorem continuous_vanillaBlock_relu_inj {m : Type*} [Fintype m] (Wr : Matrix d m ℝ)
+    (Ww : Matrix m d ℝ) : Continuous (vanillaBlock relu Wr Ww) := by
+  have hr : Continuous relu := continuous_id.max continuous_const
+  unfold vanillaBlock
+  exact Continuous.matrix_vecMul (continuous_pi fun i => hr.comp ((continuous_apply i).comp
+    (continuous_id.matrix_vecMul continuous_const))) continuous_const
+
+omit [DecidableEq d] in
+/-- A ReLU block is positively homogeneous. -/
+private theorem vanillaBlock_relu_smul_inj {m : Type*} [Fintype m] (Wr : Matrix d m ℝ)
+    (Ww : Matrix m d ℝ) {c : ℝ} (hc : 0 < c) (u : d → ℝ) :
+    vanillaBlock relu Wr Ww (c • u) = c • vanillaBlock relu Wr Ww u := by
+  have e : (fun i => relu (((c • u) ᵥ* Wr) i)) = c • fun i => relu ((u ᵥ* Wr) i) := by
+    funext i
+    simp only [Matrix.smul_vecMul, Pi.smul_apply, smul_eq_mul, relu]
+    rw [mul_max_of_nonneg _ _ hc.le, mul_zero]
+  simp only [vanillaBlock]
+  rw [e, Matrix.smul_vecMul]
+
 /-- **Proposition 4.6 for ReLU, under invariance of domain:** let `E` and `D` have rank `d` and
 let every block of the residual ReLU network be injective on rows. Then every skipless ReLU
 network with the same `d`, of any depth and any widths, that equals the residual network has at
@@ -220,7 +383,43 @@ theorem two_mul_card_le_of_eval_eq_skipless_relu [Nonempty T] (hinv : Invariance
     (heq : ∀ X : Matrix T dIn ℝ,
       eval (Arch.mlp relu id hid') 0 θ' X = eval (Arch.mlp relu id hid) 1 θ X) :
     ∀ ℓ : Fin L', 2 * Fintype.card d ≤ Fintype.card (hid' ℓ) := by
-  sorry
+  obtain ⟨t₀⟩ := ‹Nonempty T›
+  -- the two networks on rows: `F'(x) = H_0(x E')` and `F(x) = G_0(x E)`
+  have hrow : ∀ x : dIn → ℝ,
+      suffixMap_inj (fun k => vanillaBlock relu (θ'.read k) (θ'.write k)) θ'.D 0 (x ᵥ* θ'.E)
+        = suffixMap_inj (blockMapRes θ) θ.D 0 (x ᵥ* θ.E) := by
+    intro x
+    have h := congrFun (heq (Matrix.of fun _ => x)) t₀
+    rw [eval_skipless_row_inj, eval_res_row_inj] at h
+    exact h
+  -- Step 1: the residual network is injective in `x E`
+  have hG := suffixMap_injective_inj (blockMapRes θ) θ.D hD hinj 0
+  -- Step 2: the kernel of `x ↦ x E'` lies in that of `x ↦ x E`; so `x ↦ x E'` is onto and the
+  -- two kernels are equal
+  have hker : ∀ x : dIn → ℝ, x ᵥ* θ'.E = 0 → x ᵥ* θ.E = 0 := by
+    intro x hx
+    have h1 : suffixMap_inj (blockMapRes θ) θ.D 0 (x ᵥ* θ.E)
+        = suffixMap_inj (blockMapRes θ) θ.D 0 (0 ᵥ* θ.E) := by
+      rw [← hrow x, ← hrow 0, hx, Matrix.zero_vecMul]
+    have h2 := hG h1
+    rwa [Matrix.zero_vecMul] at h2
+  obtain ⟨hsurj, hker'⟩ := vecMul_surjective_of_ker_le_inj hE hker
+  -- so the skipless network is injective in its first hidden row
+  have hH : Function.Injective
+      (suffixMap_inj (fun k => vanillaBlock relu (θ'.read k) (θ'.write k)) θ'.D 0) := by
+    intro v v' hv
+    obtain ⟨x, rfl⟩ := hsurj v
+    obtain ⟨x', rfl⟩ := hsurj v'
+    have h1 : x ᵥ* θ.E = x' ᵥ* θ.E := hG (by rw [← hrow, ← hrow]; exact hv)
+    have h2 : (x - x') ᵥ* θ'.E = 0 := hker' _ (by rw [Matrix.sub_vecMul, h1, sub_self])
+    rw [Matrix.sub_vecMul, sub_eq_zero] at h2
+    exact h2
+  -- and every skipless block is injective
+  have hB := injective_blocks_inj hinv _ θ'.D
+    (fun k => continuous_vanillaBlock_relu_inj (θ'.read k) (θ'.write k))
+    (fun k c u hc => vanillaBlock_relu_smul_inj (θ'.read k) (θ'.write k) hc u) hH
+  -- Step 3: an injective ReLU block has at least `2 d` units
+  exact fun ℓ => two_mul_card_le_of_injective_vanillaBlock_relu _ _ (hB ℓ)
 
 /-- **Proposition 4.6 for GELU, under invariance of domain:** let `E` and `D` have rank `d` and
 let every block of the residual network be injective on rows when GELU is replaced by ReLU. Then
@@ -235,7 +434,17 @@ theorem two_mul_card_le_of_eval_eq_skipless_gelu [Nonempty T] (hinv : Invariance
     (heq : ∀ X : Matrix T dIn ℝ,
       eval (Arch.mlp gelu id hid') 0 θ' X = eval (Arch.mlp gelu id hid) 1 θ X) :
     ∀ ℓ : Fin L', 2 * Fintype.card d ≤ Fintype.card (hid' ℓ) := by
-  sorry
+  -- GELU reduces to ReLU: the two ReLU networks with the same weights are equal, as both are the
+  -- limit of `F(t X)/t` along the ray
+  have heq' : ∀ X : Matrix T dIn ℝ,
+      eval (Arch.mlp relu id hid') 0 (θ'.withActivation relu) X
+        = eval (Arch.mlp relu id hid) 1 (θ.withActivation relu) X := by
+    intro X
+    refine tendsto_nhds_unique (tendsto_eval_gelu_ray 0 θ' X) ?_
+    exact (tendsto_eval_gelu_ray 1 θ X).congr fun t =>
+      (congrArg (fun M => t⁻¹ • M) (heq (t • X))).symm
+  exact two_mul_card_le_of_eval_eq_skipless_relu hinv (θ.withActivation relu) hE hD hinj hid'
+    (θ'.withActivation relu) heq'
 
 /-- **Proposition 4.6 for ReLU with the condition `‖W_read‖ ‖W_write‖ < 1`, under invariance of
 domain:** if `E` and `D` have rank `d` and every block of the residual ReLU network has Lipschitz
@@ -256,7 +465,9 @@ theorem two_mul_card_le_of_eval_eq_skipless_relu_of_norm_lt_one [Nonempty T]
     (heq : ∀ X : Matrix T dIn ℝ,
       eval (Arch.mlp relu id hid') 0 θ' X = eval (Arch.mlp relu id hid) 1 θ X) :
     ∀ ℓ : Fin L', 2 * Fintype.card d ≤ Fintype.card (hid' ℓ) := by
-  sorry
+  -- no block folds (Proposition A.32 (iii))
+  exact two_mul_card_le_of_eval_eq_skipless_relu hinv θ hE hD
+    (fun ℓ => not_not.1 (not_folds_of_norm_mul_norm_lt_one θ ℓ (ha ℓ) (hb ℓ) (hab ℓ))) hid' θ' heq
 
 /-- **Proposition 4.6 for GELU with the condition `‖W_read‖ ‖W_write‖ < 1`, under invariance of
 domain.** -/
@@ -274,6 +485,9 @@ theorem two_mul_card_le_of_eval_eq_skipless_gelu_of_norm_lt_one [Nonempty T]
     (heq : ∀ X : Matrix T dIn ℝ,
       eval (Arch.mlp gelu id hid') 0 θ' X = eval (Arch.mlp gelu id hid) 1 θ X) :
     ∀ ℓ : Fin L', 2 * Fintype.card d ≤ Fintype.card (hid' ℓ) := by
-  sorry
+  -- no block of the ReLU network with the same weights folds (Proposition A.32 (iii))
+  exact two_mul_card_le_of_eval_eq_skipless_gelu hinv θ hE hD
+    (fun ℓ => not_not.1 (not_folds_of_norm_mul_norm_lt_one (θ.withActivation relu) ℓ (ha ℓ)
+      (hb ℓ) (hab ℓ))) hid' θ' heq
 
 end Skips
