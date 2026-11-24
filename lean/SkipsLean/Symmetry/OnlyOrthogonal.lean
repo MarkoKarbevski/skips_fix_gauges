@@ -333,6 +333,159 @@ private theorem vecMul_eq_of_rmsRow_two (hε : 0 < ε) (M : Matrix d d ℝ) {a b
   exact mul_left_cancel₀ hsb.ne' (e1 i)
 
 
+/-! #### Lemma A.4 for a general block -/
+
+omit [Fintype T] [Fintype dOut] in
+/-- Helper, fact (c): every row is a row of the hidden state `h_ℓ` for some parameters and input,
+if every block can make a nonzero hidden unit from every nonzero row. -/
+private theorem exists_hidden_row {A : Arch T d L} [Nonempty T] [Nonempty dIn] [Nonempty d]
+    (hε : 0 < ε) (hA : A.χ = rmsNorm ε)
+    (hnz : ∀ k (N : Matrix T d ℝ) (t : T), N t ≠ 0 →
+      ∃ (W : Matrix d (A.r k) ℝ) (j : A.w k), A.f k (N * W) t j ≠ 0)
+    (ℓ : Fin (L + 1)) (v : d → ℝ) :
+    ∃ (θ : Params A dIn dOut) (x : Matrix T dIn ℝ) (t : T), hidden A 0 θ x ℓ t = v := by
+  classical
+  induction ℓ using Fin.induction generalizing v with
+  | zero =>
+    obtain ⟨t⟩ := ‹Nonempty T›
+    obtain ⟨i⟩ := ‹Nonempty dIn›
+    -- a one-hot input and an embedding with the row `v`
+    refine ⟨⟨Matrix.of fun _ => v, 0, 0, 0⟩, Matrix.of fun _ => Pi.single i 1, t, ?_⟩
+    rw [hidden_zero]
+    funext k
+    simp only [Matrix.mul_apply, Matrix.of_apply, Pi.single_apply, ite_mul, one_mul, zero_mul,
+      Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte]
+  | succ k ih =>
+    obtain ⟨i₀⟩ := ‹Nonempty d›
+    -- parameters with a nonzero row `t` of `h_k`, so `N_ε(h_k)` has a nonzero row `t`
+    obtain ⟨θ, x, t, ht⟩ := ih (Pi.single i₀ 1)
+    have hN : rmsNorm ε (hidden A 0 θ x k.castSucc) t ≠ 0 := by
+      show rmsRow ε (hidden A 0 θ x k.castSucc t) ≠ 0
+      rw [ht]
+      refine smul_ne_zero (inv_ne_zero (Real.sqrt_pos.mpr (rms_arg_pos hε _)).ne') fun h0 => ?_
+      have := congrFun h0 i₀
+      rw [Pi.single_eq_same, Pi.zero_apply] at this
+      exact one_ne_zero this
+    -- a read with a nonzero unit `j`, of value `c`; the write with the row `c⁻¹ v` at `j`
+    obtain ⟨W, j, hc⟩ := hnz k _ t hN
+    generalize hc_def : A.f k (rmsNorm ε (hidden A 0 θ x k.castSucc) * W) t j = c at hc
+    let θ' : Params A dIn dOut := ⟨θ.E, Function.update θ.read k W,
+      Function.update θ.write k (Matrix.of fun j' i => if j' = j then c⁻¹ * v i else 0), θ.D⟩
+    have e1 : hidden A 0 θ' x k.castSucc = hidden A 0 θ x k.castSucc :=
+      hidden_congr θ' θ x rfl k.castSucc
+        (fun i hi => Function.update_of_ne (ne_of_lt_castSucc hi) _ _)
+        (fun i hi => Function.update_of_ne (ne_of_lt_castSucc hi) _ _)
+    have hrk : θ'.read k = W := Function.update_self _ _ _
+    have hwk : θ'.write k = Matrix.of fun j' i => if j' = j then c⁻¹ * v i else 0 :=
+      Function.update_self _ _ _
+    refine ⟨θ', x, t, ?_⟩
+    rw [hidden_succ_skipless, e1, hrk, hwk, hA]
+    funext i
+    simp only [Matrix.mul_apply, Matrix.of_apply, mul_ite, mul_zero, Finset.sum_ite_eq',
+      Finset.mem_univ, ↓reduceIte, hc_def]
+    exact mul_inv_cancel_left₀ hc (v i)
+
+omit [Fintype T] [Fintype dOut] in
+/-- Lemma A.4 for a skipless pre-RMSNorm network (`ε > 0`) whose blocks separate their inputs
+(fact (b), `hsep`) and make a nonzero hidden unit from every nonzero row (`hnz`, for fact (c)).
+Downward induction on `ℓ` for `S(ℓ)`: `N_ε(h̃_ℓ) G_ℓ⁻¹ = N_ε(h_ℓ)` for all parameters and inputs,
+where `h̃_ℓ = ũ_ℓ G_ℓ` is the hidden state of the changed network. -/
+private theorem orthogonal_of_eval_cob_skipless_rmsNorm_gen {A : Arch T d L} [Nonempty T]
+    [Nonempty dIn] [Nonempty dOut] (hε : 0 < ε) (hA : A.χ = rmsNorm ε)
+    (hsep : ∀ k (n n' : Matrix T d ℝ),
+      (∀ W : Matrix d (A.r k) ℝ, A.f k (n' * W) = A.f k (n * W)) → n' = n)
+    (hnz : ∀ k (N : Matrix T d ℝ) (t : T), N t ≠ 0 →
+      ∃ (W : Matrix d (A.r k) ℝ) (j : A.w k), A.f k (N * W) t j ≠ 0)
+    (G : Fin (L + 1) → GL d ℝ)
+    (h : ∀ (θ : Params A dIn dOut) (x : Matrix T dIn ℝ),
+      eval A 0 (θ.cob G G) x = eval A 0 θ x) :
+    ∀ ℓ, (G ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ := by
+  classical
+  rcases isEmpty_or_nonempty d with hd | hd
+  · -- no coordinates: every `0 × 0` matrix is orthogonal
+    intro ℓ
+    rw [mem_orthogonalGroup_iff]
+    exact Matrix.ext fun i => isEmptyElim i
+  -- `S ℓ`
+  let S : Fin (L + 1) → Prop := fun ℓ => ∀ (θ : Params A dIn dOut) (x : Matrix T dIn ℝ),
+    rmsNorm ε (hidden A 0 (θ.cob G G) x ℓ) * (↑(G ℓ)⁻¹ : Matrix d d ℝ)
+      = rmsNorm ε (hidden A 0 θ x ℓ)
+  -- fact (a): from `S ℓ`, `ũ_ℓ = h̃_ℓ G_ℓ⁻¹ = h_ℓ` (scale the write into `h_ℓ` by `2`)
+  have hU : ∀ ℓ, S ℓ → ∀ (θ : Params A dIn dOut) (x : Matrix T dIn ℝ),
+      hidden A 0 (θ.cob G G) x ℓ * (↑(G ℓ)⁻¹ : Matrix d d ℝ) = hidden A 0 θ x ℓ := by
+    intro ℓ hS θ x
+    obtain ⟨θ₂, e2, e2'⟩ := exists_params_smul_hidden θ x G 2 ℓ
+    have h1 := hS θ x
+    have h2 := hS θ₂ x
+    rw [e2, e2'] at h2
+    funext t
+    exact vecMul_eq_of_rmsRow_two hε _ (congrFun h1 t) (congrFun h2 t)
+  -- `S L`: the outputs agree for every readout `D`
+  have hlast : S (Fin.last L) := by
+    intro θ x
+    refine eq_of_forall_mul_right' (n := dOut) fun D => ?_
+    have he := h ⟨θ.E, θ.read, θ.write, D⟩ x
+    unfold eval at he
+    change A.χ (hidden A 0 (θ.cob G G) x (Fin.last L))
+        * ((↑(G (Fin.last L))⁻¹ : Matrix d d ℝ) * D)
+      = A.χ (hidden A 0 θ x (Fin.last L)) * D at he
+    rw [hA, ← Matrix.mul_assoc] at he
+    exact he
+  -- fact (b): from `ũ_{k+1} = h_{k+1}` for all reads and writes of block `k` to `S k`
+  have hstep : ∀ k : Fin L, S k.succ → S k.castSucc := by
+    intro k hS θ x
+    apply hsep k
+    intro W
+    refine eq_of_forall_mul_right' (n := d) fun V => ?_
+    let θ' : Params A dIn dOut :=
+      ⟨θ.E, Function.update θ.read k W, Function.update θ.write k V, θ.D⟩
+    have hr : ∀ j : Fin L, (j : ℕ) < (k.castSucc : ℕ) → θ'.read j = θ.read j :=
+      fun j hj => Function.update_of_ne (ne_of_lt_castSucc hj) _ _
+    have hw : ∀ j : Fin L, (j : ℕ) < (k.castSucc : ℕ) → θ'.write j = θ.write j :=
+      fun j hj => Function.update_of_ne (ne_of_lt_castSucc hj) _ _
+    have e1 : hidden A 0 θ' x k.castSucc = hidden A 0 θ x k.castSucc :=
+      hidden_congr θ' θ x rfl k.castSucc hr hw
+    have e2 : hidden A 0 (θ'.cob G G) x k.castSucc = hidden A 0 (θ.cob G G) x k.castSucc :=
+      hidden_congr (θ'.cob G G) (θ.cob G G) x rfl k.castSucc
+        (fun j hj => by
+          show (↑(G j.castSucc)⁻¹ : Matrix d d ℝ) * θ'.read j
+            = (↑(G j.castSucc)⁻¹ : Matrix d d ℝ) * θ.read j
+          rw [hr j hj])
+        (fun j hj => by
+          show θ'.write j * (G j.succ : Matrix d d ℝ) = θ.write j * (G j.succ : Matrix d d ℝ)
+          rw [hw j hj])
+    have hrk : θ'.read k = W := Function.update_self _ _ _
+    have hwk : θ'.write k = V := Function.update_self _ _ _
+    have hrk' : (θ'.cob G G).read k = (↑(G k.castSucc)⁻¹ : Matrix d d ℝ) * W := by
+      show (↑(G k.castSucc)⁻¹ : Matrix d d ℝ) * θ'.read k = _
+      rw [hrk]
+    have hwk' : (θ'.cob G G).write k = V * (G k.succ : Matrix d d ℝ) := by
+      show θ'.write k * (G k.succ : Matrix d d ℝ) = _
+      rw [hwk]
+    have hU' := hU k.succ hS θ' x
+    rw [hidden_succ_skipless, hidden_succ_skipless, e1, e2, hrk, hwk, hrk', hwk', hA,
+      Matrix.mul_assoc _ (V * _), Matrix.mul_assoc V, Units.mul_inv, Matrix.mul_one,
+      ← Matrix.mul_assoc (rmsNorm ε _)] at hU'
+    exact hU'
+  have hS : ∀ ℓ, S ℓ := fun ℓ => Fin.reverseInduction hlast hstep ℓ
+  -- fact (c): every row `v` is a row of some `h_ℓ`, and `N_ε(h_ℓ G_ℓ) = N_ε(h_ℓ) G_ℓ`
+  intro ℓ
+  refine (orthogonal_of_rmsRow_vecMul hε (G ℓ) (G ℓ) fun v _ => ?_).1
+  obtain ⟨θ, x, t, hv⟩ := exists_hidden_row (dIn := dIn) (dOut := dOut) hε hA hnz ℓ v
+  have h1 := hS ℓ θ x
+  have h2 := hU ℓ (hS ℓ) θ x
+  -- `h̃_ℓ = h_ℓ G_ℓ`
+  have h3 : hidden A 0 (θ.cob G G) x ℓ = hidden A 0 θ x ℓ * (G ℓ : Matrix d d ℝ) := by
+    rw [← h2, Matrix.mul_assoc, Units.inv_mul, Matrix.mul_one]
+  rw [h3] at h1
+  have h4 : rmsNorm ε (hidden A 0 θ x ℓ * (G ℓ : Matrix d d ℝ))
+      = rmsNorm ε (hidden A 0 θ x ℓ) * (G ℓ : Matrix d d ℝ) := by
+    rw [← h1, Matrix.mul_assoc, Units.inv_mul, Matrix.mul_one]
+  have h5 := congrFun h4 t
+  change rmsRow ε (hidden A 0 θ x ℓ t ᵥ* (G ℓ : Matrix d d ℝ))
+    = rmsRow ε (hidden A 0 θ x ℓ t) ᵥ* (G ℓ : Matrix d d ℝ) at h5
+  rwa [hv] at h5
+
 /-- **Lemma A.4 for vanilla blocks** whose activation is continuous, not even and not constant:
 if the changes of basis `G_0, …, G_L` preserve the function of the skipless pre-RMSNorm network
 (`ε > 0`) for all values of the parameters, every `G_ℓ` is orthogonal. -/
@@ -344,7 +497,25 @@ theorem orthogonal_of_eval_cob_skipless_rmsNorm_mlp [Nonempty T] [Nonempty dIn] 
       eval (Arch.mlp σ (rmsNorm ε) hid) 0 (θ.cob G G) x
         = eval (Arch.mlp σ (rmsNorm ε) hid) 0 θ x) :
     ∀ ℓ, (G ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ := by
-  sorry
+  classical
+  refine orthogonal_of_eval_cob_skipless_rmsNorm_gen (A := Arch.mlp σ (rmsNorm ε) hid) hε rfl
+    ?_ ?_ G h
+  · -- fact (b), row by row: a read whose columns all equal `w` gives `σ(n' w) = σ(n w)`
+    intro k n n' hW
+    obtain ⟨j₀⟩ := hhid k
+    funext t
+    refine eq_of_forall_map_dotProduct_eq hσc hne hnc fun w => ?_
+    exact congrFun (congrFun (hW (Matrix.of fun i _ => w i)) t) j₀
+  · -- `σ(z) ≠ 0` for some `z`, and the read column `(z/‖n‖²) n` gives the unit the value `σ(z)`
+    intro k N t hN
+    obtain ⟨j₀⟩ := hhid k
+    obtain ⟨z, hz⟩ : ∃ z, σ z ≠ 0 := by
+      by_contra hcon
+      simp only [not_exists, not_not] at hcon
+      exact hnc fun z => by rw [hcon z, hcon 0]
+    refine ⟨Matrix.of fun i _ => ((z / (N t ⬝ᵥ N t)) • N t) i, j₀, ?_⟩
+    show σ (N t ⬝ᵥ ((z / (N t ⬝ᵥ N t)) • N t)) ≠ 0
+    rwa [dotProduct_smul_self_div hN]
 
 /-- **Lemma A.4 for gated blocks** whose gate is not identically zero and satisfies
 `σ(z) = κ σ(κ z)` for all `z` only for `κ = 1`. -/
@@ -357,7 +528,26 @@ theorem orthogonal_of_eval_cob_skipless_rmsNorm_gated [Nonempty T] [Nonempty dIn
       eval (Arch.gated σ (rmsNorm ε) hid) 0 (θ.cob G G) x
         = eval (Arch.gated σ (rmsNorm ε) hid) 0 θ x) :
     ∀ ℓ, (G ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ := by
-  sorry
+  classical
+  refine orthogonal_of_eval_cob_skipless_rmsNorm_gen (A := Arch.gated σ (rmsNorm ε) hid) hε rfl
+    ?_ ?_ G h
+  · -- fact (b), row by row: gate columns `g` and value columns `v` give
+    -- `σ(n' g)(n' v) = σ(n g)(n v)`
+    intro k n n' hW
+    obtain ⟨j₀⟩ := hhid k
+    funext t
+    refine eq_of_forall_gate_mul_eq hσ0 hκ fun g v => ?_
+    exact congrFun (congrFun
+      (hW (Matrix.of fun i c => Sum.elim (fun _ => g i) (fun _ => v i) c)) t) j₀
+  · -- the gate column `(z/‖n‖²) n` with `σ(z) ≠ 0` and the value column `n/‖n‖²`
+    intro k N t hN
+    obtain ⟨j₀⟩ := hhid k
+    obtain ⟨z, hz⟩ := hσ0
+    refine ⟨Matrix.of fun i c => Sum.elim (fun _ => ((z / (N t ⬝ᵥ N t)) • N t) i)
+      (fun _ => ((1 / (N t ⬝ᵥ N t)) • N t) i) c, j₀, ?_⟩
+    show σ (N t ⬝ᵥ ((z / (N t ⬝ᵥ N t)) • N t)) * (N t ⬝ᵥ ((1 / (N t ⬝ᵥ N t)) • N t)) ≠ 0
+    rw [dotProduct_smul_self_div hN, dotProduct_smul_self_div hN, mul_one]
+    exact hz
 
 /-! ### Theorem 3.3 (ii), skipless networks under pre-RMSNorm -/
 
@@ -372,7 +562,9 @@ theorem eval_cob_skipless_rmsNorm_iff_mlp [Nonempty T] [Nonempty dIn] [Nonempty 
         eval (Arch.mlp σ (rmsNorm ε) hid) 0 (θ.cob G G) x
           = eval (Arch.mlp σ (rmsNorm ε) hid) 0 θ x)
       ↔ ∀ ℓ, (G ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ := by
-  sorry
+  -- "only if" is Lemma A.4; "if" is Proposition 3.2 under pre-RMSNorm
+  exact ⟨orthogonal_of_eval_cob_skipless_rmsNorm_mlp hε hσc hne hnc hhid G,
+    fun hG θ x => eval_cob_rmsNorm θ x ε rfl G hG⟩
 
 /-- **Theorem 3.3 (ii), skipless, pre-RMSNorm (`ε > 0`), gated blocks.** -/
 theorem eval_cob_skipless_rmsNorm_iff_gated [Nonempty T] [Nonempty dIn] [Nonempty dOut]
@@ -383,7 +575,9 @@ theorem eval_cob_skipless_rmsNorm_iff_gated [Nonempty T] [Nonempty dIn] [Nonempt
         eval (Arch.gated σ (rmsNorm ε) hid) 0 (θ.cob G G) x
           = eval (Arch.gated σ (rmsNorm ε) hid) 0 θ x)
       ↔ ∀ ℓ, (G ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ := by
-  sorry
+  -- "only if" is Lemma A.4; "if" is Proposition 3.2 under pre-RMSNorm
+  exact ⟨orthogonal_of_eval_cob_skipless_rmsNorm_gated hε hσ0 hκ hhid G,
+    fun hG θ x => eval_cob_rmsNorm θ x ε rfl G hG⟩
 
 /-! ### The activations and gates of the paper -/
 
