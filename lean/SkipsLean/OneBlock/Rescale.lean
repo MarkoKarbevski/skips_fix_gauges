@@ -337,6 +337,102 @@ theorem flatOn_noKink_le_mlp_rescale {k : ℕ} (hσ : ∀ z, z ≠ 0 → HasDeri
     hθ.rank_E hθ.rank_D hθ.rank_read hθ.rank_write).1 ⟨hC, hA⟩
   exact ⟨X, α', sub_eq_iff_eq_add.1 hX⟩
 
+/-! ### Helpers: the space of the directions of the changes of basis and of the rescalings -/
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `α ↦ rescaleDirMlp k θ α` is linear. -/
+private noncomputable def rescaleDirMlpLin (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
+    (∀ ℓ : Fin 1, hid ℓ → ℝ) →ₗ[ℝ] Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut where
+  toFun := rescaleDirMlp k θ
+  map_add' α β := by
+    apply Params.ext'
+    · exact (add_zero 0).symm
+    · intro ℓ
+      ext a i
+      show (α + β) ℓ i * θ.read ℓ a i = α ℓ i * θ.read ℓ a i + β ℓ i * θ.read ℓ a i
+      rw [Pi.add_apply, Pi.add_apply]
+      ring
+    · intro ℓ
+      ext i a
+      show -((k : ℝ) * (α + β) ℓ i) * θ.write ℓ i a
+        = -((k : ℝ) * α ℓ i) * θ.write ℓ i a + -((k : ℝ) * β ℓ i) * θ.write ℓ i a
+      rw [Pi.add_apply, Pi.add_apply]
+      ring
+    · exact (add_zero 0).symm
+  map_smul' c α := by
+    apply Params.ext'
+    · exact (smul_zero c).symm
+    · intro ℓ
+      ext a i
+      show (c • α) ℓ i * θ.read ℓ a i = c * (α ℓ i * θ.read ℓ a i)
+      rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+      ring
+    · intro ℓ
+      ext i a
+      show -((k : ℝ) * (c • α) ℓ i) * θ.write ℓ i a = c * (-((k : ℝ) * α ℓ i) * θ.write ℓ i a)
+      rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+      ring
+    · exact (smul_zero c).symm
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the pairs `(X, α)` of two `d × d` matrices and one number per hidden unit form a
+space of dimension `2 d² + d_hidden`. -/
+private theorem finrank_dirDomain :
+    Module.finrank ℝ ((Fin (1 + 1) → Matrix d d ℝ) × (∀ ℓ : Fin 1, hid ℓ → ℝ))
+      = 2 * Fintype.card d ^ 2 + Fintype.card (hid 0) := by
+  rw [Module.finrank_prod, finrank_cobDomain (L := 1) (d := d), Module.finrank_pi_fintype]
+  simp only [Module.finrank_fintype_fun_eq_card, Finset.univ_unique, Fin.default_eq_zero,
+    Finset.sum_singleton, Nat.reduceAdd]
+
+omit [Nonempty T] in
+/-- Helper: the directions `cobDir θ X + rescaleDirMlp k θ α` are flat (changes of basis and
+rescalings are symmetries; no differentiability of `σ` is used). -/
+private theorem range_dir_le_flat {k : ℕ}
+    (hhom : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
+    LinearMap.range ((cobDirLin θ).coprod (rescaleDirMlpLin k θ))
+      ≤ flat (Arch.mlp σ id hid) 0 θ := by
+  rintro _ ⟨p, rfl⟩
+  rw [LinearMap.coprod_apply]
+  exact add_mem (cobDir_mem_flat_skipless' θ rfl p.1) (rescaleDirMlp_mem_flat hhom θ 0 p.2)
+
+/-- Helper: the directions that are flat at every input of `noKink θ` are among the directions
+`cobDir θ X + rescaleDirMlp k θ α` (the previous theorem). -/
+private theorem flatOn_noKink_le_range {k : ℕ} (hσ : ∀ z, z ≠ 0 → HasDerivAt σ (σ' z) z)
+    (hU : UnitsRescale σ σ' k dIn dOut (hid 0))
+    (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) (hθ : OneBlockGeneric θ) :
+    flatOn (Arch.mlp σ id hid) 0 θ (noKink θ)
+      ≤ LinearMap.range ((cobDirLin θ).coprod (rescaleDirMlpLin k θ)) := by
+  intro η hη
+  obtain ⟨X, α, rfl⟩ := flatOn_noKink_le_mlp_rescale hσ hU θ hθ η hη
+  exact LinearMap.mem_range.2 ⟨(X, α), rfl⟩
+
+omit [Nonempty T] in
+/-- Helper (Lemma B.1 for these blocks): under the conditions, the directions
+`cobDir θ X + rescaleDirMlp k θ α` form a space of dimension `2 d² + d_hidden`. -/
+private theorem finrank_range_dir (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) (hθ : OneBlockGeneric θ) :
+    Module.finrank ℝ (LinearMap.range ((cobDirLin θ).coprod (rescaleDirMlpLin k θ)))
+      = 2 * Fintype.card d ^ 2 + Fintype.card (hid 0) := by
+  -- no column of `W_read` vanishes, since the columns of `C = E W_read` do not
+  have hv : ∀ ℓ i, (fun a => θ.read ℓ a i) ≠ 0 := by
+    intro ℓ i h0
+    obtain rfl := Subsingleton.elim ℓ 0
+    apply hθ.col_ne_zero i
+    funext a
+    show ∑ j, θ.E a j * θ.read 0 j i = 0
+    exact Finset.sum_eq_zero fun j _ => by
+      rw [show θ.read 0 j i = 0 from congrFun h0 j, mul_zero]
+  -- `(X, α) ↦ cobDir θ X + rescaleDirMlp k θ α` is injective
+  have hinj0 := cobDir_add_rescaleDirMlp_injective k θ hθ.rank_E
+    (fun ℓ => by obtain rfl := Subsingleton.elim ℓ 0; exact hθ.rank_write) hv
+  have hinj : Function.Injective ((cobDirLin θ).coprod (rescaleDirMlpLin k θ)) :=
+    fun p q hpq => by
+      rw [LinearMap.coprod_apply, LinearMap.coprod_apply] at hpq
+      exact hinj0 hpq
+  rw [LinearMap.finrank_range_of_inj hinj, finrank_dirDomain]
+
 /-- **Theorem 5.1 / C.1 for an activation with the rescalings, under the conditions of the
 proof:** `fd = P - 2 d² - d_hidden`. -/
 theorem funDim_mlp_oneBlock_rescale {k : ℕ} (hσ : ∀ z, z ≠ 0 → HasDerivAt σ (σ' z) z)
@@ -345,7 +441,15 @@ theorem funDim_mlp_oneBlock_rescale {k : ℕ} (hσ : ∀ z, z ≠ 0 → HasDeriv
     (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) (hθ : OneBlockGeneric θ) :
     funDim (Arch.mlp σ id hid) 0 θ + (2 * Fintype.card d ^ 2 + Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  -- the sandwich: the directions `cobDir θ X + rescaleDirMlp k θ α` ≤ `K(θ)` ≤ the directions
+  -- flat on `noKink θ` ≤ the directions `cobDir θ X + rescaleDirMlp k θ α`
+  have hflat : flat (Arch.mlp σ id hid) 0 θ
+      = LinearMap.range ((cobDirLin θ).coprod (rescaleDirMlpLin k θ)) :=
+    le_antisymm ((flat_le_flatOn θ (noKink θ)).trans (flatOn_noKink_le_range hσ hU θ hθ))
+      (range_dir_le_flat hhom θ)
+  -- `fd(θ) = P - dim K(θ)` (Appendix C), and `dim K(θ) = 2 d² + d_hidden`
+  have h := funDim_add_finrank_flat' (S := 0) θ
+  rwa [hflat, finrank_range_dir k θ hθ] at h
 
 /-- The same rank on a batch of inputs with no hidden unit at its kink, as the paper takes the
 Jacobian for ReLU blocks. -/
@@ -357,7 +461,17 @@ theorem exists_jacobianRank_mlp_oneBlock_rescale {k : ℕ}
     ∃ (n : ℕ) (X : Fin n → Matrix T dIn ℝ), (∀ i, X i ∈ noKink θ) ∧
       jacobianRank (Arch.mlp σ id hid) 0 X θ + (2 * Fintype.card d ^ 2 + Fintype.card (hid 0))
         = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  -- a batch of inputs of `noKink θ`, where the network is differentiable in `θ`, with the rank
+  -- `P - dim K_U(θ)`, `U = noKink θ`
+  obtain ⟨n, X, hX, h⟩ := exists_jacobianRank_add_finrank_flatOn (S := 0) θ (noKink θ)
+    (fun x hx => differentiableAt_eval_of_mem_noKink hσ θ x hx)
+  -- the same sandwich: `K_U(θ)` is the space of the directions `cobDir θ X + rescaleDirMlp k θ α`
+  have hflatOn : flatOn (Arch.mlp σ id hid) 0 θ (noKink θ)
+      = LinearMap.range ((cobDirLin θ).coprod (rescaleDirMlpLin k θ)) :=
+    le_antisymm (flatOn_noKink_le_range hσ hU θ hθ)
+      ((range_dir_le_flat hhom θ).trans (flat_le_flatOn θ (noKink θ)))
+  refine ⟨n, X, hX, ?_⟩
+  rwa [hflatOn, finrank_range_dir k θ hθ] at h
 
 /-- **Theorem 5.1 / C.1 for a ReLU block:** for `d_in, d_out, d_hidden ≥ d ≥ 2`, at generic
 parameters, `fd = P - 2 d² - d_hidden`. -/
