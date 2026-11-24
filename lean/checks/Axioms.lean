@@ -1076,3 +1076,5 @@ import SkipsLean
 #print axioms Skips.exists_cob_heads_of_eval_eq_skipless_attention_rmsNorm
 #print axioms Skips.exists_cob_heads_of_eval_eq_residual_attention_rmsNorm
 #print axioms Skips.ae_exists_cob_heads_of_eval_eq_attention_residual_rmsNorm
+#print axioms Skips.ae_funDim_attention_residual_eq_add_of_skipless
+#print axioms Skips.ae_funDim_attention_residual_rmsNorm_eq_add_of_skipless
