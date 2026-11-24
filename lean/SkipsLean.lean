@@ -155,3 +155,5 @@ import SkipsLean.Depth.GeluPathBlock
 import SkipsLean.Depth.RegularZeroGelu
 import SkipsLean.Depth.GeluZero
 import SkipsLean.Dimension.UpperBoundResidualRMSNormZero
+import SkipsLean.Depth.TanhZeroBatch
+import SkipsLean.Depth.GeluZeroBatch
