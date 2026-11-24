@@ -324,3 +324,31 @@ import SkipsLean
 #print axioms Skips.tendsto_eval_gelu_ray
 #print axioms Skips.exists_ne_skipless_of_first_card_lt_gelu
 #print axioms Skips.ae_ne_skipless_of_first_card_lt_gelu
+
+-- Skips paper: Theorem 4.2 with identity skips and the term s; Theorem 4.6 (i) for ReLU and ReLU² blocks
+#print axioms Skips.cobDir_const_mem_flat_residual'
+#print axioms Skips.cobDir_const_mem_flat_residual_rmsNorm'
+#print axioms Skips.funDim_add_le_residual'
+#print axioms Skips.funDim_add_le_residual_rmsNorm'
+#print axioms Skips.funDim_add_le_residual_gated
+#print axioms Skips.funDim_add_le_residual_gated_rmsNorm
+#print axioms Skips.ae_funDim_add_le_residual_gated
+#print axioms Skips.ae_funDim_add_le_residual_gated_rmsNorm
+#print axioms Skips.funDim_add_le_residual_mlp_rescale
+#print axioms Skips.funDim_add_le_residual_mlp_rescale_rmsNorm
+#print axioms Skips.ae_funDim_add_le_residual_mlp_rescale
+#print axioms Skips.ae_funDim_add_le_residual_mlp_rescale_rmsNorm
+#print axioms Skips.funDim_add_le_residual_gated_gate
+#print axioms Skips.funDim_add_le_residual_gated_gate_rmsNorm
+#print axioms Skips.ae_funDim_add_le_residual_gated_gate
+#print axioms Skips.ae_funDim_add_le_residual_gated_gate_rmsNorm
+#print axioms Skips.differentiableAt_eval_residual_of_mem_noKink
+#print axioms Skips.flatOn_noKink_le_mlp_rescale_residual
+#print axioms Skips.funDim_mlp_oneBlock_rescale_residual
+#print axioms Skips.exists_jacobianRank_mlp_oneBlock_rescale_residual
+#print axioms Skips.ae_funDim_relu_oneBlock_residual
+#print axioms Skips.ae_exists_jacobianRank_relu_oneBlock_residual
+#print axioms Skips.ae_funDim_relu_oneBlock_residual_eq_add
+#print axioms Skips.ae_funDim_reluSq_oneBlock_residual
+#print axioms Skips.ae_exists_jacobianRank_reluSq_oneBlock_residual
+#print axioms Skips.ae_funDim_reluSq_oneBlock_residual_eq_add

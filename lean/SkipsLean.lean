@@ -54,3 +54,5 @@ import SkipsLean.Dimension.RescalingMlp
 import SkipsLean.OneBlock.Rescale
 import SkipsLean.Dimension.RescalingGate
 import SkipsLean.Absorb.FirstBlock
+import SkipsLean.Residual.UpperBoundSymmetries
+import SkipsLean.OneBlock.ResidualRescale
