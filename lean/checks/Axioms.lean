@@ -1551,3 +1551,11 @@ import SkipsLean
 #print axioms Skips.exists_attentionBlockRotaryB_add_linear_noMask
 #print axioms Skips.exists_attentionBlockRotaryB_add_linear_causal
 #print axioms Skips.rotary_angle_one
+#print axioms Skips.exists_sqTarget_mem_span_of_reluSqCell
+#print axioms Skips.card_add_two_mul_card_le_of_reluSqCell
+#print axioms Skips.card_lt_card_of_reluSqCell
+#print axioms Skips.ae_exists_sqTarget_ne_zero
+#print axioms Skips.ae_not_reluSq_absorbB_same_width
+#print axioms Skips.ae_linearIndependent_sqTarget
+#print axioms Skips.ae_not_reluSq_absorbB_of_card_lt
+#print axioms Skips.ae_reluSq_absorbB_add_card
