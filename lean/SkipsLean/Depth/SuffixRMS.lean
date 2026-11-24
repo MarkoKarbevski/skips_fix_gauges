@@ -682,13 +682,81 @@ theorem claimRMS_last [Nonempty T] (hε : 0 < ε) (hχ : A.χ = rmsNorm ε)
   rw [eq_neg_iff_add_eq_zero, add_comm]
   exact hDZ
 
+/-! ### Proposition D.4 -/
+
+/-- The chain rule for `F_θ(x) = 𝓑_{>0}(x E)`, for a real-analytic `χ` and real-analytic blocks:
+the derivative of `θ ↦ F_θ(x)` along `η` is `𝐃𝓑_{>0}(x E)(x η_E) + 𝐃_θ 𝓑_{>0}(x E) η`. -/
+theorem fderiv_eval_eq_fderiv_suffix_of_analytic (hχ : AnalyticOnNhd ℝ A.χ Set.univ)
+    (hf : ∀ ℓ, AnalyticOnNhd ℝ (A.f ℓ) Set.univ) (x : Matrix T dIn ℝ) (η : Params A dIn dOut) :
+    fderiv ℝ (fun θ' : Params A dIn dOut => eval A 0 θ' x) θ η
+      = fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ 0 h') (x * θ.E) (x * η.E)
+        + fderiv ℝ (fun θ' : Params A dIn dOut => suffix A 0 θ' 0 (x * θ.E)) θ η := by
+  -- `Φ(θ', h) = 𝓑_{>0}(h)` with the weights `θ'`, and its derivative `Φ'` at `(θ, x E)`
+  let Φ : Params A dIn dOut × Matrix T d ℝ → Matrix T dOut ℝ := fun p => suffix A 0 p.1 0 p.2
+  have hΦ : HasFDerivAt Φ (fderiv ℝ Φ (θ, x * θ.E)) (θ, x * θ.E) :=
+    ((analyticOnNhd_suffix_prod_of_analytic (dIn := dIn) (dOut := dOut) A hχ hf 0) _
+      (Set.mem_univ _)).differentiableAt.hasFDerivAt
+  -- `θ' ↦ x θ'_E`, a continuous linear map
+  let lE : Params A dIn dOut →L[ℝ] Matrix T d ℝ := LinearMap.toContinuousLinearMap
+    ((mulLeftLin x).comp (Params.linE (A := A) (dIn := dIn) (dOut := dOut)))
+  -- three chain rules: `F_θ'(x) = Φ(θ', x θ'_E)`, `θ' ↦ Φ(θ', x E)` and `h ↦ Φ(θ, h)`
+  have h1 : HasFDerivAt (fun θ' : Params A dIn dOut => eval A 0 θ' x)
+      ((fderiv ℝ Φ (θ, x * θ.E)).comp ((ContinuousLinearMap.id ℝ _).prod lE)) θ := by
+    have hc := hΦ.comp θ ((hasFDerivAt_id θ).prodMk lE.hasFDerivAt)
+    have hfun : (fun θ' : Params A dIn dOut => eval A 0 θ' x) = Φ ∘ fun θ' => (id θ', lE θ') :=
+      funext fun θ' => eval_eq_suffix_zero A 0 θ' x
+    rw [hfun]
+    exact hc
+  have h2 : HasFDerivAt (fun θ' : Params A dIn dOut => suffix A 0 θ' 0 (x * θ.E))
+      ((fderiv ℝ Φ (θ, x * θ.E)).comp (ContinuousLinearMap.inl ℝ _ _)) θ := by
+    have hl : HasFDerivAt (fun θ' : Params A dIn dOut => (θ', x * θ.E))
+        (ContinuousLinearMap.inl ℝ (Params A dIn dOut) (Matrix T d ℝ)) θ :=
+      hasFDerivAt_prodMk_left θ (x * θ.E)
+    have hc := hΦ.comp θ hl
+    exact hc
+  have h3 : HasFDerivAt (fun h' : Matrix T d ℝ => suffix A 0 θ 0 h')
+      ((fderiv ℝ Φ (θ, x * θ.E)).comp (ContinuousLinearMap.inr ℝ _ _)) (x * θ.E) := by
+    have hl : HasFDerivAt (fun h' : Matrix T d ℝ => (θ, h'))
+        (ContinuousLinearMap.inr ℝ (Params A dIn dOut) (Matrix T d ℝ)) (x * θ.E) :=
+      hasFDerivAt_prodMk_right θ (x * θ.E)
+    have hc := hΦ.comp (x * θ.E) hl
+    exact hc
+  rw [h1.fderiv, h2.fderiv, h3.fderiv]
+  -- `Φ'(η, x η_E) = Φ'(0, x η_E) + Φ'(η, 0)`
+  show fderiv ℝ Φ (θ, x * θ.E) (η, x * η.E)
+    = fderiv ℝ Φ (θ, x * θ.E) (0, x * η.E) + fderiv ℝ Φ (θ, x * θ.E) (η, 0)
+  rw [← map_add (fderiv ℝ Φ (θ, x * θ.E)), Prod.mk_add_mk, zero_add, add_zero]
+
+/-- The chain rule for `F_θ(x) = 𝓑_{>0}(x E)` under pre-RMSNorm with `ε > 0` (analytic blocks). -/
+theorem fderiv_eval_eq_fderiv_suffix_rmsNorm (hε : 0 < ε) (hχ : A.χ = rmsNorm ε)
+    (hf : ∀ ℓ, AnalyticOnNhd ℝ (A.f ℓ) Set.univ) (x : Matrix T dIn ℝ) (η : Params A dIn dOut) :
+    fderiv ℝ (fun θ' : Params A dIn dOut => eval A 0 θ' x) θ η
+      = fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ 0 h') (x * θ.E) (x * η.E)
+        + fderiv ℝ (fun θ' : Params A dIn dOut => suffix A 0 θ' 0 (x * θ.E)) θ η :=
+  fderiv_eval_eq_fderiv_suffix_of_analytic A θ (by rw [hχ]; exact analyticOnNhd_rmsNorm hε) hf x η
+
 /-- **Proposition D.4, case (+), first part:** if `θ` is regular and `(D_0)` holds at `θ`, every
 flat direction is the direction of antisymmetric changes of basis at the hidden states. -/
 theorem flat_le_range_cobDir_of_claimRMS [Nonempty T] (hε : 0 < ε) (hχ : A.χ = rmsNorm ε)
     (hf : ∀ ℓ, AnalyticOnNhd ℝ (A.f ℓ) Set.univ) (hθ : Regular A θ) (h0 : ClaimRMS A θ 0)
     (η : Params A dIn dOut) (hη : η ∈ flat A 0 θ) :
     ∃ X : Fin (L + 1) → Matrix d d ℝ, (∀ ℓ, X ℓ ∈ antisymmetric d) ∧ η = cobDir θ X := by
-  sorry
+  -- for every input `x`: `0 = 𝐃_θ F(x) η = 𝐃𝓑_{>0}(x E)(x η_E) + 𝐃_θ 𝓑_{>0}(x E) η`
+  have hx : ∀ x : Matrix T dIn ℝ,
+      fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ 0 h') (x * θ.E) (x * η.E)
+        + fderiv ℝ (fun θ' : Params A dIn dOut => suffix A 0 θ' 0 (x * θ.E)) θ η = 0 := by
+    intro x
+    rw [← fderiv_eval_eq_fderiv_suffix_rmsNorm A θ hε hχ hf x η]
+    exact LinearMap.mem_ker.1 ((Submodule.mem_iInf _).1 hη x)
+  -- Lemma D.3 at the embedding (rank `d` by (R1)): `η_E = E Z` and the identity (16) for `k = 0`
+  obtain ⟨Z, hEZ, hZ⟩ :=
+    suffixFlat_of_flat_at_write_rmsNorm A θ hε hχ hf hθ 0 θ.E hθ.rank_E η.E η hx
+  -- the claim `(D_0)` gives the antisymmetric changes of basis `X` with `X_0 = Z`
+  obtain ⟨X, hX0, hXa, hX, hXD⟩ := h0 Z η hZ
+  refine ⟨X, fun ℓ => hXa ℓ (Fin.zero_le _), Params.ext' ?_
+    (fun ℓ => (hX ℓ (Fin.zero_le _)).1) (fun ℓ => (hX ℓ (Fin.zero_le _)).2) hXD⟩
+  show η.E = θ.E * X 0
+  rw [hX0, hEZ]
 
 /-- **Proposition D.4, case (+):** if `θ` is regular and `(D_0)` holds at `θ`, the functional
 dimension at `θ` is `P - (L + 1) d (d - 1) / 2`. -/
@@ -696,6 +764,32 @@ theorem funDim_of_claimRMS [Nonempty T] (hε : 0 < ε) (hχ : A.χ = rmsNorm ε)
     (hf : ∀ ℓ, AnalyticOnNhd ℝ (A.f ℓ) Set.univ) (hθ : Regular A θ) (h0 : ClaimRMS A θ 0) :
     funDim A 0 θ + (L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2)
       = Module.finrank ℝ (Params A dIn dOut) := by
-  sorry
+  have hfd : ∀ ℓ, Differentiable ℝ (A.f ℓ) := fun ℓ =>
+    differentiableOn_univ.1 (hf ℓ).differentiableOn
+  have hdiff : ∀ x : Matrix T dIn ℝ,
+      DifferentiableAt ℝ (fun θ' : Params A dIn dOut => eval A 0 θ' x) θ := fun x =>
+    (differentiable_eval hfd (by rw [hχ]; exact differentiable_rmsNorm hε) x).differentiableAt
+  -- `≤`: the antisymmetric changes of basis are flat
+  have hle := funDim_add_le_skipless_rmsNorm θ hε hχ hfd hθ.rank_E hθ.rank_write
+  -- `≥`: `K(θ)` lies in the range of `X ↦ cobDir θ X` on antisymmetric families
+  let Φ : (Fin (L + 1) → antisymmetric d) →ₗ[ℝ] Params A dIn dOut :=
+    (cobDirLin θ).comp (LinearMap.compLeft (antisymmetric d).subtype (Fin (L + 1)))
+  have hflat : flat A 0 θ ≤ LinearMap.range Φ := by
+    intro η hη
+    obtain ⟨X, hX, rfl⟩ := flat_le_range_cobDir_of_claimRMS A θ hε hχ hf hθ h0 η hη
+    exact ⟨fun ℓ => ⟨X ℓ, hX ℓ⟩, rfl⟩
+  -- a space of dimension at most `(L + 1) d (d - 1) / 2`
+  have hdim : Module.finrank ℝ (LinearMap.range Φ)
+      ≤ (L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2) := by
+    calc Module.finrank ℝ (LinearMap.range Φ)
+        ≤ Module.finrank ℝ (Fin (L + 1) → antisymmetric d) := LinearMap.finrank_range_le Φ
+      _ = (L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2) := by
+        rw [Module.finrank_pi_fintype, finrank_antisymmetric, Finset.sum_const, Finset.card_univ,
+          Fintype.card_fin, smul_eq_mul]
+  -- `fd(θ) + dim K(θ) = P`
+  have h := funDim_add_finrank_flat θ hdiff
+  have hmono := Submodule.finrank_mono hflat
+  generalize (L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2) = N at hle hdim ⊢
+  omega
 
 end Skips
