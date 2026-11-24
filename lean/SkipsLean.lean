@@ -276,3 +276,4 @@ import SkipsLean.Absorb.ReluSqBiasesCells
 import SkipsLean.Absorb.ReluSqBiasesCount
 import SkipsLean.Absorb.ReluSqBiasesLower
 import SkipsLean.Absorb.RotaryBiases
+import SkipsLean.Symmetry.FiniteSymmetriesCompose
