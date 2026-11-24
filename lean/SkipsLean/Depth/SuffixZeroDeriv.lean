@@ -49,7 +49,7 @@ structure RegularZero : Prop where
           = a • (A.f ℓ (n * θ.read ℓ) * θ.write ℓ) t) →
       v = 0
 
-omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- RMSNorm with `ε = 0` maps a nonzero row to the sphere `‖n‖² = d`. -/
 theorem rmsNorm_zero_dotProduct_self (h : Matrix T d ℝ) (t : T) (ht : h t ≠ 0) :
     (rmsNorm 0 h) t ⬝ᵥ (rmsNorm 0 h) t = (Fintype.card d : ℝ) := by
