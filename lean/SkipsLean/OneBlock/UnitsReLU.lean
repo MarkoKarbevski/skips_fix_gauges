@@ -362,6 +362,61 @@ theorem relu_units_flat {n k q : Type*} [Fintype n] [Fintype k] [Fintype q]
   · choose lam hlam using fun i => relu_unit_coeffs (ha i) (hc i) (hT0 i)
     exact ⟨lam, hlam⟩
 
+/-- **One ReLU² unit.** If `(x c + β)² ψ_a + 2 (x c + β) (x ψ_c + ψ_β) a = 0` for all `x`, with
+`a ≠ 0` and `c ≠ 0`, then `(ψ_c, ψ_β) = l (c, β)` and `ψ_a = -2 l a`. -/
+private lemma reluSq_unit_coeffs {n k : Type*} [Fintype n] {c ψc : n → ℝ} {β ψβ : ℝ}
+    {a ψa : k → ℝ} (ha : a ≠ 0) (hc : c ≠ 0)
+    (h : ∀ x : n → ℝ,
+      (x ⬝ᵥ c + β) ^ 2 • ψa + (2 * (x ⬝ᵥ c + β) * (x ⬝ᵥ ψc + ψβ)) • a = 0) :
+    ∃ l : ℝ, ψc = l • c ∧ ψβ = l * β ∧ ψa = -(2 * l) • a := by
+  obtain ⟨o, ho⟩ := Function.ne_iff.1 ha
+  rw [Pi.zero_apply] at ho
+  have h2o : 2 * a o ≠ 0 := mul_ne_zero two_ne_zero ho
+  set l := -(ψa o / (2 * a o)) with hl
+  have hl2 : l * (2 * a o) = -ψa o := by rw [hl, neg_mul, div_mul_cancel₀ _ h2o]
+  -- off `H`, the output `o` divided by `x c + β` gives `x ψ_c + ψ_β = l (x c + β)`
+  have hw' : ∀ x : n → ℝ, x ⬝ᵥ c + β ≠ 0 → x ⬝ᵥ ψc + ψβ = l * (x ⬝ᵥ c + β) := fun x hx => by
+    have e := congrFun (h x) o
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul, Pi.zero_apply] at e
+    have e' : (x ⬝ᵥ c + β) * ((x ⬝ᵥ c + β) * ψa o + 2 * (x ⬝ᵥ ψc + ψβ) * a o) = 0 := by
+      linear_combination e
+    have e'' := (mul_eq_zero.1 e').resolve_left hx
+    have key : (2 * a o) * ((x ⬝ᵥ ψc + ψβ) - l * (x ⬝ᵥ c + β)) = 0 := by
+      linear_combination e'' - (x ⬝ᵥ c + β) * hl2
+    exact sub_eq_zero.1 ((mul_eq_zero.1 key).resolve_left h2o)
+  -- on `H` too: average over `x + c` and `x - c`, which lie off `H`
+  have hcc : c ⬝ᵥ c ≠ 0 := dotProduct_self_eq_zero.not.2 hc
+  have hw : ∀ x : n → ℝ, x ⬝ᵥ ψc + ψβ = l * (x ⬝ᵥ c + β) := fun x => by
+    by_cases hx : x ⬝ᵥ c + β = 0
+    · have e1 := hw' (x + c) (by rw [add_dotProduct, add_right_comm, hx, zero_add]; exact hcc)
+      have e2 := hw' (x - c)
+        (by rw [sub_dotProduct, sub_add_eq_add_sub, hx, zero_sub]; exact neg_ne_zero.2 hcc)
+      simp only [add_dotProduct, sub_dotProduct] at e1 e2
+      linear_combination (e1 + e2) / 2
+    · exact hw' x hx
+  obtain ⟨hψc, hψβ⟩ := coeffs_of_eq_mul hw
+  refine ⟨l, hψc, hψβ, funext fun o' => ?_⟩
+  -- every output: `(x c + β)² (ψ_a + 2 l a) = 0`, at an `x` with `x c + β ≠ 0`
+  obtain ⟨x, hx⟩ := exists_affine_ne_zero hc β
+  have e := congrFun (h x) o'
+  simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul, Pi.zero_apply, hw x] at e
+  have key : (x ⬝ᵥ c + β) ^ 2 * (ψa o' + 2 * l * a o') = 0 := by linear_combination e
+  have := (mul_eq_zero.1 key).resolve_left (pow_ne_zero 2 hx)
+  simp only [Pi.smul_apply, smul_eq_mul]
+  linarith
+
+/-- The terms of one ReLU² unit on the side `z > 0` form a polynomial along lines. -/
+private lemma quadAlong_reluSq_term {n k : Type*} [Fintype n] (c ψc : n → ℝ) (β ψβ : ℝ)
+    (ψa a : k → ℝ) :
+    QuadAlong (fun x => (x ⬝ᵥ c + β) ^ 2 • ψa + (2 * (x ⬝ᵥ c + β) * (x ⬝ᵥ ψc + ψβ)) • a) := by
+  intro x v
+  refine ⟨(2 * (x ⬝ᵥ c + β) * (v ⬝ᵥ c)) • ψa
+      + (2 * ((v ⬝ᵥ c) * (x ⬝ᵥ ψc + ψβ) + (x ⬝ᵥ c + β) * (v ⬝ᵥ ψc))) • a,
+    (v ⬝ᵥ c) ^ 2 • ψa + (2 * (v ⬝ᵥ c) * (v ⬝ᵥ ψc)) • a, fun t => ?_⟩
+  ext o
+  simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul, add_dotProduct, smul_dotProduct]
+  ring
+
 /-- **Lemma C.3 for ReLU².** -/
 theorem reluSq_units_flat {n k q : Type*} [Fintype n] [Fintype k] [Fintype q]
     (c : q → n → ℝ) (β : q → ℝ) (a : q → k → ℝ)
@@ -374,6 +429,26 @@ theorem reluSq_units_flat {n k q : Type*} [Fintype n] [Fintype k] [Fintype q]
     ψM = 0 ∧ ψγ = 0 ∧
       ∃ lam : q → ℝ, ∀ i, ψc i = lam i • c i ∧ ψβ i = lam i * β i ∧
         ψa i = -(2 * lam i) • a i := by
-  sorry
+  classical
+  -- on the side `z_i > 0` unit `i` contributes `z_i² ψ_{a_i} + 2 z_i (x ψ_{c_i} + ψ_{β_i}) a_i`,
+  -- on the side `z_i < 0` nothing
+  obtain ⟨hT0, hL0⟩ := units_core c β hc hcol (fun x => x ᵥ* ψM + ψγ) (quadAlong_affine ψM ψγ)
+    (fun i x => reluSq (x ⬝ᵥ c i + β i) • ψa i
+      + (reluSqDeriv (x ⬝ᵥ c i + β i) * (x ⬝ᵥ ψc i + ψβ i)) • a i)
+    (fun i x => (x ⬝ᵥ c i + β i) ^ 2 • ψa i
+      + (2 * (x ⬝ᵥ c i + β i) * (x ⬝ᵥ ψc i + ψβ i)) • a i)
+    (fun i => quadAlong_reluSq_term _ _ _ _ _ _)
+    (fun i x hz => by simp only [reluSq, reluSqDeriv, max_eq_left hz.le])
+    (fun i x hz => by
+      simp only [reluSq, reluSqDeriv, max_eq_right hz.le, ne_eq, OfNat.ofNat_ne_zero,
+        not_false_eq_true, zero_pow, zero_smul, mul_zero, zero_mul, add_zero])
+    h
+  -- `x ψ_M + ψ_γ = 0` for all `x`
+  have hγ : ψγ = 0 := by simpa using hL0 0
+  refine ⟨?_, hγ, ?_⟩
+  · ext m o
+    simpa [hγ] using congrFun (hL0 (Pi.single m 1)) o
+  · choose lam hlam using fun i => reluSq_unit_coeffs (ha i) (hc i) (hT0 i)
+    exact ⟨lam, hlam⟩
 
 end Skips
