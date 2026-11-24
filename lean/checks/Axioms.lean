@@ -445,3 +445,17 @@ import SkipsLean
 #print axioms Skips.hasDerivAt_tanh
 -- Symmetry/Normalized.lean
 #print axioms Skips.coe_inv_of_mem_orthogonalGroup
+-- OneBlock/ReGLU.lean
+#print axioms Skips.ae_oneBlockGenericReGLU
+#print axioms Skips.differentiableAt_eval_of_mem_noKinkGate
+#print axioms Skips.flatOn_noKinkGate_le_reglu
+#print axioms Skips.funDim_reglu_oneBlock
+#print axioms Skips.exists_jacobianRank_reglu_oneBlock
+#print axioms Skips.ae_funDim_reglu_oneBlock
+#print axioms Skips.ae_exists_jacobianRank_reglu_oneBlock
+#print axioms Skips.flatOn_noKinkGate_le_reglu_residual
+#print axioms Skips.funDim_reglu_oneBlock_residual
+#print axioms Skips.exists_jacobianRank_reglu_oneBlock_residual
+#print axioms Skips.ae_funDim_reglu_oneBlock_residual
+#print axioms Skips.ae_exists_jacobianRank_reglu_oneBlock_residual
+#print axioms Skips.ae_funDim_reglu_oneBlock_residual_eq_add
