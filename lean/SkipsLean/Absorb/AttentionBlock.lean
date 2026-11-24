@@ -111,6 +111,53 @@ theorem attnHeads_zero_row (sees : T → T → Prop) [DecidableRel sees] {H : Ty
   simp only [attnWeights_uniform_atb sees _ t₀ ht₀ hZ]
   exact (Finset.smul_sum (s := Finset.univ) (f := fun s => h s)).symm
 
+omit [Fintype T] in
+/-- The Euclidean norm of a row, `√(v ⬝ᵥ v)`, is the norm of `v` in `EuclideanSpace ℝ d`. -/
+private theorem sqrt_dot_eq_norm_atb (v : d → ℝ) :
+    Real.sqrt (v ⬝ᵥ v) = ‖WithLp.toLp 2 v‖ := by
+  rw [EuclideanSpace.norm_eq]
+  congr 1
+  simp only [dotProduct, Real.norm_eq_abs, sq, abs_mul_abs_self]
+
+omit [Fintype T] in
+/-- The case split of the proof of (ii): `‖a‖ ≤ ‖a + b‖ + ‖b‖`, so `‖a‖/3 ≤ ‖a + b‖` or
+`‖a‖/3 ≤ r ‖b‖` for `r ≥ 1/2`. -/
+private theorem norm_cases_atb (a b : d → ℝ) {r : ℝ} (hr : 1 / 2 ≤ r) :
+    Real.sqrt (a ⬝ᵥ a) / 3 ≤ Real.sqrt ((a + b) ⬝ᵥ (a + b))
+      ∨ Real.sqrt (a ⬝ᵥ a) / 3 ≤ Real.sqrt ((r • b) ⬝ᵥ (r • b)) := by
+  simp only [sqrt_dot_eq_norm_atb, WithLp.toLp_add, WithLp.toLp_smul, norm_smul,
+    Real.norm_eq_abs, abs_of_nonneg (by linarith : (0 : ℝ) ≤ r)]
+  have htri : ‖WithLp.toLp 2 a‖ ≤ ‖WithLp.toLp 2 a + WithLp.toLp 2 b‖ + ‖WithLp.toLp 2 b‖ := by
+    have h := norm_sub_le (WithLp.toLp 2 a + WithLp.toLp 2 b) (WithLp.toLp 2 b)
+    rwa [add_sub_cancel_right] at h
+  have hB := norm_nonneg (WithLp.toLp 2 b)
+  by_cases hc : ‖WithLp.toLp 2 a‖ / 3 ≤ ‖WithLp.toLp 2 a + WithLp.toLp 2 b‖
+  · exact Or.inl hc
+  · right
+    have hc' := not_le.mp hc
+    nlinarith [mul_nonneg (sub_nonneg.2 hr) hB]
+
+omit [Fintype T] [Fintype d] in
+/-- A row of `A + B - C`. -/
+private theorem add_sub_row_atb (A B C : Matrix T d ℝ) (t : T) :
+    (A + B - C) t = A t + B t - C t := rfl
+
+omit [Fintype d] in
+/-- The rows of the matrix whose row `t₀` is `0` and whose other rows are `x` sum to
+`(T - 1) x`. -/
+private theorem sum_rows_zero_row_atb [DecidableEq T] (t₀ : T) (x : d → ℝ) :
+    ∑ s, (Matrix.of fun t => if t = t₀ then 0 else x : Matrix T d ℝ) s
+      = ((Fintype.card T : ℝ) - 1) • x := by
+  have h1 : ∀ s, (Matrix.of fun t => if t = t₀ then 0 else x : Matrix T d ℝ) s
+      = x - if s = t₀ then x else 0 := by
+    intro s
+    show (if s = t₀ then (0 : d → ℝ) else x) = x - if s = t₀ then x else 0
+    by_cases hs : s = t₀
+    · simp only [hs, ite_true, sub_self]
+    · simp only [hs, ite_false, sub_zero]
+  simp only [h1, Finset.sum_sub_distrib, Finset.sum_const, Finset.card_univ,
+    Finset.sum_ite_eq', Finset.mem_univ, ite_true, sub_smul, one_smul, Nat.cast_smul_eq_nsmul]
+
 /-- **Theorem A.13 (ii) / Theorem 3.4 (ii):** with at least two tokens and a token that sees all
 tokens, for every row `x` of norm at most `1` some `h` whose rows have norm at most `1` has a row
 in which `h M + B_θ(h)` and `B_θ'(h)` differ by at least `‖x M‖/3`. -/
@@ -122,7 +169,43 @@ theorem exists_row_attnHeads_sub_ge (sees : T → T → Prop) [DecidableRel sees
       Real.sqrt ((x ᵥ* M) ⬝ᵥ (x ᵥ* M)) / 3
         ≤ Real.sqrt (((h * M + attnHeads sees Γ C h - attnHeads sees Γ' C' h) t)
             ⬝ᵥ ((h * M + attnHeads sees Γ C h - attnHeads sees Γ' C' h) t)) := by
-  sorry
+  classical
+  have hT2 : (2 : ℝ) ≤ Fintype.card T := by exact_mod_cast hT
+  have hr : 1 / 2 ≤ (Fintype.card T : ℝ)⁻¹ * ((Fintype.card T : ℝ) - 1) := by
+    rw [inv_mul_eq_div, le_div_iff₀ (by linarith)]
+    linarith
+  -- Step 1, all rows `x`: row `t₀` is `x M + x (∑ C_i - ∑ C'_i)`
+  have hrow₁ : ((Matrix.of fun _ => x : Matrix T d ℝ) * M
+      + attnHeads sees Γ C (Matrix.of fun _ => x) - attnHeads sees Γ' C' (Matrix.of fun _ => x)) t₀
+        = x ᵥ* M + (x ᵥ* ∑ i, C i - x ᵥ* ∑ i, C' i) := by
+    rw [add_sub_row_atb, Matrix.mul_apply_eq_vecMul,
+      attnHeads_const_row sees Γ C x t₀ ⟨t₀, ht₀ t₀⟩,
+      attnHeads_const_row sees Γ' C' x t₀ ⟨t₀, ht₀ t₀⟩, add_sub_assoc]
+    rfl
+  -- Step 2, row `t₀` zero and the other rows `x`: row `t₀` is `((T - 1)/T) x (∑ C_i - ∑ C'_i)`
+  obtain ⟨h₂, hh₂⟩ : ∃ h₂ : Matrix T d ℝ, h₂ = Matrix.of fun t => if t = t₀ then 0 else x :=
+    ⟨_, rfl⟩
+  have h₂0 : h₂ t₀ = 0 := by
+    rw [hh₂]
+    show (if t₀ = t₀ then (0 : d → ℝ) else x) = 0
+    rw [ite_eq_left_iff]
+    exact fun h => absurd rfl h
+  have hrow₂ : (h₂ * M + attnHeads sees Γ C h₂ - attnHeads sees Γ' C' h₂) t₀
+      = ((Fintype.card T : ℝ)⁻¹ * ((Fintype.card T : ℝ) - 1))
+        • (x ᵥ* ∑ i, C i - x ᵥ* ∑ i, C' i) := by
+    rw [add_sub_row_atb, Matrix.mul_apply_eq_vecMul, attnHeads_zero_row sees Γ C h₂ t₀ ht₀ h₂0,
+      attnHeads_zero_row sees Γ' C' h₂ t₀ ht₀ h₂0, h₂0, Matrix.zero_vecMul, zero_add, hh₂,
+      sum_rows_zero_row_atb, smul_smul, Matrix.smul_vecMul, Matrix.smul_vecMul, smul_sub]
+  rcases norm_cases_atb (x ᵥ* M) (x ᵥ* ∑ i, C i - x ᵥ* ∑ i, C' i) hr with hc | hc
+  · exact ⟨Matrix.of fun _ => x, fun _ => hx, t₀, by rw [hrow₁]; exact hc⟩
+  · refine ⟨h₂, fun t => ?_, t₀, by rw [hrow₂]; exact hc⟩
+    by_cases ht : t = t₀
+    · rw [ht, h₂0, zero_dotProduct]
+      exact zero_le_one
+    · rw [hh₂]
+      show (if t = t₀ then (0 : d → ℝ) else x) ⬝ᵥ (if t = t₀ then (0 : d → ℝ) else x) ≤ 1
+      simp only [ht, ite_false]
+      exact hx
 
 /-- **Theorem A.13 (i) / Theorem 3.4 (i):** with at least two tokens and a token that sees all
 tokens, for `M ≠ 0` and almost every `h`, `h M + B_θ(h) ≠ B_θ'(h)`. -/
