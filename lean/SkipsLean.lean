@@ -178,3 +178,4 @@ import SkipsLean.Residual.FoldingOpen
 import SkipsLean.Symmetry.HomogeneousRMSNorm
 import SkipsLean.OneBlock.ResidualRMSStepsOn
 import SkipsLean.OneBlock.ResidualRMSRescale
+import SkipsLean.OneBlock.ResidualRMSReGLU
