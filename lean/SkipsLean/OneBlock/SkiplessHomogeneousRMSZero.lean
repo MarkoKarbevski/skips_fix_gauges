@@ -2,6 +2,7 @@ import SkipsLean.Dimension.UpperBoundRMSNormZero
 import SkipsLean.Dimension.RescalingMlp
 import SkipsLean.OneBlock.Common
 import SkipsLean.Dimension.ExpOrbit
+import SkipsLean.Symmetry.HomogeneousRMSNorm
 
 /-!
 # One skipless block under pre-RMSNorm with `ε = 0`, ReLU and ReLU²: the bound
@@ -23,6 +24,10 @@ preserve the function. They move the parameters along the directions with the en
 `D` for an antisymmetric `Y` and a number `c`, and along the rescalings of the units. For generic
 parameters these directions are independent, as in Step 3 of part (i). So
 `dim K(θ) ≥ d_model² + d_model (d_model − 1)/2 + 1 + s`, which is the bound."
+
+That the change of basis at `h_0` preserves the function is Lemma A.3 (i) of the paper
+(`Symmetry/HomogeneousRMSNorm.lean`, at any depth). Here it is stated for directions, for one
+block that is positively homogeneous row by row (`RowHomogeneous`).
 
 Here, for one MLP block whose activation is positively homogeneous of degree `k` (ReLU: `k = 1`;
 ReLU²: `k = 2`), `s` is the number of hidden units: the direction of a change of basis `I + τ X`
@@ -202,6 +207,19 @@ private theorem cobDir_zero_mem_flat_of_rowScaling_shz {A : Arch T d 1}
   · -- the readout is `exp (-τ 0) D = D`
     show NormedSpace.exp (-(τ • (0 : Matrix d d ℝ))) * θ.D = θ.D
     rw [smul_zero, neg_zero, NormedSpace.exp_zero, Matrix.one_mul]
+
+/-- **Lemma A.3 (i) of the skips paper as a statement on directions, for one block:** for a
+skipless network of one block under pre-RMSNorm with `ε = 0` whose map `f` is positively
+homogeneous of degree `k` row by row (`RowHomogeneous`: MLP blocks with a positively homogeneous
+activation, gated blocks with a positively homogeneous gate), the direction of the change of
+basis `I + τ X` at `h_0` (`E X` at `E`, `−X W_read` at `W_read`) is flat, for every matrix `X`. -/
+theorem cobDir_zero_mem_flat_skipless_rmsNorm_zero_of_rowHomogeneous {A : Arch T d 1}
+    (hA : A.χ = rmsNorm 0) {k : ℕ} (hf : RowHomogeneous A k)
+    (θ : Params A dIn dOut) (X : Matrix d d ℝ) :
+    cobDir θ ![X, 0] ∈ flat A 0 θ := by
+  refine cobDir_zero_mem_flat_of_rowScaling_shz hA
+    (fun c hc z => ⟨fun t => c t ^ k, fun t => pow_pos (hc t) k, ?_⟩) θ X
+  exact hf 0 c hc z
 
 /-- **Proof of Theorem B.1 (iv) of the skips paper, "Its normalization before the block drops
 out":** for one skipless MLP block with `σ(λ z) = λ^k σ(z)` for `λ > 0`, under pre-RMSNorm with
