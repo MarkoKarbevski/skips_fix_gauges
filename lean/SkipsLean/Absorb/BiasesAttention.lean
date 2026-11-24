@@ -23,7 +23,8 @@ statement is for any mask in which some token sees another token, and the paper'
 least two tokens are stated by name (no mask: `sees = fun _ _ => True`; the causal mask on `Fin n`:
 `sees t s` is `s ≤ t`). The two blocks may have any numbers of heads and any head dimensions. If
 every token sees itself only (one token, for the paper's masks), the block is affine in `h` and
-absorbs `h M` with more heads; the paper's theorem does not state a number of tokens.
+absorbs `h M` with more heads; the paper's theorem does not state a number of tokens (its
+Section 3.3 defines the block on `T ≥ 2` tokens).
 
 The block with biases is `attentionBlockB` (`Absorb/BiasesConstructions.lean`).
 -/
