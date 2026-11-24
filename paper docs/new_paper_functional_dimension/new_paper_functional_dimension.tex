@@ -1446,7 +1446,7 @@ which are holomorphic on $\mathbb D$. By \cref{lem:e0sep}, with $u_j = \sqrt{\dm
 
 \para{The step for GELU on the path.} Consider, for a block $\ell$ with $W = \Wread^{\ell}$, its columns $c_j$, $V = \Wwrite^{\ell}$, its rows $a_j$, and $\varkappa_\ell$ of \cref{lem:e0cone}:
 \begin{itemize}[leftmargin=2.9em]
-\item[(P1)] the columns of $W$ are pairwise different, and the matrix $WV$ is invertible;
+\item[(P1)] the columns of $W$ are pairwise different, no row of $V$ vanishes, and the matrix $WV$ is invertible;
 \item[(P2)] there is a unit row $\xi_0$ such that, for every unit row $\xi'$ orthogonal to $\xi_0$,
 \begin{gather*}
 \lvert\xi'c_j\rvert < \xi_0c_j \ \text{ for every } j, \qquad\qquad
@@ -1523,7 +1523,7 @@ By \eqref{eq:e0L}, with $\dot z_j$ the entry $j$ of $\dot z$,
 \[
 \mathcal L'_j(t) \;=\; \dot z_j\big(n(t)\big)\;\Der\mathcal B\big(n(t)\,WV\big)\,a_j .
 \]
-At $t = 1$ this is $\dot z_j(n)\,\Der\mathcal B(n\,WV)\,a_j = 0$ at $n = \sqrt{\dm}\,\xi$, for $\xi$ in an open set. By \cref{lem:e0tailrank}, $\Der\mathcal B(n\,WV)\,a_j \neq 0$ on an open dense set of $n$. So $\dot z_j(n) = 0$ on an open subset of $\mathbb S$, that is, by \eqref{eq:e0zdot},
+At $t = 1$ this is $\dot z_j(n)\,\Der\mathcal B(n\,WV)\,a_j = 0$ at $n = \sqrt{\dm}\,\xi$, for $\xi$ in an open set. By (P1), $a_j \neq 0$, so by \cref{lem:e0tailrank} $\Der\mathcal B(n\,WV)\,a_j \neq 0$ on an open dense set of $n$. So $\dot z_j(n) = 0$ on an open subset of $\mathbb S$, that is, by \eqref{eq:e0zdot},
 \[
 \norm{n}^2\;n\,\big(Zc_j + \eta_{c_j}\big) \;=\; \langle nZ, n\rangle\;nc_j
 \]
