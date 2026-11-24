@@ -790,3 +790,6 @@ import SkipsLean
 #print axioms Skips.suffixFlatZero_castSucc_iff_mlp_values
 #print axioms Skips.suffixFlatZero_castSucc_iff_mlp_sphere
 #print axioms Skips.eq_zero_of_fderiv_suffix_one_sub_sq_zero
+#print axioms Skips.dense_setOf_linearIndependent_vecMul
+#print axioms Skips.exists_eq_smul_one_of_vecMul_parallel
+#print axioms Skips.eq_zero_of_vecMul_eq_zero_of_isOpen
