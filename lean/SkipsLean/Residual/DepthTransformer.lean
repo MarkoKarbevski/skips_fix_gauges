@@ -54,6 +54,364 @@ variable {sees : T → T → Prop} [DecidableRel sees]
 variable {H dh hid : Fin L → Type} [∀ ℓ, Fintype (H ℓ)] [∀ ℓ, Fintype (dh ℓ)]
   [∀ ℓ, Fintype (hid ℓ)] {σ σ' : ℝ → ℝ}
 
+/-! ### Helpers: derivatives of matrix curves at `0` -/
+
+/-- Helper (as `hasDerivAt_line_dpa` of `Residual/DepthAttention.lean`): a line `τ ↦ M + τ N` of
+matrices has the derivative `N`. -/
+private theorem hasDerivAt_line_dtm {m n : Type*} [Fintype m] [Fintype n] (M N : Matrix m n ℝ) :
+    HasDerivAt (fun τ : ℝ => M + τ • N) N 0 := by
+  have h := ((hasDerivAt_id (0 : ℝ)).smul_const N).const_add M
+  rw [one_smul] at h
+  exact h
+
+/-- Helper (as `hasDerivAt_mul_dpa`): the product rule for two matrix curves, entry by entry. -/
+private theorem hasDerivAt_mul_dtm {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    {A : ℝ → Matrix m n ℝ} {B : ℝ → Matrix n p ℝ} {A' : Matrix m n ℝ} {B' : Matrix n p ℝ}
+    (hA : HasDerivAt A A' 0) (hB : HasDerivAt B B' 0) :
+    HasDerivAt (fun τ => A τ * B τ) (A' * B 0 + A 0 * B') 0 := by
+  refine hasDerivAt_pi.2 fun a => hasDerivAt_pi.2 fun c => ?_
+  have h := HasDerivAt.fun_sum (u := Finset.univ) fun b _ =>
+    (hasDerivAt_pi.1 (hasDerivAt_pi.1 hA a) b).fun_mul (hasDerivAt_pi.1 (hasDerivAt_pi.1 hB b) c)
+  simp only [Matrix.add_apply, Matrix.mul_apply, ← Finset.sum_add_distrib]
+  exact h
+
+/-! ### Helpers: `J_0` as the derivative of a curve, for any blocks -/
+
+omit [DecidableEq d] in
+/-- Helper (as `hasDerivAt_block_dpa`, for any differentiable block): the term of block `ℓ`
+along the moved reads and writes, `τ ↦ f_ℓ(x E (W_read + τ η_read)) (W_write + τ η_write) D`, has
+at `τ = 0` the derivative `(D f_ℓ(x E W_read)(x E η_read) W_write + f_ℓ(x E W_read) η_write) D`
+(chain rule). -/
+private theorem hasDerivAt_block_dtm {A : Arch T d L} {ℓ : Fin L}
+    (hf : Differentiable ℝ (A.f ℓ)) (θ η : Params A dIn dOut) (x : Matrix T dIn ℝ) :
+    HasDerivAt (fun τ : ℝ => A.f ℓ (x * θ.E * (θ.read ℓ + τ • η.read ℓ))
+        * (θ.write ℓ + τ • η.write ℓ) * θ.D)
+      ((fderiv ℝ (A.f ℓ) (x * θ.E * θ.read ℓ) (x * θ.E * η.read ℓ) * θ.write ℓ
+        + A.f ℓ (x * θ.E * θ.read ℓ) * η.write ℓ) * θ.D) 0 := by
+  -- the line `τ ↦ x E (W_read + τ η_read)` has the derivative `x E η_read`
+  have hl : HasDerivAt (fun τ : ℝ => x * θ.E * (θ.read ℓ + τ • η.read ℓ))
+      (x * θ.E * η.read ℓ) 0 :=
+    (hasDerivAt_mul_dtm (hasDerivAt_const (0 : ℝ) (x * θ.E))
+      (hasDerivAt_line_dtm (θ.read ℓ) (η.read ℓ))).congr_deriv
+      (by simp only [Matrix.zero_mul, zero_add])
+  -- the chain rule through `f_ℓ`
+  have hc := (hf (x * θ.E * θ.read ℓ)).hasFDerivAt.comp_hasDerivAt_of_eq (0 : ℝ) hl
+    (by rw [zero_smul, add_zero])
+  have hc' : HasDerivAt (fun τ : ℝ => A.f ℓ (x * θ.E * (θ.read ℓ + τ • η.read ℓ)))
+      (fderiv ℝ (A.f ℓ) (x * θ.E * θ.read ℓ) (x * θ.E * η.read ℓ)) 0 := hc
+  -- the product rule with the write and with `D`
+  have h := hasDerivAt_mul_dtm (hasDerivAt_mul_dtm hc'
+    (hasDerivAt_line_dtm (θ.write ℓ) (η.write ℓ))) (hasDerivAt_const (0 : ℝ) θ.D)
+  exact h.congr_deriv (by simp only [zero_smul, add_zero, Matrix.mul_zero])
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: the curve whose derivative at `τ = 0` is `(J_0 η)(x)`: `x (E D + τ ψ_M)` with
+`ψ_M = η_E D + E η_D`, plus the blocks with the reads and the writes moved by `τ η` (`E` and `D`
+do not move inside the blocks). -/
+private noncomputable def curve_dtm (A : Arch T d L) (θ η : Params A dIn dOut)
+    (x : Matrix T dIn ℝ) (τ : ℝ) : Matrix T dOut ℝ :=
+  x * (θ.E * θ.D + τ • (η.E * θ.D + θ.E * η.D))
+    + ∑ ℓ, A.f ℓ (x * θ.E * (θ.read ℓ + τ • η.read ℓ)) * (θ.write ℓ + τ • η.write ℓ) * θ.D
+
+omit [DecidableEq d] in
+/-- Helper: `(J_0 η)(x)` is the derivative of `curve_dtm` at `τ = 0`, for differentiable
+blocks. -/
+private theorem hasDerivAt_curve_dtm {A : Arch T d L} (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ))
+    (θ η : Params A dIn dOut) (x : Matrix T dIn ℝ) :
+    HasDerivAt (curve_dtm A θ η x) (smallWritesLimit A θ η x) 0 := by
+  have hd := (hasDerivAt_mul_dtm (hasDerivAt_const (0 : ℝ) x)
+    (hasDerivAt_line_dtm (θ.E * θ.D) (η.E * θ.D + θ.E * η.D))).add
+    (HasDerivAt.fun_sum (u := Finset.univ) fun ℓ _ => hasDerivAt_block_dtm (hf ℓ) θ η x)
+  refine hd.congr_deriv ?_
+  rw [Matrix.zero_mul, zero_add]
+  rfl
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- Helper ("the output of a block of the sum is the output of the attention block plus the
+output of the MLP block", `f_sum_mul`): the curve of a network of `A.sum B`, plus
+`x (E D + τ ψ_M)`, is the sum of the curves of its two parts. -/
+private theorem curve_sum_dtm {A B : Arch T d L} (θ η : Params (A.sum B) dIn dOut)
+    (x : Matrix T dIn ℝ) (τ : ℝ) :
+    curve_dtm (A.sum B) θ η x τ + x * (θ.E * θ.D + τ • (η.E * θ.D + θ.E * η.D))
+      = curve_dtm A θ.sumFst η.sumFst x τ + curve_dtm B θ.sumSnd η.sumSnd x τ := by
+  -- block `ℓ`: `f_ℓ(x E R) W D = f_ℓ^A(x E R_A) W_A D + f_ℓ^B(x E R_B) W_B D`
+  have hl : ∀ ℓ, (A.sum B).f ℓ (x * θ.E * (θ.read ℓ + τ • η.read ℓ))
+        * (θ.write ℓ + τ • η.write ℓ) * θ.D
+      = A.f ℓ (x * θ.sumFst.E * (θ.sumFst.read ℓ + τ • η.sumFst.read ℓ))
+          * (θ.sumFst.write ℓ + τ • η.sumFst.write ℓ) * θ.sumFst.D
+        + B.f ℓ (x * θ.sumSnd.E * (θ.sumSnd.read ℓ + τ • η.sumSnd.read ℓ))
+          * (θ.sumSnd.write ℓ + τ • η.sumSnd.write ℓ) * θ.sumSnd.D := by
+    intro ℓ
+    rw [f_sum_mul, Matrix.add_mul]
+    rfl
+  -- the linear terms: the two parts have the `E` and the `D` of `θ`
+  have eA : x * (θ.sumFst.E * θ.sumFst.D
+      + τ • (η.sumFst.E * θ.sumFst.D + θ.sumFst.E * η.sumFst.D))
+      = x * (θ.E * θ.D + τ • (η.E * θ.D + θ.E * η.D)) := rfl
+  have eB : x * (θ.sumSnd.E * θ.sumSnd.D
+      + τ • (η.sumSnd.E * θ.sumSnd.D + θ.sumSnd.E * η.sumSnd.D))
+      = x * (θ.E * θ.D + τ • (η.E * θ.D + θ.E * η.D)) := rfl
+  rw [curve_dtm, curve_dtm, curve_dtm, eA, eB]
+  simp only [hl, Finset.sum_add_distrib]
+  abel
+
+omit [DecidableEq d] in
+/-- Helper: `(J_0 η)(x)` of a network of `A.sum B`, plus `x ψ_M`, is the sum of the
+`(J_0 η)(x)` of its two parts, at `θ.sumFst`, `η.sumFst` and at `θ.sumSnd`, `η.sumSnd`. -/
+private theorem smallWritesLimit_sum_dtm {A B : Arch T d L}
+    (hA : ∀ ℓ, Differentiable ℝ (A.f ℓ)) (hB : ∀ ℓ, Differentiable ℝ (B.f ℓ))
+    (θ η : Params (A.sum B) dIn dOut) (x : Matrix T dIn ℝ) :
+    smallWritesLimit (A.sum B) θ η x + x * (η.E * θ.D + θ.E * η.D)
+      = smallWritesLimit A θ.sumFst η.sumFst x + smallWritesLimit B θ.sumSnd η.sumSnd x := by
+  -- the derivatives at `τ = 0` of the two sides of `curve_sum_dtm`
+  have h1 := (hasDerivAt_curve_dtm (fun ℓ => differentiable_f_sum (hA ℓ) (hB ℓ)) θ η x).add
+    (hasDerivAt_mul_dtm (hasDerivAt_const (0 : ℝ) x)
+      (hasDerivAt_line_dtm (θ.E * θ.D) (η.E * θ.D + θ.E * η.D)))
+  have h2 := ((hasDerivAt_curve_dtm hA θ.sumFst η.sumFst x).add
+    (hasDerivAt_curve_dtm hB θ.sumSnd η.sumSnd x)).congr_of_eventuallyEq
+    (Filter.Eventually.of_forall fun τ => curve_sum_dtm θ η x τ)
+  have h := h1.unique h2
+  rw [Matrix.zero_mul, zero_add] at h
+  exact h
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: if the reads and the writes of `η` vanish, `(J_0 η)(x) = x ψ_M`. -/
+private theorem smallWritesLimit_of_zero_dtm {A : Arch T d L} (θ η : Params A dIn dOut)
+    (hr : ∀ ℓ, η.read ℓ = 0) (hw : ∀ ℓ, η.write ℓ = 0) (x : Matrix T dIn ℝ) :
+    smallWritesLimit A θ η x = x * (η.E * θ.D + θ.E * η.D) := by
+  simp only [smallWritesLimit, hr, hw, Matrix.mul_zero, map_zero, Matrix.zero_mul, add_zero,
+    Finset.sum_const_zero]
+
+/-! ### Helpers: the heads at an input whose tokens are all equal -/
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (as `moveRW_dpa`): the parameters `θ` with the reads and the writes moved by `τ η`;
+`E` and `D` stay. -/
+private def moveRW_dtm {A : Arch T d L} (θ η : Params A dIn dOut) (τ : ℝ) :
+    Params A dIn dOut where
+  E := θ.E
+  read ℓ := θ.read ℓ + τ • η.read ℓ
+  write ℓ := θ.write ℓ + τ • η.write ℓ
+  D := θ.D
+
+/-- Helper: the value matrix `W_{V,i}` of head `i` of block `ℓ`. -/
+private abbrev wV_dtm (θ : Params (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut)
+    (ℓ : Fin L) (i : H ℓ) : Matrix d (dh ℓ) ℝ :=
+  (θ.read ℓ).submatrix id fun k : dh ℓ => (i, Sum.inr (Sum.inr k))
+
+/-- Helper: the output matrix `W_{O,i}` of head `i` of block `ℓ`. -/
+private abbrev wO_dtm (θ : Params (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut)
+    (ℓ : Fin L) (i : H ℓ) : Matrix (dh ℓ) d ℝ :=
+  (θ.write ℓ).submatrix (fun k : dh ℓ => (i, k)) id
+
+omit [DecidableEq d] in
+/-- Helper (as `hasDerivAt_headValue_dpa`): along the moved reads and writes, the matrix `C` of
+head `i` of block `ℓ` has at `τ = 0` the derivative `E η_V W_O D + E W_V η_O D`. -/
+private theorem hasDerivAt_headValue_dtm
+    (θ η : Params (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut) (ℓ : Fin L)
+    (i : H ℓ) :
+    HasDerivAt (fun τ => headValue (moveRW_dtm θ η τ) ℓ i)
+      (θ.E * wV_dtm η ℓ i * wO_dtm θ ℓ i * θ.D + θ.E * wV_dtm θ ℓ i * wO_dtm η ℓ i * θ.D) 0 := by
+  -- `C(τ) = E (W_V + τ η_V) (W_O + τ η_O) D`
+  have h := hasDerivAt_mul_dtm (hasDerivAt_mul_dtm (hasDerivAt_mul_dtm
+    (hasDerivAt_const (0 : ℝ) θ.E) (hasDerivAt_line_dtm (wV_dtm θ ℓ i) (wV_dtm η ℓ i)))
+    (hasDerivAt_line_dtm (wO_dtm θ ℓ i) (wO_dtm η ℓ i))) (hasDerivAt_const (0 : ℝ) θ.D)
+  exact h.congr_deriv (by simp only [zero_smul, add_zero, Matrix.zero_mul, zero_add,
+    Matrix.mul_zero, Matrix.add_mul])
+
+omit [DecidableEq d] [Fintype dOut] in
+/-- Helper (as `sum_heads_eq_dpa`, "let the heads of all attention blocks form one attention
+block"): `∑_{(ℓ,i)} P(x B_{ℓ,i} x^⊤) x C_{ℓ,i} = ∑_ℓ f_ℓ(x E W_read^ℓ) W_write^ℓ D`. -/
+private theorem sum_heads_eq_dtm
+    (θ : Params (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut) (x : Matrix T dIn ℝ) :
+    ∑ p : (Σ ℓ, H ℓ), attnWeights sees (x * headScore θ p.1 p.2 * xᵀ) * x * headValue θ p.1 p.2
+      = ∑ ℓ, (Arch.attention (T := T) (d := d) sees id H dh).f ℓ (x * θ.E * θ.read ℓ)
+          * θ.write ℓ * θ.D := by
+  rw [Fintype.sum_sigma]
+  refine Finset.sum_congr rfl fun ℓ _ => ?_
+  -- block `ℓ` is equation (4) on the hidden state `x E`
+  rw [f_attention_mul]
+  simp only [attentionBlock, attnHeads, headScore, headValue, Matrix.sum_mul,
+    Matrix.transpose_mul, Matrix.mul_smul, Matrix.smul_mul, Matrix.mul_assoc]
+
+/-- Helper (as the private `attnWeights_sum_rat` of `Absorb/RMSNormAttention.lean`): row `t` of
+the weights sums to `1` when token `t` sees some token (the denominator is positive). -/
+private theorem attnWeights_sum_dtm (Z : Matrix T T ℝ) (t : T) (ht : ∃ s, sees t s) :
+    ∑ s, attnWeights sees Z t s = 1 := by
+  obtain ⟨s, hs⟩ := ht
+  have hS : 0 < ∑ s', if sees t s' then Real.exp (Z t s') else 0 := by
+    refine Finset.sum_pos' (fun s' _ => ?_) ⟨s, Finset.mem_univ _, ?_⟩
+    · split_ifs
+      · exact (Real.exp_pos _).le
+      · exact le_rfl
+    · simp only [hs, ite_true]
+      exact Real.exp_pos _
+  have h1 : ∀ s, attnWeights sees Z t s = (if sees t s then Real.exp (Z t s) else 0)
+      / ∑ s', if sees t s' then Real.exp (Z t s') else 0 := by
+    intro s
+    simp only [attnWeights, Matrix.of_apply]
+    split_ifs
+    · rfl
+    · rw [zero_div]
+  simp only [h1, ← Finset.sum_div]
+  exact div_self hS.ne'
+
+omit [Fintype dOut] in
+/-- Helper ("head `i` then gives every token the output `x C_i`, whatever its scores are"): if the
+rows of `x` all equal `v` and token `t` sees itself, row `t` of `P x C` is row `t` of `x C`. -/
+private theorem row_attn_const_dtm (t : T) (ht : sees t t) (Z : Matrix T T ℝ) (v : dIn → ℝ)
+    (C : Matrix dIn dOut ℝ) :
+    (attnWeights sees Z * Matrix.of (fun _ : T => v) * C) t
+      = (Matrix.of (fun _ : T => v) * C) t := by
+  funext o
+  rw [Matrix.mul_assoc, Matrix.mul_apply]
+  -- every row of `x C` is `v C`, and the weights of row `t` sum to `1`
+  calc ∑ s, attnWeights sees Z t s * (Matrix.of (fun _ : T => v) * C) s o
+      = ∑ s, attnWeights sees Z t s * (Matrix.of (fun _ : T => v) * C) t o := rfl
+    _ = (∑ s, attnWeights sees Z t s) * (Matrix.of (fun _ : T => v) * C) t o :=
+        (Finset.sum_mul _ _ _).symm
+    _ = (Matrix.of (fun _ : T => v) * C) t o := by
+        rw [attnWeights_sum_dtm Z t ⟨t, ht⟩, one_mul]
+
+omit [DecidableEq d] in
+/-- Helper ("First take an input whose tokens all equal `x`. Head `i` then gives every token the
+output `x C_i`, whatever its scores are"): at an input whose rows all equal `v`, row `t` of
+`(J_0 η)(x)` of the attention network is `v K` for one matrix `K` (`K = ψ_M + ∑_p ψ_{C_p}`), when
+token `t` sees itself. -/
+private theorem smallWritesLimit_attention_const_dtm (t : T) (ht : sees t t)
+    (θ η : Params (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut) :
+    ∃ K : Matrix dIn dOut ℝ, ∀ v : dIn → ℝ,
+      smallWritesLimit (Arch.attention sees id H dh) θ η (Matrix.of fun _ : T => v) t
+        = v ᵥ* K := by
+  refine ⟨η.E * θ.D + θ.E * η.D + ∑ p : (Σ ℓ, H ℓ), (θ.E * wV_dtm η p.1 p.2 * wO_dtm θ p.1 p.2
+    * θ.D + θ.E * wV_dtm θ p.1 p.2 * wO_dtm η p.1 p.2 * θ.D), fun v => ?_⟩
+  obtain ⟨x, hx⟩ : ∃ x : Matrix T dIn ℝ, x = Matrix.of fun _ : T => v := ⟨_, rfl⟩
+  rw [← hx]
+  -- along the curve, head `p` gives row `t` the value `v C_p(τ)`
+  have heq : ∀ τ, curve_dtm (Arch.attention sees id H dh) θ η x τ t
+      = (x * (θ.E * θ.D + τ • (η.E * θ.D + θ.E * η.D))
+        + ∑ p : (Σ ℓ, H ℓ), x * headValue (moveRW_dtm θ η τ) p.1 p.2) t := by
+    intro τ
+    have hs : ∑ ℓ, (Arch.attention (T := T) (d := d) sees id H dh).f ℓ
+          (x * θ.E * (θ.read ℓ + τ • η.read ℓ)) * (θ.write ℓ + τ • η.write ℓ) * θ.D
+        = ∑ p : (Σ ℓ, H ℓ), attnWeights sees (x * headScore (moveRW_dtm θ η τ) p.1 p.2 * xᵀ)
+          * x * headValue (moveRW_dtm θ η τ) p.1 p.2 :=
+      (sum_heads_eq_dtm (moveRW_dtm θ η τ) x).symm
+    rw [curve_dtm, hs]
+    funext o
+    simp only [Matrix.add_apply, Matrix.sum_apply]
+    congr 1
+    refine Finset.sum_congr rfl fun p _ => ?_
+    rw [hx]
+    exact congrFun (row_attn_const_dtm t ht _ v _) o
+  -- the derivative of `x M(τ) + ∑_p x C_p(τ)` at `τ = 0` is `x (ψ_M + ∑_p ψ_{C_p})`
+  have h2 : HasDerivAt (fun τ : ℝ => x * (θ.E * θ.D + τ • (η.E * θ.D + θ.E * η.D))
+      + ∑ p : (Σ ℓ, H ℓ), x * headValue (moveRW_dtm θ η τ) p.1 p.2)
+      (x * (η.E * θ.D + θ.E * η.D + ∑ p : (Σ ℓ, H ℓ), (θ.E * wV_dtm η p.1 p.2
+        * wO_dtm θ p.1 p.2 * θ.D + θ.E * wV_dtm θ p.1 p.2 * wO_dtm η p.1 p.2 * θ.D))) 0 := by
+    have h := (hasDerivAt_mul_dtm (hasDerivAt_const (0 : ℝ) x)
+      (hasDerivAt_line_dtm (θ.E * θ.D) (η.E * θ.D + θ.E * η.D))).add
+      (HasDerivAt.fun_sum (u := Finset.univ) fun (p : Σ ℓ, H ℓ) _ =>
+        hasDerivAt_mul_dtm (hasDerivAt_const (0 : ℝ) x) (hasDerivAt_headValue_dtm θ η p.1 p.2))
+    refine h.congr_deriv ?_
+    simp only [Matrix.zero_mul, zero_add, Matrix.mul_add, Matrix.mul_sum]
+  -- row `t`: `(J_0 η)(x)` is the derivative of the curve, which is `x K` there
+  have h1 := hasDerivAt_pi.1 (hasDerivAt_curve_dtm
+    (fun ℓ => differentiable_f_attention (T := T) (d := d) sees id H dh ℓ) θ η x) t
+  have h3 := (hasDerivAt_pi.1 h2 t).congr_of_eventuallyEq (Filter.Eventually.of_forall heq)
+  rw [h1.unique h3, Matrix.mul_apply_eq_vecMul, hx]
+  rfl
+
+/-! ### Helpers: the terms of the hidden units (as in `Residual/DepthMlp.lean`) -/
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (as `fderiv_map_apply_dm`): the derivative of `M ↦ σ(M)` (entrywise) at `P` along `Q`
+has the entries `σ'(P_{t i}) Q_{t i}`. -/
+private theorem fderiv_map_apply_dtm (hσ : ∀ z, HasDerivAt σ (σ' z) z) {m n : Type*}
+    [Fintype m] [Fintype n] (P Q : Matrix m n ℝ) (t : m) (i : n) :
+    fderiv ℝ (fun M : Matrix m n ℝ => M.map σ) P Q t i = σ' (P t i) * Q t i := by
+  have hσd : Differentiable ℝ σ := fun z => (hσ z).differentiableAt
+  have hd : Differentiable ℝ (fun M : Matrix m n ℝ => M.map σ) :=
+    differentiable_pi.2 fun t => differentiable_pi.2 fun i =>
+      hσd.comp (differentiable_pi.1 (differentiable_pi.1 differentiable_id t) i)
+  -- the chain rule along the line `τ ↦ P + τ Q`
+  have hline : HasDerivAt (fun τ : ℝ => P + τ • Q) Q 0 := hasDerivAt_line_dtm P Q
+  have h0 : P = P + (0 : ℝ) • Q := by rw [zero_smul, add_zero]
+  have h1 := (hd P).hasFDerivAt.comp_hasDerivAt_of_eq (0 : ℝ) hline h0
+  have h2 := hasDerivAt_pi.1 (hasDerivAt_pi.1 h1 t) i
+  -- the same derivative, entrywise: `τ ↦ σ(P_{t i} + τ Q_{t i})`
+  have h3 : HasDerivAt (fun τ : ℝ => σ (P t i + τ * Q t i)) (σ' (P t i) * Q t i) 0 := by
+    have hu : HasDerivAt (fun τ : ℝ => P t i + τ * Q t i) (Q t i) 0 := by
+      have h := ((hasDerivAt_id (0 : ℝ)).mul_const (Q t i)).const_add (P t i)
+      rw [one_mul] at h
+      exact h
+    have h := (hσ (P t i)).comp_of_eq (0 : ℝ) hu (by rw [zero_mul, add_zero])
+    exact h
+  exact h2.unique h3
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the same for the map of block `ℓ` of an MLP network. -/
+private theorem fderiv_f_mlp_apply_dtm (hσ : ∀ z, HasDerivAt σ (σ' z) z) (ℓ : Fin L)
+    (P Q : Matrix T (hid ℓ) ℝ) (t : T) (i : hid ℓ) :
+    fderiv ℝ ((Arch.mlp (T := T) (d := d) σ id hid).f ℓ) P Q t i = σ' (P t i) * Q t i :=
+  fderiv_map_apply_dtm hσ P Q t i
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: an entry of `M N + M' N'`. -/
+private theorem mul_add_mul_apply_dtm {m n k : Type*} [Fintype n] (M M' : Matrix m n ℝ)
+    (N N' : Matrix n k ℝ) (t : m) (o : k) :
+    (M * N + M' * N') t o = ∑ i, (M t i * N i o + M' t i * N' i o) := by
+  simp only [Matrix.add_apply, Matrix.mul_apply, Finset.sum_add_distrib]
+
+omit [DecidableEq d] [Fintype dOut] in
+/-- Helper (as `smallWritesLimit_mlp_apply` of `Residual/DepthMlp.lean`): the entries of
+`(J_0 η)(x)` for MLP blocks, `(x ψ_M)_{t o} + ∑_ℓ ∑_i [σ(z_{ℓ i}) (ψ_A^ℓ)_{i o}
++ σ'(z_{ℓ i}) (x ψ_C^ℓ)_{t i} (A^ℓ)_{i o}]` with `z_{ℓ i} = (x C^ℓ)_{t i}`. -/
+private theorem smallWritesLimit_mlp_apply_dtm (hσ : ∀ z, HasDerivAt σ (σ' z) z)
+    (θ η : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) (x : Matrix T dIn ℝ) (t : T)
+    (o : dOut) :
+    smallWritesLimit (Arch.mlp σ id hid) θ η x t o
+      = (x * (η.E * θ.D + θ.E * η.D)) t o + ∑ ℓ, ∑ i : hid ℓ,
+        (σ ((x * (θ.E * θ.read ℓ)) t i) * (η.write ℓ * θ.D) i o
+          + σ' ((x * (θ.E * θ.read ℓ)) t i) * (x * (θ.E * η.read ℓ)) t i
+            * (θ.write ℓ * θ.D) i o) := by
+  rw [smallWritesLimit, Matrix.add_apply, Matrix.sum_apply]
+  congr 1
+  refine Finset.sum_congr rfl fun ℓ _ => ?_
+  have e : ∀ F' F : Matrix T (hid ℓ) ℝ, ((F' * θ.write ℓ + F * η.write ℓ) * θ.D) t o
+      = ∑ i, (F' t i * (θ.write ℓ * θ.D) i o + F t i * (η.write ℓ * θ.D) i o) := by
+    intro F' F
+    rw [Matrix.add_mul, Matrix.mul_assoc, Matrix.mul_assoc]
+    exact mul_add_mul_apply_dtm _ _ _ _ t o
+  rw [e]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [fderiv_f_mlp_apply_dtm hσ, Matrix.mul_assoc x θ.E (θ.read ℓ),
+    Matrix.mul_assoc x θ.E (η.read ℓ)]
+  show σ' _ * _ * _ + σ _ * _ = _
+  ring
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (as `cancel_left_of_rank_dm`): a matrix whose rank is its number of columns cancels
+on the left, via a left inverse. -/
+private theorem cancel_left_of_rank_dtm {m n k : Type*} [Fintype m] [Fintype n] [DecidableEq n]
+    (M : Matrix m n ℝ) (hM : M.rank = Fintype.card n) {X Y : Matrix n k ℝ}
+    (h : M * X = M * Y) : X = Y := by
+  obtain ⟨B, hB⟩ := Matrix.vecMul_surjective_iff_exists_left_inverse.mp
+    (Matrix.vecMul_surjective_iff_rank_eq_card.mpr hM)
+  have := congrArg (B * ·) h
+  simpa only [← Matrix.mul_assoc, hB, Matrix.one_mul] using this
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (as `cancel_right_of_rank_dm`): a matrix whose rank is its number of rows cancels on
+the right, via a right inverse. -/
+private theorem cancel_right_of_rank_dtm {m n k : Type*} [Fintype m] [Fintype n] [DecidableEq m]
+    (M : Matrix m n ℝ) (hM : M.rank = Fintype.card m) {X Y : Matrix k m ℝ}
+    (h : X * M = Y * M) : X = Y := by
+  obtain ⟨R, hR⟩ := Matrix.mulVec_surjective_iff_exists_right_inverse.mp
+    (Matrix.mulVec_surjective_iff_rank_eq_card.mpr hM)
+  have := congrArg (· * R) h
+  simpa only [Matrix.mul_assoc, hR, Matrix.mul_one] using this
+
 /-- **Proof of Lemma A.27, attention blocks and MLP blocks without normalization, the flat
 directions of `J_0`:** let token `t₂` see itself and another token `t₁`. Under the conditions of
 the lemma, a direction `η` with `(J_0 η)(x) = 0` at every input `x` has `η_E = E X` and
@@ -72,7 +430,72 @@ theorem smallWritesLimit_eq_zero_attentionMlp (hσ : ∀ z, HasDerivAt σ (σ' z
         ∧ (∀ ℓ, η.sumFst.read ℓ = (headDirQK θ.sumFst Γ + headDirVO θ.sumFst Γ').read ℓ)
         ∧ (∀ ℓ, η.sumFst.write ℓ = (headDirQK θ.sumFst Γ + headDirVO θ.sumFst Γ').write ℓ)
         ∧ (∀ ℓ, η.sumSnd.read ℓ = 0) ∧ (∀ ℓ, η.sumSnd.write ℓ = 0) := by
-  sorry
+  have hσd : Differentiable ℝ σ := fun z => (hσ z).differentiableAt
+  -- `(J_0 η)(x) = x ψ_M + [the terms of the heads] + [the terms of the hidden units]`
+  -- (`f_sum_mul`), the heads at `θ.sumFst`, `η.sumFst`, the hidden units at `θ.sumSnd`, `η.sumSnd`
+  have hsum : ∀ x, smallWritesLimit (Arch.attentionMlp sees σ id H dh hid) θ η x
+      + x * (η.E * θ.D + θ.E * η.D)
+      = smallWritesLimit (Arch.attention sees id H dh) θ.sumFst η.sumFst x
+        + smallWritesLimit (Arch.mlp σ id hid) θ.sumSnd η.sumSnd x := fun x =>
+    smallWritesLimit_sum_dtm (fun ℓ => differentiable_f_attention (T := T) (d := d) sees id H dh ℓ)
+      (fun ℓ => differentiable_f_mlp (T := T) (d := d) (χ := id) hσd ℓ) θ η x
+  -- Step 1 (equal tokens): at an input whose rows all equal `v`, row `t₂` of the terms of the
+  -- heads is `v K` with `K = ψ_M + ∑_p ψ_{C_p}`, whatever the scores are
+  obtain ⟨K, hK⟩ := smallWritesLimit_attention_const_dtm t₂ hs2 θ.sumFst η.sumFst
+  have key : ∀ (v : dIn → ℝ) (o : dOut), (v ᵥ* K) o + ∑ ℓ, ∑ i : hid ℓ,
+      (σ ((Matrix.of (fun _ : T => v) * (θ.sumSnd.E * θ.sumSnd.read ℓ)) t₂ i)
+          * (η.sumSnd.write ℓ * θ.sumSnd.D) i o
+        + σ' ((Matrix.of (fun _ : T => v) * (θ.sumSnd.E * θ.sumSnd.read ℓ)) t₂ i)
+          * (Matrix.of (fun _ : T => v) * (θ.sumSnd.E * η.sumSnd.read ℓ)) t₂ i
+            * (θ.sumSnd.write ℓ * θ.sumSnd.D) i o) = 0 := by
+    intro v o
+    have h := congrFun (congrFun (hsum (Matrix.of fun _ : T => v)) t₂) o
+    rw [Matrix.add_apply, Matrix.add_apply, hη, Matrix.zero_apply, zero_add, hK v,
+      smallWritesLimit_mlp_apply_dtm hσ] at h
+    have e : (Matrix.of (fun _ : T => v)
+        * (η.sumSnd.E * θ.sumSnd.D + θ.sumSnd.E * η.sumSnd.D)) t₂ o
+        = (Matrix.of (fun _ : T => v) * (η.E * θ.D + θ.E * η.D)) t₂ o := rfl
+    rw [e] at h
+    linarith
+  -- Lemma B.3 for the units of all blocks together, with `M + ∑ C` in the place of `M`:
+  -- `E η_read = 0` and `η_write D = 0` at every hidden unit
+  obtain ⟨-, -, hc, -, ha⟩ := hU (fun p => (θ.sumSnd.E * θ.sumSnd.read p.1)ᵀ p.2) 0
+    (fun p => (θ.sumSnd.write p.1 * θ.sumSnd.D) p.2) K 0
+    (fun p => (θ.sumSnd.E * η.sumSnd.read p.1)ᵀ p.2) 0
+    (fun p => (η.sumSnd.write p.1 * θ.sumSnd.D) p.2)
+    (fun p => hθm.row_ne_zero p.1 p.2) (fun p => hθm.col_ne_zero p.1 p.2)
+    (fun p q hpq => hθm.col_not_collinear p q hpq) (by
+      intro v
+      funext o
+      simp only [Pi.add_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, Pi.zero_apply,
+        add_zero]
+      rw [Fintype.sum_sigma]
+      exact key v o)
+  -- `E` cancels on the left and `D` on the right: the reads and writes of the units vanish
+  have hr2 : ∀ ℓ, η.sumSnd.read ℓ = 0 := fun ℓ => by
+    refine cancel_left_of_rank_dtm θ.sumSnd.E hθm.rank_E ?_
+    rw [Matrix.mul_zero]
+    ext a i
+    exact congrFun (congrFun hc ⟨ℓ, i⟩) a
+  have hw2 : ∀ ℓ, η.sumSnd.write ℓ = 0 := fun ℓ => by
+    refine cancel_right_of_rank_dtm θ.sumSnd.D hθm.rank_D ?_
+    rw [Matrix.zero_mul]
+    ext i o
+    exact congrFun (congrFun ha ⟨ℓ, i⟩) o
+  -- Step 2: "The terms of the units then vanish at every input", so `(J_0 η)(x) = 0` is the
+  -- condition of the attention network at `θ.sumFst` and the direction `η.sumFst`
+  have hA0 : ∀ x, smallWritesLimit (Arch.attention sees id H dh) θ.sumFst η.sumFst x = 0 := by
+    intro x
+    have h := hsum x
+    rw [hη, zero_add, smallWritesLimit_of_zero_dtm θ.sumSnd η.sumSnd hr2 hw2] at h
+    have e : x * (η.sumSnd.E * θ.sumSnd.D + θ.sumSnd.E * η.sumSnd.D)
+        = x * (η.E * θ.D + θ.E * η.D) := rfl
+    rw [e] at h
+    exact right_eq_add.mp h
+  -- the attention case (`Residual/DepthAttention.lean`): `X`, `Γ`, `Γ'`
+  obtain ⟨X, Γ, Γ', hE, hD, hr, hw⟩ :=
+    smallWritesLimit_eq_zero_attention t₁ t₂ h12 hs2 hs1 θ.sumFst hθa η.sumFst hA0
+  exact ⟨X, Γ, Γ', hE, hD, hr, hw, hr2, hw2⟩
 
 /-- **Lemma A.27 (Small writes), first value, for attention blocks and MLP blocks, under the
 conditions of its proof:** with a token that sees itself and another token, for all small `τ ≠ 0`
