@@ -219,7 +219,7 @@ the nineteenth audit began): `OneBlock/SkiplessHomogeneousRMSZero.lean`,
 `OneBlock/ResidualRMSZeroValue.lean` (the proofs are the nineteenth reader's; the statements
 were read by the coordinator only); these four are with the reader of the twentieth audit since
 20:14 UTC, 24 November. Also not yet compared: `Dimension/LocalIdentifiabilityUnderEquality.lean`
-(statements and three-line proofs by the coordinator, 20:23 UTC). A ninth reader (part A, 24 November) compared the six files on
+(statements and three-line proofs by the coordinator, 20:22 UTC). A ninth reader (part A, 24 November) compared the six files on
 GELU at complex arguments (`Activations/MillsC.lean`, `Activations/MillsCExpansion.lean`,
 `Activations/MillsAtInfinityC.lean`, `Activations/GeluOnPath.lean`,
 `Generic/HolomorphicBall.lean`, `Depth/GeluPathSeparation.lean`: 31 public names) and found
