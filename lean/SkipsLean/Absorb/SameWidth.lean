@@ -151,8 +151,10 @@ theorem exists_subProd_eq_neg_of_gelu_absorb (hp : 2 ≤ Fintype.card p) (Wr : M
     (Ww : Matrix m q ℝ) (hnd : Nondegenerate Wr Ww) (M : Matrix p q ℝ) (Wr' : Matrix p m ℝ)
     (Ww' : Matrix m q ℝ)
     (h : ∀ x : p → ℝ, x ᵥ* M + vanillaBlock gelu Wr Ww x = vanillaBlock gelu Wr' Ww' x) :
-    ∃ S : Finset m, subProd S Wr Ww = -M := by
-  sorry
+    ∃ S : Finset m, subProd S Wr Ww = -M :=
+  -- the ReLU blocks with the same weights satisfy the same equation
+  exists_subProd_eq_neg_of_relu_absorb hp Wr Ww hnd M Wr' Ww'
+    (relu_absorb_of_gelu_absorb Wr Ww Wr' Ww' M h)
 
 /-- **Theorem 3.1 (i), first sentence, for ReLU** (Corollary A.9): a nondegenerate block absorbs
 `x M` at the same width if and only if some set `S` of hidden units has
@@ -162,7 +164,12 @@ theorem relu_absorb_same_width_iff (hp : 2 ≤ Fintype.card p) (Wr : Matrix p m 
     (∃ (Wr' : Matrix p m ℝ) (Ww' : Matrix m q ℝ),
         ∀ x : p → ℝ, x ᵥ* M + vanillaBlock relu Wr Ww x = vanillaBlock relu Wr' Ww' x)
       ↔ ∃ S : Finset m, subProd S Wr Ww = -M := by
-  sorry
+  constructor
+  · rintro ⟨Wr', Ww', h⟩
+    exact exists_subProd_eq_neg_of_relu_absorb hp Wr Ww hnd M Wr' Ww' h
+  · -- flip the reads of the units of `S`
+    rintro ⟨S, hS⟩
+    exact ⟨flipCols S Wr, Ww, vanillaBlock_flipCols_of_subProd relu_sub_relu_neg S Wr Ww M hS⟩
 
 /-- **Theorem 3.1 (i), first sentence, for GELU.** -/
 theorem gelu_absorb_same_width_iff (hp : 2 ≤ Fintype.card p) (Wr : Matrix p m ℝ)
@@ -170,22 +177,127 @@ theorem gelu_absorb_same_width_iff (hp : 2 ≤ Fintype.card p) (Wr : Matrix p m 
     (∃ (Wr' : Matrix p m ℝ) (Ww' : Matrix m q ℝ),
         ∀ x : p → ℝ, x ᵥ* M + vanillaBlock gelu Wr Ww x = vanillaBlock gelu Wr' Ww' x)
       ↔ ∃ S : Finset m, subProd S Wr Ww = -M := by
-  sorry
+  constructor
+  · rintro ⟨Wr', Ww', h⟩
+    exact exists_subProd_eq_neg_of_gelu_absorb hp Wr Ww hnd M Wr' Ww' h
+  · -- flip the reads of the units of `S`
+    rintro ⟨S, hS⟩
+    exact ⟨flipCols S Wr, Ww, vanillaBlock_flipCols_of_subProd gelu_sub_gelu_neg S Wr Ww M hS⟩
 
 variable [Fintype q]
+
+/-- An entry of a product of two matrix-valued functions whose entries are analytic is
+analytic. -/
+private theorem analyticOnNhd_mul_entry {P a b c : Type*} [NormedAddCommGroup P]
+    [NormedSpace ℝ P] [Fintype b] {F : P → Matrix a b ℝ} {G : P → Matrix b c ℝ}
+    (hF : ∀ i j, AnalyticOnNhd ℝ (fun y => F y i j) Set.univ)
+    (hG : ∀ i j, AnalyticOnNhd ℝ (fun y => G y i j) Set.univ) (i : a) (j : c) :
+    AnalyticOnNhd ℝ (fun y => (F y * G y) i j) Set.univ := by
+  simp only [Matrix.mul_apply]
+  exact Finset.analyticOnNhd_fun_sum _ fun k _ => (hF i k).mul (hG k j)
+
+omit [DecidableEq m] in
+/-- An entry of the read is an analytic (linear) function of the weights. -/
+private theorem analyticOnNhd_fst_apply (a : p) (i : m) :
+    AnalyticOnNhd ℝ (fun W : Matrix p m ℝ × Matrix m q ℝ => W.1 a i) Set.univ :=
+  analyticOnNhd_linear ((Matrix.entryLinearMap ℝ ℝ a i).comp
+    (LinearMap.fst ℝ (Matrix p m ℝ) (Matrix m q ℝ)))
+
+omit [DecidableEq m] in
+/-- An entry of the write is an analytic (linear) function of the weights. -/
+private theorem analyticOnNhd_snd_apply (i : m) (o : q) :
+    AnalyticOnNhd ℝ (fun W : Matrix p m ℝ × Matrix m q ℝ => W.2 i o) Set.univ :=
+  analyticOnNhd_linear ((Matrix.entryLinearMap ℝ ℝ i o).comp
+    (LinearMap.snd ℝ (Matrix p m ℝ) (Matrix m q ℝ)))
+
+omit [DecidableEq m] in
+/-- An analytic function of the weights `(W_read, W_write)` that is not identically zero is nonzero
+at generic weights. The Borel structure of the product is given explicitly: the measure sees the
+topology of `Matrix`, the analytic function the one of the norm, and they agree only by
+definition. -/
+private theorem ae_ne_zero_of_analytic_prod
+    (μ : Measure (Matrix p m ℝ × Matrix m q ℝ)) [μ.IsAddHaarMeasure]
+    {g : Matrix p m ℝ × Matrix m q ℝ → ℝ} (hg : AnalyticOnNhd ℝ g Set.univ)
+    (hne : ∃ y, g y ≠ 0) : ∀ᵐ W ∂μ, g W ≠ 0 := by
+  have h1 : SecondCountableTopology (Matrix p m ℝ) :=
+    inferInstanceAs (SecondCountableTopology (p → m → ℝ))
+  have hB : BorelSpace (Matrix p m ℝ × Matrix m q ℝ) := Prod.borelSpace
+  exact @ae_ne_zero_of_analytic _ _ _ _ _ hB μ ‹_› _ hg hne
 
 /-- Generic blocks are nondegenerate (`p ≥ 2` inputs, at least one output). -/
 theorem ae_nondegenerate (hp : 2 ≤ Fintype.card p) [Nonempty q]
     (μ : Measure (Matrix p m ℝ × Matrix m q ℝ)) [μ.IsAddHaarMeasure] :
     ∀ᵐ W ∂μ, Nondegenerate W.1 W.2 := by
-  sorry
+  classical
+  obtain ⟨a₁, a₂, ha⟩ := Fintype.exists_pair_of_one_lt_card (show 1 < Fintype.card p by omega)
+  obtain ⟨o₀⟩ := ‹Nonempty q›
+  -- the columns of the read are nonzero: their entries at `a₁` are
+  have h1 : ∀ᵐ W ∂μ, ∀ i : m, W.1 a₁ i ≠ 0 := by
+    refine ae_all_iff.2 fun i => ?_
+    exact ae_ne_zero_of_analytic_prod μ (analyticOnNhd_fst_apply a₁ i)
+      ⟨(Matrix.of fun _ _ => 1, 0), one_ne_zero⟩
+  -- the rows of the write are nonzero: their entries at `o₀` are
+  have h2 : ∀ᵐ W ∂μ, ∀ i : m, W.2 i o₀ ≠ 0 := by
+    refine ae_all_iff.2 fun i => ?_
+    exact ae_ne_zero_of_analytic_prod μ (analyticOnNhd_snd_apply i o₀)
+      ⟨(0, Matrix.of fun _ _ => 1), one_ne_zero⟩
+  -- two columns of the read are not collinear: a `2 × 2` minor does not vanish
+  have h3 : ∀ᵐ W ∂μ, ∀ i j : m, i ≠ j →
+      W.1 a₁ i * W.1 a₂ j - W.1 a₁ j * W.1 a₂ i ≠ 0 := by
+    refine ae_all_iff.2 fun i => ae_all_iff.2 fun j => ?_
+    by_cases hij : i = j
+    · exact Filter.Eventually.of_forall fun _ h => absurd hij h
+    · -- the read with the entries `(a₁, i)` and `(a₂, j)` equal to `1`, the others `0`
+      let R : Matrix p m ℝ := Matrix.of fun a k =>
+        if a = a₁ ∧ k = i then 1 else if a = a₂ ∧ k = j then 1 else 0
+      have hR : R a₁ i * R a₂ j - R a₁ j * R a₂ i ≠ 0 := by
+        simp only [R, Matrix.of_apply, ha, ha.symm, hij, Ne.symm hij, and_self, and_true,
+          and_false, ↓reduceIte]
+        norm_num
+      have hg : AnalyticOnNhd ℝ (fun W : Matrix p m ℝ × Matrix m q ℝ =>
+          W.1 a₁ i * W.1 a₂ j - W.1 a₁ j * W.1 a₂ i) Set.univ :=
+        ((analyticOnNhd_fst_apply a₁ i).mul (analyticOnNhd_fst_apply a₂ j)).sub
+          ((analyticOnNhd_fst_apply a₁ j).mul (analyticOnNhd_fst_apply a₂ i))
+      exact (ae_ne_zero_of_analytic_prod μ hg ⟨(R, 0), hR⟩).mono fun _ h _ => h
+  filter_upwards [h1, h2, h3] with W h1 h2 h3
+  refine ⟨fun i hi => h1 i (congrFun hi a₁), fun i j hij r hr => ?_,
+    fun i hi => h2 i (congrFun hi o₀)⟩
+  -- if `w_i = r w_j`, the minor of the columns `i`, `j` vanishes
+  have e1 : W.1 a₁ i = r * W.1 a₁ j := congrFun hr a₁
+  have e2 : W.1 a₂ i = r * W.1 a₂ j := congrFun hr a₂
+  apply h3 i j hij
+  rw [e1, e2]
+  ring
 
 /-- For `M ≠ 0` the condition `W_read[:,S] W_write[S,:] = -M` fails for every `S` at generic
 weights: it is polynomial in the weights and fails when the writes vanish. -/
 theorem ae_forall_subProd_ne_neg (M : Matrix p q ℝ) (hM : M ≠ 0)
     (μ : Measure (Matrix p m ℝ × Matrix m q ℝ)) [μ.IsAddHaarMeasure] :
     ∀ᵐ W ∂μ, ∀ S : Finset m, subProd S W.1 W.2 ≠ -M := by
-  sorry
+  -- an entry `(a, o)` with `M a o ≠ 0`
+  obtain ⟨a, o, hao⟩ : ∃ a o, M a o ≠ 0 := by
+    by_contra hc
+    exact hM (Matrix.ext fun a o => by_contra fun h => hc ⟨a, o, h⟩)
+  refine ae_all_iff.2 fun S => ?_
+  -- `W ↦ (W_read Π_S W_write) a o + M a o` is a polynomial, equal to `M a o ≠ 0` at `W = 0`
+  have hg : AnalyticOnNhd ℝ (fun W : Matrix p m ℝ × Matrix m q ℝ =>
+      subProd S W.1 W.2 a o + M a o) Set.univ := by
+    refine AnalyticOnNhd.add ?_ analyticOnNhd_const
+    have h1 : ∀ a k, AnalyticOnNhd ℝ (fun W : Matrix p m ℝ × Matrix m q ℝ =>
+        (W.1 * Matrix.diagonal (fun j => if j ∈ S then (1 : ℝ) else 0)) a k) Set.univ :=
+      analyticOnNhd_mul_entry (F := fun W : Matrix p m ℝ × Matrix m q ℝ => W.1)
+        (G := fun _ => Matrix.diagonal (fun j => if j ∈ S then (1 : ℝ) else 0))
+        (fun a i => analyticOnNhd_fst_apply a i) (fun _ _ => analyticOnNhd_const)
+    exact analyticOnNhd_mul_entry (F := fun W : Matrix p m ℝ × Matrix m q ℝ =>
+        W.1 * Matrix.diagonal (fun j => if j ∈ S then (1 : ℝ) else 0))
+      (G := fun W => W.2) h1 (fun i o => analyticOnNhd_snd_apply i o) a o
+  have h0 : subProd S (0 : Matrix p m ℝ × Matrix m q ℝ).1 (0 : Matrix p m ℝ × Matrix m q ℝ).2 a o
+      + M a o ≠ 0 := by
+    simpa only [subProd, Prod.fst_zero, Prod.snd_zero, Matrix.zero_mul, Matrix.mul_zero,
+      Matrix.zero_apply, zero_add] using hao
+  filter_upwards [ae_ne_zero_of_analytic_prod μ hg ⟨0, h0⟩] with W hW hS
+  apply hW
+  rw [hS, Matrix.neg_apply, neg_add_cancel]
 
 /-- **Theorem 3.1 (i), second sentence, for ReLU:** fix `M ≠ 0`. For generic `θ = (W_read, W_write)`
 no ReLU block of the same width computes `x M + B_θ(x)`. -/
@@ -193,14 +305,28 @@ theorem ae_not_relu_absorb_same_width (hp : 2 ≤ Fintype.card p) (M : Matrix p 
     (μ : Measure (Matrix p m ℝ × Matrix m q ℝ)) [μ.IsAddHaarMeasure] :
     ∀ᵐ W ∂μ, ¬ ∃ (Wr' : Matrix p m ℝ) (Ww' : Matrix m q ℝ),
       ∀ x : p → ℝ, x ᵥ* M + vanillaBlock relu W.1 W.2 x = vanillaBlock relu Wr' Ww' x := by
-  sorry
+  -- `q` is nonempty, since `M ≠ 0`
+  have : Nonempty q := by
+    by_contra hq
+    exact hM (Matrix.ext fun _ o => (hq ⟨o⟩).elim)
+  filter_upwards [ae_nondegenerate hp μ, ae_forall_subProd_ne_neg M hM μ] with W hnd hS
+  rintro ⟨Wr', Ww', h⟩
+  obtain ⟨S, hS'⟩ := exists_subProd_eq_neg_of_relu_absorb hp W.1 W.2 hnd M Wr' Ww' h
+  exact hS S hS'
 
 /-- **Theorem 3.1 (i), second sentence, for GELU.** -/
 theorem ae_not_gelu_absorb_same_width (hp : 2 ≤ Fintype.card p) (M : Matrix p q ℝ) (hM : M ≠ 0)
     (μ : Measure (Matrix p m ℝ × Matrix m q ℝ)) [μ.IsAddHaarMeasure] :
     ∀ᵐ W ∂μ, ¬ ∃ (Wr' : Matrix p m ℝ) (Ww' : Matrix m q ℝ),
       ∀ x : p → ℝ, x ᵥ* M + vanillaBlock gelu W.1 W.2 x = vanillaBlock gelu Wr' Ww' x := by
-  sorry
+  -- `q` is nonempty, since `M ≠ 0`
+  have : Nonempty q := by
+    by_contra hq
+    exact hM (Matrix.ext fun _ o => (hq ⟨o⟩).elim)
+  filter_upwards [ae_nondegenerate hp μ, ae_forall_subProd_ne_neg M hM μ] with W hnd hS
+  rintro ⟨Wr', Ww', h⟩
+  obtain ⟨S, hS'⟩ := exists_subProd_eq_neg_of_gelu_absorb hp W.1 W.2 hnd M Wr' Ww' h
+  exact hS S hS'
 
 /-! ### Proposition 3.2: networks of one block -/
 
