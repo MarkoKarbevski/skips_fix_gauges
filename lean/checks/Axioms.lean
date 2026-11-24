@@ -1316,3 +1316,7 @@ import SkipsLean
 #print axioms Skips.ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads_rmsNorm
 #print axioms Skips.ae_funDim_attentionGated_residual_iff_ae_locally_cob_heads_rescale
 #print axioms Skips.ae_funDim_attentionGated_residual_iff_ae_locally_cob_heads_rescale_rmsNorm
+#print axioms Skips.dimH_setOf_forall_isUnit_det
+#print axioms Skips.dimH_setOf_forall_mem_orthogonalGroup
+#print axioms Skips.dimH_setOf_const_isUnit_det
+#print axioms Skips.dimH_setOf_const_mem_orthogonalGroup

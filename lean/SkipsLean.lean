@@ -242,3 +242,4 @@ import SkipsLean.Residual.IdentifiableIff
 import SkipsLean.Symmetry.OnlyOrthogonalRows
 import SkipsLean.Generic.GroupDimension
 import SkipsLean.Symmetry.CobGroup
+import SkipsLean.Dimension.IdentifiableIffTransformer
