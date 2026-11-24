@@ -167,7 +167,10 @@ theorem exists_ne_reglu (Wg Wv : Matrix p m ℝ) (Ww : Matrix m q ℝ) (Wg' Wv' 
 theorem exists_ne_swiglu (Wg Wv : Matrix p m ℝ) (Ww : Matrix m q ℝ) (Wg' Wv' : Matrix p m' ℝ)
     (Ww' : Matrix m' q ℝ) (M : Matrix p q ℝ) (hM : M ≠ 0) :
     ∃ x : p → ℝ, x ᵥ* M + gatedBlock silu Wg Wv Ww x ≠ gatedBlock silu Wg' Wv' Ww' x := by
-  sorry
+  -- Proposition A.2: SiLU vanishes at `0` and is differentiable there
+  have h0 : silu 0 = 0 := by rw [silu, zero_div]
+  exact exists_ne_of_gated h0 (hasDerivAt_silu 0).differentiableAt h0
+    (hasDerivAt_silu 0).differentiableAt Wg Wv Ww Wg' Wv' Ww' M hM
 
 /-- **Theorem 3.3 (b) for GeGLU blocks** (gate GELU). -/
 theorem exists_ne_geglu (Wg Wv : Matrix p m ℝ) (Ww : Matrix m q ℝ) (Wg' Wv' : Matrix p m' ℝ)
