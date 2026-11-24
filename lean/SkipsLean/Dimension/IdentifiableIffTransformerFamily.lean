@@ -17,7 +17,7 @@ them: "With the permutations and the sign flips, the symmetries form a Lie group
 with finitely many components".
 
 `Dimension/IdentifiableIffTransformer.lean` states the equivalence with the continuous symmetries
-    only. Here
+only. Here
 the same statements with countably many further images `img j θ` of `θ`, one of which is `θ`
 itself: every `θ'` near `θ` with the same function is, for some `j`, the image of `img j θ` under
 the continuous symmetries. With `img j` running over the compositions of the permutations of
