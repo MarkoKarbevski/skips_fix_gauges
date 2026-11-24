@@ -232,3 +232,4 @@ import SkipsLean.Dimension.UpperBoundTransformerRescale
 import SkipsLean.Residual.LocalIdentifiabilityTransformer
 import SkipsLean.Residual.SkiplessEndsTransformer
 import SkipsLean.Residual.DifferentClassesTransformer
+import SkipsLean.Residual.ExactGainTransformer

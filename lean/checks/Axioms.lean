@@ -1246,3 +1246,7 @@ import SkipsLean
 #print axioms Skips.ae_funDim_attentionGated_residual_rmsNorm_ge_add
 #print axioms Skips.ae_funDim_attention_swiglu_residual_rmsNorm
 #print axioms Skips.ae_funDim_attention_geglu_residual_rmsNorm
+#print axioms Skips.ae_funDim_attentionMlp_residual_eq_add_of_skipless
+#print axioms Skips.ae_funDim_attentionMlp_residual_rmsNorm_eq_add_of_skipless
+#print axioms Skips.ae_funDim_attentionGated_residual_eq_add_of_skipless
+#print axioms Skips.ae_funDim_attentionGated_residual_rmsNorm_eq_add_of_skipless
