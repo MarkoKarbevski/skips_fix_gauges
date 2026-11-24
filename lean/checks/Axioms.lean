@@ -1748,3 +1748,4 @@ import SkipsLean
 #print axioms Skips.ae_funDimSkipsOn_tri_le_residual_add_attention_oneBlock_rmsNorm_zero
 #print axioms Skips.relu_unitsRescaleSphere
 #print axioms Skips.reluSq_unitsRescaleSphere
+#print axioms Skips.exists_of_flatSkipsOn_learned_rmsNorm_zero_on
