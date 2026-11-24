@@ -11,7 +11,8 @@ weights of the block plus these,
 `∂_ψ B(n) = q(n) 𝐃B(n) n` (17)
 
 for every `n` in the image of `N_ε`, the open ball of radius `√d_model`" (with
-`q(n) = n X_s nᵀ / d_model`, `X_s` symmetric), and then: "For the other blocks both sides are analytic in `n`, so (17) holds for all `n`, and we
+`q(n) = n X_s nᵀ / d_model`, `X_s` symmetric), and then: "For the other blocks both sides are
+analytic in `n`, so (17) holds for all `n`, and we
 take `n = t n̂` with a fixed row `n̂` and `t → ∞`, as in the proof of Lemma B.3. For GELU the right
 side is `t³ q(n̂) max(n̂ W_read, 0) W_write` up to terms that decay faster than any power of `t`,
 and the left side is a polynomial of degree at most one in `t` up to such terms, so
