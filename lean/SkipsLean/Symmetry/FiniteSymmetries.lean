@@ -102,6 +102,7 @@ private theorem eval_eq_of_blocks_fs {A : Arch T d L} (θ₁ θ₂ : Params A dI
   -- hence the outputs agree
   rw [eval, eval, hh, hD]
 
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
 /-- The permutations of the hidden units of MLP blocks preserve the function, for every
 activation, all stream matrices and every map `χ`. -/
 theorem eval_permUnits (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut)
@@ -113,6 +114,7 @@ theorem eval_permUnits (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn d
   simp only [Matrix.mul_apply, Matrix.map_apply, Params.permUnits, Matrix.of_apply]
   exact Equiv.sum_comp (p ℓ) (fun i => σ (∑ j, n t j * θ.read ℓ j i) * θ.write ℓ i a)
 
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
 /-- The sign flips of the hidden units of MLP blocks preserve the function when the activation is
 odd (tanh), for all stream matrices and every map `χ`. -/
 theorem eval_flipUnits (hσ : ∀ z, σ (-z) = -σ z)
@@ -128,6 +130,7 @@ theorem eval_flipUnits (hσ : ∀ z, σ (-z) = -σ z)
   · simp [h]
   · simp [h, hσ, Finset.sum_neg_distrib]
 
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
 /-- The permutations of the hidden units of gated blocks preserve the function, for every gate
 activation, all stream matrices and every map `χ`. -/
 theorem eval_permUnitsGated (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut)
@@ -140,6 +143,7 @@ theorem eval_permUnitsGated (θ : Params (Arch.gated (T := T) (d := d) σ χ hid
   exact Equiv.sum_comp (p ℓ) (fun i => σ (∑ j, n t j * θ.read ℓ j (Sum.inl i))
     * (∑ j, n t j * θ.read ℓ j (Sum.inr i)) * θ.write ℓ i a)
 
+omit [DecidableEq d] [Fintype dOut] in
 /-- The permutations of the heads of attention blocks preserve the function, for all stream
 matrices and every map `χ`. -/
 theorem eval_permHeads (θ : Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut)
@@ -153,11 +157,13 @@ theorem eval_permHeads (θ : Params (Arch.attention (T := T) (d := d) sees χ H 
   exact Equiv.sum_comp (Equiv.prodCongr (q ℓ) (Equiv.refl _))
     (fun c => (Arch.attention sees χ H dh).f ℓ (n * θ.read ℓ) t c * θ.write ℓ c a)
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- The trivial permutation of the hidden units of MLP blocks gives `θ` back. -/
 theorem permUnits_one (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) :
     θ.permUnits (fun _ => 1) = θ := by
   rfl
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- The signs `1` give `θ` back. -/
 theorem flipUnits_one (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) :
     θ.flipUnits (fun _ _ => 1) = θ := by
@@ -165,6 +171,7 @@ theorem flipUnits_one (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dO
   simp only [Params.flipUnits, Units.val_one, Int.cast_one, one_mul]
   rfl
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- The trivial permutation of the hidden units of gated blocks gives `θ` back. -/
 theorem permUnitsGated_one (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut) :
     θ.permUnitsGated (fun _ => 1) = θ := by
@@ -172,6 +179,7 @@ theorem permUnitsGated_one (θ : Params (Arch.gated (T := T) (d := d) σ χ hid)
   simp only [Params.permUnitsGated, Equiv.Perm.coe_one, Sum.map_id_id, id]
   rfl
 
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- The trivial permutation of the heads gives `θ` back. -/
 theorem permHeads_one (θ : Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut) :
     θ.permHeads (fun _ => 1) = θ := by

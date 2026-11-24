@@ -1385,3 +1385,11 @@ import SkipsLean
 #print axioms Skips.ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads_rmsNorm_family
 #print axioms Skips.ae_funDim_attentionGated_residual_iff_ae_locally_cob_heads_rescale_family
 #print axioms Skips.ae_funDim_attentionGated_residual_iff_ae_locally_cob_heads_rescale_rmsNorm_family
+#print axioms Skips.eval_permUnits
+#print axioms Skips.eval_flipUnits
+#print axioms Skips.eval_permUnitsGated
+#print axioms Skips.eval_permHeads
+#print axioms Skips.permUnits_one
+#print axioms Skips.flipUnits_one
+#print axioms Skips.permUnitsGated_one
+#print axioms Skips.permHeads_one
