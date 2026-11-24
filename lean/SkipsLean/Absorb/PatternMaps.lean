@@ -65,6 +65,13 @@ noncomputable def reluPattern (S : Fin L → Matrix d d ℝ)
     ∀ ℓ : Fin L, T → hid ℓ → Bool :=
   fun ℓ t j => decide (0 < (hidden (Arch.mlp relu id hid) S θ x ℓ.castSucc * θ.read ℓ) t j)
 
+/-- Helper: `relu z` is `z` if `z > 0` and `0` otherwise. -/
+private theorem relu_eq_ite_pat (z : ℝ) : (if decide (0 < z) then z else 0) = relu z := by
+  by_cases hz : 0 < z
+  · simp only [decide_eq_true hz, ite_true, relu, max_eq_left hz.le]
+  · simp only [decide_eq_false hz, Bool.false_eq_true, ite_false, relu,
+      max_eq_right (not_lt.1 hz)]
+
 /-- **Proof of Proposition 4.7, Step 1, "with this pattern, `F_Z(θ) = F^π_Z(θ)`", at one input:**
 a ReLU network without normalization, with any stream matrices, is the network of its own
 pattern. -/
@@ -72,7 +79,23 @@ theorem eval_relu_eq_eval_masked (S : Fin L → Matrix d d ℝ)
     (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (x : Matrix T dIn ℝ) :
     eval (Arch.mlp relu id hid) S θ x
       = eval (Arch.masked (reluPattern S θ x)) S (θ.toMasked (reluPattern S θ x)) x := by
-  sorry
+  -- the hidden states agree, by induction along the network
+  have hh : ∀ k : Fin (L + 1),
+      hidden (Arch.masked (reluPattern S θ x)) S (θ.toMasked (reluPattern S θ x)) x k
+        = hidden (Arch.mlp relu id hid) S θ x k := by
+    intro k
+    induction k using Fin.induction with
+    | zero => rw [hidden_zero, hidden_zero]; rfl
+    | succ ℓ ih =>
+      -- the stream term is the same; in block `ℓ`, `relu z = z` where the pattern says active
+      -- (`z > 0`) and `relu z = 0` where it says inactive
+      rw [hidden_succ, hidden_succ, ih]
+      congr 2
+      ext t j
+      exact relu_eq_ite_pat _
+  -- hence the outputs agree
+  rw [eval, eval, hh]
+  rfl
 
 /-- **The map `F^π_Z` of the proof of Proposition 4.7:** the outputs on the batch `X` of the
 networks of the patterns `π i`, one pattern per input, as a map of the weights. -/
@@ -88,7 +111,46 @@ theorem evalBatch_relu_eq_maskedBatch (S : Fin L → Matrix d d ℝ) {n : ℕ}
     (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) :
     evalBatch (Arch.mlp relu id hid) S X θ
       = maskedBatch S X (fun i => reluPattern S θ (X i)) θ := by
-  sorry
+  -- input by input, `eval_relu_eq_eval_masked`
+  funext i
+  exact eval_relu_eq_eval_masked S θ (X i)
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the fixed map of block `ℓ` of the network of a pattern is linear. -/
+private def maskLin_pat (π : ∀ ℓ : Fin L, T → hid ℓ → Bool) (ℓ : Fin L) :
+    Matrix T (hid ℓ) ℝ →ₗ[ℝ] Matrix T (hid ℓ) ℝ where
+  toFun M := Matrix.of fun t j => if π ℓ t j then M t j else 0
+  map_add' M N := by
+    ext t j
+    simp only [Matrix.of_apply, Matrix.add_apply]
+    split_ifs <;> simp
+  map_smul' c M := by
+    ext t j
+    simp only [Matrix.of_apply, Matrix.smul_apply, smul_eq_mul, RingHom.id_apply]
+    split_ifs <;> simp
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the fixed map of block `ℓ` of the network of a pattern is analytic (it is linear). -/
+private theorem analyticOnNhd_mask_pat (π : ∀ ℓ : Fin L, T → hid ℓ → Bool) (ℓ : Fin L) :
+    AnalyticOnNhd ℝ ((Arch.masked (T := T) (d := d) π).f ℓ) Set.univ := by
+  show AnalyticOnNhd ℝ (maskLin_pat π ℓ) Set.univ
+  rw [← LinearMap.coe_toContinuousLinearMap' (maskLin_pat π ℓ)]
+  exact (LinearMap.toContinuousLinearMap (maskLin_pat π ℓ)).analyticOnNhd _
+
+/-- Helper: `θ ↦ θ.toMasked π`, as a continuous linear map. -/
+private noncomputable def toMaskedCLM_pat (π : ∀ ℓ : Fin L, T → hid ℓ → Bool) :
+    Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut →L[ℝ]
+      Params (Arch.masked (T := T) (d := d) π) dIn dOut :=
+  LinearMap.toContinuousLinearMap
+    { toFun := fun θ => θ.toMasked π, map_add' := fun _ _ => rfl, map_smul' := fun _ _ => rfl }
+
+omit [DecidableEq d] in
+/-- Helper: the output of the network of a pattern at one input is analytic in its weights. -/
+private theorem analyticOnNhd_eval_masked_pat (S : Fin L → Matrix d d ℝ)
+    (π : ∀ ℓ : Fin L, T → hid ℓ → Bool) (x : Matrix T dIn ℝ) :
+    AnalyticOnNhd ℝ (fun θ' : Params (Arch.masked (T := T) (d := d) π) dIn dOut =>
+      eval (Arch.masked π) S θ' x) Set.univ :=
+  analyticOnNhd_eval_params (Arch.masked π) S (analyticOnNhd_mask_pat π) analyticOnNhd_id x
 
 /-- **Proof of Proposition 4.7, Step 1, "a polynomial map of the weights":** `F^π_Z` is
 real-analytic in the weights. -/
@@ -98,7 +160,12 @@ theorem analyticOnNhd_maskedBatch (S : Fin L → Matrix d d ℝ) {n : ℕ}
       (maskedBatch (d := d) (dOut := dOut) S X π :
         Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut → Fin n → Matrix T dOut ℝ)
       Set.univ := by
-  sorry
+  -- input by input: the output of the network of `π i` (analytic) after the linear map
+  -- `θ ↦ θ.toMasked (π i)`
+  refine AnalyticOnNhd.pi fun i => ?_
+  have hc := (analyticOnNhd_eval_masked_pat (dOut := dOut) S (π i) (X i)).comp
+    ((toMaskedCLM_pat (π i)).analyticOnNhd Set.univ) (Set.mapsTo_univ _ _)
+  exact hc
 
 /-- **Proof of Proposition 4.7, Step 2, for a skipless network:** for `d_in ≥ d ≥ 1` and blocks
 of at least `d` hidden units, the Jacobian of every pattern map `F'^π_Z` of the skipless network
