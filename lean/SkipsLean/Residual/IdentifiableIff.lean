@@ -656,6 +656,91 @@ theorem ae_funDim_attention_residual_iff_ae_locally_cob_heads_rmsNorm
     generalize Fintype.card d * (Fintype.card d - 1) / 2 = a at h1 h2 ⊢
     omega
 
+/-! ### Attention blocks and MLP or gated blocks -/
+
+omit [Fintype T] [DecidableEq d] [Fintype d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (the private `sumOfLin_lit` of `Residual/LocalIdentifiabilityTransformer.lean`):
+`(a, b) ↦ Params.sumOf a b` is linear. -/
+private noncomputable def sumOfLin_iffr {A B : Arch T d L} :
+    (Params A dIn dOut × Params B dIn dOut) →ₗ[ℝ] Params (A.sum B) dIn dOut where
+  toFun p := Params.sumOf p.1 p.2
+  map_add' p q := by
+    refine Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl
+    · ext k j
+      rcases j with j | j <;> rfl
+    · ext j k
+      rcases j with j | j <;> rfl
+  map_smul' c p := by
+    refine Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl
+    · ext k j
+      rcases j with j | j <;> rfl
+    · ext j k
+      rcases j with j | j <;> rfl
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: the parameters of the sum, made of two families of class `C¹`, are of class `C¹`
+(`Params.sumOf` is linear). -/
+private theorem contDiffOn_sumOf_iffr {A B : Arch T d L} {N : Type*} [NormedAddCommGroup N]
+    [NormedSpace ℝ N] {fa : N → Params A dIn dOut} {fb : N → Params B dIn dOut} {Ω : Set N}
+    (ha : ContDiffOn ℝ 1 fa Ω) (hb : ContDiffOn ℝ 1 fb Ω) :
+    ContDiffOn ℝ 1 (fun n => Params.sumOf (fa n) (fb n)) Ω := by
+  have h := (LinearMap.toContinuousLinearMap
+    (sumOfLin_iffr (A := A) (B := B) (dIn := dIn) (dOut := dOut))).contDiff.comp_contDiffOn
+      (ha.prodMk hb)
+  exact h
+
+omit [DecidableEq d] in
+/-- Helper (the private `ae_rank_QV_lit`, for the first part of a sum): at generic parameters
+the query matrix and the value matrix of every head have rank `d_h`, when `d_h ≤ d`. -/
+private theorem ae_rank_QV_sum_iffr {B : Arch T d L} {χ : Matrix T d ℝ → Matrix T d ℝ}
+    (μ : Measure (Params ((Arch.attention (T := T) (d := d) sees χ H dh).sum B) dIn dOut))
+    [μ.IsAddHaarMeasure] (hdh : ∀ ℓ, Fintype.card (dh ℓ) ≤ Fintype.card d) :
+    ∀ᵐ θ ∂μ, (∀ ℓ (i : H ℓ),
+        ((θ.sumFst.read ℓ).submatrix id fun k : dh ℓ => (i, Sum.inl k)).rank
+          = Fintype.card (dh ℓ)) ∧
+      ∀ ℓ (i : H ℓ),
+        ((θ.sumFst.read ℓ).submatrix id fun k : dh ℓ => (i, Sum.inr (Sum.inr k))).rank
+          = Fintype.card (dh ℓ) := by
+  classical
+  -- finitely many conditions, two for each head of each block; the read of the first part is
+  -- made of columns of the read of the sum
+  refine (ae_all_iff.2 fun ℓ => ae_all_iff.2 fun i => ?_).and
+    (ae_all_iff.2 fun ℓ => ae_all_iff.2 fun i => ?_)
+  · exact ae_rank_read_cols_iffr μ ℓ (c := fun k : dh ℓ => Sum.inl (i, Sum.inl k))
+      (fun _ _ h => Sum.inl_injective (Prod.mk.inj (Sum.inl_injective h)).2) (hdh ℓ)
+  · exact ae_rank_read_cols_iffr μ ℓ (c := fun k : dh ℓ => Sum.inl (i, Sum.inr (Sum.inr k)))
+      (fun _ _ h => Sum.inr_injective (Sum.inr_injective (Prod.mk.inj (Sum.inl_injective h)).2))
+      (hdh ℓ)
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper (the private `ae_value_ne_zero_lit`, for the second part of a sum): at generic
+parameters no value column of the gated part of a read vanishes. -/
+private theorem ae_value_ne_zero_sum_iffr [Nonempty d] {A : Arch T d L}
+    {χ : Matrix T d ℝ → Matrix T d ℝ}
+    (μ : Measure (Params (A.sum (Arch.gated (T := T) (d := d) σ χ hid)) dIn dOut))
+    [μ.IsAddHaarMeasure] :
+    ∀ᵐ θ ∂μ, ∀ ℓ i, (fun k => θ.sumSnd.read ℓ k (Sum.inr i)) ≠ 0 := by
+  -- finitely many conditions, one for each hidden unit `i` of each block `ℓ`
+  refine ae_all_iff.2 fun ℓ => ae_all_iff.2 fun i => ?_
+  -- an entry `k₀` of the value column
+  obtain k₀ : d := Classical.arbitrary d
+  -- the entry `θ ↦ θ.read ℓ k₀ (inr (inr i))` is a linear functional of the parameters
+  let l : Params (A.sum (Arch.gated (T := T) (d := d) σ χ hid)) dIn dOut →ₗ[ℝ] ℝ :=
+    (Matrix.entryLinearMap ℝ ℝ k₀ (Sum.inr (Sum.inr i))).comp
+      (Params.linRead (A := A.sum (Arch.gated (T := T) (d := d) σ χ hid)) (dIn := dIn)
+        (dOut := dOut) ℓ)
+  have hl : ∀ θ, l θ = θ.read ℓ k₀ (Sum.inr (Sum.inr i)) := fun θ => rfl
+  -- it is not zero at the parameters whose reads have all entries `1`
+  have h₁ : l ⟨0, fun _ => Matrix.of fun _ _ => 1, 0, 0⟩ ≠ 0 := by
+    rw [hl]
+    exact one_ne_zero
+  -- an analytic function that is not identically zero is nonzero almost everywhere
+  have hne : ∀ᵐ θ ∂μ, l θ ≠ 0 :=
+    ae_ne_zero_of_analytic μ (analyticOnNhd_linear l) ⟨_, h₁⟩
+  -- and a function with a nonzero entry is not zero
+  filter_upwards [hne] with θ h hz
+  exact h (by rw [hl]; exact congrFun hz k₀)
+
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks and MLP blocks
 with a real-analytic activation, in any order, without normalization:** `fd = P − d² − s` at almost
 every parameter (`s = 2 ∑ H d_h²`) if and only if at almost every parameter `θ` every `θ'` near `θ`
@@ -679,7 +764,40 @@ theorem ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads
           ∃ G : GL d ℝ,
             θ' = (Params.sumOf ((θ.sumFst.headsQK K).headsVO K') θ.sumSnd).cob
               (fun _ => G) (fun _ => G)) := by
-  sorry
+  constructor
+  · -- from the equality condition: Proposition 4.5 at every `θ` where `E` has rank `d` and the
+    -- query and value matrices of every head have rank `d_h`, with no condition on `G`, `K`, `K'`
+    intro h
+    filter_upwards [h, ae_rank_E_iffr μ hdIn, ae_rank_QV_sum_iffr μ hdh] with θ hfd hE hQV
+    obtain ⟨U, hU, hUV⟩ := exists_cob_heads_of_eval_eq_residual_attentionMlp hσ θ hE hQV.1
+      hQV.2 hfd Set.univ Filter.univ_mem Set.univ Filter.univ_mem
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨G, K, K', -, -, -, hθ'⟩ := hUV θ' hθ' heq
+    exact ⟨K, K', G, hθ'⟩
+  · -- to the equality condition: the lower bound `P ≤ fd + d² + 2 ∑ H d_h²` from local
+    -- identifiability, with the changes of basis inside the heads of the attention part at pairs
+    -- of families of invertible matrices, and the upper bound of Theorem 4.2
+    intro h
+    have hlow := ae_finrank_le_funDim_add_of_ae_locally_cob_const
+      (Arch.attentionMlp (T := T) (d := d) sees σ id H dh hid) 1
+      (fun ℓ => analyticOnNhd_f_sum (analyticOnNhd_f_attention sees id H dh ℓ)
+        (analyticOnNhd_f_mlp hσ ℓ)) analyticOnNhd_id μ
+      (fun θ n => Params.sumOf (headsFam_iffr θ.sumFst n) θ.sumSnd)
+      {n | ∀ ℓ i, IsUnit (n.1 ℓ i) ∧ IsUnit (n.2 ℓ i)}
+      (fun θ => contDiffOn_sumOf_iffr (contDiffOn_headsFam_iffr θ.sumFst) contDiffOn_const) (by
+        filter_upwards [h] with θ ⟨U, hU, hUV⟩
+        refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+        obtain ⟨K, K', G, hG⟩ := hUV θ' hθ' heq
+        refine ⟨(fun ℓ i => (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ),
+          fun ℓ i => (K' ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ)),
+          fun ℓ i => ⟨(K ℓ i).isUnit, (K' ℓ i).isUnit⟩, G, ?_⟩
+        rw [headsFam_coe_iffr]
+        exact hG)
+    have hup := ae_funDim_add_le_residual_attentionMlp μ hdIn hdh
+    filter_upwards [hlow, hup] with θ h1 h2
+    rw [Module.finrank_prod, finrank_headFun_iffr] at h1
+    generalize ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2 = s at h1 h2 ⊢
+    omega
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks and MLP blocks
 with a real-analytic activation, in any order, under pre-RMSNorm with `ε > 0`:** `fd = P − d(d−1)/2
@@ -704,7 +822,41 @@ theorem ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads_rmsNorm
           ∃ Q : GL d ℝ, (Q : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ ∧
             θ' = (Params.sumOf ((θ.sumFst.headsQK K).headsVO K') θ.sumSnd).cob
               (fun _ => Q) (fun _ => Q)) := by
-  sorry
+  constructor
+  · -- from the equality condition: Proposition 4.5 at every `θ` where `E` has rank `d` and the
+    -- query and value matrices of every head have rank `d_h`, with no condition on `Q`, `K`, `K'`
+    intro h
+    filter_upwards [h, ae_rank_E_iffr μ hdIn, ae_rank_QV_sum_iffr μ hdh] with θ hfd hE hQV
+    obtain ⟨U, hU, hUV⟩ := exists_cob_heads_of_eval_eq_residual_attentionMlp_rmsNorm hε hσ θ hE
+      hQV.1 hQV.2 hfd Set.univ Filter.univ_mem Set.univ Filter.univ_mem
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨Q, K, K', hQ, -, -, -, hθ'⟩ := hUV θ' hθ' heq
+    exact ⟨K, K', Q, hQ, hθ'⟩
+  · -- to the equality condition: the lower bound `P ≤ fd + d(d-1)/2 + 2 ∑ H d_h²` from local
+    -- identifiability, with the changes of basis inside the heads of the attention part at pairs
+    -- of families of invertible matrices, and the upper bound of Theorem 4.2
+    intro h
+    have hlow := ae_finrank_le_funDim_add_of_ae_locally_cob_const_orthogonal
+      (Arch.attentionMlp (T := T) (d := d) sees σ (rmsNorm ε) H dh hid) 1
+      (fun ℓ => analyticOnNhd_f_sum (analyticOnNhd_f_attention sees (rmsNorm ε) H dh ℓ)
+        (analyticOnNhd_f_mlp hσ ℓ)) (analyticOnNhd_rmsNorm hε) μ
+      (fun θ n => Params.sumOf (headsFam_iffr θ.sumFst n) θ.sumSnd)
+      {n | ∀ ℓ i, IsUnit (n.1 ℓ i) ∧ IsUnit (n.2 ℓ i)}
+      (fun θ => contDiffOn_sumOf_iffr (contDiffOn_headsFam_iffr θ.sumFst) contDiffOn_const) (by
+        filter_upwards [h] with θ ⟨U, hU, hUV⟩
+        refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+        obtain ⟨K, K', Q, hQ, hQθ⟩ := hUV θ' hθ' heq
+        refine ⟨(fun ℓ i => (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ),
+          fun ℓ i => (K' ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ)),
+          fun ℓ i => ⟨(K ℓ i).isUnit, (K' ℓ i).isUnit⟩, Q, hQ, ?_⟩
+        rw [headsFam_coe_iffr]
+        exact hQθ)
+    have hup := ae_funDim_add_le_residual_attentionMlp_rmsNorm ε μ hdIn hdh
+    filter_upwards [hlow, hup] with θ h1 h2
+    rw [Module.finrank_prod, finrank_headFun_iffr] at h1
+    generalize ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2 = s at h1 h2 ⊢
+    generalize Fintype.card d * (Fintype.card d - 1) / 2 = a at h1 h2 ⊢
+    omega
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks and gated blocks
 with a real-analytic gate, in any order, without normalization:** `fd = P − d² − s` at almost every
@@ -731,7 +883,48 @@ theorem ae_funDim_attentionGated_residual_iff_ae_locally_cob_heads_rescale
           ∃ G : GL d ℝ,
             θ' = (Params.sumOf ((θ.sumFst.headsQK K).headsVO K') (θ.sumSnd.rescale c)).cob
               (fun _ => G) (fun _ => G)) := by
-  sorry
+  constructor
+  · -- from the equality condition: Proposition 4.5 at every `θ` where `E` has rank `d`, the
+    -- query and value matrices of every head have rank `d_h` and no value column of a gated unit
+    -- vanishes, with no condition on `G`, `K`, `K'`, `c` (the neighbourhoods `Set.univ`)
+    intro h
+    filter_upwards [h, ae_rank_E_iffr μ hdIn, ae_rank_QV_sum_iffr μ hdh,
+      ae_value_ne_zero_sum_iffr μ] with θ hfd hE hQV hv
+    obtain ⟨U, hU, hUV⟩ := exists_cob_heads_of_eval_eq_residual_attentionGated hσ θ hE hQV.1
+      hQV.2 hv hfd Set.univ Filter.univ_mem Set.univ Filter.univ_mem Set.univ Filter.univ_mem
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨G, K, K', c, -, -, -, -, hc0, hθ'⟩ := hUV θ' hθ' heq
+    exact ⟨K, K', c, fun ℓ i => (hc0 ℓ i).ne', G, hθ'⟩
+  · -- to the equality condition: the lower bound `P ≤ fd + d² + 2 ∑ H d_h² + s` from local
+    -- identifiability, with the changes of basis inside the heads at pairs of families of
+    -- invertible matrices and the rescalings by factors without zero, and the upper bound of
+    -- Theorem 4.2
+    intro h
+    have hlow := ae_finrank_le_funDim_add_of_ae_locally_cob_const
+      (Arch.attentionGated (T := T) (d := d) sees σ id H dh hid) 1
+      (fun ℓ => analyticOnNhd_f_sum (analyticOnNhd_f_attention sees id H dh ℓ)
+        (analyticOnNhd_f_gated hσ ℓ)) analyticOnNhd_id μ
+      (N := ((∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) × (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ))
+        × (∀ ℓ, hid ℓ → ℝ))
+      (fun θ n => Params.sumOf (headsFam_iffr θ.sumFst n.1) (θ.sumSnd.rescale n.2))
+      {n | (∀ ℓ i, IsUnit (n.1.1 ℓ i) ∧ IsUnit (n.1.2 ℓ i)) ∧ ∀ ℓ i, n.2 ℓ i ≠ 0}
+      (fun θ => contDiffOn_sumOf_iffr
+        ((contDiffOn_headsFam_iffr θ.sumFst).comp contDiffOn_fst fun _ hn => hn.1)
+        ((contDiffOn_rescale_iffr θ.sumSnd).comp contDiffOn_snd fun _ hn => hn.2)) (by
+        filter_upwards [h] with θ ⟨U, hU, hUV⟩
+        refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+        obtain ⟨K, K', c, hc, G, hG⟩ := hUV θ' hθ' heq
+        refine ⟨((fun ℓ i => (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ),
+          fun ℓ i => (K' ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ)), c),
+          ⟨fun ℓ i => ⟨(K ℓ i).isUnit, (K' ℓ i).isUnit⟩, hc⟩, G, ?_⟩
+        rw [headsFam_coe_iffr]
+        exact hG)
+    have hup := ae_funDim_add_le_residual_attentionGated μ hdIn hdh
+    filter_upwards [hlow, hup] with θ h1 h2
+    rw [Module.finrank_prod, Module.finrank_prod, finrank_headFun_iffr, finrank_hidFun_iffr] at h1
+    generalize ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2 = s at h1 h2 ⊢
+    generalize ∑ ℓ, Fintype.card (hid ℓ) = t at h1 h2 ⊢
+    omega
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks and gated blocks
 with a real-analytic gate, in any order, under pre-RMSNorm with `ε > 0`:** `fd = P − d(d−1)/2 − s`
@@ -758,6 +951,49 @@ theorem ae_funDim_attentionGated_residual_iff_ae_locally_cob_heads_rescale_rmsNo
           ∃ Q : GL d ℝ, (Q : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ ∧
             θ' = (Params.sumOf ((θ.sumFst.headsQK K).headsVO K') (θ.sumSnd.rescale c)).cob
               (fun _ => Q) (fun _ => Q)) := by
-  sorry
+  constructor
+  · -- from the equality condition: Proposition 4.5 at every `θ` where `E` has rank `d`, the
+    -- query and value matrices of every head have rank `d_h` and no value column of a gated unit
+    -- vanishes, with no condition on `Q`, `K`, `K'`, `c` (the neighbourhoods `Set.univ`)
+    intro h
+    filter_upwards [h, ae_rank_E_iffr μ hdIn, ae_rank_QV_sum_iffr μ hdh,
+      ae_value_ne_zero_sum_iffr μ] with θ hfd hE hQV hv
+    obtain ⟨U, hU, hUV⟩ := exists_cob_heads_of_eval_eq_residual_attentionGated_rmsNorm hε hσ θ
+      hE hQV.1 hQV.2 hv hfd Set.univ Filter.univ_mem Set.univ Filter.univ_mem Set.univ
+      Filter.univ_mem
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨Q, K, K', c, hQ, -, -, -, -, hc0, hθ'⟩ := hUV θ' hθ' heq
+    exact ⟨K, K', c, fun ℓ i => (hc0 ℓ i).ne', Q, hQ, hθ'⟩
+  · -- to the equality condition: the lower bound `P ≤ fd + d(d-1)/2 + 2 ∑ H d_h² + s` from local
+    -- identifiability, with the changes of basis inside the heads at pairs of families of
+    -- invertible matrices and the rescalings by factors without zero, and the upper bound of
+    -- Theorem 4.2
+    intro h
+    have hlow := ae_finrank_le_funDim_add_of_ae_locally_cob_const_orthogonal
+      (Arch.attentionGated (T := T) (d := d) sees σ (rmsNorm ε) H dh hid) 1
+      (fun ℓ => analyticOnNhd_f_sum (analyticOnNhd_f_attention sees (rmsNorm ε) H dh ℓ)
+        (analyticOnNhd_f_gated hσ ℓ)) (analyticOnNhd_rmsNorm hε) μ
+      (N := ((∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) × (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ))
+        × (∀ ℓ, hid ℓ → ℝ))
+      (fun θ n => Params.sumOf (headsFam_iffr θ.sumFst n.1) (θ.sumSnd.rescale n.2))
+      {n | (∀ ℓ i, IsUnit (n.1.1 ℓ i) ∧ IsUnit (n.1.2 ℓ i)) ∧ ∀ ℓ i, n.2 ℓ i ≠ 0}
+      (fun θ => contDiffOn_sumOf_iffr
+        ((contDiffOn_headsFam_iffr θ.sumFst).comp contDiffOn_fst fun _ hn => hn.1)
+        ((contDiffOn_rescale_iffr θ.sumSnd).comp contDiffOn_snd fun _ hn => hn.2)) (by
+        filter_upwards [h] with θ ⟨U, hU, hUV⟩
+        refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+        obtain ⟨K, K', c, hc, Q, hQ, hQθ⟩ := hUV θ' hθ' heq
+        refine ⟨((fun ℓ i => (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ),
+          fun ℓ i => (K' ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ)), c),
+          ⟨fun ℓ i => ⟨(K ℓ i).isUnit, (K' ℓ i).isUnit⟩, hc⟩, Q, hQ, ?_⟩
+        rw [headsFam_coe_iffr]
+        exact hQθ)
+    have hup := ae_funDim_add_le_residual_attentionGated_rmsNorm ε μ hdIn hdh
+    filter_upwards [hlow, hup] with θ h1 h2
+    rw [Module.finrank_prod, Module.finrank_prod, finrank_headFun_iffr, finrank_hidFun_iffr] at h1
+    generalize ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2 = s at h1 h2 ⊢
+    generalize ∑ ℓ, Fintype.card (hid ℓ) = t at h1 h2 ⊢
+    generalize Fintype.card d * (Fintype.card d - 1) / 2 = a at h1 h2 ⊢
+    omega
 
 end Skips
