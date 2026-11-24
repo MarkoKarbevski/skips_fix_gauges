@@ -114,6 +114,25 @@ theorem funDim_tanh_skipless [Nonempty T] (hθ : TanhDepthGeneric θ) :
   funDim_of_claim _ θ rfl (fun ℓ => analyticOnNhd_f_mlp analyticOnNhd_tanh ℓ)
     (regular_of_tanhDepthGeneric θ hθ) (claim_of_tanhDepthGeneric θ hθ 0)
 
+/-- Helper: the determinant of a product of two matrices that depend linearly on a point of a
+finite-dimensional space is analytic: a finite sum of signed finite products of entries, and each
+entry is a polynomial of degree two. -/
+private theorem analyticOnNhd_det_mul {P m : Type*} [NormedAddCommGroup P] [NormedSpace ℝ P]
+    [FiniteDimensional ℝ P] [Fintype m] (F : P →ₗ[ℝ] Matrix d m ℝ)
+    (G : P →ₗ[ℝ] Matrix m d ℝ) : AnalyticOnNhd ℝ (fun y => (F y * G y).det) Set.univ := by
+  simp only [Matrix.det_apply']
+  exact Finset.analyticOnNhd_fun_sum _ fun σ _ => analyticOnNhd_const.mul
+    (Finset.analyticOnNhd_fun_prod _ fun i _ => analyticOnNhd_mul_apply F G (σ i) i)
+
+omit [Fintype d] in
+/-- Helper: the `d × m` matrix whose row `i` is the unit vector at `c i`, times its transpose, is
+the identity. -/
+private theorem indicator_mul_transpose {m : Type*} [Fintype m] [DecidableEq m] (c : d ↪ m) :
+    (Matrix.of fun i j => if c i = j then (1 : ℝ) else 0) *
+      (Matrix.of fun i j => if c i = j then (1 : ℝ) else 0)ᵀ = 1 := by
+  ext i i'
+  simp [Matrix.mul_apply, Matrix.one_apply, c.injective.eq_iff]
+
 /-- The conditions hold at generic parameters, when `d_in, d_out ≥ d ≥ 1` and every block has at
 least `d` hidden units. -/
 theorem ae_tanhDepthGeneric [Nonempty d]
@@ -122,7 +141,78 @@ theorem ae_tanhDepthGeneric [Nonempty d]
     (hdOut : Fintype.card d ≤ Fintype.card dOut)
     (hhid : ∀ ℓ, Fintype.card d ≤ Fintype.card (hid ℓ)) :
     ∀ᵐ θ ∂μ, TanhDepthGeneric θ := by
-  sorry
+  classical
+  obtain k₀ : d := Classical.arbitrary d
+  obtain ⟨cD⟩ := Function.Embedding.nonempty_of_card_le hdOut
+  -- (R1): `E` and the writes (`Generic/Params.lean`); `D`, by an invertible `d × d` minor
+  have h1 := ae_rank_E_write μ hdIn hhid
+  have h2 := ae_isUnit_det_submatrix μ
+  -- (T1): the entry `k₀` of every row of every write is a nonzero linear functional, so it is
+  -- nonzero at generic parameters
+  have h3 : ∀ᵐ θ ∂μ, ∀ ℓ (i : hid ℓ), θ.write ℓ i k₀ ≠ 0 := by
+    refine ae_all_iff.2 fun ℓ => ae_all_iff.2 fun i => ?_
+    let l : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut →ₗ[ℝ] ℝ :=
+      (Matrix.entryLinearMap ℝ ℝ i k₀).comp (Params.linWrite
+        (A := Arch.mlp (T := T) (d := d) Real.tanh id hid) (dIn := dIn) (dOut := dOut) ℓ)
+    have hl : ∀ θ, l θ = θ.write ℓ i k₀ := fun θ => rfl
+    -- it is `1` at the parameters whose writes have all entries `1`
+    have h₁ : l ⟨0, 0, fun _ => Matrix.of fun _ _ => 1, 0⟩ ≠ 0 := by
+      rw [hl]
+      exact one_ne_zero
+    filter_upwards [ae_ne_zero_of_analytic μ (analyticOnNhd_linear l) ⟨_, h₁⟩] with θ h
+    rwa [hl] at h
+  -- (T2): for rationals `κ ≠ 0`, the entry `k₀` of `∑ κ_j c_j` is a nonzero
+  -- linear functional, so it is nonzero at generic parameters; there are countably many `κ`
+  have h4 : ∀ᵐ θ ∂μ, ∀ ℓ (κ : hid ℓ → ℚ),
+      ∑ j, κ j • (fun i : d => θ.read ℓ i j) = 0 → ∀ j, κ j = 0 := by
+    refine ae_all_iff.2 fun ℓ => ae_all_iff.2 fun κ => ?_
+    by_cases hκ : ∀ j, κ j = 0
+    · exact Filter.Eventually.of_forall fun _ _ => hκ
+    obtain ⟨j₀, hj₀⟩ := not_forall.1 hκ
+    have hg : AnalyticOnNhd ℝ
+        (fun θ : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut =>
+          ∑ j, (κ j : ℝ) * θ.read ℓ k₀ j) Set.univ :=
+      Finset.analyticOnNhd_fun_sum _ fun j _ => analyticOnNhd_const.mul
+        (analyticOnNhd_linear ((Matrix.entryLinearMap ℝ ℝ k₀ j).comp (Params.linRead
+          (A := Arch.mlp (T := T) (d := d) Real.tanh id hid) (dIn := dIn) (dOut := dOut) ℓ)))
+    -- it is `κ_{j₀}` at the parameters whose read `ℓ` has the column `j₀` of ones, zeros elsewhere
+    let θ₀ : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut :=
+      ⟨0, Pi.single (M := fun ℓ => Matrix d (hid ℓ) ℝ) ℓ
+        (Matrix.of fun _ j => if j = j₀ then 1 else 0), 0, 0⟩
+    have hθ₀ : ∑ j, (κ j : ℝ) * θ₀.read ℓ k₀ j ≠ 0 := by
+      show ∑ j, (κ j : ℝ) * Pi.single (M := fun ℓ => Matrix d (hid ℓ) ℝ) ℓ
+        (Matrix.of fun _ j => if j = j₀ then (1 : ℝ) else 0) ℓ k₀ j ≠ 0
+      rw [Pi.single_eq_same]
+      simp only [Matrix.of_apply, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq',
+        Finset.mem_univ, ite_true]
+      exact Rat.cast_ne_zero.2 hj₀
+    filter_upwards [ae_ne_zero_of_analytic μ hg ⟨θ₀, hθ₀⟩] with θ hθ hsum
+    -- the entry `k₀` of `∑ κ_j c_j = 0`
+    have hk₀ := congrFun hsum k₀
+    simp only [Finset.sum_apply, Pi.smul_apply, Rat.smul_def, Pi.zero_apply] at hk₀
+    exact absurd hk₀ hθ
+  -- every `W_read W_write` is invertible: its determinant is analytic, and it is `1` at the
+  -- parameters whose read `ℓ` is `1` on `d` of its columns and `0` elsewhere, and whose write is
+  -- the transpose of the read
+  have h5 : ∀ᵐ θ ∂μ, ∀ ℓ, (θ.read ℓ * θ.write ℓ).det ≠ 0 := by
+    have cR : ∀ ℓ, d ↪ hid ℓ := fun ℓ =>
+      (Function.Embedding.nonempty_of_card_le (hhid ℓ)).some
+    let R : ∀ ℓ, Matrix d (hid ℓ) ℝ := fun ℓ =>
+      Matrix.of fun i j => if cR ℓ i = j then 1 else 0
+    let θ₀ : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut :=
+      ⟨0, R, fun ℓ => (R ℓ)ᵀ, 0⟩
+    refine ae_all_iff.2 fun ℓ => ae_ne_zero_of_analytic μ (analyticOnNhd_det_mul
+      (Params.linRead (A := Arch.mlp (T := T) (d := d) Real.tanh id hid) (dIn := dIn)
+        (dOut := dOut) ℓ)
+      (Params.linWrite (A := Arch.mlp (T := T) (d := d) Real.tanh id hid) (dIn := dIn)
+        (dOut := dOut) ℓ)) ⟨θ₀, ?_⟩
+    show (R ℓ * (R ℓ)ᵀ).det ≠ 0
+    rw [indicator_mul_transpose, Matrix.det_one]
+    exact one_ne_zero
+  filter_upwards [h1, h2, h3, h4, h5] with θ h1 h2 h3 h4 h5
+  exact ⟨h1.1, rank_eq_card_of_isUnit_det θ.D cD (h2.2.1 cD), h1.2,
+    fun ℓ i hi => h3 ℓ i (congrFun hi k₀), fun ℓ => Fintype.linearIndependent_iff.2 (h4 ℓ),
+    fun ℓ => isUnit_iff_ne_zero.2 (h5 ℓ)⟩
 
 /-- **Theorem 5.2 (i), the case without normalization:** a network of `L` `tanh` blocks without
 skip connections, without normalization and without biases, with `d_in, d_out ≥ d ≥ 2` and at
