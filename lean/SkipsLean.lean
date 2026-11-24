@@ -217,3 +217,4 @@ import SkipsLean.Residual.SkiplessEndsAttention
 import SkipsLean.Residual.DifferentClassesAttention
 import SkipsLean.Residual.BlocksAlone
 import SkipsLean.Residual.BlocksAloneAttention
+import SkipsLean.Residual.LocallyUniform

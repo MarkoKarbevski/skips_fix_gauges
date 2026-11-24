@@ -11,8 +11,10 @@ too."
 Here the last clause for attention blocks, without normalization and under pre-RMSNorm with
 `ε > 0`: at almost every parameter `θ`, if the skipless network attains its bound at `θ`
 (`fd = P − (L + 1) dim G − s`), then the residual network has exactly `L dim G` more. Whether the
-skipless network of `L ≥ 2` attention blocks attains its bound is not proved in the papers; for
-one block without normalization it does (`OneBlock/AttentionDim.lean`).
+skipless network attains its bound is not proved in the papers for `L ≥ 2` attention blocks, nor
+under pre-RMSNorm for one attention block (skips paper, after Theorem B.1: "In part (ii), for the
+skipless network we prove here only the bound"); for one block without normalization it does
+(`OneBlock/AttentionDim.lean`).
 -/
 
 namespace Skips
