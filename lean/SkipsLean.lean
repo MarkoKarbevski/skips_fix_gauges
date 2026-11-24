@@ -240,3 +240,5 @@ import SkipsLean.Dimension.IdentifiableConverseCob
 import SkipsLean.Dimension.IdentifiableIff
 import SkipsLean.Residual.IdentifiableIff
 import SkipsLean.Symmetry.OnlyOrthogonalRows
+import SkipsLean.Generic.GroupDimension
+import SkipsLean.Symmetry.CobGroup
