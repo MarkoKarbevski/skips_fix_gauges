@@ -8,10 +8,10 @@ import Mathlib.Analysis.Complex.RealDeriv
 /-!
 # GELU, SiLU and the gated blocks are real-analytic
 
-Papers: Section 2 (Setup) of the dimension paper names the tanh, GELU, SwiGLU and GeGLU blocks
-"analytic blocks"; Appendix D uses that the network after a hidden state is real-analytic in the
-hidden state and in the weights (cases (n) and (+)), and Appendix D.7 that the outputs on a batch
-are real-analytic in the weights.
+Papers: Section 1.1 (Results) of the dimension paper says of the tanh, GELU, SwiGLU and GeGLU
+blocks: "These four kinds of block are real-analytic"; Appendix D uses that the network after a
+hidden state is real-analytic in the hidden state and in the weights (cases (n) and (+)), and
+Appendix D.7 that the outputs on a batch are real-analytic in the weights.
 
 Stated here: the standard normal distribution function `Φ` is real-analytic, hence GELU
 (`z Φ(z)`); SiLU (`z / (1 + e^{-z})`) is real-analytic; and the map of a gated block,
