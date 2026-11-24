@@ -988,3 +988,9 @@ import SkipsLean
 #print axioms Skips.exists_isOpen_funDim_smallWrites_reglu
 #print axioms Skips.exists_isOpen_folds_funDim_add_le_relu
 #print axioms Skips.ae_notMem_iUnion_range_of_rank_lt_on
+#print axioms Skips.surjective_of_injective_of_posHomogeneous
+#print axioms Skips.two_mul_card_le_of_injective_vanillaBlock_relu
+#print axioms Skips.two_mul_card_le_of_eval_eq_skipless_relu
+#print axioms Skips.two_mul_card_le_of_eval_eq_skipless_gelu
+#print axioms Skips.two_mul_card_le_of_eval_eq_skipless_relu_of_norm_lt_one
+#print axioms Skips.two_mul_card_le_of_eval_eq_skipless_gelu_of_norm_lt_one

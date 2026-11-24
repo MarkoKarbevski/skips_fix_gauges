@@ -43,6 +43,7 @@ variable {T dIn dOut : Type*} {d : Type} {L : ℕ} [Fintype T] [Fintype d] [Deci
   [Fintype dIn] [Fintype dOut]
 variable {hid : Fin L → Type} [∀ ℓ, Fintype (hid ℓ)]
 
+omit [DecidableEq d] in
 /-- **Proof of Proposition 4.6, Step 2, the topological fact, under invariance of domain:** a
 continuous, positively homogeneous, injective map of `ℝ^d` to itself is onto. -/
 theorem surjective_of_injective_of_posHomogeneous (hinv : InvarianceOfDomain d)
@@ -175,6 +176,7 @@ private theorem card_le_card_active_inj {m : Type*} [Fintype m] [DecidableEq m]
   exact card_le_of_vecMul_subProd_injective_inj Wr Ww S
     (vecMul_injective_of_eventually_inj hi hev')
 
+omit [DecidableEq d] in
 /-- **Proof of Proposition 4.6, Step 3:** a ReLU block `h ↦ ReLU(h W_read) W_write` of `ℝ^d` to
 itself that is injective has at least `2 d` hidden units. -/
 theorem two_mul_card_le_of_injective_vanillaBlock_relu {m : Type*} [Fintype m]
@@ -328,7 +330,7 @@ private theorem vecMul_surjective_of_ker_le_inj {E E' : Matrix dIn d ℝ}
   rw [← hkeq] at h5
   exact LinearMap.mem_ker.1 h5
 
-omit [Fintype dOut] in
+omit [Fintype dOut] [DecidableEq d] in
 /-- **Step 2, the induction:** if `H_0` is injective and every block is continuous and
 positively homogeneous, then every block is injective: `H_k = H_{k+1} ∘ B_k` injective makes `B_k`
 injective, hence onto (invariance of domain), hence `H_{k+1}` injective. -/
@@ -370,6 +372,7 @@ private theorem vanillaBlock_relu_smul_inj {m : Type*} [Fintype m] (Wr : Matrix 
   simp only [vanillaBlock]
   rw [e, Matrix.smul_vecMul]
 
+omit [Fintype T] in
 /-- **Proposition 4.6 for ReLU, under invariance of domain:** let `E` and `D` have rank `d` and
 let every block of the residual ReLU network be injective on rows. Then every skipless ReLU
 network with the same `d`, of any depth and any widths, that equals the residual network has at
@@ -446,6 +449,7 @@ theorem two_mul_card_le_of_eval_eq_skipless_gelu [Nonempty T] (hinv : Invariance
   exact two_mul_card_le_of_eval_eq_skipless_relu hinv (θ.withActivation relu) hE hD hinj hid'
     (θ'.withActivation relu) heq'
 
+omit [Fintype T] in
 /-- **Proposition 4.6 for ReLU with the condition `‖W_read‖ ‖W_write‖ < 1`, under invariance of
 domain:** if `E` and `D` have rank `d` and every block of the residual ReLU network has Lipschitz
 constants `a ℓ` of its read and `b ℓ` of its write, in the Euclidean norm, with
