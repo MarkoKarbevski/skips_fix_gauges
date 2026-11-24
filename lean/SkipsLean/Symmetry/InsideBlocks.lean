@@ -4,7 +4,7 @@ import SkipsLean.Residual.UpperBoundSymmetries
 /-!
 # Symmetries inside the blocks, for any kind of block, and the upper bounds they give
 
-Papers. Skips paper, Section 4.1: "the symmetries inside the blocks […] change only the read and
+Papers. Skips paper, Section 4.1: "the symmetries inside the blocks, which change the read and
 the write of one block and leave the map of that block unchanged: the rescaling of a hidden unit
 of a ReLU or ReLU² block, the rescaling of the value of a hidden unit of a gated block, and the
 changes of basis inside an attention head […]. Let `s` be the total dimension of the symmetries
