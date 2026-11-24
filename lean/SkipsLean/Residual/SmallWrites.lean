@@ -119,11 +119,11 @@ private theorem sum_ite_lt_succ_SW {M : Type*} [AddCommMonoid M] {m : ℕ} (a : 
       simp only [h1, h2, h3, ite_true, ite_false, add_zero]
     · by_cases h2 : ℓ = k
       · subst h2
-        simp
+        simp only [lt_add_iff_pos_right, Order.lt_one_iff, ↓reduceIte, lt_self_iff_false, zero_add]
       · have h3 : ¬ (ℓ : ℕ) < k + 1 := fun h => h2 (Fin.ext (by omega))
         simp only [h1, h2, h3, ite_false, add_zero]
   rw [Finset.sum_congr rfl fun ℓ _ => h ℓ, Finset.sum_add_distrib]
-  simp
+  simp only [Fin.val_fin_lt, Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte]
 
 omit [Fintype T] [Fintype dOut] in
 /-- Helper: every hidden state at `θ_τ` is continuous in `τ`. -/
@@ -195,7 +195,7 @@ theorem hasDerivAt_eval_smallWrites (hA : A.χ = id) (hf : ∀ ℓ, Differentiab
   have hsum : (∑ ℓ : Fin L, if (ℓ : ℕ) < ((Fin.last L : Fin (L + 1)) : ℕ)
       then A.f ℓ (x * θ.E * θ.read ℓ) * θ.write ℓ else 0)
         = ∑ ℓ, A.f ℓ (x * θ.E * θ.read ℓ) * θ.write ℓ :=
-    Finset.sum_congr rfl fun ℓ _ => by simp [ℓ.isLt]
+    Finset.sum_congr rfl fun ℓ _ => by simp only [Fin.val_last, ℓ.isLt, ↓reduceIte]
   rw [hsum] at hL
   -- the output is `h_L D`, and `y ↦ y D` is linear
   have hc := (mulRightCLMSW (m := T) θ.D).hasFDerivAt.comp_hasDerivAt (0 : ℝ) hL
