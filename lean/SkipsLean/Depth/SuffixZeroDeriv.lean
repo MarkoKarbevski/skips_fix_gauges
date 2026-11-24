@@ -52,7 +52,38 @@ omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- RMSNorm with `ε = 0` maps a nonzero row to the sphere `‖n‖² = d`. -/
 theorem rmsNorm_zero_dotProduct_self (h : Matrix T d ℝ) (t : T) (ht : h t ≠ 0) :
     (rmsNorm 0 h) t ⬝ᵥ (rmsNorm 0 h) t = (Fintype.card d : ℝ) := by
-  sorry
+  -- `N(h)_t = ρ⁻¹ h_t` with `ρ² = ‖h_t‖²/d > 0`
+  have h1 : 0 < h t ⬝ᵥ h t :=
+    lt_of_le_of_ne (Finset.sum_nonneg fun j _ => mul_self_nonneg (h t j))
+      (fun h0 => ht (dotProduct_self_eq_zero.1 h0.symm))
+  obtain ⟨j, -⟩ := Function.ne_iff.1 ht
+  have h2 : (0 : ℝ) < Fintype.card d := Nat.cast_pos.2 (Fintype.card_pos_iff.2 ⟨j⟩)
+  have hq : 0 < (h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + 0 := by
+    rw [add_zero]; exact div_pos h1 h2
+  show rmsRow 0 (h t) ⬝ᵥ rmsRow 0 (h t) = _
+  unfold rmsRow
+  rw [smul_dotProduct, dotProduct_smul, smul_eq_mul, smul_eq_mul, ← mul_assoc, ← mul_inv,
+    Real.mul_self_sqrt hq.le, add_zero]
+  field_simp
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (the `AnalyticAt` form of `analyticOnNhd_matrix_mul`): the matrix product of two
+maps analytic at a point is analytic there. -/
+private theorem analyticAt_matrix_mul_zd {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    {f : E → Matrix m n ℝ} {g : E → Matrix n p ℝ} {x : E}
+    (hf : AnalyticAt ℝ f x) (hg : AnalyticAt ℝ g x) :
+    AnalyticAt ℝ (fun y => f y * g y) x := by
+  let B : Matrix m n ℝ →ₗ[ℝ] Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ :=
+    LinearMap.mk₂ ℝ (fun a b => a * b) Matrix.add_mul (fun c a b => Matrix.smul_mul c a b)
+      Matrix.mul_add (fun c a b => Matrix.mul_smul a c b)
+  let B' : Matrix m n ℝ →L[ℝ] Matrix n p ℝ →L[ℝ] Matrix m p ℝ :=
+    LinearMap.toContinuousLinearMap
+      ((LinearMap.toContinuousLinearMap :
+        (Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ) ≃ₗ[ℝ] (Matrix n p ℝ →L[ℝ] Matrix m p ℝ)).toLinearMap ∘ₗ B)
+  have hB : (fun y => f y * g y) = fun y => B' (f y) (g y) := rfl
+  rw [hB]
+  exact (B'.analyticAt_bilinear (f x, g x)).comp₂ hf hg
 
 /-- **Appendix D.3, the case (0): "by (R2), it is defined and real-analytic on all rows `h ≠ 0`".**
 For real-analytic blocks under pre-RMSNorm with `ε = 0`, at parameters with (R2), the map
@@ -63,14 +94,83 @@ theorem analyticAt_suffix_prod_zero (hχ : A.χ = rmsNorm 0)
     (h : Matrix T d ℝ) (hh : ∀ t, h t ≠ 0) :
     AnalyticAt ℝ
       (fun p : Params A dIn dOut × Matrix T d ℝ => suffix A 0 p.1 k p.2) (θ, h) := by
-  sorry
+  -- the weights are linear, hence analytic, functions of the parameters
+  have hD : AnalyticOnNhd ℝ (fun p : Params A dIn dOut × Matrix T d ℝ => p.1.D) Set.univ :=
+    ((LinearMap.toContinuousLinearMap
+      (Params.linD (A := A) (dIn := dIn) (dOut := dOut))).analyticOnNhd _).comp
+      analyticOnNhd_fst (Set.mapsTo_univ _ _)
+  have hr : ∀ ℓ, AnalyticOnNhd ℝ
+      (fun p : Params A dIn dOut × Matrix T d ℝ => p.1.read ℓ) Set.univ := fun ℓ =>
+    ((LinearMap.toContinuousLinearMap
+      (Params.linRead (A := A) (dIn := dIn) (dOut := dOut) ℓ)).analyticOnNhd _).comp
+      analyticOnNhd_fst (Set.mapsTo_univ _ _)
+  have hw : ∀ ℓ, AnalyticOnNhd ℝ
+      (fun p : Params A dIn dOut × Matrix T d ℝ => p.1.write ℓ) Set.univ := fun ℓ =>
+    ((LinearMap.toContinuousLinearMap
+      (Params.linWrite (A := A) (dIn := dIn) (dOut := dOut) ℓ)).analyticOnNhd _).comp
+      analyticOnNhd_fst (Set.mapsTo_univ _ _)
+  induction k using Fin.reverseInduction generalizing h with
+  | last =>
+    -- `(θ', h') ↦ N(h') D'`
+    simp only [suffix_last, hχ]
+    have hN : AnalyticAt ℝ (fun p : Params A dIn dOut × Matrix T d ℝ => rmsNorm 0 p.2) (θ, h) := by
+      have hc := (analyticAt_rmsNorm_zero h hh).comp (analyticAt_snd (𝕜 := ℝ) (p := (θ, h)))
+      exact hc
+    exact analyticAt_matrix_mul_zd hN (hD _ (Set.mem_univ _))
+  | cast ℓ ih =>
+    -- `(θ', h') ↦ 𝓑_{>ℓ}(f_ℓ(N(h') W'_read) W'_write)`, with the weights `θ'`
+    simp only [suffix_castSucc, Pi.zero_apply, Matrix.mul_zero, zero_add, hχ]
+    have hN : AnalyticAt ℝ (fun p : Params A dIn dOut × Matrix T d ℝ => rmsNorm 0 p.2) (θ, h) := by
+      have hc := (analyticAt_rmsNorm_zero h hh).comp (analyticAt_snd (𝕜 := ℝ) (p := (θ, h)))
+      exact hc
+    have hg : AnalyticAt ℝ (fun p : Params A dIn dOut × Matrix T d ℝ =>
+        (p.1, A.f ℓ (rmsNorm 0 p.2 * p.1.read ℓ) * p.1.write ℓ)) (θ, h) :=
+      analyticAt_fst.prod (analyticAt_matrix_mul_zd
+        ((hf ℓ _ (Set.mem_univ _)).comp (analyticAt_matrix_mul_zd hN (hr ℓ _ (Set.mem_univ _))))
+        (hw ℓ _ (Set.mem_univ _)))
+    -- the block's value at `(θ, h)` has no zero row, by (R2): the rows of `N(h)` are on the sphere
+    have hne : ∀ t, (A.f ℓ (rmsNorm 0 h * θ.read ℓ) * θ.write ℓ) t ≠ 0 :=
+      hθ.block_ne_zero ℓ _ fun t => rmsNorm_zero_dotProduct_self h t (hh t)
+    have hc := (ih _ hne).comp_of_eq hg rfl
+    exact hc
+
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (as `rmsRow_zero_smul` in `Basic/RMSNorm.lean`, private there): `N_0(c w) = N_0(w)`
+for `c > 0`, also for `w = 0`. -/
+private theorem rmsRow_zero_smul_zd {c : ℝ} (hc : 0 < c) (w : d → ℝ) :
+    rmsRow 0 (c • w) = rmsRow 0 w := by
+  unfold rmsRow
+  have hs : Real.sqrt ((c • w ⬝ᵥ c • w) / (Fintype.card d : ℝ) + 0)
+      = c * Real.sqrt ((w ⬝ᵥ w) / (Fintype.card d : ℝ) + 0) := by
+    have : (c • w ⬝ᵥ c • w) / (Fintype.card d : ℝ) + 0
+        = c ^ 2 * ((w ⬝ᵥ w) / (Fintype.card d : ℝ) + 0) := by
+      rw [smul_dotProduct, dotProduct_smul]
+      simp only [smul_eq_mul, add_zero]
+      ring
+    rw [this, Real.sqrt_mul (sq_nonneg c), Real.sqrt_sq hc.le]
+  rw [hs, mul_inv, smul_smul]
+  congr 1
+  rw [mul_comm c⁻¹, mul_assoc, inv_mul_cancel₀ hc.ne', mul_one]
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `N_0` forgets positive scales of the rows. -/
+private theorem rmsNorm_zero_smul_rows_zd (h : Matrix T d ℝ) (c : T → ℝ) (hc : ∀ t, 0 < c t) :
+    rmsNorm 0 (Matrix.of fun t => c t • h t) = rmsNorm 0 h := by
+  ext t i
+  show rmsRow 0 (c t • h t) i = rmsRow 0 (h t) i
+  rw [rmsRow_zero_smul_zd (hc t)]
 
 /-- **Appendix D.3, the case (0), "`𝓑_{>k}(λh) = 𝓑_{>k}(h)` for `λ > 0`":** under pre-RMSNorm with
 `ε = 0`, multiplying the rows of `h` by positive numbers does not change `𝓑_{>k}(h)`. -/
 theorem suffix_zero_smul_rows (hχ : A.χ = rmsNorm 0) (k : Fin (L + 1)) (h : Matrix T d ℝ)
     (c : T → ℝ) (hc : ∀ t, 0 < c t) :
     suffix A 0 θ k (Matrix.of fun t => c t • h t) = suffix A 0 θ k h := by
-  sorry
+  -- `𝓑_{>k}(h)` depends on `h` only through `N(h)`
+  induction k using Fin.reverseInduction with
+  | last => rw [suffix_last, suffix_last, hχ, rmsNorm_zero_smul_rows_zd h c hc]
+  | cast ℓ _ =>
+    simp only [suffix_castSucc, Pi.zero_apply, Matrix.mul_zero, zero_add, hχ,
+      rmsNorm_zero_smul_rows_zd h c hc]
 
 /-- **Lemma D.2 of the dimension paper (the derivative of `𝓑_{>k}`), the case (0):** let the
 blocks be real-analytic, `d ≥ 2`, and `θ` regular. For every `k` there is an open dense set `U_k`
