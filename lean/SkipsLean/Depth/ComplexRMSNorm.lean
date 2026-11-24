@@ -41,6 +41,8 @@ noncomputable def rmsNormC (h : Matrix T d ℂ) : Matrix T d ℂ :=
   Matrix.of fun t => rmsRowC (h t)
 
 omit [Fintype T] in
+/-- Helper (as in `Depth/SuffixZero.lean`): `‖v‖² / d > 0` for a real row `v ≠ 0` (then `d` is not
+empty). -/
 private theorem dotProduct_self_div_pos_crn {v : d → ℝ} (hv : v ≠ 0) :
     0 < (v ⬝ᵥ v) / (Fintype.card d : ℝ) := by
   have h1 : 0 < v ⬝ᵥ v :=
@@ -73,6 +75,7 @@ theorem rmsRowC_ofReal (v : d → ℝ) (hv : v ≠ 0) :
   rw [neg_div]
 
 omit [Fintype T] in
+/-- Helper: `Re⟨v, v⟩ > 0` forces `d` to be nonempty (over an empty `d` the dot product is `0`). -/
 private theorem card_pos_of_re_pos_crn {v : d → ℂ} (hv : 0 < (v ⬝ᵥ v).re) :
     0 < Fintype.card d := by
   rcases Nat.eq_zero_or_pos (Fintype.card d) with h | h
@@ -81,6 +84,8 @@ private theorem card_pos_of_re_pos_crn {v : d → ℂ} (hv : 0 < (v ⬝ᵥ v).re
   · exact h
 
 omit [Fintype T] in
+/-- Helper: for `Re⟨v, v⟩ > 0` the number `⟨v, v⟩/d` has a positive real part, so it lies in the
+slit plane, where the principal logarithm is analytic. -/
 private theorem mem_slitPlane_crn {v : d → ℂ} (hv : 0 < (v ⬝ᵥ v).re) :
     (v ⬝ᵥ v) / (Fintype.card d : ℂ) ∈ Complex.slitPlane := by
   refine Complex.mem_slitPlane_iff.2 (Or.inl ?_)
@@ -88,6 +93,7 @@ private theorem mem_slitPlane_crn {v : d → ℂ} (hv : 0 < (v ⬝ᵥ v).re) :
   exact div_pos hv (Nat.cast_pos.2 (card_pos_of_re_pos_crn hv))
 
 omit [Fintype T] in
+/-- Helper: a coordinate of a complex row is an analytic (linear) function of the row. -/
 private theorem analyticAt_apply_crn (j : d) (v : d → ℂ) :
     AnalyticAt ℂ (fun h : d → ℂ => h j) v :=
   (ContinuousLinearMap.proj (R := ℂ) (φ := fun _ : d => ℂ) j).analyticAt v
@@ -95,17 +101,21 @@ private theorem analyticAt_apply_crn (j : d) (v : d → ℂ) :
 /-- "It is holomorphic": the complex RMSNorm is analytic at every row `h` with `Re⟨h, h⟩ > 0`. -/
 theorem analyticAt_rmsRowC (v : d → ℂ) (hv : 0 < (v ⬝ᵥ v).re) :
     AnalyticAt ℂ (rmsRowC : (d → ℂ) → d → ℂ) v := by
+  -- `⟨h, h⟩/d` is a polynomial in the coordinates
   have hq : AnalyticAt ℂ (fun h : d → ℂ => (h ⬝ᵥ h) / (Fintype.card d : ℂ)) v :=
     (Finset.analyticAt_fun_sum _ fun j _ =>
       (analyticAt_apply_crn j v).mul (analyticAt_apply_crn j v)).div_const
+  -- `log` is analytic on the slit plane, `exp` everywhere
   have hφ : AnalyticAt ℂ (fun h : d → ℂ =>
       Complex.exp (-(Complex.log ((h ⬝ᵥ h) / (Fintype.card d : ℂ)) / 2))) v :=
     ((hq.clog (mem_slitPlane_crn hv)).div_const.neg).cexp'
+  -- `N(h)` is the product of this scalar and `h`
   show AnalyticAt ℂ (fun h : d → ℂ =>
     Complex.exp (-(Complex.log ((h ⬝ᵥ h) / (Fintype.card d : ℂ)) / 2)) • h) v
   exact hφ.fun_smul analyticAt_id
 
 omit [Fintype T] in
+/-- Helper: `⟨v, v⟩/d ≠ 0` for `Re⟨v, v⟩ > 0`. -/
 private theorem ne_zero_of_re_pos_crn {v : d → ℂ} (hv : 0 < (v ⬝ᵥ v).re) :
     (v ⬝ᵥ v) / (Fintype.card d : ℂ) ≠ 0 :=
   Complex.slitPlane_ne_zero (mem_slitPlane_crn hv)
@@ -113,11 +123,13 @@ private theorem ne_zero_of_re_pos_crn {v : d → ℂ} (hv : 0 < (v ⬝ᵥ v).re)
 /-- "`N(λh) = N(h)` for `λ > 0`", at rows with `Re⟨h, h⟩ > 0`. -/
 theorem rmsRowC_smul (c : ℝ) (hc : 0 < c) (v : d → ℂ) (hv : 0 < (v ⬝ᵥ v).re) :
     rmsRowC ((c : ℂ) • v) = rmsRowC v := by
+  -- `⟨cv, cv⟩ = c² ⟨v, v⟩` and `log (c² z) = log (c²) + log z` for `z ≠ 0`
   have hdot : ((c : ℂ) • v) ⬝ᵥ ((c : ℂ) • v) = ((c ^ 2 : ℝ) : ℂ) * (v ⬝ᵥ v) := by
     rw [smul_dotProduct, dotProduct_smul]; simp only [smul_eq_mul]; push_cast; ring
   have hlog : Complex.log ((((c : ℂ) • v) ⬝ᵥ ((c : ℂ) • v)) / (Fintype.card d : ℂ))
       = (Real.log (c ^ 2) : ℂ) + Complex.log ((v ⬝ᵥ v) / (Fintype.card d : ℂ)) := by
     rw [hdot, mul_div_assoc, Complex.log_ofReal_mul (by positivity) (ne_zero_of_re_pos_crn hv)]
+  -- so the scalar factor of `N(cv)` is `exp (-(log c)) = c⁻¹` times that of `N(v)`
   unfold rmsRowC
   rw [hlog, smul_smul]
   congr 1
@@ -131,8 +143,10 @@ theorem rmsRowC_smul (c : ℝ) (hc : 0 < c) (v : d → ℂ) (hv : 0 < (v ⬝ᵥ 
 
 /-- **Equation (40), first part:** `⟨n, n⟩ = d ⟹ N(n) = n`. -/
 theorem rmsRowC_eq_self (n : d → ℂ) (hn : n ⬝ᵥ n = (Fintype.card d : ℂ)) : rmsRowC n = n := by
+  -- with `d` empty both sides are functions on an empty type
   rcases isEmpty_or_nonempty d with hd | hd
   · funext i; exact isEmptyElim i
+  -- otherwise `⟨n, n⟩/d = 1`, `log 1 = 0` and `exp 0 = 1`
   · have hc : (Fintype.card d : ℂ) ≠ 0 := Nat.cast_ne_zero.2 Fintype.card_ne_zero
     unfold rmsRowC
     rw [hn, div_self hc, Complex.log_one, zero_div, neg_zero, Complex.exp_zero, one_smul]
@@ -203,6 +217,7 @@ def complexCone (κ : ℝ) : Set (d → ℂ) :=
 
 /-- "an open cone": `C_κ` is open. -/
 theorem isOpen_complexCone (κ : ℝ) : IsOpen (complexCone (d := d) κ) := by
+  -- both sides of the strict inequality are continuous (finite sums of products of coordinates)
   refine isOpen_lt ?_ ?_
   · exact continuous_finsetSum _ fun i _ =>
       (Complex.continuous_im.comp (continuous_apply i)).mul
@@ -214,6 +229,7 @@ theorem isOpen_complexCone (κ : ℝ) : IsOpen (complexCone (d := d) κ) := by
 /-- "an open cone": `C_κ` is closed under multiplication by positive numbers. -/
 theorem smul_mem_complexCone {κ : ℝ} {h : d → ℂ} (hh : h ∈ complexCone κ) (c : ℝ) (hc : 0 < c) :
     (c : ℂ) • h ∈ complexCone κ := by
+  -- the real and imaginary parts of `c h` are `c u` and `c u'`; both sides scale by `c²`
   have him : (fun i => (((c : ℂ) • h) i).im) = c • fun i => (h i).im := by
     funext i; simp only [Pi.smul_apply, smul_eq_mul, Complex.im_ofReal_mul]
   have hre : (fun i => (((c : ℂ) • h) i).re) = c • fun i => (h i).re := by
@@ -234,6 +250,7 @@ theorem ofReal_mem_complexCone {κ : ℝ} (hκ : 0 < κ) (v : d → ℝ) (hv : v
       (fun h => hv (dotProduct_self_eq_zero.1 h.symm))
   show (fun i => ((v i : ℂ)).im) ⬝ᵥ (fun i => ((v i : ℂ)).im)
       < κ ^ 2 * ((fun i => ((v i : ℂ)).re) ⬝ᵥ (fun i => ((v i : ℂ)).re))
+  -- the imaginary part is `0`, the real part is `v` with `‖v‖² > 0`
   simp only [Complex.ofReal_im, Complex.ofReal_re]
   have h0 : ((fun _ : d => (0 : ℝ)) ⬝ᵥ fun _ => 0) = 0 := zero_dotProduct _
   rw [h0]
@@ -247,6 +264,7 @@ theorem complexCone_mono {κ κ' : ℝ} (hκ : 0 ≤ κ) (h : κ ≤ κ') :
       < κ ^ 2 * ((fun i => (u i).re) ⬝ᵥ (fun i => (u i).re)) := hu
   have hB : 0 ≤ (fun i => (u i).re) ⬝ᵥ (fun i => (u i).re) :=
     Finset.sum_nonneg fun j _ => mul_self_nonneg _
+  -- `κ² ≤ κ'²` and `‖u‖² ≥ 0`
   have hk : κ ^ 2 ≤ κ' ^ 2 := pow_le_pow_left₀ hκ h 2
   exact lt_of_lt_of_le hu' (mul_le_mul_of_nonneg_right hk hB)
 
@@ -257,6 +275,7 @@ theorem re_dotProduct_self_pos_of_mem_complexCone {κ : ℝ} (hκ0 : 0 ≤ κ) (
       < κ ^ 2 * ((fun i => (h i).re) ⬝ᵥ (fun i => (h i).re)) := hh
   have hB : 0 ≤ (fun i => (h i).re) ⬝ᵥ (fun i => (h i).re) :=
     Finset.sum_nonneg fun j _ => mul_self_nonneg _
+  -- `Re⟨h, h⟩ = ‖u‖² − ‖u'‖² > (1 − κ²) ‖u‖² ≥ 0`
   have hre : (h ⬝ᵥ h).re = (fun i => (h i).re) ⬝ᵥ (fun i => (h i).re)
       - (fun i => (h i).im) ⬝ᵥ (fun i => (h i).im) := by
     simp only [dotProduct, Complex.re_sum, Complex.mul_re, Finset.sum_sub_distrib]
@@ -274,6 +293,7 @@ noncomputable def pathRow (ξ ξ' : d → ℝ) (t : ℂ) : d → ℂ :=
 theorem pathRow_dotProduct_self (ξ ξ' : d → ℝ) (hξ : ξ ⬝ᵥ ξ = 1) (hξ' : ξ' ⬝ᵥ ξ' = 1)
     (hξξ' : ξ ⬝ᵥ ξ' = 0) (t : ℂ) (ht : t ≠ 0) :
     pathRow ξ ξ' t ⬝ᵥ pathRow ξ ξ' t = (Fintype.card d : ℂ) := by
+  -- the three real sums `⟨ξ, ξ⟩ = ⟨ξ', ξ'⟩ = 1`, `⟨ξ, ξ'⟩ = 0`, cast to `ℂ`
   have hA : ∑ i, (ξ i : ℂ) * ξ i = 1 := by
     have h := congrArg (fun x : ℝ => (x : ℂ)) hξ
     simp only [dotProduct] at h; push_cast at h; exact h
@@ -283,16 +303,19 @@ theorem pathRow_dotProduct_self (ξ ξ' : d → ℝ) (hξ : ξ ⬝ᵥ ξ = 1) (h
   have hC : ∑ i, (ξ i : ℂ) * ξ' i = 0 := by
     have h := congrArg (fun x : ℝ => (x : ℂ)) hξξ'
     simp only [dotProduct] at h; push_cast at h; exact h
+  -- `(√d)² = d` and `t t⁻¹ = 1`
   have hs : ((Real.sqrt (Fintype.card d) : ℝ) : ℂ) ^ 2 = (Fintype.card d : ℂ) := by
     rw [← Complex.ofReal_pow, Real.sq_sqrt (Nat.cast_nonneg _)]; push_cast; rfl
   have htt : t * t⁻¹ = 1 := mul_inv_cancel₀ ht
   set s : ℂ := ((Real.sqrt (Fintype.card d) : ℝ) : ℂ) with hs_def
+  -- `n_i(t) = (s/2)((t + t⁻¹) ξ_i + i (t − t⁻¹) ξ'_i)`; expand the square and sum over `i`
   have key : pathRow ξ ξ' t ⬝ᵥ pathRow ξ ξ' t
       = (s / 2) ^ 2 * ((t + t⁻¹) ^ 2 * ∑ i, (ξ i : ℂ) * ξ i
         + 2 * Complex.I * (t + t⁻¹) * (t - t⁻¹) * ∑ i, (ξ i : ℂ) * ξ' i
         + Complex.I ^ 2 * (t - t⁻¹) ^ 2 * ∑ i, (ξ' i : ℂ) * ξ' i) := by
     simp only [pathRow, dotProduct, Finset.mul_sum, ← Finset.sum_add_distrib]
     exact Finset.sum_congr rfl fun i _ => by ring
+  -- `(s²/4)((t + t⁻¹)² − (t − t⁻¹)²) = s² t t⁻¹ = d`
   rw [key, hA, hB, hC]
   linear_combination (s ^ 2 / 4 * (t - t⁻¹) ^ 2) * Complex.I_sq + s ^ 2 * htt + hs
 
@@ -302,6 +325,7 @@ theorem pathRow_ofReal (ξ ξ' : d → ℝ) (t : ℝ) (ht : t ≠ 0) (i : d) :
     pathRow ξ ξ' (t : ℂ) i
       = ((Real.sqrt (Fintype.card d) * ((t + t⁻¹) / 2 * ξ i) : ℝ) : ℂ)
         + Complex.I * ((Real.sqrt (Fintype.card d) * ((t - t⁻¹) / 2 * ξ' i) : ℝ) : ℂ) := by
+  -- `t ν + t⁻¹ ν̄ = (t + t⁻¹) ξ + i (t − t⁻¹) ξ'`
   simp only [pathRow]
   push_cast
   ring
@@ -311,6 +335,7 @@ theorem pathRow_ofReal (ξ ξ' : d → ℝ) (t : ℝ) (ht : t ≠ 0) (i : d) :
 theorem pathRow_exp_mul_I (ξ ξ' : d → ℝ) (φ : ℝ) (i : d) :
     pathRow ξ ξ' (Complex.exp (φ * Complex.I)) i
       = ((Real.sqrt (Fintype.card d) * (Real.cos φ * ξ i - Real.sin φ * ξ' i) : ℝ) : ℂ) := by
+  -- `t = e^{iφ} = cos φ + i sin φ` and `t⁻¹ = e^{-iφ} = cos φ − i sin φ`
   have h2 : (Complex.exp (φ * Complex.I))⁻¹ = Complex.cos φ - Complex.sin φ * Complex.I := by
     rw [← Complex.exp_neg, show -((φ : ℂ) * Complex.I) = ((-φ : ℝ) : ℂ) * Complex.I by
       push_cast; ring, Complex.exp_mul_I]
@@ -320,6 +345,7 @@ theorem pathRow_exp_mul_I (ξ ξ' : d → ℝ) (φ : ℝ) (i : d) :
   simp only [pathRow]
   rw [h2, Complex.exp_mul_I]
   push_cast
+  -- `t ν + t⁻¹ ν̄ = 2 cos φ ξ + 2 i² sin φ ξ'` with `i² = −1`
   linear_combination ((Real.sqrt (Fintype.card d) : ℂ) * Complex.sin φ * (ξ' i : ℂ)) * Complex.I_sq
 
 /-- "with `n(1) = √d ξ`". -/
