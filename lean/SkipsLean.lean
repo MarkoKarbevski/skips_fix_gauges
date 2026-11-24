@@ -247,6 +247,10 @@ import SkipsLean.Dimension.IdentifiableConverseFamily
 import SkipsLean.Dimension.IdentifiableIffFamily
 import SkipsLean.Residual.IdentifiableIffFamily
 import SkipsLean.Dimension.IdentifiableIffTransformerFamily
+import SkipsLean.Symmetry.FiniteSymmetries
+import SkipsLean.Dimension.IdentifiableIffFinite
+import SkipsLean.Residual.IdentifiableIffFinite
+import SkipsLean.Dimension.IdentifiableIffTransformerFinite
 import SkipsLean.OneBlock.LearnedSkip
 import SkipsLean.OneBlock.LearnedSkipZero
 import SkipsLean.OneBlock.LearnedSkipBound
