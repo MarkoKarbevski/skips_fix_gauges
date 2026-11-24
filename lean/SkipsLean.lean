@@ -280,5 +280,6 @@ import SkipsLean.Symmetry.FiniteSymmetriesCompose
 import SkipsLean.OneBlock.ResidualRMSZeroSteps
 import SkipsLean.OneBlock.ResidualRMSZeroGain
 import SkipsLean.OneBlock.ResidualRMSZeroKinds
+import SkipsLean.OneBlock.ResidualRMSZeroValue
 import SkipsLean.OneBlock.SkiplessHomogeneousRMSZero
 import SkipsLean.OneBlock.SkiplessHomogeneousGatedRMSZero

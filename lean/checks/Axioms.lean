@@ -1573,3 +1573,5 @@ import SkipsLean
 #print axioms Skips.ae_funDimOn_skipless_add_le_swiglu_oneBlock_residual_rmsNorm_zero
 #print axioms Skips.ae_funDimOn_skipless_add_le_geglu_oneBlock_residual_rmsNorm_zero
 #print axioms Skips.ae_funDimOn_skipless_add_le_attention_oneBlock_residual_rmsNorm_zero
+#print axioms Skips.funDimOn_add_le_residual_rmsNorm_zero
+#print axioms Skips.funDimOn_residual_rmsNorm_zero_eq
