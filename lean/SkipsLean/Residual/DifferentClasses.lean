@@ -35,6 +35,37 @@ variable {T d dIn dOut : Type*} {L : ℕ} [Fintype T] [Nonempty T] [Fintype d] [
 
 /-! ### MLP blocks whose hidden units have no symmetry (`s = 0`) -/
 
+/-- The two ingredients of Lemma A.26 for MLP blocks without normalization (proof of Theorem A.28
+(ii)): a bound `r₀ = P - 2 d²` on the rank of the Jacobian of the skipless network at every
+parameter and on every batch, and one residual parameter `θ₀` whose functional dimension
+`P - d²` exceeds it. -/
+private theorem exists_rank_gap_mlp_dc
+    (hσ : ∀ z, HasDerivAt σ (σ' z) z) (hσa : AnalyticOnNhd ℝ σ Set.univ)
+    (hU : UnitsRigid σ σ' dIn dOut (Σ ℓ, hid ℓ))
+    (μ : Measure (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut))
+    [μ.IsAddHaarMeasure] (hd : 2 ≤ Fintype.card d) (hdIn : Fintype.card d ≤ Fintype.card dIn)
+    (hdOut : Fintype.card d ≤ Fintype.card dOut) (hL : 0 < L) :
+    ∃ r₀ : ℕ, (∀ (n : ℕ) (X : Fin n → Matrix T dIn ℝ)
+        (η : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut),
+        jacobianRank (Arch.mlp σ id hid) 0 X η ≤ r₀) ∧
+      ∃ θ₀ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut,
+        r₀ < funDim (Arch.mlp σ id hid) 1 θ₀ := by
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.mlp (T := T) (d := d) σ id hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_mlp hσa ℓ
+  -- one residual parameter `θ₀` of functional dimension `P - d²` (Theorem 4.7)
+  obtain ⟨θ₀, hθ₀⟩ := (ae_funDim_mlp_residual hσ hσa hU μ hd hdIn hdOut).exists
+  -- the skipless network has rank at most `P - 2 d²` at every parameter, on every batch
+  have hbound := fun (n : ℕ) (X : Fin n → Matrix T dIn ℝ)
+      (η : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) =>
+    jacobianRank_add_le_skipless_ends rfl hf hL hdIn hdOut η X
+  have h0 := hbound 0 (fun i => i.elim0) θ₀
+  have hpos : 0 < Fintype.card d ^ 2 := pow_pos (by omega) 2
+  -- `P - 2 d² < P - d²` as `d² > 0` (and `2 d² ≤ P`)
+  refine ⟨Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)
+    - 2 * Fintype.card d ^ 2, fun n X η => ?_, θ₀, by omega⟩
+  have := hbound n X η
+  omega
+
 /-- **Theorem 4.11 (i) of the skips paper, "equals no skipless network of the same widths", for MLP
 blocks whose hidden units have no symmetry (`s = 0`) without normalization, given Sard's theorem**
 (Theorem A.28 (ii)): with `d_in, d_out ≥ d ≥ 2` and `L ≥ 1` blocks of any widths, at generic
@@ -50,7 +81,10 @@ theorem ae_forall_eval_residual_ne_skipless_mlp
     (hdOut : Fintype.card d ≤ Fintype.card dOut) (hL : 0 < L) :
     ∀ᵐ θ ∂μ, ∀ η : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut,
       eval (Arch.mlp σ id hid) 1 θ ≠ eval (Arch.mlp σ id hid) 0 η := by
-  sorry
+  -- Lemma A.26 (i) with `F` the residual and `G` the skipless networks of the same widths
+  obtain ⟨r₀, hr₀, θ₀, hθ₀⟩ := exists_rank_gap_mlp_dc hσ hσa hU μ hd hdIn hdOut hL
+  exact ae_forall_eval_ne_of_jacobianRank_lt _ 1 _ 0 hSard
+    (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
 
 /-- **Theorem A.28 (iv) of the skips paper for MLP blocks whose hidden units have no symmetry (`s =
 0`) without normalization, given Sard's theorem and the property of definable sets:** there is a
@@ -70,7 +104,10 @@ theorem exists_batch_ae_exists_pos_le_norm_sub_skipless_mlp
     ∃ (n : ℕ) (X : Fin n → Matrix T dIn ℝ), ∀ᵐ θ ∂μ, ∃ δ : ℝ, 0 < δ ∧
       ∀ η : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut,
         ∃ i, δ ≤ ‖eval (Arch.mlp σ id hid) 1 θ (X i) - eval (Arch.mlp σ id hid) 0 η (X i)‖ := by
-  sorry
+  -- Lemma A.26 (ii) with `F` the residual and `G` the skipless networks of the same widths
+  obtain ⟨r₀, hr₀, θ₀, hθ₀⟩ := exists_rank_gap_mlp_dc hσ hσa hU μ hd hdIn hdOut hL
+  exact exists_batch_ae_exists_pos_le_norm_sub_of_jacobianRank_lt _ 1 _ 0 hSard hOmin
+    (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
 
 /-- **Theorem 4.11 (i) of the skips paper, "is not a pointwise limit of such networks", for MLP
 blocks whose hidden units have no symmetry (`s = 0`) without normalization, given Sard's theorem and
@@ -91,9 +128,42 @@ theorem ae_not_isPointwiseLimit_skipless_mlp
       (Set.range (eval (Arch.mlp (T := T) (d := d) σ id hid) 0 :
         Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut → Matrix T dIn ℝ → Matrix T dOut ℝ))
       (eval (Arch.mlp σ id hid) 1 θ) := by
-  sorry
+  -- Theorem A.28 (iv) with `F` the residual and `G` the skipless networks of the same widths
+  obtain ⟨r₀, hr₀, θ₀, hθ₀⟩ := exists_rank_gap_mlp_dc hσ hσa hU μ hd hdIn hdOut hL
+  exact ae_not_isPointwiseLimit_of_jacobianRank_lt _ 1 _ 0 hSard hOmin
+    (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
 
 /-! ### gated blocks whose only symmetries inside the blocks are the rescalings -/
+
+/-- The two ingredients of Lemma A.26 for gated blocks without normalization (proof of Theorem
+A.28 (ii)): a bound `r₀ = P - 2 d² - s` on the rank of the Jacobian of the skipless network at every
+parameter and on every batch, and one residual parameter `θ₀` whose functional dimension
+`P - d² - s` exceeds it. -/
+private theorem exists_rank_gap_gated_dc
+    (hσ : ∀ z, HasDerivAt σ (σ' z) z) (hσa : AnalyticOnNhd ℝ σ Set.univ)
+    (hU : GatedUnitsRescale σ σ' dIn dOut (Σ ℓ, hid ℓ))
+    (μ : Measure (Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut))
+    [μ.IsAddHaarMeasure] (hd : 2 ≤ Fintype.card d) (hdIn : Fintype.card d ≤ Fintype.card dIn)
+    (hdOut : Fintype.card d ≤ Fintype.card dOut) (hL : 0 < L) :
+    ∃ r₀ : ℕ, (∀ (n : ℕ) (X : Fin n → Matrix T dIn ℝ)
+        (η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut),
+        jacobianRank (Arch.gated σ id hid) 0 X η ≤ r₀) ∧
+      ∃ θ₀ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut,
+        r₀ < funDim (Arch.gated σ id hid) 1 θ₀ := by
+  have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+  -- one residual parameter `θ₀` of functional dimension `P - d² - s` (Theorem 4.7)
+  obtain ⟨θ₀, hθ₀⟩ := (ae_funDim_gated_residual hσ hσa hU μ hd hdIn hdOut).exists
+  -- the skipless network has rank at most `P - 2 d² - s` at every parameter, on every batch
+  have hbound := fun (n : ℕ) (X : Fin n → Matrix T dIn ℝ)
+      (η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) =>
+    jacobianRank_add_le_skipless_ends_gated hσa hL hdIn hdOut η X
+  have h0 := hbound 0 (fun i => i.elim0) θ₀
+  have hpos : 0 < Fintype.card d ^ 2 := pow_pos (by omega) 2
+  -- `P - 2 d² - s < P - d² - s` as `d² > 0` (and `2 d² + s ≤ P`)
+  refine ⟨Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    - (2 * Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ)), fun n X η => ?_, θ₀, by omega⟩
+  have := hbound n X η
+  omega
 
 /-- **Theorem 4.11 (i) of the skips paper, "equals no skipless network of the same widths", for
 gated blocks whose only symmetries inside the blocks are the rescalings without normalization, given
@@ -110,7 +180,10 @@ theorem ae_forall_eval_residual_ne_skipless_gated
     (hdOut : Fintype.card d ≤ Fintype.card dOut) (hL : 0 < L) :
     ∀ᵐ θ ∂μ, ∀ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut,
       eval (Arch.gated σ id hid) 1 θ ≠ eval (Arch.gated σ id hid) 0 η := by
-  sorry
+  -- Lemma A.26 (i) with `F` the residual and `G` the skipless networks of the same widths
+  obtain ⟨r₀, hr₀, θ₀, hθ₀⟩ := exists_rank_gap_gated_dc hσ hσa hU μ hd hdIn hdOut hL
+  exact ae_forall_eval_ne_of_jacobianRank_lt _ 1 _ 0 hSard
+    (fun ℓ => analyticOnNhd_f_gated hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_gated hσa ℓ) analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
 
 /-- **Theorem A.28 (iv) of the skips paper for gated blocks whose only symmetries inside the blocks
 are the rescalings without normalization, given Sard's theorem and the property of definable sets:**
@@ -130,7 +203,10 @@ theorem exists_batch_ae_exists_pos_le_norm_sub_skipless_gated
     ∃ (n : ℕ) (X : Fin n → Matrix T dIn ℝ), ∀ᵐ θ ∂μ, ∃ δ : ℝ, 0 < δ ∧
       ∀ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut,
         ∃ i, δ ≤ ‖eval (Arch.gated σ id hid) 1 θ (X i) - eval (Arch.gated σ id hid) 0 η (X i)‖ := by
-  sorry
+  -- Lemma A.26 (ii) with `F` the residual and `G` the skipless networks of the same widths
+  obtain ⟨r₀, hr₀, θ₀, hθ₀⟩ := exists_rank_gap_gated_dc hσ hσa hU μ hd hdIn hdOut hL
+  exact exists_batch_ae_exists_pos_le_norm_sub_of_jacobianRank_lt _ 1 _ 0 hSard hOmin
+    (fun ℓ => analyticOnNhd_f_gated hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_gated hσa ℓ) analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
 
 /-- **Theorem 4.11 (i) of the skips paper, "is not a pointwise limit of such networks", for gated
 blocks whose only symmetries inside the blocks are the rescalings without normalization, given
@@ -152,7 +228,10 @@ theorem ae_not_isPointwiseLimit_skipless_gated
       (Set.range (eval (Arch.gated (T := T) (d := d) σ id hid) 0 :
         Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut → Matrix T dIn ℝ → Matrix T dOut ℝ))
       (eval (Arch.gated σ id hid) 1 θ) := by
-  sorry
+  -- Theorem A.28 (iv) with `F` the residual and `G` the skipless networks of the same widths
+  obtain ⟨r₀, hr₀, θ₀, hθ₀⟩ := exists_rank_gap_gated_dc hσ hσa hU μ hd hdIn hdOut hL
+  exact ae_not_isPointwiseLimit_of_jacobianRank_lt _ 1 _ 0 hSard hOmin
+    (fun ℓ => analyticOnNhd_f_gated hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_gated hσa ℓ) analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
 
 /-! ### `tanh` blocks -/
 
@@ -168,7 +247,8 @@ theorem ae_forall_eval_residual_ne_skipless_tanh
     (hdOut : Fintype.card d ≤ Fintype.card dOut) (hL : 0 < L) :
     ∀ᵐ θ ∂μ, ∀ η : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut,
       eval (Arch.mlp Real.tanh id hid) 1 θ ≠ eval (Arch.mlp Real.tanh id hid) 0 η := by
-  sorry
+  exact ae_forall_eval_residual_ne_skipless_mlp hSard hasDerivAt_tanh analyticOnNhd_tanh (tanh_unitsRigid _ _ _)
+    μ hd hdIn hdOut hL
 
 /-- **Theorem 4.11 (i) of the skips paper, "is not a pointwise limit of such networks", for `tanh`
 blocks without normalization, given Sard's theorem and the property of definable sets** (Theorem
@@ -188,7 +268,8 @@ theorem ae_not_isPointwiseLimit_skipless_tanh
         Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut →
           Matrix T dIn ℝ → Matrix T dOut ℝ))
       (eval (Arch.mlp Real.tanh id hid) 1 θ) := by
-  sorry
+  exact ae_not_isPointwiseLimit_skipless_mlp hSard hOmin hasDerivAt_tanh analyticOnNhd_tanh (tanh_unitsRigid _ _ _)
+    μ hd hdIn hdOut hL
 
 /-! ### GELU blocks -/
 
@@ -204,7 +285,8 @@ theorem ae_forall_eval_residual_ne_skipless_gelu
     (hdOut : Fintype.card d ≤ Fintype.card dOut) (hL : 0 < L) :
     ∀ᵐ θ ∂μ, ∀ η : Params (Arch.mlp (T := T) (d := d) gelu id hid) dIn dOut,
       eval (Arch.mlp gelu id hid) 1 θ ≠ eval (Arch.mlp gelu id hid) 0 η := by
-  sorry
+  exact ae_forall_eval_residual_ne_skipless_mlp hSard hasDerivAt_gelu analyticOnNhd_gelu (gelu_unitsRigid _ _ _)
+    μ hd hdIn hdOut hL
 
 /-- **Theorem 4.11 (i) of the skips paper, "is not a pointwise limit of such networks", for GELU
 blocks without normalization, given Sard's theorem and the property of definable sets** (Theorem
@@ -224,7 +306,8 @@ theorem ae_not_isPointwiseLimit_skipless_gelu
         Params (Arch.mlp (T := T) (d := d) gelu id hid) dIn dOut →
           Matrix T dIn ℝ → Matrix T dOut ℝ))
       (eval (Arch.mlp gelu id hid) 1 θ) := by
-  sorry
+  exact ae_not_isPointwiseLimit_skipless_mlp hSard hOmin hasDerivAt_gelu analyticOnNhd_gelu (gelu_unitsRigid _ _ _)
+    μ hd hdIn hdOut hL
 
 /-! ### SwiGLU blocks -/
 
@@ -240,7 +323,8 @@ theorem ae_forall_eval_residual_ne_skipless_swiglu
     (hdOut : Fintype.card d ≤ Fintype.card dOut) (hL : 0 < L) :
     ∀ᵐ θ ∂μ, ∀ η : Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut,
       eval (Arch.gated silu id hid) 1 θ ≠ eval (Arch.gated silu id hid) 0 η := by
-  sorry
+  exact ae_forall_eval_residual_ne_skipless_gated hSard hasDerivAt_silu analyticOnNhd_silu (silu_gatedUnitsRescale _ _ _)
+    μ hd hdIn hdOut hL
 
 /-- **Theorem 4.11 (i) of the skips paper, "is not a pointwise limit of such networks", for SwiGLU
 blocks without normalization, given Sard's theorem and the property of definable sets** (Theorem
@@ -260,7 +344,8 @@ theorem ae_not_isPointwiseLimit_skipless_swiglu
         Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut →
           Matrix T dIn ℝ → Matrix T dOut ℝ))
       (eval (Arch.gated silu id hid) 1 θ) := by
-  sorry
+  exact ae_not_isPointwiseLimit_skipless_gated hSard hOmin hasDerivAt_silu analyticOnNhd_silu (silu_gatedUnitsRescale _ _ _)
+    μ hd hdIn hdOut hL
 
 /-! ### GeGLU blocks -/
 
@@ -276,7 +361,8 @@ theorem ae_forall_eval_residual_ne_skipless_geglu
     (hdOut : Fintype.card d ≤ Fintype.card dOut) (hL : 0 < L) :
     ∀ᵐ θ ∂μ, ∀ η : Params (Arch.gated (T := T) (d := d) gelu id hid) dIn dOut,
       eval (Arch.gated gelu id hid) 1 θ ≠ eval (Arch.gated gelu id hid) 0 η := by
-  sorry
+  exact ae_forall_eval_residual_ne_skipless_gated hSard hasDerivAt_gelu analyticOnNhd_gelu (gelu_gatedUnitsRescale _ _ _)
+    μ hd hdIn hdOut hL
 
 /-- **Theorem 4.11 (i) of the skips paper, "is not a pointwise limit of such networks", for GeGLU
 blocks without normalization, given Sard's theorem and the property of definable sets** (Theorem
@@ -296,6 +382,7 @@ theorem ae_not_isPointwiseLimit_skipless_geglu
         Params (Arch.gated (T := T) (d := d) gelu id hid) dIn dOut →
           Matrix T dIn ℝ → Matrix T dOut ℝ))
       (eval (Arch.gated gelu id hid) 1 θ) := by
-  sorry
+  exact ae_not_isPointwiseLimit_skipless_gated hSard hOmin hasDerivAt_gelu analyticOnNhd_gelu (gelu_gatedUnitsRescale _ _ _)
+    μ hd hdIn hdOut hL
 
 end Skips
