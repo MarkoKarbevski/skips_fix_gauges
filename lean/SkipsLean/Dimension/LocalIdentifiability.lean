@@ -240,7 +240,24 @@ theorem exists_cob_of_eval_eq_skipless (A : Arch T d L) (hA : A.χ = id)
     ∀ V ∈ 𝓝 (1 : Fin (L + 1) → Matrix d d ℝ), ∃ U ∈ 𝓝 θ, ∀ θ' ∈ U,
       (∀ x : Matrix T dIn ℝ, eval A 0 θ' x = eval A 0 θ x) →
         ∃ G : Fin (L + 1) → GL d ℝ, (fun ℓ => (G ℓ : Matrix d d ℝ)) ∈ V ∧ θ' = θ.cob G G := by
-  sorry
+  intro V hV
+  -- `χ = id` is analytic
+  have hχ : AnalyticOnNhd ℝ A.χ Set.univ := by
+    rw [hA]
+    exact analyticOnNhd_id
+  -- the families `m` of `d × d` matrices form a space of dimension `(L + 1) d²`
+  have hdimM : Module.finrank ℝ (Fin (L + 1) → Matrix d d ℝ) = (L + 1) * Fintype.card d ^ 2 := by
+    rw [Module.finrank_pi_fintype, Module.finrank_matrix]
+    simp [sq]
+  -- the orbit `m ↦ θ.cob (exp m) (exp m)` fills the level set near `θ` (Proposition 3.2 for the
+  -- invariance)
+  obtain ⟨U, hU, hUV⟩ := exists_cobExp_of_eval_eq_li A hf hχ θ hE hw
+    (ContinuousLinearMap.id ℝ (Fin (L + 1) → Matrix d d ℝ)) (fun _ _ h => h)
+    (by rw [hdimM]; exact hfd) (fun m x => eval_cob_skipless θ _ x hA) V hV
+  refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+  -- `G_ℓ = exp m_ℓ`
+  obtain ⟨m, hm, hmθ⟩ := hUV θ' hθ' heq
+  exact ⟨fun ℓ => expGL_li (m ℓ), hm, hmθ⟩
 
 /-- **Proposition 4.6, from the equality condition to local identifiability, under pre-RMSNorm
 with `ε > 0`:** for real-analytic blocks, if `E` and the writes have rank `d` and
@@ -258,7 +275,32 @@ theorem exists_cob_of_eval_eq_skipless_rmsNorm (A : Arch T d L) {ε : ℝ} (hε 
         ∃ Q : Fin (L + 1) → GL d ℝ,
           (∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ) ∧
           (fun ℓ => (Q ℓ : Matrix d d ℝ)) ∈ V ∧ θ' = θ.cob Q Q := by
-  sorry
+  intro V hV
+  -- RMSNorm with `ε > 0` is analytic
+  have hχ : AnalyticOnNhd ℝ A.χ Set.univ := by
+    rw [hA]
+    exact analyticOnNhd_rmsNorm hε
+  -- the families `m` of antisymmetric matrices, inside all the families of matrices
+  let ι : (Fin (L + 1) → antisymmetric d) →L[ℝ] (Fin (L + 1) → Matrix d d ℝ) :=
+    ContinuousLinearMap.pi fun ℓ => (antisymmetric d).subtypeL.comp (ContinuousLinearMap.proj ℓ)
+  have hι : Function.Injective ι := fun m₁ m₂ h => funext fun ℓ => Subtype.ext (congrFun h ℓ)
+  -- they form a space of dimension `(L + 1) d (d - 1) / 2`
+  have hdimM : Module.finrank ℝ (Fin (L + 1) → antisymmetric d)
+      = (L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2) := by
+    rw [Module.finrank_pi_fintype, finrank_antisymmetric, Finset.sum_const, Finset.card_univ,
+      Fintype.card_fin, smul_eq_mul]
+  -- the changes of basis `exp m_ℓ`, `m_ℓ` antisymmetric, are orthogonal
+  have horth : ∀ (m : Fin (L + 1) → antisymmetric d) ℓ,
+      ((expGL_li (ι m ℓ) : GL d ℝ) : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ :=
+    fun m ℓ => exp_mem_orthogonalGroup_li (m ℓ).2
+  -- the orbit `m ↦ θ.cob (exp m) (exp m)` fills the level set near `θ` (Proposition 3.2 under
+  -- pre-RMSNorm for the invariance)
+  obtain ⟨U, hU, hUV⟩ := exists_cobExp_of_eval_eq_li A hf hχ θ hE hw ι hι
+    (by rw [hdimM]; exact hfd) (fun m x => eval_cob_rmsNorm θ x ε hA _ (horth m)) V hV
+  refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+  -- `Q_ℓ = exp m_ℓ`
+  obtain ⟨m, hm, hmθ⟩ := hUV θ' hθ' heq
+  exact ⟨fun ℓ => expGL_li (ι m ℓ), horth m, hm, hmθ⟩
 
 variable {hid : Fin L → Type} [∀ ℓ, Fintype (hid ℓ)]
 
@@ -274,7 +316,12 @@ theorem ae_exists_cob_of_eval_eq_tanh_skipless [Nonempty T]
       (∀ x : Matrix T dIn ℝ, eval (Arch.mlp Real.tanh id hid) 0 θ' x
         = eval (Arch.mlp Real.tanh id hid) 0 θ x) →
         ∃ G : Fin (L + 1) → GL d ℝ, (fun ℓ => (G ℓ : Matrix d d ℝ)) ∈ V ∧ θ' = θ.cob G G := by
-  sorry
+  -- at generic parameters `E` and the writes have rank `d`, and `fd(θ) = P - (L + 1) d²`
+  filter_upwards [ae_rank_E_write μ hdIn hhid, ae_funDim_tanh_skipless μ hd hdIn hdOut hhid]
+    with θ hθ hfd
+  -- Proposition 4.6 at `θ`, with the analytic blocks of tanh
+  exact exists_cob_of_eval_eq_skipless _ rfl (fun ℓ => analyticOnNhd_f_mlp analyticOnNhd_tanh ℓ)
+    θ hθ.1 hθ.2 hfd
 
 /-- **Corollary 5.3 for tanh blocks under pre-RMSNorm with `ε > 0`:** at almost every parameter
 `θ`, every `θ'` near `θ` with the same function is `θ.cob Q Q` with orthogonal `Q_0, …, Q_L` near
@@ -290,7 +337,12 @@ theorem ae_exists_cob_of_eval_eq_tanh_skipless_rmsNorm [Nonempty T] {ε : ℝ} (
         ∃ Q : Fin (L + 1) → GL d ℝ,
           (∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ) ∧
           (fun ℓ => (Q ℓ : Matrix d d ℝ)) ∈ V ∧ θ' = θ.cob Q Q := by
-  sorry
+  -- at generic parameters `E` and the writes have rank `d`, and `fd(θ) = P - (L + 1) d(d-1)/2`
+  filter_upwards [ae_rank_E_write μ hdIn hhid,
+    ae_funDim_tanh_skipless_rmsNorm hε μ hd hdIn hdOut hhid] with θ hθ hfd
+  -- Proposition 4.6 under pre-RMSNorm at `θ`, with the analytic blocks of tanh
+  exact exists_cob_of_eval_eq_skipless_rmsNorm _ hε rfl
+    (fun ℓ => analyticOnNhd_f_mlp analyticOnNhd_tanh ℓ) θ hθ.1 hθ.2 hfd
 
 /-- **Corollary 5.3 for GELU blocks under pre-RMSNorm with `ε > 0`:** at almost every parameter
 `θ`, every `θ'` near `θ` with the same function is `θ.cob Q Q` with orthogonal `Q_0, …, Q_L` near
@@ -306,6 +358,11 @@ theorem ae_exists_cob_of_eval_eq_gelu_skipless_rmsNorm [Nonempty T] {ε : ℝ} (
         ∃ Q : Fin (L + 1) → GL d ℝ,
           (∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ) ∧
           (fun ℓ => (Q ℓ : Matrix d d ℝ)) ∈ V ∧ θ' = θ.cob Q Q := by
-  sorry
+  -- at generic parameters `E` and the writes have rank `d`, and `fd(θ) = P - (L + 1) d(d-1)/2`
+  filter_upwards [ae_rank_E_write μ hdIn hhid,
+    ae_funDim_gelu_skipless_rmsNorm hε μ hd hdIn hdOut hhid] with θ hθ hfd
+  -- Proposition 4.6 under pre-RMSNorm at `θ`, with the analytic blocks of GELU
+  exact exists_cob_of_eval_eq_skipless_rmsNorm _ hε rfl
+    (fun ℓ => analyticOnNhd_f_mlp analyticOnNhd_gelu ℓ) θ hθ.1 hθ.2 hfd
 
 end Skips
