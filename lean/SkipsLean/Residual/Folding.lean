@@ -138,6 +138,7 @@ theorem exists_homeomorph_blockMapRes_of_not_folds (hinv : InvarianceOfDomain d)
   exact ⟨(Equiv.ofBijective _ ⟨hinj, hsurj⟩).toHomeomorphOfContinuousOpen hc hopen,
     fun h => rfl⟩
 
+omit [Fintype T] [Fintype dOut] in
 /-- Row `t` of the hidden state `k` is a continuous map of the input onto `ℝ^d`, when `E` has
 rank `d` and no block folds: by induction on `k`, with `Φ_ℓ` onto by part (i). -/
 private theorem continuous_surjective_row_fold (hinv : InvarianceOfDomain d)
@@ -169,6 +170,7 @@ private theorem continuous_surjective_row_fold (hinv : InvarianceOfDomain d)
     rw [e]
     exact ⟨(continuous_blockMapRes_fold θ k).comp ih.1, hs.comp ih.2⟩
 
+omit [Fintype T] [Fintype dOut] in
 /-- **Proposition A.32 (ii), under invariance of domain:** let `E` have rank `d` and let no block
 of a residual ReLU network fold. For a unit `j` of block `m` with a nonzero read and a token `t`,
 there is a nonempty open set of inputs at which the unit is active at `t`, and one at which its
@@ -207,6 +209,7 @@ theorem exists_isOpen_active_of_not_folds (hinv : InvarianceOfDomain d)
   · rw [hz]
     exact hx
 
+omit [Fintype T] [Fintype dOut] in
 /-- **Proposition A.32 (ii), "In particular, no unit with a nonzero read is dead"** (with at
 least one token). -/
 theorem not_unitInactiveRes_of_not_folds [Nonempty T] (hinv : InvarianceOfDomain d)
