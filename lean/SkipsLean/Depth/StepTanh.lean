@@ -66,6 +66,27 @@ theorem suffixFlat_castSucc_iff_mlp (hσ : ∀ z, HasDerivAt σ (σ' z) z)
           (n * (Z * θ.read k + η.read k)) = 0 := by
   sorry
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the set where a nonzero additive and homogeneous function `f` does not vanish is dense
+(from a zero `x` of `f`, the points `x + ε x₀` with `f x₀ ≠ 0` and `ε ≠ 0` tend to `x`). -/
+private theorem dense_setOf_ne_zero_of_linear (f : Matrix T d ℝ → ℝ)
+    (hadd : ∀ x y, f (x + y) = f x + f y) (hsmul : ∀ (c : ℝ) x, f (c • x) = c * f x)
+    {x₀ : Matrix T d ℝ} (hx₀ : f x₀ ≠ 0) : Dense {x | f x ≠ 0} := by
+  intro x
+  by_cases hx : f x ≠ 0
+  · exact subset_closure hx
+  rw [not_not] at hx
+  have ht : Filter.Tendsto (fun ε : ℝ => x + ε • x₀) (𝓝[≠] 0) (𝓝 x) := by
+    have hc : Continuous (fun ε : ℝ => x + ε • x₀) :=
+      continuous_const.add (continuous_id.smul continuous_const)
+    have h0 := hc.tendsto 0
+    rw [zero_smul, add_zero] at h0
+    exact h0.mono_left nhdsWithin_le_nhds
+  refine mem_closure_of_tendsto ht (eventually_nhdsWithin_of_forall fun ε hε => ?_)
+  show f (x + ε • x₀) ≠ 0
+  rw [hadd, hsmul, hx, zero_add]
+  exact mul_ne_zero hε hx₀
+
 /-- **(T2) on a ray.** If the columns of `W` are linearly independent over `ℚ`, then for a dense set
 of matrices `Ξ` (one row `ξ` per token) the numbers `ξ c_j`, over all tokens and all hidden units,
 are linearly independent over `ℚ`. (For integers `κ` that are not all zero, `∑ κ_{t j} ξ_t c_j`
@@ -73,7 +94,60 @@ vanishes only for `Ξ` in a proper subspace, and there are countably many `κ`.)
 theorem dense_setOf_linearIndependent_mul {q : Type*} [Fintype q] (W : Matrix d q ℝ)
     (hW : LinearIndependent ℚ (fun j : q => fun i : d => W i j)) :
     Dense {Ξ : Matrix T d ℝ | LinearIndependent ℚ (fun p : T × q => (Ξ * W) p.1 p.2)} := by
-  sorry
+  classical
+  -- for `κ : T × q → ℚ`, the functional `Ξ ↦ ∑ κ_{t j} (Ξ W)_{t j}`
+  let ℓ : (T × q → ℚ) → Matrix T d ℝ → ℝ := fun κ Ξ => ∑ p : T × q, (κ p : ℝ) * (Ξ * W) p.1 p.2
+  -- the set is the intersection, over `κ ≠ 0`, of the sets where `ℓ κ` does not vanish
+  have hset : {Ξ : Matrix T d ℝ | LinearIndependent ℚ (fun p : T × q => (Ξ * W) p.1 p.2)}
+      = ⋂ κ : {κ : T × q → ℚ // κ ≠ 0}, {Ξ | ℓ κ.1 Ξ ≠ 0} := by
+    ext Ξ
+    simp only [Set.mem_iInter]
+    show LinearIndependent ℚ _ ↔ ∀ κ : {κ : T × q → ℚ // κ ≠ 0}, ℓ κ.1 Ξ ≠ 0
+    rw [Fintype.linearIndependent_iff]
+    simp only [Rat.smul_def]
+    constructor
+    · rintro hli ⟨κ, hκ⟩ h0
+      exact hκ (funext (hli κ h0))
+    · intro h κ h0
+      by_contra hne
+      exact h ⟨κ, fun hκ => hne fun i => by rw [hκ]; rfl⟩ h0
+  rw [hset]
+  -- Baire: a countable intersection of open dense sets is dense
+  have : BaireSpace (Matrix T d ℝ) := inferInstanceAs (BaireSpace (T → d → ℝ))
+  refine dense_iInter_of_isOpen (fun κ => isOpen_ne_fun ?_ continuous_const) (fun κ => ?_)
+  · -- `ℓ κ` is continuous
+    show Continuous fun Ξ : Matrix T d ℝ => ∑ p : T × q, (κ.1 p : ℝ) * (Ξ * W) p.1 p.2
+    fun_prop
+  -- `ℓ κ` is additive and homogeneous
+  obtain ⟨κ, hκ⟩ := κ
+  have hadd : ∀ x y, ℓ κ (x + y) = ℓ κ x + ℓ κ y := by
+    intro x y
+    simp only [ℓ, Matrix.add_mul, Matrix.add_apply, mul_add, Finset.sum_add_distrib]
+  have hsmul : ∀ (c : ℝ) x, ℓ κ (c • x) = c * ℓ κ x := by
+    intro c x
+    simp only [ℓ, Matrix.smul_mul, Matrix.smul_apply, smul_eq_mul, Finset.mul_sum]
+    exact Finset.sum_congr rfl fun p _ => by ring
+  -- a token `t₀` and a hidden unit `j₀` with `κ_{t₀ j₀} ≠ 0`
+  obtain ⟨⟨t₀, j₀⟩, hj₀⟩ : ∃ p, κ p ≠ 0 := by
+    by_contra hne
+    push Not at hne
+    exact hκ (funext hne)
+  -- the vector `∑_j κ_{t₀ j} W_{· j}` is not zero (`hW`): it has a nonzero entry `i₀`
+  obtain ⟨i₀, hi₀⟩ : ∃ i₀, ∑ j, (κ (t₀, j) : ℝ) * W i₀ j ≠ 0 := by
+    by_contra hne
+    push Not at hne
+    refine hj₀ (Fintype.linearIndependent_iff.1 hW (fun j => κ (t₀, j)) ?_ j₀)
+    funext i
+    simp only [Finset.sum_apply, Pi.smul_apply, Rat.smul_def, Pi.zero_apply]
+    exact hne i
+  -- `Ξ = single t₀ i₀ 1` gives `ℓ κ Ξ = ∑_j κ_{t₀ j} W_{i₀ j} ≠ 0`
+  refine dense_setOf_ne_zero_of_linear (ℓ κ) hadd hsmul (x₀ := Matrix.single t₀ i₀ (1 : ℝ)) ?_
+  show ∑ p : T × q, (κ p : ℝ) * (Matrix.single t₀ i₀ (1 : ℝ) * W) p.1 p.2 ≠ 0
+  rw [Fintype.sum_prod_type, Finset.sum_eq_single t₀]
+  · simpa only [Matrix.single_mul_apply_same, one_mul] using hi₀
+  · intro t _ ht
+    exact Finset.sum_eq_zero fun j _ => by rw [Matrix.single_mul_apply_of_ne _ _ _ _ _ ht, mul_zero]
+  · intro h; exact absurd (Finset.mem_univ t₀) h
 
 variable (θ : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut)
 
