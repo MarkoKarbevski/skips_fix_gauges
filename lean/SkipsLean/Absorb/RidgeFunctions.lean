@@ -211,6 +211,72 @@ theorem exists_polynomial_of_sum_ridge_eq_zero {d q : Type*} [Fintype d] [Fintyp
   simp [Polynomial.eval_finsetSum]
 
 
+/-- The derivatives of a polynomial function: `(d/dt)^m P(t) = (P^{(m)})(t)`. -/
+private lemma iteratedDeriv_eval_rf (P : Polynomial ℝ) (m : ℕ) :
+    iteratedDeriv m (fun t => P.eval t) = fun t => (Polynomial.derivative^[m] P).eval t := by
+  induction m generalizing P with
+  | zero => simp
+  | succ m ih =>
+    rw [iteratedDeriv_succ', show deriv (fun t => P.eval t) = fun t => P.derivative.eval t from
+      funext fun t => Polynomial.deriv P, ih, Function.iterate_succ_apply]
+
+/-- An analytic `ψ` with `ψ^{(m)}(0) = 0` for all `m ≥ N` is a polynomial: `ψ^{(N)}` is analytic
+with all derivatives zero at `0`, so it vanishes near `0`, hence everywhere (identity theorem). -/
+private lemma exists_polynomial_of_analytic_rf (ψ : ℝ → ℝ) (hψ : AnalyticOnNhd ℝ ψ Set.univ)
+    (N : ℕ) (h : ∀ m, N ≤ m → iteratedDeriv m ψ 0 = 0) :
+    ∃ P : Polynomial ℝ, ∀ t, ψ t = P.eval t := by
+  have hφ : AnalyticOnNhd ℝ (iteratedDeriv N ψ) Set.univ := by
+    rw [iteratedDeriv_eq_iterate]
+    exact hψ.iterated_deriv N
+  have hall : ∀ m, iteratedDeriv m (iteratedDeriv N ψ) 0 = 0 := by
+    intro m
+    rw [iteratedDeriv_eq_iterate, iteratedDeriv_eq_iterate, ← Function.iterate_add_apply,
+      ← iteratedDeriv_eq_iterate]
+    exact h _ (by omega)
+  have htop : analyticOrderAt (iteratedDeriv N ψ) 0 = ⊤ := ENat.eq_top_iff_forall_ge.2 fun m =>
+    (natCast_le_analyticOrderAt_iff_iteratedDeriv_eq_zero (hφ 0 (Set.mem_univ _))).2
+      fun i _ => hall i
+  have hev : iteratedDeriv N ψ =ᶠ[nhds 0] 0 := analyticOrderAt_eq_top.1 htop
+  have hzero : iteratedDeriv N ψ = 0 := funext fun t =>
+    hφ.eqOn_zero_of_preconnected_of_eventuallyEq_zero isPreconnected_univ (Set.mem_univ 0) hev
+      (Set.mem_univ t)
+  obtain ⟨c, hc⟩ := exists_coeffs_rf N ψ hψ.contDiff hzero
+  exact ⟨∑ i : Fin N, Polynomial.C (c i) * Polynomial.X ^ (i : ℕ), fun t => by
+    simp [hc t, Polynomial.eval_finsetSum]⟩
+
+/-- For distinct positive `α_k` and `b_{k₀} ≠ 0`, `∑_k b_k α_k^m ≠ 0` for all large `m`: divided
+by `α_max^m` (the largest `α_k` with `b_k ≠ 0`), the sum tends to `b_max ≠ 0`. -/
+private lemma eventually_sum_pow_ne_zero_rf {n : ℕ} (α : Fin n → ℝ) (hα : ∀ k, 0 < α k)
+    (hinj : Function.Injective α) (b : Fin n → ℝ) (k₀ : Fin n) (hb : b k₀ ≠ 0) :
+    ∀ᶠ m in Filter.atTop, ∑ k, b k * α k ^ m ≠ 0 := by
+  classical
+  obtain ⟨k₁, hk₁, hmax⟩ :=
+    (Finset.univ.filter fun k => b k ≠ 0).exists_max_image α ⟨k₀, by simp [hb]⟩
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hk₁ hmax
+  have hlim : Filter.Tendsto (fun m : ℕ => ∑ k, b k * (α k / α k₁) ^ m) Filter.atTop
+      (nhds (∑ k, if k = k₁ then b k₁ else 0)) := by
+    apply tendsto_finsetSum
+    intro k _
+    by_cases hk : k = k₁
+    · subst hk
+      simp [div_self (hα k).ne']
+    · rw [ite_eq_right hk]
+      by_cases hbk : b k = 0
+      · simp [hbk]
+      · have hlt : α k < α k₁ := lt_of_le_of_ne (hmax k hbk) fun h => hk (hinj h)
+        have h1 := (tendsto_pow_atTop_nhds_zero_of_lt_one (div_nonneg (hα k).le (hα k₁).le)
+          ((div_lt_one (hα k₁)).2 hlt)).const_mul (b k)
+        simpa using h1
+  have hsum : (∑ k, if k = k₁ then b k₁ else 0) = b k₁ := by simp
+  rw [hsum] at hlim
+  filter_upwards [hlim.eventually_ne hk₁] with m hm hzero
+  apply hm
+  have h2 : ∑ k, b k * (α k / α k₁) ^ m = (∑ k, b k * α k ^ m) / α k₁ ^ m := by
+    rw [Finset.sum_div]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    rw [div_pow, mul_div_assoc]
+  rw [h2, hzero, zero_div]
+
 /-- **Lemma A.6 of the absorb paper (Distinct scales):** let `ψ` be real-analytic and not a
 polynomial, `α_1, …, α_n > 0` distinct and `a_1, …, a_n ∈ ℝ^q`. If every coordinate of
 `∑_k a_k ψ(α_k t)` is a polynomial in `t`, then every `a_k` is zero. -/
@@ -219,6 +285,37 @@ theorem eq_zero_of_sum_smul_scaled_eq_polynomial {q : Type*} {n : ℕ} (ψ : ℝ
     (α : Fin n → ℝ) (hα : ∀ k, 0 < α k) (hinj : Function.Injective α) (a : Fin n → q → ℝ)
     (hP : ∀ j : q, ∃ P : Polynomial ℝ, ∀ t, ∑ k, a k j * ψ (α k * t) = P.eval t) :
     ∀ k, a k = 0 := by
-  sorry
+  intro k₀
+  funext j
+  show a k₀ j = 0
+  by_contra hne
+  obtain ⟨P, hPeq⟩ := hP j
+  have hψc : ∀ m : ℕ, ContDiff ℝ m ψ := fun m => hψ.contDiff
+  have hfun : (fun t => ∑ k, a k j * ψ (α k * t)) = fun t => P.eval t := funext hPeq
+  -- the `m`-th derivative at `0` of the sum is `(∑_k a_k α_k^m) ψ^{(m)}(0)`
+  have hcoef : ∀ m : ℕ, iteratedDeriv m (fun t => ∑ k, a k j * ψ (α k * t)) 0 =
+      (∑ k, a k j * α k ^ m) * iteratedDeriv m ψ 0 := by
+    intro m
+    have hcd : ∀ k ∈ Finset.univ, ContDiffAt ℝ m (fun t => a k j * ψ (α k * t)) 0 := fun k _ =>
+      (contDiff_const.mul ((hψc m).comp (contDiff_const.mul contDiff_id))).contDiffAt
+    rw [iteratedDeriv_fun_sum hcd]
+    rw [Finset.sum_mul]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    rw [iteratedDeriv_const_mul_field]
+    simp only [iteratedDeriv_comp_const_mul (hψc m), mul_zero]
+    ring
+  -- for `m` larger than the degree, the `m`-th derivative of the polynomial vanishes
+  have hPd : ∀ m, P.natDegree < m → iteratedDeriv m (fun t => P.eval t) 0 = 0 := by
+    intro m hm
+    rw [iteratedDeriv_eval_rf, Polynomial.iterate_derivative_eq_zero hm]
+    simp
+  obtain ⟨N, hN⟩ :=
+    Filter.eventually_atTop.1 (eventually_sum_pow_ne_zero_rf α hα hinj (fun k => a k j) k₀ hne)
+  -- so `ψ^{(m)}(0) = 0` for all large `m`, and `ψ` is a polynomial
+  obtain ⟨Q, hQ⟩ := exists_polynomial_of_analytic_rf ψ hψ (max N (P.natDegree + 1)) fun m hm => by
+    have h1 := hcoef m
+    rw [hfun, hPd m (by omega)] at h1
+    exact (mul_eq_zero.1 h1.symm).resolve_left (hN m (by omega))
+  exact hnp ⟨Q, hQ⟩
 
 end Skips
