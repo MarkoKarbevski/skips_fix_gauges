@@ -10,9 +10,10 @@ gives no reference.
 We rely on the result "if `U` is an open subset of `ℝ^n` and `f : U → ℝ^n` is an injective
 continuous map, then `f(U)` is open in `ℝ^n` and `f` is a homeomorphism between `U` and `f(U)`"
 (invariance of domain), due to L. E. J. Brouwer, *Beweis der Invarianz des n-dimensionalen
-Gebiets*, Math. Ann. 71 (1912), 305–315. The statement and the reference are taken from the
-article "Invariance of domain" of Wikipedia (read on 24 November 2026); Brouwer's paper itself was
-not read. It is formalized as `InvarianceOfDomain` below, in the case `U = ℝ^n` that the paper
+Gebiets*, Math. Ann. 71 (1912), 305–313. The statement and the reference are taken from the
+article "Invariance of domain" of Wikipedia (read on 24 November 2026), which gives the pages
+305–315; the records of EuDML and Mathdoc give 305–313. Brouwer's paper itself was not
+read. It is formalized as `InvarianceOfDomain` below, in the case `U = ℝ^n` that the paper
 uses: an injective continuous map of `ℝ^n` to itself is an open map.
 
 It is not proved here, and it is not an axiom: the theorems that use it take it as a hypothesis.
