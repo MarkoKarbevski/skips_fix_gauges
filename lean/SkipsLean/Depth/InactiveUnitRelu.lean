@@ -75,6 +75,7 @@ private theorem continuous_write_entry_iur (m : Fin (L + 1)) (i : hid m) (a : d)
        map_smul' := fun _ _ => rfl } :
       Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut →ₗ[ℝ] ℝ)
 
+omit [Fintype T] [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
 /-- The set of weights with `a_k r < 0` for all `k` is open. -/
 theorem isOpen_negReadSet (ℓ : Fin L) (j : hid ℓ.succ) :
     IsOpen (negReadSet (T := T) (d := d) σ χ dIn dOut ℓ j) := by
@@ -91,6 +92,7 @@ theorem isOpen_negReadSet (ℓ : Fin L) (j : hid ℓ.succ) :
   exact continuous_finsetSum _ fun a _ =>
     (continuous_write_entry_iur _ k a).mul (continuous_read_entry_iur _ a j)
 
+omit [Fintype T] [∀ ℓ, DecidableEq (hid ℓ)] in
 /-- The set of weights with `a_k r < 0` for all `k` is nonempty. -/
 theorem nonempty_negReadSet [Nonempty d] (ℓ : Fin L) (j : hid ℓ.succ) :
     (negReadSet (T := T) (d := d) σ χ dIn dOut ℓ j).Nonempty := by
@@ -101,6 +103,7 @@ theorem nonempty_negReadSet [Nonempty d] (ℓ : Fin L) (j : hid ℓ.succ) :
   -- then `a_k r = -1`
   simp [Matrix.mulVec, dotProduct]
 
+omit [Fintype T] [DecidableEq d] [∀ ℓ, DecidableEq (hid ℓ)] in
 /-- **Proof of Proposition E.1, ReLU and ReLU²:** "The hidden unit of block 2 reads the number
 `h_1 r = ∑_k σ(u c_k) a_k r`, with `σ ≥ 0`. It is positive at no input when `a_k r < 0` for all
 `k`." -/
