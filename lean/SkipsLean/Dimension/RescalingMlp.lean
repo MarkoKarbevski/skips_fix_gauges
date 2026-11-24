@@ -405,7 +405,8 @@ theorem ae_funDim_add_le_skipless_relu_rmsNorm [Nonempty d] (ε : ℝ)
     ∀ᵐ θ ∂μ, funDim (Arch.mlp relu (rmsNorm ε) hid) 0 θ
         + ((L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2) + ∑ ℓ, Fintype.card (hid ℓ))
       ≤ Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  filter_upwards [ae_rank_E_write μ hdIn hhid, ae_read_col_ne_zero μ] with θ h1 h2
+  exact funDim_add_le_skipless_mlp_rescale_rmsNorm relu_homogeneous ε θ h1.1 h1.2 h2
 
 /-- **Theorem 4.3 for ReLU² blocks at generic parameters, under pre-RMSNorm.** -/
 theorem ae_funDim_add_le_skipless_reluSq_rmsNorm [Nonempty d] (ε : ℝ)
