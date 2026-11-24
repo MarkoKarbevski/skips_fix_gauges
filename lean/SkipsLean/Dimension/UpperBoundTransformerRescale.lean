@@ -417,7 +417,7 @@ omit [DecidableEq d] in
 span a space `V_A` of directions of symmetries inside the blocks, of dimension
 `2 ∑_ℓ H_ℓ d_{h,ℓ}²` (Lemma B.1), in which a direction whose read of a block is `0` has the
 write of that block `0`. -/
-private theorem attn_part_ubr
+theorem attn_part_ubr
     (θ : Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut)
     (hQ : ∀ ℓ (i : H ℓ), ((θ.read ℓ).submatrix id fun k : dh ℓ => (i, Sum.inl k)).rank
       = Fintype.card (dh ℓ))
@@ -495,7 +495,7 @@ omit [Fintype T] [DecidableEq d] in
 homogeneous activation span a space `V_B` of directions of symmetries inside the blocks, of
 dimension `∑_ℓ d_hidden,ℓ`, in which a direction whose read of a block is `0` has the write of
 that block `0`. -/
-private theorem mlp_part_ubr {k : ℕ}
+theorem mlp_part_ubr {k : ℕ}
     (hσ : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z)
     (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut)
     (hc : ∀ ℓ i, (fun a => θ.read ℓ a i) ≠ 0) :
@@ -630,7 +630,7 @@ omit [Fintype T] [DecidableEq d] in
 a positively homogeneous gate span a space `V_B` of directions of symmetries inside the blocks,
 of dimension `2 ∑_ℓ d_hidden,ℓ`, in which a direction whose read of a block is `0` has the write
 of that block `0`. -/
-private theorem gate_part_ubr {k : ℕ}
+theorem gate_part_ubr {k : ℕ}
     (hσ : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z)
     (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut)
     (hv : ∀ ℓ i, (fun a => θ.read ℓ a (Sum.inr i)) ≠ 0)
@@ -724,7 +724,7 @@ private theorem ae_rank_read_cols_ubr {A : Arch T d L} (μ : Measure (Params A d
 omit [DecidableEq d] in
 /-- Helper (the private `ae_rank_QV_ubt`): at generic parameters the query matrix and the value
 matrix of every head of the first part of a sum have rank `d_h`, when `d_h ≤ d`. -/
-private theorem ae_rank_QV_ubr {B : Arch T d L}
+theorem ae_rank_QV_ubr {B : Arch T d L}
     (μ : Measure (Params ((Arch.attention (T := T) (d := d) sees χ H dh).sum B) dIn dOut))
     [μ.IsAddHaarMeasure] (hdh : ∀ ℓ, Fintype.card (dh ℓ) ≤ Fintype.card d) :
     ∀ᵐ θ ∂μ, (∀ ℓ (i : H ℓ), ((θ.sumFst.read ℓ).submatrix id fun k : dh ℓ => (i, Sum.inl k)).rank
@@ -744,7 +744,7 @@ private theorem ae_rank_QV_ubr {B : Arch T d L}
 
 /-- Helper (the private `ae_rank_E_ubt`): at generic parameters `E` has rank `d`, when
 `d_in ≥ d`. -/
-private theorem ae_rank_E_ubr {A : Arch T d L} (μ : Measure (Params A dIn dOut))
+theorem ae_rank_E_ubr {A : Arch T d L} (μ : Measure (Params A dIn dOut))
     [μ.IsAddHaarMeasure] (hdIn : Fintype.card d ≤ Fintype.card dIn) :
     ∀ᵐ θ ∂μ, θ.E.rank = Fintype.card d := by
   -- `d` rows `ρ` of `E`, invertible at generic parameters
@@ -760,7 +760,7 @@ omit [Fintype T] [DecidableEq d] in
 /-- Helper (`ae_read_col_ne_zero` of `Dimension/RescalingMlp.lean` and `ae_value_ne_zero_ubt`,
 for every column of the second part of a sum): at generic parameters no column of the read of
 the second part vanishes. -/
-private theorem ae_sumSnd_col_ne_zero_ubr [Nonempty d] {A B : Arch T d L}
+theorem ae_sumSnd_col_ne_zero_ubr [Nonempty d] {A B : Arch T d L}
     (μ : Measure (Params (A.sum B) dIn dOut)) [μ.IsAddHaarMeasure] :
     ∀ᵐ θ ∂μ, ∀ ℓ (j : B.r ℓ), (fun a => θ.sumSnd.read ℓ a j) ≠ 0 := by
   -- finitely many conditions, one for each column `j` of each block `ℓ`

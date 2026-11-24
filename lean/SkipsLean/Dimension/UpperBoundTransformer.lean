@@ -208,7 +208,7 @@ omit [DecidableEq d] in
 /-- Helper: the directions of the changes of basis inside the heads span a space `V_A` of
 directions of symmetries inside the blocks, of dimension `2 ∑_ℓ H_ℓ d_{h,ℓ}²` (Lemma B.1), in
 which a direction whose read of a block is `0` has the write of that block `0`. -/
-private theorem attn_part_ubt {χ : Matrix T d ℝ → Matrix T d ℝ}
+theorem attn_part_ubt {χ : Matrix T d ℝ → Matrix T d ℝ}
     (θ : Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut)
     (hQ : ∀ ℓ (i : H ℓ), ((θ.read ℓ).submatrix id fun k : dh ℓ => (i, Sum.inl k)).rank
       = Fintype.card (dh ℓ))
@@ -287,7 +287,7 @@ omit [Fintype T] [DecidableEq d] in
 /-- Helper: the directions of the rescalings of the values of the gated units span a space `V_B`
 of directions of symmetries inside the blocks, of dimension `∑_ℓ d_hidden,ℓ`, in which a
 direction whose read of a block is `0` has the write of that block `0`. -/
-private theorem gated_part_ubt {χ : Matrix T d ℝ → Matrix T d ℝ}
+theorem gated_part_ubt {χ : Matrix T d ℝ → Matrix T d ℝ}
     (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut)
     (hv : ∀ ℓ i, (fun k => θ.read ℓ k (Sum.inr i)) ≠ 0) :
     ∃ V : Submodule ℝ (Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut),
@@ -371,7 +371,7 @@ omit [DecidableEq d] in
 /-- Helper (the private `ae_rank_QV_uba`, for the first part of a sum): at generic parameters the
 query matrix and the value matrix of every head have rank `d_h`, when `d_h ≤ d`. The read of the
 first part is made of columns of the read of the sum. -/
-private theorem ae_rank_QV_ubt {B : Arch T d L} {χ : Matrix T d ℝ → Matrix T d ℝ}
+theorem ae_rank_QV_ubt {B : Arch T d L} {χ : Matrix T d ℝ → Matrix T d ℝ}
     (μ : Measure (Params ((Arch.attention (T := T) (d := d) sees χ H dh).sum B) dIn dOut))
     [μ.IsAddHaarMeasure] (hdh : ∀ ℓ, Fintype.card (dh ℓ) ≤ Fintype.card d) :
     ∀ᵐ θ ∂μ, (∀ ℓ (i : H ℓ), ((θ.sumFst.read ℓ).submatrix id fun k : dh ℓ => (i, Sum.inl k)).rank
@@ -391,7 +391,7 @@ private theorem ae_rank_QV_ubt {B : Arch T d L} {χ : Matrix T d ℝ → Matrix 
 
 /-- Helper (the private `ae_rank_E_uba`): at generic parameters `E` has rank `d`, when
 `d_in ≥ d`. -/
-private theorem ae_rank_E_ubt {A : Arch T d L} (μ : Measure (Params A dIn dOut))
+theorem ae_rank_E_ubt {A : Arch T d L} (μ : Measure (Params A dIn dOut))
     [μ.IsAddHaarMeasure] (hdIn : Fintype.card d ≤ Fintype.card dIn) :
     ∀ᵐ θ ∂μ, θ.E.rank = Fintype.card d := by
   -- `d` rows `ρ` of `E`, invertible at generic parameters
@@ -406,7 +406,7 @@ private theorem ae_rank_E_ubt {A : Arch T d L} (μ : Measure (Params A dIn dOut)
 omit [Fintype T] [DecidableEq d] in
 /-- Helper (`ae_value_ne_zero` of `Generic/Gated.lean`, for the second part of a sum): at generic
 parameters no value column of the gated part of a read vanishes. -/
-private theorem ae_value_ne_zero_ubt [Nonempty d] {A : Arch T d L}
+theorem ae_value_ne_zero_ubt [Nonempty d] {A : Arch T d L}
     {χ : Matrix T d ℝ → Matrix T d ℝ}
     (μ : Measure (Params (A.sum (Arch.gated (T := T) (d := d) σ χ hid)) dIn dOut))
     [μ.IsAddHaarMeasure] :

@@ -396,7 +396,7 @@ private theorem ae_rank_read_cols_uba {A : Arch T d L} (μ : Measure (Params A d
 omit [DecidableEq d] in
 /-- Helper: at generic parameters the query matrix and the value matrix of every head have rank
 `d_h`, when `d_h ≤ d`. -/
-private theorem ae_rank_QV_uba {χ : Matrix T d ℝ → Matrix T d ℝ}
+theorem ae_rank_QV_uba {χ : Matrix T d ℝ → Matrix T d ℝ}
     (μ : Measure (Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut))
     [μ.IsAddHaarMeasure] (hdh : ∀ ℓ, Fintype.card (dh ℓ) ≤ Fintype.card d) :
     ∀ᵐ θ ∂μ, (∀ ℓ (i : H ℓ), ((θ.read ℓ).submatrix id fun k : dh ℓ => (i, Sum.inl k)).rank

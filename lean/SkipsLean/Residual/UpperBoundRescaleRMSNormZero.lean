@@ -105,7 +105,7 @@ private noncomputable def scaleDirLin_urz {A : Arch T d L} (θ : Params A dIn dO
 inside the blocks, under pre-RMSNorm with `ε = 0`. Let `ρ : V → Params` be linear and injective
 with `E` component `0` (the directions of the rescalings). If the directions `ρ v` are flat and
 `E` has rank `d ≥ 1`, then `fd ≤ P - (d(d-1)/2 + 1) - dim V`. -/
-private theorem funDim_add_le_of_coScale_add_urz [Nonempty d] {A : Arch T d L}
+theorem funDim_add_le_of_coScale_add_urz [Nonempty d] {A : Arch T d L}
     (θ : Params A dIn dOut) (hA : A.χ = rmsNorm 0) (hE : θ.E.rank = Fintype.card d)
     {V : Type*} [AddCommGroup V] [Module ℝ V] [FiniteDimensional ℝ V]
     (ρ : V →ₗ[ℝ] Params A dIn dOut) (hρ : Function.Injective ρ) (hρE : ∀ v, (ρ v).E = 0)
