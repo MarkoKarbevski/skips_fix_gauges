@@ -796,3 +796,4 @@ import SkipsLean
 #print axioms Skips.suffix_mlp_rmsNorm_row
 #print axioms Skips.fderiv_suffix_zero_row
 #print axioms Skips.fderiv_param_suffix_zero_row
+#print axioms Skips.flat_at_write_of_isOpen_rows
