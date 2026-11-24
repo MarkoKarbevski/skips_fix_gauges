@@ -50,8 +50,8 @@ reader (written after the sixth audit began): `Symmetry/OnlyOrthogonal.lean`,
 `Residual/PointwiseLimit.lean`, `Residual/SkiplessEnds.lean`,
 `Residual/DifferentClassesCriterion.lean`, `Residual/DifferentClasses.lean`,
 `Residual/DifferentClassesRMS.lean`, `Dimension/ParameterCount.lean`,
-`Residual/PointwiseLimitUnion.lean`, `Residual/SkiplessAll.lean` and
-`Residual/FewerHiddenUnits.lean`.
+`Residual/PointwiseLimitUnion.lean`, `Residual/SkiplessAll.lean`,
+`Residual/FewerHiddenUnits.lean` and `Dimension/UpperBoundRMSNormZero.lean`.
 
 ## Definitions
 
@@ -343,6 +343,7 @@ Notes for the authors on these statements:
 | S Theorem 3.3 (iii), under pre-RMSNorm, read of a block and the readout `D` (no invertibility is used) | `exists_cob_residual_read_upperTriangular`, `exists_cob_residual_D_upperTriangular` | `Residual/LearnedSkips.lean` | proved |
 | S Theorem 4.2, with identity skips, without the term `s` (changes of basis only), under the condition of the proof (`E` of rank `d`): `fd ≤ P − d²` | `cobDir_const_mem_flat_residual`, `funDim_add_le_residual` | `Dimension/UpperBound.lean` | proved |
 | S Theorem 4.2, with identity skips, without the term `s`, under pre-RMSNorm (`ε > 0`), under the condition of the proof (`E` of rank `d`): `fd ≤ P − d(d−1)/2` | `funDim_add_le_residual_rmsNorm` | `Dimension/UpperBoundRMSNorm.lean` | proved |
+| **D Theorem 4.3, the sentence for `ε = 0`:** "For `ε = 0` the same bound holds, with `𝒢 = CO(d_model)`" (the matrices `cQ`, dimension `d(d−1)/2 + 1`): `fd ≤ P − (L+1)(d(d−1)/2 + 1) − s` for a skipless network under pre-RMSNorm with `ε = 0`, where `E` and every write have rank `d ≥ 1` (gated blocks: and no value column of a read vanishes), and at generic parameters for `d_in ≥ d` and blocks of at least `d` hidden units. The directions are `cobDir θ Y` with antisymmetric `Y_ℓ` and `scaleDir θ β` (`E ↦ β_0 E`, `W_write^ℓ ↦ β_ℓ W_write^ℓ`); in Lean for arbitrary maps `f_ℓ` and at every such parameter (the Lean `rmsNorm 0` maps a zero row to `0`, and the derivative in the parameters is taken to be `0` where the output is not differentiable) | `scaleDir`, `scaleDir_mem_flat_skipless_rmsNorm_zero`, `cobDir_add_scaleDir_injective`, `funDim_add_le_skipless_rmsNorm_zero`, `ae_funDim_add_le_skipless_rmsNorm_zero`, `funDim_add_le_skipless_gated_rmsNorm_zero`, `ae_funDim_add_le_skipless_gated_rmsNorm_zero` | `Dimension/UpperBoundRMSNormZero.lean` | in work |
 | S Theorem 4.2, with identity skips, without the term `s`, at generic parameters (only `d_in ≥ d` is used) | `ae_funDim_add_le_residual`, `ae_funDim_add_le_residual_rmsNorm` | `Generic/Params.lean` | proved |
 | S Theorem 3.3 (i), "only if", without normalization: if every block is nonzero for some value of its parameters and `G_0, …, G_L` preserve the function of the residual network for all values of the parameters, then `G_0 = ⋯ = G_L`; and the equivalence (the hypothesis on the blocks is that of Theorem A.5 (iii); its `d ≥ 2` is not used) | `cob_eq_of_eval_cob_residual`, `eval_cob_residual_iff` | `Residual/OneChangeOfBasis.lean` | proved |
 | S Theorem 3.3 (i), "only if", under pre-RMSNorm (`ε > 0`): the same, and the common matrix is orthogonal; and the equivalence | `cob_eq_orthogonal_of_eval_cob_residual_rmsNorm`, `eval_cob_residual_rmsNorm_iff` | `Residual/OneChangeOfBasis.lean` | proved |
