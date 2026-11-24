@@ -137,3 +137,9 @@ import SkipsLean.Depth.DomainZero
 import SkipsLean.Depth.DomainZeroConnected
 import SkipsLean.Depth.RegularZeroTanh
 import SkipsLean.Depth.TanhZero
+import SkipsLean.Activations.MillsC
+import SkipsLean.Activations.MillsCExpansion
+import SkipsLean.Activations.MillsAtInfinityC
+import SkipsLean.Generic.HolomorphicBall
+import SkipsLean.Activations.GeluOnPath
+import SkipsLean.Depth.GeluPathSeparation
