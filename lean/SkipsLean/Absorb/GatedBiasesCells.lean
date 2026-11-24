@@ -373,6 +373,63 @@ private theorem at_point_gbc {σ : ℝ → ℝ} (hσ : NearReLU σ)
       constructor <;> nlinarith [ht1.1, ht1.2, ht2.1, ht2.2]
   exact ⟨funext fun o => (hall o).1, funext fun o => (hall o).2⟩
 
+/-! ### Helpers for Lemma C.8: the cell of `x` -/
+
+/-- **Step (d), the cell of `x`:** along a line `x + s u` through `x` off the hyperplanes, for
+`s` near `0` the point stays off the hyperplanes and every gate stays open or closed. -/
+private theorem cell_gbc {n : Type*} [Fintype n] (Wg : Matrix p n ℝ) (x : p → ℝ)
+    (hx : ∀ j, (x ᵥ* Wg) j = 0 → Wgᵀ j = 0) (u : p → ℝ) :
+    ∀ᶠ s in nhds (0 : ℝ), ∀ j, (((x + s • u) ᵥ* Wg) j = 0 → Wgᵀ j = 0) ∧
+      (0 < ((x + s • u) ᵥ* Wg) j ↔ 0 < (x ᵥ* Wg) j) := by
+  refine Filter.eventually_all.2 fun j => ?_
+  have e : ∀ s : ℝ, ((x + s • u) ᵥ* Wg) j = (x ᵥ* Wg) j + s * (u ᵥ* Wg) j := fun s => by
+    rw [Matrix.add_vecMul, Matrix.smul_vecMul]
+    rfl
+  by_cases hg : Wgᵀ j = 0
+  · -- gate read `0`: both reads are `0`
+    refine Filter.Eventually.of_forall fun s => ⟨fun _ => hg, ?_⟩
+    rw [vecMul_eq_zero_of_col_gbc Wg hg, vecMul_eq_zero_of_col_gbc Wg hg]
+  · -- `x g_j ≠ 0`, and `x g_j + s (u g_j)` keeps its sign for `s` near `0`
+    have ha : (x ᵥ* Wg) j ≠ 0 := fun h0 => hg (hx j h0)
+    have hc : Continuous (fun s : ℝ => (x ᵥ* Wg) j + s * (u ᵥ* Wg) j) := by fun_prop
+    have ht : Filter.Tendsto (fun s : ℝ => (x ᵥ* Wg) j + s * (u ᵥ* Wg) j) (nhds 0)
+        (nhds ((x ᵥ* Wg) j)) := hc.tendsto' 0 _ (by simp)
+    rcases lt_or_gt_of_ne ha with hneg | hpos
+    · filter_upwards [ht.eventually (eventually_lt_nhds hneg)] with s hs
+      rw [e s]
+      exact ⟨fun h0 => absurd h0 hs.ne, ⟨fun h1 => absurd h1 (not_lt.2 hs.le),
+        fun h1 => absurd h1 (not_lt.2 hneg.le)⟩⟩
+    · filter_upwards [ht.eventually (eventually_gt_nhds hpos)] with s hs
+      rw [e s]
+      exact ⟨fun h0 => absurd h0 hs.ne', ⟨fun _ => hpos, fun _ => hs⟩⟩
+
+open scoped Classical in
+/-- `Λ` depends on `x` only through the set of open gates. -/
+private theorem gateLinear_congr_gbc (σ : ℝ → ℝ) (Wg : Matrix p m ℝ) (bg : m → ℝ)
+    (Wv : Matrix p m ℝ) (bv : m → ℝ) (Ww : Matrix m q ℝ) {x y : p → ℝ}
+    (hxy : ∀ j, 0 < (y ᵥ* Wg) j ↔ 0 < (x ᵥ* Wg) j) :
+    gateLinear σ Wg bg Wv bv Ww y = gateLinear σ Wg bg Wv bv Ww x := by
+  simp only [gateLinear, hxy]
+
+open scoped Classical in
+/-- `Q(x, ·)` depends on `x` only through the set of open gates. -/
+private theorem gateQuadratic_congr_gbc (Wg Wv : Matrix p m ℝ) (Ww : Matrix m q ℝ)
+    {x y : p → ℝ} (hxy : ∀ j, 0 < (y ᵥ* Wg) j ↔ 0 < (x ᵥ* Wg) j) (z : p → ℝ) :
+    gateQuadratic Wg Wv Ww y z = gateQuadratic Wg Wv Ww x z := by
+  simp only [gateQuadratic, hxy]
+
+/-- `Q(x, ·)` is a quadratic form: `Q(x, y + s u) = Q(x, y) + s L + s² Q(x, u)`. -/
+private theorem gateQuadratic_add_smul_gbc (Wg Wv : Matrix p m ℝ) (Ww : Matrix m q ℝ)
+    (x y u : p → ℝ) (o : q) :
+    ∃ L, ∀ s : ℝ, gateQuadratic Wg Wv Ww x (y + s • u) o
+      = gateQuadratic Wg Wv Ww x y o + s * L + s ^ 2 * gateQuadratic Wg Wv Ww x u o := by
+  refine ⟨∑ j, (if 0 < (x ᵥ* Wg) j
+    then (y ᵥ* Wg) j * (u ᵥ* Wv) j + (u ᵥ* Wg) j * (y ᵥ* Wv) j else 0) * Ww j o, fun s => ?_⟩
+  simp only [gateQuadratic_apply_gbc, Matrix.add_vecMul, Matrix.smul_vecMul, Pi.add_apply,
+    Pi.smul_apply, smul_eq_mul, Finset.mul_sum, ← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  split_ifs <;> ring
+
 /-- **Proof of Lemma C.8 of the absorb paper, "Expansion along rays", with the comparison of the
 coefficients of `t²` and of `t`:** let the gate `σ` be at a distance `O(1/|z|)` from ReLU, and let
 gated blocks with biases `B_θ` and `B_{θ′}`, of any widths, satisfy `x M + B_θ(x) = B_{θ′}(x)` for
@@ -388,6 +445,63 @@ theorem gateLinear_gateQuadratic_of_gatedBlockB_absorb {σ : ℝ → ℝ} (hσ :
     (hx' : ∀ j, (x ᵥ* Wg') j = 0 → Wg'ᵀ j = 0) :
     M + gateLinear σ Wg bg Wv bv Ww x = gateLinear σ Wg' bg' Wv' bv' Ww' x ∧
       ∀ y : p → ℝ, gateQuadratic Wg Wv Ww x y = gateQuadratic Wg' Wv' Ww' x y := by
-  sorry
+  classical
+  -- step (c) at `x`
+  obtain ⟨hL, hQ⟩ := at_point_gbc hσ Wg bg Wv bv Ww c Wg' bg' Wv' bv' Ww' c' M h x hx hx'
+  -- step (d): step (c) at `x + s u` for `s` near `0`, with the gates open at `x`
+  have hdir : ∀ u : p → ℝ, ∃ ε > 0, ∀ s : ℝ, |s| < ε →
+      (x + s • u) ᵥ* M + (x + s • u) ᵥ* gateLinear σ Wg bg Wv bv Ww x
+        = (x + s • u) ᵥ* gateLinear σ Wg' bg' Wv' bv' Ww' x ∧
+      gateQuadratic Wg Wv Ww x (x + s • u) = gateQuadratic Wg' Wv' Ww' x (x + s • u) := by
+    intro u
+    obtain ⟨ε, hε, hs⟩ := Metric.eventually_nhds_iff.1 ((cell_gbc Wg x hx u).and
+      (cell_gbc Wg' x hx' u))
+    refine ⟨ε, hε, fun s hs' => ?_⟩
+    obtain ⟨h1, h2⟩ := hs (by rwa [Real.dist_eq, sub_zero] : dist s 0 < ε)
+    obtain ⟨e1, e2⟩ := at_point_gbc hσ Wg bg Wv bv Ww c Wg' bg' Wv' bv' Ww' c' M h (x + s • u)
+      (fun j => (h1 j).1) (fun j => (h2 j).1)
+    rw [gateLinear_congr_gbc σ Wg bg Wv bv Ww (fun j => (h1 j).2),
+      gateLinear_congr_gbc σ Wg' bg' Wv' bv' Ww' (fun j => (h2 j).2)] at e1
+    rw [gateQuadratic_congr_gbc Wg Wv Ww (fun j => (h1 j).2),
+      gateQuadratic_congr_gbc Wg' Wv' Ww' (fun j => (h2 j).2)] at e2
+    exact ⟨e1, e2⟩
+  constructor
+  · -- step (e): `u (M + Λ(x)) = u Λ′(x)` for every `u`, from `x` and `x + (ε/2) u`
+    have hu : ∀ u : p → ℝ, u ᵥ* (M + gateLinear σ Wg bg Wv bv Ww x)
+        = u ᵥ* gateLinear σ Wg' bg' Wv' bv' Ww' x := by
+      intro u
+      obtain ⟨ε, hε, hs⟩ := hdir u
+      have h1 := (hs (ε / 2) (by rw [abs_of_pos (by positivity)]; linarith)).1
+      have hne : ε / 2 ≠ 0 := by positivity
+      funext o
+      have a1 := congrFun h1 o
+      have a0 := congrFun hL o
+      simp only [Matrix.add_vecMul, Matrix.smul_vecMul, Matrix.vecMul_add, Pi.add_apply,
+        Pi.smul_apply, smul_eq_mul] at a1 a0 ⊢
+      have h3 : ε / 2 * ((u ᵥ* M) o + (u ᵥ* gateLinear σ Wg bg Wv bv Ww x) o
+          - (u ᵥ* gateLinear σ Wg' bg' Wv' bv' Ww' x) o) = 0 := by
+        linear_combination a1 - a0
+      rcases mul_eq_zero.1 h3 with h4 | h4
+      · exact absurd h4 hne
+      · linarith
+    ext a o
+    have := congrFun (hu (Pi.single a 1)) o
+    simpa [Matrix.single_one_vecMul] using this
+  · -- step (f): `Q(x, ·) − Q′(x, ·)` vanishes at `x` and at `x + s y` for `s = ε/2, ε/4`
+    intro y
+    funext o
+    obtain ⟨ε, hε, hs⟩ := hdir y
+    obtain ⟨L, hL1⟩ := gateQuadratic_add_smul_gbc Wg Wv Ww x x y o
+    obtain ⟨L', hL2⟩ := gateQuadratic_add_smul_gbc Wg' Wv' Ww' x x y o
+    have a1 := congrFun (hs (ε / 2) (by rw [abs_of_pos (by positivity)]; linarith)).2 o
+    have a2 := congrFun (hs (ε / 4) (by rw [abs_of_pos (by positivity)]; linarith)).2 o
+    have a0 := congrFun hQ o
+    rw [hL1, hL2] at a1 a2
+    have h3 : ε ^ 2 / 8 * (gateQuadratic Wg Wv Ww x y o - gateQuadratic Wg' Wv' Ww' x y o)
+        = 0 := by
+      linear_combination a1 - 2 * a2 + a0
+    rcases mul_eq_zero.1 h3 with h4 | h4
+    · exact absurd h4 (by positivity)
+    · linarith
 
 end Skips
