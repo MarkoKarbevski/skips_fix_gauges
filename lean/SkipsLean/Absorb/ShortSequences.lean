@@ -213,6 +213,75 @@ private theorem eval_ssq (n m a b L : ℕ) (z : Fin L → ℂ) (s : ℝ)
   rw [eval, hidden_ssq n m a b L z s M hM X, chi_ssq]
   simp [Matrix.mul_apply, params_ssq, enc_ssq]
 
+/-- Helper: the real matrix `B`, as a complex matrix, on a real column. -/
+private theorem mulVec_ofReal_ssq {n : ℕ} (B : Matrix (Fin n) (Fin n) ℝ) (v : Fin n → ℝ) :
+    B.map Complex.ofReal *ᵥ (fun t => (v t : ℂ)) = fun t => ((B *ᵥ v) t : ℂ) := by
+  ext t
+  simp [Matrix.mulVec, dotProduct]
+
+/-- Helper, **the residual network:** `ζ_k = ∏_{ℓ < k} (1 + c_ℓ U) x`, written as a polynomial
+in `U`. -/
+private theorem zeta_res_ssq {n L : ℕ} (U : Matrix (Fin n) (Fin n) ℝ) (c : Fin L → ℂ)
+    (x : Fin n → ℂ) (k : Fin (L + 1)) :
+    zeta_ssq U c 1 x k
+      = Polynomial.aeval (U.map Complex.ofReal)
+          (∏ j ∈ Finset.univ.filter (fun j : Fin L => (j : ℕ) < k),
+            (1 + Polynomial.C (c j) * Polynomial.X)) *ᵥ x := by
+  induction k using Fin.induction with
+  | zero => simp [zeta_zero_ssq]
+  | succ ℓ ih =>
+    -- the blocks before `ℓ + 1` are those before `ℓ`, and `ℓ`
+    have hs : Finset.univ.filter (fun j : Fin L => (j : ℕ) < (ℓ.succ : ℕ))
+        = insert ℓ (Finset.univ.filter (fun j : Fin L => (j : ℕ) < (ℓ.castSucc : ℕ))) := by
+      ext j
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_insert, Fin.val_succ,
+        Fin.val_castSucc, Fin.ext_iff]
+      omega
+    have hn : ℓ ∉ Finset.univ.filter (fun j : Fin L => (j : ℕ) < (ℓ.castSucc : ℕ)) := by simp
+    -- block `ℓ` multiplies by `1 + c_ℓ U`
+    rw [zeta_succ_ssq, ih, hs, Finset.prod_insert hn, map_mul, ← Matrix.mulVec_mulVec]
+    generalize Polynomial.aeval (R := ℂ) (U.map Complex.ofReal) _ *ᵥ x = y
+    simp [Matrix.add_mulVec, Algebra.algebraMap_eq_smul_one, Matrix.smul_mulVec]
+
+/-- Helper, **the polynomial over `ℂ`:** `Q(U)` computed with complex coefficients is the real
+matrix `Q(U)`. -/
+private theorem aeval_map_ssq {n : ℕ} (U : Matrix (Fin n) (Fin n) ℝ) (Q : Polynomial ℝ) :
+    Polynomial.aeval (U.map Complex.ofReal) (Q.map (algebraMap ℝ ℂ))
+      = (Polynomial.aeval U Q).map Complex.ofReal := by
+  rw [Polynomial.aeval_map_algebraMap ℂ]
+  have h := Polynomial.aeval_algHom_apply (Complex.ofRealAm.mapMatrix (m := Fin n)) U Q
+  simpa [AlgHom.mapMatrix_apply, Complex.ofRealAm_coe] using h
+
+/-- Helper, **the skipless network:** with `z_0 = γ` and `z_ℓ = 1` after, and no stream,
+`ζ_k = γ U^k x` for `k ≥ 1`. -/
+private theorem zeta_skip_ssq {n L : ℕ} (U : Matrix (Fin n) (Fin n) ℝ) (γ : ℝ)
+    (v : Fin n → ℝ) (k : Fin (L + 2)) :
+    zeta_ssq U (fun ℓ : Fin (L + 1) => if ℓ = 0 then (γ : ℂ) else 1) 0 (fun t => (v t : ℂ)) k
+      = fun t => (((if (k : ℕ) = 0 then 1 else γ) • (U ^ (k : ℕ) *ᵥ v)) t : ℂ) := by
+  induction k using Fin.induction with
+  | zero => simp [zeta_zero_ssq]
+  | succ ℓ ih =>
+    rw [zeta_succ_ssq, ih, mulVec_ofReal_ssq]
+    ext t
+    by_cases h0 : ℓ = 0
+    · subst h0; simp
+    · have h0' : (ℓ : ℕ) ≠ 0 := fun h => h0 (Fin.ext h)
+      simp [h0, h0', pow_succ', Matrix.mulVec_smul, ← Matrix.mulVec_mulVec]
+
+/-- Helper: token `0` sees only itself, so row `0` of `U^k` is `e_0`. -/
+private theorem pow_mulVec_zero_ssq {n : ℕ} (hn1 : 1 ≤ n) (v : Fin n → ℝ) (k : ℕ) :
+    ((attnWeights (fun t s : Fin n => s ≤ t) 0) ^ k *ᵥ v) ⟨0, hn1⟩ = v ⟨0, hn1⟩ := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    rw [pow_succ', ← Matrix.mulVec_mulVec, Matrix.mulVec, dotProduct,
+      Finset.sum_eq_single (⟨0, hn1⟩ : Fin n), attnWeights_causal_ssq, ih]
+    · simp
+    · intro s _ hs
+      rw [attnWeights_causal_ssq, ite_eq_right fun h => hs (Fin.ext (by
+        have := Fin.le_def.1 h; simp at this; omega)), zero_mul]
+    · simp
+
 /-- **Theorem 4.2 (iii), short sequences:** without normalization, with the causal mask on
 `n ≥ 1` tokens, when `n ≤ L`, or `n = L + 1` and `L ≤ L'`: for every model dimension `m + 2`,
 some residual network of `L` attention blocks with `E D ≠ 0` equals a skipless network of
