@@ -494,6 +494,7 @@ theorem exists_jacobianRank_add_finrank_flatOn (U : Set (Matrix T dIn ℝ))
     ∃ (n : ℕ) (X : Fin n → Matrix T dIn ℝ), (∀ i, X i ∈ U) ∧
       jacobianRank A S X θ + Module.finrank ℝ (flatOn A S θ U)
         = Module.finrank ℝ (Params A dIn dOut) := by
-  sorry
+  -- the argument is in `exists_jacobianRank_add_finrank_flatOn_aux`, above its first use
+  exact exists_jacobianRank_add_finrank_flatOn_aux θ U hU
 
 end Skips
