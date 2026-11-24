@@ -379,12 +379,200 @@ private theorem mem_complexCone_tpx [DecidableEq d] [Nonempty d] {m : ℕ} (B : 
   rw [Finset.mul_sum]
   exact Finset.sum_lt_sum_of_nonempty Finset.univ_nonempty fun i _ => hco i
 
+/-- Helper (S3): with the unit row `ξ₀ = (1/√d, …, 1/√d)`, every `ξ₀ c_k > 0` (so every sign is
+`1`), `√d ξ₀ c_k ≥ λ`, and the cone part gives (S3) for `ρ`. -/
+private theorem saturated_tpx [DecidableEq d] [Nonempty d] {m : ℕ} {l : ℝ} (hl : 1 ≤ l)
+    (μ : Fin m → ℝ) (hμ : ∀ j, 1 ≤ μ j) (B : Fin m → d → ℝ) (hB : ∀ j i, 0 ≤ B j i)
+    {κ ρ : ℝ} (hκ : 0 < κ) (hρ0 : 0 < ρ) (hρ1 : ρ ≤ 1 / 2) (hρκ : ρ ≤ κ / 4)
+    (hexp : Real.exp (-(2 * l)) < ρ / 3) :
+    ∃ (ξ₀ : d → ℝ) (ρ' : ℝ), ξ₀ ⬝ᵥ ξ₀ = 1 ∧ 0 < ρ' ∧ ρ' ≤ 1 ∧
+      (∀ k, (ξ₀ ᵥ* readTpx l μ) k ≠ 0) ∧
+      (∀ w : d ⊕ Fin m → ℂ,
+        (∀ k, ‖w k - ((Real.sign ((ξ₀ ᵥ* readTpx l μ) k) : ℝ) : ℂ)‖ ≤ ρ') →
+        w ᵥ* (writeTpx B).map (fun x : ℝ => (x : ℂ)) ∈ complexCone κ) ∧
+      ∀ k, Real.exp (-(2 * (Real.sqrt (Fintype.card d) * |(ξ₀ ᵥ* readTpx l μ) k|))) < ρ' / 3 := by
+  -- `s = √d > 0`, `s² = d ≥ 1`
+  have hc : (1 : ℝ) ≤ Fintype.card d := by exact_mod_cast Fintype.card_pos
+  set s := Real.sqrt (Fintype.card d) with hs
+  have hs0 : 0 < s := Real.sqrt_pos.2 (by linarith)
+  have hss : s * s = Fintype.card d := Real.mul_self_sqrt (by linarith)
+  -- `ξ₀ ⬝ ξ₀ = d / s² = 1`
+  have hξ : (fun _ : d => s⁻¹) ⬝ᵥ (fun _ : d => s⁻¹) = 1 := by
+    simp only [dotProduct, Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+    rw [← hss]
+    field_simp
+  -- `ξ₀ c_k > 0` and `s ξ₀ c_k ≥ λ`
+  have hpos : ∀ k, 0 < ((fun _ : d => s⁻¹) ᵥ* readTpx l μ) k ∧
+      l ≤ s * ((fun _ : d => s⁻¹) ᵥ* readTpx l μ) k := by
+    intro k
+    rcases k with i | j
+    · rw [vecMul_read_inl_tpx]
+      refine ⟨mul_pos (by linarith) (inv_pos.2 hs0), ?_⟩
+      rw [show s * (l * s⁻¹) = l by field_simp]
+    · rw [vecMul_read_inr_tpx]
+      simp only [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+      have hsinv : (Fintype.card d : ℝ) * s⁻¹ = s := by rw [← hss]; field_simp
+      rw [hsinv]
+      refine ⟨mul_pos (mul_pos (by linarith) (by linarith [hμ j])) hs0, ?_⟩
+      rw [show s * (l * μ j * s) = l * (μ j * (s * s)) by ring, hss]
+      exact le_mul_of_one_le_right (by linarith) (one_le_mul_of_one_le_of_one_le (hμ j) hc)
+  refine ⟨fun _ => s⁻¹, ρ, hξ, hρ0, by linarith, fun k => (hpos k).1.ne', fun w hw => ?_,
+    fun k => ?_⟩
+  · -- all signs are `1`
+    refine mem_complexCone_tpx B hB hκ hρ0 hρ1 hρκ w fun k => ?_
+    have h := hw k
+    rwa [Real.sign_of_pos (hpos k).1, Complex.ofReal_one] at h
+  · -- the decay: `e^{−2 s ξ₀ c_k} ≤ e^{−2λ} < ρ/3`
+    rw [abs_of_pos (hpos k).1]
+    exact lt_of_le_of_lt (Real.exp_le_exp.2 (by linarith [(hpos k).2])) hexp
+
+/-- Helper: a `λ ≥ 1` with `e^{−2λ} < ρ/3` (`λ = 1 + 3/ρ`, `e^x ≥ 1 + x`). -/
+private theorem exists_lambda_tpx {ρ : ℝ} (hρ : 0 < ρ) :
+    ∃ l : ℝ, 1 ≤ l ∧ Real.exp (-(2 * l)) < ρ / 3 := by
+  have h3 : 0 < 3 / ρ := div_pos three_pos hρ
+  refine ⟨1 + 3 / ρ, by linarith, ?_⟩
+  have h1 := Real.add_one_le_exp (2 * (1 + 3 / ρ))
+  have h2 : ρ * (3 / ρ) = 3 := by field_simp
+  rw [Real.exp_neg, inv_eq_one_div, div_lt_iff₀ (Real.exp_pos _)]
+  nlinarith [mul_le_mul_of_nonneg_left h1 (by positivity : (0 : ℝ) ≤ ρ / 3)]
+
+/-- Helper: an `η > 0` with `η ∑_j (j + 2) < tanh 1 / 2`. -/
+private theorem exists_eta_tpx (m : ℕ) :
+    ∃ η : ℝ, 0 < η ∧ η * ∑ j : Fin m, (((j : ℕ) : ℝ) + 2) < Real.tanh 1 / 2 := by
+  have ht := tanh_pos_tpx one_pos
+  have hS : 0 ≤ ∑ j : Fin m, (((j : ℕ) : ℝ) + 2) := Finset.sum_nonneg fun j _ => by positivity
+  refine ⟨Real.tanh 1 / (2 * (∑ j : Fin m, (((j : ℕ) : ℝ) + 2) + 1)), by positivity, ?_⟩
+  rw [div_mul_eq_mul_div, div_lt_div_iff₀ (by positivity) (by norm_num)]
+  nlinarith
+
+/-- Helper: over `ℚ`, the linear independence of `(u_j)_j` passes to `(c u_j)_j`, `c ≠ 0` real
+(a copy of the private `linearIndependent_mul_szt`). -/
+private theorem linearIndependent_mul_tpx {q : Type*} {u : q → ℝ} (hu : LinearIndependent ℚ u)
+    {c : ℝ} (hc : c ≠ 0) : LinearIndependent ℚ (fun j => c * u j) :=
+  hu.map' (LinearMap.mulLeft ℚ c) (LinearMap.ker_eq_bot.2 (mul_right_injective₀ hc))
+
+/-- Helper: numbers `μ_j > 1` with `1, μ_0, …, μ_{m−1}` linearly independent over `ℚ`: a point
+`x` of the dense set of rows with entries independent over `ℚ` (the columns of `1`) in the open set
+`0 < x_∅ < x_j`, and `μ_j = x_j / x_∅`. -/
+private theorem exists_mu_tpx (m : ℕ) :
+    ∃ μ : Fin m → ℝ, (∀ j, 1 < μ j) ∧
+      LinearIndependent ℚ (fun o : Option (Fin m) => Option.elim o 1 μ) := by
+  classical
+  -- the columns of `1` are linearly independent over `ℚ`
+  have hcols : LinearIndependent ℚ (fun j : Option (Fin m) => fun i : Option (Fin m) =>
+      (1 : Matrix (Option (Fin m)) (Option (Fin m)) ℝ) i j) := by
+    rw [Fintype.linearIndependent_iff]
+    intro g hg o
+    have h := congrFun hg o
+    simp only [Finset.sum_apply, Pi.smul_apply, Matrix.one_apply, Rat.smul_def, mul_ite, mul_one,
+      mul_zero, Finset.sum_ite_eq, Finset.mem_univ, ite_true, Pi.zero_apply] at h
+    exact_mod_cast h
+  have hD := dense_setOf_linearIndependent_vecMul _ hcols
+  -- the open set `0 < x_∅ < x_j`
+  let U : Set (Option (Fin m) → ℝ) :=
+    {x | 0 < x none} ∩ ⋂ j : Fin m, {x | x none < x (some j)}
+  have hU : IsOpen U :=
+    (isOpen_lt continuous_const (continuous_apply none)).inter
+      (isOpen_iInter_of_finite fun j => isOpen_lt (continuous_apply none) (continuous_apply _))
+  have hUne : U.Nonempty := ⟨fun o => Option.elim o 1 (fun _ => 2), by
+    refine ⟨by simp, Set.mem_iInter.2 fun j => ?_⟩
+    show (1 : ℝ) < 2
+    norm_num⟩
+  obtain ⟨x, hxD, hx0, hxj⟩ := hD.exists_mem_open hU hUne
+  have hxj' : ∀ j, x none < x (some j) := fun j => Set.mem_iInter.1 hxj j
+  have hx0' : 0 < x none := hx0
+  refine ⟨fun j => x (some j) / x none, fun j => (one_lt_div hx0').2 (hxj' j), ?_⟩
+  have h1 : LinearIndependent ℚ x := by
+    have h := hxD
+    simp only [Set.mem_ofPred_eq, Matrix.vecMul_one] at h
+    exact h
+  have h2 := linearIndependent_mul_tpx h1 (inv_ne_zero hx0'.ne')
+  convert h2 using 1
+  funext o
+  cases o with
+  | none => simp [hx0'.ne']
+  | some j => simp [div_eq_inv_mul]
+
+omit [Fintype d] in
+/-- Helper: `(x ∘ e) (V reindexed) = x V` for a reindexing `e` of the hidden units. -/
+private theorem comp_vecMul_submatrix_tpx {R : Type*} [CommSemiring R] {q q' : Type*}
+    [Fintype q] [Fintype q'] (e : q' ≃ q) (M : Matrix q d R) (x : q → R) :
+    (x ∘ e) ᵥ* M.submatrix e id = x ᵥ* M := by
+  funext i
+  simp only [Matrix.vecMul, dotProduct, Matrix.submatrix_apply, Function.comp_apply, id]
+  exact e.sum_comp (fun k => x k * M k i)
+
+/-- Helper: the six conditions do not depend on the order of the hidden units. -/
+private theorem tanhPathBlock_submatrix_tpx {q q' : Type*} [Fintype q] [Fintype q'] (e : q' ≃ q)
+    {W : Matrix d q ℝ} {V : Matrix q d ℝ} {κ : ℝ} (h : TanhPathBlock W V κ) :
+    TanhPathBlock (W.submatrix id e) (V.submatrix e id) κ := by
+  -- `g(n) = tanh(nW) V` is the same function
+  have hpt : ∀ n : d → ℝ, (fun j => Real.tanh ((n ᵥ* W.submatrix id e) j)) ᵥ* V.submatrix e id
+      = (fun j => Real.tanh ((n ᵥ* W) j)) ᵥ* V := fun n =>
+    comp_vecMul_submatrix_tpx e V (fun j => Real.tanh ((n ᵥ* W) j))
+  have hfun : (fun n : d → ℝ => (fun j => Real.tanh ((n ᵥ* W.submatrix id e) j)) ᵥ*
+      V.submatrix e id) = fun n => (fun j => Real.tanh ((n ᵥ* W) j)) ᵥ* V := funext hpt
+  refine ⟨?_, fun n hn => ?_, ?_, ?_, ?_, ?_⟩
+  · exact (Matrix.rank_submatrix V e (Equiv.refl d)).trans h.rank_write
+  · rw [hpt]
+    exact h.ne_zero n hn
+  · obtain ⟨n, hn, h3⟩ := h.deriv
+    refine ⟨n, hn, fun v hv ha => h3 v hv ?_⟩
+    rw [hfun, hpt] at ha
+    exact ha
+  · exact fun i j hij a c hac => h.rows_indep (e i) (e j) (e.injective.ne hij) a c hac
+  · exact h.cols_indep.comp e e.injective
+  · obtain ⟨ξ₀, ρ, h1, hρ0, hρ1, hne, hcone, hdec⟩ := h.saturated
+    refine ⟨ξ₀, ρ, h1, hρ0, hρ1, fun j => hne (e j), fun w hw => ?_, fun j => hdec (e j)⟩
+    have key := comp_vecMul_submatrix_tpx e (V.map (fun x : ℝ => (x : ℂ))) (w ∘ e.symm)
+    simp only [Function.comp_assoc, Equiv.symm_comp_self, Function.comp_id] at key
+    rw [show (V.submatrix e id).map (fun x : ℝ => (x : ℂ))
+      = (V.map (fun x : ℝ => (x : ℂ))).submatrix e id from rfl, key]
+    refine hcone _ fun j => ?_
+    have hj := hw (e.symm j)
+    have he : (ξ₀ ᵥ* W.submatrix id e) (e.symm j) = (ξ₀ ᵥ* W) j := by
+      show (ξ₀ ᵥ* W) (e (e.symm j)) = _
+      rw [e.apply_symm_apply]
+    rw [he] at hj
+    exact hj
+
+/-- Helper: the theorem for the hidden units `d ⊕ Fin m`, with the explicit pair. -/
+private theorem exists_tanhPathBlock_sum_tpx [DecidableEq d] (hd : 2 ≤ Fintype.card d) (m : ℕ)
+    {κ : ℝ} (hκ : 0 < κ) :
+    ∃ (W : Matrix d (d ⊕ Fin m) ℝ) (V : Matrix (d ⊕ Fin m) d ℝ), TanhPathBlock W V κ := by
+  obtain ⟨i₀, i₁, hi⟩ := Fintype.exists_pair_of_one_lt_card (by omega : 1 < Fintype.card d)
+  have : Nonempty d := ⟨i₀⟩
+  -- the numbers `μ_j`, `ρ`, `λ`, `η`
+  obtain ⟨μ, hμ1, hμQ⟩ := exists_mu_tpx m
+  have hρ0 : 0 < min (1 / 2 : ℝ) (κ / 4) := lt_min (by norm_num) (by linarith)
+  obtain ⟨l, hl, hexp⟩ := exists_lambda_tpx hρ0
+  obtain ⟨η, hη, hη2⟩ := exists_eta_tpx m
+  -- `∑_j |η a_j i| < tanh 1 / 2`
+  have hB : ∀ i, ∑ j, |rowTpx η i₁ j i| < Real.tanh 1 / 2 := fun i => by
+    refine lt_of_le_of_lt ?_ hη2
+    rw [Finset.mul_sum]
+    refine Finset.sum_le_sum fun j _ => ?_
+    rw [abs_of_pos (rowTpx_pos hη i₁ j i)]
+    exact rowTpx_le hη i₁ j i
+  have hB0 : ∀ (j : Fin m) (i : d), 0 ≤ rowTpx η i₁ j i := fun j i => (rowTpx_pos hη i₁ j i).le
+  refine ⟨readTpx l μ, writeTpx (rowTpx η i₁), rank_write_tpx _, ne_zero_tpx hl μ _ hB,
+    deriv_tpx (by linarith) μ (fun j => by linarith [hμ1 j]) _ hB0,
+    rows_indep_tpx hη hi, cols_indep_tpx (by linarith) μ hμQ,
+    saturated_tpx hl μ (fun j => (hμ1 j).le) _ hB0 hκ hρ0 (min_le_left _ _) (min_le_right _ _)
+      hexp⟩
+
 /-- **"Parameters that satisfy all conditions, in the case (0)", one block:** for `d ≥ 2`, at least
 `d` hidden units and every `κ > 0`, there are a read `W` and a write `V` that satisfy (R1) for the
 write, (R2), (R3), (S1), (S2), and (S3) for the cone `C_κ`. -/
 theorem exists_tanhPathBlock {q : Type*} [Fintype q] (hd : 2 ≤ Fintype.card d)
     (hq : Fintype.card d ≤ Fintype.card q) {κ : ℝ} (hκ : 0 < κ) :
     ∃ (W : Matrix d q ℝ) (V : Matrix q d ℝ), TanhPathBlock W V κ := by
-  sorry
+  classical
+  -- the pair on `d ⊕ Fin m`, `m = q − d`, moved to `q` along `q ≃ d ⊕ Fin m`
+  obtain ⟨W, V, h⟩ := exists_tanhPathBlock_sum_tpx hd (Fintype.card q - Fintype.card d) hκ
+  have hcard : Fintype.card q = Fintype.card (d ⊕ Fin (Fintype.card q - Fintype.card d)) := by
+    rw [Fintype.card_sum, Fintype.card_fin]
+    omega
+  exact ⟨_, _, tanhPathBlock_submatrix_tpx (Fintype.equivOfCardEq hcard) h⟩
 
 end Skips
