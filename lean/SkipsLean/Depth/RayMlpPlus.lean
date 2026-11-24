@@ -753,7 +753,72 @@ theorem flat_of_suffixFlat_mlp_rmsNorm (hε : 0 < ε) (hg : GateFar σ σ' p)
     (∀ n : Matrix T d ℝ, (∀ t, n t ∈ C k.castSucc) →
         tangentRMS Z n * θ.read k + n * η.read k = 0) ∧
       ∀ w : Matrix T (hid k) ℝ, writeLHS (Arch.mlp σ (rmsNorm ε) hid) θ k η w 0 = 0 := by
-  sorry
+  classical
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_mlp hg.analytic ℓ
+  -- Lemma D.2 after the block: `𝐃𝓑` is injective on an open dense set `U`
+  obtain ⟨U, hUo, hUd, hU⟩ := exists_open_dense_injective_fderiv_suffix_rmsNorm
+    (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) (dIn := dIn) (dOut := dOut) θ hε rfl hf hreg
+    k.succ
+  -- the frozen block `g°_k` is linear, and injective by (K2)
+  let gl : (d → ℝ) →ₗ[ℝ] (d → ℝ) :=
+    { toFun := frozenMlp θ k (A k)
+      map_add' := fun x y => by
+        simp only [frozenMlp, add_dotProduct, add_smul, Finset.sum_add_distrib]
+      map_smul' := fun c x => by
+        simp only [frozenMlp, smul_dotProduct, smul_eq_mul, mul_smul, Finset.smul_sum,
+          RingHom.id_apply] }
+  have hgl : Function.Injective (frozenMlp θ k (A k)) := by
+    obtain ⟨n, hn⟩ := hθ.frozen_deriv k
+    have h := (LinearMap.toContinuousLinearMap gl).fderiv (x := n)
+    have e : fderiv ℝ (frozenMlp θ k (A k)) n = LinearMap.toContinuousLinearMap gl := h
+    rw [e] at hn
+    exact hn
+  -- so is `g°(Ξ) = (t ↦ g°_k(Ξ_t))`, hence it is onto, and open
+  let Gm : Matrix T d ℝ →ₗ[ℝ] Matrix T d ℝ :=
+    { toFun := fun Ξ => Matrix.of fun t => frozenMlp θ k (A k) (Ξ t)
+      map_add' := fun x y => funext fun t => gl.map_add (x t) (y t)
+      map_smul' := fun c x => funext fun t => gl.map_smul c (x t) }
+  have hGinj : Function.Injective Gm := fun x y h => funext fun t => hgl (congrFun h t)
+  have hGsurj : Function.Surjective Gm := LinearMap.injective_iff_surjective.1 hGinj
+  let Gc := LinearMap.toContinuousLinearMap Gm
+  have hopen : IsOpenMap Gc := Gc.isOpenMap hGsurj
+  -- the generic `Ξ`: (i), and (iii) on the open dense set `g°⁻¹(U)`
+  have hgen : Dense ({Ξ : Matrix T d ℝ |
+      LinearIndependent ℚ (fun i : T × hid k => |(Ξ * θ.read k) i.1 i.2| ^ p)} ∩ Gc ⁻¹' U) :=
+    hdense.inter_of_isOpen_right (hUd.preimage hopen) (hUo.preimage Gc.continuous)
+  -- the open set `O` of the `n` with rows in `C_k`
+  have hO : IsOpen {n : Matrix T d ℝ | ∀ t, n t ∈ C k.castSucc} := by
+    have e : {n : Matrix T d ℝ | ∀ t, n t ∈ C k.castSucc}
+        = ⋂ t, (fun n : Matrix T d ℝ => n t) ⁻¹' C k.castSucc := by
+      ext n
+      simp only [Set.mem_ofPred_eq, Set.mem_iInter, Set.mem_preimage]
+    rw [e]
+    exact isOpen_iInter_of_finite fun t => (hθ.cone k.castSucc).isOpen.preimage (continuous_apply t)
+  have hsub := hgen.open_subset_closure_inter hO
+  -- at a generic `Ξ ∈ O`, the statement on one ray
+  have hray : ∀ Ξ ∈ {n : Matrix T d ℝ | ∀ t, n t ∈ C k.castSucc} ∩ ({Ξ : Matrix T d ℝ |
+      LinearIndependent ℚ (fun i : T × hid k => |(Ξ * θ.read k) i.1 i.2| ^ p)} ∩ Gc ⁻¹' U),
+      tangentRMS Z Ξ * θ.read k + Ξ * η.read k = 0 ∧
+        ∀ w : Matrix T (hid k) ℝ, writeLHS (Arch.mlp σ (rmsNorm ε) hid) θ k η w 0 = 0 :=
+    fun Ξ hΞ => flat_at_generic_ray_mlp_rmsNorm hε hg hone hθ k Z η hflat Ξ hΞ.1 hΞ.2.1
+      (hU _ hΞ.2.2)
+  refine ⟨fun n hn => ?_, ?_⟩
+  · -- `n ↦ ż(n)` is continuous and vanishes on a set whose closure contains `O`
+    have hT : Continuous fun n : Matrix T d ℝ => tangentRMS Z n := by
+      refine continuous_pi fun t => continuous_pi fun i => ?_
+      simp only [tangentRMS, Matrix.of_apply, Pi.sub_apply, Pi.smul_apply, smul_eq_mul,
+        dotProduct, Matrix.mul_apply]
+      fun_prop
+    have hcl : IsClosed {n : Matrix T d ℝ | tangentRMS Z n * θ.read k + n * η.read k = 0} :=
+      isClosed_eq ((hT.matrix_mul continuous_const).add (continuous_id.matrix_mul continuous_const))
+        continuous_const
+    exact closure_minimal (fun Ξ hΞ => (hray Ξ hΞ).1) hcl (hsub hn)
+  · -- `O` is not empty (all rows equal to a row of `C_k`), so there is a generic `Ξ ∈ O`
+    obtain ⟨c, hc⟩ := (hθ.cone k.castSucc).nonempty
+    obtain ⟨Ξ, hΞ⟩ := closure_nonempty_iff.1 ⟨_, hsub (show (fun _ : T => c) ∈
+      {n : Matrix T d ℝ | ∀ t, n t ∈ C k.castSucc} from fun _ => hc)⟩
+    exact (hray Ξ hΞ).2
 
 /-- **Lemma D.12 up to (38), GELU blocks, case (+):** with the matrices `c_j c_j^⊤` of the read
 columns of block `k` linearly independent over `ℚ`. -/
@@ -768,6 +833,25 @@ theorem flat_of_suffixFlat_gelu_rmsNorm (hε : 0 < ε) {C : Fin (L + 1) → Set 
     (∀ n : Matrix T d ℝ, (∀ t, n t ∈ C k.castSucc) →
         tangentRMS Z n * θ.read k + n * η.read k = 0) ∧
       ∀ w : Matrix T (hid k) ℝ, writeLHS (Arch.mlp gelu (rmsNorm ε) hid) θ k η w 0 = 0 := by
-  sorry
+  rcases isEmpty_or_nonempty T with hT | hT
+  · -- no token: a matrix with the rows `T` is `0`
+    exact ⟨fun n _ => funext fun t => isEmptyElim t, fun w => funext fun t => isEmptyElim t⟩
+  · -- the `Ξ` with (i) are dense, by the independence of the `c_j c_jᵀ` over `ℚ`
+    have hdense : Dense {Ξ : Matrix T d ℝ |
+        LinearIndependent ℚ (fun i : T × hid k => |(Ξ * θ.read k) i.1 i.2| ^ 2)} := by
+      refine (dense_setOf_linearIndependent_sq_dotProduct (T := T)
+        (fun j => (θ.read k)ᵀ j) hQ).mono fun Ξ hΞ => ?_
+      have e : (fun i : T × hid k => |(Ξ * θ.read k) i.1 i.2| ^ 2)
+          = fun i => (Ξ i.1 ⬝ᵥ (θ.read k)ᵀ i.2) ^ 2 := funext fun i => by
+        rw [sq_abs]
+        rfl
+      show LinearIndependent ℚ _
+      rw [e]
+      exact hΞ
+    -- GELU has a gate far from zero (`p = 2`), "one small factor" (Lemma D.9), and a good `θ`
+    -- is regular
+    exact flat_of_suffixFlat_mlp_rmsNorm hε gateFar_gelu
+      (fun u hu a b ha hb _ h => one_small_factor_gelu hu ha hb h) hθ
+      (regular_of_goodForConesMlp_gelu hθ) k hdense Z η hflat
 
 end Skips
