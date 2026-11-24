@@ -46,10 +46,36 @@ def MeromorphicAtInfinityC (Θ : ℝ → F) : Prop :=
   ∃ (l : ℕ) (Θ₀ : ℂ → F), AnalyticAt ℂ Θ₀ 0 ∧
     ∀ᶠ t : ℝ in atTop, Θ t = ((t : ℂ) ^ l) • Θ₀ ((t : ℂ)⁻¹)
 
+/-- `1/t → 0` in `ℂ` as `t → +∞`. -/
+private lemma tendsto_ofReal_inv_mic : Tendsto (fun t : ℝ => (t : ℂ)⁻¹) atTop (𝓝 0) := by
+  have h := (Complex.continuous_ofReal.tendsto 0).comp tendsto_inv_atTop_zero
+  rw [Complex.ofReal_zero] at h
+  exact h.congr fun t => by simp
+
 /-- **"Such a map vanishes identically if it tends to `0` faster than every power of `1/t`."** -/
 theorem MeromorphicAtInfinityC.eventually_eq_zero {Θ : ℝ → F} (hΘ : MeromorphicAtInfinityC Θ)
     (h : FasterThanPowers Θ) : ∀ᶠ t in atTop, Θ t = 0 := by
-  sorry
+  obtain ⟨l, Θ₀, hΘ₀, hEq⟩ := hΘ
+  -- the restriction `f(s) = Θ₀(s)` of `Θ₀` to real `s` is real-analytic at `0`
+  have hf : AnalyticAt ℝ (fun s : ℝ => Θ₀ (s : ℂ)) 0 := by
+    have h1 : AnalyticAt ℝ Θ₀ ((0 : ℝ) : ℂ) := by
+      rw [Complex.ofReal_zero]
+      exact hΘ₀.restrictScalars
+    exact h1.comp (Complex.ofRealCLM.analyticAt 0)
+  -- `‖f(1/t)‖ ≤ t^l ‖Θ₀(1/t)‖ = ‖Θ(t)‖` for `t ≥ 1`, so `f(1/t)` tends to `0` faster than every
+  -- power
+  have hinv : ∀ t : ℝ, ((1 / t : ℝ) : ℂ) = (t : ℂ)⁻¹ := fun t => by push_cast; ring
+  have h₀ : FasterThanPowers fun t : ℝ => (fun s : ℝ => Θ₀ (s : ℂ)) (1 / t) := by
+    refine h.mono ?_
+    filter_upwards [hEq, eventually_ge_atTop 1] with t ht ht1
+    rw [ht, norm_smul, norm_pow, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (by linarith),
+      hinv]
+    exact le_mul_of_one_le_left (norm_nonneg _) (one_le_pow₀ ht1)
+  -- so `f = 0` near `0`, and `Θ(t) = t^l Θ₀(1/t) = t^l f(1/t) = 0` for large `t`
+  filter_upwards [hEq, tendsto_inv_atTop_zero.eventually
+    (eventually_nhds_eq_zero_of_fasterThanPowers hf h₀)] with t ht ht0
+  rw [ht, ← Complex.ofReal_inv, ht0, smul_zero]
+
 
 /-- **Lemma D.9 (the Mills ratio at infinity), for complex `ω`, `ω'` with `Re ω > 0`.** If `Θ₁`
 and `Θ₂` are meromorphic at infinity and `Θ₁(t) mr(ω t + ω'/t) + Θ₂(t)` tends to `0` faster than
