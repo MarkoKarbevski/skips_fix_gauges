@@ -375,6 +375,26 @@ theorem headDirVO_mem_flat (S : Fin L → Matrix d d ℝ) (Γ : ∀ ℓ, H ℓ �
     (headDirVO θ Γ) (hasDerivAt_headsVO_ath θ Γ) (headsVO_expGL_zero_ath θ Γ)
     (Filter.Eventually.of_forall fun τ x => eval_headsVO θ _ S x)
 
+/-- Helper (the private `mul_left_cancel_of_rank` of `Dimension/UpperBound.lean`): a matrix `M` of
+rank equal to its number of columns cancels on the left, `M X = M Y → X = Y` (its kernel is `0`
+by rank–nullity). -/
+private theorem cancel_left_of_rank_ath {m n k : Type*} [Fintype n] (M : Matrix m n ℝ)
+    (hM : M.rank = Fintype.card n) {X Y : Matrix n k ℝ} (h : M * X = M * Y) : X = Y := by
+  -- `v ↦ M v` is injective: `rank M + dim ker M = card n`
+  have hinj : Function.Injective M.mulVecLin := by
+    rw [← LinearMap.ker_eq_bot, ← Submodule.finrank_eq_zero]
+    have := LinearMap.finrank_range_add_finrank_ker M.mulVecLin
+    rw [Module.finrank_fintype_fun_eq_card] at this
+    rw [Matrix.rank] at hM
+    omega
+  -- compare `X` and `Y` column by column
+  ext i j
+  have hcol : M.mulVecLin (fun l => X l j) = M.mulVecLin (fun l => Y l j) := by
+    funext p
+    have := congrFun (congrFun h p) j
+    simpa [Matrix.mul_apply, Matrix.mulVec, dotProduct] using this
+  exact congrFun (hinj hcol) i
+
 /-- **Lemma B.1 for attention blocks, in infinitesimal form:** if `E` and every write have rank
 `d` and the query matrix and the value matrix of every head have rank `d_h`, the changes of basis
 `X` of the hidden states and the changes of basis `Γ`, `Γ'` inside the heads are determined by
@@ -390,6 +410,66 @@ theorem cobDir_add_headDirQK_add_headDirVO_injective (hE : θ.E.rank = Fintype.c
       fun p : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ)
           × (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) =>
         cobDir θ p.1 + headDirQK θ p.2.1 + headDirVO θ p.2.2 := by
-  sorry
+  rintro ⟨X, Γ, Γ'⟩ ⟨Y, Δ, Δ'⟩ h
+  -- the embedding component: `E X_0 = E Y_0` (the directions inside the heads leave `E` alone),
+  -- and `E` has rank `d`
+  have h0 : θ.E * X 0 = θ.E * Y 0 := by
+    have hE0 := congrArg Params.E h
+    change θ.E * X 0 + 0 + 0 = θ.E * Y 0 + 0 + 0 at hE0
+    simpa only [add_zero] using hE0
+  have hX0 : X 0 = Y 0 := cancel_left_of_rank_ath θ.E hE h0
+  -- block `ℓ`: if `X_{ℓ-1} = Y_{ℓ-1}`, then `Γ_ℓ = Δ_ℓ`, `Γ'_ℓ = Δ'_ℓ` and `X_ℓ = Y_ℓ`
+  have key : ∀ ℓ : Fin L, X ℓ.castSucc = Y ℓ.castSucc →
+      Γ ℓ = Δ ℓ ∧ Γ' ℓ = Δ' ℓ ∧ X ℓ.succ = Y ℓ.succ := by
+    intro ℓ hℓ
+    have hr := congrArg (fun η => η.read ℓ) h
+    -- the query columns of head `i` move by `-X_{ℓ-1} W_{Q,i} + W_{Q,i} Γ_i`, and the first
+    -- terms agree; `W_{Q,i}` has rank `d_h`
+    have hQK : Γ ℓ = Δ ℓ := by
+      funext i
+      refine cancel_left_of_rank_ath _ (hQ ℓ i) ?_
+      ext a k
+      have hk := congrFun (congrFun hr a) (i, Sum.inl k)
+      change -(X ℓ.castSucc * θ.read ℓ) a (i, Sum.inl k)
+          + (∑ k', θ.read ℓ a (i, Sum.inl k') * Γ ℓ i k' k) + 0
+        = -(Y ℓ.castSucc * θ.read ℓ) a (i, Sum.inl k)
+          + (∑ k', θ.read ℓ a (i, Sum.inl k') * Δ ℓ i k' k) + 0 at hk
+      rw [hℓ] at hk
+      simp only [add_zero, add_right_inj] at hk
+      exact hk
+    -- the value columns of head `i` move by `-X_{ℓ-1} W_{V,i} + W_{V,i} Γ'_i`; `W_{V,i}` has
+    -- rank `d_h`
+    have hVO : Γ' ℓ = Δ' ℓ := by
+      funext i
+      refine cancel_left_of_rank_ath _ (hV ℓ i) ?_
+      ext a k
+      have hk := congrFun (congrFun hr a) (i, Sum.inr (Sum.inr k))
+      change -(X ℓ.castSucc * θ.read ℓ) a (i, Sum.inr (Sum.inr k)) + 0
+          + (∑ k', θ.read ℓ a (i, Sum.inr (Sum.inr k')) * Γ' ℓ i k' k)
+        = -(Y ℓ.castSucc * θ.read ℓ) a (i, Sum.inr (Sum.inr k)) + 0
+          + (∑ k', θ.read ℓ a (i, Sum.inr (Sum.inr k')) * Δ' ℓ i k' k) at hk
+      rw [hℓ] at hk
+      simp only [add_zero, add_right_inj] at hk
+      exact hk
+    refine ⟨hQK, hVO, ?_⟩
+    -- the write moves by `W X_ℓ - (Γ'_i W_{O,i})_i`; the second terms agree, and `W` has rank `d`
+    have hw' := congrArg (fun η => η.write ℓ) h
+    change θ.write ℓ * X ℓ.succ + 0 + (headDirVO θ Γ').write ℓ
+      = θ.write ℓ * Y ℓ.succ + 0 + (headDirVO θ Δ').write ℓ at hw'
+    have hO : (headDirVO θ Γ').write ℓ = (headDirVO θ Δ').write ℓ := by
+      ext ⟨i, k⟩ b
+      show -∑ k', Γ' ℓ i k k' * θ.write ℓ (i, k') b = -∑ k', Δ' ℓ i k k' * θ.write ℓ (i, k') b
+      rw [hVO]
+    rw [hO] at hw'
+    simp only [add_zero, add_left_inj] at hw'
+    exact cancel_left_of_rank_ath (θ.write ℓ) (hw ℓ) hw'
+  -- by induction along the network, `X = Y`; then `Γ = Δ` and `Γ' = Δ'`
+  have hX : ∀ ℓ : Fin (L + 1), X ℓ = Y ℓ := by
+    intro ℓ
+    induction ℓ using Fin.induction with
+    | zero => exact hX0
+    | succ ℓ ih => exact (key ℓ ih).2.2
+  exact Prod.ext (funext hX) (Prod.ext (funext fun ℓ => (key ℓ (hX ℓ.castSucc)).1)
+    (funext fun ℓ => (key ℓ (hX ℓ.castSucc)).2.1))
 
 end Skips
