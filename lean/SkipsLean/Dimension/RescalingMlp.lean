@@ -393,7 +393,8 @@ theorem ae_funDim_add_le_skipless_reluSq [Nonempty d]
     ∀ᵐ θ ∂μ, funDim (Arch.mlp reluSq id hid) 0 θ
         + ((L + 1) * Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
       ≤ Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) reluSq id hid) dIn dOut) := by
-  sorry
+  filter_upwards [ae_rank_E_write μ hdIn hhid, ae_read_col_ne_zero μ] with θ h1 h2
+  exact funDim_add_le_skipless_mlp_rescale reluSq_homogeneous θ h1.1 h1.2 h2
 
 /-- **Theorem 4.3 for ReLU blocks at generic parameters, under pre-RMSNorm:**
 `fd ≤ P - (L + 1) d (d - 1) / 2 - s`. -/
