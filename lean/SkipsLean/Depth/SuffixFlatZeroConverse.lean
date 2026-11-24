@@ -127,6 +127,98 @@ theorem suffixFlatZero_cobDir_add_scaleDir (hχ : A.χ = rmsNorm 0)
     (Y : Fin (L + 1) → Matrix d d ℝ) (hY : ∀ ℓ, k ≤ ℓ → Y ℓ ∈ antisymmetric d)
     (β : Fin (L + 1) → ℝ) :
     SuffixFlatZero A θ k (Y k + β k • (1 : Matrix d d ℝ)) (cobDir θ Y + scaleDir θ β) := by
-  sorry
+  revert hY
+  induction k using Fin.reverseInduction with
+  | last =>
+    -- `𝓑_{>L}(h) = N(h) D`: the left side is `(N(h) Y_L) D + N(h) (−Y_L D) = 0`
+    intro hY h hh
+    calc _ = rmsNorm 0 h * Y (Fin.last L) * θ.D
+          + rmsNorm 0 h * (cobDir θ Y + scaleDir θ β).D :=
+          congrArg₂ (· + ·)
+            ((fderiv_suffix_last_zero_conv A θ hχ h _ hh).trans (by
+              rw [fderiv_rmsNorm_zero_antisymm_conv (hY _ le_rfl) _ h hh]))
+            ((fderiv_params_suffix_last_eq_mul A θ h _).trans (by rw [hχ]))
+      _ = 0 := by
+          show rmsNorm 0 h * Y (Fin.last L) * θ.D
+            + rmsNorm 0 h * (-(Y (Fin.last L) * θ.D) + 0) = 0
+          rw [add_zero, Matrix.mul_neg, Matrix.mul_assoc, add_neg_cancel]
+  | cast ℓ ih =>
+    intro hY h hh
+    set η := cobDir θ Y + scaleDir θ β
+    set Z := Y ℓ.castSucc + β ℓ.castSucc • (1 : Matrix d d ℝ)
+    -- the rows of `n = N(h)` are on the sphere, so by (R2) `g = f_ℓ(n W) V` has no zero row
+    have hg0 : ∀ t, (A.f ℓ (rmsNorm 0 h * θ.read ℓ) * θ.write ℓ) t ≠ 0 :=
+      hθ.block_ne_zero ℓ (rmsNorm 0 h) fun t => rmsNorm_zero_dotProduct_self h t (hh t)
+    -- `(θ', h') ↦ 𝓑_{>ℓ−1}(h')` is differentiable at `(θ, h)`, `(θ', h') ↦ 𝓑_{>ℓ}(h')` at `(θ, g)`
+    have hΨ := (analyticAt_suffix_prod_zero A θ hχ hf hθ ℓ.castSucc h hh).differentiableAt
+    have hΦ := (analyticAt_suffix_prod_zero A θ hχ hf hθ ℓ.succ _ hg0).differentiableAt
+    -- along `τ ↦ h + τ h Z`, `N` moves by `𝐃N(h)(h Z) = n Y_{ℓ−1}`
+    have hN : HasDerivAt (fun τ : ℝ => rmsNorm 0 (h + τ • (h * Z)))
+        (rmsNorm 0 h * Y ℓ.castSucc) 0 := by
+      rw [← fderiv_rmsNorm_zero_antisymm_conv (hY _ le_rfl) (β ℓ.castSucc) h hh]
+      have hc := (analyticAt_rmsNorm_zero h hh).differentiableAt.hasFDerivAt.comp_hasDerivAt_of_eq
+        (0 : ℝ) (hasDerivAt_line_conv h (h * Z)) (by rw [zero_smul, add_zero])
+      exact hc
+    -- the input of `f_ℓ` does not move: `ṅ W + n η_read = n Y W − n Y W = 0`
+    have hP : HasDerivAt (fun τ : ℝ => rmsNorm 0 (h + τ • (h * Z)) * (θ.read ℓ + τ • η.read ℓ))
+        0 0 := by
+      have hc := hasDerivAt_matMul_conv hN (hasDerivAt_line_conv (θ.read ℓ) (η.read ℓ))
+      refine hc.congr_deriv ?_
+      show rmsNorm 0 h * Y ℓ.castSucc * (θ.read ℓ + (0 : ℝ) • η.read ℓ)
+          + rmsNorm 0 (h + (0 : ℝ) • (h * Z)) * (-(Y ℓ.castSucc * θ.read ℓ) + 0) = 0
+      rw [zero_smul, add_zero, zero_smul, add_zero, add_zero, Matrix.mul_neg, Matrix.mul_assoc,
+        add_neg_cancel]
+    -- so `f_ℓ(·)` does not move either
+    have hF : HasDerivAt
+        (fun τ : ℝ => A.f ℓ (rmsNorm 0 (h + τ • (h * Z)) * (θ.read ℓ + τ • η.read ℓ))) 0 0 := by
+      have hc := ((hf ℓ _ (Set.mem_univ _)).differentiableAt.hasFDerivAt).comp_hasDerivAt
+        (0 : ℝ) hP
+      rw [map_zero] at hc
+      exact hc
+    -- the block moves by `f_ℓ(n W) η_write = g (Y_ℓ + β_ℓ I)`
+    have hG := hasDerivAt_matMul_conv hF (hasDerivAt_line_conv (θ.write ℓ) (η.write ℓ))
+    simp only [zero_smul, add_zero, Matrix.zero_mul, zero_add] at hG
+    have hG' : HasDerivAt (fun τ : ℝ => A.f ℓ (rmsNorm 0 (h + τ • (h * Z))
+          * (θ.read ℓ + τ • η.read ℓ)) * (θ.write ℓ + τ • η.write ℓ))
+        ((A.f ℓ (rmsNorm 0 h * θ.read ℓ) * θ.write ℓ)
+          * (Y ℓ.succ + β ℓ.succ • (1 : Matrix d d ℝ))) 0 := by
+      refine hG.congr_deriv ?_
+      show A.f ℓ (rmsNorm 0 h * θ.read ℓ) * (θ.write ℓ * Y ℓ.succ + β ℓ.succ • θ.write ℓ) = _
+      rw [Matrix.mul_add, Matrix.mul_add, Matrix.mul_smul, Matrix.mul_smul, Matrix.mul_one,
+        Matrix.mul_assoc]
+    -- the derivative of `τ ↦ 𝓑_{>ℓ−1}(h + τ h Z)` (at the weights `θ + τ η`) at `0`, directly ...
+    have e1 : HasDerivAt
+        (fun τ : ℝ => suffix A 0 (θ + τ • η) ℓ.castSucc (h + τ • (h * Z)))
+        (fderiv ℝ (fun p : Params A dIn dOut × Matrix T d ℝ => suffix A 0 p.1 ℓ.castSucc p.2)
+          (θ, h) (η, h * Z)) 0 := by
+      have hc := hΨ.hasFDerivAt.comp_hasDerivAt_of_eq 0
+        ((hasDerivAt_line_conv θ η).prodMk (hasDerivAt_line_conv h (h * Z))) (by simp)
+      exact hc
+    -- ... and through block `ℓ`: `𝓑_{>ℓ−1}(h') = 𝓑_{>ℓ}(f_ℓ(N(h') W) V)`
+    have e2 : HasDerivAt
+        (fun τ : ℝ => suffix A 0 (θ + τ • η) ℓ.castSucc (h + τ • (h * Z)))
+        (fderiv ℝ (fun p : Params A dIn dOut × Matrix T d ℝ => suffix A 0 p.1 ℓ.succ p.2)
+          (θ, A.f ℓ (rmsNorm 0 h * θ.read ℓ) * θ.write ℓ)
+          (η, (A.f ℓ (rmsNorm 0 h * θ.read ℓ) * θ.write ℓ)
+            * (Y ℓ.succ + β ℓ.succ • (1 : Matrix d d ℝ)))) 0 := by
+      have hc := hΦ.hasFDerivAt.comp_hasDerivAt_of_eq 0 ((hasDerivAt_line_conv θ η).prodMk hG')
+        (by simp)
+      have hfun : (fun τ : ℝ => suffix A 0 (θ + τ • η) ℓ.castSucc (h + τ • (h * Z)))
+          = (fun p : Params A dIn dOut × Matrix T d ℝ => suffix A 0 p.1 ℓ.succ p.2) ∘
+            fun τ : ℝ => (θ + τ • η, A.f ℓ (rmsNorm 0 (h + τ • (h * Z))
+              * (θ.read ℓ + τ • η.read ℓ)) * (θ.write ℓ + τ • η.write ℓ)) := by
+        funext τ
+        simp only [Function.comp_apply, suffix_castSucc, Pi.zero_apply, Matrix.mul_zero, zero_add,
+          hχ]
+        rfl
+      rw [hfun]
+      exact hc
+    -- both sides are derivatives of the joint maps `(θ', h') ↦ 𝓑(h')`; the right one is the
+    -- left side of (16) for `ℓ` at `g`, which is `0` by the induction hypothesis
+    calc _ = _ := fderiv_partial_add_conv
+          (Φ := fun θ' h' => suffix A 0 θ' ℓ.castSucc h') hΨ η (h * Z)
+      _ = _ := e1.unique e2
+      _ = _ := (fderiv_partial_add_conv (Φ := fun θ' h' => suffix A 0 θ' ℓ.succ h') hΦ η _).symm
+      _ = 0 := ih (fun ℓ' hℓ' => hY ℓ' ((Fin.castSucc_le_succ ℓ).trans hℓ')) _ hg0
 
 end Skips
