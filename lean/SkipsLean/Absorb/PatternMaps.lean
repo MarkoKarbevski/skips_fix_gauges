@@ -72,6 +72,7 @@ private theorem relu_eq_ite_pat (z : ℝ) : (if decide (0 < z) then z else 0) = 
   · simp only [decide_eq_false hz, Bool.false_eq_true, ite_false, relu,
       max_eq_right (not_lt.1 hz)]
 
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
 /-- **Proof of Proposition 4.7, Step 1, "with this pattern, `F_Z(θ) = F^π_Z(θ)`", at one input:**
 a ReLU network without normalization, with any stream matrices, is the network of its own
 pattern. -/
@@ -105,6 +106,7 @@ noncomputable def maskedBatch (S : Fin L → Matrix d d ℝ) {n : ℕ}
     (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) : Fin n → Matrix T dOut ℝ :=
   fun i => eval (Arch.masked (π i)) S (θ.toMasked (π i)) (X i)
 
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
 /-- On a batch, a ReLU network is the map `F^π_Z` of its own patterns. -/
 theorem evalBatch_relu_eq_maskedBatch (S : Fin L → Matrix d d ℝ) {n : ℕ}
     (X : Fin n → Matrix T dIn ℝ)
@@ -152,6 +154,7 @@ private theorem analyticOnNhd_eval_masked_pat (S : Fin L → Matrix d d ℝ)
       eval (Arch.masked π) S θ' x) Set.univ :=
   analyticOnNhd_eval_params (Arch.masked π) S (analyticOnNhd_mask_pat π) analyticOnNhd_id x
 
+omit [DecidableEq d] in
 /-- **Proof of Proposition 4.7, Step 1, "a polynomial map of the weights":** `F^π_Z` is
 real-analytic in the weights. -/
 theorem analyticOnNhd_maskedBatch (S : Fin L → Matrix d d ℝ) {n : ℕ}

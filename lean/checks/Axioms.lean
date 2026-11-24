@@ -994,3 +994,11 @@ import SkipsLean
 #print axioms Skips.two_mul_card_le_of_eval_eq_skipless_gelu
 #print axioms Skips.two_mul_card_le_of_eval_eq_skipless_relu_of_norm_lt_one
 #print axioms Skips.two_mul_card_le_of_eval_eq_skipless_gelu_of_norm_lt_one
+#print axioms Skips.eval_relu_eq_eval_masked
+#print axioms Skips.evalBatch_relu_eq_maskedBatch
+#print axioms Skips.analyticOnNhd_maskedBatch
+#print axioms Skips.finrank_range_fderiv_maskedBatch_skipless_add_le
+#print axioms Skips.jacobianRank_add_le_residual_relu_of_ne_zero
+#print axioms Skips.isOpen_setOf_isFull
+#print axioms Skips.ae_isFull_imp_eval_ne_skipless_relu
+#print axioms Skips.ae_eventually_isFull_smallWrites
