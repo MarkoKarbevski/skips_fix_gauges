@@ -33,7 +33,8 @@ The route of the proofs, from the full skip (`OneBlock/LearnedSkipKinds.lean`):
   to a point with a triangular skip; the generic functional dimension of the triangular family is
   the largest (`ae_funDimSkips_ge`); the restricted family has at most the functional dimension of
   the full one (`funDimSkips_comp_le`, `funDimLearned_add_le_rmsNorm`).
-Not stated here: ReLU, ReLU², ReGLU and attention blocks; blocks narrower than `d`; `ε = 0`.
+Attention blocks: `OneBlock/LearnedSkipTriangularSmooth.lean`; ReLU, ReLU² and ReGLU blocks:
+`OneBlock/LearnedSkipTriangularRescale.lean`. Not stated: blocks narrower than `d`; `ε = 0`.
 -/
 
 namespace Skips

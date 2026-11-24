@@ -33,8 +33,8 @@ width with at least one hidden unit:
 The route is that of `OneBlock/LearnedSkipRescale.lean`, with Lemma B.3 for ReGLU as in
 `flatOn_noKinkGateRMS_le_reglu_residual_rmsNorm` and the residual value
 `funDim_reglu_oneBlock_residual_rmsNorm`. Numeric check:
-`learned_skip_relu_attention_check_2026-11-24.py`. Not stated here: the upper triangular skip;
-`ε = 0`.
+`learned_skip_relu_attention_check_2026-11-24.py`. The upper triangular skip:
+`OneBlock/LearnedSkipTriangularRescale.lean`. Not stated: `ε = 0`.
 -/
 
 namespace Skips

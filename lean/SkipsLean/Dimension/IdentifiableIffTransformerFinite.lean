@@ -85,10 +85,12 @@ theorem ae_funDim_attentionMlp_skipless_iff_ae_locally_cob_heads_perm
 /-- **Proposition 4.5 of the skips paper, for skipless networks of attention blocks and MLP blocks
 with a real-analytic activation, in any order, without normalization, with the permutations of the
 heads and of the hidden units and the sign flips of the hidden units (the finite symmetries for an
-odd activation: tanh):** `fd = P − (L + 1) d² − s` at almost every parameter (`s = 2 ∑ H d_h²`) if
-and only if at almost every parameter `θ` every `θ'` near `θ` with the same function is `θ` after a
-permutation of the heads, a permutation of the hidden units of every block, sign flips of hidden
-units, changes of basis inside the heads and a change of basis by invertible `G_0, …, G_L`. -/
+odd activation: tanh; for an activation that is not odd, such as GELU, the images under the sign
+flips are not symmetric, and the paper's form is the one with the permutations alone):** `fd = P −
+(L + 1) d² − s` at almost every parameter (`s = 2 ∑ H d_h²`) if and only if at almost every
+parameter `θ` every `θ'` near `θ` with the same function is `θ` after a permutation of the heads, a
+permutation of the hidden units of every block, sign flips of hidden units, changes of basis inside
+the heads and a change of basis by invertible `G_0, …, G_L`. -/
 theorem ae_funDim_attentionMlp_skipless_iff_ae_locally_cob_heads_perm_flip
     (hσ : AnalyticOnNhd ℝ σ Set.univ)
     (μ : Measure (Params
@@ -168,11 +170,12 @@ theorem ae_funDim_attentionMlp_skipless_iff_ae_locally_cob_heads_rmsNorm_perm
 /-- **Proposition 4.5 of the skips paper, for skipless networks of attention blocks and MLP blocks
 with a real-analytic activation, in any order, under pre-RMSNorm with `ε > 0`, with the permutations
 of the heads and of the hidden units and the sign flips of the hidden units (the finite symmetries
-for an odd activation: tanh):** `fd = P − (L + 1) d(d−1)/2 − s` at almost every parameter (`s = 2 ∑
-H d_h²`) if and only if at almost every parameter `θ` every `θ'` near `θ` with the same function is
-`θ` after a permutation of the heads, a permutation of the hidden units of every block, sign flips
-of hidden units, changes of basis inside the heads and a change of basis by orthogonal `Q_0, …,
-Q_L`. -/
+for an odd activation: tanh; for an activation that is not odd, such as GELU, the images under the
+sign flips are not symmetric, and the paper's form is the one with the permutations alone):** `fd =
+P − (L + 1) d(d−1)/2 − s` at almost every parameter (`s = 2 ∑ H d_h²`) if and only if at almost
+every parameter `θ` every `θ'` near `θ` with the same function is `θ` after a permutation of the
+heads, a permutation of the hidden units of every block, sign flips of hidden units, changes of
+basis inside the heads and a change of basis by orthogonal `Q_0, …, Q_L`. -/
 theorem ae_funDim_attentionMlp_skipless_iff_ae_locally_cob_heads_rmsNorm_perm_flip
     (hε : 0 < ε) (hσ : AnalyticOnNhd ℝ σ Set.univ)
     (μ : Measure (Params

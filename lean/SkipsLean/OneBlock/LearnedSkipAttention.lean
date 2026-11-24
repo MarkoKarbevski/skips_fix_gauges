@@ -34,8 +34,8 @@ Stated here:
   value): at almost every `(θ, A)` the functional dimension is `P + d² − d (d − 1) − 2 H d_h²`,
   which is `d (d + 1)/2` more than the residual network at almost every `θ'`.
 
-Numeric check: `learned_skip_relu_attention_check_2026-11-24.py`. Not stated here: the upper
-triangular skip; `ε = 0`.
+Numeric check: `learned_skip_relu_attention_check_2026-11-24.py`. The upper triangular
+skip: `OneBlock/LearnedSkipTriangularSmooth.lean`. Not stated: `ε = 0`.
 -/
 
 namespace Skips

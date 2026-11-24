@@ -4,9 +4,10 @@ import SkipsLean.Symmetry.FiniteSymmetries
 /-!
 # The equality condition is local identifiability up to all the symmetries: residual networks
 
-Paper (dimension paper, Proposition 4.6; skips paper, Proposition 4.5): "A network satisfies the
-equality condition if and only if, at generic parameters, it is locally identifiable up to its
-symmetries." Definition 4.5 of the dimension paper (4.4 of the skips paper): "A network is
+Paper (skips paper, Proposition 4.5): "A skipless or a residual network satisfies the equality
+condition if and only if, at generic parameters, it is locally identifiable up to its symmetries."
+(The dimension paper, Proposition 4.6, has skipless networks only.) Definition 4.4 of the skips
+paper (4.5 of the dimension paper): "A network is
 identifiable up to its symmetries at `θ` if every `θ′` with `F_{θ′} = F_θ` is the image of `θ`
 under a symmetry: a change of basis […], a symmetry inside a block, or a composition of these. It
 is locally identifiable at `θ` if this holds for every `θ′` in some neighborhood of `θ`." The
@@ -78,10 +79,12 @@ theorem ae_funDim_mlp_residual_iff_ae_locally_cob_perm
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of MLP blocks with a real-analytic
 activation (tanh, GELU), without normalization, with the permutations and the sign flips of the
-hidden units (the finite symmetries for an odd activation: tanh):** `fd = P − d²` at almost every
-parameter if and only if at almost every parameter `θ` every `θ'` near `θ` with the same function is
-`θ` after a permutation of the hidden units of every block, sign flips of hidden units, a change of
-basis by one invertible `G` at all hidden states. -/
+hidden units (the finite symmetries for an odd activation: tanh; for an activation that is not odd,
+such as GELU, the images under the sign flips are not symmetric, and the paper's form is the one
+with the permutations alone):** `fd = P − d²` at almost every parameter if and only if at almost
+every parameter `θ` every `θ'` near `θ` with the same function is `θ` after a permutation of the
+hidden units of every block, sign flips of hidden units, a change of basis by one invertible `G` at
+all hidden states. -/
 theorem ae_funDim_mlp_residual_iff_ae_locally_cob_perm_flip
     (hσ : AnalyticOnNhd ℝ σ Set.univ)
     (μ : Measure (Params
@@ -153,10 +156,12 @@ theorem ae_funDim_mlp_residual_iff_ae_locally_cob_rmsNorm_perm
 
 /-- **Proposition 4.5 of the skips paper, for residual networks of MLP blocks with a real-analytic
 activation (tanh, GELU), under pre-RMSNorm with `ε > 0`, with the permutations and the sign flips of
-the hidden units (the finite symmetries for an odd activation: tanh):** `fd = P − d(d−1)/2` at
-almost every parameter if and only if at almost every parameter `θ` every `θ'` near `θ` with the
-same function is `θ` after a permutation of the hidden units of every block, sign flips of hidden
-units, a change of basis by one orthogonal `Q` at all hidden states. -/
+the hidden units (the finite symmetries for an odd activation: tanh; for an activation that is not
+odd, such as GELU, the images under the sign flips are not symmetric, and the paper's form is the
+one with the permutations alone):** `fd = P − d(d−1)/2` at almost every parameter if and only if at
+almost every parameter `θ` every `θ'` near `θ` with the same function is `θ` after a permutation of
+the hidden units of every block, sign flips of hidden units, a change of basis by one orthogonal `Q`
+at all hidden states. -/
 theorem ae_funDim_mlp_residual_iff_ae_locally_cob_rmsNorm_perm_flip
     (hε : 0 < ε) (hσ : AnalyticOnNhd ℝ σ Set.univ)
     (μ : Measure (Params
@@ -389,11 +394,12 @@ theorem ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads_perm
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks and MLP blocks
 with a real-analytic activation, in any order, without normalization, with the permutations of the
 heads and of the hidden units and the sign flips of the hidden units (the finite symmetries for an
-odd activation: tanh):** `fd = P − d² − s` at almost every parameter (`s = 2 ∑ H d_h²`) if and only
-if at almost every parameter `θ` every `θ'` near `θ` with the same function is `θ` after a
-permutation of the heads, a permutation of the hidden units of every block, sign flips of hidden
-units, changes of basis inside the heads and a change of basis by one invertible `G` at all hidden
-states. -/
+odd activation: tanh; for an activation that is not odd, such as GELU, the images under the sign
+flips are not symmetric, and the paper's form is the one with the permutations alone):** `fd = P −
+d² − s` at almost every parameter (`s = 2 ∑ H d_h²`) if and only if at almost every parameter `θ`
+every `θ'` near `θ` with the same function is `θ` after a permutation of the heads, a permutation of
+the hidden units of every block, sign flips of hidden units, changes of basis inside the heads and a
+change of basis by one invertible `G` at all hidden states. -/
 theorem ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads_perm_flip
     (hσ : AnalyticOnNhd ℝ σ Set.univ)
     (μ : Measure (Params
@@ -482,11 +488,12 @@ theorem ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads_rmsNorm_perm
 /-- **Proposition 4.5 of the skips paper, for residual networks of attention blocks and MLP blocks
 with a real-analytic activation, in any order, under pre-RMSNorm with `ε > 0`, with the permutations
 of the heads and of the hidden units and the sign flips of the hidden units (the finite symmetries
-for an odd activation: tanh):** `fd = P − d(d−1)/2 − s` at almost every parameter (`s = 2 ∑ H d_h²`)
-if and only if at almost every parameter `θ` every `θ'` near `θ` with the same function is `θ` after
-a permutation of the heads, a permutation of the hidden units of every block, sign flips of hidden
-units, changes of basis inside the heads and a change of basis by one orthogonal `Q` at all hidden
-states. -/
+for an odd activation: tanh; for an activation that is not odd, such as GELU, the images under the
+sign flips are not symmetric, and the paper's form is the one with the permutations alone):** `fd =
+P − d(d−1)/2 − s` at almost every parameter (`s = 2 ∑ H d_h²`) if and only if at almost every
+parameter `θ` every `θ'` near `θ` with the same function is `θ` after a permutation of the heads, a
+permutation of the hidden units of every block, sign flips of hidden units, changes of basis inside
+the heads and a change of basis by one orthogonal `Q` at all hidden states. -/
 theorem ae_funDim_attentionMlp_residual_iff_ae_locally_cob_heads_rmsNorm_perm_flip
     (hε : 0 < ε) (hσ : AnalyticOnNhd ℝ σ Set.univ)
     (μ : Measure (Params

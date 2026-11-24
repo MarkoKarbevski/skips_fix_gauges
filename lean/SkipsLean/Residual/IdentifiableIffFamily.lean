@@ -5,9 +5,10 @@ import SkipsLean.Dimension.IdentifiableConverseFamily
 # The equality condition is local identifiability, with permutations and sign flips: residual
     networks
 
-Paper (dimension paper, Proposition 4.6; skips paper, Proposition 4.5): "A network satisfies the
-equality condition if and only if, at generic parameters, it is locally identifiable up to its
-symmetries." Definition 4.5 of the dimension paper (4.4 of the skips paper): "A network is
+Paper (skips paper, Proposition 4.5): "A skipless or a residual network satisfies the equality
+condition if and only if, at generic parameters, it is locally identifiable up to its symmetries."
+(The dimension paper, Proposition 4.6, has skipless networks only.) Definition 4.4 of the skips
+paper (4.5 of the dimension paper): "A network is
 identifiable up to its symmetries at `θ` if every `θ′` with `F_{θ′} = F_θ` is the image of `θ`
 under a symmetry: a change of basis […], a symmetry inside a block, or a composition of these."
 The symmetries inside the blocks (dimension paper, Appendix B): "Permutations of hidden units or
