@@ -601,7 +601,150 @@ theorem exists_sqTarget_mem_span_of_reluSqCell (Wr : Matrix p m ℝ) (b : m → 
         sqTarget M Wr b Ww S o ∈
           Submodule.span ℝ ((fun i => sqForm (Wrᵀ i) (b i)) '' (U : Set m)) ⊔
             Submodule.span ℝ ((fun j => sqForm (Wr'ᵀ j) (b' j)) '' (F₂ : Set m')) := by
-  sorry
+  classical
+  -- (C) at every input off the hyperplanes
+  have hC := cell_eq_rsn Wr b Ww c Wr' b' Ww' c' M hcell
+  -- the classes `J_i` of the units of `B_{θ′}` with read and bias `λ (w_i, b_i)`, `λ ≠ 0`
+  obtain ⟨J, hJ⟩ : ∃ J : m → Finset m', ∀ i j, j ∈ J i ↔
+      ∃ r : ℝ, r ≠ 0 ∧ Wr'ᵀ j = r • Wrᵀ i ∧ b' j = r * b i :=
+    ⟨fun i => Finset.univ.filter fun j => ∃ r : ℝ, r ≠ 0 ∧ Wr'ᵀ j = r • Wrᵀ i ∧ b' j = r * b i,
+      fun i j => by simp⟩
+  have hlam0 : ∀ i j, ∃ r : ℝ, j ∈ J i → r ≠ 0 ∧ Wr'ᵀ j = r • Wrᵀ i ∧ b' j = r * b i := by
+    intro i j
+    by_cases hj : j ∈ J i
+    · obtain ⟨r, hr'⟩ := (hJ i j).1 hj
+      exact ⟨r, fun _ => hr'⟩
+    · exact ⟨0, fun h => absurd h hj⟩
+  choose lam hlam using hlam0
+  -- the classes are disjoint (`hH`), and their units have nonzero reads
+  have hdisj : ∀ i i' j, j ∈ J i → j ∈ J i' → i = i' := by
+    intro i i' j h1 h2
+    obtain ⟨r, hr0, hw1, hb1⟩ := (hJ i j).1 h1
+    obtain ⟨r', -, hw2, hb2⟩ := (hJ i' j).1 h2
+    by_contra hne
+    refine hH i i' hne (r⁻¹ * r') ⟨?_, ?_⟩
+    · rw [mul_smul, ← hw2, hw1, smul_smul, inv_mul_cancel₀ hr0, one_smul]
+    · rw [mul_assoc, ← hb2, hb1, ← mul_assoc, inv_mul_cancel₀ hr0, one_mul]
+  have hJne : ∀ i j, j ∈ J i → Wr'ᵀ j ≠ 0 := by
+    intro i j hj h0
+    obtain ⟨hl0, hw', -⟩ := hlam i j hj
+    rw [h0] at hw'
+    exact hr i ((smul_eq_zero.1 hw'.symm).resolve_left hl0)
+  -- `P_i`, `N_i` and Step 1: `ŵ_i = P_i − N_i`
+  obtain ⟨P, hP⟩ : ∃ P : m → q → ℝ, ∀ i o,
+      P i o = ∑ j ∈ J i, (if 0 < lam i j then lam i j ^ 2 * Ww' j o else 0) := ⟨_, fun _ _ => rfl⟩
+  obtain ⟨N, hN⟩ : ∃ N : m → q → ℝ, ∀ i o,
+      N i o = ∑ j ∈ J i, (if 0 < lam i j then 0 else lam i j ^ 2 * Ww' j o) := ⟨_, fun _ _ => rfl⟩
+  have hK : ∀ i o, Ww i o = P i o - N i o := fun i o => by
+    rw [hP, hN]
+    exact step1_rsn Wr b Ww Wr' b' Ww' M hr hH hC i (J i) (lam i)
+      (fun j hj r hr0 h => hj ((hJ i j).2 ⟨r, hr0, h⟩)) (hlam i) o
+  -- `F`: the units with a nonzero read in no class
+  obtain ⟨F, hF⟩ : ∃ F : Finset m', ∀ j, j ∈ F ↔ ¬ Wr'ᵀ j = 0 ∧ ∀ i, j ∉ J i :=
+    ⟨Finset.univ.filter fun j => ¬ Wr'ᵀ j = 0 ∧ ∀ i, j ∉ J i, fun j => by simp⟩
+  -- the two cells far away, and `F₁`, `F₂`
+  obtain ⟨x₁, x₂, ⟨ha1, ha1'⟩, ⟨ha2, ha2'⟩, hsep⟩ := exists_far_rsn Wr b Wr' b' hr
+  have hdisjF : Disjoint (F.filter fun j => 0 < x₁ ⬝ᵥ Wr'ᵀ j + b' j)
+      (F.filter fun j => 0 < x₂ ⬝ᵥ Wr'ᵀ j + b' j) :=
+    Finset.disjoint_filter.2 fun j hj h1 h2 => hsep j ((hF j).1 hj).1 ⟨h1, h2⟩
+  -- `S`: `μ_i = −ŵ_i` (`P_i = 0`); `U`: `μ_i ∉ {0, −ŵ_i}`
+  obtain ⟨S, hS⟩ : ∃ S : Finset m, ∀ i, i ∈ S ↔ ∀ o, P i o = 0 :=
+    ⟨Finset.univ.filter fun i => ∀ o, P i o = 0, fun i => by simp⟩
+  obtain ⟨U, hU⟩ : ∃ U : Finset m, ∀ i, i ∈ U ↔ (∃ o, N i o ≠ 0) ∧ ∃ o, P i o ≠ 0 :=
+    ⟨Finset.univ.filter fun i => (∃ o, N i o ≠ 0) ∧ ∃ o, P i o ≠ 0, fun i => by simp⟩
+  have hSU : Disjoint S U := Finset.disjoint_left.2 fun i hiS hiU => by
+    obtain ⟨o, ho⟩ := ((hU i).1 hiU).2
+    exact ho ((hS i).1 hiS o)
+  -- Step 3: `τ_o = ∑_{i ∈ U} N_{i,o} φ_i + ∑_{j ∈ F open at x} ŵ'_{j,o} φ'_j`
+  have hmem : ∀ x : p → ℝ, (∀ i, x ⬝ᵥ Wrᵀ i + b i ≠ 0) →
+      (∀ j, x ⬝ᵥ Wr'ᵀ j + b' j = 0 → Wr'ᵀ j = 0) → ∀ o,
+      sqTarget M Wr b Ww S o ∈
+        Submodule.span ℝ ((fun i => sqForm (Wrᵀ i) (b i)) '' (U : Set m)) ⊔
+          Submodule.span ℝ ((fun j => sqForm (Wr'ᵀ j) (b' j)) ''
+            ((F.filter fun j => 0 < x ⬝ᵥ Wr'ᵀ j + b' j : Finset m') : Set m')) := by
+    intro x hx hx' o
+    have h2 := step2_rsn Wr b Ww Wr' b' Ww' M J lam F P N hlam hdisj hF hP hN hK x hx o
+      (hC x hx hx' o)
+    have hpt : ∀ i, N i o + (if i ∈ S then Ww i o else 0) = if i ∈ U then N i o else 0 := by
+      intro i
+      by_cases hiS : i ∈ S
+      · have hiU : i ∉ U := Finset.disjoint_left.1 hSU hiS
+        rw [ite_eq_left hiS, ite_eq_right hiU, hK i o, (hS i).1 hiS o]
+        ring
+      · rw [ite_eq_right hiS, add_zero]
+        by_cases hiU : i ∈ U
+        · rw [ite_eq_left hiU]
+        · rw [ite_eq_right hiU]
+          -- `i ∉ S` gives some `P_{i,o'} ≠ 0`, so `i ∉ U` forces `N_i = 0`
+          have hP' : ∃ o', P i o' ≠ 0 := by
+            by_contra h
+            push Not at h
+            exact hiS ((hS i).2 h)
+          by_contra hNo
+          exact hiU ((hU i).2 ⟨⟨o, hNo⟩, hP'⟩)
+    have hsum : ∑ i, N i o • sqForm (Wrᵀ i) (b i) + ∑ i ∈ S, Ww i o • sqForm (Wrᵀ i) (b i)
+        = ∑ i, (if i ∈ U then N i o else 0) • sqForm (Wrᵀ i) (b i) := by
+      have e : ∑ i ∈ S, Ww i o • sqForm (Wrᵀ i) (b i)
+          = ∑ i, if i ∈ S then Ww i o • sqForm (Wrᵀ i) (b i) else 0 := by
+        rw [Finset.sum_ite_mem, Finset.univ_inter]
+      rw [e, ← Finset.sum_add_distrib]
+      refine Finset.sum_congr rfl fun i _ => ?_
+      rw [← hpt i, add_smul, ite_smul, zero_smul]
+    rw [sqTarget, h2, add_right_comm, hsum]
+    refine Submodule.add_mem_sup (Submodule.sum_mem _ fun i _ => ?_)
+      (Submodule.sum_mem _ fun j hj => Submodule.smul_mem _ _ (Submodule.subset_span ⟨j, hj, rfl⟩))
+    by_cases hiU : i ∈ U
+    · rw [ite_eq_left hiU]
+      exact Submodule.smul_mem _ _ (Submodule.subset_span ⟨i, hiU, rfl⟩)
+    · rw [ite_eq_right hiU, zero_smul]
+      exact Submodule.zero_mem _
+  -- the count: the classes have `≥ 1` units, `≥ 2` for `i ∈ U`; with `F₁`, `F₂` they are disjoint
+  have hJ1 : ∀ i, 1 ≤ (J i).card := by
+    intro i
+    obtain ⟨o, ho⟩ := Function.ne_iff.1 (hw i)
+    refine Finset.card_pos.2 (Finset.nonempty_iff_ne_empty.2 fun h0 => ho ?_)
+    rw [hK i o, hP, hN, h0, Finset.sum_empty, Finset.sum_empty, sub_zero, Pi.zero_apply]
+  have hJ2 : ∀ i ∈ U, 2 ≤ (J i).card := by
+    intro i hi
+    obtain ⟨⟨o, hNo⟩, ⟨o', hPo⟩⟩ := (hU i).1 hi
+    rw [hN] at hNo
+    rw [hP] at hPo
+    obtain ⟨j, hj, hj0⟩ := Finset.exists_ne_zero_of_sum_ne_zero hNo
+    obtain ⟨j', hj', hj0'⟩ := Finset.exists_ne_zero_of_sum_ne_zero hPo
+    have hneg : ¬ 0 < lam i j := fun h => hj0 (ite_eq_left h)
+    have hpos : 0 < lam i j' := by
+      by_contra h
+      exact hj0' (ite_eq_right h)
+    exact Finset.one_lt_card.2 ⟨j, hj, j', hj', fun h => hneg (h ▸ hpos)⟩
+  have hsplit := sum_split_rsn J F (fun j => Wr'ᵀ j = 0) hdisj hF
+    (fun j => if Wr'ᵀ j = 0 then (0 : ℕ) else 1) (fun j hj => ite_eq_left hj)
+  have hle : ∑ j, (if Wr'ᵀ j = 0 then (0 : ℕ) else 1) ≤ Fintype.card m' := by
+    have h1 := Finset.sum_le_card_nsmul Finset.univ (fun j => if Wr'ᵀ j = 0 then (0 : ℕ) else 1) 1
+      (fun j _ => by split_ifs <;> simp)
+    simpa using h1
+  have hJc : ∀ i, ∑ j ∈ J i, (if Wr'ᵀ j = 0 then (0 : ℕ) else 1) = (J i).card := fun i => by
+    rw [Finset.card_eq_sum_ones]
+    exact Finset.sum_congr rfl fun j hj => ite_eq_right (hJne i j hj)
+  have hFc : ∑ j ∈ F, (if Wr'ᵀ j = 0 then (0 : ℕ) else 1) = F.card := by
+    rw [Finset.card_eq_sum_ones]
+    exact Finset.sum_congr rfl fun j hj => ite_eq_right ((hF j).1 hj).1
+  have hF12 : (F.filter fun j => 0 < x₁ ⬝ᵥ Wr'ᵀ j + b' j).card
+      + (F.filter fun j => 0 < x₂ ⬝ᵥ Wr'ᵀ j + b' j).card ≤ F.card := by
+    rw [← Finset.card_union_of_disjoint hdisjF]
+    exact Finset.card_le_card (Finset.union_subset (Finset.filter_subset _ _)
+      (Finset.filter_subset _ _))
+  have hmU : Fintype.card m + U.card ≤ ∑ i, (J i).card := by
+    have h1 : ∑ i, (1 + if i ∈ U then 1 else 0) ≤ ∑ i, (J i).card :=
+      Finset.sum_le_sum fun i _ => by
+        by_cases hi : i ∈ U
+        · rw [ite_eq_left hi]; exact hJ2 i hi
+        · rw [ite_eq_right hi]; exact hJ1 i
+    rw [Finset.sum_add_distrib, Finset.sum_ite_mem, Finset.univ_inter] at h1
+    simpa using h1
+  rw [Finset.sum_congr rfl fun i _ => hJc i, hFc] at hsplit
+  refine ⟨S, U, F.filter fun j => 0 < x₁ ⬝ᵥ Wr'ᵀ j + b' j,
+    F.filter fun j => 0 < x₂ ⬝ᵥ Wr'ᵀ j + b' j, hSU, hdisjF, by omega,
+    fun o => ⟨hmem x₁ ha1 ha1' o, hmem x₂ ha2 ha2' o⟩⟩
 
 /-- **Proof of Theorem C.2 (iii) of the absorb paper, "Conclusion":** under the hypotheses of the
 three steps, if for all disjoint sets `S`, `U` of units of `B_θ` with `|U| < 2 d` the vectors
