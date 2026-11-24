@@ -29,7 +29,8 @@ hidden units by nonzero factors, for attention blocks the changes of basis insid
 permutations of hidden units or heads and the sign flips of tanh units, which the papers list among
 the symmetries inside the blocks and count in the proof of the converse, are not in the family: the
 direction from local identifiability to the equality condition is proved here for this smaller
-family. The first statements are for
+family (with all the symmetries: `Dimension/IdentifiableIffFamily.lean`,
+`Dimension/IdentifiableIffFinite.lean`). The first statements are for
 any real-analytic blocks, with the changes of basis alone (`s = 0`): they contain tanh and GELU
 blocks, and are also stated for MLP blocks by name.
 

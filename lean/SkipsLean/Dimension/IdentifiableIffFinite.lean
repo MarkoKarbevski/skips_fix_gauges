@@ -69,9 +69,11 @@ theorem ae_funDim_mlp_skipless_iff_ae_locally_cob_perm
 /-- **Proposition 4.6 of the dimension paper and Proposition 4.5 of the skips paper, for skipless
 networks of MLP blocks with a real-analytic activation (tanh, GELU), without normalization, with the
 permutations and the sign flips of the hidden units (the finite symmetries for an odd activation:
-tanh):** `fd = P − (L + 1) d²` at almost every parameter if and only if at almost every parameter
-`θ` every `θ'` near `θ` with the same function is `θ` after a permutation of the hidden units of
-every block, sign flips of hidden units, a change of basis by invertible `G_0, …, G_L`. -/
+tanh; for an activation that is not odd, such as GELU, the images under the sign flips are not
+symmetric, and the paper's form is the one with the permutations alone):** `fd = P − (L + 1) d²` at
+almost every parameter if and only if at almost every parameter `θ` every `θ'` near `θ` with the
+same function is `θ` after a permutation of the hidden units of every block, sign flips of hidden
+units, a change of basis by invertible `G_0, …, G_L`. -/
 theorem ae_funDim_mlp_skipless_iff_ae_locally_cob_perm_flip
     (hσ : AnalyticOnNhd ℝ σ Set.univ)
     (μ : Measure (Params
@@ -126,10 +128,11 @@ theorem ae_funDim_mlp_skipless_iff_ae_locally_cob_rmsNorm_perm
 /-- **Proposition 4.6 of the dimension paper and Proposition 4.5 of the skips paper, for skipless
 networks of MLP blocks with a real-analytic activation (tanh, GELU), under pre-RMSNorm with `ε > 0`,
 with the permutations and the sign flips of the hidden units (the finite symmetries for an odd
-activation: tanh):** `fd = P − (L + 1) d(d−1)/2` at almost every parameter if and only if at almost
-every parameter `θ` every `θ'` near `θ` with the same function is `θ` after a permutation of the
-hidden units of every block, sign flips of hidden units, a change of basis by orthogonal `Q_0, …,
-Q_L`. -/
+activation: tanh; for an activation that is not odd, such as GELU, the images under the sign flips
+are not symmetric, and the paper's form is the one with the permutations alone):** `fd = P − (L + 1)
+d(d−1)/2` at almost every parameter if and only if at almost every parameter `θ` every `θ'` near `θ`
+with the same function is `θ` after a permutation of the hidden units of every block, sign flips of
+hidden units, a change of basis by orthogonal `Q_0, …, Q_L`. -/
 theorem ae_funDim_mlp_skipless_iff_ae_locally_cob_rmsNorm_perm_flip
     (hε : 0 < ε) (hσ : AnalyticOnNhd ℝ σ Set.univ)
     (μ : Measure (Params
