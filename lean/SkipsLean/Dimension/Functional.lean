@@ -349,10 +349,132 @@ theorem mem_flat_of_hasDerivAt'
   · -- not differentiable at `θ`: Mathlib's derivative is `0`
     rw [fderiv_zero_of_not_differentiableAt hx, _root_.zero_apply]
 
+/-- A direction is in the kernel of the Jacobian on a batch of inputs at which the output is
+differentiable if and only if the derivative of the output at every input of the batch vanishes
+along it (`mem_ker_fderiv_evalBatch_iff` with a hypothesis on the batch only). -/
+private theorem mem_ker_fderiv_evalBatch_iff' {n : ℕ} (X : Fin n → Matrix T dIn ℝ)
+    (hX : ∀ i, DifferentiableAt ℝ (fun θ' : Params A dIn dOut => eval A S θ' (X i)) θ)
+    (η : Params A dIn dOut) :
+    η ∈ LinearMap.ker (fderiv ℝ (evalBatch A S X) θ).toLinearMap ↔
+      ∀ i, fderiv ℝ (fun θ' => eval A S θ' (X i)) θ η = 0 := by
+  -- the derivative of the outputs on the batch is the tuple of the derivatives of the outputs
+  have h : fderiv ℝ (evalBatch A S X) θ =
+      ContinuousLinearMap.pi fun i => fderiv ℝ (fun θ' => eval A S θ' (X i)) θ :=
+    fderiv_pi hX
+  rw [LinearMap.mem_ker]
+  show fderiv ℝ (evalBatch A S X) θ η = 0 ↔ _
+  rw [h]
+  constructor
+  · intro h0 i
+    exact congr_fun h0 i
+  · intro h0
+    funext i
+    exact h0 i
+
+/-- Every flat direction is in the kernel of the Jacobian on every batch, with no hypothesis of
+differentiability: on a batch with an input at which the output is not differentiable, the
+Jacobian is `0`. -/
+private theorem flat_le_ker' {n : ℕ} (X : Fin n → Matrix T dIn ℝ) :
+    flat A S θ ≤ LinearMap.ker (fderiv ℝ (evalBatch A S X) θ).toLinearMap := by
+  by_cases hX : ∀ i, DifferentiableAt ℝ (fun θ' : Params A dIn dOut => eval A S θ' (X i)) θ
+  · -- every input of the batch is differentiable: the kernel is that at each input
+    intro η hη
+    rw [flat, Submodule.mem_iInf] at hη
+    rw [mem_ker_fderiv_evalBatch_iff' θ X hX]
+    intro i
+    have hi := hη (X i)
+    rw [LinearMap.mem_ker] at hi
+    exact hi
+  · -- some output is not differentiable, so neither is the tuple, and its derivative is `0`
+    have hnd : ¬DifferentiableAt ℝ (evalBatch A S X) θ := fun h => hX (differentiableAt_pi.1 h)
+    rw [fderiv_zero_of_not_differentiableAt hnd]
+    intro η _
+    exact LinearMap.mem_ker.2 rfl
+
+/-- The argument of `exists_jacobianRank_add_finrank_flatOn`, stated here so that
+`funDim_add_finrank_flat'` can use it: among the batches of inputs of `U`, one whose kernel has
+least dimension has the kernel `K_U(θ)`; then rank–nullity. -/
+private theorem exists_jacobianRank_add_finrank_flatOn_aux (U : Set (Matrix T dIn ℝ))
+    (hU : ∀ x ∈ U, DifferentiableAt ℝ (fun θ' : Params A dIn dOut => eval A S θ' x) θ) :
+    ∃ (n : ℕ) (X : Fin n → Matrix T dIn ℝ), (∀ i, X i ∈ U) ∧
+      jacobianRank A S X θ + Module.finrank ℝ (flatOn A S θ U)
+        = Module.finrank ℝ (Params A dIn dOut) := by
+  -- among the kernels on finite batches of inputs of `U`, take one of least dimension
+  obtain ⟨n, X, hXU, hX⟩ := Nat.sInf_mem (s := {k : ℕ | ∃ (n : ℕ) (X : Fin n → Matrix T dIn ℝ),
+      (∀ i, X i ∈ U) ∧
+        k = Module.finrank ℝ (LinearMap.ker (fderiv ℝ (evalBatch A S X) θ).toLinearMap)})
+    ⟨_, 0, fun i => i.elim0, fun i => i.elim0, rfl⟩
+  refine ⟨n, X, hXU, ?_⟩
+  -- the directions flat on `U` are in the kernel on `X`, since the inputs of `X` are in `U`
+  have hge : flatOn A S θ U ≤ LinearMap.ker (fderiv ℝ (evalBatch A S X) θ).toLinearMap := by
+    intro η hη
+    rw [flatOn, Submodule.mem_iInf] at hη
+    rw [mem_ker_fderiv_evalBatch_iff' θ X (fun i => hU _ (hXU i))]
+    intro i
+    have hi := (Submodule.mem_iInf _).1 (hη (X i)) (hXU i)
+    rw [LinearMap.mem_ker] at hi
+    exact hi
+  -- the kernel on `X` is flat at every input `x` of `U`
+  have hle : LinearMap.ker (fderiv ℝ (evalBatch A S X) θ).toLinearMap ≤ flatOn A S θ U := by
+    intro η hη
+    rw [flatOn, Submodule.mem_iInf]
+    intro x
+    rw [Submodule.mem_iInf]
+    intro hx
+    -- the batch with `x` added has its inputs in `U`
+    have hXU' : ∀ i, (Fin.cons x X : Fin (n + 1) → Matrix T dIn ℝ) i ∈ U := by
+      intro i
+      refine Fin.cases ?_ (fun j => ?_) i
+      · simpa only [Fin.cons_zero] using hx
+      · simpa only [Fin.cons_succ] using hXU j
+    -- adding the input `x` to the batch can only shrink the kernel ...
+    have hle' : LinearMap.ker (fderiv ℝ (evalBatch A S
+          (Fin.cons x X : Fin (n + 1) → Matrix T dIn ℝ)) θ).toLinearMap ≤
+        LinearMap.ker (fderiv ℝ (evalBatch A S X) θ).toLinearMap := by
+      intro ξ hξ
+      rw [mem_ker_fderiv_evalBatch_iff' θ _ (fun i => hU _ (hXU' i))] at hξ
+      rw [mem_ker_fderiv_evalBatch_iff' θ X (fun i => hU _ (hXU i))]
+      intro i
+      simpa only [Fin.cons_succ] using hξ i.succ
+    -- ... and its dimension is not smaller, so the kernel stays the same
+    have heq := Submodule.eq_of_le_of_finrank_le hle' (by
+      rw [← hX]
+      exact Nat.sInf_le ⟨n + 1, Fin.cons x X, hXU', rfl⟩)
+    -- hence the derivative at `x`, the input added, vanishes along `η`
+    rw [← heq, mem_ker_fderiv_evalBatch_iff' θ _ (fun i => hU _ (hXU' i))] at hη
+    have h0 := hη 0
+    simp only [Fin.cons_zero] at h0
+    rw [LinearMap.mem_ker]
+    exact h0
+  -- the kernel on `X` is `K_U(θ)`; rank–nullity on `X`
+  rw [← le_antisymm hle hge]
+  exact jacobianRank_add_finrank_ker (S := S) θ X
+
 /-- `fd(θ) = P - dim K(θ)`, with no hypothesis of differentiability. -/
 theorem funDim_add_finrank_flat' :
     funDim A S θ + Module.finrank ℝ (flat A S θ) = Module.finrank ℝ (Params A dIn dOut) := by
-  sorry
+  -- the inputs outside `U`, where the output is not differentiable at `θ`, put no condition on
+  -- flat directions: `K_U(θ) = K(θ)`
+  have hflat : flatOn A S θ
+      {x | DifferentiableAt ℝ (fun θ' : Params A dIn dOut => eval A S θ' x) θ} = flat A S θ := by
+    refine le_antisymm (fun η hη => ?_) (flat_le_flatOn θ _)
+    rw [flatOn, Submodule.mem_iInf] at hη
+    rw [flat, Submodule.mem_iInf]
+    intro x
+    by_cases hx : DifferentiableAt ℝ (fun θ' : Params A dIn dOut => eval A S θ' x) θ
+    · exact (Submodule.mem_iInf _).1 (hη x) hx
+    · rw [fderiv_zero_of_not_differentiableAt hx]
+      exact LinearMap.mem_ker.2 rfl
+  -- a batch `X₀` of inputs of `U` has rank `P - dim K(θ)`
+  obtain ⟨n₀, X₀, -, h₀⟩ := exists_jacobianRank_add_finrank_flatOn_aux θ
+    {x | DifferentiableAt ℝ (fun θ' : Params A dIn dOut => eval A S θ' x) θ} (fun _ hx => hx)
+  rw [hflat] at h₀
+  -- on every batch the kernel contains `K(θ)`, so the rank is at most that on `X₀`
+  obtain ⟨n, X, hX⟩ := exists_jacobianRank_eq_funDim (S := S) θ
+  have hrn := jacobianRank_add_finrank_ker (S := S) θ X
+  have hmono := Submodule.finrank_mono (flat_le_ker' (S := S) θ X)
+  have hge := jacobianRank_le_funDim (S := S) θ X₀
+  omega
 
 /-- A subspace of flat directions bounds the functional dimension, with no hypothesis of
 differentiability. -/
