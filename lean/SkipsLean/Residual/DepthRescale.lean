@@ -498,6 +498,53 @@ theorem eventually_funDim_smallWrites_mlp_rescale {k : ℕ}
   have h2 := funDim_add_le_residual_mlp_rescale hhom (θ.smallWrites τ) hθ.rank_E hc
   omega
 
+/-! ### Helpers: the conditions of the upper bound are open -/
+
+omit [Fintype T] [Nonempty T] in
+/-- Helper (lower semicontinuity of the rank): if the embedding of `θ₀` has rank `d`, so has the
+embedding of every parameter near `θ₀`. With a left inverse `B` of `E₀`, `det (B E')` is
+continuous in `θ'` and equals `1` at `θ₀`. -/
+private theorem eventually_rank_E_drs
+    (θ₀ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)
+    (h : θ₀.E.rank = Fintype.card d) :
+    ∀ᶠ θ' in 𝓝 θ₀, θ'.E.rank = Fintype.card d := by
+  obtain ⟨B, hB⟩ := Matrix.vecMul_surjective_iff_exists_left_inverse.mp
+    (Matrix.vecMul_surjective_iff_rank_eq_card.mpr h)
+  have hE : Continuous fun θ' : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut => θ'.E :=
+    (Params.linE (A := Arch.mlp (T := T) (d := d) σ id hid) (dIn := dIn)
+      (dOut := dOut)).continuous_of_finiteDimensional
+  have hc : Continuous fun θ' : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut =>
+      (B * θ'.E).det :=
+    (continuous_const.matrix_mul hE).matrix_det
+  have h0 : (B * θ₀.E).det ≠ 0 := by
+    rw [hB, Matrix.det_one]
+    exact one_ne_zero
+  filter_upwards [hc.continuousAt.eventually_ne h0] with θ' h'
+  -- `B E'` is invertible, so `d = rank (B E') ≤ rank E' ≤ d`
+  refine le_antisymm (Matrix.rank_le_card_width _) ?_
+  have hu : IsUnit (B * θ'.E) := (Matrix.isUnit_iff_isUnit_det _).2 (Ne.isUnit h')
+  rw [← Matrix.rank_of_isUnit _ hu]
+  exact Matrix.rank_mul_le_right _ _
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper: if no column of a read of `θ₀` vanishes, the same holds near `θ₀` (each column has
+an entry that is not `0`, and the entries are continuous in the parameters). -/
+private theorem eventually_read_col_ne_zero_drs
+    (θ₀ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)
+    (h : ∀ ℓ i, (fun a => θ₀.read ℓ a i) ≠ 0) :
+    ∀ᶠ θ' in 𝓝 θ₀, ∀ ℓ i, (fun a => θ'.read ℓ a i) ≠ 0 := by
+  refine Filter.eventually_all.2 fun ℓ => Filter.eventually_all.2 fun i => ?_
+  obtain ⟨a, ha⟩ := Function.ne_iff.mp (h ℓ i)
+  have hr : Continuous fun θ' : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut =>
+      θ'.read ℓ :=
+    (Params.linRead (A := Arch.mlp (T := T) (d := d) σ id hid) (dIn := dIn) (dOut := dOut)
+      ℓ).continuous_of_finiteDimensional
+  have hc : Continuous fun θ' : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut =>
+      θ'.read ℓ a i :=
+    hr.matrix_elem a i
+  filter_upwards [hc.continuousAt.eventually_ne ha] with θ' h' h0
+  exact h' (congrFun h0 a)
+
 /-- **Lemma A.30, second sentence, near `θ_τ`:** under the conditions `SmallWritesGeneric`, for
 all small `τ ≠ 0` the residual network has `fd = P − d² − s` at every parameter near `θ_τ`. -/
 theorem eventually_eventually_funDim_smallWrites_mlp_rescale {k : ℕ}
@@ -508,7 +555,25 @@ theorem eventually_eventually_funDim_smallWrites_mlp_rescale {k : ℕ}
     ∀ᶠ τ in 𝓝[≠] (0 : ℝ), ∀ᶠ θ' in 𝓝 (θ.smallWrites τ),
       funDim (Arch.mlp σ id hid) 1 θ' + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
         = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  -- the batch of the first sentence: for small `τ ≠ 0` no pre-activation on it vanishes at
+  -- `θ_τ`, and the rank on it is `P - d² - s`
+  obtain ⟨n, X, -, h⟩ := exists_eventually_jacobianRank_smallWrites_mlp_rescale hσ hhom hU θ hθ
+  have hc := read_col_ne_zero_drs hθ
+  filter_upwards [h] with τ hτ
+  obtain ⟨hpre, hrank⟩ := hτ
+  -- near `θ_τ` the pre-activations on the batch stay off the kinks, where the blocks are `C¹`,
+  -- and the rank on the batch does not drop (Residual/SmallWritesOn.lean)
+  have hnear := eventually_jacobianRank_ge_of_contDiffOn (Arch.mlp σ id hid) (θ.smallWrites τ)
+    rfl 1 (fun ℓ => noZero_drs T (hid ℓ)) (fun ℓ => isOpen_noZero_drs)
+    (fun ℓ => (contDiffOn_map_drs hhom).of_le one_le_two) X (fun i ℓ => hpre i ℓ)
+  -- near `θ_τ` the embedding has rank `d` and no column of a read vanishes, so `fd ≤ P - d² - s`
+  have hE := eventually_rank_E_drs (θ.smallWrites τ) hθ.rank_E
+  have hcol := eventually_read_col_ne_zero_drs (θ.smallWrites τ) hc
+  filter_upwards [hnear, hE, hcol] with θ' h1 h2 h3
+  have h4 := jacobianRank_le_funDim (A := Arch.mlp σ id hid) (S := 1) θ' X
+  have h5 := funDim_add_le_residual_mlp_rescale hhom θ' h2 h3
+  have h6 := h1.2
+  omega
 
 /-- **Lemma A.30 for ReLU blocks, first sentence:** with `d_in, d_out ≥ d ≥ 2` and blocks of any
 widths, for generic parameters `θ` there is a finite batch of inputs at which no limit
@@ -527,7 +592,10 @@ theorem ae_exists_eventually_jacobianRank_smallWrites_relu
         jacobianRank (Arch.mlp relu id hid) 1 X (θ.smallWrites τ)
             + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
           = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) := by
-  sorry
+  -- the conditions of Lemma A.27 hold at generic parameters (`Residual/DepthMlp.lean`)
+  filter_upwards [ae_smallWritesGeneric μ hd hdIn hdOut] with θ hθ
+  exact exists_eventually_jacobianRank_smallWrites_mlp_rescale (fun _ hz => hasDerivAt_relu hz)
+    relu_homogeneous (relu_unitsRescale _ _ _) θ hθ
 
 /-- **Lemma A.30 for ReLU blocks, second sentence:** with `d_in, d_out ≥ d ≥ 2` and blocks of
 any widths, there is an open set `U` of weights on which the residual network has
@@ -547,7 +615,27 @@ theorem exists_isOpen_funDim_smallWrites_relu
         [μ.IsAddHaarMeasure], (∀ ℓ, Fintype.card d ≤ Fintype.card (hid ℓ)) →
         ∀ᵐ θ ∂μ, θ ∈ U → funDim (Arch.mlp relu id hid) 0 θ + L * Fintype.card d ^ 2
           ≤ funDim (Arch.mlp relu id hid) 1 θ) := by
-  sorry
+  -- `U` is the interior of the set where `fd = P - d² - s`
+  refine ⟨interior {θ | funDim (Arch.mlp relu id hid) 1 θ
+      + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
+        = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut)},
+    isOpen_interior, fun θ hθ => interior_subset hθ, ?_, ?_⟩
+  · -- for generic `θ` and small `τ ≠ 0`, `fd = P - d² - s` on a neighborhood of `θ_τ`
+    intro μ _
+    filter_upwards [ae_smallWritesGeneric μ hd hdIn hdOut] with θ hθ
+    filter_upwards [eventually_eventually_funDim_smallWrites_mlp_rescale
+      (fun _ hz => hasDerivAt_relu hz) relu_homogeneous (relu_unitsRescale _ _ _) θ hθ]
+      with τ hτ
+    exact mem_interior_iff_mem_nhds.2 hτ
+  · -- the gain: `fd_0 + (L + 1) d² + s ≤ P = fd_1 + d² + s` (Theorem 4.3 without skips)
+    intro μ _ hhid
+    have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+    filter_upwards [ae_funDim_add_le_skipless_relu μ hdIn hhid] with θ h hθU
+    have h1 : funDim (Arch.mlp relu id hid) 1 θ + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
+        = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) :=
+      interior_subset hθU
+    rw [add_mul, one_mul] at h
+    omega
 
 /-- **Lemma A.30 for ReLU² blocks, first sentence.** -/
 theorem ae_exists_eventually_jacobianRank_smallWrites_reluSq
@@ -564,7 +652,10 @@ theorem ae_exists_eventually_jacobianRank_smallWrites_reluSq
             + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
           = Module.finrank ℝ
               (Params (Arch.mlp (T := T) (d := d) reluSq id hid) dIn dOut) := by
-  sorry
+  -- the conditions of Lemma A.27 hold at generic parameters (`Residual/DepthMlp.lean`)
+  filter_upwards [ae_smallWritesGeneric μ hd hdIn hdOut] with θ hθ
+  exact exists_eventually_jacobianRank_smallWrites_mlp_rescale (fun z _ => hasDerivAt_reluSq z)
+    reluSq_homogeneous (reluSq_unitsRescale _ _ _) θ hθ
 
 /-- **Lemma A.30 for ReLU² blocks, second sentence.** -/
 theorem exists_isOpen_funDim_smallWrites_reluSq
@@ -580,6 +671,27 @@ theorem exists_isOpen_funDim_smallWrites_reluSq
         [μ.IsAddHaarMeasure], (∀ ℓ, Fintype.card d ≤ Fintype.card (hid ℓ)) →
         ∀ᵐ θ ∂μ, θ ∈ U → funDim (Arch.mlp reluSq id hid) 0 θ + L * Fintype.card d ^ 2
           ≤ funDim (Arch.mlp reluSq id hid) 1 θ) := by
-  sorry
+  -- `U` is the interior of the set where `fd = P - d² - s`
+  refine ⟨interior {θ | funDim (Arch.mlp reluSq id hid) 1 θ
+      + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
+        = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) reluSq id hid) dIn dOut)},
+    isOpen_interior, fun θ hθ => interior_subset hθ, ?_, ?_⟩
+  · -- for generic `θ` and small `τ ≠ 0`, `fd = P - d² - s` on a neighborhood of `θ_τ`
+    intro μ _
+    filter_upwards [ae_smallWritesGeneric μ hd hdIn hdOut] with θ hθ
+    filter_upwards [eventually_eventually_funDim_smallWrites_mlp_rescale
+      (fun z _ => hasDerivAt_reluSq z) reluSq_homogeneous (reluSq_unitsRescale _ _ _) θ hθ]
+      with τ hτ
+    exact mem_interior_iff_mem_nhds.2 hτ
+  · -- the gain: `fd_0 + (L + 1) d² + s ≤ P = fd_1 + d² + s` (Theorem 4.3 without skips)
+    intro μ _ hhid
+    have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+    filter_upwards [ae_funDim_add_le_skipless_reluSq μ hdIn hhid] with θ h hθU
+    have h1 : funDim (Arch.mlp reluSq id hid) 1 θ
+        + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
+        = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) reluSq id hid) dIn dOut) :=
+      interior_subset hθU
+    rw [add_mul, one_mul] at h
+    omega
 
 end Skips
