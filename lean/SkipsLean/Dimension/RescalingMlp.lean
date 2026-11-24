@@ -314,7 +314,38 @@ theorem funDim_add_le_skipless_mlp_rescale_rmsNorm {k : ℕ}
     funDim (Arch.mlp σ (rmsNorm ε) hid) 0 θ
         + ((L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2) + ∑ ℓ, Fintype.card (hid ℓ))
       ≤ Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  -- the linear map `(X, α) ↦ cobDir θ X + rescaleDirMlp k θ α`, with antisymmetric `X_ℓ`
+  let Φ : ((Fin (L + 1) → antisymmetric d) × (∀ ℓ, hid ℓ → ℝ)) →ₗ[ℝ]
+      Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut :=
+    ((cobDirLin θ).comp (LinearMap.compLeft (antisymmetric d).subtype (Fin (L + 1)))).coprod
+      (rescaleDirMlpLin k θ)
+  -- its directions are flat, since both summands are
+  have hV : LinearMap.range Φ ≤ flat (Arch.mlp σ (rmsNorm ε) hid) 0 θ := by
+    rintro _ ⟨p, rfl⟩
+    rw [LinearMap.coprod_apply]
+    exact Submodule.add_mem _
+      (cobDir_mem_flat_skipless_rmsNorm' θ ε rfl (fun ℓ => (p.1 ℓ : Matrix d d ℝ))
+        fun ℓ => (p.1 ℓ).2)
+      (rescaleDirMlp_mem_flat hσ θ 0 p.2)
+  -- it is injective (Lemma B.1)
+  have hinj : Function.Injective Φ := by
+    intro p q hpq
+    rw [LinearMap.coprod_apply, LinearMap.coprod_apply] at hpq
+    have h' : cobDir θ (fun ℓ => (p.1 ℓ : Matrix d d ℝ)) + rescaleDirMlp k θ p.2
+        = cobDir θ (fun ℓ => (q.1 ℓ : Matrix d d ℝ)) + rescaleDirMlp k θ q.2 := hpq
+    have h2 : ((fun ℓ => (p.1 ℓ : Matrix d d ℝ)), p.2) =
+        ((fun ℓ => (q.1 ℓ : Matrix d d ℝ)), q.2) :=
+      cobDir_add_rescaleDirMlp_injective k θ hE hw hc h'
+    have h3 := Prod.mk.inj h2
+    exact Prod.ext (funext fun ℓ => Subtype.ext (congrFun h3.1 ℓ)) h3.2
+  -- the domain has dimension `(L + 1) d (d - 1) / 2 + s`
+  have hdim : Module.finrank ℝ ((Fin (L + 1) → antisymmetric d) × (∀ ℓ, hid ℓ → ℝ)) =
+      (L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2) + ∑ ℓ, Fintype.card (hid ℓ) := by
+    rw [Module.finrank_prod, Module.finrank_pi_fintype, finrank_antisymmetric, Finset.sum_const,
+      Finset.card_univ, Fintype.card_fin, smul_eq_mul, Module.finrank_pi_fintype]
+    simp only [Module.finrank_fintype_fun_eq_card]
+  have h := funDim_add_finrank_le_of_le_flat' θ _ hV
+  rwa [LinearMap.finrank_range_of_inj hinj, hdim] at h
 
 /-- At generic parameters no column of a read of an MLP network vanishes. -/
 theorem ae_read_col_ne_zero [Nonempty d]
