@@ -423,7 +423,130 @@ theorem exists_bound_eval_writeScale (hχ : A.χ = rmsNorm 0)
     ∃ C t₀ : ℝ, ∀ X ∈ 𝒳, ∀ t : ℝ, t₀ ≤ t →
       DefinedAt A 1 (θ.writeScale t) X ∧
         ‖eval A 1 (θ.writeScale t) X - eval A 0 θ X‖ ≤ C / t := by
-  sorry
+  -- `s k X`: the hidden states of `F`; `u t k X = t^{-k} h_k`: those of `F_t`, rescaled;
+  -- `G_k = B_k ∘ N_0`: the block of `F` with its normalization
+  let s : Fin (L + 1) → Matrix T dIn ℝ → Matrix T d ℝ := fun k X => hidden A 0 θ X k
+  let u : ℝ → Fin (L + 1) → Matrix T dIn ℝ → Matrix T d ℝ :=
+    fun t k X => (t ^ (k : ℕ))⁻¹ • hidden A 1 (θ.writeScale t) X k
+  let G : Fin L → Matrix T d ℝ → Matrix T d ℝ := fun k y => blockMap A θ k (rmsNorm 0 y)
+  have hs : ∀ (k : Fin L) X, s k.succ X = G k (s k.castSucc X) := by
+    intro k X
+    simp only [s, G, hidden_succ, hχ, Pi.zero_apply, Matrix.mul_zero, zero_add, blockMap]
+  have hu0 : ∀ t X, u t 0 X = s 0 X := by
+    intro t X
+    simp only [u, s, hidden_zero, Fin.val_zero, pow_zero, inv_one, one_smul, Params.writeScale]
+  -- `N_0` removes the factor `t^k` of `h_k = t^k u_k`; the write `t^{k+1} W_write` cancels
+  -- `t^{-(k+1)}`
+  have hu : ∀ t : ℝ, 1 ≤ t → ∀ (k : Fin L) X,
+      u t k.succ X = t⁻¹ • u t k.castSucc X + G k (u t k.castSucc X) := by
+    intro t ht k X
+    have htpos : 0 < t := lt_of_lt_of_le one_pos ht
+    simp only [u, G, hidden_succ, hχ, Fin.val_succ, Fin.val_castSucc, Pi.one_apply,
+      Matrix.mul_one, blockMap, Params.writeScale, Matrix.mul_smul]
+    rw [rmsNorm_zero_smul (inv_pos.2 (pow_pos htpos _))]
+    exact inv_pow_succ_smul_add htpos.ne' _ _ _
+  -- `N_0` is continuous at the states without zero rows
+  have hNcont : ∀ z : Matrix T d ℝ, (∀ r, z r ≠ 0) → ContinuousAt (rmsNorm 0) z := by
+    intro z hz
+    obtain ⟨ρ, hρ, hρz⟩ := exists_pos_le_of_finite (fun r => ‖z r‖)
+      (fun r => norm_pos_iff.2 (hz r))
+    refine continuousAt_of_locally_lipschitz one_pos (2 * Fintype.card d / ρ) fun y _ => ?_
+    rw [dist_eq_norm, dist_eq_norm]
+    exact norm_rmsNorm_zero_sub_le hρ hρz y
+  -- the hidden states of `F` are continuous on `𝒳`, where no row of them vanishes
+  have hcont : ∀ k, ContinuousOn (s k) 𝒳 := by
+    intro k
+    induction k using Fin.induction with
+    | zero =>
+      have h0 : s 0 = fun X => X * θ.E := funext fun X => hidden_zero A 0 θ X
+      rw [h0]
+      exact (lipschitzWith_mul_right θ.E).continuous.continuousOn
+    | succ k ih =>
+      have h1 : s k.succ = fun X => G k (s k.castSucc X) := funext (hs k)
+      rw [h1]
+      intro X hX
+      exact ((locallyLipschitz_blockMap A θ hf k).continuous.continuousAt.comp
+        (hNcont (s k.castSucc X) (hdef X hX k.castSucc))).comp_continuousWithinAt (ih X hX)
+  -- bounds by compactness: `‖s_k‖ ≤ S_k`, and every row of `s_k` is not shorter than `ρ_k > 0`
+  have hS : ∀ k, ∃ S, ∀ X ∈ 𝒳, ‖s k X‖ ≤ S := fun k => h𝒳.exists_bound_of_continuousOn (hcont k)
+  have hρ : ∀ k, ∃ ρ > 0, ∀ X ∈ 𝒳, ∀ r, ρ ≤ ‖s k X r‖ := by
+    intro k
+    have hrow : ∀ r, ∃ ρ > 0, ∀ X ∈ 𝒳, ρ ≤ ‖s k X r‖ := fun r =>
+      exists_pos_le_of_isCompact h𝒳 (f := fun X => ‖s k X r‖)
+        (continuous_norm.comp_continuousOn ((continuous_apply r).comp_continuousOn (hcont k)))
+        (fun X hX => norm_pos_iff.2 (hdef X hX k r))
+    choose ρ hρ hρle using hrow
+    obtain ⟨ρ₀, hρ₀, hρ₀le⟩ := exists_pos_le_of_finite ρ hρ
+    exact ⟨ρ₀, hρ₀, fun X hX r => (hρ₀le r).trans (hρle r X hX)⟩
+  choose ρ hρpos hρle using hρ
+  -- `G_k` is Lipschitz at the `s_k(X)`: `N_0` is, with constant `2d/ρ_k`, and `B_k` is Lipschitz
+  -- on the image of `N_0`, which lies in the ball of radius `√d`
+  have hG : ∀ (k : Fin L) C, 0 ≤ C → ∃ K, ∀ X ∈ 𝒳, ∀ y, ‖y - s k.castSucc X‖ ≤ C →
+      ‖G k y - G k (s k.castSucc X)‖ ≤ K * ‖y - s k.castSucc X‖ := by
+    intro k C _
+    obtain ⟨K, hK⟩ := (locallyLipschitz_blockMap A θ hf k).locallyLipschitzOn
+      |>.exists_lipschitzOnWith_of_compact
+        (isCompact_closedBall (0 : Matrix T d ℝ) (Real.sqrt (Fintype.card d)))
+    refine ⟨K * (2 * Fintype.card d / ρ k.castSucc), fun X hX y _ => ?_⟩
+    have h1 := hK.dist_le_mul (rmsNorm 0 y) (mem_closedBall_zero_iff.2 (norm_rmsNorm_zero_le y))
+      (rmsNorm 0 (s k.castSucc X)) (mem_closedBall_zero_iff.2 (norm_rmsNorm_zero_le _))
+    rw [dist_eq_norm, dist_eq_norm] at h1
+    have h2 := norm_rmsNorm_zero_sub_le (hρpos k.castSucc) (hρle k.castSucc X hX) y
+    calc ‖G k y - G k (s k.castSucc X)‖ ≤ K * ‖rmsNorm 0 y - rmsNorm 0 (s k.castSucc X)‖ := h1
+      _ ≤ K * (2 * Fintype.card d / ρ k.castSucc * ‖y - s k.castSucc X‖) := by gcongr
+      _ = _ := by ring
+  -- the induction: `‖u_k - s_k‖ ≤ C_k / t` for `t ≥ 1`
+  choose C hC hCb using exists_bound_of_step 𝒳 G s u hs hu0 hu (fun k => hS k.castSucc) hG
+  -- `t_0 = 1 + ∑ C_k/ρ_k`: then `C_k / t < ρ_k` for every `k`
+  refine ⟨Fintype.card d * (2 * Fintype.card d / ρ (Fin.last L) * C (Fin.last L)) * ‖θ.D‖,
+    1 + ∑ k, C k / ρ k, fun X hX t ht => ⟨?_, ?_⟩⟩
+  · -- `F_t` is defined: a row of `h_k = t^k u_k` is `t^k` times a row of `u_k`, which is within
+    -- `C_k/t < ρ_k` of the corresponding row of `s_k`, of norm at least `ρ_k`
+    intro k r
+    have hsum : C k / ρ k ≤ ∑ j, C j / ρ j := Finset.single_le_sum
+      (fun j _ => div_nonneg (hC j) (hρpos j).le) (Finset.mem_univ k)
+    have hsum0 : 0 ≤ ∑ j, C j / ρ j := le_trans (div_nonneg (hC k) (hρpos k).le) hsum
+    have ht1 : 1 ≤ t := by linarith
+    have htpos : 0 < t := by linarith
+    have hk : C k / t < ρ k := by
+      have h1 : C k / ρ k < t := by linarith
+      rw [div_lt_iff₀ (hρpos k)] at h1
+      rw [div_lt_iff₀ htpos]
+      linarith
+    have hd : ‖u t k X r - s k X r‖ < ρ k :=
+      lt_of_le_of_lt ((norm_le_pi_norm (u t k X - s k X) r).trans (hCb k X hX t ht1)) hk
+    have hur : u t k X r ≠ 0 := by
+      intro h0
+      rw [h0, zero_sub, norm_neg] at hd
+      exact absurd (hρle k X hX r) (not_le.2 hd)
+    have hh : hidden A 1 (θ.writeScale t) X k = (t ^ (k : ℕ)) • u t k X := by
+      simp only [u]
+      rw [smul_inv_smul₀ (pow_ne_zero _ htpos.ne')]
+    rw [hh]
+    exact smul_ne_zero (pow_ne_zero _ htpos.ne') hur
+  · -- `F_t(X) - F(X) = (N_0(u_L) - N_0(s_L)) D`, and `N_0` is `2d/ρ_L`-Lipschitz at `s_L`
+    have hsum0 : 0 ≤ ∑ j, C j / ρ j :=
+      Finset.sum_nonneg fun j _ => div_nonneg (hC j) (hρpos j).le
+    have ht1 : 1 ≤ t := by linarith
+    have htpos : 0 < t := by linarith
+    have he : eval A 1 (θ.writeScale t) X - eval A 0 θ X
+        = (rmsNorm 0 (u t (Fin.last L) X) - rmsNorm 0 (s (Fin.last L) X)) * θ.D := by
+      simp only [eval, hχ, u, s, Fin.val_last, Params.writeScale, Matrix.sub_mul]
+      rw [rmsNorm_zero_smul (inv_pos.2 (pow_pos htpos L))]
+    rw [he]
+    calc ‖(rmsNorm 0 (u t (Fin.last L) X) - rmsNorm 0 (s (Fin.last L) X)) * θ.D‖
+        ≤ Fintype.card d * ‖rmsNorm 0 (u t (Fin.last L) X) - rmsNorm 0 (s (Fin.last L) X)‖
+            * ‖θ.D‖ := norm_mul_le_card _ _
+      _ ≤ Fintype.card d * (2 * Fintype.card d / ρ (Fin.last L) * (C (Fin.last L) / t))
+            * ‖θ.D‖ := by
+          have h3 : ‖rmsNorm 0 (u t (Fin.last L) X) - rmsNorm 0 (s (Fin.last L) X)‖
+              ≤ 2 * Fintype.card d / ρ (Fin.last L) * (C (Fin.last L) / t) :=
+            (norm_rmsNorm_zero_sub_le (hρpos _) (hρle _ X hX) _).trans
+              (mul_le_mul_of_nonneg_left (hCb _ X hX t ht1)
+                (div_nonneg (by positivity) (hρpos _).le))
+          gcongr
+      _ = Fintype.card d * (2 * Fintype.card d / ρ (Fin.last L) * C (Fin.last L)) * ‖θ.D‖ / t := by
+          ring
 
 /-- **Proposition 5.1 (ii):** under pre-RMSNorm with `ε = 0`, a skipless network whose blocks are
 locally Lipschitz is the limit of the residual networks `F_t`, uniformly on compact sets of inputs
