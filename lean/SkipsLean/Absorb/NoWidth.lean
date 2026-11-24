@@ -148,8 +148,11 @@ theorem gatedBlock_relu_smul (Wg Wv : Matrix p m ℝ) (Ww : Matrix m q ℝ) (lam
 `x M + B(x)`. -/
 theorem exists_ne_reluSq (Wr : Matrix p m ℝ) (Ww : Matrix m q ℝ) (Wr' : Matrix p m' ℝ)
     (Ww' : Matrix m' q ℝ) (M : Matrix p q ℝ) (hM : M ≠ 0) :
-    ∃ x : p → ℝ, x ᵥ* M + vanillaBlock reluSq Wr Ww x ≠ vanillaBlock reluSq Wr' Ww' x := by
-  sorry
+    ∃ x : p → ℝ, x ᵥ* M + vanillaBlock reluSq Wr Ww x ≠ vanillaBlock reluSq Wr' Ww' x :=
+  -- Proposition A.1 with `k = 2`
+  exists_ne_of_homogeneous (k := 2) (by norm_num) _ _
+    (fun lam x hlam => vanillaBlock_reluSq_smul Wr Ww lam x hlam)
+    (fun lam x hlam => vanillaBlock_reluSq_smul Wr' Ww' lam x hlam) M hM
 
 /-- **Theorem 3.3 (a) for ReGLU blocks.** -/
 theorem exists_ne_reglu (Wg Wv : Matrix p m ℝ) (Ww : Matrix m q ℝ) (Wg' Wv' : Matrix p m' ℝ)
