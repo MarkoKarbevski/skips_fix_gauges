@@ -1034,3 +1034,4 @@ import SkipsLean
 #print axioms Skips.analyticOnNhd_f_attention
 #print axioms Skips.differentiable_f_attention
 #print axioms Skips.exists_cobDir_add_headDir_of_keeps
+#print axioms Skips.ae_oneBlockGenericAttention
