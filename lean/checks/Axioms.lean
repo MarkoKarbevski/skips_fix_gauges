@@ -1010,3 +1010,4 @@ import SkipsLean
 #print axioms Skips.exists_ne_residual_skipless_attnHeads
 #print axioms Skips.ae_mul_add_attentionBlock_ne
 #print axioms Skips.exists_row_attentionBlock_sub_ge
+#print axioms Skips.hasDerivAt_eval_attention_zero
