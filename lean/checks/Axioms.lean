@@ -936,3 +936,8 @@ import SkipsLean
 #print axioms Skips.exists_isOpen_gateInactive_reglu
 #print axioms Skips.exists_isOpen_gateInactive_reglu_bound
 #print axioms Skips.not_ae_funDim_add_eq_reglu_skipless
+#print axioms Skips.hidden_succ_eq_blockMapRes
+#print axioms Skips.exists_homeomorph_blockMapRes_of_not_folds
+#print axioms Skips.exists_isOpen_active_of_not_folds
+#print axioms Skips.not_unitInactiveRes_of_not_folds
+#print axioms Skips.not_folds_of_norm_mul_norm_lt_one

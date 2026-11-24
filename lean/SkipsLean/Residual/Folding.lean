@@ -67,6 +67,7 @@ def UnitInactiveRes (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut
   ∀ (x : Matrix T dIn ℝ) (t : T),
     (hidden (Arch.mlp σ id hid) 1 θ x m.castSucc * θ.read m) t j ≤ 0
 
+omit [Fintype T] [Fintype dOut] in
 /-- A row of the hidden state after residual block `ℓ` is `Φ_ℓ` of the row before it. -/
 theorem hidden_succ_eq_blockMapRes
     (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) (x : Matrix T dIn ℝ) (ℓ : Fin L)
@@ -104,6 +105,7 @@ private theorem blockMapRes_smul_fold
   simp only [blockMapRes]
   rw [e, Matrix.smul_vecMul, smul_add]
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **Proposition A.32 (i), under invariance of domain:** if residual ReLU block `ℓ` does not
 fold, `Φ_ℓ` is a homeomorphism of `ℝ^{1×d}`. -/
 theorem exists_homeomorph_blockMapRes_of_not_folds (hinv : InvarianceOfDomain d)
@@ -230,6 +232,7 @@ private theorem eq_zero_of_sqrt_dotProduct_fold {n : Type*} [Fintype n] {v : n �
   rw [Real.sqrt_eq_zero h0] at h
   exact dotProduct_self_eq_zero.1 h
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **Proposition A.32 (iii):** a residual ReLU block with `‖W_read‖ ‖W_write‖ < 1` in spectral
 norm does not fold. The spectral norms enter as Lipschitz constants `a`, `b` in the Euclidean
 norm. -/
