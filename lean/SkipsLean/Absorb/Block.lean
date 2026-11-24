@@ -71,7 +71,31 @@ theorem vanillaBlock_flipCols [DecidableEq m] (hσ : ∀ z, σ z - σ (-z) = c *
     (Wr : Matrix p m ℝ) (Ww : Matrix m q ℝ) (x : p → ℝ) :
     vanillaBlock σ (flipCols S Wr) Ww x
       = vanillaBlock σ Wr Ww x - c • (x ᵥ* subProd S Wr Ww) := by
-  sorry
+  -- the flipped read: unit `i ∈ S` reads `-(x w_i)`
+  have hy : ∀ i, (x ᵥ* flipCols S Wr) i = if i ∈ S then -(x ᵥ* Wr) i else (x ᵥ* Wr) i := by
+    intro i
+    by_cases hi : i ∈ S
+    · simp only [flipCols, Matrix.vecMul, dotProduct, Matrix.of_apply, hi, ↓reduceIte, mul_neg,
+        Finset.sum_neg_distrib]
+    · simp only [flipCols, Matrix.vecMul, dotProduct, Matrix.of_apply, hi, ↓reduceIte]
+  -- `x W_read[:,S] W_write[S,:]` keeps the units of `S` in the read
+  have hsub : x ᵥ* subProd S Wr Ww = (fun i => if i ∈ S then (x ᵥ* Wr) i else 0) ᵥ* Ww := by
+    have hd : (x ᵥ* Wr) ᵥ* Matrix.diagonal (fun j => if j ∈ S then (1 : ℝ) else 0)
+        = fun i => if i ∈ S then (x ᵥ* Wr) i else 0 := by
+      funext i
+      rw [Matrix.vecMul_diagonal]
+      by_cases hi : i ∈ S <;> simp only [hi, ↓reduceIte, mul_one, mul_zero]
+    rw [subProd, ← Matrix.vecMul_vecMul, ← Matrix.vecMul_vecMul, hd]
+  unfold vanillaBlock
+  rw [hsub, ← Matrix.smul_vecMul, ← Matrix.sub_vecMul]
+  congr 1
+  funext i
+  -- `σ(-y) = σ(y) - c y`
+  have h1 := hσ ((x ᵥ* Wr) i)
+  by_cases hi : i ∈ S
+  · simp only [hy, hi, ↓reduceIte, Pi.sub_apply, Pi.smul_apply, smul_eq_mul]
+    linarith
+  · simp only [hy, hi, ↓reduceIte, Pi.sub_apply, Pi.smul_apply, smul_eq_mul, mul_zero, sub_zero]
 
 /-- **Theorem 3.1 (i), "if"** (for every `M`): if `σ(z) - σ(-z) = z` and a set `S` of units has
 `W_read[:,S] W_write[S,:] = -M`, the block with the reads of `S` flipped, of the same width,
@@ -80,7 +104,10 @@ theorem vanillaBlock_flipCols_of_subProd [DecidableEq m] (hσ : ∀ z, σ z - σ
     (S : Finset m) (Wr : Matrix p m ℝ) (Ww : Matrix m q ℝ) (M : Matrix p q ℝ)
     (hS : subProd S Wr Ww = -M) (x : p → ℝ) :
     x ᵥ* M + vanillaBlock σ Wr Ww x = vanillaBlock σ (flipCols S Wr) Ww x := by
-  sorry
+  -- `c = 1`, and `x W_read[:,S] W_write[S,:] = x (-M) = -(x M)`
+  have h := vanillaBlock_flipCols (c := 1) (fun z => by rw [hσ z, one_mul]) S Wr Ww x
+  rw [h, hS, Matrix.vecMul_neg, one_smul]
+  abel
 
 /-- **Proposition A.11 (i)** (the first half of Theorem 3.1 (ii)), "With more units": if
 `σ(z) - σ(-z) = c z` with `c ≠ 0` and the read has rank `p` (the number of its rows; `d` in the
