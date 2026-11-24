@@ -80,3 +80,6 @@ import SkipsLean.Depth.RayGatedN
 import SkipsLean.Depth.StepsGatedN
 import SkipsLean.Activations.OneSmallFactor
 import SkipsLean.Depth.ScaledSuffix
+import SkipsLean.Depth.RayGatedPlus
+import SkipsLean.Depth.RayMlpPlus
+import SkipsLean.Depth.StepsPlus

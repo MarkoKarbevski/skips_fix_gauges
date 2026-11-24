@@ -1,6 +1,9 @@
 import SkipsLean.Depth.Cones
 import SkipsLean.Depth.RayGatedN
 import SkipsLean.Depth.StepsGatedN
+import SkipsLean.Depth.RayGatedPlus
+import SkipsLean.Depth.RayMlpPlus
+import SkipsLean.Depth.StepsPlus
 
 /-!
 # The step for GELU and gated blocks on rays
@@ -18,8 +21,9 @@ SwiGLU blocks, of the matrices `c_j c_j^⊤` for GeGLU and GELU blocks. The clai
 This is the longest argument of Appendix D. In the case (n) the two proofs below put together
 its two halves, each stated in a file of its own: from (28) to (38) on generic rays
 (`Depth/RayGatedN.lean`, which uses Lemmas D.8 and D.11, the frozen network and the induction on
-the exponents), and steps 1 to 3 (`Depth/StepsGatedN.lean`). The three statements in the case (+)
-are not proved yet.
+the exponents), and steps 1 to 3 (`Depth/StepsGatedN.lean`). In the case (+) the three proofs do
+the same with `Depth/RayGatedPlus.lean` and `Depth/RayMlpPlus.lean` (which use Lemmas D.8, D.9 and
+D.10 and the induction on the exponents) and `Depth/StepsPlus.lean`.
 -/
 
 namespace Skips
@@ -53,7 +57,11 @@ theorem claimGated_castSucc_swiglu_rmsNorm [Nonempty T] {ε : ℝ} (hε : 0 < ε
     (hQ : ∀ ℓ, LinearIndependent ℚ (fun j : hid ℓ => (θ.read ℓ)ᵀ (Sum.inl j)))
     (k : Fin L) (hk : ClaimGated (antisymmetric d) θ k.succ) :
     ClaimGated (antisymmetric d) θ k.castSucc := by
-  sorry
+  intro Z η hflat
+  -- the ray: (28) gives (38) (`Depth/RayGatedPlus.lean`)
+  have h38 := flat_of_suffixFlat_swiglu_rmsNorm hε hθ k (hQ k) Z η hflat
+  -- steps 1 to 3 (`Depth/StepsPlus.lean`)
+  exact claimGated_castSucc_of_flat_rmsNorm hε analyticOnNhd_silu hθ (regular_of_goodForConesGated_swiglu hθ) k hk Z η h38
 
 /-- **Lemma D.12, GeGLU blocks, case (n).** -/
 theorem claimGated_castSucc_geglu [Nonempty T] {C : Fin (L + 1) → Set (d → ℝ)}
@@ -78,7 +86,11 @@ theorem claimGated_castSucc_geglu_rmsNorm [Nonempty T] {ε : ℝ} (hε : 0 < ε)
       Matrix.vecMulVec ((θ.read ℓ)ᵀ (Sum.inl j)) ((θ.read ℓ)ᵀ (Sum.inl j))))
     (k : Fin L) (hk : ClaimGated (antisymmetric d) θ k.succ) :
     ClaimGated (antisymmetric d) θ k.castSucc := by
-  sorry
+  intro Z η hflat
+  -- the ray: (28) gives (38) (`Depth/RayGatedPlus.lean`)
+  have h38 := flat_of_suffixFlat_geglu_rmsNorm hε hθ k (hQ k) Z η hflat
+  -- steps 1 to 3 (`Depth/StepsPlus.lean`)
+  exact claimGated_castSucc_of_flat_rmsNorm hε analyticOnNhd_gelu hθ (regular_of_goodForConesGated_geglu hθ) k hk Z η h38
 
 /-- **Lemma D.12, GELU blocks, case (+).** -/
 theorem claimRMS_castSucc_gelu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
@@ -89,6 +101,11 @@ theorem claimRMS_castSucc_gelu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
       Matrix.vecMulVec ((θ.read ℓ)ᵀ j) ((θ.read ℓ)ᵀ j)))
     (k : Fin L) (hk : ClaimRMS (Arch.mlp gelu (rmsNorm ε) hid) θ k.succ) :
     ClaimRMS (Arch.mlp gelu (rmsNorm ε) hid) θ k.castSucc := by
-  sorry
+  intro Z η hflat
+  -- the ray: (28) gives (38) (`Depth/RayMlpPlus.lean`)
+  obtain ⟨hz, hw⟩ := flat_of_suffixFlat_gelu_rmsNorm hε hθ k (hQ k) Z η hflat
+  -- steps 1 to 3 (`Depth/StepsPlus.lean`)
+  exact claimRMS_castSucc_of_flat_rmsNorm hε analyticOnNhd_gelu hθ
+    (regular_of_goodForConesMlp_gelu hθ) k hk Z η hz hw
 
 end Skips
