@@ -98,3 +98,7 @@ import SkipsLean.Residual.SmallWritesRMSSteps
 import SkipsLean.Residual.DepthMlpRMS
 import SkipsLean.Residual.DepthGatedRMS
 import SkipsLean.Residual.ExactGainRMS
+import SkipsLean.Literature.Sard
+import SkipsLean.Literature.OMinimal
+import SkipsLean.Dimension.SubmersionNull
+import SkipsLean.Dimension.RankCriterion

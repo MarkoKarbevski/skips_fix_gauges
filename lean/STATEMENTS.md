@@ -45,7 +45,8 @@ reader (written after the sixth audit began): `Symmetry/OnlyOrthogonal.lean`,
 `Residual/DepthGated.lean`, `Residual/ExactGain.lean`, `OneBlock/ResidualRMSSteps.lean`,
 `OneBlock/ResidualRMSMlp.lean`, `OneBlock/ResidualRMSGated.lean`, `OneBlock/ResidualRMSGain.lean`,
 `Residual/SmallWritesNorm.lean`, `Residual/SmallWritesRMSSteps.lean`, `Residual/DepthMlpRMS.lean`,
-`Residual/DepthGatedRMS.lean` and `Residual/ExactGainRMS.lean`.
+`Residual/DepthGatedRMS.lean`, `Residual/ExactGainRMS.lean`, `Literature/Sard.lean`,
+`Literature/OMinimal.lean`, `Dimension/SubmersionNull.lean` and `Dimension/RankCriterion.lean`.
 
 ## Definitions
 
@@ -67,6 +68,18 @@ Differences from the paper, on purpose:
    `rmsRow 0 0 = 0`. Statements for `ε = 0` that need a nonzero row will say so.
 3. The maps `f_ℓ` are arbitrary in the definitions. The kinds of block (tanh, GELU, gated,
    attention) enter as choices of `f_ℓ` in later files.
+
+## Assumed from the literature
+
+These two results are not proved in Lean. Each is a named proposition (a `def … : Prop`, never an
+`axiom`), and the theorems that use it take it as a hypothesis, so `#print axioms` stays at the
+three standard axioms. No theorem of the tables below uses them yet, except the rows of
+`Dimension/RankCriterion.lean`.
+
+| Result | Source | Lean | File | Where the papers use it |
+|---|---|---|---|---|
+| Sard's theorem: the critical values of a `C^r` map `f : M → N`, `r > max{0, dim M − dim N}`, form a set of measure zero. In Lean for real-analytic maps between finite-dimensional real normed spaces | A. Sard, The measure of the critical values of differentiable maps, Bull. Amer. Math. Soc. 48 (1942), 883–890. The skips paper names the theorem and gives no reference | `SardCriticalValues E F` | `Literature/Sard.lean` | S proofs of Lemmas A.24 and A.26. Mathlib v4.36.0 has only the case of equal dimensions and the case of a source of smaller dimension |
+| The closure of a definable set of measure zero has measure zero (S Lemma A.23), for the sets of outputs of the networks, which are definable in an o-minimal structure (S Lemma A.21). In Lean as the one property used: for every linear `π` to some `ℝ^r`, if `π(S)` has measure zero then so has its closure | L. van den Dries, Tame Topology and O-minimal Structures (1998), Ch. 1 Lemma (2.3), Ch. 3 Theorem (2.11), Ch. 4 Theorem (1.8); P. Speissegger, The Pfaffian closure of an o-minimal structure (1997). Assumed as the authors asked, not checked against the sources | `ClosureNullOfNull S` | `Literature/OMinimal.lean` | S proof of Lemma A.26 (ii), then Theorems A.28 (iv) and 4.11 ("not a pointwise limit") |
 
 ## Results
 
@@ -352,6 +365,8 @@ Notes for the authors on these statements:
 | **S Lemma A.27 (Small writes), second value, and Theorem 4.7 under pre-RMSNorm (`ε > 0`), for tanh and GELU blocks** (no biases, blocks of any widths, `d_in, d_out ≥ d ≥ 2`): for generic `θ` and all small `τ ≠ 0`, `fd(θ_τ) = P − d(d−1)/2`; at generic parameters `fd = P − d(d−1)/2`. With the conditions of the proof as a structure and the flat directions of `J_0` (`η_E = E Y`, `η_D = −Y D`, `Y` antisymmetric; reads and writes zero) | `SmallWritesGenericRMS`, `smallWritesLimitNorm_eq_zero_mlp_rmsNorm`, `eventually_funDim_smallWrites_mlp_rmsNorm`, `ae_smallWritesGenericRMS`, `ae_eventually_funDim_smallWrites_mlp_rmsNorm`, `ae_funDim_mlp_residual_rmsNorm`, `ae_eventually_funDim_smallWrites_tanh_rmsNorm`, `ae_eventually_funDim_smallWrites_gelu_rmsNorm`, `ae_funDim_tanh_residual_rmsNorm`, `ae_funDim_gelu_residual_rmsNorm` | `Residual/DepthMlpRMS.lean` | proved |
 | **S Lemma A.27, second value, and Theorem 4.7 under pre-RMSNorm (`ε > 0`), for SwiGLU and GeGLU blocks:** `fd(θ_τ) = P − d(d−1)/2 − s` for generic `θ` and small `τ ≠ 0`; `fd = P − d(d−1)/2 − s` at generic parameters, `s` the number of hidden units | `SmallWritesGenericGatedRMS`, `smallWritesLimitNorm_eq_zero_gated_rmsNorm`, `eventually_funDim_smallWrites_gated_rmsNorm`, `ae_smallWritesGenericGatedRMS`, `ae_eventually_funDim_smallWrites_gated_rmsNorm`, `ae_funDim_gated_residual_rmsNorm`, `ae_eventually_funDim_smallWrites_swiglu_rmsNorm`, `ae_eventually_funDim_smallWrites_geglu_rmsNorm`, `ae_funDim_swiglu_residual_rmsNorm`, `ae_funDim_geglu_residual_rmsNorm` | `Residual/DepthGatedRMS.lean` | proved |
 | **S Theorem 4.7, second sentence, and Corollary 4.8 (exact gain) under pre-RMSNorm (`ε > 0`):** with blocks of width at least `d`, at generic parameters the skips raise `fd` by at least `L d(d−1)/2` (tanh-like activations with Lemma B.3; gated blocks), and by exactly `L d(d−1)/2` for tanh, GELU, SwiGLU and GeGLU blocks | `ae_funDim_skipless_add_le_residual_mlp_rmsNorm`, `ae_funDim_skipless_add_le_residual_gated_rmsNorm`, `ae_funDim_tanh_residual_rmsNorm_eq_add`, `ae_funDim_gelu_residual_rmsNorm_eq_add`, `ae_funDim_swiglu_residual_rmsNorm_eq_add`, `ae_funDim_geglu_residual_rmsNorm_eq_add` | `Residual/ExactGainRMS.lean` | proved |
+| S proof of Lemma A.26, "so does its preimage under `F_X` in `U`", in the form the Lean route uses: for `f` continuously differentiable on an open set `U` with an onto derivative at every point of `U`, the preimage in `U` of a set of measure zero has measure zero | `measure_inter_preimage_eq_zero_of_surjective_fderiv` | `Dimension/SubmersionNull.lean` | in work |
+| **S Lemma A.26 (a rank criterion), without networks:** `F : P → Y`, `G : P' → Y` real-analytic; the Jacobian of `G` has rank at most `r₀` at every parameter (the paper gets this from a Lie group with orbits of dimension at least `k`, `r₀ = P' − k`); the Jacobian of `F` has rank greater than `r₀` at one parameter. (i) For almost every `θ`, `F θ` is not an output of `G`. (ii) If the outputs of `G` have the property of definable sets (`ClosureNullOfNull`), then for almost every `θ`, `F θ` is not in the closure of the outputs of `G` (a `δ > 0` separates it from them). Both under Sard's theorem as a hypothesis (`SardCriticalValues`); no constant rank theorem | `ae_notMem_range_of_rank_lt`, `ae_notMem_closure_range_of_rank_lt`, `exists_pos_le_norm_sub_of_notMem_closure` | `Dimension/RankCriterion.lean` | in work |
 
 Not stated yet from the main text of the skips paper: Theorem 3.3 (ii), the dimensions of the
 groups; the term `s` of attention blocks in Theorem 4.2; Definitions 4.3, 4.4 and Proposition 4.5;
