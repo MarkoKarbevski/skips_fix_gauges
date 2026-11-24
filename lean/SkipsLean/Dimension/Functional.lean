@@ -315,7 +315,14 @@ noncomputable def flatOn (A : Arch T d L) (S : Fin L → Matrix d d ℝ) (θ : P
 
 /-- A flat direction is flat at every input of `U`. -/
 theorem flat_le_flatOn (U : Set (Matrix T dIn ℝ)) : flat A S θ ≤ flatOn A S θ U := by
-  sorry
+  -- an infimum over every input lies below the infimum over the inputs of `U`
+  intro η hη
+  rw [flat, Submodule.mem_iInf] at hη
+  rw [flatOn, Submodule.mem_iInf]
+  intro x
+  rw [Submodule.mem_iInf]
+  intro _
+  exact hη x
 
 /-- A direction of a symmetry is flat, with no hypothesis of differentiability: if a curve of
 parameters through `θ` with velocity `η` keeps the function near `τ = 0`, then `η` is flat. -/
