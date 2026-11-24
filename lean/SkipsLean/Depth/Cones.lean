@@ -112,23 +112,494 @@ structure GoodForConesMlp (C : Fin (L + 1) → Set (d → ℝ)) (A : ∀ ℓ, Fi
 
 /-! ### A good `θ` is regular -/
 
+section Regular
+
+open Filter
+
+omit [DecidableEq d] in
+/-- `v ↦ v ⬝ c`, as a continuous linear map. -/
+private noncomputable def dotCLM (c : d → ℝ) : (d → ℝ) →L[ℝ] ℝ :=
+  LinearMap.toContinuousLinearMap
+    { toFun := fun v => v ⬝ᵥ c
+      map_add' := fun v w => add_dotProduct v w c
+      map_smul' := fun r v => smul_dotProduct r v c }
+
+private theorem dotCLM_apply (c v : d → ℝ) : dotCLM c v = v ⬝ᵥ c := rfl
+
+omit [DecidableEq d] in
+/-- `v ↦ (v ⬝ c) a`, as a continuous linear map. -/
+private noncomputable def dotSmul (c a : d → ℝ) : (d → ℝ) →L[ℝ] (d → ℝ) :=
+  (dotCLM c).smulRight a
+
+private theorem dotSmul_apply (c a v : d → ℝ) : dotSmul c a v = (v ⬝ᵥ c) • a := rfl
+
+omit [DecidableEq d] in
+/-- The derivative of a gated unit `x ↦ σ(x c) (x e) a`:
+`v ↦ σ'(x c) (x e) (v c) a + σ(x c) (v e) a`. -/
+private theorem hasFDerivAt_gatedUnit {σ' : ℝ → ℝ} (hσ : ∀ y, HasDerivAt σ (σ' y) y)
+    (c e a x : d → ℝ) :
+    HasFDerivAt (fun x : d → ℝ => (σ (x ⬝ᵥ c) * (x ⬝ᵥ e)) • a)
+      ((σ' (x ⬝ᵥ c) * (x ⬝ᵥ e)) • dotSmul c a + σ (x ⬝ᵥ c) • dotSmul e a) x := by
+  have h1 := (hσ (x ⬝ᵥ c)).comp_hasFDerivAt x (dotCLM c).hasFDerivAt
+  have h2 := (h1.mul (dotCLM e).hasFDerivAt).smul_const a
+  refine h2.congr_fderiv (ContinuousLinearMap.ext fun v => ?_)
+  funext k
+  simp only [ContinuousLinearMap.smulRight_apply, _root_.add_apply,
+    FunLike.coe_smul, Pi.smul_apply, Function.comp_apply, dotCLM_apply,
+    dotSmul_apply, Pi.add_apply, smul_eq_mul]
+  ring
+
+omit [DecidableEq d] in
+/-- The derivative of an MLP unit `x ↦ σ(x c) a`: `v ↦ σ'(x c) (v c) a`. -/
+private theorem hasFDerivAt_mlpUnit {σ' : ℝ → ℝ} (hσ : ∀ y, HasDerivAt σ (σ' y) y)
+    (c a x : d → ℝ) :
+    HasFDerivAt (fun x : d → ℝ => σ (x ⬝ᵥ c) • a) (σ' (x ⬝ᵥ c) • dotSmul c a) x := by
+  have h1 := ((hσ (x ⬝ᵥ c)).comp_hasFDerivAt x (dotCLM c).hasFDerivAt).smul_const a
+  refine h1.congr_fderiv (ContinuousLinearMap.ext fun v => ?_)
+  funext k
+  simp only [ContinuousLinearMap.smulRight_apply, FunLike.coe_smul, Pi.smul_apply,
+    dotCLM_apply, dotSmul_apply, smul_eq_mul]
+  ring
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: a map acting row by row, `n ↦ (t ↦ g (n t))`, has at the matrix all of whose rows are
+`x` the derivative `V ↦ (t ↦ G (V t))`, which is injective if `G` is. -/
+private theorem injective_fderiv_rowwise [Finite T] {g : (d → ℝ) → (d → ℝ)}
+    {G : (d → ℝ) →L[ℝ] (d → ℝ)} {x : d → ℝ} (hg : HasFDerivAt g G x)
+    (hG : Function.Injective G) :
+    Function.Injective (fderiv ℝ (fun n : T → d → ℝ => fun t => g (n t)) (fun _ => x)) := by
+  have : Fintype T := Fintype.ofFinite T
+  have h : HasFDerivAt (fun n : T → d → ℝ => fun t => g (n t))
+      (ContinuousLinearMap.pi fun t => G.comp (ContinuousLinearMap.proj t)) (fun _ => x) :=
+    hasFDerivAt_pi.2 fun t =>
+      hg.comp (fun _ : T => x) (hasFDerivAt_apply (𝕜 := ℝ) (F' := fun _ : T => d → ℝ) t _)
+  rw [h.fderiv]
+  intro V W hVW
+  funext t
+  exact hG (congrFun hVW t)
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- A gated block acts row by row: row `t` of `f(n W_read) W_write` is
+`∑_j σ(n_t c_j) (n_t e_j) a_j`. -/
+private theorem block_gated_eq (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut)
+    (ℓ : Fin L) :
+    (fun n : Matrix T d ℝ => (Arch.gated σ χ hid).f ℓ (n * θ.read ℓ) * θ.write ℓ) =
+      fun n t => ∑ j, (σ (n t ⬝ᵥ (θ.read ℓ)ᵀ (Sum.inl j)) * (n t ⬝ᵥ (θ.read ℓ)ᵀ (Sum.inr j))) •
+        θ.write ℓ j := by
+  funext n t k
+  change ((Matrix.of fun t i => σ ((n * θ.read ℓ) t (Sum.inl i)) * (n * θ.read ℓ) t (Sum.inr i)) *
+    θ.write ℓ) t k = _
+  simp only [Matrix.mul_apply, Matrix.of_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul,
+    dotProduct, Matrix.transpose_apply]
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- An MLP block acts row by row: row `t` of `σ(n W_read) W_write` is `∑_j σ(n_t c_j) a_j`. -/
+private theorem block_mlp_eq (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut)
+    (ℓ : Fin L) :
+    (fun n : Matrix T d ℝ => (Arch.mlp σ χ hid).f ℓ (n * θ.read ℓ) * θ.write ℓ) =
+      fun n t => ∑ j, σ (n t ⬝ᵥ (θ.read ℓ)ᵀ j) • θ.write ℓ j := by
+  funext n t k
+  change ((n * θ.read ℓ).map σ * θ.write ℓ) t k = _
+  simp only [Matrix.mul_apply, Matrix.map_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul,
+    dotProduct, Matrix.transpose_apply]
+
+
+/-- Helper (a copy of the private lemma of `Depth/Suffix.lean`): an analytic family `J` of linear
+maps that is injective at one point `x₀` is injective on an open dense set that contains `x₀`. With
+a left inverse `K` of `J x₀`, the determinant `φ x` of `K ∘ J x` is analytic in `x` and `φ x₀ = 1`;
+by the identity theorem its zero set has empty interior. -/
+private theorem exists_open_dense_injective_of_analytic
+    {X E F : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
+    [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E]
+    [NormedAddCommGroup F] [NormedSpace ℝ F] [FiniteDimensional ℝ F]
+    {J : X → E →L[ℝ] F} (hJ : AnalyticOnNhd ℝ J Set.univ) {x₀ : X}
+    (h₀ : Function.Injective (J x₀)) :
+    ∃ U : Set X, IsOpen U ∧ Dense U ∧ x₀ ∈ U ∧ ∀ x ∈ U, Function.Injective (J x) := by
+  -- a left inverse `K` of `J x₀`
+  obtain ⟨K, hK⟩ :=
+    (J x₀ : E →ₗ[ℝ] F).exists_leftInverse_of_injective (LinearMap.ker_eq_bot.2 h₀)
+  -- the matrix of `K ∘ J x` in a basis `b` of `E`, a linear function of `J x`
+  let b := Module.finBasis ℝ E
+  let Ψ : (E →L[ℝ] F) →ₗ[ℝ]
+      Matrix (Fin (Module.finrank ℝ E)) (Fin (Module.finrank ℝ E)) ℝ :=
+    (LinearMap.toMatrix b b).toLinearMap ∘ₗ (LinearMap.llcomp ℝ E F E K) ∘ₗ
+      (ContinuousLinearMap.coeLM ℝ)
+  have hΨ : ∀ x, Ψ (J x) = LinearMap.toMatrix b b (K ∘ₗ (J x : E →ₗ[ℝ] F)) := fun x => rfl
+  -- its determinant `φ x` is an analytic function of `x`: a polynomial in the entries
+  let φ : X → ℝ := fun x => (Ψ (J x)).det
+  have hentry : ∀ i j, AnalyticOnNhd ℝ (fun x => Ψ (J x) i j) Set.univ := fun i j =>
+    ((LinearMap.toContinuousLinearMap ((Matrix.entryLinearMap ℝ ℝ i j) ∘ₗ Ψ)).analyticOnNhd
+      _).comp hJ (Set.mapsTo_univ _ _)
+  have hφ : AnalyticOnNhd ℝ φ Set.univ := by
+    show AnalyticOnNhd ℝ (fun x => (Ψ (J x)).det) Set.univ
+    simp only [Matrix.det_apply']
+    exact Finset.analyticOnNhd_fun_sum _ fun σ _ => analyticOnNhd_const.mul
+      (Finset.analyticOnNhd_fun_prod _ fun i _ => hentry (σ i) i)
+  have hφcont : Continuous φ := continuousOn_univ.mp hφ.continuousOn
+  -- `φ x₀ = det 1 = 1`
+  have hφ₀ : φ x₀ = 1 := by
+    show (Ψ (J x₀)).det = 1
+    rw [hΨ, hK, LinearMap.toMatrix_id, Matrix.det_one]
+  -- where `φ x ≠ 0`, `K ∘ J x` is invertible, so `J x` is injective
+  have hφinj : ∀ x, φ x ≠ 0 → Function.Injective (J x) := by
+    intro x hx
+    have hdet : LinearMap.det (K ∘ₗ (J x : E →ₗ[ℝ] F)) ≠ 0 := by
+      rw [← LinearMap.det_toMatrix b]
+      exact hx
+    have hbij := (Module.End.isUnit_iff _).1
+      ((LinearMap.isUnit_iff_isUnit_det _).2 (isUnit_iff_ne_zero.2 hdet))
+    have hinj := hbij.1
+    rw [LinearMap.coe_comp] at hinj
+    exact hinj.of_comp
+  refine ⟨{x | φ x ≠ 0}, isOpen_ne_fun hφcont continuous_const, ?_, ?_, hφinj⟩
+  · -- dense: if `φ` vanished on a nonempty open set, it would vanish everywhere
+    rw [dense_iff_inter_open]
+    rintro W hW ⟨z, hz⟩
+    by_contra hne
+    have hzero : φ =ᶠ[𝓝 z] 0 := Filter.eventually_of_mem (hW.mem_nhds hz) fun y hy => by
+      by_contra hy'
+      exact hne ⟨y, hy, hy'⟩
+    have h1 := hφ.eqOn_zero_of_preconnected_of_eventuallyEq_zero isPreconnected_univ
+      (Set.mem_univ z) hzero (Set.mem_univ x₀)
+    rw [hφ₀] at h1
+    exact one_ne_zero h1
+  · show φ x₀ ≠ 0
+    rw [hφ₀]
+    exact one_ne_zero
+
+omit [DecidableEq d] in
+/-- Helper: an analytic map of rows with an injective derivative at one row has an injective
+derivative at some row of any nonempty open set (the paper: "take `ξ ∈ C_{ℓ-1}` with `Dg°_ℓ(ξ)`
+invertible"). -/
+private theorem exists_mem_injective_fderiv {g : (d → ℝ) → (d → ℝ)}
+    (hg : AnalyticOnNhd ℝ g Set.univ) {C : Set (d → ℝ)} (hC : IsOpen C) (hCne : C.Nonempty)
+    (h : ∃ n, Function.Injective (fderiv ℝ g n)) :
+    ∃ ξ ∈ C, Function.Injective (fderiv ℝ g ξ) := by
+  obtain ⟨n₀, hn₀⟩ := h
+  obtain ⟨U, -, hUd, -, hU⟩ := exists_open_dense_injective_of_analytic hg.fderiv hn₀
+  obtain ⟨ξ, hξC, hξU⟩ := hUd.inter_open_nonempty C hC hCne
+  exact ⟨ξ, hξC, hU ξ hξU⟩
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- The frozen gated block is a polynomial, hence analytic. -/
+private theorem analyticOnNhd_frozenGated
+    (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut) (ℓ : Fin L) (A : Finset (hid ℓ)) :
+    AnalyticOnNhd ℝ (frozenGated θ ℓ A) Set.univ := by
+  show AnalyticOnNhd ℝ (fun n => ∑ j ∈ A, ((n ⬝ᵥ (θ.read ℓ)ᵀ (Sum.inl j)) *
+    (n ⬝ᵥ (θ.read ℓ)ᵀ (Sum.inr j))) • θ.write ℓ j) Set.univ
+  refine Finset.analyticOnNhd_fun_sum _ fun j _ => ?_
+  have h := (((dotCLM ((θ.read ℓ)ᵀ (Sum.inl j))).analyticOnNhd Set.univ).mul
+    ((dotCLM ((θ.read ℓ)ᵀ (Sum.inr j))).analyticOnNhd Set.univ)).smul
+      (analyticOnNhd_const (v := θ.write ℓ j))
+  exact h
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- The frozen MLP block is linear, hence analytic. -/
+private theorem analyticOnNhd_frozenMlp
+    (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) (ℓ : Fin L) (A : Finset (hid ℓ)) :
+    AnalyticOnNhd ℝ (frozenMlp θ ℓ A) Set.univ := by
+  show AnalyticOnNhd ℝ (fun n => ∑ j ∈ A, (n ⬝ᵥ (θ.read ℓ)ᵀ j) • θ.write ℓ j) Set.univ
+  refine Finset.analyticOnNhd_fun_sum _ fun j _ => ?_
+  have h := (dotSmul ((θ.read ℓ)ᵀ j) (θ.write ℓ j)).analyticOnNhd Set.univ
+  exact h
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- The derivative of the frozen gated block at `ξ`:
+`v ↦ ∑_{j ∈ A} ((ξ e_j)(v c_j) + (ξ c_j)(v e_j)) a_j`. -/
+private theorem hasFDerivAt_frozenGated
+    (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut) (ℓ : Fin L) (A : Finset (hid ℓ))
+    (ξ : d → ℝ) :
+    HasFDerivAt (frozenGated θ ℓ A)
+      (∑ j ∈ A, ((ξ ⬝ᵥ (θ.read ℓ)ᵀ (Sum.inr j)) • dotSmul ((θ.read ℓ)ᵀ (Sum.inl j)) (θ.write ℓ j) +
+        (ξ ⬝ᵥ (θ.read ℓ)ᵀ (Sum.inl j)) • dotSmul ((θ.read ℓ)ᵀ (Sum.inr j)) (θ.write ℓ j))) ξ := by
+  have h := HasFDerivAt.fun_sum (u := A) fun j _ =>
+    hasFDerivAt_gatedUnit (σ := id) (fun y => hasDerivAt_id y) ((θ.read ℓ)ᵀ (Sum.inl j))
+      ((θ.read ℓ)ᵀ (Sum.inr j)) (θ.write ℓ j) ξ
+  simp only [id, one_mul] at h
+  exact h
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- The derivative of the frozen MLP block (at any `ξ`): `v ↦ ∑_{j ∈ A} (v c_j) a_j`. -/
+private theorem hasFDerivAt_frozenMlp
+    (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) (ℓ : Fin L) (A : Finset (hid ℓ))
+    (ξ : d → ℝ) :
+    HasFDerivAt (frozenMlp θ ℓ A) (∑ j ∈ A, dotSmul ((θ.read ℓ)ᵀ j) (θ.write ℓ j)) ξ :=
+  HasFDerivAt.fun_sum fun _ _ => (dotSmul _ _).hasFDerivAt
+
+/-- Helper: the injective continuous linear maps form an open set, so maps that tend to an
+injective one are eventually injective. -/
+private theorem eventually_injective_of_tendsto {E F ι : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] [FiniteDimensional ℝ E] [NormedAddCommGroup F] [NormedSpace ℝ F]
+    {l : Filter ι} {Λ : ι → E →L[ℝ] F} {Λ₀ : E →L[ℝ] F} (h : Tendsto Λ l (𝓝 Λ₀))
+    (h₀ : Function.Injective Λ₀) : ∀ᶠ s in l, Function.Injective (Λ s) :=
+  h (ContinuousLinearMap.isOpen_injective.mem_nhds h₀)
+
+omit [DecidableEq d] in
+/-- Helper (the paper's limit `t → ∞`, gated blocks): if the gates `ξ c_j` are positive on `A` and
+negative off `A`, and the frozen derivative `v ↦ ∑_{j ∈ A} ((ξ e_j)(v c_j) + (ξ c_j)(v e_j)) a_j` is
+injective, then the derivative of the gated row map at `s ξ` is injective for some `s > 0`: divided
+by `s`, it tends to the frozen derivative, since `σ'(s z) → 1`, `σ(s z)/s → z` for `z > 0` and
+`σ'(s z) → 0`, `σ(s z)/s → 0` for `z < 0`. -/
+private theorem exists_injective_gatedRow {ι : Type*} [Fintype ι] {σ' : ℝ → ℝ}
+    (hpos : ∀ z, 0 < z → Tendsto (fun s => σ' (s * z)) atTop (𝓝 1) ∧
+      Tendsto (fun s => σ (s * z) / s) atTop (𝓝 z))
+    (hneg : ∀ z, z < 0 → Tendsto (fun s => σ' (s * z)) atTop (𝓝 0) ∧
+      Tendsto (fun s => σ (s * z) / s) atTop (𝓝 0))
+    (c e a : ι → d → ℝ) (A : Finset ι) (ξ : d → ℝ)
+    (hA : ∀ j ∈ A, 0 < ξ ⬝ᵥ c j) (hA' : ∀ j ∉ A, ξ ⬝ᵥ c j < 0)
+    (h0 : Function.Injective (∑ j ∈ A, ((ξ ⬝ᵥ e j) • dotSmul (c j) (a j) +
+      (ξ ⬝ᵥ c j) • dotSmul (e j) (a j)) : (d → ℝ) →L[ℝ] (d → ℝ))) :
+    ∃ x : d → ℝ, Function.Injective (∑ j, ((σ' (x ⬝ᵥ c j) * (x ⬝ᵥ e j)) • dotSmul (c j) (a j) +
+      σ (x ⬝ᵥ c j) • dotSmul (e j) (a j)) : (d → ℝ) →L[ℝ] (d → ℝ)) := by
+  classical
+  -- the coefficients of the derivative at `s ξ`, divided by `s`, and their limits
+  have hα : ∀ j, Tendsto (fun s => σ' (s * (ξ ⬝ᵥ c j)) * (ξ ⬝ᵥ e j)) atTop
+      (𝓝 (if j ∈ A then ξ ⬝ᵥ e j else 0)) := by
+    intro j
+    by_cases hj : j ∈ A
+    · simpa [hj] using ((hpos _ (hA j hj)).1).mul_const (ξ ⬝ᵥ e j)
+    · simpa [hj] using ((hneg _ (hA' j hj)).1).mul_const (ξ ⬝ᵥ e j)
+  have hβ : ∀ j, Tendsto (fun s => σ (s * (ξ ⬝ᵥ c j)) / s) atTop
+      (𝓝 (if j ∈ A then ξ ⬝ᵥ c j else 0)) := by
+    intro j
+    by_cases hj : j ∈ A
+    · simpa [hj] using (hpos _ (hA j hj)).2
+    · simpa [hj] using (hneg _ (hA' j hj)).2
+  have hΛ := tendsto_finsetSum (Finset.univ : Finset ι) fun j _ =>
+    ((hα j).smul_const (dotSmul (c j) (a j))).add ((hβ j).smul_const (dotSmul (e j) (a j)))
+  -- the limit is the frozen derivative
+  have hlim : (∑ j, ((if j ∈ A then ξ ⬝ᵥ e j else 0) • dotSmul (c j) (a j) +
+      (if j ∈ A then ξ ⬝ᵥ c j else 0) • dotSmul (e j) (a j))) =
+      ∑ j ∈ A, ((ξ ⬝ᵥ e j) • dotSmul (c j) (a j) + (ξ ⬝ᵥ c j) • dotSmul (e j) (a j)) := by
+    have h := Finset.sum_ite_mem Finset.univ A fun j =>
+      (ξ ⬝ᵥ e j) • dotSmul (c j) (a j) + (ξ ⬝ᵥ c j) • dotSmul (e j) (a j)
+    rw [Finset.univ_inter] at h
+    rw [← h]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    split_ifs <;> simp
+  rw [hlim] at hΛ
+  obtain ⟨s, hsinj, hs⟩ :=
+    ((eventually_injective_of_tendsto hΛ h0).and (eventually_gt_atTop 0)).exists
+  refine ⟨s • ξ, ?_⟩
+  -- the derivative at `s ξ` is `s` times the map at `s`
+  have hD : (∑ j, ((σ' ((s • ξ) ⬝ᵥ c j) * ((s • ξ) ⬝ᵥ e j)) • dotSmul (c j) (a j) +
+      σ ((s • ξ) ⬝ᵥ c j) • dotSmul (e j) (a j)) : (d → ℝ) →L[ℝ] (d → ℝ)) =
+      s • ∑ j, ((σ' (s * (ξ ⬝ᵥ c j)) * (ξ ⬝ᵥ e j)) • dotSmul (c j) (a j) +
+        (σ (s * (ξ ⬝ᵥ c j)) / s) • dotSmul (e j) (a j)) := by
+    rw [Finset.smul_sum]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    rw [smul_add, smul_smul, smul_smul, smul_dotProduct, smul_dotProduct, smul_eq_mul,
+      smul_eq_mul]
+    congr 2
+    · ring
+    · field_simp
+  rw [hD]
+  intro v w hvw
+  rw [_root_.smul_apply, _root_.smul_apply] at hvw
+  exact hsinj (smul_right_injective _ hs.ne' hvw)
+
+omit [DecidableEq d] in
+/-- Helper (the limit `t → ∞`, MLP blocks): if the gates `ξ c_j` are positive on `A` and negative
+off `A`, and `v ↦ ∑_{j ∈ A} (v c_j) a_j` is injective, then the derivative of the MLP row map at
+`s ξ` is injective for some `s`: it tends to that map, since `σ'(s z) → 1` for `z > 0` and
+`σ'(s z) → 0` for `z < 0`. -/
+private theorem exists_injective_mlpRow {ι : Type*} [Fintype ι] {σ' : ℝ → ℝ}
+    (hpos : ∀ z, 0 < z → Tendsto (fun s => σ' (s * z)) atTop (𝓝 1))
+    (hneg : ∀ z, z < 0 → Tendsto (fun s => σ' (s * z)) atTop (𝓝 0))
+    (c a : ι → d → ℝ) (A : Finset ι) (ξ : d → ℝ)
+    (hA : ∀ j ∈ A, 0 < ξ ⬝ᵥ c j) (hA' : ∀ j ∉ A, ξ ⬝ᵥ c j < 0)
+    (h0 : Function.Injective (∑ j ∈ A, dotSmul (c j) (a j) : (d → ℝ) →L[ℝ] (d → ℝ))) :
+    ∃ x : d → ℝ, Function.Injective
+      (∑ j, σ' (x ⬝ᵥ c j) • dotSmul (c j) (a j) : (d → ℝ) →L[ℝ] (d → ℝ)) := by
+  classical
+  have hα : ∀ j, Tendsto (fun s => σ' (s * (ξ ⬝ᵥ c j))) atTop
+      (𝓝 (if j ∈ A then 1 else 0)) := by
+    intro j
+    by_cases hj : j ∈ A
+    · simpa [hj] using hpos _ (hA j hj)
+    · simpa [hj] using hneg _ (hA' j hj)
+  have hΛ := tendsto_finsetSum (Finset.univ : Finset ι) fun j _ =>
+    (hα j).smul_const (dotSmul (c j) (a j))
+  have hlim : (∑ j, (if j ∈ A then (1 : ℝ) else 0) • dotSmul (c j) (a j)) =
+      ∑ j ∈ A, dotSmul (c j) (a j) := by
+    have h := Finset.sum_ite_mem Finset.univ A fun j => dotSmul (c j) (a j)
+    rw [Finset.univ_inter] at h
+    rw [← h]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    split_ifs <;> simp
+  rw [hlim] at hΛ
+  obtain ⟨s, hsinj⟩ := (eventually_injective_of_tendsto hΛ h0).exists
+  refine ⟨s • ξ, ?_⟩
+  simpa only [smul_dotProduct, smul_eq_mul] using hsinj
+
+
+/-- `f(s z) → a` as `s → ∞`, for `z > 0`, if `f → a` at `+∞`. -/
+private theorem tendsto_comp_mul_pos {f : ℝ → ℝ} {a : ℝ} (hf : Tendsto f atTop (𝓝 a)) {z : ℝ}
+    (hz : 0 < z) : Tendsto (fun s => f (s * z)) atTop (𝓝 a) :=
+  hf.comp (tendsto_id.atTop_mul_const hz)
+
+/-- `f(s z) → a` as `s → ∞`, for `z < 0`, if `f → a` at `-∞`. -/
+private theorem tendsto_comp_mul_neg {f : ℝ → ℝ} {a : ℝ} (hf : Tendsto f atBot (𝓝 a)) {z : ℝ}
+    (hz : z < 0) : Tendsto (fun s => f (s * z)) atTop (𝓝 a) :=
+  hf.comp (tendsto_id.atTop_mul_const_of_neg hz)
+
+/-- For `σ(y) = y S(y)`: `σ(s z)/s = z S(s z)`, so it tends to `z b` if `S(s z) → b`. -/
+private theorem tendsto_div_of_eq_mul {S : ℝ → ℝ} (hS : ∀ y, σ y = y * S y) {z b : ℝ}
+    (h : Tendsto (fun s => S (s * z)) atTop (𝓝 b)) :
+    Tendsto (fun s => σ (s * z) / s) atTop (𝓝 (z * b)) := by
+  refine (h.const_mul z).congr' ?_
+  filter_upwards [eventually_ne_atTop 0] with s hs
+  rw [hS]
+  field_simp
+
+/-- "A good `θ` is regular", for gated blocks whose gate `σ(y) = y S(y)` has `σ' → 1`, `S → 1` at
+`+∞` and `σ' → 0`, `S → 0` at `-∞`. For block `ℓ`: a row `ξ` of the cone `C_{ℓ-1}` at which the
+frozen block has an injective derivative, then the row `x = s ξ` for a large `s`, then the matrix
+all of whose rows are `x`. -/
+private theorem regular_of_goodForConesGated_of_limits [Nonempty T] {σ' S : ℝ → ℝ}
+    (hσ : ∀ y, HasDerivAt σ (σ' y) y) (hσ'1 : Tendsto σ' atTop (𝓝 1))
+    (hσ'0 : Tendsto σ' atBot (𝓝 0)) (hS : ∀ y, σ y = y * S y) (hS1 : Tendsto S atTop (𝓝 1))
+    (hS0 : Tendsto S atBot (𝓝 0)) {C : Fin (L + 1) → Set (d → ℝ)} {A : ∀ ℓ, Finset (hid ℓ)}
+    {θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut}
+    (hθ : GoodForConesGated C A θ) : Regular (Arch.gated σ χ hid) θ := by
+  refine ⟨hθ.rank_E, hθ.rank_D, hθ.rank_write, fun ℓ => ?_⟩
+  -- a row `ξ` of the cone read by block `ℓ` at which the frozen block has an injective derivative
+  obtain ⟨ξ, hξC, hξ⟩ := exists_mem_injective_fderiv (analyticOnNhd_frozenGated θ ℓ (A ℓ))
+    (hθ.cone ℓ.castSucc).isOpen (hθ.cone ℓ.castSucc).nonempty (hθ.frozen_deriv ℓ)
+  rw [(hasFDerivAt_frozenGated θ ℓ (A ℓ) ξ).fderiv] at hξ
+  -- the derivative of the row map at `s ξ` is injective for a large `s`
+  obtain ⟨x, hx⟩ := exists_injective_gatedRow (σ := σ) (σ' := σ')
+    (fun z hz => ⟨tendsto_comp_mul_pos hσ'1 hz,
+      by simpa using tendsto_div_of_eq_mul hS (tendsto_comp_mul_pos hS1 hz)⟩)
+    (fun z hz => ⟨tendsto_comp_mul_neg hσ'0 hz,
+      by simpa using tendsto_div_of_eq_mul hS (tendsto_comp_mul_neg hS0 hz)⟩)
+    (fun j => (θ.read ℓ)ᵀ (Sum.inl j)) (fun j => (θ.read ℓ)ᵀ (Sum.inr j)) (θ.write ℓ) (A ℓ) ξ
+    (fun j hj => hθ.gate_pos ℓ ξ hξC j hj) (fun j hj => hθ.gate_neg ℓ ξ hξC j hj) hξ
+  -- the block acts row by row: at the matrix all of whose rows are `x` its derivative is injective
+  refine ⟨fun _ => x, ?_⟩
+  rw [block_gated_eq]
+  exact injective_fderiv_rowwise (HasFDerivAt.fun_sum fun j _ =>
+    hasFDerivAt_gatedUnit hσ ((θ.read ℓ)ᵀ (Sum.inl j)) ((θ.read ℓ)ᵀ (Sum.inr j)) (θ.write ℓ j) x) hx
+
+/-- "A good `θ` is regular", for MLP blocks whose activation has `σ' → 1` at `+∞` and `σ' → 0` at
+`-∞`. -/
+private theorem regular_of_goodForConesMlp_of_limits [Nonempty T] {σ' : ℝ → ℝ}
+    (hσ : ∀ y, HasDerivAt σ (σ' y) y) (hσ'1 : Tendsto σ' atTop (𝓝 1))
+    (hσ'0 : Tendsto σ' atBot (𝓝 0)) {C : Fin (L + 1) → Set (d → ℝ)} {A : ∀ ℓ, Finset (hid ℓ)}
+    {θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut}
+    (hθ : GoodForConesMlp C A θ) : Regular (Arch.mlp σ χ hid) θ := by
+  refine ⟨hθ.rank_E, hθ.rank_D, hθ.rank_write, fun ℓ => ?_⟩
+  -- a row `ξ` of the cone read by block `ℓ` at which the frozen block has an injective derivative
+  obtain ⟨ξ, hξC, hξ⟩ := exists_mem_injective_fderiv (analyticOnNhd_frozenMlp θ ℓ (A ℓ))
+    (hθ.cone ℓ.castSucc).isOpen (hθ.cone ℓ.castSucc).nonempty (hθ.frozen_deriv ℓ)
+  rw [(hasFDerivAt_frozenMlp θ ℓ (A ℓ) ξ).fderiv] at hξ
+  -- the derivative of the row map at `s ξ` is injective for a large `s`
+  obtain ⟨x, hx⟩ := exists_injective_mlpRow (σ' := σ') (fun z hz => tendsto_comp_mul_pos hσ'1 hz)
+    (fun z hz => tendsto_comp_mul_neg hσ'0 hz) (fun j => (θ.read ℓ)ᵀ j) (θ.write ℓ) (A ℓ) ξ
+    (fun j hj => hθ.gate_pos ℓ ξ hξC j hj) (fun j hj => hθ.gate_neg ℓ ξ hξC j hj) hξ
+  -- the block acts row by row: at the matrix all of whose rows are `x` its derivative is injective
+  refine ⟨fun _ => x, ?_⟩
+  rw [block_mlp_eq]
+  exact injective_fderiv_rowwise (HasFDerivAt.fun_sum fun j _ =>
+    hasFDerivAt_mlpUnit hσ ((θ.read ℓ)ᵀ j) (θ.write ℓ j) x) hx
+
+/-- `σ'(-y) = 1 - σ'(y)` for SiLU. -/
+private theorem siluDeriv_neg' (y : ℝ) : siluDeriv (-y) = 1 - siluDeriv y := by
+  have hx := Real.exp_pos y
+  simp only [siluDeriv, neg_neg, Real.exp_neg]
+  field_simp
+  ring
+
+/-- `σ'(y) → 1` at `+∞` for SiLU: `σ'(y) = (1 + e^{-y} + y e^{-y}) / (1 + e^{-y})²`. -/
+private theorem tendsto_siluDeriv_atTop : Tendsto siluDeriv atTop (𝓝 1) := by
+  have h1 := Real.tendsto_exp_neg_atTop_nhds_zero
+  have h2 : Tendsto (fun y : ℝ => y * Real.exp (-y)) atTop (𝓝 0) := by
+    simpa using Real.tendsto_pow_mul_exp_neg_atTop_nhds_zero 1
+  have h3 : Tendsto (fun y : ℝ => 1 + Real.exp (-y)) atTop (𝓝 (1 + 0)) :=
+    tendsto_const_nhds.add h1
+  have h : Tendsto siluDeriv atTop (𝓝 ((1 + 0 + 0) / (1 + 0) ^ 2)) :=
+    (h3.add h2).div (h3.pow 2) (by norm_num)
+  simpa using h
+
+/-- `σ'(y) → 0` at `-∞` for SiLU, since `σ'(y) = 1 - σ'(-y)`. -/
+private theorem tendsto_siluDeriv_atBot : Tendsto siluDeriv atBot (𝓝 0) := by
+  have h := (tendsto_siluDeriv_atTop.comp tendsto_neg_atBot_atTop).const_sub 1
+  rw [sub_self] at h
+  refine h.congr fun y => ?_
+  rw [Function.comp_apply, siluDeriv_neg']
+  ring
+
+/-- SiLU is `y S(y)` with the logistic function `S(y) = 1/(1 + e^{-y})`. -/
+private theorem silu_eq_mul (y : ℝ) : silu y = y * (1 + Real.exp (-y))⁻¹ := div_eq_mul_inv _ _
+
+private theorem tendsto_logistic_atTop :
+    Tendsto (fun y : ℝ => (1 + Real.exp (-y))⁻¹) atTop (𝓝 1) := by
+  have h := ((tendsto_const_nhds (x := (1 : ℝ))).add Real.tendsto_exp_neg_atTop_nhds_zero).inv₀
+    (by norm_num)
+  simpa using h
+
+private theorem tendsto_logistic_atBot :
+    Tendsto (fun y : ℝ => (1 + Real.exp (-y))⁻¹) atBot (𝓝 0) := by
+  have h : Tendsto (fun y : ℝ => Real.exp (-y)) atBot atTop :=
+    Real.tendsto_exp_atTop.comp tendsto_neg_atBot_atTop
+  exact (tendsto_atTop_add_const_left _ 1 h).inv_tendsto_atTop
+
+/-- `y φ(y) → 0` at `+∞`: `y φ(y) = (y²/2) e^{-y²/2} · 2/(y √(2π))`. -/
+private theorem tendsto_mul_gaussPdf_atTop : Tendsto (fun y => y * gaussPdf y) atTop (𝓝 0) := by
+  have h1 : Tendsto (fun y : ℝ => (y ^ 2 / 2) ^ 1 * Real.exp (-(y ^ 2 / 2))) atTop (𝓝 0) :=
+    (Real.tendsto_pow_mul_exp_neg_atTop_nhds_zero 1).comp
+      ((tendsto_pow_atTop two_ne_zero).atTop_div_const two_pos)
+  have hs : 0 < Real.sqrt (2 * Real.pi) := Real.sqrt_pos.2 (by positivity)
+  have h2 : Tendsto (fun y : ℝ => 2 / (y * Real.sqrt (2 * Real.pi))) atTop (𝓝 0) :=
+    tendsto_const_nhds.div_atTop (tendsto_id.atTop_mul_const hs)
+  have h3 := h1.mul h2
+  rw [zero_mul] at h3
+  refine h3.congr' ?_
+  filter_upwards [eventually_gt_atTop 0] with y hy
+  rw [gaussPdf, pow_one, show -(y ^ 2 / 2) = -y ^ 2 / 2 by ring]
+  field_simp
+
+/-- `y φ(y) → 0` at `-∞`, since `y φ(y)` is odd. -/
+private theorem tendsto_mul_gaussPdf_atBot : Tendsto (fun y => y * gaussPdf y) atBot (𝓝 0) := by
+  have h := (tendsto_mul_gaussPdf_atTop.comp tendsto_neg_atBot_atTop).neg
+  rw [neg_zero] at h
+  refine h.congr fun y => ?_
+  rw [Function.comp_apply, gaussPdf_neg]
+  ring
+
+private theorem tendsto_geluDeriv_atTop :
+    Tendsto (fun y => gaussCdf y + y * gaussPdf y) atTop (𝓝 1) := by
+  simpa using tendsto_gaussCdf_atTop.add tendsto_mul_gaussPdf_atTop
+
+private theorem tendsto_geluDeriv_atBot :
+    Tendsto (fun y => gaussCdf y + y * gaussPdf y) atBot (𝓝 0) := by
+  simpa using tendsto_gaussCdf_atBot.add tendsto_mul_gaussPdf_atBot
+
+
 /-- "A good `θ` is regular", SwiGLU blocks. -/
 theorem regular_of_goodForConesGated_swiglu [Nonempty T] {C : Fin (L + 1) → Set (d → ℝ)}
     {A : ∀ ℓ, Finset (hid ℓ)} {θ : Params (Arch.gated (T := T) (d := d) silu χ hid) dIn dOut}
-    (hθ : GoodForConesGated C A θ) : Regular (Arch.gated silu χ hid) θ := by
-  sorry
+    (hθ : GoodForConesGated C A θ) : Regular (Arch.gated silu χ hid) θ :=
+  -- SiLU: `σ(y) = y S(y)` with the logistic function `S`
+  regular_of_goodForConesGated_of_limits hasDerivAt_silu tendsto_siluDeriv_atTop
+    tendsto_siluDeriv_atBot silu_eq_mul tendsto_logistic_atTop tendsto_logistic_atBot hθ
 
 /-- "A good `θ` is regular", GeGLU blocks. -/
 theorem regular_of_goodForConesGated_geglu [Nonempty T] {C : Fin (L + 1) → Set (d → ℝ)}
     {A : ∀ ℓ, Finset (hid ℓ)} {θ : Params (Arch.gated (T := T) (d := d) gelu χ hid) dIn dOut}
-    (hθ : GoodForConesGated C A θ) : Regular (Arch.gated gelu χ hid) θ := by
-  sorry
+    (hθ : GoodForConesGated C A θ) : Regular (Arch.gated gelu χ hid) θ :=
+  -- GELU: `σ(y) = y Φ(y)`
+  regular_of_goodForConesGated_of_limits hasDerivAt_gelu tendsto_geluDeriv_atTop
+    tendsto_geluDeriv_atBot (fun _ => rfl) tendsto_gaussCdf_atTop tendsto_gaussCdf_atBot hθ
 
 /-- "A good `θ` is regular", GELU blocks. -/
 theorem regular_of_goodForConesMlp_gelu [Nonempty T] {C : Fin (L + 1) → Set (d → ℝ)}
     {A : ∀ ℓ, Finset (hid ℓ)} {θ : Params (Arch.mlp (T := T) (d := d) gelu χ hid) dIn dOut}
-    (hθ : GoodForConesMlp C A θ) : Regular (Arch.mlp gelu χ hid) θ := by
-  sorry
+    (hθ : GoodForConesMlp C A θ) : Regular (Arch.mlp gelu χ hid) θ :=
+  regular_of_goodForConesMlp_of_limits hasDerivAt_gelu tendsto_geluDeriv_atTop
+    tendsto_geluDeriv_atBot hθ
+
+end Regular
 
 /-! ### Lemma D.13: good parameters exist -/
 
