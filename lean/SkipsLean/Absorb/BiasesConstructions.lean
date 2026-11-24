@@ -77,6 +77,64 @@ noncomputable def attentionBlockB {T d H dh : Type*} [Fintype T] [Fintype d] [Fi
 
 /-! ### Theorem C.1 (i): the constructions -/
 
+/-- The entry `o` of `f ᵥ* W` as a sum over the rows. -/
+private theorem vecMul_apply_bc {n : Type*} [Fintype n] (f : n → ℝ) (W : Matrix n q ℝ) (o : q) :
+    (f ᵥ* W) o = ∑ i, f i * W i o := rfl
+
+/-- A vanilla block with biases whose old units keep their reads and biases, whose old writes get
+`D` added, with new units `k`: it is the old block, plus `σ(x W_read + b) D`, plus the new units,
+plus `c' - c`. -/
+private theorem vanillaBlockB_sum_bc {k : Type*} [Fintype k] (σ : ℝ → ℝ) (Wr : Matrix p m ℝ)
+    (b : m → ℝ) (Ww : Matrix m q ℝ) (c : q → ℝ) (Wn : Matrix p k ℝ) (bn : k → ℝ)
+    (D : Matrix m q ℝ) (Wwn : Matrix k q ℝ) (c' : q → ℝ) (x : p → ℝ) :
+    vanillaBlockB σ (Matrix.of fun i s => Sum.elim (Wr i) (Wn i) s) (Sum.elim b bn)
+        (Matrix.of fun s o => Sum.elim (fun j => Ww j o + D j o) (fun l => Wwn l o) s) c' x
+      = vanillaBlockB σ Wr b Ww c x + (fun j => σ ((x ᵥ* Wr) j + b j)) ᵥ* D
+        + (fun l => σ ((x ᵥ* Wn) l + bn l)) ᵥ* Wwn + (c' - c) := by
+  funext o
+  simp only [vanillaBlockB, vecMul_apply_bc, Fintype.sum_sum_type, Matrix.of_apply, Sum.elim_inl,
+    Sum.elim_inr, Pi.add_apply, Pi.sub_apply, mul_add, Finset.sum_add_distrib]
+  ring
+
+/-- The same for a gated block with biases (no change of the old writes). -/
+private theorem gatedBlockB_sum_bc {k : Type*} [Fintype k] (σ : ℝ → ℝ) (Wg : Matrix p m ℝ)
+    (bg : m → ℝ) (Wv : Matrix p m ℝ) (bv : m → ℝ) (Ww : Matrix m q ℝ) (c : q → ℝ)
+    (Wgn : Matrix p k ℝ) (bgn : k → ℝ) (Wvn : Matrix p k ℝ) (bvn : k → ℝ) (Wwn : Matrix k q ℝ)
+    (c' : q → ℝ) (x : p → ℝ) :
+    gatedBlockB σ (Matrix.of fun i s => Sum.elim (Wg i) (Wgn i) s) (Sum.elim bg bgn)
+        (Matrix.of fun i s => Sum.elim (Wv i) (Wvn i) s) (Sum.elim bv bvn)
+        (Matrix.of fun s o => Sum.elim (fun j => Ww j o) (fun l => Wwn l o) s) c' x
+      = gatedBlockB σ Wg bg Wv bv Ww c x
+        + (fun l => σ ((x ᵥ* Wgn) l + bgn l) * ((x ᵥ* Wvn) l + bvn l)) ᵥ* Wwn + (c' - c) := by
+  funext o
+  simp only [gatedBlockB, vecMul_apply_bc, Fintype.sum_sum_type, Matrix.of_apply, Sum.elim_inl,
+    Sum.elim_inr, Pi.add_apply, Pi.sub_apply]
+  ring
+
+/-- **The gated construction for a factorization `M = A B`:** if `σ(1) ≠ 0`, new units with gate
+read `0`, gate bias `1`, value read the columns of `A`, value bias `0` and writes `σ(1)⁻¹ B_k` add
+`x A B`. -/
+private theorem exists_gatedBlockB_add_mul_bc {k : Type*} [Fintype k] {σ : ℝ → ℝ}
+    (hσ : σ 1 ≠ 0) (Wg : Matrix p m ℝ) (bg : m → ℝ) (Wv : Matrix p m ℝ) (bv : m → ℝ)
+    (Ww : Matrix m q ℝ) (c : q → ℝ) (A : Matrix p k ℝ) (B : Matrix k q ℝ) :
+    ∃ (Wg' : Matrix p (m ⊕ k) ℝ) (bg' : m ⊕ k → ℝ) (Wv' : Matrix p (m ⊕ k) ℝ)
+      (bv' : m ⊕ k → ℝ) (Ww' : Matrix (m ⊕ k) q ℝ) (c' : q → ℝ),
+      ∀ x : p → ℝ, x ᵥ* (A * B) + gatedBlockB σ Wg bg Wv bv Ww c x
+        = gatedBlockB σ Wg' bg' Wv' bv' Ww' c' x := by
+  refine ⟨Matrix.of fun i s => Sum.elim (Wg i) ((0 : Matrix p k ℝ) i) s,
+    Sum.elim bg (fun _ => 1), Matrix.of fun i s => Sum.elim (Wv i) (A i) s,
+    Sum.elim bv (fun _ => 0),
+    Matrix.of fun s o => Sum.elim (fun j => Ww j o) (fun l => ((σ 1)⁻¹ • B) l o) s, c,
+    fun x => ?_⟩
+  rw [gatedBlockB_sum_bc σ Wg bg Wv bv Ww c 0 _ A _ ((σ 1)⁻¹ • B)]
+  -- unit `l` computes `σ(1) (x A)_l`
+  have hu : (fun l => σ ((x ᵥ* (0 : Matrix p k ℝ)) l + 1) * ((x ᵥ* A) l + 0))
+      = σ 1 • (x ᵥ* A) := by
+    funext l
+    simp only [Matrix.vecMul_zero, Pi.zero_apply, zero_add, add_zero, Pi.smul_apply, smul_eq_mul]
+  rw [hu, Matrix.smul_vecMul, Matrix.vecMul_smul, smul_smul, mul_inv_cancel₀ hσ, one_smul,
+    Matrix.vecMul_vecMul, sub_self, add_zero, add_comm]
+
 /-- **Theorem C.1 (i) for gated blocks (ReGLU, SwiGLU, GeGLU), with `d` more units:** if
 `σ(1) ≠ 0`, every gated block with biases absorbs `x M` with one more hidden unit per coordinate
 of the input. -/
@@ -87,7 +145,27 @@ theorem exists_gatedBlockB_add_linear [DecidableEq p] {σ : ℝ → ℝ} (hσ : 
       (bv' : m ⊕ p → ℝ) (Ww' : Matrix (m ⊕ p) q ℝ) (c' : q → ℝ),
       ∀ x : p → ℝ, x ᵥ* M + gatedBlockB σ Wg bg Wv bv Ww c x
         = gatedBlockB σ Wg' bg' Wv' bv' Ww' c' x := by
-  sorry
+  -- `M = 1 M`: the new unit `a` has the value read `e_a`
+  have h := exists_gatedBlockB_add_mul_bc hσ Wg bg Wv bv Ww c 1 M
+  rwa [Matrix.one_mul] at h
+
+/-- **A rank factorization:** `M = A B` with `rank M` columns in `A`: `B` holds a basis of the span
+of the rows of `M`, and `A` the coordinates of the rows in it. -/
+private theorem exists_mul_eq_rank_bc [Fintype q] (M : Matrix p q ℝ) :
+    ∃ (A : Matrix p (Fin M.rank) ℝ) (B : Matrix (Fin M.rank) q ℝ), M = A * B := by
+  classical
+  set W := Submodule.span ℝ (Set.range M.row) with hW
+  let β : Module.Basis (Fin M.rank) ℝ W :=
+    Module.finBasisOfFinrankEq ℝ W (M.rank_eq_finrank_span_row).symm
+  have hmem : ∀ i, M i ∈ W := fun i => Submodule.subset_span ⟨i, rfl⟩
+  refine ⟨Matrix.of fun i l => β.repr ⟨M i, hmem i⟩ l, Matrix.of fun l => (β l : q → ℝ), ?_⟩
+  funext i o
+  have h := β.sum_repr ⟨M i, hmem i⟩
+  have h2 := congrArg (fun v : W => (v : q → ℝ) o) h
+  simp only [Submodule.coe_sum, Submodule.coe_smul, Finset.sum_apply, Pi.smul_apply,
+    smul_eq_mul] at h2
+  rw [Matrix.mul_apply]
+  simpa only [Matrix.of_apply] using h2.symm
 
 /-- **Remark C.3, "Every gated block absorbs `x M` with `rank M` more units":** if `σ(1) ≠ 0`,
 every gated block with biases absorbs `x M` with `rank M` more hidden units. -/
@@ -99,7 +177,9 @@ theorem exists_gatedBlockB_add_linear_rank [Fintype q] {σ : ℝ → ℝ} (hσ :
       (Ww' : Matrix (m ⊕ Fin M.rank) q ℝ) (c' : q → ℝ),
       ∀ x : p → ℝ, x ᵥ* M + gatedBlockB σ Wg bg Wv bv Ww c x
         = gatedBlockB σ Wg' bg' Wv' bv' Ww' c' x := by
-  sorry
+  obtain ⟨A, B, hAB⟩ := exists_mul_eq_rank_bc M
+  have h := exists_gatedBlockB_add_mul_bc hσ Wg bg Wv bv Ww c A B
+  rwa [← hAB] at h
 
 /-- **Theorem C.1 (i) for ReLU and GELU blocks, with `2 d` more units:** if
 `σ(z) − σ(−z) = z`, every vanilla block with biases absorbs `x M` with two more hidden units per
