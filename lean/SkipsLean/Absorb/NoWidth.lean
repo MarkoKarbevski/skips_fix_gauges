@@ -134,7 +134,15 @@ theorem vanillaBlock_reluSq_smul (Wr : Matrix p m ℝ) (Ww : Matrix m q ℝ) (la
 theorem gatedBlock_relu_smul (Wg Wv : Matrix p m ℝ) (Ww : Matrix m q ℝ) (lam : ℝ) (x : p → ℝ)
     (hlam : 0 < lam) :
     gatedBlock relu Wg Wv Ww (lam • x) = lam ^ (2 : ℝ) • gatedBlock relu Wg Wv Ww x := by
-  sorry
+  -- unit by unit: `max(λ a, 0) (λ b) = λ² max(a, 0) b`
+  have key : (fun i => relu (((lam • x) ᵥ* Wg) i) * ((lam • x) ᵥ* Wv) i)
+      = lam ^ 2 • fun i => relu ((x ᵥ* Wg) i) * (x ᵥ* Wv) i := by
+    funext i
+    rw [Matrix.smul_vecMul, Matrix.smul_vecMul, Pi.smul_apply, Pi.smul_apply, Pi.smul_apply,
+      smul_eq_mul, smul_eq_mul, smul_eq_mul, relu, relu, ← mul_zero lam,
+      ← mul_max_of_nonneg _ _ hlam.le, mul_zero]
+    ring
+  rw [gatedBlock, gatedBlock, key, Matrix.smul_vecMul, Real.rpow_two]
 
 /-- **Theorem 3.3 (a) for ReLU² blocks:** for `M ≠ 0`, no ReLU² block of any width computes
 `x M + B(x)`. -/
