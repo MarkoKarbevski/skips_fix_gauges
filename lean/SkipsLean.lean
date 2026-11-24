@@ -60,3 +60,5 @@ import SkipsLean.OneBlock.ReGLU
 import SkipsLean.Absorb.RMSNormRays
 import SkipsLean.Absorb.RMSNormGeneric
 import SkipsLean.Dimension.GenericRank
+import SkipsLean.Activations.Analytic
+import SkipsLean.Depth.SuffixGated
