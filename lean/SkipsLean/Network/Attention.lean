@@ -75,6 +75,36 @@ noncomputable abbrev Arch.attention (sees : T → T → Prop) [DecidableRel sees
       * M s (p.1, Sum.inr (Sum.inr p.2))
   χ := χ
 
+omit [Fintype T] in
+/-- The scores of head `i`, written with the read `R`, are `h Γ_i hᵀ`. -/
+private theorem scores_eq_att {H dh : Type*} [Fintype H] [Fintype dh] (c : ℝ)
+    (h : Matrix T d ℝ) (R : Matrix d (H × (dh ⊕ (dh ⊕ dh))) ℝ) (i : H) :
+    (Matrix.of fun t' s' =>
+        c * ∑ k, (h * R) t' (i, Sum.inl k) * (h * R) s' (i, Sum.inr (Sum.inl k)))
+      = h * (c • ((R.submatrix id fun k => (i, Sum.inl k))
+          * (R.submatrix id fun k => (i, Sum.inr (Sum.inl k)))ᵀ)) * hᵀ := by
+  ext t' s'
+  simp only [Matrix.of_apply, Matrix.mul_apply, Matrix.smul_apply, Matrix.transpose_apply,
+    Matrix.submatrix_apply, id, smul_eq_mul, Finset.mul_sum, Finset.sum_mul]
+  -- both sides are `c ∑_{a,b,k} h t' a R a (i, q k) h s' b R b (i, k k)`: reorder the sums
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun a _ => ?_
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun b _ => Finset.sum_congr rfl fun k _ => ?_
+  ring
+
+/-- The values of head `i` weighted by `P`, times the rows `(i, ·)` of the write, are
+`P h W_{V,i} W_{O,i}`. -/
+private theorem values_eq_att {H dh : Type*} [Fintype H] [Fintype dh] (P : Matrix T T ℝ)
+    (h : Matrix T d ℝ) (R : Matrix d (H × (dh ⊕ (dh ⊕ dh))) ℝ) (W : Matrix (H × dh) d ℝ)
+    (i : H) (t : T) (a : d) :
+    ∑ k, (∑ s, P t s * (h * R) s (i, Sum.inr (Sum.inr k))) * W (i, k) a
+      = (P * h * ((R.submatrix id fun k => (i, Sum.inr (Sum.inr k)))
+          * W.submatrix (fun k => (i, k)) id)) t a := by
+  -- `P h W_V W_O = (P (h W_V)) W_O`, and `h W_V` is the value columns of `h R`
+  rw [Matrix.mul_assoc P, ← Matrix.mul_assoc h, ← Matrix.mul_assoc P]
+  simp only [Matrix.mul_apply, Matrix.submatrix_apply, id]
+
 /-- **The block of `Arch.attention` is equation (4):** on a hidden state `h`, with the read `R`
 and the write `W`, the output of block `ℓ` is the attention block whose head `i` has the query,
 key and value matrices in the columns `(i, ·)` of `R` and the output matrix in the rows `(i, ·)`
@@ -89,6 +119,13 @@ theorem f_attention_mul (sees : T → T → Prop) [DecidableRel sees]
           (fun i => R.submatrix id fun k => (i, Sum.inr (Sum.inl k)))
           (fun i => R.submatrix id fun k => (i, Sum.inr (Sum.inr k)))
           (fun i => W.submatrix (fun k => (i, k)) id) h := by
-  sorry
+  ext t a
+  simp only [attentionBlock, attnHeads, Matrix.sum_apply]
+  -- split the sum over the rows `(i, k)` of the write by head
+  rw [Matrix.mul_apply, Fintype.sum_prod_type]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  -- head `i`: its scores are `h Γ_i hᵀ`, its output is `P_i h W_{V,i} W_{O,i}`
+  rw [← scores_eq_att, ← values_eq_att]
+  rfl
 
 end Skips
