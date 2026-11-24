@@ -50,7 +50,8 @@ theorem ae_eventually_funDim_smallWrites_attention
           + (Fintype.card d ^ 2 + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2)
         = Module.finrank ℝ
             (Params (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut) := by
-  sorry
+  filter_upwards [ae_smallWritesGenericAttention μ hd hdIn hdOut hdh hdh0] with θ hθ
+  exact eventually_funDim_smallWrites_attention t₁ t₂ h12 hs2 hs1 θ hθ
 
 /-- **Theorem 4.7 of the skips paper for attention blocks without normalization:** with
 `d_in, d_out ≥ d ≥ 2`, `L` attention blocks with heads of width `1 ≤ d_h ≤ d`, and a token that
@@ -65,7 +66,16 @@ theorem ae_funDim_attention_residual
     ∀ᵐ θ ∂μ, funDim (Arch.attention sees id H dh) 1 θ
         + (Fintype.card d ^ 2 + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2)
       = Module.finrank ℝ (Params (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut) := by
-  sorry
+  classical
+  -- one parameter `θ₀` with the conditions of Lemma A.27, and one small `τ ≠ 0`:
+  -- `fd(θ₀_τ) = P - d² - s`
+  obtain ⟨θ₀, hθ₀⟩ := (ae_smallWritesGenericAttention μ hd hdIn hdOut hdh hdh0).exists
+  obtain ⟨τ, hτ⟩ := (eventually_funDim_smallWrites_attention t₁ t₂ h12 hs2 hs1 θ₀ hθ₀).exists
+  -- at almost every `θ`, `fd(θ) ≥ fd(θ₀_τ)` (analytic outputs) and `fd(θ) ≤ P - d² - s`
+  filter_upwards [ae_funDim_ge (Arch.attention sees id H dh) 1
+      (fun ℓ => analyticOnNhd_f_attention sees id H dh ℓ) analyticOnNhd_id μ (θ₀.smallWrites τ),
+    ae_funDim_add_le_residual_attention μ hdIn hdh] with θ h1 h2
+  omega
 
 /-- **Theorem 4.7, the gain, for attention blocks without normalization:** if moreover every
 block has total width `H d_h ≥ d`, at almost every parameter the skips raise the functional
@@ -79,7 +89,12 @@ theorem ae_funDim_attention_residual_ge_add
     (t₁ t₂ : T) (h12 : t₁ ≠ t₂) (hs2 : sees t₂ t₂) (hs1 : sees t₂ t₁) :
     ∀ᵐ θ ∂μ, funDim (Arch.attention sees id H dh) 0 θ + L * Fintype.card d ^ 2
       ≤ funDim (Arch.attention sees id H dh) 1 θ := by
-  sorry
+  classical
+  -- `fd₁ = P - d² - s` and `fd₀ ≤ P - (L + 1) d² - s`
+  filter_upwards [ae_funDim_attention_residual μ hd hdIn hdOut hdh hdh0 t₁ t₂ h12 hs2 hs1,
+    ae_funDim_add_le_skipless_attention μ hdIn hdh hH] with θ h1 h2
+  rw [add_one_mul] at h2
+  omega
 
 /-- **Corollary 4.10 (i) of the skips paper (attention-only transformers):** without
 normalization, with `d_in, d_out ≥ d ≥ 2` and `L` attention blocks of `Hn` heads each, of total
@@ -94,6 +109,29 @@ theorem ae_funDim_attention_residual_of_width (Hn : ℕ)
     ∀ᵐ θ ∂μ, funDim (Arch.attention sees id H dh) 1 θ
         + (Fintype.card d ^ 2 + 2 * L * Fintype.card d ^ 2 / Hn)
       = Module.finrank ℝ (Params (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut) := by
-  sorry
+  -- every block has heads of width `1 ≤ d_h ≤ d`, since `H d_h = d ≥ 2`
+  have hpos : ∀ ℓ, 0 < Fintype.card (H ℓ) ∧ 0 < Fintype.card (dh ℓ) := fun ℓ => by
+    have h : 0 < Fintype.card (H ℓ) * Fintype.card (dh ℓ) := by rw [hHd ℓ]; omega
+    exact ⟨Nat.pos_of_mul_pos_right h, Nat.pos_of_mul_pos_left h⟩
+  have hdh : ∀ ℓ, Fintype.card (dh ℓ) ≤ Fintype.card d := fun ℓ =>
+    hHd ℓ ▸ Nat.le_mul_of_pos_left _ (hpos ℓ).1
+  -- `s = 2 ∑_ℓ H d_h² = 2 L d² / H`
+  have hs : 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2
+      = 2 * L * Fintype.card d ^ 2 / Hn := by
+    rcases Nat.eq_zero_or_pos L with hL | hL
+    · subst hL
+      simp
+    have hHn0 : 0 < Hn := hHn ⟨0, hL⟩ ▸ (hpos ⟨0, hL⟩).1
+    -- each block: `H d_h² = d² / H`, as `d² = (H d_h²) H`
+    have hterm : ∀ ℓ, Fintype.card d ^ 2
+        = Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2 * Hn := fun ℓ => by
+      rw [← hHd ℓ, ← hHn ℓ]
+      ring
+    have hdvd : Hn ∣ Fintype.card d ^ 2 := Dvd.intro_left _ (hterm ⟨0, hL⟩).symm
+    rw [Finset.sum_congr rfl fun ℓ _ => (Nat.div_eq_of_eq_mul_left hHn0 (hterm ℓ)).symm,
+      Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul,
+      Nat.mul_div_assoc _ hdvd, mul_assoc]
+  rw [← hs]
+  exact ae_funDim_attention_residual μ hd hdIn hdOut hdh (fun ℓ => (hpos ℓ).2) t₁ t₂ h12 hs2 hs1
 
 end Skips
