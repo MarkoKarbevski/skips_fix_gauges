@@ -426,6 +426,114 @@ theorem smallWritesLimitNorm_eq_zero_attention_rmsNorm (hε : 0 < ε) (t₁ t₂
     exact congrFun (congrFun (hΓO ℓ i) k) b
 
 
+/-! ### Helpers: the space of the flat directions of `J_0` -/
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] in
+/-- Helper (as `flatEDLin_dpa` of `Residual/DepthAttention.lean`): the directions
+`Y ↦ (E Y, 0, 0, −Y D)` of one change of basis at all hidden states, as a linear map. -/
+private def flatEDLin_rma {A : Arch T d L} (θ : Params A dIn dOut) :
+    Matrix d d ℝ →ₗ[ℝ] Params A dIn dOut where
+  toFun X := ⟨θ.E * X, 0, 0, -(X * θ.D)⟩
+  map_add' X Y := by
+    apply Params.ext'
+    · exact Matrix.mul_add _ _ _
+    · intro ℓ
+      exact (add_zero 0).symm
+    · intro ℓ
+      exact (add_zero 0).symm
+    · show -((X + Y) * θ.D) = -(X * θ.D) + -(Y * θ.D)
+      rw [Matrix.add_mul, neg_add]
+  map_smul' c X := by
+    apply Params.ext'
+    · exact Matrix.mul_smul _ _ _
+    · intro ℓ
+      exact (smul_zero c).symm
+    · intro ℓ
+      exact (smul_zero c).symm
+    · show -((c • X) * θ.D) = c • -(X * θ.D)
+      rw [Matrix.smul_mul, smul_neg]
+
+/-- Helper (as `headDirQKLin_dpa`): `Γ ↦ headDirQK θ Γ` is linear. -/
+private noncomputable def headDirQKLin_rma
+    (θ : Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut) :
+    (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) →ₗ[ℝ]
+      Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut where
+  toFun := headDirQK θ
+  map_add' Γ Δ := by
+    apply Params.ext'
+    · simp [headDirQK]
+    · intro ℓ
+      ext a ⟨i, k | k | k⟩
+      · simp only [headDirQK, Params.add_read, Matrix.add_apply, Matrix.of_apply, Pi.add_apply,
+          mul_add, Finset.sum_add_distrib]
+      · simp only [headDirQK, Params.add_read, Matrix.add_apply, Matrix.of_apply, Pi.add_apply,
+          mul_add, Finset.sum_add_distrib, neg_add]
+      · simp [headDirQK]
+    · intro ℓ
+      simp [headDirQK]
+    · simp [headDirQK]
+  map_smul' c Γ := by
+    apply Params.ext'
+    · simp [headDirQK]
+    · intro ℓ
+      ext a ⟨i, k | k | k⟩
+      · simp only [headDirQK, Params.smul_read, Matrix.smul_apply, Matrix.of_apply, Pi.smul_apply,
+          smul_eq_mul, RingHom.id_apply, Finset.mul_sum]
+        exact Finset.sum_congr rfl fun _ _ => by ring
+      · simp only [headDirQK, Params.smul_read, Matrix.smul_apply, Matrix.of_apply, Pi.smul_apply,
+          smul_eq_mul, RingHom.id_apply, Finset.mul_sum, mul_neg]
+        exact congrArg Neg.neg (Finset.sum_congr rfl fun _ _ => by ring)
+      · simp [headDirQK]
+    · intro ℓ
+      simp [headDirQK]
+    · simp [headDirQK]
+
+/-- Helper (as `headDirVOLin_dpa`): `Γ' ↦ headDirVO θ Γ'` is linear. -/
+private noncomputable def headDirVOLin_rma
+    (θ : Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut) :
+    (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) →ₗ[ℝ]
+      Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut where
+  toFun := headDirVO θ
+  map_add' Γ Δ := by
+    apply Params.ext'
+    · simp [headDirVO]
+    · intro ℓ
+      ext a ⟨i, k | k | k⟩
+      · simp [headDirVO]
+      · simp [headDirVO]
+      · simp only [headDirVO, Params.add_read, Matrix.add_apply, Matrix.of_apply, Pi.add_apply,
+          mul_add, Finset.sum_add_distrib]
+    · intro ℓ
+      ext p b
+      simp only [headDirVO, Params.add_write, Matrix.add_apply, Matrix.of_apply, Pi.add_apply,
+        add_mul, Finset.sum_add_distrib, neg_add]
+    · simp [headDirVO]
+  map_smul' c Γ := by
+    apply Params.ext'
+    · simp [headDirVO]
+    · intro ℓ
+      ext a ⟨i, k | k | k⟩
+      · simp [headDirVO]
+      · simp [headDirVO]
+      · simp only [headDirVO, Params.smul_read, Matrix.smul_apply, Matrix.of_apply, Pi.smul_apply,
+          smul_eq_mul, RingHom.id_apply, Finset.mul_sum]
+        exact Finset.sum_congr rfl fun _ _ => by ring
+    · intro ℓ
+      ext p b
+      simp only [headDirVO, Params.smul_write, Matrix.smul_apply, Matrix.of_apply, Pi.smul_apply,
+        smul_eq_mul, RingHom.id_apply, Finset.mul_sum, mul_neg]
+      exact congrArg Neg.neg (Finset.sum_congr rfl fun _ _ => by ring)
+    · simp [headDirVO]
+
+/-- Helper (as `finrank_headFun_dpa`): the families `Γ` of `d_h × d_h` matrices, one for each
+head of each block, form a space of dimension `∑_ℓ H_ℓ d_{h,ℓ}²`. -/
+private theorem finrank_headFun_rma :
+    Module.finrank ℝ (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ)
+      = ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2 := by
+  rw [Module.finrank_pi_fintype]
+  simp only [Module.finrank_pi_fintype, Module.finrank_matrix, Module.finrank_self, mul_one,
+    Finset.sum_const, Finset.card_univ, smul_eq_mul, sq]
+
 /-- **Lemma A.27 (Small writes), second value, for attention blocks, under the conditions of its
 proof:** under pre-RMSNorm with `ε > 0`, with a token that sees itself and another token, for all
 small `τ ≠ 0` the residual network has `fd(θ_τ) = P − d(d−1)/2 − 2 ∑_ℓ H_ℓ d_{h,ℓ}²`. -/
@@ -439,6 +547,46 @@ theorem eventually_funDim_smallWrites_attention_rmsNorm (hε : 0 < ε) (t₁ t�
             + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2)
         = Module.finrank ℝ
             (Params (Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh) dIn dOut) := by
-  sorry
+  classical
+  -- the flat directions of `J_0` lie in the range `V` of the linear map
+  -- `(Y, Γ, Γ') ↦ (E Y, 0, 0, −Y D) + headDirQK θ Γ + headDirVO θ Γ'` on antisymmetric `Y`
+  -- (the first theorem)
+  let Φ := ((flatEDLin_rma θ).comp (antisymmetric d).subtype).coprod
+    ((headDirQKLin_rma θ).coprod (headDirVOLin_rma θ))
+  have hV : ∀ η, (∀ x, smallWritesLimitNorm (Arch.attention sees (rmsNorm ε) H dh) θ η x = 0) →
+      η ∈ LinearMap.range Φ := by
+    intro η hη
+    obtain ⟨Y, Γ, Γ', hYa, hE, hD, hr, hw⟩ :=
+      smallWritesLimitNorm_eq_zero_attention_rmsNorm hε t₁ t₂ h12 hs2 hs1 θ hθ η hη
+    refine ⟨(⟨Y, hYa⟩, Γ, Γ'), ?_⟩
+    rw [LinearMap.coprod_apply, LinearMap.coprod_apply]
+    apply Params.ext'
+    · show θ.E * Y + ((0 : Matrix dIn d ℝ) + 0) = η.E
+      rw [add_zero, add_zero, hE]
+    · intro ℓ
+      show 0 + (headDirQK θ Γ + headDirVO θ Γ').read ℓ = η.read ℓ
+      rw [zero_add, hr ℓ]
+    · intro ℓ
+      show 0 + (headDirQK θ Γ + headDirVO θ Γ').write ℓ = η.write ℓ
+      rw [zero_add, hw ℓ]
+    · show -(Y * θ.D) + ((0 : Matrix d dOut ℝ) + 0) = η.D
+      rw [add_zero, add_zero, hD]
+  -- `dim V ≤ d(d−1)/2 + 2 ∑_ℓ H_ℓ d_{h,ℓ}²`, the dimension of the domain of the map
+  have hdim : Module.finrank ℝ (LinearMap.range Φ)
+      ≤ Fintype.card d * (Fintype.card d - 1) / 2
+        + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2 := by
+    have h := LinearMap.finrank_range_le Φ
+    rwa [Module.finrank_prod, Module.finrank_prod, finrank_antisymmetric, finrank_headFun_rma,
+      ← two_mul] at h
+  -- `≥`: "The rank" of the proof of Lemma A.27 (`N_ε` and the blocks are analytic); `≤`: the
+  -- upper bound for residual networks under pre-RMSNorm, as `θ ↦ θ_τ` changes neither `E` nor
+  -- the reads
+  filter_upwards [eventually_funDim_smallWrites_ge_norm
+    (Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh) θ (analyticOnNhd_rmsNorm hε)
+    (fun ℓ => analyticOnNhd_f_attention (d := d) sees (rmsNorm ε) H dh ℓ) _ hV] with τ hτ
+  have hle := funDim_add_le_residual_attention_rmsNorm ε (θ.smallWrites τ) hθ.rank_E hθ.rank_Q
+    hθ.rank_V
+  generalize Fintype.card d * (Fintype.card d - 1) / 2 = N at hle hdim ⊢
+  omega
 
 end Skips
