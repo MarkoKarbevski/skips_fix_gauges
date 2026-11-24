@@ -902,3 +902,9 @@ import SkipsLean
 #print axioms Skips.hasStrictFDerivAt_cobExp
 #print axioms Skips.cobExp_zero
 #print axioms Skips.exists_mem_orbit_of_eval_eq
+#print axioms Skips.exists_cob_of_eval_eq_residual
+#print axioms Skips.exists_cob_of_eval_eq_residual_rmsNorm
+#print axioms Skips.ae_exists_cob_of_eval_eq_tanh_residual
+#print axioms Skips.ae_exists_cob_of_eval_eq_gelu_residual
+#print axioms Skips.ae_exists_cob_of_eval_eq_tanh_residual_rmsNorm
+#print axioms Skips.ae_exists_cob_of_eval_eq_gelu_residual_rmsNorm
