@@ -74,6 +74,109 @@ def noKink (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
     Set (Matrix T dIn ℝ) :=
   {x | ∀ (t : T) (i : hid 0), (x * θ.E * θ.read 0) t i ≠ 0}
 
+/-! ### Helpers: the function of one MLP block and its derivative (as in `Mlp.lean`) -/
+
+/-- Helper: the read of the block, with its columns indexed by the hidden units. -/
+private def rd (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
+    Matrix d (hid 0) ℝ :=
+  θ.read 0
+
+/-- Helper: the write of the block, with its rows indexed by the hidden units. -/
+private def wr (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
+    Matrix (hid 0) d ℝ :=
+  θ.write 0
+
+/-- Helper: `C = E W_read`. -/
+private def Cm (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
+    Matrix dIn (hid 0) ℝ :=
+  θ.E * rd θ
+
+/-- Helper: `A = W_write D`. -/
+private def Am (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
+    Matrix (hid 0) dOut ℝ :=
+  wr θ * θ.D
+
+/-- Helper: the derivative `∂C = η_E W_read + E η_read` of `C` along `η`. -/
+private def dCm (θ η : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
+    Matrix dIn (hid 0) ℝ :=
+  η.E * rd θ + θ.E * rd η
+
+/-- Helper: the derivative `∂A = η_write D + W_write η_D` of `A` along `η`. -/
+private def dAm (θ η : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
+    Matrix (hid 0) dOut ℝ :=
+  wr η * θ.D + wr θ * η.D
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the read is linear in the parameters. -/
+private theorem rd_line (θ η : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)
+    (τ : ℝ) : rd (θ + τ • η) = rd θ + τ • rd η := rfl
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the write is linear in the parameters. -/
+private theorem wr_line (θ η : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)
+    (τ : ℝ) : wr (θ + τ • η) = wr θ + τ • wr η := rfl
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: the function of one MLP block, `F_θ(x) = σ(x C) A` (the stream matrix is `0`). -/
+private theorem eval_mlp_eq (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)
+    (x : Matrix T dIn ℝ) :
+    eval (Arch.mlp σ id hid) 0 θ x = (x * Cm θ).map σ * Am θ := by
+  have h1 : (Fin.last 1 : Fin 2) = (0 : Fin 1).succ := rfl
+  have hχ : (Arch.mlp (T := T) (d := d) σ id hid).χ = id := rfl
+  have hf : (Arch.mlp (T := T) (d := d) σ id hid).f 0 = fun M => M.map σ := rfl
+  -- `h_1 = h_0 0 + σ(h_0 W_read) W_write` with `h_0 = x E`
+  rw [eval, h1, hidden_succ, Fin.castSucc_zero, hidden_zero, hχ, hf]
+  simp only [Pi.zero_apply, Matrix.mul_zero, zero_add, id_eq]
+  rw [Matrix.mul_assoc x θ.E (θ.read 0)]
+  exact Matrix.mul_assoc _ _ _
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: the entries of `F_θ(x)`, `∑_i σ((x C)_{t i}) A_{i o}`. -/
+private theorem eval_mlp_apply
+    (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)
+    (x : Matrix T dIn ℝ) (t : T) (o : dOut) :
+    eval (Arch.mlp σ id hid) 0 θ x t o
+      = ∑ i : hid 0, σ ((x * Cm θ) t i) * Am θ i o := by
+  rw [eval_mlp_eq, Matrix.mul_apply]
+  rfl
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: along the line, `C(τ) = C + τ ∂C + τ² η_E η_read`. -/
+private theorem Cm_line (θ η : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)
+    (τ : ℝ) :
+    Cm (θ + τ • η) = Cm θ + τ • dCm θ η + (τ * τ) • Cm η := by
+  simp only [Cm, dCm, rd_line, Params.add_E, Params.smul_E, Matrix.mul_add, Matrix.add_mul,
+    Matrix.mul_smul, Matrix.smul_mul, smul_add, smul_smul]
+  abel
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: along the line, `A(τ) = A + τ ∂A + τ² η_write η_D`. -/
+private theorem Am_line (θ η : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)
+    (τ : ℝ) :
+    Am (θ + τ • η) = Am θ + τ • dAm θ η + (τ * τ) • Am η := by
+  simp only [Am, dAm, wr_line, Params.add_D, Params.smul_D, Matrix.mul_add, Matrix.add_mul,
+    Matrix.mul_smul, Matrix.smul_mul, smul_add, smul_smul]
+  abel
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: the entries of `F_{θ + τ η}(x)` as functions of `τ`. -/
+private theorem eval_line_apply
+    (θ η : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)
+    (x : Matrix T dIn ℝ) (t : T) (o : dOut) (τ : ℝ) :
+    eval (Arch.mlp σ id hid) 0 (θ + τ • η) x t o = ∑ i : hid 0,
+      σ ((x * Cm θ) t i + τ * (x * dCm θ η) t i + τ * τ * (x * Cm η) t i) *
+        (Am θ i o + τ * dAm θ η i o + τ * τ * Am η i o) := by
+  rw [eval_mlp_apply, Cm_line, Am_line]
+  simp only [Matrix.mul_add, Matrix.mul_smul]
+  rfl
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: at an input of `noKink θ`, every entry of `x C` is nonzero. -/
+private theorem noKink_apply {θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut}
+    {x : Matrix T dIn ℝ} (hx : x ∈ noKink θ) (t : T) (i : hid 0) : (x * Cm θ) t i ≠ 0 := by
+  have h := hx t i
+  rwa [Matrix.mul_assoc] at h
+
 /-- At an input with no hidden unit at its kink, the output of a network of one block is
 differentiable in the parameters, when `σ` is differentiable away from `0`. -/
 theorem differentiableAt_eval_of_mem_noKink (hσ : ∀ z, z ≠ 0 → HasDerivAt σ (σ' z) z)
@@ -82,7 +185,27 @@ theorem differentiableAt_eval_of_mem_noKink (hσ : ∀ z, z ≠ 0 → HasDerivAt
     DifferentiableAt ℝ
       (fun θ' : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut =>
         eval (Arch.mlp σ id hid) 0 θ' x) θ := by
-  sorry
+  -- the entries of `C = E W_read` and of `A = W_write D` are polynomials in the parameters
+  have hC : ∀ (a : dIn) (i : hid 0), DifferentiableAt ℝ
+      (fun θ' : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut => Cm θ' a i) θ :=
+    fun a i => (analyticOnNhd_E_mul_read (A := Arch.mlp (T := T) (d := d) σ id hid)
+      (dOut := dOut) 0 a i θ (Set.mem_univ _)).differentiableAt
+  have hA : ∀ (i : hid 0) (o : dOut), DifferentiableAt ℝ
+      (fun θ' : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut => Am θ' i o) θ :=
+    fun i o => (analyticOnNhd_write_mul_D (A := Arch.mlp (T := T) (d := d) σ id hid)
+      (dIn := dIn) 0 i o θ (Set.mem_univ _)).differentiableAt
+  -- so are the entries of `x C`
+  have hxC : ∀ (t : T) (i : hid 0), DifferentiableAt ℝ
+      (fun θ' : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut => (x * Cm θ') t i) θ := by
+    intro t i
+    simp only [Matrix.mul_apply]
+    exact DifferentiableAt.fun_sum fun a _ => (hC a i).const_mul (x t a)
+  -- the entry `(t, o)` of `F_θ'(x)` is `∑_i σ((x C)_{t i}) A_{i o}`, and `σ` is differentiable
+  -- at every `(x C)_{t i}`, which is not `0`
+  refine differentiableAt_pi.2 fun t => differentiableAt_pi.2 fun o => ?_
+  simp only [eval_mlp_apply]
+  exact DifferentiableAt.fun_sum fun i _ =>
+    ((hσ _ (noKink_apply hx t i)).differentiableAt.comp θ (hxC t i)).mul (hA i o)
 
 /-- **Steps 1 to 3 of the proof of Theorem 5.1 for an activation with the rescalings.** Under the
 conditions `OneBlockGeneric`, a direction that is flat at every input with no hidden unit at its
