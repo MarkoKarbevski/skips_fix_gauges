@@ -417,6 +417,7 @@ theorem ae_funDim_add_le_skipless_reluSq_rmsNorm [Nonempty d] (ε : ℝ)
         + ((L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2) + ∑ ℓ, Fintype.card (hid ℓ))
       ≤ Module.finrank ℝ
           (Params (Arch.mlp (T := T) (d := d) reluSq (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  filter_upwards [ae_rank_E_write μ hdIn hhid, ae_read_col_ne_zero μ] with θ h1 h2
+  exact funDim_add_le_skipless_mlp_rescale_rmsNorm reluSq_homogeneous ε θ h1.1 h1.2 h2
 
 end Skips
