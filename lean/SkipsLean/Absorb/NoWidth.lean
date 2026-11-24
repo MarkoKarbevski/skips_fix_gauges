@@ -181,11 +181,38 @@ theorem exists_ne_geglu (Wg Wv : Matrix p m ℝ) (Ww : Matrix m q ℝ) (Wg' Wv' 
   exact exists_ne_of_gated h0 (hasDerivAt_gelu 0).differentiableAt h0
     (hasDerivAt_gelu 0).differentiableAt Wg Wv Ww Wg' Wv' Ww' M hM
 
+/-- Each output coordinate of a `tanh` block is bounded by the sum of the absolute values of the
+corresponding column of the write. -/
+private lemma abs_vanillaBlock_tanh_le {k : Type*} [Fintype k] (Wr : Matrix p k ℝ)
+    (Ww : Matrix k q ℝ) (x : p → ℝ) (o : q) :
+    |vanillaBlock Real.tanh Wr Ww x o| ≤ ∑ i, |Ww i o| := by
+  rw [vanillaBlock, vecMul_apply_eq_sum]
+  refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun i _ => ?_)
+  -- `|tanh(…) w| ≤ |w|`
+  rw [abs_mul]
+  exact mul_le_of_le_one_left (abs_nonneg _) (Real.abs_tanh_lt_one _).le
+
 /-- **Theorem 3.3 (c):** for `M ≠ 0`, no `tanh` block of any width computes `x M + B(x)`: a `tanh`
 block is bounded, and `x M` is not. -/
 theorem exists_ne_tanh (Wr : Matrix p m ℝ) (Ww : Matrix m q ℝ) (Wr' : Matrix p m' ℝ)
     (Ww' : Matrix m' q ℝ) (M : Matrix p q ℝ) (hM : M ≠ 0) :
     ∃ x : p → ℝ, x ᵥ* M + vanillaBlock Real.tanh Wr Ww x ≠ vanillaBlock Real.tanh Wr' Ww' x := by
-  sorry
+  by_contra hcon
+  push Not at hcon
+  obtain ⟨z, o, hz⟩ := exists_vecMul_apply_ne_zero hM
+  -- the two blocks are bounded in coordinate `o`, with bounds summing to `C`; on the ray `t z`
+  -- with `t (z M)_o = C + 1` the linear term exceeds `C`
+  set C := ∑ i, |Ww i o| + ∑ i, |Ww' i o| with hC
+  set t := (C + 1) / (z ᵥ* M) o with ht
+  have hlin : ((t • z) ᵥ* M) o = C + 1 := by
+    rw [Matrix.smul_vecMul, Pi.smul_apply, smul_eq_mul, ht, div_mul_cancel₀ _ hz]
+  have h := congrFun (hcon (t • z)) o
+  rw [Pi.add_apply, hlin] at h
+  have hb := abs_vanillaBlock_tanh_le Wr Ww (t • z) o
+  have hb' := abs_vanillaBlock_tanh_le Wr' Ww' (t • z) o
+  have := neg_abs_le (vanillaBlock Real.tanh Wr Ww (t • z) o)
+  have := le_abs_self (vanillaBlock Real.tanh Wr' Ww' (t • z) o)
+  -- `C + 1 = B'(t z)_o - B(t z)_o ≤ C`
+  linarith
 
 end Skips
