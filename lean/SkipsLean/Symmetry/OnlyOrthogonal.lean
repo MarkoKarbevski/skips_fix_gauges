@@ -165,6 +165,174 @@ theorem eq_of_forall_gate_mul_eq (hσ0 : ∃ z, σ z ≠ 0)
 
 /-! ### Lemma A.4 -/
 
+/-! #### Hidden states -/
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: a hidden state depends only on the embedding and on the blocks before it. -/
+private theorem hidden_congr {A : Arch T d L} {M : Fin L → Matrix d d ℝ}
+    (θ θ' : Params A dIn dOut) (x : Matrix T dIn ℝ) (hE : θ.E = θ'.E) (ℓ : Fin (L + 1))
+    (hr : ∀ j : Fin L, (j : ℕ) < ℓ → θ.read j = θ'.read j)
+    (hw : ∀ j : Fin L, (j : ℕ) < ℓ → θ.write j = θ'.write j) :
+    hidden A M θ x ℓ = hidden A M θ' x ℓ := by
+  induction ℓ using Fin.induction with
+  | zero => rw [hidden_zero, hidden_zero, hE]
+  | succ i ih =>
+    have hi : (i : ℕ) < (i.succ : ℕ) := by rw [Fin.val_succ]; omega
+    have hlt : ∀ j : Fin L, (j : ℕ) < (i.castSucc : ℕ) → (j : ℕ) < (i.succ : ℕ) := by
+      intro j hj
+      rw [Fin.val_castSucc] at hj
+      rw [Fin.val_succ]
+      omega
+    rw [hidden_succ, hidden_succ, ih (fun j hj => hr j (hlt j hj)) (fun j hj => hw j (hlt j hj)),
+      hr i hi, hw i hi]
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: without skips, `h_{k+1} = f_k(χ(h_k) W_read^k) W_write^k`. -/
+private theorem hidden_succ_skipless {A : Arch T d L} (θ : Params A dIn dOut)
+    (x : Matrix T dIn ℝ) (k : Fin L) :
+    hidden A 0 θ x k.succ = A.f k (A.χ (hidden A 0 θ x k.castSucc) * θ.read k) * θ.write k := by
+  rw [hidden_succ, Pi.zero_apply, Matrix.mul_zero, zero_add]
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: a block `j < k` is not the block `k`. -/
+private theorem ne_of_lt_castSucc {j k : Fin L} (hj : (j : ℕ) < (k.castSucc : ℕ)) : j ≠ k :=
+  fun e => by rw [e, Fin.val_castSucc] at hj; exact lt_irrefl _ hj
+
+omit [Fintype T] [Fintype dOut] in
+/-- Helper for fact (a): multiplying the embedding (`ℓ = 0`) or the write into `h_ℓ` by `c`
+multiplies `h_ℓ` by `c`, in the network and in the changed one (the parameters before do not
+change). -/
+private theorem exists_params_smul_hidden {A : Arch T d L} (θ : Params A dIn dOut)
+    (x : Matrix T dIn ℝ) (G : Fin (L + 1) → GL d ℝ) (c : ℝ) (ℓ : Fin (L + 1)) :
+    ∃ θ' : Params A dIn dOut, hidden A 0 θ' x ℓ = c • hidden A 0 θ x ℓ ∧
+      hidden A 0 (θ'.cob G G) x ℓ = c • hidden A 0 (θ.cob G G) x ℓ := by
+  cases ℓ using Fin.cases with
+  | zero =>
+    -- the embedding `c E`
+    refine ⟨⟨c • θ.E, θ.read, θ.write, θ.D⟩, ?_, ?_⟩
+    · rw [hidden_zero, hidden_zero]
+      exact Matrix.mul_smul _ _ _
+    · rw [hidden_zero, hidden_zero]
+      show x * ((c • θ.E) * _) = c • (x * (θ.E * _))
+      rw [Matrix.smul_mul, Matrix.mul_smul]
+  | succ k =>
+    classical
+    -- the write `c W_write^k`
+    let θ' : Params A dIn dOut := ⟨θ.E, θ.read, Function.update θ.write k (c • θ.write k), θ.D⟩
+    have hw : ∀ j : Fin L, (j : ℕ) < (k.castSucc : ℕ) → θ'.write j = θ.write j :=
+      fun j hj => Function.update_of_ne (ne_of_lt_castSucc hj) _ _
+    have e1 : hidden A 0 θ' x k.castSucc = hidden A 0 θ x k.castSucc :=
+      hidden_congr θ' θ x rfl k.castSucc (fun _ _ => rfl) hw
+    have e2 : hidden A 0 (θ'.cob G G) x k.castSucc = hidden A 0 (θ.cob G G) x k.castSucc :=
+      hidden_congr (θ'.cob G G) (θ.cob G G) x rfl k.castSucc (fun _ _ => rfl) fun j hj => by
+        show θ'.write j * _ = θ.write j * _
+        rw [hw j hj]
+    have hwk : θ'.write k = c • θ.write k := Function.update_self _ _ _
+    have hwk' : (θ'.cob G G).write k = c • (θ.cob G G).write k := by
+      show θ'.write k * (G k.succ : Matrix d d ℝ) = c • (θ.write k * (G k.succ : Matrix d d ℝ))
+      rw [hwk, Matrix.smul_mul]
+    refine ⟨θ', ?_, ?_⟩
+    · rw [hidden_succ_skipless, hidden_succ_skipless, e1, hwk, Matrix.mul_smul]
+    · rw [hidden_succ_skipless, hidden_succ_skipless, e2, hwk', Matrix.mul_smul]
+      rfl
+
+/-! #### Facts on rows and matrices -/
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: two matrices with the same products with every matrix on the right are equal. -/
+private theorem eq_of_forall_mul_right' {m n : Type*} [Fintype m] [Nonempty n]
+    {X Y : Matrix T m ℝ} (h : ∀ D : Matrix m n ℝ, X * D = Y * D) : X = Y := by
+  classical
+  obtain ⟨o⟩ := ‹Nonempty n›
+  ext t k
+  -- the matrix `e_k e_oᵀ` reads off the column `k`
+  have := congrFun (congrFun (h (Matrix.single k o 1)) t) o
+  simpa only [mul_single_apply_same, mul_one] using this
+
+omit [DecidableEq d] in
+/-- Helper: the argument `‖v‖² / d_model + ε` of the square root in RMSNorm is positive. -/
+private theorem rms_arg_pos (hε : 0 < ε) (v : d → ℝ) :
+    0 < v ⬝ᵥ v / (Fintype.card d : ℝ) + ε := by
+  have : 0 ≤ v ⬝ᵥ v / (Fintype.card d : ℝ) :=
+    div_nonneg (Finset.sum_nonneg fun i _ => mul_self_nonneg (v i)) (Nat.cast_nonneg _)
+  linarith
+
+/-- Helper: `p⁻¹ u = q⁻¹ w` with `p, q ≠ 0` gives `q u = p w`. -/
+private theorem mul_eq_mul_of_inv_mul_eq {p q u w : ℝ} (hp : p ≠ 0) (hq : q ≠ 0)
+    (h : p⁻¹ * u = q⁻¹ * w) : q * u = p * w :=
+  calc q * u = q * (p * (p⁻¹ * u)) := by rw [mul_inv_cancel_left₀ hp]
+    _ = q * (p * (q⁻¹ * w)) := by rw [h]
+    _ = p * w := by rw [mul_left_comm p, mul_inv_cancel_left₀ hq]
+
+omit [DecidableEq d] in
+/-- Helper, fact (a) on rows: if `N_ε(a) M = N_ε(b)` and `N_ε(2a) M = N_ε(2b)` with `ε > 0`, then
+`a M = b`. Write `y = a M`: `y = λ b` with `λ = s(a)/s(b) = s(2a)/s(2b)`, where `s(v)² = ‖v‖²/d + ε`;
+if `b ≠ 0` the two factors agree, which forces `‖a‖ = ‖b‖` and `λ = 1`. -/
+private theorem vecMul_eq_of_rmsRow_two (hε : 0 < ε) (M : Matrix d d ℝ) {a b : d → ℝ}
+    (h1 : rmsRow ε a ᵥ* M = rmsRow ε b)
+    (h2 : rmsRow ε ((2 : ℝ) • a) ᵥ* M = rmsRow ε ((2 : ℝ) • b)) : a ᵥ* M = b := by
+  -- `‖2v‖² / d = 4 (‖v‖² / d)`
+  have h4 : ∀ v : d → ℝ, ((2 : ℝ) • v) ⬝ᵥ ((2 : ℝ) • v) / (Fintype.card d : ℝ)
+      = 4 * (v ⬝ᵥ v / (Fintype.card d : ℝ)) := by
+    intro v
+    rw [smul_dotProduct, dotProduct_smul, smul_eq_mul, smul_eq_mul]
+    ring
+  have hp0 : ∀ v : d → ℝ, 0 ≤ v ⬝ᵥ v / (Fintype.card d : ℝ) := fun v =>
+    div_nonneg (Finset.sum_nonneg fun i _ => mul_self_nonneg (v i)) (Nat.cast_nonneg _)
+  have hA0 := hp0 a
+  have hB0 := hp0 b
+  unfold rmsRow at h1 h2
+  rw [h4, h4, Matrix.smul_vecMul, Matrix.smul_vecMul] at h2
+  rw [Matrix.smul_vecMul] at h1
+  generalize a ⬝ᵥ a / (Fintype.card d : ℝ) = A at h1 h2 hA0
+  generalize b ⬝ᵥ b / (Fintype.card d : ℝ) = B at h1 h2 hB0
+  generalize a ᵥ* M = y at h1 h2 ⊢
+  -- the four square roots are positive
+  have hS : ∀ t : ℝ, 0 ≤ t → 0 < Real.sqrt (t + ε) := fun t ht => Real.sqrt_pos.mpr (by linarith)
+  have hsa := hS A hA0
+  have hsb := hS B hB0
+  have hsa2 := hS (4 * A) (by linarith)
+  have hsb2 := hS (4 * B) (by linarith)
+  -- `s(b) y = s(a) b` and `s(2b) y = s(2a) b`, entry by entry
+  have e1 : ∀ i, Real.sqrt (B + ε) * y i = Real.sqrt (A + ε) * b i := by
+    intro i
+    have := congrFun h1 i
+    simp only [Pi.smul_apply, smul_eq_mul] at this
+    exact mul_eq_mul_of_inv_mul_eq hsa.ne' hsb.ne' this
+  have e2 : ∀ i, Real.sqrt (4 * B + ε) * y i = Real.sqrt (4 * A + ε) * b i := by
+    intro i
+    have := congrFun h2 i
+    simp only [Pi.smul_apply, smul_eq_mul] at this
+    have := mul_eq_mul_of_inv_mul_eq hsa2.ne' hsb2.ne' this
+    linear_combination this / 2
+  by_cases hb : b = 0
+  · -- `b = 0`: then `y = 0`
+    funext i
+    have := e1 i
+    rw [hb, Pi.zero_apply, mul_zero] at this
+    rw [hb, Pi.zero_apply]
+    exact (mul_eq_zero.mp this).resolve_left hsb.ne'
+  obtain ⟨i₀, hi₀⟩ := Function.ne_iff.mp hb
+  -- the two factors agree: `s(a) s(2b) = s(2a) s(b)`
+  have hk : Real.sqrt (A + ε) * Real.sqrt (4 * B + ε) = Real.sqrt (4 * A + ε) * Real.sqrt (B + ε) := by
+    apply mul_right_cancel₀ hi₀
+    linear_combination (-Real.sqrt (4 * B + ε)) * e1 i₀ + Real.sqrt (B + ε) * e2 i₀
+  -- squaring: `(A + ε)(4B + ε) = (4A + ε)(B + ε)`, so `3 ε (A - B) = 0`
+  have hsq := congrArg (· ^ 2) hk
+  simp only [mul_pow, Real.sq_sqrt (show (0 : ℝ) ≤ A + ε by linarith),
+    Real.sq_sqrt (show (0 : ℝ) ≤ B + ε by linarith),
+    Real.sq_sqrt (show (0 : ℝ) ≤ 4 * A + ε by linarith),
+    Real.sq_sqrt (show (0 : ℝ) ≤ 4 * B + ε by linarith)] at hsq
+  have hAB : A = B := by
+    have h3 : (A - B) * (3 * ε) = 0 := by linear_combination -hsq
+    have := (mul_eq_zero.mp h3).resolve_right (by positivity)
+    linarith
+  -- so `s(a) = s(b)` and `y = b`
+  subst hAB
+  funext i
+  exact mul_left_cancel₀ hsb.ne' (e1 i)
+
+
 /-- **Lemma A.4 for vanilla blocks** whose activation is continuous, not even and not constant:
 if the changes of basis `G_0, …, G_L` preserve the function of the skipless pre-RMSNorm network
 (`ε > 0`) for all values of the parameters, every `G_ℓ` is orthogonal. -/
