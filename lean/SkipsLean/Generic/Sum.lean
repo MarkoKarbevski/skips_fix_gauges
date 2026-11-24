@@ -72,6 +72,7 @@ private theorem ae_comp_of_surjective_gsm {A' : Arch T d L}
   by_contra hn
   exact hθ (hsub hn)
 
+omit [Fintype T] [DecidableEq d] in
 /-- **A condition that holds at generic parameters of `A` holds for the first part of generic
 parameters of `A.sum B`.** -/
 theorem ae_sumFst (μ : Measure (Params (A.sum B) dIn dOut)) [μ.IsAddHaarMeasure]
@@ -80,6 +81,7 @@ theorem ae_sumFst (μ : Measure (Params (A.sum B) dIn dOut)) [μ.IsAddHaarMeasur
     ∀ᵐ θ ∂μ, p θ.sumFst :=
   ae_comp_of_surjective_gsm μ sumFstLin_gsm sumFstLin_surjective_gsm hp
 
+omit [Fintype T] [DecidableEq d] in
 /-- **A condition that holds at generic parameters of `B` holds for the second part of generic
 parameters of `A.sum B`.** -/
 theorem ae_sumSnd (μ : Measure (Params (A.sum B) dIn dOut)) [μ.IsAddHaarMeasure]

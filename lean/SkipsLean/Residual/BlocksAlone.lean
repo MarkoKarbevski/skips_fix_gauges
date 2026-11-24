@@ -94,12 +94,14 @@ theorem finrank_blockParams (A : Arch T d L) :
   rw [finrank_params]
   simp only [Fintype.card_eq_zero, zero_mul, mul_zero, zero_add, add_zero]
 
+omit [Fintype T] in
 /-- The rank of the Jacobian on any batch is at most the number of parameters of the blocks. -/
 theorem jacobianRankBlocks_le_finrank {n : ℕ} (X : Fin n → Matrix T d ℝ) (β : BlockParams A) :
     jacobianRankBlocks A S X β ≤ Module.finrank ℝ (BlockParams A) := by
   -- the range of a linear map has at most the dimension of its domain
   exact LinearMap.finrank_range_le _
 
+omit [Fintype T] in
 /-- The ranks in the definition of `funDimBlocks` are at most the number of parameters. -/
 private theorem funDimBlocks_set_bddAbove_bla (β : BlockParams A) :
     BddAbove {r : ℕ | ∃ (n : ℕ) (X : Fin n → Matrix T d ℝ), r = jacobianRankBlocks A S X β} := by
@@ -107,12 +109,14 @@ private theorem funDimBlocks_set_bddAbove_bla (β : BlockParams A) :
   rintro _ ⟨n, X, rfl⟩
   exact jacobianRankBlocks_le_finrank X β
 
+omit [Fintype T] in
 /-- The rank of the Jacobian on any batch is at most the functional dimension. -/
 theorem jacobianRankBlocks_le_funDimBlocks {n : ℕ} (X : Fin n → Matrix T d ℝ)
     (β : BlockParams A) : jacobianRankBlocks A S X β ≤ funDimBlocks A S β := by
   -- a member of a set of naturals bounded above is at most its supremum
   exact le_csSup (funDimBlocks_set_bddAbove_bla β) ⟨n, X, rfl⟩
 
+omit [Fintype T] in
 /-- Some finite batch attains the functional dimension. -/
 theorem exists_jacobianRankBlocks_eq_funDimBlocks (β : BlockParams A) :
     ∃ (n : ℕ) (X : Fin n → Matrix T d ℝ), jacobianRankBlocks A S X β = funDimBlocks A S β := by

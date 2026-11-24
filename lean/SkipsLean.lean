@@ -226,3 +226,5 @@ import SkipsLean.Dimension.UpperBoundTransformer
 import SkipsLean.Generic.Sum
 import SkipsLean.Residual.DepthTransformer
 import SkipsLean.Residual.DepthTransformerGated
+import SkipsLean.Residual.DepthTransformerRMS
+import SkipsLean.Residual.DepthTransformerGatedRMS

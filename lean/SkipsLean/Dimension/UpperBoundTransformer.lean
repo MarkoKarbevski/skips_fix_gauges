@@ -204,6 +204,7 @@ private theorem headDir_write_eq_zero_ubt {χ : Matrix T d ℝ → Matrix T d �
   ext p b
   simp [headDirQK, headDirVO, hΓ]
 
+omit [DecidableEq d] in
 /-- Helper: the directions of the changes of basis inside the heads span a space `V_A` of
 directions of symmetries inside the blocks, of dimension `2 ∑_ℓ H_ℓ d_{h,ℓ}²` (Lemma B.1), in
 which a direction whose read of a block is `0` has the write of that block `0`. -/
@@ -282,6 +283,7 @@ private theorem rescale_eq_zero_ubt {χ : Matrix T d ℝ → Matrix T d ℝ}
   · exact absurd (neg_eq_zero.1 h) hα
   · exact h
 
+omit [Fintype T] [DecidableEq d] in
 /-- Helper: the directions of the rescalings of the values of the gated units span a space `V_B`
 of directions of symmetries inside the blocks, of dimension `∑_ℓ d_hidden,ℓ`, in which a
 direction whose read of a block is `0` has the write of that block `0`. -/
