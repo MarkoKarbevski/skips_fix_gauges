@@ -21,10 +21,13 @@ identifiable at `θ` if this holds for every `θ′` in some neighborhood of `θ
 Here the equivalence for residual networks (stream matrices `1`) with `d_in ≥ d` and blocks of any
 widths (heads of width `d_h ≤ d`): "the functional dimension is `P − dim 𝒢 − s` at almost every
 parameter" if and only if "at almost every parameter `θ`, every `θ'` near `θ` with the same
-function is the image of `θ` under a symmetry". The symmetries are those of the paper: one change
-of basis at all hidden states (orthogonal under pre-RMSNorm), for gated blocks the rescalings of
-the values of the hidden units by nonzero factors, for attention blocks the changes of basis
-inside the heads. The first statements are for any real-analytic blocks, with the change of basis
+function is the image of `θ` under a symmetry". The symmetries are the continuous symmetries of
+the paper: one change of basis at all hidden states (orthogonal under pre-RMSNorm), for gated
+blocks the rescalings of the values of the hidden units by nonzero factors, for attention blocks
+the changes of basis inside the heads. The permutations of hidden units or heads and the sign
+flips of tanh units, which the paper lists among the symmetries inside the blocks and counts in
+the proof of the converse, are not in the family: the direction from local identifiability to the
+equality condition is proved here for this smaller family. The first statements are for any real-analytic blocks, with the change of basis
 alone (`s = 0`): they contain tanh and GELU blocks, and are also stated for MLP blocks by name.
 For tanh, GELU, SwiGLU, GeGLU and attention blocks both sides hold (Theorem 4.7, Corollary 4.9).
 

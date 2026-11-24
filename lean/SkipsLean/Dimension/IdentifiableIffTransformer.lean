@@ -21,7 +21,10 @@ skipless networks of one kind of block); then the equivalence at generic paramet
 `d_in ≥ d`, heads of width `d_h ≤ d` and blocks of total width `H d_h + d_hidden ≥ d` (the twins:
 `Dimension/IdentifiableIff.lean`, `Residual/IdentifiableIff.lean`). The symmetries: the changes of
 basis `G_0, …, G_L` (orthogonal under pre-RMSNorm), the changes of basis inside the heads and, for
-gated blocks, the rescalings of the values of the hidden units.
+gated blocks, the rescalings of the values of the hidden units. These are the continuous
+symmetries; the permutations of hidden units or heads and the sign flips of tanh units are not in
+the family, so the direction from local identifiability to the equality condition is proved here
+for this smaller family.
 -/
 
 namespace Skips
