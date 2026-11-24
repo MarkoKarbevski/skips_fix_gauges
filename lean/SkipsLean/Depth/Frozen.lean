@@ -193,13 +193,45 @@ theorem regular_frozen_of_goodForConesGated {C : Fin (L + 1) → Set (d → ℝ)
   rw [← hfun] at key
   exact key
 
+omit [Fintype T] [Fintype d] [DecidableEq d] in
+/-- Helper: the fixed map of a frozen block is quadratic, `f°_ℓ(c M) = c² f°_ℓ(M)`. -/
+private theorem frozen_f_smul (A : ∀ ℓ, Finset (hid ℓ)) (ℓ : Fin L) (c : ℝ)
+    (M : Matrix T ((Arch.frozen (T := T) (d := d) A).r ℓ) ℝ) :
+    (Arch.frozen (T := T) (d := d) A).f ℓ (c • M)
+      = (c ^ 2) • (Arch.frozen (T := T) (d := d) A).f ℓ M := by
+  ext t i
+  show Set.indicator (↑(A ℓ) : Set (hid ℓ))
+      (fun i => (c • M) t (Sum.inl i) * (c • M) t (Sum.inr i)) i
+    = c ^ 2 * Set.indicator (↑(A ℓ) : Set (hid ℓ)) (fun i => M t (Sum.inl i) * M t (Sum.inr i)) i
+  by_cases hi : i ∈ A ℓ
+  · -- an active unit: `(c z)(c w) = c² z w`
+    rw [Set.indicator_of_mem (Finset.mem_coe.2 hi), Set.indicator_of_mem (Finset.mem_coe.2 hi)]
+    simp only [Matrix.smul_apply, smul_eq_mul]
+    ring
+  · -- an inactive unit: `0 = c² 0`
+    rw [Set.indicator_of_notMem (Finset.mem_coe.not.2 hi),
+      Set.indicator_of_notMem (Finset.mem_coe.not.2 hi), mul_zero]
+
 /-- **The frozen network is homogeneous:** `𝓑°_{>k}(c h) = c^{2^{L−k}} 𝓑°_{>k}(h)`. -/
 theorem suffix_frozen_smul (A : ∀ ℓ, Finset (hid ℓ))
     (θ : Params (Arch.frozen (T := T) (d := d) A) dIn dOut) (k : Fin (L + 1)) (c : ℝ)
     (h : Matrix T d ℝ) :
     suffix (Arch.frozen A) 0 θ k (c • h)
       = c ^ (2 ^ (L - (k : ℕ))) • suffix (Arch.frozen A) 0 θ k h := by
-  sorry
+  induction k using Fin.reverseInduction generalizing c h with
+  | last =>
+    -- `𝓑°_{>L}(c h) = (c h) D = c (h D)`
+    rw [suffix_last_eq_mul (Arch.frozen A) θ rfl, Fin.val_last, Nat.sub_self, pow_zero, pow_one]
+    exact Matrix.smul_mul c h θ.D
+  | cast ℓ ih =>
+    -- `𝓑°_{>ℓ-1}(c h) = 𝓑°_{>ℓ}(g°_ℓ(c h)) = 𝓑°_{>ℓ}(c² g°_ℓ(h)) = (c²)^{2^{L-ℓ-1}} 𝓑°_{>ℓ-1}(h)`
+    rw [suffix_castSucc_eq_comp (Arch.frozen A) θ rfl ℓ, Function.comp_apply, Function.comp_apply,
+      Matrix.smul_mul, frozen_f_smul, Matrix.smul_mul, ih]
+    -- `(c²)^{2^{L-ℓ-1}} = c^{2^{L-ℓ}}`, since `ℓ < L`
+    have hL : L - (ℓ : ℕ) = (L - ((ℓ : ℕ) + 1)) + 1 := by
+      have := ℓ.isLt
+      omega
+    rw [Fin.val_succ, Fin.val_castSucc, ← pow_mul, hL, pow_succ, mul_comm (2 : ℕ)]
 
 /-- The derivative of the frozen network in the hidden state is homogeneous of the degree
 `2^{L−k} − 1`. -/
@@ -209,7 +241,31 @@ theorem fderiv_suffix_frozen_smul (A : ∀ ℓ, Finset (hid ℓ))
     fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.frozen A) 0 θ k h') (c • h) v
       = c ^ (2 ^ (L - (k : ℕ)) - 1)
         • fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.frozen A) 0 θ k h') h v := by
-  sorry
+  -- `𝓑°_{>k}` is analytic, hence differentiable
+  have hd : ∀ x, DifferentiableAt ℝ (suffix (Arch.frozen (T := T) (d := d) A) 0 θ k) x :=
+    fun x => (analyticOnNhd_suffix (Arch.frozen A) θ rfl (analyticOnNhd_f_frozen A) k x
+      (Set.mem_univ _)).differentiableAt
+  -- the derivative of `h' ↦ 𝓑°_{>k}(c h')` at `h`, by the chain rule: `v ↦ 𝐃𝓑°_{>k}(c h)(c v)`
+  have h1 := HasFDerivAt.comp (f := fun x : Matrix T d ℝ => c • x) h (hd (c • h)).hasFDerivAt
+    ((hasFDerivAt_id h).fun_const_smul c)
+  -- and, by homogeneity (`suffix_frozen_smul`), `c^M 𝐃𝓑°_{>k}(h)` with `M = 2^{L-k}`
+  have h2 : HasFDerivAt
+      (suffix (Arch.frozen (T := T) (d := d) A) 0 θ k ∘ fun x : Matrix T d ℝ => c • x)
+      (c ^ 2 ^ (L - (k : ℕ)) • fderiv ℝ (suffix (Arch.frozen (T := T) (d := d) A) 0 θ k) h) h := by
+    have hfun : (suffix (Arch.frozen (T := T) (d := d) A) 0 θ k ∘ fun x : Matrix T d ℝ => c • x)
+        = fun x => c ^ 2 ^ (L - (k : ℕ)) • suffix (Arch.frozen A) 0 θ k x :=
+      funext fun x => suffix_frozen_smul A θ k c x
+    rw [hfun]
+    exact (hd h).hasFDerivAt.fun_const_smul _
+  -- so `c 𝐃𝓑°_{>k}(c h) v = c^M 𝐃𝓑°_{>k}(h) v`
+  -- (stated by defeq: `simp` lemmas about `comp`/`smul` do not fire on this CLM)
+  have e : c • fderiv ℝ (suffix (Arch.frozen (T := T) (d := d) A) 0 θ k) (c • h) v
+      = c ^ 2 ^ (L - (k : ℕ)) • fderiv ℝ (suffix (Arch.frozen (T := T) (d := d) A) 0 θ k) h v :=
+    (map_smul (fderiv ℝ (suffix (Arch.frozen (T := T) (d := d) A) 0 θ k) (c • h)) c v).symm.trans
+      (DFunLike.congr_fun (h1.unique h2) v)
+  -- cancel one `c` (`M ≥ 1`)
+  rw [← Nat.sub_add_cancel (Nat.one_le_two_pow (n := L - (k : ℕ))), pow_succ', mul_smul] at e
+  exact (smul_right_inj hc).1 e
 
 /-- The derivative of the frozen network in the weights is homogeneous of the degree `2^{L−k}` in
 the hidden state. -/
@@ -221,7 +277,24 @@ theorem fderiv_params_suffix_frozen_smul (A : ∀ ℓ, Finset (hid ℓ))
       = c ^ (2 ^ (L - (k : ℕ)))
         • fderiv ℝ (fun θ' : Params (Arch.frozen (T := T) (d := d) A) dIn dOut =>
             suffix (Arch.frozen A) 0 θ' k h) θ η := by
-  sorry
+  -- for every weight `θ'`, `𝓑°_{>k}(c h) = c^M 𝓑°_{>k}(h)` (`suffix_frozen_smul`)
+  have hfun : (fun θ' : Params (Arch.frozen (T := T) (d := d) A) dIn dOut =>
+      suffix (Arch.frozen A) 0 θ' k (c • h))
+        = fun θ' => c ^ 2 ^ (L - (k : ℕ)) • suffix (Arch.frozen A) 0 θ' k h :=
+    funext fun θ' => suffix_frozen_smul A θ' k c h
+  -- and `θ' ↦ 𝓑°_{>k}(h)` is differentiable
+  have hd : DifferentiableAt ℝ (fun θ' : Params (Arch.frozen (T := T) (d := d) A) dIn dOut =>
+      suffix (Arch.frozen A) 0 θ' k h) θ :=
+    differentiable_params_suffix (Arch.frozen A) rfl
+      (fun ℓ => differentiableOn_univ.1 (analyticOnNhd_f_frozen A ℓ).differentiableOn) k h θ
+  -- so the derivative of `θ' ↦ c^M 𝓑°_{>k}(h)` is `c^M` times that of `θ' ↦ 𝓑°_{>k}(h)`
+  have e : fderiv ℝ (fun θ' : Params (Arch.frozen (T := T) (d := d) A) dIn dOut =>
+      suffix (Arch.frozen A) 0 θ' k (c • h)) θ
+        = c ^ 2 ^ (L - (k : ℕ)) • fderiv ℝ (fun θ' : Params (Arch.frozen (T := T) (d := d) A)
+            dIn dOut => suffix (Arch.frozen A) 0 θ' k h) θ := by
+    rw [hfun]
+    exact fderiv_fun_const_smul hd _
+  rw [e, _root_.smul_apply]
 
 /-- The left side of the identity for one block of the frozen network is homogeneous of the degree
 `2^{L−k−1}` in the outputs of the hidden units and their derivative together. -/
@@ -230,6 +303,13 @@ theorem writeLHS_frozen_smul (A : ∀ ℓ, Finset (hid ℓ))
     (v vdot : Matrix T (hid k) ℝ) :
     writeLHS (Arch.frozen A) θ k η (c • v) (c • vdot)
       = c ^ (2 ^ (L - (k : ℕ) - 1)) • writeLHS (Arch.frozen A) θ k η v vdot := by
-  sorry
+  -- `(c v) W = c (v W)`, the direction is `c` times the old one, and `𝐃𝓑°` is linear in it
+  unfold writeLHS
+  simp only [Matrix.smul_mul, ← smul_add, map_smul]
+  -- `fderiv_suffix_frozen_smul` and `fderiv_params_suffix_frozen_smul` at `k + 1`
+  rw [fderiv_suffix_frozen_smul A θ k.succ hc, fderiv_params_suffix_frozen_smul A θ η k.succ c]
+  -- `c c^{M-1} = c^M` with `M = 2^{L-k-1}`
+  rw [smul_smul, Fin.val_succ, ← pow_succ', Nat.sub_add_cancel Nat.one_le_two_pow, Nat.sub_sub,
+    smul_add]
 
 end Skips
