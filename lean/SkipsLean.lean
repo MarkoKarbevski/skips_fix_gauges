@@ -182,3 +182,4 @@ import SkipsLean.OneBlock.ResidualRMSReGLU
 import SkipsLean.Residual.SmallParameterOn
 import SkipsLean.Residual.SmallWritesOn
 import SkipsLean.Residual.DepthRescale
+import SkipsLean.Residual.DepthReGLU
