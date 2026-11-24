@@ -226,6 +226,63 @@ theorem smallWritesLimit_eq_zero_gated (hσ : ∀ z, HasDerivAt σ (σ' z) z)
   · rw [hwrite ℓ]
     rfl
 
+/-- Helper: the flat directions of `J_0` found in `smallWritesLimit_eq_zero_gated`,
+`(X, α) ↦ (E X, the reads with gate columns `0` and value columns `-α_{ℓ,i}` times those of
+`W_read^ℓ`, the writes with rows `α_{ℓ,i}` times those of `W_write^ℓ`, -X D)`, as a linear map. -/
+private noncomputable def limitFlatLin
+    (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) :
+    (Matrix d d ℝ × (∀ ℓ, hid ℓ → ℝ)) →ₗ[ℝ]
+      Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut where
+  toFun p := ⟨θ.E * p.1,
+    fun ℓ => Matrix.of fun k j =>
+      Sum.elim (fun _ => 0) (fun i => -(p.2 ℓ i) * θ.read ℓ k (Sum.inr i)) j,
+    fun ℓ => Matrix.of fun i k => p.2 ℓ i * θ.write ℓ i k, -(p.1 * θ.D)⟩
+  map_add' p q := by
+    apply Params.ext'
+    · exact Matrix.mul_add _ _ _
+    · intro ℓ
+      ext k j
+      rcases j with i | i
+      · exact (add_zero 0).symm
+      · show -((p.2 + q.2) ℓ i) * θ.read ℓ k (Sum.inr i)
+          = -(p.2 ℓ i) * θ.read ℓ k (Sum.inr i) + -(q.2 ℓ i) * θ.read ℓ k (Sum.inr i)
+        rw [Pi.add_apply, Pi.add_apply]
+        ring
+    · intro ℓ
+      ext i k
+      show (p.2 + q.2) ℓ i * θ.write ℓ i k = p.2 ℓ i * θ.write ℓ i k + q.2 ℓ i * θ.write ℓ i k
+      rw [Pi.add_apply, Pi.add_apply]
+      ring
+    · show -((p.1 + q.1) * θ.D) = -(p.1 * θ.D) + -(q.1 * θ.D)
+      rw [Matrix.add_mul, neg_add]
+  map_smul' c p := by
+    apply Params.ext'
+    · exact Matrix.mul_smul _ _ _
+    · intro ℓ
+      ext k j
+      rcases j with i | i
+      · exact (smul_zero c).symm
+      · show -((c • p.2) ℓ i) * θ.read ℓ k (Sum.inr i) = c * (-(p.2 ℓ i) * θ.read ℓ k (Sum.inr i))
+        rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+        ring
+    · intro ℓ
+      ext i k
+      show (c • p.2) ℓ i * θ.write ℓ i k = c * (p.2 ℓ i * θ.write ℓ i k)
+      rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+      ring
+    · show -((c • p.1) * θ.D) = c • -(p.1 * θ.D)
+      rw [Matrix.smul_mul, smul_neg]
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the pairs `(X, α)` of a `d × d` matrix and one number per hidden unit form a space of
+dimension `d² + s`. -/
+private theorem finrank_limitFlatDomain :
+    Module.finrank ℝ (Matrix d d ℝ × (∀ ℓ, hid ℓ → ℝ))
+      = Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ) := by
+  rw [Module.finrank_prod, Module.finrank_matrix, Module.finrank_self, mul_one, ← sq,
+    Module.finrank_pi_fintype]
+  simp only [Module.finrank_fintype_fun_eq_card]
+
 /-- **Lemma A.27 (Small writes), first value, for gated blocks, under the conditions of its
 proof:** for all small `τ ≠ 0` the residual network has `fd(θ_τ) = P - d² - s`, with `s` the number
 of hidden units. -/
@@ -237,7 +294,42 @@ theorem eventually_funDim_smallWrites_gated (hσ : ∀ z, HasDerivAt σ (σ' z) 
       funDim (Arch.gated σ id hid) 1 (θ.smallWrites τ)
           + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
         = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  -- `≥`: every flat direction of `J_0` lies in the range `V` of `limitFlatLin θ` (step 1), of
+  -- dimension at most `d² + s`
+  have hV : ∀ η, (∀ x, smallWritesLimit (Arch.gated σ id hid) θ η x = 0) →
+      η ∈ LinearMap.range (limitFlatLin θ) := by
+    intro η hη
+    obtain ⟨X, α, hE, hD, hg, hv, hw⟩ := smallWritesLimit_eq_zero_gated hσ hU θ hθ η hη
+    refine LinearMap.mem_range.2 ⟨(X, α), ?_⟩
+    apply Params.ext'
+    · exact hE.symm
+    · intro ℓ
+      ext k j
+      rcases j with i | i
+      · exact (hg ℓ i k).symm
+      · exact (hv ℓ i k).symm
+    · intro ℓ
+      ext i k
+      exact (hw ℓ i k).symm
+    · exact hD.symm
+  have hdim : Module.finrank ℝ (LinearMap.range (limitFlatLin θ))
+      ≤ Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ) :=
+    (LinearMap.finrank_range_le _).trans finrank_limitFlatDomain.le
+  have hge := eventually_funDim_smallWrites_ge (Arch.gated σ id hid) θ rfl
+    (fun ℓ => analyticOnNhd_f_gated hσa ℓ) _ hV
+  -- `≤`: at every `τ` the network has the symmetries of the one change of basis and of the
+  -- rescalings; `E` and the reads of `θ_τ` are those of `θ`, and no value column of a read
+  -- vanishes since no value column of `E W_read^ℓ` does
+  have hv : ∀ ℓ i, (fun a => θ.read ℓ a (Sum.inr i)) ≠ 0 := by
+    intro ℓ i h0
+    apply hθ.value_ne_zero ℓ i
+    funext a
+    show ∑ k, θ.E a k * θ.read ℓ k (Sum.inr i) = 0
+    exact Finset.sum_eq_zero fun k _ => by
+      rw [show θ.read ℓ k (Sum.inr i) = 0 from congrFun h0 k, mul_zero]
+  filter_upwards [hge] with τ hτ
+  have hle := funDim_add_le_residual_gated (θ.smallWrites τ) hθ.rank_E hv
+  omega
 
 /-- The conditions of Lemma A.27 for gated blocks hold at generic parameters, for
 `d_in, d_out ≥ d ≥ 2` and blocks of any widths. -/
