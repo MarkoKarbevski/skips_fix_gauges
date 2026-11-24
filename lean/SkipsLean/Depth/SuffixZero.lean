@@ -180,10 +180,151 @@ def ClaimZero (k : Fin (L + 1)) : Prop :=
         η.write ℓ = θ.write ℓ * (Y ℓ.succ + β ℓ.succ • (1 : Matrix d d ℝ))) ∧
       η.D = -(Y (Fin.last L) * θ.D)
 
+/-- Helper: `y ↦ y M`, as a continuous linear map. -/
+private noncomputable def mulRightCLM_sz {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    (M : Matrix n p ℝ) : Matrix m n ℝ →L[ℝ] Matrix m p ℝ :=
+  LinearMap.toContinuousLinearMap
+    { toFun := fun y => y * M
+      map_add' := fun a b => Matrix.add_mul a b M
+      map_smul' := fun c a => Matrix.smul_mul c a M }
+
+/-- Helper: for `χ = N` (RMSNorm with `ε = 0`), the derivative of `h ↦ 𝓑_{>L}(h) = N(h) D` at a
+matrix `h` without a zero row, along `v`, is `(𝐃N(h) v) D`. -/
+private theorem fderiv_suffix_last_zero_sz (hχ : A.χ = rmsNorm 0) (h v : Matrix T d ℝ)
+    (hh : ∀ t, h t ≠ 0) :
+    fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ (Fin.last L) h') h v
+      = fderiv ℝ (rmsNorm 0 : Matrix T d ℝ → Matrix T d ℝ) h v * θ.D := by
+  simp only [suffix_last, hχ]
+  -- `h ↦ N(h) D` is `y ↦ y D` after `N`, which is differentiable at `h`
+  have hc := (mulRightCLM_sz (m := T) θ.D).hasFDerivAt.comp h
+    (analyticAt_rmsNorm_zero h hh).differentiableAt.hasFDerivAt
+  exact DFunLike.congr_fun hc.fderiv v
+
 /-- **Lemma D.5 of the dimension paper (the readout), the case (0):** if `D` has rank `d ≥ 2`,
 then `(D_L)` holds under pre-RMSNorm with `ε = 0`. -/
 theorem claimZero_last [Nonempty T] (hχ : A.χ = rmsNorm 0) (hD : θ.D.rank = Fintype.card d)
     (hd : 2 ≤ Fintype.card d) : ClaimZero A θ (Fin.last L) := by
-  sorry
+  intro Z η hZ
+  obtain ⟨t₀⟩ := ‹Nonempty T›
+  obtain ⟨i₀⟩ : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+  -- `D R = 1` (`D` has rank `d`)
+  obtain ⟨R, hR⟩ : ∃ R : Matrix dOut d ℝ, θ.D * R = 1 :=
+    Matrix.mulVec_surjective_iff_exists_right_inverse.1
+      (Matrix.mulVec_surjective_iff_rank_eq_card.2 hD)
+  -- (16) at the hidden state all of whose rows are `u ≠ 0`, on row `t₀`, multiplied by
+  -- `d ρ³` (`ρ = ‖u‖/√d`): `‖u‖² (u Z D + u η_D) = ⟨u, u Z⟩ u D`, also for `u = 0`
+  have hrow : ∀ u : d → ℝ, (u ⬝ᵥ u) • ((u ᵥ* Z) ᵥ* θ.D + u ᵥ* η.D)
+      = (u ⬝ᵥ (u ᵥ* Z)) • (u ᵥ* θ.D) := by
+    intro u
+    by_cases hu : u = 0
+    · subst hu
+      simp only [zero_dotProduct, zero_smul]
+    have hrows : ∀ t, (Matrix.of fun _ : T => u) t ≠ 0 := fun _ => hu
+    have e := hZ (Matrix.of fun _ : T => u) hrows
+    rw [fderiv_suffix_last_zero_sz A θ hχ _ _ hrows, fderiv_params_suffix_last_eq_mul A θ, hχ,
+      fderiv_rmsNorm_zero_apply _ _ hrows] at e
+    -- row `t₀` of `(𝐃N(h)(h Z)) D + N(h) η_D = 0`
+    have e' : ((Real.sqrt ((u ⬝ᵥ u) / (Fintype.card d : ℝ)))⁻¹ • (u ᵥ* Z)
+        - ((u ⬝ᵥ (u ᵥ* Z)) / (Fintype.card d : ℝ)
+            * (Real.sqrt ((u ⬝ᵥ u) / (Fintype.card d : ℝ)))⁻¹ ^ 3) • u) ᵥ* θ.D
+        + ((Real.sqrt ((u ⬝ᵥ u) / (Fintype.card d : ℝ) + 0))⁻¹ • u) ᵥ* η.D = 0 :=
+      congrFun e t₀
+    rw [add_zero] at e'
+    simp only [Matrix.sub_vecMul, Matrix.smul_vecMul] at e'
+    -- `ρ > 0` and `‖u‖² = d ρ²`
+    have hpos := dotProduct_self_div_pos_sz hu
+    have hc : (Fintype.card d : ℝ) ≠ 0 := fun h0 => by
+      rw [h0, div_zero] at hpos
+      exact lt_irrefl _ hpos
+    have hs := Real.sqrt_pos.2 hpos
+    have hs2 : Real.sqrt ((u ⬝ᵥ u) / (Fintype.card d : ℝ)) ^ 2
+        = (u ⬝ᵥ u) / (Fintype.card d : ℝ) := Real.sq_sqrt hpos.le
+    have hN : u ⬝ᵥ u
+        = (Fintype.card d : ℝ) * Real.sqrt ((u ⬝ᵥ u) / (Fintype.card d : ℝ)) ^ 2 := by
+      rw [hs2]
+      field_simp
+    generalize Real.sqrt ((u ⬝ᵥ u) / (Fintype.card d : ℝ)) = ρ at hs hN e'
+    have hρ := hs.ne'
+    rw [hN]
+    -- multiply the row by `d ρ³`
+    have e2 := congrArg (fun w => ((Fintype.card d : ℝ) * ρ ^ 3) • w) e'
+    simp only [smul_add, smul_sub, smul_smul, smul_zero] at e2
+    have k1 : (Fintype.card d : ℝ) * ρ ^ 3 * ρ⁻¹ = (Fintype.card d : ℝ) * ρ ^ 2 := by
+      field_simp
+    have k2 : (Fintype.card d : ℝ) * ρ ^ 3
+        * ((u ⬝ᵥ (u ᵥ* Z)) / (Fintype.card d : ℝ) * ρ⁻¹ ^ 3) = u ⬝ᵥ (u ᵥ* Z) := by
+      field_simp
+    rw [k1, k2] at e2
+    linear_combination (norm := module) e2
+  -- the same identity for the rows of `M = Z D + η_D`
+  have hrowM : ∀ u : d → ℝ, (u ⬝ᵥ u) • (u ᵥ* (Z * θ.D + η.D))
+      = (u ⬝ᵥ (u ᵥ* Z)) • (u ᵥ* θ.D) := by
+    intro u
+    rw [Matrix.vecMul_add, ← Matrix.vecMul_vecMul]
+    exact hrow u
+  -- two different rows of `D` are linearly independent (`D R = 1`)
+  have hind : ∀ i j : d, i ≠ j → ∀ a b : ℝ, a • θ.D i + b • θ.D j = 0 → a = 0 ∧ b = 0 := by
+    intro i j hij a b hab
+    have hw : (a • Pi.single i 1 + b • Pi.single j 1 : d → ℝ) ᵥ* θ.D = 0 := by
+      rw [Matrix.add_vecMul, Matrix.smul_vecMul, Matrix.smul_vecMul, Matrix.single_one_vecMul,
+        Matrix.single_one_vecMul]
+      exact hab
+    have hw' := congrArg (· ᵥ* R) hw
+    simp only [Matrix.vecMul_vecMul, hR, Matrix.vecMul_one, Matrix.zero_vecMul] at hw'
+    have ha := congrFun hw' i
+    have hb := congrFun hw' j
+    simp only [Pi.add_apply, Pi.smul_apply, Pi.single_eq_same, Pi.single_eq_of_ne hij,
+      Pi.single_eq_of_ne (Ne.symm hij), smul_eq_mul, mul_one, mul_zero, add_zero, zero_add,
+      Pi.zero_apply] at ha hb
+    exact ⟨ha, hb⟩
+  -- the identity at `e_i`: row `i` of `M` is `Z_ii D_i`
+  have hdiagM : ∀ i, (Z * θ.D + η.D) i = Z i i • θ.D i := by
+    intro i
+    have e := hrowM (Pi.single i 1)
+    rw [single_one_dotProduct, single_one_dotProduct, Matrix.single_one_vecMul,
+      Matrix.single_one_vecMul, Matrix.single_one_vecMul, Pi.single_eq_same, one_smul] at e
+    exact e
+  -- the identity at `e_i + e_j`, `i ≠ j`: `Z_ii = Z_jj` and `Z_ij + Z_ji = 0`
+  have hpair : ∀ i j : d, i ≠ j → Z i i = Z j j ∧ Z i j + Z j i = 0 := by
+    intro i j hij
+    have e := hrowM (Pi.single i 1 + Pi.single j 1)
+    simp only [add_dotProduct, dotProduct_add, Matrix.add_vecMul, single_one_dotProduct,
+      Matrix.single_one_vecMul, Matrix.row, Pi.single_eq_same,
+      Pi.single_eq_of_ne hij, Pi.single_eq_of_ne (Ne.symm hij), add_zero, zero_add,
+      hdiagM i, hdiagM j] at e
+    have e3 : (2 * Z i i - (Z i i + Z i j + (Z j i + Z j j))) • θ.D i
+        + (2 * Z j j - (Z i i + Z i j + (Z j i + Z j j))) • θ.D j = 0 := by
+      linear_combination (norm := module) e
+    obtain ⟨h1, h2⟩ := hind i j hij _ _ e3
+    constructor <;> linarith
+  -- so the diagonal of `Z` is constant, `β`, and `M = β D`
+  set β := Z i₀ i₀
+  have hdiag : ∀ i, Z i i = β := by
+    intro i
+    by_cases hi : i = i₀
+    · rw [hi]
+    · exact (hpair i i₀ hi).1
+  have hM : Z * θ.D + η.D = β • θ.D := by
+    ext i o
+    have e := congrFun (hdiagM i) o
+    rw [hdiag i] at e
+    exact e
+  -- `Y = Z - β I` is antisymmetric
+  have hY : (Z - β • (1 : Matrix d d ℝ))ᵀ = -(Z - β • (1 : Matrix d d ℝ)) := by
+    ext i j
+    simp only [Matrix.transpose_apply, Matrix.sub_apply, Matrix.smul_apply, Matrix.neg_apply,
+      smul_eq_mul]
+    by_cases hij : i = j
+    · subst hij
+      rw [hdiag i, Matrix.one_apply_eq, mul_one, sub_self, neg_zero]
+    · rw [Matrix.one_apply_ne hij, Matrix.one_apply_ne (Ne.symm hij), mul_zero, sub_zero,
+        sub_zero]
+      linarith [(hpair i j hij).2]
+  -- `Z = Y + β I`; no block comes after `L`; `η_D = β D - Z D = -Y D`
+  refine ⟨fun _ => Z - β • (1 : Matrix d d ℝ), fun _ => β, fun _ _ => hY,
+    (sub_add_cancel Z _).symm, fun ℓ hℓ => absurd hℓ (not_le.2 (Fin.castSucc_lt_last ℓ)), ?_⟩
+  show η.D = -((Z - β • (1 : Matrix d d ℝ)) * θ.D)
+  rw [Matrix.sub_mul, Matrix.smul_mul, Matrix.one_mul, neg_sub, ← hM]
+  abel
 
 end Skips
