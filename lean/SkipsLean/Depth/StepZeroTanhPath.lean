@@ -669,6 +669,101 @@ private theorem path_sum_tps [Nonempty d] [Nonempty T]
   refine Finset.sum_congr rfl fun j _ => ?_
   ring
 
+
+omit [DecidableEq d] [Fintype dIn] in
+/-- Step 5: if `𝒯_i` (`i = ±1, ±3`) vanishes on the polydisc, then at every real row `r` near `s`,
+`𝐃𝓑(rV)(((1 − r²) ⊙ c) V) = 0`, the hypothesis of Lemma D.17. -/
+private theorem fderiv_rows_eq_zero_tps
+    (θ : Params (Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm 0) hid) dIn dOut) (k : Fin L)
+    {κ : ℝ} (hhol : HolomorphicOnCone Complex.tanh θ k.succ κ)
+    (η : Params (Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm 0) hid) dIn dOut)
+    (s : hid k → ℝ) (hs : ∀ j, s j = 1 ∨ s j = -1) {ρ : ℝ} (hρ : 0 < ρ) (hρ1 : ρ ≤ 1)
+    (hcone : ∀ w : hid k → ℂ, (∀ j, ‖w j - (s j : ℂ)‖ ≤ ρ) →
+      w ᵥ* θ.toC.2.1 k ∈ complexCone κ) (c : hid k → ℂ)
+    (h0 : ∀ ζ : hid k → ℂ, (∀ j, ‖ζ j‖ < ρ / 3) → bigT_tps θ k η s c 0 ζ = 0)
+    (r : hid k → ℝ) (hr : ∀ j, |r j - s j| < ρ / 4) :
+    fderiv ℂ (fun h' : Matrix T d ℂ => suffixC Complex.tanh θ.toC k.succ h')
+      ((Matrix.of fun (_ : T) (j : hid k) => (r j : ℂ)) * θ.toC.2.1 k)
+      ((Matrix.of fun (_ : T) (j : hid k) => (1 - (r j : ℂ) ^ 2) * c j) * θ.toC.2.1 k) = 0 := by
+  obtain ⟨ζ, hζ, hwr⟩ := exists_wt_eq_tps s r hs hρ hρ1 hr
+  have h := h0 ζ hζ
+  unfold bigT_tps at h
+  simp only [zero_smul, add_zero] at h
+  rw [← fderiv_right_tps _ _ _ _
+    (hhol _ (rows_mem_cone_tps θ k s hs hρ1 hcone ζ hζ)).differentiableAt] at h
+  simp only [hwr] at h
+  exact h
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the zero matrix written entrywise. -/
+private theorem of_zero_tps {m n R : Type*} [Zero R] :
+    (Matrix.of fun (_ : m) (_ : n) => (0 : R)) = 0 := rfl
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the row `0` is not in the cone. -/
+private theorem zero_not_mem_cone_tps {κ : ℝ} : (0 : d → ℂ) ∉ complexCone κ := by
+  intro h
+  have h' : (fun i => ((0 : d → ℂ) i).im) ⬝ᵥ (fun i => ((0 : d → ℂ) i).im)
+      < κ ^ 2 * ((fun i => ((0 : d → ℂ) i).re) ⬝ᵥ (fun i => ((0 : d → ℂ) i).re)) := h
+  simp [dotProduct] at h'
+
+/-- Step 6 (`i = 0`): if `𝒯_0` vanishes on the polydisc, then at every real row `r` near `s`,
+`𝐃𝓑(rV)(r η_V) + 𝐃_θ𝓑(rV) η = 0`. -/
+private theorem third_tps
+    (θ : Params (Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm 0) hid) dIn dOut) (k : Fin L)
+    {κ : ℝ} (hκ : 0 < κ) (hhol : HolomorphicOnCone Complex.tanh θ k.succ κ)
+    (η : Params (Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm 0) hid) dIn dOut)
+    (s : hid k → ℝ) (hs : ∀ j, s j = 1 ∨ s j = -1) {ρ : ℝ} (hρ : 0 < ρ) (hρ1 : ρ ≤ 1)
+    (hcone : ∀ w : hid k → ℂ, (∀ j, ‖w j - (s j : ℂ)‖ ≤ ρ) →
+      w ᵥ* θ.toC.2.1 k ∈ complexCone κ)
+    (h0 : ∀ ζ : hid k → ℂ, (∀ j, ‖ζ j‖ < ρ / 3) → bigT_tps θ k η s 0 1 ζ = 0)
+    (r : hid k → ℝ) (hr : ∀ j, |r j - s j| < ρ / 4) :
+    fderiv ℝ
+          (fun h' : Matrix T d ℝ => suffix (Arch.mlp Real.tanh (rmsNorm 0) hid) 0 θ k.succ h')
+          ((Matrix.of fun (_ : T) => r) * θ.write k) ((Matrix.of fun (_ : T) => r) * η.write k)
+        + fderiv ℝ
+            (fun θ' : Params (Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm 0) hid) dIn dOut =>
+              suffix (Arch.mlp Real.tanh (rmsNorm 0) hid) 0 θ' k.succ
+                ((Matrix.of fun (_ : T) => r) * θ.write k)) θ η = 0 := by
+  obtain ⟨ζ, hζ, hwr⟩ := exists_wt_eq_tps s r hs hρ hρ1 hr
+  have h := h0 ζ hζ
+  unfold bigT_tps at h
+  simp only [hwr, one_smul, Pi.zero_apply, mul_zero, of_zero_tps, Matrix.zero_mul, zero_add] at h
+  -- the row `r V` is in the cone, so it is not `0`
+  have hmem : (fun j => (r j : ℂ)) ᵥ* θ.toC.2.1 k ∈ complexCone κ := by
+    refine hcone _ fun j => ?_
+    rw [← Complex.ofReal_sub, Complex.norm_real, Real.norm_eq_abs]
+    linarith [hr j]
+  have hrow : ∀ τ, ((Matrix.of fun (_ : T) => r) * θ.write k) τ ≠ 0 := by
+    intro τ h0'
+    have e1 : r ᵥ* θ.write k = 0 := h0'
+    have e2 : (fun j => (r j : ℂ)) ᵥ* θ.toC.2.1 k = 0 := by
+      rw [show θ.toC.2.1 k = (θ.write k).map (fun x : ℝ => (x : ℂ)) from rfl, vecMul_ofReal_tps,
+        e1]
+      funext l; simp
+    rw [e2] at hmem
+    exact zero_not_mem_cone_tps hmem
+  have hcr : (Matrix.of fun (_ : T) => r).map (fun x : ℝ => (x : ℂ))
+      = Matrix.of fun (_ : T) j => (r j : ℂ) := by ext τ j; rfl
+  -- `𝓛` at the real arguments `(r, 0, 0)` is the real `𝓛`
+  have hL := blockLHSC_ofReal (fun x => (Complex.ofReal_tanh x).symm) θ k hκ hhol η
+    (Matrix.of fun (_ : T) => r) 0 0 hrow
+  rw [hcr, blockLHSC_eq_tps θ k η (Matrix.of fun (_ : T) j => (r j : ℂ)) _ _
+    (hhol ((Matrix.of fun (_ : T) j => (r j : ℂ)) * θ.toC.2.1 k) fun _ => hmem).differentiableAt]
+    at hL
+  have e : (blockLHS θ k η (Matrix.of fun (_ : T) => r) 0 0).map (fun x : ℝ => (x : ℂ)) = 0 := by
+    rw [← hL]
+    refine Eq.trans ?_ h
+    congr 1
+    simp only [Matrix.map_apply, Matrix.zero_apply, Complex.ofReal_zero, mul_zero, of_zero_tps,
+      Matrix.zero_mul, zero_add]
+  have e' : blockLHS θ k η (Matrix.of fun (_ : T) => r) 0 0 = 0 := by
+    ext τ l
+    have := congrFun (congrFun e τ) l
+    simpa using this
+  unfold blockLHS at e'
+  simpa only [Matrix.zero_apply, mul_zero, of_zero_tps, Matrix.zero_mul, zero_add] using e'
+
 /-- **Proof of Lemma D.18, the path and the powers of `t`, for one pair `ξ, ξ'`.** Let `σ = tanh`,
 in the case (0), `d ≥ 2`, `θ` regular with (S1) for block `k`, `𝓑_{>k+1}` holomorphic on `C_κ`, and
 let the identity (16) hold before block `k` for `Z` and `η`. Let `s_j = ±1` and `ρ ∈ (0, 1]` be such
@@ -710,6 +805,135 @@ theorem tanh_path_step [Nonempty T]
             (fun θ' : Params (Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm 0) hid) dIn dOut =>
               suffix (Arch.mlp Real.tanh (rmsNorm 0) hid) 0 θ' k.succ
                 ((Matrix.of fun (_ : T) => r) * θ.write k)) θ η = 0 := by
-  sorry
+  classical
+  have hd0 : 0 < Fintype.card d := by omega
+  have : Nonempty d := Fintype.card_pos_iff.1 hd0
+  have hsd : 0 < Real.sqrt (Fintype.card d) := Real.sqrt_pos.2 (by exact_mod_cast hd0)
+  -- `hid k` is not empty: the write of block `k` has rank `d ≥ 2`
+  have hq : 0 < Fintype.card (hid k) := by
+    have h1 := hθ.rank_write k
+    have h2 : (θ.write k).rank ≤ Fintype.card (hid k) := Matrix.rank_le_card_height (θ.write k)
+    omega
+  obtain ⟨j₀⟩ : Nonempty (hid k) := Fintype.card_pos_iff.1 hq
+  have hα0 : (((Real.sqrt (Fintype.card d) : ℝ) : ℂ) / 2) ≠ 0 := by
+    have : ((Real.sqrt (Fintype.card d) : ℝ) : ℂ) ≠ 0 := by exact_mod_cast hsd.ne'
+    exact div_ne_zero this two_ne_zero
+  -- Step 2: the coefficients of `ż` on the path
+  obtain ⟨c3, hc3⟩ : ∃ c, c = cCube_tps (Z.map (fun x : ℝ => (x : ℂ))) (θ.toC.1 k)
+      (fun i => (ξ i : ℂ) + Complex.I * (ξ' i : ℂ)) (((Real.sqrt (Fintype.card d) : ℝ) : ℂ) / 2) :=
+    ⟨_, rfl⟩
+  obtain ⟨c1, hc1⟩ : ∃ c, c = cPlus_tps (Z.map (fun x : ℝ => (x : ℂ))) (θ.toC.1 k) (η.toC.1 k)
+      (fun i => (ξ i : ℂ) + Complex.I * (ξ' i : ℂ))
+      (fun i => (ξ i : ℂ) + (-Complex.I) * (ξ' i : ℂ))
+      (((Real.sqrt (Fintype.card d) : ℝ) : ℂ) / 2) := ⟨_, rfl⟩
+  obtain ⟨cm1, hcm1⟩ : ∃ c, c = cPlus_tps (Z.map (fun x : ℝ => (x : ℂ))) (θ.toC.1 k) (η.toC.1 k)
+      (fun i => (ξ i : ℂ) + (-Complex.I) * (ξ' i : ℂ))
+      (fun i => (ξ i : ℂ) + Complex.I * (ξ' i : ℂ))
+      (((Real.sqrt (Fintype.card d) : ℝ) : ℂ) / 2) := ⟨_, rfl⟩
+  obtain ⟨cm3, hcm3⟩ : ∃ c, c = cCube_tps (Z.map (fun x : ℝ => (x : ℂ))) (θ.toC.1 k)
+      (fun i => (ξ i : ℂ) + (-Complex.I) * (ξ' i : ℂ))
+      (((Real.sqrt (Fintype.card d) : ℝ) : ℂ) / 2) := ⟨_, rfl⟩
+  have hz : ∀ t : ℝ, 1 ≤ t → ∀ τ j, zdotC θ k Z η (pathMatrix (Matrix.of fun (_ : T) => ξ)
+      (Matrix.of fun (_ : T) => ξ') (t : ℂ)) τ j
+        = (t : ℂ) ^ 3 * c3 j + (t : ℂ) * c1 j + (t : ℂ)⁻¹ * cm1 j + (t : ℂ)⁻¹ ^ 3 * cm3 j := by
+    intro t ht τ j
+    have ht0 : (t : ℂ) ≠ 0 := by exact_mod_cast (show t ≠ 0 by linarith)
+    rw [zdotC_path_tps θ k Z η ξ ξ' hd0 (t : ℂ) ht0 τ, hc3, hc1, hcm1, hcm3]
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+  -- Step 4 (Lemma D.16): every `𝒯_i` vanishes on the polydisc
+  have hpos : ∀ j, 0 < Real.sqrt (Fintype.card d) * |(ξ ᵥ* θ.read k) j| := by
+    intro j
+    refine mul_pos hsd (abs_pos.2 fun h0 => ?_)
+    have := hsign j
+    rw [h0, mul_zero] at this
+    exact lt_irrefl _ this
+  have hall := path_separation (fun j => Real.sqrt (Fintype.card d) * |(ξ ᵥ* θ.read k) j|) hpos
+    (linearIndependent_abs_tps (fun j => (ξ ᵥ* θ.read k) j) s hs hsign _ hsd hind)
+    (fun j => Real.sqrt (Fintype.card d) * s j * (ξ' ᵥ* θ.read k) j) (ρ / 3) hdecay 3
+    (fun i => bigT_tps θ k η s (![cm3, 0, cm1, 0, c1, 0, c3] i) (![0, 0, 0, 1, 0, 0, 0] i))
+    (fun i => analyticOnNhd_bigT_tps θ k hhol η s hs hρ1 hcone _ _)
+    (path_sum_tps θ hθ k hκ hhol s hs hρ1 hcone Z η h16 ξ ξ' hξ hξ' hξξ' hsd hsign hdecay
+      c3 c1 cm1 cm3 hz)
+  have hT3 : ∀ ζ : hid k → ℂ, (∀ j, ‖ζ j‖ < ρ / 3) → bigT_tps θ k η s c3 0 ζ = 0 :=
+    fun ζ hζ => hall 6 ζ hζ
+  have hT1 : ∀ ζ : hid k → ℂ, (∀ j, ‖ζ j‖ < ρ / 3) → bigT_tps θ k η s c1 0 ζ = 0 :=
+    fun ζ hζ => hall 4 ζ hζ
+  have hT0 : ∀ ζ : hid k → ℂ, (∀ j, ‖ζ j‖ < ρ / 3) → bigT_tps θ k η s 0 1 ζ = 0 :=
+    fun ζ hζ => hall 3 ζ hζ
+  -- Step 6: the open set of real rows near `s̄`, and Lemma D.17 for `c₃` and `c₁`
+  have hB : IsOpen (Metric.ball s (ρ / 4)) := Metric.isOpen_ball
+  have hBne : (Metric.ball s (ρ / 4)).Nonempty := Metric.nonempty_ball.2 (by positivity)
+  have hBmem : ∀ r ∈ Metric.ball s (ρ / 4), ∀ j, |r j - s j| < ρ / 4 := by
+    intro r hr j
+    rw [Metric.mem_ball, dist_pi_lt_iff (by positivity)] at hr
+    simpa [Real.dist_eq] using hr j
+  have hc3z : c3 = 0 := eq_zero_of_fderiv_suffixC_one_sub_sq analyticOnNhd_tanh
+    (fun x => (Complex.ofReal_tanh x).symm) θ hθ hd k hS1 hκ hhol c3 _ hB hBne
+    (fun r hr => fderiv_rows_eq_zero_tps θ k hhol η s hs hρ hρ1 hcone c3 hT3 r (hBmem r hr))
+  have hc1z : c1 = 0 := eq_zero_of_fderiv_suffixC_one_sub_sq analyticOnNhd_tanh
+    (fun x => (Complex.ofReal_tanh x).symm) θ hθ hd k hS1 hκ hhol c1 _ hB hBne
+    (fun r hr => fderiv_rows_eq_zero_tps θ k hhol η s hs hρ hρ1 hcone c1 hT1 r (hBmem r hr))
+  -- `c₃ = 0` with `νW ≠ 0` gives `⟨νZ, ν⟩ = 0`
+  have hθW : θ.toC.1 k = (θ.read k).map (fun x : ℝ => (x : ℂ)) := rfl
+  have hqνν : ((fun i => (ξ i : ℂ) + Complex.I * (ξ' i : ℂ)) ᵥ* Z.map (fun x : ℝ => (x : ℂ)))
+      ⬝ᵥ (fun i => (ξ i : ℂ) + Complex.I * (ξ' i : ℂ)) = 0 := by
+    have e := congrFun hc3z j₀
+    rw [hc3] at e
+    simp only [cCube_tps, Pi.smul_apply, smul_eq_mul, Pi.zero_apply] at e
+    rw [hθW, nu_vecMul_tps ξ ξ' Complex.I (θ.read k)] at e
+    have hne : ((ξ ᵥ* θ.read k) j₀ : ℂ) + Complex.I * ((ξ' ᵥ* θ.read k) j₀ : ℂ) ≠ 0 := by
+      intro h0
+      have h1 := congrArg Complex.re h0
+      simp at h1
+      have h' := hsign j₀
+      rw [h1, mul_zero] at h'
+      exact lt_irrefl _ h'
+    have hα4 : -((((Real.sqrt (Fintype.card d) : ℝ) : ℂ) / 2) / 4) ≠ 0 :=
+      neg_ne_zero.2 (div_ne_zero hα0 (by norm_num))
+    exact (mul_eq_zero.1 ((mul_eq_zero.1 e).resolve_right hne)).resolve_left hα4
+  -- its real and imaginary parts: the first pair
+  have hq := hqνν
+  rw [q_nu_tps] at hq
+  have hre := congrArg Complex.re hq
+  have him := congrArg Complex.im hq
+  simp at hre him
+  have hpart1 : (ξ ᵥ* Z) ⬝ᵥ ξ' + (ξ' ᵥ* Z) ⬝ᵥ ξ = 0 ∧ (ξ ᵥ* Z) ⬝ᵥ ξ = (ξ' ᵥ* Z) ⬝ᵥ ξ' :=
+    ⟨him, by linarith⟩
+  -- `c₁ = 0` with `⟨νZ, ν⟩ = 0` and `⟨νZ, ν̄⟩ + ⟨ν̄Z, ν⟩ = 4 ξZξᵀ`: `ν (ZW + η_W) = (ξZξᵀ) νW`
+  have hM : Z.map (fun x : ℝ => (x : ℂ)) * θ.toC.1 k + η.toC.1 k
+      = (Z * θ.read k + η.read k).map (fun x : ℝ => (x : ℂ)) := by
+    rw [Matrix.map_add _ fun a b => Complex.ofReal_add a b]
+    congr 1
+    exact (Matrix.map_mul (f := Complex.ofRealHom)).symm
+  have hpair : ∀ j, (((ξ ᵥ* (Z * θ.read k + η.read k)) j : ℝ) : ℂ)
+      + Complex.I * (((ξ' ᵥ* (Z * θ.read k + η.read k)) j : ℝ) : ℂ)
+      = (((ξ ᵥ* Z) ⬝ᵥ ξ : ℝ) : ℂ)
+        * ((((ξ ᵥ* θ.read k) j : ℝ) : ℂ) + Complex.I * (((ξ' ᵥ* θ.read k) j : ℝ) : ℂ)) := by
+    intro j
+    have e := congrFun hc1z j
+    rw [hc1] at e
+    simp only [cPlus_tps] at e
+    rw [hqνν, zero_smul, add_zero, smul_vecMul, hM, q_nu_tps, q_nu_tps, hθW,
+      nu_vecMul_tps ξ ξ' Complex.I (Z * θ.read k + η.read k),
+      nu_vecMul_tps ξ ξ' Complex.I (θ.read k)] at e
+    simp only [Pi.smul_apply, Pi.sub_apply, smul_eq_mul, Pi.zero_apply] at e
+    have e2 := (mul_eq_zero.1 e).resolve_left hα0
+    have hE : (((ξ' ᵥ* Z) ⬝ᵥ ξ' : ℝ) : ℂ) = (((ξ ᵥ* Z) ⬝ᵥ ξ : ℝ) : ℂ) := by rw [hpart1.2]
+    linear_combination e2
+      + (-(1 / 2) * ((((ξ ᵥ* θ.read k) j : ℝ) : ℂ) + Complex.I * (((ξ' ᵥ* θ.read k) j : ℝ) : ℂ))
+        * (((ξ' ᵥ* Z) ⬝ᵥ ξ' : ℝ) : ℂ)) * Complex.I_sq
+      + ((1 / 2) * ((((ξ ᵥ* θ.read k) j : ℝ) : ℂ) + Complex.I * (((ξ' ᵥ* θ.read k) j : ℝ) : ℂ)))
+        * hE
+  have hpart2 : ξ ᵥ* (Z * θ.read k + η.read k) = ((ξ ᵥ* Z) ⬝ᵥ ξ) • (ξ ᵥ* θ.read k) ∧
+      ξ' ᵥ* (Z * θ.read k + η.read k) = ((ξ ᵥ* Z) ⬝ᵥ ξ) • (ξ' ᵥ* θ.read k) := by
+    refine ⟨funext fun j => ?_, funext fun j => ?_⟩
+    · have h1 := congrArg Complex.re (hpair j)
+      simp at h1
+      simpa using h1
+    · have h1 := congrArg Complex.im (hpair j)
+      simp at h1
+      simpa using h1
+  -- Step 6 (`i = 0`): the third part
+  exact ⟨hpart1, hpart2, fun r hr => third_tps θ k hκ hhol η s hs hρ hρ1 hcone hT0 r hr⟩
 
 end Skips
