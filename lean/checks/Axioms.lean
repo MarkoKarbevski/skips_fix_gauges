@@ -737,3 +737,15 @@ import SkipsLean
 #print axioms Skips.ae_not_isPointwiseLimit_skipless_swiglu_rmsNorm
 #print axioms Skips.ae_forall_eval_residual_ne_skipless_geglu_rmsNorm
 #print axioms Skips.ae_not_isPointwiseLimit_skipless_geglu_rmsNorm
+#print axioms Skips.finrank_params
+#print axioms Skips.finrank_params_mlp
+#print axioms Skips.finrank_params_gated
+#print axioms Skips.IsPointwiseLimit.mono
+#print axioms Skips.isPointwiseLimit_union
+#print axioms Skips.exists_isPointwiseLimit_of_biUnion_finite
+#print axioms Skips.jacobianRank_add_le_skipless_all
+#print axioms Skips.jacobianRank_add_le_skipless_all_rmsNorm
+#print axioms Skips.ae_forall_eval_residual_ne_skipless_mlp_of_card_lt
+#print axioms Skips.ae_not_isPointwiseLimit_skipless_mlp_of_card_lt
+#print axioms Skips.ae_forall_widths_eval_residual_ne_skipless_gelu
+#print axioms Skips.ae_not_isPointwiseLimit_skipless_gelu_widths
