@@ -1055,3 +1055,9 @@ import SkipsLean
 #print axioms Skips.attnFamily_two_tokens
 #print axioms Skips.attnFamily_rigid
 #print axioms Skips.ae_smallWritesGenericAttention
+#print axioms Skips.smallWritesLimit_eq_zero_attention
+#print axioms Skips.eventually_funDim_smallWrites_attention
+#print axioms Skips.ae_eventually_funDim_smallWrites_attention
+#print axioms Skips.ae_funDim_attention_residual
+#print axioms Skips.ae_funDim_attention_residual_ge_add
+#print axioms Skips.ae_funDim_attention_residual_of_width

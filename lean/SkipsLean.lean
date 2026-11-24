@@ -207,3 +207,5 @@ import SkipsLean.Residual.DepthAttentionGeneric
 import SkipsLean.Residual.DepthAttentionDim
 import SkipsLean.Dimension.ExpOrbitAttention
 import SkipsLean.Dimension.LocalIdentifiabilityAttention
+import SkipsLean.Residual.DepthAttentionRMS
+import SkipsLean.Residual.DepthAttentionRMSDim
