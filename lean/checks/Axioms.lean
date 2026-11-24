@@ -459,3 +459,8 @@ import SkipsLean
 #print axioms Skips.ae_funDim_reglu_oneBlock_residual
 #print axioms Skips.ae_exists_jacobianRank_reglu_oneBlock_residual
 #print axioms Skips.ae_funDim_reglu_oneBlock_residual_eq_add
+-- Dimension/GenericRank.lean
+#print axioms Skips.analyticOnNhd_eval_params
+#print axioms Skips.ae_jacobianRank_ge
+#print axioms Skips.ae_jacobianRank_le_funDim
+#print axioms Skips.ae_funDim_ge
