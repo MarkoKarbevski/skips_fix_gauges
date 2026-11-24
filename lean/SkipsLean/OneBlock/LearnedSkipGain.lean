@@ -926,11 +926,16 @@ theorem funDimLearned_eq_funDim_residual_add_of_noSymmetricPart {A : Arch T d 1}
       = Fintype.card d * (Fintype.card d - 1) / 2 + Module.finrank ℝ K := by
     rw [← finrank_domR_lsn K, ← LinearMap.finrank_range_of_inj (phiR_injective_lsn θ K hKE hE)]
     exact le_antisymm (Submodule.finrank_mono hRs) (Submodule.finrank_mono hflatR)
-  -- `fd + dim (flat directions) = number of parameters`, for both networks
+  -- `fd + dim (flat directions) = number of parameters`, for both networks (the block and
+  -- `N_ε` are differentiable)
+  have hχ : Differentiable ℝ A.χ := by
+    rw [hA]
+    exact differentiable_rmsNorm hε
   have hsumL : funDimLearned A (θ, R) + Module.finrank ℝ
       (flatSkips A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R))
       = Module.finrank ℝ (Params A dIn dOut × (Fin 1 → Matrix d d ℝ)) :=
-    funDimSkips_add_finrank_flatSkips' A _ (θ, R)
+    funDimSkips_add_finrank_flatSkips A _
+      (fun ℓ => by rw [Subsingleton.elim ℓ 0]; exact hfd) hχ (θ, R)
   have hsumR := funDim_add_finrank_flat' (A := A) (S := 1) θ
   have hP := finrank_paramsSkip_lsn (A := A) (dIn := dIn) (dOut := dOut)
   -- the arithmetic: `d (d + 1)/2 + d (d − 1)/2 = d²` and `2 · (d (d − 1)/2) = d (d − 1)`
