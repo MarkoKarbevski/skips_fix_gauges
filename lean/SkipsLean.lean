@@ -240,11 +240,14 @@ import SkipsLean.Dimension.IdentifiableConverse
 import SkipsLean.Generic.Cayley
 import SkipsLean.Dimension.IdentifiableConverseCob
 import SkipsLean.Dimension.IdentifiableIff
+import SkipsLean.Dimension.IdentifiableUnderEquality
 import SkipsLean.Residual.IdentifiableIff
+import SkipsLean.Residual.IdentifiableUnderEquality
 import SkipsLean.Symmetry.OnlyOrthogonalRows
 import SkipsLean.Generic.GroupDimension
 import SkipsLean.Symmetry.CobGroup
 import SkipsLean.Dimension.IdentifiableIffTransformer
+import SkipsLean.Dimension.IdentifiableUnderEqualityTransformer
 import SkipsLean.Dimension.IdentifiableConverseFamily
 import SkipsLean.Dimension.IdentifiableIffFamily
 import SkipsLean.Residual.IdentifiableIffFamily
