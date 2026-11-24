@@ -42,7 +42,9 @@ def gatedBlock (σ : ℝ → ℝ) (Wg Wv : Matrix p m ℝ) (Ww : Matrix m q ℝ)
 theorem map_mul_mul_row {T : Type*} (σ : ℝ → ℝ) (Wr : Matrix p m ℝ) (Ww : Matrix m q ℝ)
     (h : Matrix T p ℝ) (t : T) :
     ((h * Wr).map σ * Ww) t = vanillaBlock σ Wr Ww (h t) := by
-  sorry
+  -- both sides at `o` are `∑ i, σ (∑ a, h t a * Wr a i) * Ww i o`
+  funext o
+  simp only [vanillaBlock, Matrix.mul_apply, Matrix.map_apply, Matrix.vecMul, dotProduct]
 
 /-- The read with the columns of the units in `S` multiplied by `-1`. -/
 def flipCols [DecidableEq m] (S : Finset m) (Wr : Matrix p m ℝ) : Matrix p m ℝ :=
@@ -56,7 +58,10 @@ def subProd [DecidableEq m] (S : Finset m) (Wr : Matrix p m ℝ) (Ww : Matrix m 
 
 /-- ReLU satisfies equation (3): `σ(z) - σ(-z) = z`. (For GELU: `gelu_sub_gelu_neg`.) -/
 theorem relu_sub_relu_neg (z : ℝ) : relu z - relu (-z) = z := by
-  sorry
+  simp only [relu]
+  rcases le_total z 0 with h | h
+  · rw [max_eq_right h, max_eq_left (neg_nonneg.2 h)]; ring
+  · rw [max_eq_left h, max_eq_right (neg_nonpos.2 h)]; ring
 
 variable {σ : ℝ → ℝ} {c : ℝ}
 
