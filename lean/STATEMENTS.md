@@ -197,7 +197,8 @@ reader (written after the seventeenth audit began): `OneBlock/LearnedSkipTriangu
 `Absorb/BiasesAttention.lean`, `Absorb/BiasesVanillaLower.lean`,
 `Absorb/GatedBiasesCells.lean`, `Absorb/GatedBiasesCount.lean`, `Absorb/GatedBiasesLower.lean`,
 `Absorb/ReluSqBiasesCells.lean`, `Absorb/ReluSqBiasesCount.lean`, `Absorb/ReluSqBiasesLower.lean`,
-`Absorb/RotaryBiases.lean`. A ninth reader (part A, 24 November) compared the six files on
+`Absorb/RotaryBiases.lean` (these fourteen are with the two readers of the eighteenth audit, since
+18:56 UTC, 24 November). A ninth reader (part A, 24 November) compared the six files on
 GELU at complex arguments (`Activations/MillsC.lean`, `Activations/MillsCExpansion.lean`,
 `Activations/MillsAtInfinityC.lean`, `Activations/GeluOnPath.lean`,
 `Generic/HolomorphicBall.lean`, `Depth/GeluPathSeparation.lean`: 31 public names) and found
