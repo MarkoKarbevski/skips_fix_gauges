@@ -19,13 +19,14 @@ one parameter `θ₀`.
 (`ClosureNullOfNull`), then for almost every `θ`, `F θ` is not in the closure of the outputs of
 `G`: some `δ > 0` separates it from all of them.
 
-The Lean route follows the paper's proof, without the constant rank theorem: at a `θ` where the
-Jacobian of `F` has its largest rank `r*`, a linear `π : Y → ℝ^{r*}` is chosen with `π ∘ DF(θ)`
-onto; `π ∘ F` is a submersion near `θ`; `π ∘ G` has rank less than `r*` everywhere, "so all its
-values are critical, and by Sard's theorem its image has measure zero"; the preimage of this image
-under `π ∘ F` has measure zero near `θ` (`Dimension/SubmersionNull.lean`); countably many
-neighbourhoods cover the set where the rank is `r*`, whose complement has measure zero (analytic
-minors). Sard's theorem is a hypothesis from the literature (`Literature/Sard.lean`).
+The Lean route follows the paper's proof, without the constant rank theorem and without the
+largest rank: with `r > r₀` the rank of the Jacobian of `F` at `θ₀`, a linear `π : Y → ℝ^r` is
+chosen with `π ∘ DF(θ₀)` onto; `π ∘ DF(θ)` is onto on an open set `U` whose complement has measure
+zero (the zero set of an analytic determinant that equals `1` at `θ₀`); `π ∘ G` has rank less than
+`r` everywhere, "so all its values are critical, and by Sard's theorem its image has measure zero";
+the preimage of this image under the submersion `π ∘ F` on `U` has measure zero
+(`Dimension/SubmersionNull.lean`). Sard's theorem is a hypothesis from the literature
+(`Literature/Sard.lean`).
 -/
 
 namespace Skips
@@ -220,6 +221,7 @@ theorem ae_notMem_closure_range_of_rank_lt (hSard : ∀ r : ℕ, SardCriticalVal
   -- `π` is continuous: `π(closure (range G)) ⊆ closure (π (range G))`
   exact hθ (image_closure_subset_closure_image π.continuous ⟨F θ, hmem, rfl⟩)
 
+omit [NormedSpace ℝ Y] [FiniteDimensional ℝ Y] in
 /-- The conclusion of Lemma A.26 (ii) in the paper's words: a point outside the closure of a set
 has a positive distance `δ` to every point of the set. -/
 theorem exists_pos_le_norm_sub_of_notMem_closure {y : Y} {S : Set Y} (h : y ∉ closure S) :

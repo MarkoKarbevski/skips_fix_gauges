@@ -46,7 +46,10 @@ reader (written after the sixth audit began): `Symmetry/OnlyOrthogonal.lean`,
 `OneBlock/ResidualRMSMlp.lean`, `OneBlock/ResidualRMSGated.lean`, `OneBlock/ResidualRMSGain.lean`,
 `Residual/SmallWritesNorm.lean`, `Residual/SmallWritesRMSSteps.lean`, `Residual/DepthMlpRMS.lean`,
 `Residual/DepthGatedRMS.lean`, `Residual/ExactGainRMS.lean`, `Literature/Sard.lean`,
-`Literature/OMinimal.lean`, `Dimension/SubmersionNull.lean` and `Dimension/RankCriterion.lean`.
+`Literature/OMinimal.lean`, `Dimension/SubmersionNull.lean`, `Dimension/RankCriterion.lean`,
+`Residual/PointwiseLimit.lean`, `Residual/SkiplessEnds.lean`,
+`Residual/DifferentClassesCriterion.lean`, `Residual/DifferentClasses.lean` and
+`Residual/DifferentClassesRMS.lean`.
 
 ## Definitions
 
@@ -73,8 +76,11 @@ Differences from the paper, on purpose:
 
 These two results are not proved in Lean. Each is a named proposition (a `def … : Prop`, never an
 `axiom`), and the theorems that use it take it as a hypothesis, so `#print axioms` stays at the
-three standard axioms. No theorem of the tables below uses them yet, except the rows of
-`Dimension/RankCriterion.lean`.
+three standard axioms. The theorems that take them as hypotheses are the rows of
+`Dimension/RankCriterion.lean`, `Residual/DifferentClassesCriterion.lean`,
+`Residual/DifferentClasses.lean` and `Residual/DifferentClassesRMS.lean` (Lemma A.26,
+Theorem A.28 (ii), (iv) and Theorem 4.11 (i) of the skips paper): "equals no skipless network"
+uses Sard's theorem, and "not a pointwise limit" uses both.
 
 | Result | Source | Lean | File | Where the papers use it |
 |---|---|---|---|---|
@@ -367,6 +373,11 @@ Notes for the authors on these statements:
 | **S Theorem 4.7, second sentence, and Corollary 4.8 (exact gain) under pre-RMSNorm (`ε > 0`):** with blocks of width at least `d`, at generic parameters the skips raise `fd` by at least `L d(d−1)/2` (tanh-like activations with Lemma B.3; gated blocks), and by exactly `L d(d−1)/2` for tanh, GELU, SwiGLU and GeGLU blocks | `ae_funDim_skipless_add_le_residual_mlp_rmsNorm`, `ae_funDim_skipless_add_le_residual_gated_rmsNorm`, `ae_funDim_tanh_residual_rmsNorm_eq_add`, `ae_funDim_gelu_residual_rmsNorm_eq_add`, `ae_funDim_swiglu_residual_rmsNorm_eq_add`, `ae_funDim_geglu_residual_rmsNorm_eq_add` | `Residual/ExactGainRMS.lean` | proved |
 | S proof of Lemma A.26, "so does its preimage under `F_X` in `U`", in the form the Lean route uses: for `f` continuously differentiable on an open set `U` with an onto derivative at every point of `U`, the preimage in `U` of a set of measure zero has measure zero | `measure_inter_preimage_eq_zero_of_surjective_fderiv` | `Dimension/SubmersionNull.lean` | in work |
 | **S Lemma A.26 (a rank criterion), without networks:** `F : P → Y`, `G : P' → Y` real-analytic; the Jacobian of `G` has rank at most `r₀` at every parameter (the paper gets this from a Lie group with orbits of dimension at least `k`, `r₀ = P' − k`); the Jacobian of `F` has rank greater than `r₀` at one parameter. (i) For almost every `θ`, `F θ` is not an output of `G`. (ii) If the outputs of `G` have the property of definable sets (`ClosureNullOfNull`), then for almost every `θ`, `F θ` is not in the closure of the outputs of `G` (a `δ > 0` separates it from them). Both under Sard's theorem as a hypothesis (`SardCriticalValues`); no constant rank theorem | `ae_notMem_range_of_rank_lt`, `ae_notMem_closure_range_of_rank_lt`, `exists_pos_le_norm_sub_of_notMem_closure` | `Dimension/RankCriterion.lean` | in work |
+| **S Definition A.29 (pointwise limit):** `F` is a pointwise limit of a set `𝓕` of networks if for every `n ≥ 1`, every batch `x_1, …, x_n` and every `δ > 0` some `F' ∈ 𝓕` has `‖F'(x_i) − F(x_i)‖ < δ` for all `i`. After it: "If a sequence of networks of `𝓕` converges to `F` at every input, then `F` is a pointwise limit of `𝓕`"; and the last sentence of Theorem A.28 (iv): a batch and a `δ > 0` with `‖F'(x) − F(x)‖ ≥ δ` at some `x` of the batch for every `F' ∈ 𝓕` show that `F` is not a pointwise limit of `𝓕`. A network is its function; the norm of a matrix is its largest entry in absolute value | `IsPointwiseLimit`, `isPointwiseLimit_of_tendsto`, `not_isPointwiseLimit_of_exists_pos` | `Residual/PointwiseLimit.lean` | in work |
+| S proof of Theorem A.28 (ii), "the changes of basis at `h_0` and `h_L` […] and the rescalings have orbits of dimension `2 d² + s`" (under pre-RMSNorm with `ε > 0`: "the orthogonal changes of basis at `h_0` and `h_L` […] of dimension `d(d−1) + s`"), and the proof of Lemma A.26, "the rank is lower semicontinuous, so the bound holds at every `η`": for a skipless network of `L ≥ 1` blocks of ANY widths, `fd ≤ P − 2d²` (resp. `P − d(d−1)`) where `E` and `D` have rank `d`, and the Jacobian on every batch has rank at most that at EVERY parameter when the blocks are real-analytic and `d_in, d_out ≥ d`; for gated blocks with the term `s` (the number of hidden units; the `fd` bound where no value column of a read vanishes). The widths may be smaller than `d` | `funDim_add_le_skipless_ends`, `jacobianRank_add_le_skipless_ends`, `funDim_add_le_skipless_ends_rmsNorm`, `jacobianRank_add_le_skipless_ends_rmsNorm`, `funDim_add_le_skipless_ends_gated`, `jacobianRank_add_le_skipless_ends_gated`, `funDim_add_le_skipless_ends_gated_rmsNorm`, `jacobianRank_add_le_skipless_ends_gated_rmsNorm` | `Residual/SkiplessEnds.lean` | in work |
+| **S Lemma A.26 for two families of networks** (architectures `A`, `A'` with any stream matrices, real-analytic blocks, the same inputs and outputs; the widths and depths may differ): if the Jacobian of the second family has rank at most `r₀` on every batch at every parameter and `fd(θ₀) > r₀` at one parameter of the first, then (i) for almost every `θ` no `η` has `F_θ = G_η` (also on one batch: the outputs of `F_θ` on `X` are not outputs of the second family), under Sard's theorem; (ii) there is a batch `X` such that for almost every `θ` some `δ > 0` has `‖F_θ(x) − G_η(x)‖ ≥ δ` at some `x ∈ X` for every `η`, and `F_θ` is not a pointwise limit of the second family, under Sard's theorem and the property of definable sets for the outputs of the second family on a batch. In Lean the batch does not depend on `θ` | `exists_batch_ae_notMem_range_of_jacobianRank_lt`, `ae_forall_eval_ne_of_jacobianRank_lt`, `exists_batch_ae_exists_pos_le_norm_sub_of_jacobianRank_lt`, `ae_not_isPointwiseLimit_of_jacobianRank_lt` | `Residual/DifferentClassesCriterion.lean` | in work |
+| **S Theorem 4.11 (i) and Theorem A.28 (ii), (iv), without normalization, for tanh, GELU, SwiGLU and GeGLU blocks:** with `d_in, d_out ≥ d ≥ 2` and `L ≥ 1` blocks of any widths, at generic parameters a residual network equals no skipless network of the same widths (under Sard's theorem), and is not a pointwise limit of such networks; on one batch `X`, for almost every `θ` some `δ > 0` has `‖F_θ(x) − G_η(x)‖ ≥ δ` at some `x ∈ X` for every skipless `η` (under Sard's theorem and the property of definable sets). The general forms are for MLP blocks under `UnitsRigid` and gated blocks under `GatedUnitsRescale`. The skipless network has the same architecture and any parameters. Not stated: attention blocks; "cannot be locally uniformly approximated" (it follows from `isPointwiseLimit_of_tendsto`) | `ae_forall_eval_residual_ne_skipless_mlp`, `exists_batch_ae_exists_pos_le_norm_sub_skipless_mlp`, `ae_not_isPointwiseLimit_skipless_mlp`, the same three with `_gated`, and `ae_forall_eval_residual_ne_skipless_tanh`, `ae_not_isPointwiseLimit_skipless_tanh`, the same two with `_gelu`, `_swiglu`, `_geglu` | `Residual/DifferentClasses.lean` | in work |
+| **S Theorem 4.11 (i) and Theorem A.28 (ii), (iv), under pre-RMSNorm (`ε > 0`), for tanh, GELU, SwiGLU and GeGLU blocks:** the same statements, with the residual value `P − d(d−1)/2 − s` against the skipless bound `P − d(d−1) − s` | the names of the row above with the suffix `_rmsNorm` | `Residual/DifferentClassesRMS.lean` | in work |
 
 Not stated yet from the main text of the skips paper: Theorem 3.3 (ii), the dimensions of the
 groups; the term `s` of attention blocks in Theorem 4.2; Definitions 4.3, 4.4 and Proposition 4.5;
@@ -375,7 +386,7 @@ attention blocks and its sentence on a learned skip (its first sentence and the 
 tanh, GELU, SwiGLU and GeGLU blocks);
 Theorem 4.7 and Corollary 4.8 for attention blocks (for tanh, GELU, SwiGLU and GeGLU blocks they
 are proved, without normalization and under pre-RMSNorm with `ε > 0`); Corollaries 4.9 and 4.10;
-Theorem 4.11. Lemma B.2, "a direction keeps `M` if and only if
+Theorem 4.11 (i) for attention blocks and Theorem 4.11 (ii); Theorem A.28 (i) and (iii). Lemma B.2, "a direction keeps `M` if and only if
 `X = Y`", is inside the proofs of `OneBlock/Residual.lean` and is not a statement of its own.
 
 ### Absorb paper

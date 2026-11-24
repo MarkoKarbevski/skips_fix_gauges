@@ -102,3 +102,8 @@ import SkipsLean.Literature.Sard
 import SkipsLean.Literature.OMinimal
 import SkipsLean.Dimension.SubmersionNull
 import SkipsLean.Dimension.RankCriterion
+import SkipsLean.Residual.PointwiseLimit
+import SkipsLean.Residual.SkiplessEnds
+import SkipsLean.Residual.DifferentClassesCriterion
+import SkipsLean.Residual.DifferentClasses
+import SkipsLean.Residual.DifferentClassesRMS
