@@ -329,6 +329,90 @@ theorem ae_oneBlockGenericAttention
     (hdh : Fintype.card (dh 0) ≤ Fintype.card d)
     (hH : Fintype.card d ≤ Fintype.card (H 0) * Fintype.card (dh 0)) :
     ∀ᵐ θ ∂μ, OneBlockGenericAttention θ := by
-  sorry
+  classical
+  -- the sizes: `d_h ≥ 1` (as `H d_h ≥ d ≥ 2`), two distinct `p, q` in `d`, `c : d ↪ d_in`,
+  -- `d ↪ d_out`, `d ↪ H × d_h`, some `k₀ : d_h` and some `o₀ : d_out`
+  have hHd : Fintype.card d ≤ Fintype.card (H 0 × dh 0) := hH.trans (Fintype.card_prod _ _).symm.le
+  have hdh0 : 0 < Fintype.card (dh 0) := by
+    rcases Nat.eq_zero_or_pos (Fintype.card (dh 0)) with h | h
+    · rw [h, Nat.mul_zero] at hH
+      omega
+    · exact h
+  obtain ⟨k₀⟩ : Nonempty (dh 0) := Fintype.card_pos_iff.1 hdh0
+  obtain ⟨p, q, hpq⟩ := Fintype.exists_pair_of_one_lt_card (show 1 < Fintype.card d by omega)
+  obtain ⟨c⟩ := Function.Embedding.nonempty_of_card_le hdIn
+  obtain ⟨cD⟩ := Function.Embedding.nonempty_of_card_le hdOut
+  obtain ⟨cH⟩ := Function.Embedding.nonempty_of_card_le hHd
+  obtain ⟨o₀⟩ : Nonempty dOut := ⟨cD p⟩
+  have hs : (Real.sqrt (Fintype.card (dh 0)))⁻¹ ≠ 0 :=
+    inv_ne_zero (Real.sqrt_ne_zero'.2 (by exact_mod_cast hdh0))
+  -- `E`, `D` and the write have rank `d` (`Generic/Params.lean`)
+  have h1 := ae_rank_E_write μ hdIn (fun ℓ => by
+    obtain rfl := Subsingleton.elim ℓ 0
+    exact hHd)
+  have h2 := ae_isUnit_det_submatrix μ
+  -- the query, key, value and output matrices of every head have rank `d_h`
+  have hQ : ∀ᵐ θ ∂μ, ∀ i, (attnQ θ i).rank = Fintype.card (dh 0) :=
+    ae_all_iff.2 fun i => ae_rank_read_cols_obg μ 0 (c := fun k : dh 0 => (i, Sum.inl k))
+      (fun _ _ h => Sum.inl_injective (Prod.mk.inj h).2) hdh
+  have hK : ∀ᵐ θ ∂μ, ∀ i, (attnK θ i).rank = Fintype.card (dh 0) :=
+    ae_all_iff.2 fun i => ae_rank_read_cols_obg μ 0 (c := fun k : dh 0 => (i, Sum.inr (Sum.inl k)))
+      (fun _ _ h => Sum.inl_injective (Sum.inr_injective (Prod.mk.inj h).2)) hdh
+  have hV : ∀ᵐ θ ∂μ, ∀ i, (attnV θ i).rank = Fintype.card (dh 0) :=
+    ae_all_iff.2 fun i => ae_rank_read_cols_obg μ 0 (c := fun k : dh 0 => (i, Sum.inr (Sum.inr k)))
+      (fun _ _ h => Sum.inr_injective (Sum.inr_injective (Prod.mk.inj h).2)) hdh
+  have hO : ∀ᵐ θ ∂μ, ∀ i, (attnO θ i).rank = Fintype.card (dh 0) :=
+    ae_all_iff.2 fun i => ae_rank_write_rows_obg μ 0 (r := fun k : dh 0 => (i, k))
+      (fun _ _ h => (Prod.mk.inj h).2) hdh
+  -- (a) the entry `c p` of every `B_i v₀` is nonzero: it is `(√d_h)⁻¹` at the witness
+  have hA : ∀ᵐ θ ∂μ, ∀ i, (attnScore θ i *ᵥ fun _ => (1 : ℝ)) (c p) ≠ 0 := by
+    refine ae_all_iff.2 fun i => ae_ne_zero_of_analytic μ (analyticOnNhd_score_obg i _ _)
+      ⟨wit_obg c p k₀ o₀ fun _ => p, ?_⟩
+    rw [wit_score_obg]
+    simpa using hs
+  -- (b) for `i ≠ j`, the minor of `B_i v₀`, `B_j v₀` on the rows `c p`, `c q` is nonzero: it is
+  -- `(√d_h)⁻²` at the witness whose query matrices put `B_i v₀` on `e_{c p}`, `B_j v₀` on `e_{c q}`
+  have hB : ∀ᵐ θ ∂μ, ∀ i j : H 0, i ≠ j →
+      (attnScore θ i *ᵥ fun _ => (1 : ℝ)) (c p) * (attnScore θ j *ᵥ fun _ => (1 : ℝ)) (c q)
+        - (attnScore θ i *ᵥ fun _ => (1 : ℝ)) (c q) * (attnScore θ j *ᵥ fun _ => (1 : ℝ)) (c p)
+        ≠ 0 := by
+    refine ae_all_iff.2 fun i => ae_all_iff.2 fun j => ?_
+    by_cases hij : i = j
+    · exact Filter.Eventually.of_forall fun _ h => absurd hij h
+    · have hg : AnalyticOnNhd ℝ
+          (fun θ : Params (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut =>
+            (attnScore θ i *ᵥ fun _ => (1 : ℝ)) (c p) * (attnScore θ j *ᵥ fun _ => (1 : ℝ)) (c q)
+              - (attnScore θ i *ᵥ fun _ => (1 : ℝ)) (c q)
+                * (attnScore θ j *ᵥ fun _ => (1 : ℝ)) (c p)) Set.univ :=
+        ((analyticOnNhd_score_obg i _ _).mul (analyticOnNhd_score_obg j _ _)).sub
+          ((analyticOnNhd_score_obg i _ _).mul (analyticOnNhd_score_obg j _ _))
+      refine (ae_ne_zero_of_analytic μ hg
+        ⟨wit_obg c p k₀ o₀ fun h => if h = i then p else q, ?_⟩).mono fun _ h _ => h
+      rw [wit_score_obg, wit_score_obg]
+      simp [Ne.symm hij, hpq, Ne.symm hpq, hs]
+  -- (c) the entry `o₀` of every `v₀ C_i` is nonzero: it is `1` at the witness
+  have hC : ∀ᵐ θ ∂μ, ∀ i, ((fun _ => (1 : ℝ)) ᵥ* attnValue θ i) o₀ ≠ 0 := by
+    refine ae_all_iff.2 fun i => ae_ne_zero_of_analytic μ (analyticOnNhd_value_obg i _ _)
+      ⟨wit_obg c p k₀ o₀ fun _ => p, ?_⟩
+    rw [wit_value_obg]
+    simp
+  -- the queries of all heads: `d` of their columns, chosen by `cH`, are invertible
+  let g : H 0 × dh 0 ↪ (Arch.attention (T := T) (d := d) sees id H dh).r 0 :=
+    ⟨fun x => (x.1, Sum.inl x.2), fun x y h =>
+      Prod.ext (Prod.mk.inj h).1 (Sum.inl_injective (Prod.mk.inj h).2)⟩
+  filter_upwards [h1, h2, hQ, hK, hV, hO, hA, hB, hC] with θ h1 h2 hQ hK hV hO hA hB hC
+  refine ⟨h1.1, rank_eq_card_of_isUnit_det θ.D cD (h2.2.1 cD), hQ, hK, hV, hO,
+    rank_eq_card_of_isUnit_det _ cH (h2.1 0 (cH.trans g)), h1.2 0,
+    ⟨fun _ => 1, fun i h => hA i (by rw [h]; rfl), ?_, fun i h => hC i (congrFun h o₀)⟩⟩
+  -- if `B_i v₀ = r B_j v₀`, the minor of the rows `c p`, `c q` vanishes
+  intro i j hij r hr
+  have e1 : (attnScore θ i *ᵥ fun _ => (1 : ℝ)) (c p)
+      = r * (attnScore θ j *ᵥ fun _ => (1 : ℝ)) (c p) := congrFun hr (c p)
+  have e2 : (attnScore θ i *ᵥ fun _ => (1 : ℝ)) (c q)
+      = r * (attnScore θ j *ᵥ fun _ => (1 : ℝ)) (c q) := congrFun hr (c q)
+  apply hB i j hij
+  rw [e1, e2]
+  ring
+
 
 end Skips
