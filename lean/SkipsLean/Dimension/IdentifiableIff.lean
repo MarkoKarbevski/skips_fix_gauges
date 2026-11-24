@@ -68,7 +68,33 @@ theorem ae_funDim_skipless_iff_ae_locally_cob
         = eval A 0 θ x) →
         ∃ G : Fin (L + 1) → GL d ℝ,
             θ' = θ.cob G G) := by
-  sorry
+  -- `χ = id` is analytic
+  have hχ : AnalyticOnNhd ℝ A.χ Set.univ := by
+    rw [hA]
+    exact analyticOnNhd_id
+  constructor
+  · -- the equality condition gives local identifiability at the parameters where `E` and the
+    -- writes have rank `d` (Proposition 4.6 at one parameter, with any neighborhood of `1`)
+    intro h
+    filter_upwards [h, ae_rank_E_write μ hdIn hw] with θ hfd hθ
+    obtain ⟨U, hU, hUV⟩ := exists_cob_of_eval_eq_skipless A hA hf θ hθ.1 hθ.2 hfd Set.univ
+      Filter.univ_mem
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨G, -, hG⟩ := hUV θ' hθ' heq
+    exact ⟨G, hG⟩
+  · -- local identifiability gives the lower bound `P ≤ fd + (L + 1) d²`, with no symmetry inside
+    -- the blocks (`N` of dimension `0`, `Ψ θ n = θ`)
+    intro h
+    have hlow := ae_finrank_le_funDim_add_of_ae_locally_cob A 0 hf hχ μ (N := Fin 0 → ℝ)
+      (fun θ _ => θ) Set.univ (fun _ => contDiffOn_const) (by
+        filter_upwards [h] with θ ⟨U, hU, hUV⟩
+        exact ⟨U, hU, fun θ' hθ' heq => ⟨0, Set.mem_univ _, hUV θ' hθ' heq⟩⟩)
+    -- and the upper bound of Theorem 4.3
+    have hup := ae_funDim_add_le_skipless μ hA
+      (fun ℓ => differentiableOn_univ.1 (hf ℓ).differentiableOn) hdIn hw
+    filter_upwards [hlow, hup] with θ h1 h2
+    rw [Module.finrank_fin_fun] at h1
+    omega
 
 /-- **Proposition 4.6 of the dimension paper and Proposition 4.5 of the skips paper, for skipless
 networks of any real-analytic blocks, under pre-RMSNorm with `ε > 0`:** `fd = P − (L + 1) d(d−1)/2`
@@ -91,7 +117,33 @@ theorem ae_funDim_skipless_iff_ae_locally_cob_rmsNorm
         ∃ Q : Fin (L + 1) → GL d ℝ,
             (∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ) ∧
             θ' = θ.cob Q Q) := by
-  sorry
+  -- RMSNorm with `ε > 0` is analytic
+  have hχ : AnalyticOnNhd ℝ A.χ Set.univ := by
+    rw [hA]
+    exact analyticOnNhd_rmsNorm hε
+  constructor
+  · -- the equality condition gives local identifiability at the parameters where `E` and the
+    -- writes have rank `d` (Proposition 4.6 at one parameter, with any neighborhood of `1`)
+    intro h
+    filter_upwards [h, ae_rank_E_write μ hdIn hw] with θ hfd hθ
+    obtain ⟨U, hU, hUV⟩ := exists_cob_of_eval_eq_skipless_rmsNorm A hε hA hf θ hθ.1 hθ.2 hfd
+      Set.univ Filter.univ_mem
+    refine ⟨U, hU, fun θ' hθ' heq => ?_⟩
+    obtain ⟨Q, hQ, -, hQθ⟩ := hUV θ' hθ' heq
+    exact ⟨Q, hQ, hQθ⟩
+  · -- local identifiability gives the lower bound `P ≤ fd + (L + 1) d(d−1)/2`, with no symmetry
+    -- inside the blocks (`N` of dimension `0`, `Ψ θ n = θ`)
+    intro h
+    have hlow := ae_finrank_le_funDim_add_of_ae_locally_cob_orthogonal A 0 hf hχ μ
+      (N := Fin 0 → ℝ) (fun θ _ => θ) Set.univ (fun _ => contDiffOn_const) (by
+        filter_upwards [h] with θ ⟨U, hU, hUV⟩
+        exact ⟨U, hU, fun θ' hθ' heq => ⟨0, Set.mem_univ _, hUV θ' hθ' heq⟩⟩)
+    -- and the upper bound of Theorem 4.3 under pre-RMSNorm
+    have hup := ae_funDim_add_le_skipless_rmsNorm μ hε hA
+      (fun ℓ => differentiableOn_univ.1 (hf ℓ).differentiableOn) hdIn hw
+    filter_upwards [hlow, hup] with θ h1 h2
+    rw [Module.finrank_fin_fun] at h1
+    omega
 
 /-- **Proposition 4.6 of the dimension paper and Proposition 4.5 of the skips paper, for skipless
 networks of MLP blocks with a real-analytic activation (tanh, GELU), without normalization:** `fd =
