@@ -318,6 +318,7 @@ private theorem reluSq_nonpos_lzg (z : ℝ) (hz : z ≤ 0) : reluSq z = 0 := by
   rw [reluSq, max_eq_right hz]
   norm_num
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReLU block turns a dense set of the active rows for the skip `A` at almost every weights
 and skip `(θ, A)`,** for `d ≥ 2`. -/
 theorem ae_turnsActiveRowsSkip_relu
@@ -333,6 +334,7 @@ theorem ae_turnsActiveRowsSkip_relu
   intro v hv hact
   exact mem_closure_of_wPoly_lzg relu_pos_lzg relu_nonpos_lzg _ _ _ hx v hv hact
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReLU² block turns a dense set of the active rows for the skip `A` at almost every weights
 and skip `(θ, A)`,** for `d ≥ 2`. -/
 theorem ae_turnsActiveRowsSkip_reluSq
@@ -348,6 +350,7 @@ theorem ae_turnsActiveRowsSkip_reluSq
   intro v hv hact
   exact mem_closure_of_wPoly_lzg reluSq_pos_lzg reluSq_nonpos_lzg _ _ _ hx v hv hact
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReLU block with a hidden unit turns some row off the kinks, for the skip `A`, at almost
 every weights and skip `(θ, A)`,** for `d ≥ 2`. -/
 theorem ae_exists_turned_row_skip_relu [Nonempty (hid 0)]
@@ -366,6 +369,7 @@ theorem ae_exists_turned_row_skip_relu [Nonempty (hid 0)]
   rw [relu_pos_lzg z hz, pow_one]
   exact hz.ne'
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReLU² block with a hidden unit turns some row off the kinks, for the skip `A`, at almost
 every weights and skip `(θ, A)`,** for `d ≥ 2`. -/
 theorem ae_exists_turned_row_skip_reluSq [Nonempty (hid 0)]
