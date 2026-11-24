@@ -271,6 +271,88 @@ private theorem sum_pos_igo {ι κ : Type*} [Fintype ι] [Fintype κ] (i : ι �
     nlinarith
   linarith
 
+omit [Fintype T] in
+/-- Helper (step 5): near `(θ*, u₀)`, for a row `u₀ ≠ 0`, `z ≤ 0`. If `u₀` has a positive entry,
+`z(θ*, u₀) < 0`. Otherwise every term of `z` is eventually `≤ 0`: a gate that reads
+`u₀ (i k) < 0` is eventually closed, and a hidden unit with `u₀ (i k) = 0` has eventually a
+positive value and `a_k r < 0`. -/
+private theorem eventually_Z_nonpos_igo (ℓ : Fin L) (j : hid ℓ.succ) (i : hid ℓ.castSucc → d)
+    (hi : Function.Surjective i) (a₀ : d) {δ : ℝ} (hδ : 0 < δ)
+    (hδ1 : δ * Fintype.card (hid ℓ.castSucc) * Fintype.card d < 1) (u₀ : d → ℝ)
+    (hu₀ : u₀ ≠ 0) :
+    ∀ᶠ p in 𝓝 ((star_igo (T := T) (dIn := dIn) (dOut := dOut) ℓ j i a₀ δ, u₀)),
+      Z_igo ℓ j p.1 p.2 ≤ 0 := by
+  set θs := star_igo (T := T) (dIn := dIn) (dOut := dOut) ℓ j i a₀ δ with hθs
+  by_cases hpos : ∃ a, 0 < u₀ a
+  · -- case A: `z(θ*, u₀) < 0`, and `z` is continuous
+    have hneg : Z_igo ℓ j θs u₀ < 0 := by
+      rw [hθs, Z_star_igo]
+      exact neg_neg_of_pos (sum_pos_igo i hi u₀ hδ hδ1 hpos)
+    exact (((continuous_Z_igo ℓ j).tendsto (θs, u₀)).eventually_lt_const hneg).mono
+      fun p hp => hp.le
+  · -- case B: no entry of `u₀` is positive, and some entry is negative
+    push Not at hpos
+    have hS : ∑ b, u₀ b < 0 := by
+      obtain ⟨b, hb⟩ := Function.ne_iff.1 hu₀
+      calc ∑ b, u₀ b < ∑ _b : d, (0 : ℝ) :=
+            Finset.sum_lt_sum (fun b _ => hpos b)
+              ⟨b, Finset.mem_univ b, lt_of_le_of_ne (hpos b) hb⟩
+        _ = 0 := Finset.sum_const_zero
+    -- every term of `z` is eventually `≤ 0`
+    have hterm : ∀ k, ∀ᶠ p in 𝓝 (θs, u₀), relu (gate_igo ℓ.castSucc k p.1 p.2)
+        * val_igo ℓ.castSucc k p.1 p.2 * out_igo ℓ j k p.1 ≤ 0 := by
+      intro k
+      rcases (hpos (i k)).lt_or_eq with hlt | heq
+      · -- the gate tends to `u₀ (i k) < 0`: it is eventually closed
+        have hg := (continuous_gate_igo (T := T) (dIn := dIn) (dOut := dOut) ℓ.castSucc
+          k).tendsto (θs, u₀)
+        have e : gate_igo ℓ.castSucc k (θs, u₀).1 (θs, u₀).2 = u₀ (i k) :=
+          gate_star_igo ℓ j i a₀ δ k u₀
+        rw [e] at hg
+        filter_upwards [hg.eventually_lt_const hlt] with p hp
+        rw [relu, max_eq_right hp.le, zero_mul, zero_mul]
+      · -- the value tends to `-δ ∑_b u₀ b > 0`, and `a_k r` tends to `-1`
+        have hv := (continuous_val_igo (T := T) (dIn := dIn) (dOut := dOut) ℓ.castSucc
+          k).tendsto (θs, u₀)
+        have ev : val_igo ℓ.castSucc k (θs, u₀).1 (θs, u₀).2
+            = (1 + δ) * u₀ (i k) - δ * ∑ b, u₀ b :=
+          val_star_igo ℓ j i a₀ δ k u₀
+        rw [ev] at hv
+        have hvpos : 0 < (1 + δ) * u₀ (i k) - δ * ∑ b, u₀ b := by
+          rw [heq]
+          nlinarith
+        have ho : Tendsto (fun p : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut
+            × (d → ℝ) => out_igo ℓ j k p.1) (𝓝 (θs, u₀)) (𝓝 (-1)) := by
+          rw [← out_star_igo (T := T) (dIn := dIn) (dOut := dOut) ℓ j i a₀ δ k]
+          exact ((continuous_out_igo ℓ j k).comp continuous_fst).tendsto (θs, u₀)
+        filter_upwards [hv.eventually_const_lt hvpos,
+          ho.eventually_lt_const (by norm_num : (-1 : ℝ) < 0)] with p hp1 hp2
+        exact mul_nonpos_of_nonneg_of_nonpos (mul_nonneg (le_max_right _ _) hp1.le) hp2.le
+    filter_upwards [Filter.eventually_all.2 hterm] with p hp
+    exact Finset.sum_nonpos fun k _ => hp k
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- Helper (step 6): `z` is homogeneous, so `z ≤ 0` on the unit sphere gives `z ≤ 0` at every
+row. -/
+private theorem Z_nonpos_of_sphere_igo (ℓ : Fin L) (j : hid ℓ.succ)
+    (θ : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut)
+    (h : ∀ u ∈ Metric.sphere (0 : d → ℝ) 1, Z_igo ℓ j θ u ≤ 0) (u : d → ℝ) :
+    Z_igo ℓ j θ u ≤ 0 := by
+  by_cases hu : u = 0
+  · -- `z(0) = 0² z(0) = 0`
+    subst hu
+    have h0 := Z_smul_igo ℓ j θ (0 : d → ℝ) (le_refl (0 : ℝ))
+    rw [zero_smul] at h0
+    norm_num at h0
+    exact h0.le
+  · -- `u = ‖u‖ (u / ‖u‖)`, and `u / ‖u‖` is on the unit sphere
+    have hn : 0 < ‖u‖ := norm_pos_iff.2 hu
+    have hmem : ‖u‖⁻¹ • u ∈ Metric.sphere (0 : d → ℝ) 1 := by
+      rw [mem_sphere_zero_iff_norm, norm_smul, norm_inv, norm_norm, inv_mul_cancel₀ hn.ne']
+    have he : u = ‖u‖ • (‖u‖⁻¹ • u) := (smul_inv_smul₀ hn.ne' u).symm
+    rw [he, Z_smul_igo ℓ j θ _ (norm_nonneg u)]
+    exact mul_nonpos_of_nonneg_of_nonpos (sq_nonneg _) (h _ hmem)
+
 /-- **Proof of Proposition E.1, ReGLU:** for `d ≥ 1` and at least `d` hidden units in block
 `ℓ.castSucc`, there is a nonempty open set of weights on which the gate of hidden unit `j` of the
 next block `ℓ.succ` is closed at every input. -/
@@ -278,6 +360,31 @@ theorem exists_isOpen_gateInactive_reglu [Nonempty d] (ℓ : Fin L) (j : hid ℓ
     (hq : Fintype.card d ≤ Fintype.card (hid ℓ.castSucc)) :
     ∃ U : Set (Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut),
       IsOpen U ∧ U.Nonempty ∧ ∀ θ ∈ U, GateInactive θ ℓ.succ j := by
-  sorry
+  -- a surjection `i` from the hidden units of block `ℓ.castSucc` onto the indices `d`
+  obtain ⟨e⟩ := Function.Embedding.nonempty_of_card_le hq
+  have hi : Function.Surjective (Function.invFun e) := Function.invFun_surjective e.injective
+  obtain ⟨a₀⟩ := ‹Nonempty d›
+  -- `δ = 1 / (2 q D)`, so that `0 < δ` and `δ q D < 1`
+  have hD : (0 : ℝ) < Fintype.card d := Nat.cast_pos.2 Fintype.card_pos
+  have hqD : (Fintype.card d : ℝ) ≤ Fintype.card (hid ℓ.castSucc) := Nat.cast_le.2 hq
+  have hq0 : (0 : ℝ) < Fintype.card (hid ℓ.castSucc) := hD.trans_le hqD
+  set δ : ℝ := 1 / (2 * Fintype.card (hid ℓ.castSucc) * Fintype.card d) with hδdef
+  have hδ : 0 < δ := by positivity
+  have hδ1 : δ * Fintype.card (hid ℓ.castSucc) * Fintype.card d < 1 := by
+    rw [hδdef]
+    field_simp
+    norm_num
+  -- the weights `θ*`
+  set θs := star_igo (T := T) (dIn := dIn) (dOut := dOut) ℓ j (Function.invFun e) a₀ δ
+  -- the tube lemma: near `θ*`, `z ≤ 0` on the unit sphere, hence at every row
+  have hev : ∀ᶠ θ in 𝓝 θs, ∀ u ∈ Metric.sphere (0 : d → ℝ) 1, Z_igo ℓ j θ u ≤ 0 :=
+    (isCompact_sphere 0 1).eventually_forall_of_forall_eventually fun u hu =>
+      eventually_Z_nonpos_igo ℓ j _ hi a₀ hδ hδ1 u (Metric.ne_of_mem_sphere hu one_ne_zero)
+  have hev' : ∀ᶠ θ in 𝓝 θs, ∀ u, Z_igo ℓ j θ u ≤ 0 :=
+    hev.mono fun θ hθ => Z_nonpos_of_sphere_igo ℓ j θ hθ
+  -- the open set: the interior of the weights at which `z ≤ 0` at every row
+  exact ⟨interior {θ | ∀ u, Z_igo ℓ j θ u ≤ 0}, isOpen_interior,
+    ⟨θs, mem_interior_iff_mem_nhds.2 hev'⟩,
+    fun θ hθ => gateInactive_of_igo ℓ j θ (interior_subset hθ)⟩
 
 end Skips
