@@ -324,7 +324,125 @@ theorem funDimLearned_attention_rmsNorm_eq_residual_add (hε : 0 < ε)
     funDimLearned (Arch.attention sees (rmsNorm ε) H dh) (θ, R)
       = funDim (Arch.attention sees (rmsNorm ε) H dh) 1 θ
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the block is analytic, hence `C¹`; Step 4 is `noSymmetricPart_attention_rmsNorm`
+  have hf : ContDiff ℝ 1 ((Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh).f 0) :=
+    (analyticOnNhd_f_attention (d := d) sees (rmsNorm ε) H dh 0).contDiff
+  exact funDimLearned_eq_funDim_residual_add_of_noSymmetricPart hε rfl hf θ R hE hD hR
+    (noSymmetricPart_attention_rmsNorm hε θ hE hsees hS)
+
+omit [DecidableEq d] in
+/-- Helper (copy of the private `borelSpace_skips_lsk` of `OneBlock/LearnedSkipKinds.lean`): the
+skips `Fin 1 → Matrix d d ℝ` carry the Borel σ-algebra of their norm topology. -/
+private theorem borelSpace_skips_lsa : BorelSpace (Fin 1 → Matrix d d ℝ) :=
+  inferInstanceAs (BorelSpace (Fin 1 → d → d → ℝ))
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper (copy of the private `ae_fst_lsk` of `OneBlock/LearnedSkipKinds.lean`): a condition on
+the weights that holds at almost every `θ` holds at almost every `(θ, v)`. -/
+private theorem ae_fst_lsa {A : Arch T d 1} {V : Type*} [NormedAddCommGroup V]
+    [NormedSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] (hB : BorelSpace V)
+    (μ : Measure (Params A dIn dOut × V)) (hμ : μ.IsAddHaarMeasure) {Q : Params A dIn dOut → Prop}
+    (h : ∀ᵐ θ ∂(Measure.addHaar : Measure (Params A dIn dOut)), Q θ) :
+    ∀ᵐ p ∂μ, Q p.1 := by
+  -- a measurable null set `N` outside which `Q` holds
+  rw [ae_iff] at h
+  obtain ⟨N, hsub, hN, hN0⟩ := exists_measurable_superset_of_null h
+  have hc : ∀ᵐ θ ∂(Measure.addHaar : Measure (Params A dIn dOut)), θ ∈ Nᶜ :=
+    measure_eq_zero_iff_ae_notMem.1 hN0
+  have h1 := (ae_comp_linearMap_mem_iff (LinearMap.fst ℝ (Params A dIn dOut) V) μ
+    Measure.addHaar (LinearMap.fst_surjective) hN.compl).2 hc
+  refine h1.mono fun p hp => ?_
+  by_contra hq
+  exact hp (hsub hq)
+
+omit [Fintype T] [Nonempty T] in
+/-- Helper (copy of the private `rank_eq_of_isUnit_det_rows_lsk`): a matrix with `d` columns has
+rank `d` if some `d` of its rows form an invertible matrix. -/
+private theorem rank_eq_of_isUnit_det_rows_lsa {m : Type*} (M : Matrix m d ℝ) (ρ : d ↪ m)
+    (h : IsUnit (M.submatrix ρ id).det) : M.rank = Fintype.card d :=
+  le_antisymm (Matrix.rank_le_card_width M)
+    ((Matrix.rank_of_isUnit _ ((Matrix.isUnit_iff_isUnit_det _).2 h)).symm.le.trans
+      (Matrix.rank_submatrix_le M ρ id))
+
+omit [Nonempty T] in
+/-- Helper (copy of the private `ae_rank_E_D_lsk`): at generic weights `E` and `D` have rank `d`,
+when `d_in ≥ d` and `d_out ≥ d`. -/
+private theorem ae_rank_E_D_lsa {A : Arch T d 1} (hdIn : Fintype.card d ≤ Fintype.card dIn)
+    (hdOut : Fintype.card d ≤ Fintype.card dOut) :
+    ∀ᵐ θ ∂(Measure.addHaar : Measure (Params A dIn dOut)),
+      θ.E.rank = Fintype.card d ∧ θ.D.rank = Fintype.card d := by
+  -- `d` rows of `E` and `d` columns of `D`, invertible at generic weights
+  obtain ⟨ρ⟩ := Function.Embedding.nonempty_of_card_le hdIn
+  obtain ⟨c⟩ := Function.Embedding.nonempty_of_card_le hdOut
+  filter_upwards [ae_isUnit_det_submatrix Measure.addHaar] with θ hθ
+  exact ⟨rank_eq_of_isUnit_det_rows_lsa θ.E ρ (hθ.2.2.1 ρ),
+    rank_eq_card_of_isUnit_det θ.D c (hθ.2.1 c)⟩
+
+omit [Nonempty T] in
+/-- Helper (copy of the private `ae_isUnit_det_lst` of `OneBlock/LearnedSkipTriangular.lean`): if
+a square matrix that depends linearly on a point of `E` is the identity at one point, it is
+invertible at almost every point. -/
+private theorem ae_isUnit_det_lsa {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [FiniteDimensional ℝ E] [MeasurableSpace E] (hB : BorelSpace E) (μ : Measure E)
+    (hμ : μ.IsAddHaarMeasure) (Φ : E →ₗ[ℝ] Matrix d d ℝ) (x₀ : E) (h₀ : Φ x₀ = 1) :
+    ∀ᵐ x ∂μ, IsUnit (Φ x).det := by
+  -- the entries are linear, so the determinant is analytic
+  have hentry : ∀ i j, AnalyticOnNhd ℝ (fun x => Φ x i j) Set.univ := fun i j =>
+    (LinearMap.toContinuousLinearMap ((Matrix.entryLinearMap ℝ ℝ i j) ∘ₗ Φ)).analyticOnNhd _
+  have hφ : AnalyticOnNhd ℝ (fun x => (Φ x).det) Set.univ := by
+    simp only [Matrix.det_apply']
+    exact Finset.analyticOnNhd_fun_sum _ fun σ _ => analyticOnNhd_const.mul
+      (Finset.analyticOnNhd_fun_prod _ fun i _ => hentry (σ i) i)
+  -- it is `1` at `x₀`, so its zero set is null
+  have hnull := measure_zeroSet_of_analytic μ hφ ⟨x₀, by rw [h₀, Matrix.det_one]; exact one_ne_zero⟩
+  rw [ae_iff]
+  simpa only [isUnit_iff_ne_zero, not_not] using hnull
+
+omit [Nonempty T] [DecidableEq d] in
+/-- Helper: at generic weights `S = ∑_i W_{V,i} W_{O,i} ≠ 0`, when there is a head of width at
+least `1`: its entry `(a, a)` is a polynomial in the weights, equal to `H d_h` at the weights whose
+reads and writes have all entries `1`. -/
+private theorem ae_sumValue_ne_zero_lsa [Nonempty (H 0)] [Nonempty d]
+    (hdh0 : 0 < Fintype.card (dh 0)) :
+    ∀ᵐ θ ∂(Measure.addHaar :
+      Measure (Params (Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh) dIn dOut)),
+      ∑ i, headValueModel θ 0 i ≠ 0 := by
+  obtain ⟨a⟩ := ‹Nonempty d›
+  -- the entry `(a, a)` of `S`, `∑_{i,k} W_read(a, (i, V k)) W_write((i, k), a)`, is analytic
+  have hg : AnalyticOnNhd ℝ
+      (fun θ : Params (Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh) dIn dOut =>
+        (∑ i, headValueModel θ 0 i) a a) Set.univ := by
+    simp only [Matrix.sum_apply, headValueModel, Matrix.mul_apply, Matrix.submatrix_apply, id]
+    exact Finset.analyticOnNhd_fun_sum _ fun i _ => Finset.analyticOnNhd_fun_sum _ fun k _ =>
+      (analyticOnNhd_linear ((Matrix.entryLinearMap ℝ ℝ a (i, Sum.inr (Sum.inr k))).comp
+        (Params.linRead (A := Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh)
+          (dIn := dIn) (dOut := dOut) 0))).mul
+      (analyticOnNhd_linear ((Matrix.entryLinearMap ℝ ℝ (i, k) a).comp
+        (Params.linWrite (A := Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh)
+          (dIn := dIn) (dOut := dOut) 0)))
+  -- it is `H d_h ≠ 0` at the weights with all entries `1`
+  have hne : ∃ θ : Params (Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh) dIn dOut,
+      (∑ i, headValueModel θ 0 i) a a ≠ 0 := by
+    refine ⟨⟨0, fun _ => Matrix.of fun _ _ => 1, fun _ => Matrix.of fun _ _ => 1, 0⟩, ?_⟩
+    simp only [Matrix.sum_apply, headValueModel, Matrix.mul_apply, Matrix.submatrix_apply, id,
+      Matrix.of_apply, mul_one, Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+    exact mul_ne_zero (Nat.cast_ne_zero.2 Fintype.card_ne_zero) (Nat.cast_ne_zero.2 hdh0.ne')
+  filter_upwards [ae_ne_zero_of_analytic Measure.addHaar hg hne] with θ hθ hS
+  exact hθ (by rw [hS]; rfl)
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (copy of the private `half_add_half_lsk`): `d (d + 1)/2 + d (d − 1)/2 = d²`. -/
+private theorem half_add_half_lsa (n : ℕ) : n * (n + 1) / 2 + n * (n - 1) / 2 = n ^ 2 := by
+  have h1 := Nat.two_mul_div_two_of_even (Nat.even_mul_succ_self n)
+  have h2 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self n)
+  have h3 : n * (n + 1) + n * (n - 1) = 2 * n ^ 2 := by
+    cases n with
+    | zero => rfl
+    | succ m => rw [Nat.add_sub_cancel]; ring
+  generalize n * (n + 1) = y at h1 h3 ⊢
+  generalize n * (n - 1) = x at h2 h3 ⊢
+  generalize n ^ 2 = q at h3 ⊢
+  omega
 
 /-- **Theorem B.1 (iii) of the skips paper for one attention block with a full learned skip,
 `ε > 0`:** for `d_in, d_out ≥ d ≥ 2`, at least one head, heads of width `1 ≤ d_h ≤ d` and a token
@@ -343,7 +461,56 @@ theorem ae_funDimLearned_attention_rmsNorm (hε : 0 < ε) [Nonempty (H 0)]
       = Module.finrank ℝ
           (Params (Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh) dIn dOut)
         + Fintype.card d ^ 2 := by
-  sorry
+  classical
+  have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+  have hBs : BorelSpace (Fin 1 → Matrix d d ℝ) := borelSpace_skips_lsa
+  have hBp : BorelSpace (Params (Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh) dIn dOut
+      × (Fin 1 → Matrix d d ℝ)) := Prod.borelSpace
+  -- at almost every `θ`: `E` and `D` of rank `d`, `S ≠ 0`, and the value of the residual network
+  have hθ := ((ae_rank_E_D_lsa (A := Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh)
+    hdIn hdOut).and (ae_sumValue_ne_zero_lsa (hdh0 0))).and
+    (ae_funDim_attention_residual_rmsNorm hε Measure.addHaar hd hdIn hdOut hdh hdh0 t₁ t₂ h12 hs2
+      hs1)
+  -- at almost every `(θ, A)`, moreover the skip `A_0` is invertible
+  have hdet : ∀ᵐ p ∂μ, IsUnit (p.2 0).det :=
+    ae_isUnit_det_lsa hBp μ (by assumption)
+      ((LinearMap.proj (R := ℝ) (φ := fun _ : Fin 1 => Matrix d d ℝ) 0)
+        ∘ₗ (LinearMap.snd ℝ _ (Fin 1 → Matrix d d ℝ))) (0, fun _ => 1) rfl
+  filter_upwards [ae_fst_lsa hBs μ (by assumption) hθ, hdet] with p hp hp'
+  obtain ⟨⟨⟨hE, hD⟩, hS⟩, hres⟩ := hp
+  -- `fd = fd_res + d (d + 1)/2`, `fd_res + d (d − 1)/2 + 2 ∑ H d_h² = P`, and
+  -- `d (d + 1)/2 + d (d − 1)/2 = d²`
+  have h := funDimLearned_attention_rmsNorm_eq_residual_add hε p.1 hE hD ⟨t₂, t₂, hs2⟩ hS p.2 hp'
+  rw [Prod.mk.eta] at h
+  have h1 := half_add_half_lsa (Fintype.card d)
+  have h2 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self (Fintype.card d))
+  generalize Fintype.card d * (Fintype.card d + 1) = y at h h1
+  generalize Fintype.card d * (Fintype.card d - 1) = x at hres h1 h2 ⊢
+  generalize Fintype.card d ^ 2 = q at h1 ⊢
+  omega
+
+omit [Fintype T] [Nonempty T] in
+/-- Helper (copy of the private `ae_eq_residual_add_lsk` of `OneBlock/LearnedSkipKinds.lean`):
+from the value `fd + (d (d − 1) + s) = P + d²` with the learned skip and the value
+`fd₁ + (d (d − 1)/2 + s) = P` of the residual network, the difference is `d (d + 1)/2`. -/
+private theorem ae_eq_residual_add_lsa {A : Arch T d 1}
+    (μ : Measure (Params A dIn dOut × (Fin 1 → Matrix d d ℝ))) (ν : Measure (Params A dIn dOut))
+    {k₁ k₂ s : ℕ}
+    (hval : ∀ᵐ p ∂μ, funDimLearned A p + k₁
+      = Module.finrank ℝ (Params A dIn dOut) + Fintype.card d ^ 2)
+    (hres : ∀ᵐ θ' ∂ν, funDim A 1 θ' + k₂ = Module.finrank ℝ (Params A dIn dOut))
+    (hk₁ : k₁ = Fintype.card d * (Fintype.card d - 1) + s)
+    (hk₂ : k₂ = Fintype.card d * (Fintype.card d - 1) / 2 + s) :
+    ∀ᵐ p ∂μ, ∀ᵐ θ' ∂ν, funDimLearned A p
+      = funDim A 1 θ' + Fintype.card d * (Fintype.card d + 1) / 2 := by
+  have h := half_add_half_lsa (Fintype.card d)
+  have h2 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self (Fintype.card d))
+  filter_upwards [hval] with p hp
+  filter_upwards [hres] with θ' hθ'
+  generalize Fintype.card d * (Fintype.card d + 1) = y at h ⊢
+  generalize Fintype.card d * (Fintype.card d - 1) = x at h h2 hk₁ hk₂
+  generalize Fintype.card d ^ 2 = q at h hp
+  omega
 
 /-- **Theorem 4.6 (ii) of the skips paper, "A learned skip raises it by exactly `d (d + 1)/2` more
 than an identity skip", for one attention block, `ε > 0`:** at almost every `(θ, A)` and almost
@@ -361,6 +528,8 @@ theorem ae_funDimLearned_attention_rmsNorm_eq_residual_add (hε : 0 < ε) [Nonem
     ∀ᵐ p ∂μ, ∀ᵐ θ' ∂ν, funDimLearned (Arch.attention sees (rmsNorm ε) H dh) p
       = funDim (Arch.attention sees (rmsNorm ε) H dh) 1 θ'
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  exact ae_eq_residual_add_lsa μ ν
+    (ae_funDimLearned_attention_rmsNorm hε μ hd hdIn hdOut hdh hdh0 t₁ t₂ h12 hs2 hs1)
+    (ae_funDim_attention_residual_rmsNorm hε ν hd hdIn hdOut hdh hdh0 t₁ t₂ h12 hs2 hs1) rfl rfl
 
 end Skips
