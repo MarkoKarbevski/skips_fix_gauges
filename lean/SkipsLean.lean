@@ -132,3 +132,6 @@ import SkipsLean.Dimension.GenericRankOn
 import SkipsLean.Generic.ConnectedCompl
 import SkipsLean.Depth.ComplexSuffixStep
 import SkipsLean.Depth.TanhPathBlock
+import SkipsLean.Depth.HiddenZero
+import SkipsLean.Depth.DomainZero
+import SkipsLean.Depth.DomainZeroConnected
