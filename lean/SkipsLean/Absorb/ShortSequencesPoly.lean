@@ -49,13 +49,68 @@ theorem exists_polynomial_short (n L L' : ℕ) (hn : n ≤ L ∨ (n = L + 1 ∧ 
       ∀ t : Fin n, Q.eval (((t : ℕ) + 1 : ℝ)⁻¹) = γ * (((t : ℕ) + 1 : ℝ)⁻¹) ^ (L' + 1) := by
   sorry
 
+/-- Helper: `(1 − z/r)(−r) = z − r` for `r ≠ 0`. -/
+private theorem factor_eq_ssp {r : ℂ} (hr0 : r ≠ 0) :
+    (1 + C (-r⁻¹) * X) * C (-r) = X - C r := by
+  have h : C r⁻¹ * C r = (1 : ℂ[X]) := by rw [← C_mul, inv_mul_cancel₀ hr0, C_1]
+  simp only [C_neg]
+  linear_combination X * h
+
+/-- Helper: over `ℂ`, a polynomial of degree at most `L` with the value `1` at `0` is a product
+of `L` factors `1 + c z`, by induction on `L`, splitting off one root `r ≠ 0` at a time. -/
+private theorem exists_factors_ssp (L : ℕ) :
+    ∀ R : ℂ[X], R.natDegree ≤ L → R.eval 0 = 1 →
+      ∃ c : Fin L → ℂ, R = ∏ ℓ, (1 + C (c ℓ) * X) := by
+  induction L with
+  | zero =>
+    intro R hR h0
+    refine ⟨Fin.elim0, ?_⟩
+    rw [Finset.univ_eq_empty, Finset.prod_empty, eq_C_of_natDegree_le_zero hR,
+      coeff_zero_eq_eval_zero, h0, C_1]
+  | succ L ih =>
+    intro R hR h0
+    by_cases hd : R.natDegree = 0
+    · -- `R = 1`: all factors `1 + 0 z`
+      refine ⟨fun _ => 0, ?_⟩
+      simp only [C_0, zero_mul, add_zero, Finset.prod_const_one]
+      rw [eq_C_of_natDegree_le_zero hd.le, coeff_zero_eq_eval_zero, h0, C_1]
+    -- a root `r` of `R`, `r ≠ 0` since `R(0) = 1`
+    have hpos : 0 < R.degree := natDegree_pos_iff_degree_pos.1 (Nat.pos_of_ne_zero hd)
+    obtain ⟨r, hr⟩ := Complex.exists_root hpos
+    have hr0 : r ≠ 0 := by
+      rintro rfl
+      rw [IsRoot.def, h0] at hr
+      exact one_ne_zero hr
+    -- `R = (z − r) R₁` with `deg R₁ ≤ L`
+    obtain ⟨R₁, hmul⟩ : ∃ R₁, (X - C r) * R₁ = R := ⟨_, mul_divByMonic_eq_iff_isRoot.2 hr⟩
+    have hR₁0 : R₁ ≠ 0 := by
+      rintro rfl
+      rw [mul_zero] at hmul
+      rw [← hmul, eval_zero] at h0
+      exact zero_ne_one h0
+    have hdeg1 : R₁.natDegree ≤ L := by
+      have h := natDegree_mul (X_sub_C_ne_zero r) hR₁0
+      rw [hmul, natDegree_X_sub_C] at h
+      omega
+    have h01 : (-r) * R₁.eval 0 = 1 := by
+      rw [← h0, ← hmul, eval_mul, eval_sub, eval_X, eval_C, zero_sub]
+    -- `R₂ = −r R₁` has `R₂(0) = 1`: induction
+    obtain ⟨c, hc⟩ := ih (C (-r) * R₁) ((natDegree_C_mul_le _ _).trans hdeg1)
+      (by rw [eval_mul, eval_C, h01])
+    refine ⟨Fin.cons (-r⁻¹) c, ?_⟩
+    rw [Fin.prod_univ_succ, Fin.cons_zero]
+    simp only [Fin.cons_succ]
+    rw [← hc, ← hmul, ← mul_assoc, factor_eq_ssp hr0]
+
 /-- **Proof of Theorem 4.2 (iii), the factors of `Q`:** over the complex numbers, a real
 polynomial of degree at most `L` with the value `1` at `0` is a product of `L` factors
 `1 + c z`. -/
 theorem exists_complex_factors (L : ℕ) (Q : ℝ[X]) (hdeg : Q.natDegree ≤ L)
     (h0 : Q.eval 0 = 1) :
     ∃ c : Fin L → ℂ, Q.map (algebraMap ℝ ℂ) = ∏ ℓ, (1 + C (c ℓ) * X) := by
-  sorry
+  -- the complexification of `Q` has degree at most `L` and the value `1` at `0`
+  refine exists_factors_ssp L _ (natDegree_map_le.trans hdeg) ?_
+  rw [eval_map, eval₂_at_zero, coeff_zero_eq_eval_zero, h0, map_one]
 
 /-- Helper: under the causal mask row `t` of `U` is uniform on the `t + 1` tokens `s ≤ t`. -/
 private theorem attnWeights_causal_ssp {n : ℕ} (t s : Fin n) :
