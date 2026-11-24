@@ -219,3 +219,8 @@ import SkipsLean
 #print axioms Skips.claimRMS_of_tanhDepthGeneric
 #print axioms Skips.funDim_tanh_skipless_rmsNorm
 #print axioms Skips.ae_funDim_tanh_skipless_rmsNorm
+-- Absorb paper: Proposition 5.1 (skipless networks as limits of residual networks)
+#print axioms Skips.exists_bound_eval_limitScale
+#print axioms Skips.tendstoUniformlyOn_eval_limitScale
+#print axioms Skips.exists_bound_eval_writeScale
+#print axioms Skips.tendstoUniformlyOn_eval_writeScale
