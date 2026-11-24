@@ -256,6 +256,7 @@ private theorem ae_unitsGeneralPosition_srw (hRW : ∀ R₀ W₀, ∃ y, R y = R
 
 end Generic
 
+omit [Fintype T] [Nonempty T] in
 /-- **The conditions "for generic parameters" of the proof of Theorem B.1 (iv), "The skipless
 network: equality":** for one MLP block with at least `d ≥ 2` hidden units, at almost every
 parameter the hidden units are in general position. -/
