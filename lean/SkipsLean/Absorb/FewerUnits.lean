@@ -24,6 +24,30 @@ open scoped Matrix.Norms.Elementwise
 
 variable {d m : Type*} [Fintype d] [DecidableEq d] [Fintype m] [DecidableEq m]
 
+/-- ReLU satisfies `σ(z) + σ(-z) = |z|`: the even part of ReLU is `|z|/2`. (A copy of the private
+helper `relu_add_relu_neg` of `SameWidth.lean`.) -/
+private theorem relu_add_relu_neg' (z : ℝ) : relu z + relu (-z) = |z| := by
+  simp only [relu]
+  rcases le_total z 0 with h | h
+  · rw [max_eq_right h, max_eq_left (neg_nonneg.2 h), abs_of_nonpos h]; ring
+  · rw [max_eq_left h, max_eq_right (neg_nonpos.2 h), abs_of_nonneg h]; ring
+
+/-- **Fewer conditions than unknowns.** If there are fewer vectors `u k` than coordinates, some row
+`x ≠ 0` has `x ⬝ᵥ u k = 0` for every `k`: the `card n` rows `a ↦ (u k a)_k` of `ℝ^ι` are linearly
+dependent. -/
+theorem exists_ne_zero_forall_dotProduct_eq_zero {n ι : Type*} [Fintype n] [Fintype ι]
+    (u : ι → n → ℝ) (h : Fintype.card ι < Fintype.card n) :
+    ∃ x : n → ℝ, x ≠ 0 ∧ ∀ k, x ⬝ᵥ u k = 0 := by
+  have hli : ¬ LinearIndependent ℝ (fun a : n => fun k : ι => u k a) := fun hli => by
+    have h1 := hli.fintype_card_le_finrank
+    rw [Module.finrank_fintype_fun_eq_card] at h1
+    omega
+  -- a vanishing combination `∑ₐ g_a (u k a)_k = 0` with `g ≠ 0`; take `x = g`
+  obtain ⟨g, hg, a, ha⟩ := Fintype.not_linearIndependent_iff.1 hli
+  refine ⟨g, fun h0 => ha (congrFun h0 a), fun k => ?_⟩
+  have h1 := congrFun hg k
+  simpa only [dotProduct, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, Pi.zero_apply] using h1
+
 /-- **Proposition A.11 (ii) for ReLU, under the conditions of its proof.** Let the block be
 nondegenerate and let `M + W_read[:,S] W_write[S,:]` be invertible for every set `S` of hidden
 units. Then no ReLU block with fewer than `m + d` hidden units computes `x M + B(x)`. -/
@@ -33,7 +57,153 @@ theorem exists_ne_of_relu_card_lt (hd : 2 ≤ Fintype.card d) (Wr : Matrix d m �
     {m' : Type*} [Fintype m'] (hm' : Fintype.card m' < Fintype.card m + Fintype.card d)
     (Wr' : Matrix d m' ℝ) (Ww' : Matrix m' d ℝ) :
     ∃ x : d → ℝ, x ᵥ* M + vanillaBlock relu Wr Ww x ≠ vanillaBlock relu Wr' Ww' x := by
-  sorry
+  -- Route (a shortcut of the paper's count of mixed classes): by (★) every unit `i` has a unit
+  -- `f i` of the new block that reads `ρ_i w_i`, `ρ_i ≠ 0`, and `f` is injective. The other units,
+  -- fewer than `d`, are invisible to some row `x ≠ 0`. For that `x` no unit `i` with `x w_i ≠ 0`
+  -- has a second unit on its hyperplane, so `ŵ_i = |ρ_i| ŵ'_{f i}`, and the odd part at `x` gives
+  -- `x (M + W_read[:,S] W_write[S,:]) = 0` with `S = {i | ρ_i < 0}`: the matrix is singular.
+  classical
+  by_contra hcon
+  push Not at hcon
+  -- the equation at `x` and at `-x`, at the output coordinate `o`
+  have hpre : ∀ (x : d → ℝ) (o : d), (x ᵥ* M) o + ∑ k, relu (x ⬝ᵥ Wrᵀ k) * Ww k o
+      = ∑ j, relu (x ⬝ᵥ Wr'ᵀ j) * Ww' j o := fun x o => congrFun (hcon x) o
+  have hpm : ∀ (x : d → ℝ) (o : d), -(x ᵥ* M) o + ∑ k, relu (-(x ⬝ᵥ Wrᵀ k)) * Ww k o
+      = ∑ j, relu (-(x ⬝ᵥ Wr'ᵀ j)) * Ww' j o := by
+    intro x o
+    have h2 := hpre (-x) o
+    simp only [Matrix.neg_vecMul, Pi.neg_apply, neg_dotProduct] at h2
+    exact h2
+  -- the even part: `|x W_read| W_write = |x W_read'| W_write'`
+  have hEven : ∀ x : d → ℝ,
+      (fun k => |(x ᵥ* Wr) k|) ᵥ* Ww = (fun j => |(x ᵥ* Wr') j|) ᵥ* Ww' := by
+    intro x
+    funext o
+    show ∑ k, |x ⬝ᵥ Wrᵀ k| * Ww k o = ∑ j, |x ⬝ᵥ Wr'ᵀ j| * Ww' j o
+    simp only [← relu_add_relu_neg', add_mul, Finset.sum_add_distrib]
+    linarith [hpre x o, hpm x o]
+  -- the odd part: `x W_read W_write + 2 x M = x W_read' W_write'`
+  have hOdd : ∀ (x : d → ℝ) (o : d), 2 * (x ᵥ* M) o + ∑ k, (x ⬝ᵥ Wrᵀ k) * Ww k o
+      = ∑ j, (x ⬝ᵥ Wr'ᵀ j) * Ww' j o := by
+    intro x o
+    have e1 : ∑ k, (x ⬝ᵥ Wrᵀ k) * Ww k o
+        = ∑ k, relu (x ⬝ᵥ Wrᵀ k) * Ww k o - ∑ k, relu (-(x ⬝ᵥ Wrᵀ k)) * Ww k o := by
+      rw [← Finset.sum_sub_distrib]
+      exact Finset.sum_congr rfl fun k _ => by rw [← sub_mul, relu_sub_relu_neg]
+    have e2 : ∑ j, (x ⬝ᵥ Wr'ᵀ j) * Ww' j o
+        = ∑ j, relu (x ⬝ᵥ Wr'ᵀ j) * Ww' j o - ∑ j, relu (-(x ⬝ᵥ Wr'ᵀ j)) * Ww' j o := by
+      rw [← Finset.sum_sub_distrib]
+      exact Finset.sum_congr rfl fun j _ => by rw [← sub_mul, relu_sub_relu_neg]
+    linarith [hpre x o, hpm x o]
+  -- (★) at unit `i`, with `J` the units `j` whose `w'_j` is a multiple `r_j w_i` (zero included)
+  have hJr : ∀ i, ∃ (J : Finset m') (r : m' → ℝ), (∀ j ∈ J, Wr'ᵀ j = r j • Wrᵀ i) ∧
+      (∀ j ∉ J, ∀ t : ℝ, Wr'ᵀ j ≠ t • Wrᵀ i) := by
+    intro i
+    have hr : ∀ j, ∃ t : ℝ, (∃ t' : ℝ, Wr'ᵀ j = t' • Wrᵀ i) → Wr'ᵀ j = t • Wrᵀ i := fun j => by
+      by_cases hj : ∃ t' : ℝ, Wr'ᵀ j = t' • Wrᵀ i
+      · obtain ⟨t', ht'⟩ := hj
+        exact ⟨t', fun _ => ht'⟩
+      · exact ⟨0, fun h' => absurd h' hj⟩
+    choose r hr using hr
+    exact ⟨Finset.univ.filter (fun j => ∃ t' : ℝ, Wr'ᵀ j = t' • Wrᵀ i), r,
+      fun j hj => hr j (Finset.mem_filter.1 hj).2,
+      fun j hj t ht => hj (Finset.mem_filter.2 ⟨Finset.mem_univ _, t, ht⟩)⟩
+  have hstar : ∀ i (J : Finset m') (r : m' → ℝ), (∀ j ∈ J, Wr'ᵀ j = r j • Wrᵀ i) →
+      (∀ j ∉ J, ∀ t : ℝ, Wr'ᵀ j ≠ t • Wrᵀ i) → Ww i = ∑ j ∈ J, |r j| • Ww' j :=
+    fun i J r hJ hJc => write_eq_sum_of_abs_eq Wr Ww Wr' Ww' hEven i (hnd.col_ne_zero i)
+      (fun k hk t => hnd.col_not_collinear k i hk t) J r hJ hJc
+  -- since `ŵ_i ≠ 0`, some unit `f i` reads a nonzero multiple `ρ_i w_i` of `w_i`
+  have hex : ∀ i, ∃ j, ∃ ρ : ℝ, ρ ≠ 0 ∧ Wr'ᵀ j = ρ • Wrᵀ i := by
+    intro i
+    obtain ⟨J, r, hJ, hJc⟩ := hJr i
+    have hne : ∑ j ∈ J, |r j| • Ww' j ≠ 0 := hstar i J r hJ hJc ▸ hnd.row_ne_zero i
+    obtain ⟨j, hj, hj0⟩ := Finset.exists_ne_zero_of_sum_ne_zero hne
+    exact ⟨j, r j, fun h0 => hj0 (by rw [h0, abs_zero, zero_smul]), hJ j hj⟩
+  choose f ρ hρ hf using hex
+  -- two columns of the read that are collinear are the same column
+  have hsame : ∀ a b (r₁ r₂ : ℝ), r₁ ≠ 0 → r₁ • Wrᵀ a = r₂ • Wrᵀ b → a = b := by
+    intro a b r₁ r₂ h1 h12
+    by_contra hab
+    apply hnd.col_not_collinear a b hab (r₁⁻¹ * r₂)
+    rw [mul_smul, ← h12, smul_smul, inv_mul_cancel₀ h1, one_smul]
+  -- so the units `f i` are distinct
+  have hinj : Function.Injective f := by
+    intro a b hab
+    exact hsame a b (ρ a) (ρ b) (hρ a) (by rw [← hf a, ← hf b, hab])
+  -- the other units `E` of the new block: fewer than `d`, as `m' < m + d`
+  obtain ⟨E, hE⟩ : ∃ E : Finset m', E = (Finset.univ.image f)ᶜ := ⟨_, rfl⟩
+  have hEcard : Fintype.card E < Fintype.card d := by
+    rw [Fintype.card_coe, hE, Finset.card_compl, Finset.card_image_of_injective _ hinj,
+      Finset.card_univ]
+    omega
+  -- a row `x ≠ 0` that none of them sees
+  obtain ⟨x, hx0, hxE⟩ := exists_ne_zero_forall_dotProduct_eq_zero (fun k : E => Wr'ᵀ k.1) hEcard
+  have hxE' : ∀ j, j ∉ Finset.univ.image f → x ⬝ᵥ Wr'ᵀ j = 0 := fun j hj =>
+    hxE ⟨j, by rw [hE, Finset.mem_compl]; exact hj⟩
+  -- if `x w_i ≠ 0`, no other unit reads a nonzero multiple of `w_i`, so `ŵ_i = |ρ_i| ŵ'_{f i}`
+  have hw : ∀ i, x ⬝ᵥ Wrᵀ i ≠ 0 → Ww i = |ρ i| • Ww' (f i) := by
+    intro i hxi
+    obtain ⟨J, r, hJ, hJc⟩ := hJr i
+    have hfi : f i ∈ J := by
+      by_contra hn
+      exact hJc (f i) hn (ρ i) (hf i)
+    have hr : r (f i) = ρ i :=
+      smul_left_injective ℝ (hnd.col_ne_zero i) ((hJ (f i) hfi).symm.trans (hf i))
+    rw [hstar i J r hJ hJc, Finset.sum_eq_single_of_mem (f i) hfi, hr]
+    intro j hj hne
+    have hr0 : r j = 0 := by
+      by_contra h0
+      by_cases hjf : j ∈ Finset.univ.image f
+      · -- `j = f i'` with `ρ_{i'} w_{i'} = r_j w_i`, so `i' = i`
+        obtain ⟨i', -, rfl⟩ := Finset.mem_image.1 hjf
+        exact hne (congrArg f
+          (hsame i' i (ρ i') (r (f i')) (hρ i') ((hf i').symm.trans (hJ _ hj))))
+      · -- `x w'_j = r_j (x w_i) ≠ 0`, but `x` does not see `j`
+        have h1 := hxE' j hjf
+        rw [hJ j hj, dotProduct_smul, smul_eq_mul] at h1
+        exact mul_ne_zero h0 hxi h1
+    rw [hr0, abs_zero, zero_smul]
+  -- `S`: the units whose read changes sign. Then `x (M + W_read[:,S] W_write[S,:]) = 0`
+  obtain ⟨S, hS⟩ : ∃ S : Finset m, S = Finset.univ.filter (fun i => ρ i < 0) := ⟨_, rfl⟩
+  have hmemS : ∀ i, i ∈ S ↔ ρ i < 0 := fun i => by
+    rw [hS, Finset.mem_filter]
+    exact and_iff_right (Finset.mem_univ i)
+  have hker : x ᵥ* (M + subProd S Wr Ww) = 0 := by
+    funext o
+    have hO := hOdd x o
+    -- reindex the new units by `f`; the others do not see `x`
+    have hre : ∑ j, (x ⬝ᵥ Wr'ᵀ j) * Ww' j o = ∑ i, (x ⬝ᵥ Wr'ᵀ (f i)) * Ww' (f i) o := by
+      rw [← Finset.sum_subset (Finset.subset_univ (Finset.univ.image f)),
+        Finset.sum_image (fun a _ b _ hab => hinj hab)]
+      intro j _ hj
+      rw [hxE' j hj, zero_mul]
+    -- unit `f i` contributes `±` the term of unit `i`, with `-` exactly for `i ∈ S`
+    have hterm : ∀ i, (x ⬝ᵥ Wr'ᵀ (f i)) * Ww' (f i) o - (x ⬝ᵥ Wrᵀ i) * Ww i o
+        = -2 * ((x ⬝ᵥ Wrᵀ i) * (if i ∈ S then 1 else 0) * Ww i o) := by
+      intro i
+      rw [hf i, dotProduct_smul, smul_eq_mul]
+      by_cases hxi : x ⬝ᵥ Wrᵀ i = 0
+      · rw [hxi]; ring
+      · have e2 : Ww i o = |ρ i| * Ww' (f i) o := congrFun (hw i hxi) o
+        rw [e2]
+        rcases lt_or_gt_of_ne (hρ i) with hneg | hpos
+        · simp only [abs_of_neg hneg, (hmemS i).2 hneg, ↓reduceIte]; ring
+        · simp only [abs_of_pos hpos, (hmemS i).not.2 (not_lt.2 hpos.le), ↓reduceIte]; ring
+    have hsum : ∑ i, (x ⬝ᵥ Wr'ᵀ (f i)) * Ww' (f i) o - ∑ i, (x ⬝ᵥ Wrᵀ i) * Ww i o
+        = -2 * ∑ i, (x ⬝ᵥ Wrᵀ i) * (if i ∈ S then 1 else 0) * Ww i o := by
+      rw [← Finset.sum_sub_distrib, Finset.mul_sum]
+      exact Finset.sum_congr rfl fun i _ => hterm i
+    have hsp : (x ᵥ* subProd S Wr Ww) o
+        = ∑ i, (x ⬝ᵥ Wrᵀ i) * (if i ∈ S then 1 else 0) * Ww i o := by
+      rw [subProd, ← Matrix.vecMul_vecMul, ← Matrix.vecMul_vecMul]
+      show ∑ i, ((x ᵥ* Wr) ᵥ* Matrix.diagonal (fun j => if j ∈ S then (1 : ℝ) else 0)) i
+        * Ww i o = _
+      simp only [Matrix.vecMul_diagonal]
+      rfl
+    rw [Matrix.vecMul_add, Pi.add_apply, hsp, Pi.zero_apply]
+    linarith
+  -- a nonzero row in the left kernel: the determinant vanishes, against `hdet S`
+  exact (hdet S).ne_zero (Matrix.exists_vecMul_eq_zero_iff.1 ⟨x, hx0, hker⟩)
 
 /-- **Proposition A.11 (ii) for GELU, under the same conditions** (from the case of ReLU by the
 reduction along rays, `relu_absorb_of_gelu_absorb`). -/
