@@ -35,6 +35,7 @@ open scoped Matrix.Norms.Elementwise
 variable {T d dIn dOut : Type*} {L : ℕ} [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn]
   [Fintype dOut] {hid : Fin L → Type} [∀ ℓ, Fintype (hid ℓ)] {σ : ℝ → ℝ}
 
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
 /-- **"`h_{ℓ−1}` does not depend on the weights of block `ℓ`":** the hidden state `h_j` depends only
 on `E` and on the reads and writes of the blocks before it. -/
 theorem hidden_congr (A : Arch T d L) (S : Fin L → Matrix d d ℝ) (θ θ' : Params A dIn dOut)
@@ -129,6 +130,7 @@ private theorem analyticAt_rmsNorm_zero_comp_hz {E : Type*} [NormedAddCommGroup 
     (h0 : ∀ t, f y t ≠ 0) : AnalyticAt ℝ (fun y => rmsNorm 0 (f y)) y :=
   (analyticAt_rmsNorm_zero (f y) h0).comp hf
 
+omit [DecidableEq d] in
 /-- **The hidden states are real-analytic in the weights where the earlier ones do not vanish:**
 for a real-analytic `σ`, if no row of `h_i`, `i < j`, vanishes at `θ`, then `θ' ↦ h_j` is
 real-analytic at `θ`. -/
@@ -154,6 +156,7 @@ theorem analyticAt_hidden_rmsNorm_zero (hσa : AnalyticOnNhd ℝ σ Set.univ)
       (analyticAt_matMul_hz (analyticAt_map_hz hσa
         (analyticAt_matMul_hz hN (analyticAt_read_hz θ ℓ))) (analyticAt_write_hz θ ℓ))
 
+omit [DecidableEq d] in
 /-- What block `ℓ` reads, `N(h_ℓ) W_read`, is real-analytic in the weights at a parameter at which
 no row of `h_0, …, h_ℓ` vanishes. -/
 theorem analyticAt_preactivation_rmsNorm_zero (hσa : AnalyticOnNhd ℝ σ Set.univ)
@@ -169,6 +172,7 @@ theorem analyticAt_preactivation_rmsNorm_zero (hσa : AnalyticOnNhd ℝ σ Set.u
   have hN := analyticAt_rmsNorm_zero_comp_hz hh (h ℓ.castSucc le_rfl)
   exact analyticAt_matMul_hz hN (analyticAt_read_hz θ ℓ)
 
+omit [DecidableEq d] in
 /-- **"the outputs `F_X` on the batch are real-analytic on `O_X`", one input:** the output at `x` is
 real-analytic in the weights at a parameter at which no row of a hidden state of `x` vanishes. -/
 theorem analyticAt_eval_rmsNorm_zero (hσa : AnalyticOnNhd ℝ σ Set.univ)
@@ -234,6 +238,7 @@ private theorem fderiv_apply_eq_of_line_hz {E F : Type*} [NormedAddCommGroup E] 
     exact hasDerivAt_line_hz a y
   exact h1.unique h2
 
+omit [DecidableEq d] in
 /-- **"because the derivative with respect to `W_read^ℓ` is onto":** at a parameter at which no row
 of `h_0, …, h_ℓ` vanishes, the derivative in the weights of row `t` of `N(h_ℓ) W_read` is onto. -/
 theorem surjective_fderiv_preactivation (hσa : AnalyticOnNhd ℝ σ Set.univ)
@@ -280,6 +285,7 @@ theorem surjective_fderiv_preactivation (hσa : AnalyticOnNhd ℝ σ Set.univ)
   rw [hc, Params.add_read, Params.smul_read, hηr', Matrix.mul_add, Matrix.mul_smul, hrow,
     Matrix.mul_apply_eq_vecMul _ δW, hδW]
 
+omit [DecidableEq d] in
 /-- **"Where `w̃_ℓ ≠ 0`, the derivative of `h_ℓ` with respect to `W_write^ℓ` is onto":** let `σ`
 vanish only at `0`. At a parameter at which no row of `h_0, …, h_ℓ` vanishes and row `t` of
 `N(h_ℓ) W_read` is not zero, the derivative in the weights of row `t` of `h_{ℓ+1}` is onto. -/

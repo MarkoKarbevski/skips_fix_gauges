@@ -192,6 +192,7 @@ private theorem deriv_block_rz
   rw [hrow t]
   rfl
 
+omit [DecidableEq d] in
 /-- **"So there are parameters `θ*` that are regular and whose blocks all satisfy (S1) to (S3) for
 tanh"** (Appendix D.6): for `d_in, d_out ≥ d ≥ 2` and at least `d` hidden units in every block,
 there is a parameter that is regular in the sense of the case (0) and whose every block `k`
