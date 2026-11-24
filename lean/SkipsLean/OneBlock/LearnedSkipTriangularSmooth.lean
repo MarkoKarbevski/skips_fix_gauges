@@ -55,7 +55,14 @@ theorem funDimLearnedTri_eq_funDim_residual_add_of_noSymmetricPart {A : Arch T d
     (hX : NoSymmetricPart A ε θ Set.univ) :
     funDimLearnedTri A (θ, R)
       = funDim A 1 θ + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the block is differentiable (`Fin 1` has the one block `0`)
+  have hf' : ∀ ℓ, Differentiable ℝ (A.f ℓ) := fun ℓ => by
+    obtain rfl : ℓ = 0 := Subsingleton.elim ℓ 0
+    exact hf.differentiable one_ne_zero
+  -- at the invertible triangular skip the triangular family has the value of the full family,
+  -- and the full family has the residual value plus `d (d + 1)/2`
+  rw [funDimLearnedTri_eq_funDimLearned hε hA hf' θ R hR]
+  exact funDimLearned_eq_funDim_residual_add_of_noSymmetricPart hε hA hf θ _ hE hD hR hX
 
 /-- **Theorem B.1 (iii) for an attention block with an upper triangular learned skip, at one
 parameter (`ε > 0`):** if `E` and `D` have rank `d`, some token sees a token,
@@ -69,7 +76,11 @@ theorem funDimLearnedTri_attention_rmsNorm_eq_residual_add (hε : 0 < ε)
     funDimLearnedTri (Arch.attention sees (rmsNorm ε) H dh) (θ, R)
       = funDim (Arch.attention sees (rmsNorm ε) H dh) 1 θ
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the attention block is analytic, hence `C¹`; Step 4 is `noSymmetricPart_attention_rmsNorm`
+  have hf : ContDiff ℝ 1 ((Arch.attention (T := T) (d := d) sees (rmsNorm ε) H dh).f 0) :=
+    (analyticOnNhd_f_attention (d := d) sees (rmsNorm ε) H dh 0).contDiff
+  exact funDimLearnedTri_eq_funDim_residual_add_of_noSymmetricPart hε rfl hf θ R hE hD hR
+    (noSymmetricPart_attention_rmsNorm hε θ hE hsees hS)
 
 /-- **Theorem B.1 (iii) of the skips paper for one attention block with an upper triangular
 learned skip, `ε > 0`:** for `d_in, d_out ≥ d ≥ 2`, at least one head, heads of width
