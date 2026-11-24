@@ -248,3 +248,9 @@ import SkipsLean.OneBlock.LearnedSkipZero
 import SkipsLean.OneBlock.LearnedSkipBound
 import SkipsLean.OneBlock.LearnedSkipKinds
 import SkipsLean.OneBlock.LearnedSkipTriangular
+import SkipsLean.OneBlock.LearnedSkipOn
+import SkipsLean.OneBlock.LearnedSkipSteps
+import SkipsLean.OneBlock.LearnedSkipGain
+import SkipsLean.OneBlock.LearnedSkipRescale
+import SkipsLean.OneBlock.LearnedSkipReGLU
+import SkipsLean.OneBlock.LearnedSkipAttention
