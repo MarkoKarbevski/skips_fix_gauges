@@ -24,7 +24,7 @@ for a ReLU block (`k = 1`), as one definition, `UnitsGeneralPosition W_read W_wr
    an open dense set", which for `d_model = 2` is a condition on the parameters).
 
 All four hold at almost every parameter of a block of width at least `d ≥ 2`
-(`OneBlock/UnitsGeneralPositionGeneric.lean`). From them, for `E` of rank `d`, `d ≥ 2` and at
+(`OneBlock/SkiplessReluWideRMSZero.lean`). From them, for `E` of rank `d`, `d ≥ 2` and at
 least `d` units: the hypotheses of `relu_unitsParallelAt_of_generic` at the columns of
 `E W_read` and the rows of `W_write`, hence `UnitsParallelAt`; a nonempty open set of outputs of
 the block at rows off the kinks; and the ranks of `W_read` and `W_write`.
