@@ -691,3 +691,9 @@ import SkipsLean
 #print axioms Skips.ae_funDim_gelu_residual_rmsNorm_eq_add
 #print axioms Skips.ae_funDim_swiglu_residual_rmsNorm_eq_add
 #print axioms Skips.ae_funDim_geglu_residual_rmsNorm_eq_add
+#print axioms Skips.measure_inter_preimage_eq_zero_of_surjective_fderiv
+#print axioms Skips.ae_notMem_range_of_rank_lt
+#print axioms Skips.ae_notMem_closure_range_of_rank_lt
+#print axioms Skips.exists_pos_le_norm_sub_of_notMem_closure
+#print axioms Skips.isPointwiseLimit_of_tendsto
+#print axioms Skips.not_isPointwiseLimit_of_exists_pos
