@@ -338,6 +338,222 @@ private theorem finrank_domR_lsn {M : Type*} [AddCommGroup M] [Module ℝ M]
       = Fintype.card d * (Fintype.card d - 1) / 2 + Module.finrank ℝ K := by
   rw [Module.finrank_prod, finrank_antisymmetric]
 
+/-! ### The chain rule at one input -/
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (a copy of the private `hasDerivAt_mul_son` of `OneBlock/ResidualRMSStepsOn.lean`): the
+product rule for matrices depending on one real variable. -/
+private theorem hasDerivAt_mul_lsn {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    {P : ℝ → Matrix m n ℝ} {Q : ℝ → Matrix n p ℝ} {P' P0 : Matrix m n ℝ} {Q' Q0 : Matrix n p ℝ}
+    {τ : ℝ} (hP : HasDerivAt P P' τ) (hQ : HasDerivAt Q Q' τ) (hP0 : P τ = P0) (hQ0 : Q τ = Q0) :
+    HasDerivAt (fun s => P s * Q s) (P' * Q0 + P0 * Q') τ := by
+  subst hP0 hQ0
+  refine hasDerivAt_pi.2 fun i => hasDerivAt_pi.2 fun j => ?_
+  have hPe : ∀ k, HasDerivAt (fun s => P s i k) (P' i k) τ := fun k =>
+    hasDerivAt_pi.1 (hasDerivAt_pi.1 hP i) k
+  have hQe : ∀ k, HasDerivAt (fun s => Q s k j) (Q' k j) τ := fun k =>
+    hasDerivAt_pi.1 (hasDerivAt_pi.1 hQ k) j
+  have h : HasDerivAt (fun s => ∑ k, P s i k * Q s k j)
+      (∑ k, (P' i k * Q τ k j + P τ i k * Q' k j)) τ :=
+    HasDerivAt.fun_sum (u := Finset.univ) (A := fun k s => P s i k * Q s k j)
+      fun k _ => (hPe k).mul (hQe k)
+  refine h.congr_deriv ?_
+  simp only [Matrix.add_apply, Matrix.mul_apply, Finset.sum_add_distrib]
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (a copy of the private `hasDerivAt_affine_son`): `τ ↦ M + τ N` has the derivative `N`
+at `0`. -/
+private theorem hasDerivAt_affine_lsn {m n : Type*} [Fintype m] [Fintype n]
+    (M N : Matrix m n ℝ) : HasDerivAt (fun τ : ℝ => M + τ • N) N 0 := by
+  have h := ((hasDerivAt_id (0 : ℝ)).smul_const N).const_add M
+  rw [one_smul] at h
+  exact h
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: the function of one block under pre-RMSNorm with the skip `S 0`,
+`F(x) = N_ε(x E S + f(N_ε(x E) W_read) W_write) D`. -/
+private theorem eval_eq_lsn {A : Arch T d 1} {ε : ℝ} (hA : A.χ = rmsNorm ε)
+    (S : Fin 1 → Matrix d d ℝ) (θ : Params A dIn dOut) (x : Matrix T dIn ℝ) :
+    eval A S θ x = rmsNorm ε (x * θ.E * S 0
+      + A.f 0 (rmsNorm ε (x * θ.E) * θ.read 0) * θ.write 0) * θ.D := by
+  have h1 : (Fin.last 1 : Fin 2) = (0 : Fin 1).succ := rfl
+  rw [eval, h1, hidden_succ, Fin.castSucc_zero, hidden_zero, hA]
+
+omit [Nonempty T] in
+/-- Helper (Step 5, flatness of `K_B`): if `ψ` has `ψ_E = 0`, `ψ_D = 0` and the block has
+derivative zero along it at `n = N_ε(x E)`, then along the line `θ + τ ψ` the output at `x` has
+derivative zero, for every skip: only the output `f(n W_read) W_write` of the block moves. -/
+private theorem hasDerivAt_eval_blockFlat_lsn {A : Arch T d 1} {ε : ℝ} (hε : 0 < ε)
+    (hA : A.χ = rmsNorm ε) (S : Fin 1 → Matrix d d ℝ) (θ ψ : Params A dIn dOut)
+    (x : Matrix T dIn ℝ) (hfx : DifferentiableAt ℝ (A.f 0) (rmsNorm ε (x * θ.E) * θ.read 0))
+    (hψE : ψ.E = 0) (hψD : ψ.D = 0)
+    (hψ : fderiv ℝ (A.f 0) (rmsNorm ε (x * θ.E) * θ.read 0) (rmsNorm ε (x * θ.E) * ψ.read 0)
+        * θ.write 0 + A.f 0 (rmsNorm ε (x * θ.E) * θ.read 0) * ψ.write 0 = 0) :
+    HasDerivAt (fun τ : ℝ => eval A S (θ + τ • ψ) x) 0 0 := by
+  -- along the line, `E` and `D` stay, and only `W_read`, `W_write` move
+  have e : (fun τ : ℝ => eval A S (θ + τ • ψ) x) = fun τ =>
+      rmsNorm ε (x * θ.E * S 0 + A.f 0 (rmsNorm ε (x * θ.E) * (θ.read 0 + τ • ψ.read 0))
+        * (θ.write 0 + τ • ψ.write 0)) * θ.D := by
+    funext τ
+    rw [eval_eq_lsn hA]
+    simp only [Params.add_E, Params.smul_E, Params.add_read, Params.smul_read, Params.add_write,
+      Params.smul_write, Params.add_D, Params.smul_D, hψE, hψD, smul_zero, add_zero]
+  rw [e]
+  -- `n W_read(τ)`, `f(n W_read(τ))`, `f(n W_read(τ)) W_write(τ)`: derivative zero at `0`
+  have hR := hasDerivAt_mul_lsn (hasDerivAt_const (0 : ℝ) (rmsNorm ε (x * θ.E)))
+    (hasDerivAt_affine_lsn (θ.read 0) (ψ.read 0)) (P0 := rmsNorm ε (x * θ.E))
+    (Q0 := θ.read 0) rfl (by simp)
+  rw [Matrix.zero_mul, zero_add] at hR
+  have hF := hfx.hasFDerivAt.comp_hasDerivAt_of_eq 0 hR (by simp)
+  have hFW := hasDerivAt_mul_lsn hF (hasDerivAt_affine_lsn (θ.write 0) (ψ.write 0))
+    (P0 := A.f 0 (rmsNorm ε (x * θ.E) * θ.read 0)) (Q0 := θ.write 0) (by simp) (by simp)
+  -- `h_1(τ) = x E S + …`, `N_ε(h_1(τ))` and `N_ε(h_1(τ)) D`
+  have hH := (hFW.congr_deriv hψ).const_add (x * θ.E * S 0)
+  have hN := ((differentiable_rmsNorm (T := T) (d := d) hε)
+    (x * θ.E * S 0 + A.f 0 (rmsNorm ε (x * θ.E) * θ.read 0) * θ.write 0)).hasFDerivAt
+    |>.comp_hasDerivAt_of_eq 0 hH (by simp)
+  have hND := hasDerivAt_mul_lsn (hN.congr_deriv (ContinuousLinearMap.map_zero _))
+    (hasDerivAt_const (0 : ℝ) θ.D)
+    (P0 := rmsNorm ε (x * θ.E * S 0 + A.f 0 (rmsNorm ε (x * θ.E) * θ.read 0) * θ.write 0))
+    (Q0 := θ.D) (by simp) rfl
+  exact hND.congr_deriv (by rw [Matrix.zero_mul, Matrix.mul_zero, add_zero])
+
+omit [Nonempty T] in
+/-- Helper: for a differentiable block, the directions of `K_univ` are flat for the residual
+network (Step 5 of part (ii)). -/
+private theorem blockFlat_le_flat_lsn {A : Arch T d 1} {ε : ℝ} (hε : 0 < ε)
+    (hA : A.χ = rmsNorm ε) (hf : Differentiable ℝ (A.f 0)) (θ : Params A dIn dOut) :
+    blockFlat_lsn A ε θ Set.univ ≤ flat A 1 θ := by
+  rintro ψ ⟨hψE, hψD, hψ⟩
+  rw [flat, Submodule.mem_iInf]
+  intro x
+  rw [LinearMap.mem_ker]
+  show fderiv ℝ (fun θ' : Params A dIn dOut => eval A 1 θ' x) θ ψ = 0
+  by_cases hx : DifferentiableAt ℝ (fun θ' : Params A dIn dOut => eval A 1 θ' x) θ
+  · -- the chain rule along the line `θ + τ ψ`
+    exact (hasDerivAt_eval_line 1 θ ψ x hx).unique
+      (hasDerivAt_eval_blockFlat_lsn hε hA 1 θ ψ x (hf _) hψE hψD (hψ x (Set.mem_univ x)))
+  · rw [fderiv_zero_of_not_differentiableAt hx, _root_.zero_apply]
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (a copy of the private `differentiableAt_matMul_son`): the product of two matrix-valued
+maps that are differentiable at a point is differentiable there. -/
+private theorem differentiableAt_matMul_lsn {P : Type*} [NormedAddCommGroup P] [NormedSpace ℝ P]
+    {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    {f : P → Matrix m n ℝ} {g : P → Matrix n p ℝ} {y : P}
+    (hf : DifferentiableAt ℝ f y) (hg : DifferentiableAt ℝ g y) :
+    DifferentiableAt ℝ (fun y => f y * g y) y := by
+  -- matrix multiplication as a bilinear map
+  let B : Matrix m n ℝ →ₗ[ℝ] Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ :=
+    LinearMap.mk₂ ℝ (fun a b => a * b) Matrix.add_mul (fun c a b => Matrix.smul_mul c a b)
+      Matrix.mul_add (fun c a b => Matrix.mul_smul a c b)
+  -- the same map with continuous linear maps (all spaces are finite-dimensional)
+  let B' : Matrix m n ℝ →L[ℝ] Matrix n p ℝ →L[ℝ] Matrix m p ℝ :=
+    LinearMap.toContinuousLinearMap
+      ((LinearMap.toContinuousLinearMap :
+        (Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ) ≃ₗ[ℝ] (Matrix n p ℝ →L[ℝ] Matrix m p ℝ)).toLinearMap ∘ₗ B)
+  have hB : (fun y => f y * g y) = fun y => B' (f y) (g y) := rfl
+  rw [hB]
+  exact (B'.differentiableAt.comp y hf).clm_apply hg
+
+omit [Nonempty T] in
+/-- Helper: at an input `x` at which `f` is differentiable at `N_ε(x E) W_read`, the output of the
+learned skip is a differentiable function of `(θ, R)`. -/
+private theorem differentiableAt_evalSkips_lsn {A : Arch T d 1} {ε : ℝ} (hε : 0 < ε)
+    (hA : A.χ = rmsNorm ε) (θ : Params A dIn dOut) (R : Fin 1 → Matrix d d ℝ)
+    (x : Matrix T dIn ℝ)
+    (hfx : DifferentiableAt ℝ (A.f 0) (rmsNorm ε (x * θ.E) * θ.read 0)) :
+    DifferentiableAt ℝ (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      evalSkips A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) p x) (θ, R) := by
+  have e : (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      evalSkips A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) p x)
+      = fun p => rmsNorm ε (x * p.1.E * p.2 0
+          + A.f 0 (rmsNorm ε (x * p.1.E) * p.1.read 0) * p.1.write 0) * p.1.D :=
+    funext fun p => eval_eq_lsn hA p.2 p.1 x
+  rw [e]
+  -- the weights and the skip are linear, hence differentiable, functions of `(θ, R)`
+  have hE : DifferentiableAt ℝ
+      (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) => p.1.E) (θ, R) :=
+    ((LinearMap.toContinuousLinearMap (Params.linE (A := A) (dIn := dIn) (dOut := dOut))).comp
+      (ContinuousLinearMap.fst ℝ _ (Fin 1 → Matrix d d ℝ))).differentiableAt
+  have hR : DifferentiableAt ℝ
+      (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) => p.1.read 0) (θ, R) :=
+    ((LinearMap.toContinuousLinearMap
+      (Params.linRead (A := A) (dIn := dIn) (dOut := dOut) 0)).comp
+      (ContinuousLinearMap.fst ℝ _ (Fin 1 → Matrix d d ℝ))).differentiableAt
+  have hW : DifferentiableAt ℝ
+      (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) => p.1.write 0) (θ, R) :=
+    ((LinearMap.toContinuousLinearMap
+      (Params.linWrite (A := A) (dIn := dIn) (dOut := dOut) 0)).comp
+      (ContinuousLinearMap.fst ℝ _ (Fin 1 → Matrix d d ℝ))).differentiableAt
+  have hD : DifferentiableAt ℝ
+      (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) => p.1.D) (θ, R) :=
+    ((LinearMap.toContinuousLinearMap (Params.linD (A := A) (dIn := dIn) (dOut := dOut))).comp
+      (ContinuousLinearMap.fst ℝ _ (Fin 1 → Matrix d d ℝ))).differentiableAt
+  have hS : DifferentiableAt ℝ
+      (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) => p.2 0) (θ, R) :=
+    ((ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : Fin 1 => Matrix d d ℝ) 0).comp
+      (ContinuousLinearMap.snd ℝ (Params A dIn dOut) _)).differentiableAt
+  -- `x E`, `N_ε(x E)`, `N_ε(x E) W_read`, `f(…)`
+  have h1 : DifferentiableAt ℝ
+      (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) => x * p.1.E) (θ, R) :=
+    differentiableAt_matMul_lsn (differentiableAt_const x) hE
+  have h2 : DifferentiableAt ℝ
+      (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) => rmsNorm ε (x * p.1.E)) (θ, R) :=
+    DifferentiableAt.comp (f := fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      x * p.1.E) (θ, R) (differentiable_rmsNorm hε _) h1
+  have h3 : DifferentiableAt ℝ (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      rmsNorm ε (x * p.1.E) * p.1.read 0) (θ, R) :=
+    differentiableAt_matMul_lsn h2 hR
+  have h4 : DifferentiableAt ℝ (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      A.f 0 (rmsNorm ε (x * p.1.E) * p.1.read 0)) (θ, R) :=
+    DifferentiableAt.comp (f := fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      rmsNorm ε (x * p.1.E) * p.1.read 0) (θ, R) hfx h3
+  -- `h_1 = x E S + f(…) W_write`, `N_ε(h_1)` and `N_ε(h_1) D`
+  have h5 : DifferentiableAt ℝ (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      x * p.1.E * p.2 0 + A.f 0 (rmsNorm ε (x * p.1.E) * p.1.read 0) * p.1.write 0) (θ, R) :=
+    (differentiableAt_matMul_lsn h1 hS).add (differentiableAt_matMul_lsn h4 hW)
+  have h6 : DifferentiableAt ℝ (fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      rmsNorm ε (x * p.1.E * p.2 0
+        + A.f 0 (rmsNorm ε (x * p.1.E) * p.1.read 0) * p.1.write 0)) (θ, R) :=
+    DifferentiableAt.comp (f := fun p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      x * p.1.E * p.2 0 + A.f 0 (rmsNorm ε (x * p.1.E) * p.1.read 0) * p.1.write 0) (θ, R)
+      (differentiable_rmsNorm hε _) h5
+  exact differentiableAt_matMul_lsn h6 hD
+
+omit [Nonempty T] in
+/-- Helper: for a differentiable block, the directions `(ψ, 0)`, `ψ ∈ K_univ`, are flat for the
+learned skip (the skip does not move, and the output of the block has derivative zero). -/
+private theorem mem_flatSkips_of_blockFlat_lsn {A : Arch T d 1} {ε : ℝ} (hε : 0 < ε)
+    (hA : A.χ = rmsNorm ε) (hf : Differentiable ℝ (A.f 0)) (θ : Params A dIn dOut)
+    (R : Fin 1 → Matrix d d ℝ) {ψ : Params A dIn dOut}
+    (hψ : ψ ∈ blockFlat_lsn A ε θ Set.univ) :
+    (ψ, 0) ∈ flatSkips A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) (θ, R) := by
+  obtain ⟨hψE, hψD, hψ⟩ := hψ
+  refine (Submodule.mem_iInf _).2 fun x => LinearMap.mem_ker.2 ?_
+  show fderiv ℝ (fun p' : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+    evalSkips A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) p' x) (θ, R) (ψ, 0) = 0
+  -- the chain rule along the line `(θ + τ ψ, R)`
+  have hdiff := differentiableAt_evalSkips_lsn hε hA θ R x (hf _)
+  have hline : HasDerivAt (fun τ : ℝ => ((θ, R) : Params A dIn dOut × (Fin 1 → Matrix d d ℝ))
+      + τ • (ψ, (0 : Fin 1 → Matrix d d ℝ))) (ψ, 0) 0 := by
+    have h := ((hasDerivAt_id (0 : ℝ)).smul_const (ψ, (0 : Fin 1 → Matrix d d ℝ))).const_add
+      ((θ, R) : Params A dIn dOut × (Fin 1 → Matrix d d ℝ))
+    rw [one_smul] at h
+    exact h
+  have h1 := hdiff.hasFDerivAt.comp_hasDerivAt_of_eq (0 : ℝ) hline (by rw [zero_smul, add_zero])
+  have e : ((fun p' : Params A dIn dOut × (Fin 1 → Matrix d d ℝ) =>
+      evalSkips A (ContinuousLinearMap.id ℝ (Fin 1 → Matrix d d ℝ)) p' x) ∘
+      fun τ : ℝ => ((θ, R) : Params A dIn dOut × (Fin 1 → Matrix d d ℝ))
+        + τ • (ψ, (0 : Fin 1 → Matrix d d ℝ))) = fun τ => eval A R (θ + τ • ψ) x := by
+    funext τ
+    simp only [Function.comp_apply, evalSkips, Prod.smul_mk, Prod.mk_add_mk, smul_zero,
+      add_zero]
+    rfl
+  rw [e] at h1
+  exact h1.unique (hasDerivAt_eval_blockFlat_lsn hε hA R θ ψ x (hf _) hψE hψD
+    (hψ x (Set.mem_univ x)))
+
 /-- **Theorem 4.6 (ii), "A learned skip raises it by exactly `d (d + 1)/2` more than an identity
 skip", at one parameter, for a continuously differentiable block (`ε > 0`):** if `E` and `D` have
 rank `d`, the skip `A = R 0` is invertible and Step 4 holds at `θ` (`NoSymmetricPart` at all
