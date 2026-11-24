@@ -64,3 +64,5 @@ import SkipsLean.Activations.Analytic
 import SkipsLean.Depth.SuffixGated
 import SkipsLean.Depth.GeluGatedExplicit
 import SkipsLean.Depth.GeluGatedTheorem
+import SkipsLean.Depth.Cones
+import SkipsLean.Depth.StepGated

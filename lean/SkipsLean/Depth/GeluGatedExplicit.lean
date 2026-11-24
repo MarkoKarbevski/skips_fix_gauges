@@ -1,4 +1,4 @@
-import SkipsLean.Depth.SuffixGated
+import SkipsLean.Depth.StepGated
 
 /-!
 # GELU and gated blocks at depth: the claim `(D_0)` at one explicit parameter

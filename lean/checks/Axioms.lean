@@ -470,3 +470,10 @@ import SkipsLean
 #print axioms Skips.analyticOnNhd_gelu
 #print axioms Skips.analyticOnNhd_silu
 #print axioms Skips.analyticOnNhd_f_gated
+-- Depth/SuffixGated.lean
+#print axioms Skips.claimGated_last
+#print axioms Skips.claimGated_last_rmsNorm
+#print axioms Skips.flat_le_cobDir_add_rescaleDir_of_claimGated
+#print axioms Skips.funDim_of_claimGated
+#print axioms Skips.flat_le_cobDir_add_rescaleDir_of_claimGated_rmsNorm
+#print axioms Skips.funDim_of_claimGated_rmsNorm
