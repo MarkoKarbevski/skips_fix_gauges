@@ -62,6 +62,157 @@ theorem one_sub_three_smul_attnWeights_causal_two :
   fin_cases i <;> fin_cases j <;>
     simp [attnWeights_causal_ssq, Matrix.mul_apply, Fin.sum_univ_two] <;> norm_num
 
+/-- The networks of the construction: causal attention, no normalization, two heads of
+dimension one in every block. -/
+private noncomputable abbrev arch_ssq (n m L : ℕ) : Arch (Fin n) (Fin (m + 2)) L :=
+  Arch.attention (T := Fin n) (d := Fin (m + 2)) (L := L) (fun t s => s ≤ t) id
+    (fun _ => Fin 2) (fun _ => Fin 1)
+
+/-- The matrix `α Π + β J` of the complex number `w = α + β i`. -/
+private noncomputable def vmat_ssq (m : ℕ) (w : ℂ) : Matrix (Fin (m + 2)) (Fin (m + 2)) ℝ :=
+  Matrix.of fun p q =>
+    if p = 0 then (if q = 0 then w.re else if q = 1 then -w.im else 0)
+    else if p = 1 then (if q = 0 then w.im else if q = 1 then w.re else 0) else 0
+
+/-- The hidden state that codes the complex column `ζ`: column `0` holds `re ζ`, column `1`
+holds `-im ζ`, the other columns are `0`. -/
+private noncomputable def enc_ssq {n : ℕ} (m : ℕ) (ζ : Fin n → ℂ) :
+    Matrix (Fin n) (Fin (m + 2)) ℝ :=
+  Matrix.of fun t p => if p = 0 then (ζ t).re else if p = 1 then -(ζ t).im else 0
+
+/-- The model coordinate of head `i`. -/
+private def emb_ssq (m : ℕ) (i : Fin 2) : Fin (m + 2) := if i = 0 then 0 else 1
+
+/-- The parameters of the construction: in block `ℓ`, zero queries and keys, and value–output
+products of the two heads that add up to `vmat_ssq m (z ℓ)`; `E = e₀ e₀ᵀ`, row `0` of `D` all
+ones. -/
+private noncomputable def params_ssq (n m a b L : ℕ) (z : Fin L → ℂ) :
+    Params (arch_ssq n m L) (Fin (a + 1)) (Fin (b + 1)) where
+  E := Matrix.of fun i p => if i = 0 ∧ p = 0 then 1 else 0
+  read ℓ := Matrix.of fun p c =>
+    Sum.elim (fun _ => 0) (Sum.elim (fun _ => 0) fun _ => vmat_ssq m (z ℓ) p (emb_ssq m c.1)) c.2
+  write _ := Matrix.of fun c q => if q = emb_ssq m c.1 then 1 else 0
+  D := Matrix.of fun p _ => if p = 0 then 1 else 0
+
+/-- Helper: a sum over the model coordinates of a function that vanishes outside `0, 1`. -/
+private theorem sum_fin_two_ssq (m : ℕ) (f : Fin (m + 2) → ℝ)
+    (hf : ∀ p, p ≠ 0 → p ≠ 1 → f p = 0) : ∑ p, f p = f 0 + f 1 := by
+  rw [Fin.sum_univ_succ, Fin.sum_univ_succ,
+    Finset.sum_eq_zero fun p _ => hf _ (Fin.succ_ne_zero _) (Fin.succ_succ_ne_one p)]
+  simp
+
+/-- Helper: the product `E D` has the entry `1` at `(0, 0)`. -/
+private theorem ED_ssq (n m a b L : ℕ) (z : Fin L → ℂ) :
+    ((params_ssq n m a b L z).E * (params_ssq n m a b L z).D) 0 0 = 1 := by
+  simp [params_ssq, Matrix.mul_apply]
+
+/-- Helper, **a block at zero scores:** block `ℓ` maps `h` to `U h V(z ℓ)`. -/
+private theorem block_ssq (n m a b L : ℕ) (z : Fin L → ℂ) (ℓ : Fin L)
+    (h : Matrix (Fin n) (Fin (m + 2)) ℝ) :
+    (arch_ssq n m L).f ℓ (h * (params_ssq n m a b L z).read ℓ)
+        * (params_ssq n m a b L z).write ℓ
+      = attnWeights (fun t s : Fin n => s ≤ t) 0 * h * vmat_ssq m (z ℓ) := by
+  rw [f_attention_mul]
+  simp only [attentionBlock, attnHeads]
+  -- the queries vanish, so every score matrix is `0`
+  have hQ : ∀ i : Fin 2, ((params_ssq n m a b L z).read ℓ).submatrix id
+      (fun k : Fin 1 => (i, Sum.inl k)) = 0 := by
+    intro i; ext p k; simp [params_ssq]
+  simp only [hQ, Matrix.zero_mul, smul_zero, Matrix.mul_zero]
+  rw [← Matrix.mul_sum]
+  congr 1
+  -- the value–output products of the two heads add up to `V(z ℓ)`
+  ext p q
+  simp [Matrix.sum_apply, Fin.sum_univ_two, Matrix.mul_apply, params_ssq, emb_ssq, vmat_ssq]
+  by_cases hq0 : q = 0
+  · subst hq0; simp
+  · by_cases hq1 : q = 1
+    · subst hq1; simp
+    · simp [hq0, hq1]
+
+/-- Helper, **the rows as complex numbers:** `U h V(w)` codes `w (U ζ)` when `h` codes `ζ`. -/
+private theorem mul_enc_vmat_ssq {n : ℕ} (m : ℕ) (U : Matrix (Fin n) (Fin n) ℝ)
+    (ζ : Fin n → ℂ) (w : ℂ) :
+    U * enc_ssq m ζ * vmat_ssq m w = enc_ssq m (w • (U.map Complex.ofReal *ᵥ ζ)) := by
+  ext t q
+  -- the columns `0` and `1` of `U h` are `re (U ζ)` and `-im (U ζ)`
+  have h0 : (U * enc_ssq m ζ) t 0 = ((U.map Complex.ofReal *ᵥ ζ) t).re := by
+    simp [Matrix.mul_apply, enc_ssq, Matrix.mulVec, dotProduct, Complex.re_sum]
+  have h1 : (U * enc_ssq m ζ) t 1 = -((U.map Complex.ofReal *ᵥ ζ) t).im := by
+    simp [Matrix.mul_apply, enc_ssq, Matrix.mulVec, dotProduct, Complex.im_sum]
+  rw [Matrix.mul_apply, sum_fin_two_ssq m _ fun p hp0 hp1 => by simp [vmat_ssq, hp0, hp1], h0,
+    h1]
+  by_cases hq0 : q = 0
+  · subst hq0; simp [vmat_ssq, enc_ssq]; ring
+  · by_cases hq1 : q = 1
+    · subst hq1; simp [vmat_ssq, enc_ssq]; ring
+    · simp [vmat_ssq, enc_ssq, hq0, hq1]
+
+/-- Helper: the stream and the block add up as complex columns. -/
+private theorem enc_smul_add_ssq {n : ℕ} (m : ℕ) (s : ℝ) (ζ η : Fin n → ℂ) :
+    enc_ssq m ζ * (s • (1 : Matrix (Fin (m + 2)) (Fin (m + 2)) ℝ)) + enc_ssq m η
+      = enc_ssq m ((s : ℂ) • ζ + η) := by
+  ext t p
+  by_cases hp0 : p = 0
+  · subst hp0; simp [enc_ssq]
+  · by_cases hp1 : p = 1
+    · subst hp1; simp [enc_ssq]; ring
+    · simp [enc_ssq, hp0, hp1]
+
+/-- The complex columns coded by the hidden states: `ζ_0 = x`,
+`ζ_{ℓ+1} = s ζ_ℓ + z_ℓ U ζ_ℓ`. -/
+private noncomputable def zeta_ssq {n L : ℕ} (U : Matrix (Fin n) (Fin n) ℝ) (z : Fin L → ℂ)
+    (s : ℝ) (x : Fin n → ℂ) : Fin (L + 1) → Fin n → ℂ :=
+  Fin.induction (motive := fun _ => Fin n → ℂ) x
+    (fun ℓ ζ => (s : ℂ) • ζ + z ℓ • (U.map Complex.ofReal *ᵥ ζ))
+
+/-- Helper: `ζ_0 = x`. -/
+private theorem zeta_zero_ssq {n L : ℕ} (U : Matrix (Fin n) (Fin n) ℝ) (z : Fin L → ℂ)
+    (s : ℝ) (x : Fin n → ℂ) : zeta_ssq U z s x 0 = x := rfl
+
+/-- Helper: `ζ_{ℓ+1} = s ζ_ℓ + z_ℓ U ζ_ℓ`. -/
+private theorem zeta_succ_ssq {n L : ℕ} (U : Matrix (Fin n) (Fin n) ℝ) (z : Fin L → ℂ)
+    (s : ℝ) (x : Fin n → ℂ) (ℓ : Fin L) :
+    zeta_ssq U z s x ℓ.succ
+      = (s : ℂ) • zeta_ssq U z s x ℓ.castSucc
+        + z ℓ • (U.map Complex.ofReal *ᵥ zeta_ssq U z s x ℓ.castSucc) := by
+  simp only [zeta_ssq, Fin.induction_succ]
+
+/-- Helper: the networks have no normalization. -/
+private theorem chi_ssq (n m L : ℕ) (h : Matrix (Fin n) (Fin (m + 2)) ℝ) :
+    (arch_ssq n m L).χ h = h := rfl
+
+/-- Helper, **the hidden states:** with the stream matrices `s I`, the hidden state `h_k` codes
+the complex column `ζ_k`, `ζ_0 = x` the column `0` of the input. -/
+private theorem hidden_ssq (n m a b L : ℕ) (z : Fin L → ℂ) (s : ℝ)
+    (M : Fin L → Matrix (Fin (m + 2)) (Fin (m + 2)) ℝ) (hM : ∀ ℓ, M ℓ = s • 1)
+    (X : Matrix (Fin n) (Fin (a + 1)) ℝ) (k : Fin (L + 1)) :
+    hidden (arch_ssq n m L) M (params_ssq n m a b L z) X k
+      = enc_ssq m (zeta_ssq (attnWeights (fun t s : Fin n => s ≤ t) 0) z s
+          (fun t => (X t 0 : ℂ)) k) := by
+  induction k using Fin.induction with
+  | zero =>
+    -- `h_0 = X E` holds the column `0` of `X` in its column `0`
+    rw [hidden_zero, zeta_zero_ssq]
+    ext t p
+    by_cases hp0 : p = 0
+    · subst hp0; simp [params_ssq, enc_ssq, Matrix.mul_apply]
+    · simp [params_ssq, enc_ssq, Matrix.mul_apply, hp0]
+  | succ ℓ ih =>
+    -- block `ℓ` adds `z_ℓ U ζ_ℓ` to the stream `s ζ_ℓ`
+    rw [hidden_succ, block_ssq, chi_ssq, hM, ih, mul_enc_vmat_ssq, zeta_succ_ssq]
+    exact enc_smul_add_ssq m s _ _
+
+/-- Helper, **the output:** row `0` of `D` is all ones, so the output is `re ζ_L`. -/
+private theorem eval_ssq (n m a b L : ℕ) (z : Fin L → ℂ) (s : ℝ)
+    (M : Fin L → Matrix (Fin (m + 2)) (Fin (m + 2)) ℝ) (hM : ∀ ℓ, M ℓ = s • 1)
+    (X : Matrix (Fin n) (Fin (a + 1)) ℝ) (t : Fin n) (o : Fin (b + 1)) :
+    eval (arch_ssq n m L) M (params_ssq n m a b L z) X t o
+      = (zeta_ssq (attnWeights (fun t s : Fin n => s ≤ t) 0) z s
+          (fun t => (X t 0 : ℂ)) (Fin.last L) t).re := by
+  rw [eval, hidden_ssq n m a b L z s M hM X, chi_ssq]
+  simp [Matrix.mul_apply, params_ssq, enc_ssq]
+
 /-- **Theorem 4.2 (iii), short sequences:** without normalization, with the causal mask on
 `n ≥ 1` tokens, when `n ≤ L`, or `n = L + 1` and `L ≤ L'`: for every model dimension `m + 2`,
 some residual network of `L` attention blocks with `E D ≠ 0` equals a skipless network of
