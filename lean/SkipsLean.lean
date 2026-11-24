@@ -111,3 +111,5 @@ import SkipsLean.Dimension.ParameterCount
 import SkipsLean.Residual.PointwiseLimitUnion
 import SkipsLean.Residual.SkiplessAll
 import SkipsLean.Residual.FewerHiddenUnits
+import SkipsLean.Dimension.UpperBoundRMSNormZero
+import SkipsLean.Depth.SuffixZero
