@@ -286,6 +286,139 @@ theorem smallWritesLimit_eq_zero_mlp_rescale {k : ℕ} (hσ : ∀ z, z ≠ 0 →
     exact eq_neg_of_add_eq_zero_right hM
   exact ⟨-(η.D * R), fun ℓ i => lam ⟨ℓ, i⟩, hE, cancel_left_of_rank_drs θ.E hθ.rank_E hD, hr, hw⟩
 
+/-! ### Helpers: the batch and the space of the flat directions of `J_0` -/
+
+/-- Helper (copy of `limitLin_SW` of `Residual/SmallWrites.lean`): `η ↦ (J_0 η)(x)` is linear in
+`η`. -/
+private noncomputable def limitLin_drs (A : Arch T d L) (θ : Params A dIn dOut)
+    (x : Matrix T dIn ℝ) : Params A dIn dOut →ₗ[ℝ] Matrix T dOut ℝ where
+  toFun η := smallWritesLimit A θ η x
+  map_add' η η' := by
+    simp only [smallWritesLimit, Params.add_E, Params.add_D, Params.add_read, Params.add_write,
+      Matrix.add_mul, Matrix.mul_add, map_add, Finset.sum_add_distrib]
+    abel
+  map_smul' c η := by
+    simp only [smallWritesLimit, Params.smul_E, Params.smul_D, Params.smul_read,
+      Params.smul_write, Matrix.smul_mul, Matrix.mul_smul, map_smul, ← Finset.smul_sum,
+      ← smul_add, RingHom.id_apply]
+
+/-- Helper (copy of `exists_batch_ker_SW` of `Residual/SmallWrites.lean`, kernel stabilisation):
+for a family of linear maps on a finite-dimensional space, finitely many of them have the common
+kernel of all of them. -/
+private theorem exists_batch_ker_drs {ι P F : Type*} [AddCommGroup P] [Module ℝ P]
+    [FiniteDimensional ℝ P] [AddCommGroup F] [Module ℝ F] (Λ : ι → P →ₗ[ℝ] F) :
+    ∃ (n : ℕ) (X : Fin n → ι), ∀ η, (∀ i, Λ (X i) η = 0) → ∀ x, Λ x η = 0 := by
+  -- the common kernel of a batch
+  let K : ∀ n : ℕ, (Fin n → ι) → Submodule ℝ P := fun n X => ⨅ i, LinearMap.ker (Λ (X i))
+  have hmem : ∀ n (X : Fin n → ι) η, η ∈ K n X ↔ ∀ i, Λ (X i) η = 0 := by
+    intro n X η
+    simp only [K, Submodule.mem_iInf, LinearMap.mem_ker]
+  -- a batch whose common kernel has least dimension
+  obtain ⟨n, X, hX⟩ := Nat.sInf_mem (s := {k : ℕ | ∃ (n : ℕ) (X : Fin n → ι),
+      k = Module.finrank ℝ (K n X)}) ⟨_, 0, Fin.elim0, rfl⟩
+  refine ⟨n, X, fun η hη x => ?_⟩
+  -- adding the input `x` can only shrink the kernel, and not its dimension: it stays the same
+  have hle : K (n + 1) (Fin.cons x X) ≤ K n X := by
+    intro ξ hξ
+    rw [hmem] at hξ ⊢
+    intro i
+    simpa only [Fin.cons_succ] using hξ i.succ
+  have heq := Submodule.eq_of_le_of_finrank_le hle (by
+    rw [← hX]
+    exact Nat.sInf_le ⟨n + 1, Fin.cons x X, rfl⟩)
+  have hηK : η ∈ K (n + 1) (Fin.cons x X) := by
+    rw [heq, hmem]
+    exact hη
+  rw [hmem] at hηK
+  simpa only [Fin.cons_zero] using hηK 0
+
+/-- Helper (copy of `smallWritesFlatLin` of `Residual/DepthMlp.lean`): the directions
+`X ↦ (E X, 0, 0, -X D)` of one change of basis at all hidden states, as a linear map. -/
+private def flatConstLin_drs (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
+    Matrix d d ℝ →ₗ[ℝ] Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut where
+  toFun X := ⟨θ.E * X, 0, 0, -(X * θ.D)⟩
+  map_add' X Y := by
+    apply Params.ext'
+    · exact Matrix.mul_add _ _ _
+    · intro ℓ
+      exact (add_zero 0).symm
+    · intro ℓ
+      exact (add_zero 0).symm
+    · show -((X + Y) * θ.D) = -(X * θ.D) + -(Y * θ.D)
+      rw [Matrix.add_mul, neg_add]
+  map_smul' c X := by
+    apply Params.ext'
+    · exact Matrix.mul_smul _ _ _
+    · intro ℓ
+      exact (smul_zero c).symm
+    · intro ℓ
+      exact (smul_zero c).symm
+    · show -((c • X) * θ.D) = c • -(X * θ.D)
+      rw [Matrix.smul_mul, smul_neg]
+
+/-- Helper (copy of `mlpRescaleLin` of `Residual/UpperBoundSymmetries.lean`):
+`α ↦ rescaleDirMlp k θ α` is linear. -/
+private noncomputable def rescaleLin_drs (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
+    (∀ ℓ, hid ℓ → ℝ) →ₗ[ℝ] Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut where
+  toFun := rescaleDirMlp k θ
+  map_add' α β := by
+    apply Params.ext'
+    · simp [rescaleDirMlp]
+    · intro ℓ
+      ext a i
+      simp only [rescaleDirMlp, Pi.add_apply, Params.add_read, Matrix.add_apply, Matrix.of_apply]
+      ring
+    · intro ℓ
+      ext i a
+      simp only [rescaleDirMlp, Pi.add_apply, Params.add_write, Matrix.add_apply, Matrix.of_apply]
+      ring
+    · simp [rescaleDirMlp]
+  map_smul' c α := by
+    apply Params.ext'
+    · simp [rescaleDirMlp]
+    · intro ℓ
+      ext a i
+      simp only [rescaleDirMlp, Pi.smul_apply, Params.smul_read, Matrix.smul_apply,
+        Matrix.of_apply, smul_eq_mul, RingHom.id_apply]
+      ring
+    · intro ℓ
+      ext i a
+      simp only [rescaleDirMlp, Pi.smul_apply, Params.smul_write, Matrix.smul_apply,
+        Matrix.of_apply, smul_eq_mul, RingHom.id_apply]
+      ring
+    · simp [rescaleDirMlp]
+
+/-- Helper: the numbers of the rescalings of the hidden units form a space of dimension `s`, the
+number of hidden units. -/
+private theorem finrank_hidFun_drs :
+    Module.finrank ℝ (∀ ℓ, hid ℓ → ℝ) = ∑ ℓ, Fintype.card (hid ℓ) := by
+  rw [Module.finrank_pi_fintype]
+  simp only [Module.finrank_fintype_fun_eq_card]
+
+omit [Nonempty T] [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the directions `(E X, (λ W_read^ℓ)_ℓ, (-k λ W_write^ℓ)_ℓ, -X D)` form a space of
+dimension at most `d² + s`. -/
+private theorem finrank_range_flatLin_le_drs (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) :
+    Module.finrank ℝ (LinearMap.range ((flatConstLin_drs θ).coprod (rescaleLin_drs k θ)))
+      ≤ Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ) := by
+  have h := LinearMap.finrank_range_le ((flatConstLin_drs θ).coprod (rescaleLin_drs k θ))
+  rwa [Module.finrank_prod, Module.finrank_matrix, Module.finrank_self, mul_one, ← sq,
+    finrank_hidFun_drs] at h
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] in
+/-- Helper: no column of a read vanishes when no column of `E W_read` vanishes. -/
+private theorem read_col_ne_zero_drs
+    {θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut} (hθ : SmallWritesGeneric θ) :
+    ∀ ℓ i, (fun a => θ.read ℓ a i) ≠ 0 := by
+  intro ℓ i h0
+  apply hθ.col_ne_zero ℓ i
+  funext a
+  show ∑ j, θ.E a j * θ.read ℓ j i = 0
+  exact Finset.sum_eq_zero fun j _ => by
+    rw [show θ.read ℓ j i = 0 from congrFun h0 j, mul_zero]
+
 /-- **Lemma A.30, first sentence, at one parameter:** under the conditions `SmallWritesGeneric`
 there is a finite batch of inputs at which no limit pre-activation vanishes such that, for all
 small `τ ≠ 0`, no pre-activation on the batch vanishes at `θ_τ` and the Jacobian of the residual
@@ -302,7 +435,49 @@ theorem exists_eventually_jacobianRank_smallWrites_mlp_rescale {k : ℕ}
         jacobianRank (Arch.mlp σ id hid) 1 X (θ.smallWrites τ)
             + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
           = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  -- the maps `η ↦ (J_0 η)(x)`, `x ∈ noKinkAll θ`, are linear: a finite batch `X` in
+  -- `noKinkAll θ` decides their common kernel
+  obtain ⟨n, X', hX'⟩ := exists_batch_ker_drs
+    (fun x : noKinkAll θ => limitLin_drs (Arch.mlp σ id hid) θ (dOut := dOut) x.1)
+  refine ⟨n, fun i => (X' i).1, fun i => (X' i).2, ?_⟩
+  -- a direction that is flat for `J_0` on the batch is flat at every input of `noKinkAll θ`, so
+  -- (the kernel of `J_0`) it lies in the space `W` of the directions
+  -- `(E X, (λ W_read^ℓ)_ℓ, (-k λ W_write^ℓ)_ℓ, -X D)`, of dimension at most `d² + s`
+  have hW : ∀ η, (∀ i, smallWritesLimit (Arch.mlp σ id hid) θ η (X' i).1 = 0) →
+      η ∈ LinearMap.range ((flatConstLin_drs θ).coprod (rescaleLin_drs k θ)) := by
+    intro η hη
+    have hall : ∀ x ∈ noKinkAll θ, smallWritesLimit (Arch.mlp σ id hid) θ η x = 0 :=
+      fun x hx => hX' η hη ⟨x, hx⟩
+    obtain ⟨Y, α, hE, hD, hr, hw⟩ := smallWritesLimit_eq_zero_mlp_rescale hσ hU θ hθ η hall
+    refine ⟨(Y, α), ?_⟩
+    rw [LinearMap.coprod_apply]
+    apply Params.ext'
+    · show θ.E * Y + 0 = η.E
+      rw [add_zero, hE]
+    · intro ℓ
+      show 0 + (rescaleDirMlp k θ α).read ℓ = η.read ℓ
+      rw [zero_add, hr]
+    · intro ℓ
+      show 0 + (rescaleDirMlp k θ α).write ℓ = η.write ℓ
+      rw [zero_add, hw]
+    · show -(Y * θ.D) + 0 = η.D
+      rw [add_zero, hD]
+  have hdim := finrank_range_flatLin_le_drs k θ
+  -- `≥`: for small `τ ≠ 0` the pre-activations on the batch stay off the kinks, where the
+  -- blocks are `C²`, and the rank is at least `P - dim W` (Residual/SmallWritesOn.lean)
+  filter_upwards [eventually_jacobianRank_smallWrites_ge_of_contDiffOn (Arch.mlp σ id hid) θ rfl
+    (fun ℓ => noZero_drs T (hid ℓ)) (fun ℓ => isOpen_noZero_drs)
+    (fun ℓ => contDiffOn_map_drs hhom) (fun i => (X' i).1) (fun i ℓ => (X' i).2 ℓ) _ hW]
+    with τ hτ
+  obtain ⟨hpre, hge⟩ := hτ
+  refine ⟨fun i ℓ t j => hpre i ℓ t j, ?_⟩
+  -- `≤`: the rank is at most `fd(θ_τ) ≤ P - d² - s` (the embedding and the reads of `θ_τ` are
+  -- those of `θ`)
+  have h1 := jacobianRank_le_funDim (A := Arch.mlp σ id hid) (S := 1) (θ.smallWrites τ)
+    (fun i => (X' i).1)
+  have hc := read_col_ne_zero_drs hθ
+  have h2 := funDim_add_le_residual_mlp_rescale hhom (θ.smallWrites τ) hθ.rank_E hc
+  omega
 
 /-- **Lemma A.30, the functional dimension at `θ_τ`:** under the conditions
 `SmallWritesGeneric`, for all small `τ ≠ 0` the residual network has `fd(θ_τ) = P − d² − s`. -/
@@ -315,7 +490,13 @@ theorem eventually_funDim_smallWrites_mlp_rescale {k : ℕ}
       funDim (Arch.mlp σ id hid) 1 (θ.smallWrites τ)
           + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
         = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  obtain ⟨n, X, -, h⟩ := exists_eventually_jacobianRank_smallWrites_mlp_rescale hσ hhom hU θ hθ
+  filter_upwards [h] with τ hτ
+  -- the rank on the batch is at most `fd(θ_τ)`, which is at most `P - d² - s`
+  have h1 := jacobianRank_le_funDim (A := Arch.mlp σ id hid) (S := 1) (θ.smallWrites τ) X
+  have hc := read_col_ne_zero_drs hθ
+  have h2 := funDim_add_le_residual_mlp_rescale hhom (θ.smallWrites τ) hθ.rank_E hc
+  omega
 
 /-- **Lemma A.30, second sentence, near `θ_τ`:** under the conditions `SmallWritesGeneric`, for
 all small `τ ≠ 0` the residual network has `fd = P − d² − s` at every parameter near `θ_τ`. -/
