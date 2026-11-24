@@ -140,6 +140,7 @@ private theorem cobSkip_skipProdFwd_lsc (S : Fin L → GL d ℝ) :
   simp only [cobSkip, Pi.one_apply, inv_inv]
   rw [← Units.val_mul, ← Units.val_mul, ← skipProdFwd_succ, mul_inv_cancel, Units.val_one]
 
+omit [Fintype dIn] in
 /-- **The embedding is unchanged by the forward change of variables** (`Π_0 = I`). -/
 theorem cob_skipProdFwd_E (S : Fin L → GL d ℝ) (K : Fin (L + 1) → GL d ℝ) :
     (θ.cob (fun ℓ => (skipProdFwd S ℓ)⁻¹) K).E = θ.E := by

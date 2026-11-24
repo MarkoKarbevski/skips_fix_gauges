@@ -1702,3 +1702,7 @@ import SkipsLean
 #print axioms Skips.ae_funDimLearned_eq_residual_add_of_equality
 #print axioms Skips.sq_sub_half_mul_pred
 #print axioms Skips.sq_sub_half_mul_pred_add_one
+#print axioms Skips.cob_skipProdFwd_E
+#print axioms Skips.eval_learned_eq_residual_rmsNorm_zero
+#print axioms Skips.eval_learned_eq_residual_rmsNorm_zero_fwd
+#print axioms Skips.eval_learned_eq_residual_rmsNorm_fwd
