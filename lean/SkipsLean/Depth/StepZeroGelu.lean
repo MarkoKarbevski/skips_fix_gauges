@@ -472,6 +472,16 @@ private theorem fderiv_row_eq_zero_szg
   rw [zero_smul, sub_zero, neg_eq_zero] at e
   exact e
 
+
+omit [DecidableEq d] in
+/-- Helper: a column `u` with `x ⬝ u = 0` for the rows `x` of a nonempty open set is `0`. -/
+private theorem eq_zero_of_dotProduct_szg (N : Set (d → ℝ)) (hN : IsOpen N) (hNne : N.Nonempty)
+    (u : d → ℝ) (h : ∀ x ∈ N, x ⬝ᵥ u = 0) : u = 0 := by
+  have hM := eq_zero_of_vecMul_eq_zero_of_isOpen (Matrix.of fun a (_ : Unit) => u a) N hN hNne
+    fun x hx => funext fun _ => h x hx
+  funext a
+  exact congrFun (congrFun hM a) ()
+
 /-- **Lemma D.19 of the dimension paper (the step for GELU on the path).** Let `σ` be GELU, in the
 case (0), `d ≥ 2`, let `θ` be regular, let `𝓑_{>k+1}` be holomorphic on the cone `C_κ`,
 `0 < κ ≤ 1` (Lemma D.14), and let block `k` satisfy (P1) and (P2) for `κ`. Then `(D_{k+1})` implies
@@ -483,6 +493,205 @@ theorem claimZero_castSucc_gelu [Nonempty T]
     (hhol : HolomorphicOnCone geluC θ k.succ κ) (hP2 : CondP2 θ k κ)
     (hk : ClaimZero (Arch.mlp gelu (rmsNorm 0) hid) θ k.succ) :
     ClaimZero (Arch.mlp gelu (rmsNorm 0) hid) θ k.castSucc := by
+  classical
+  intro Z η h16
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid).f ℓ)
+      Set.univ := fun ℓ => analyticOnNhd_f_mlp analyticOnNhd_gelu ℓ
+  -- Step 1: `Z'` with (49), and (16) after the block; `(D_{k+1})` gives `Y'`, `β'`
+  obtain ⟨Z', h49, h16'⟩ := exists_suffixFlatZero_succ_gelu hθ hd k hP1 hκ hκ1 hhol hP2 Z η h16
+  obtain ⟨Y', β', hYa, hZ'eq, hY, hYD⟩ := hk Z' η h16'
+  -- Preparation: (P1), and `ξ₀ c_j > 0` for all `j` from (P2)
+  obtain ⟨hcne, hVne, hM⟩ := hP1
+  obtain ⟨ξ₀, hξ₀, hP2₀⟩ := hP2
+  obtain ⟨ζ, hζ, hξ₀ζ⟩ := exists_unit_orth_szg hd ξ₀
+  have hpos : ∀ j, 0 < (ξ₀ ᵥ* θ.read k) j := fun j =>
+    lt_of_le_of_lt (abs_nonneg _) ((hP2₀ ζ hζ hξ₀ζ).1 j)
+  have hneg : ∀ i j : hid k, i ≠ j →
+      (fun a : d => θ.read k a i) ≠ fun a : d => -θ.read k a j := by
+    intro i j _ h
+    have e : (ξ₀ ᵥ* θ.read k) i = -(ξ₀ ᵥ* θ.read k) j := by
+      show ξ₀ ⬝ᵥ (fun a => θ.read k a i) = -(ξ₀ ⬝ᵥ fun a => θ.read k a j)
+      rw [h]
+      exact dotProduct_neg _ _
+    linarith [hpos i, hpos j]
+  have hc0 : ∀ j, (fun a : d => θ.read k a j) ≠ 0 := fun j h => by
+    have e : (ξ₀ ᵥ* θ.read k) j = 0 := by
+      show ξ₀ ⬝ᵥ (fun a => θ.read k a j) = 0
+      rw [h, dotProduct_zero]
+    linarith [hpos j]
+  -- the open set `U` of rows around `ξ₀` with (P2), and inside it `N`, `ξ'(x)`, the order `e`
+  have hξ₀U : ξ₀ ∈ {x : d → ℝ | x ≠ 0 ∧ ∀ ξ' : d → ℝ, ξ' ⬝ᵥ ξ' = 1 → x ⬝ᵥ ξ' = 0 →
+      PathP2 (θ.read k) (θ.write k) κ ((Real.sqrt (x ⬝ᵥ x))⁻¹ • x) ξ'} := by
+    refine ⟨fun h => ?_, fun ξ' h1 h2 => ?_⟩
+    · rw [h, zero_dotProduct] at hξ₀
+      exact zero_ne_one hξ₀
+    · rw [hξ₀, Real.sqrt_one, inv_one, one_smul]
+      exact hP2₀ ξ' h1 h2
+  obtain ⟨N, ξ', e, hNo, hNne, hNU, hN0, hNξ⟩ := exists_isOpen_rates_lt hd (θ.read k) hcne hneg
+    _ (isOpen_setOf_pathP2 (θ.read k) (θ.write k) κ) ⟨ξ₀, hξ₀U⟩
+  have hpair : ∀ x ∈ N, unitRow_szg x ⬝ᵥ unitRow_szg x = 1 ∧ ξ' x ⬝ᵥ ξ' x = 1 ∧
+      unitRow_szg x ⬝ᵥ ξ' x = 0 ∧ PathP2 (θ.read k) (θ.write k) κ (unitRow_szg x) (ξ' x) := by
+    intro x hx
+    obtain ⟨h1, h2, -⟩ := hNξ x hx
+    refine ⟨unitRow_dot_self_szg (dotProduct_self_pos_szg (hN0 x hx)), h1, ?_,
+      (hNU hx).2 _ h1 h2⟩
+    unfold unitRow_szg
+    rw [smul_dotProduct, h2, smul_zero]
+  have hrows : ∀ x ∈ N, ∀ t, ((Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • unitRow_szg x)
+      * θ.read k * θ.write k) t ≠ 0 := by
+    intro x hx t
+    rw [Matrix.mul_assoc, row_of_mul_szg]
+    refine vecMul_ne_zero_szg hM fun h0 => ?_
+    have e := congrArg (fun v => v ⬝ᵥ v) h0
+    simp only [smul_dotProduct, dotProduct_smul, (hpair x hx).1, zero_dotProduct, smul_eq_mul,
+      mul_one] at e
+    have hD : (0 : ℝ) < Fintype.card d := by exact_mod_cast (by omega : 0 < Fintype.card d)
+    rw [Real.mul_self_sqrt hD.le] at e
+    exact hD.ne' e
+  -- `hid k` is not empty (`W V` is invertible)
+  have hq : 0 < Fintype.card (hid k) := by
+    rw [Fintype.card_pos_iff]
+    by_contra hne
+    rw [not_nonempty_iff] at hne
+    have h0 : θ.read k * θ.write k = 0 := by
+      ext a b
+      simp only [Matrix.mul_apply, Finset.univ_eq_empty, Finset.sum_empty, Matrix.zero_apply]
+    have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+    rw [h0, Matrix.det_zero] at hM
+    exact not_isUnit_zero hM
+  -- Step 2: the unit `j₁` of smallest rate; `(x⬝x)(x⬝u) = (xZx)(x⬝c_{j₁})` on `N`
+  set j₁ : hid k := e.symm ⟨0, hq⟩ with hj₁
+  have hj₁lt : ∀ i, i ≠ j₁ → e j₁ < e i := by
+    intro i hi
+    have h0 : e j₁ = ⟨0, hq⟩ := e.apply_symm_apply _
+    have hne : e i ≠ ⟨0, hq⟩ := fun h => hi (by rw [hj₁, ← h, e.symm_apply_apply])
+    rw [h0, Fin.lt_def]
+    exact Nat.pos_of_ne_zero fun h => hne (Fin.ext h)
+  have hstep2 : ∀ x ∈ N, fderiv ℝ
+      (fun h' : Matrix T d ℝ => suffix (Arch.mlp gelu (rmsNorm 0) hid) 0 θ k.succ h')
+        ((Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • unitRow_szg x) * θ.read k
+          * θ.write k)
+        (Matrix.of fun t =>
+          (tangentRMS Z (Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • unitRow_szg x)
+              * θ.read k
+            + (Matrix.of fun _ : T => Real.sqrt (Fintype.card d) • unitRow_szg x) * η.read k) t j₁
+            • θ.write k j₁) = 0 := by
+    intro x hx
+    obtain ⟨h1, h2, h3, h4⟩ := hpair x hx
+    refine (gelu_path_step_unit θ hθ k hκ hκ1 hhol Z η h16 _ _ h1 h2 h3 h4 ∅ j₁
+      (Set.notMem_empty j₁) (fun i _ hi => (hNξ x hx).2.2 j₁ i (hj₁lt i hi))
+      fun t ht δ δ' hδ => ?_).2
+    -- `A = ∅`: `δ = δ' = 0`, and this is Step 1 on the path
+    have e0 : δ = 0 := funext fun i => (hδ i (Set.notMem_empty i)).1
+    have e0' : δ' = 0 := funext fun i => (hδ i (Set.notMem_empty i)).2
+    subst e0 e0'
+    have h := gelu_path_step_zero θ hθ k hκ hκ1 hhol Z η h16 _ _ h1 h2 h3 h4 t ht
+    simp only [Pi.zero_apply, sub_zero]
+    exact h
+  have hquad := quadratic_of_unit_szg hθ hd k hM j₁ (hVne j₁) Z (η.read k) N hNo hN0 hstep2
+  obtain ⟨β₀, -, hY₀⟩ := exists_smul_of_quadratic_rows Z _ _ (hc0 j₁) N hNo hNne hquad
+  -- Step 3: `Y₀ = Z − β₀ I`, the symmetry `sym`, and `η° = η − sym`
+  obtain ⟨Y₀, hY₀def⟩ : ∃ Y₀ : Matrix d d ℝ, Y₀ = Z - β₀ • (1 : Matrix d d ℝ) := ⟨_, rfl⟩
+  rw [← hY₀def] at hY₀
+  have hZ : Z = Y₀ + β₀ • (1 : Matrix d d ℝ) := by rw [hY₀def, sub_add_cancel]
+  obtain ⟨Y, hYdef⟩ : ∃ Y : Fin (L + 1) → Matrix d d ℝ, Y = Function.update Y' k.castSucc Y₀ :=
+    ⟨_, rfl⟩
+  obtain ⟨β, hβdef⟩ : ∃ β : Fin (L + 1) → ℝ,
+      β = Function.update (Function.update β' k.succ (β' k.succ - β₀)) k.castSucc β₀ := ⟨_, rfl⟩
+  -- the indices
+  have hkk : k.succ ≠ k.castSucc := (Fin.castSucc_lt_succ).ne'
+  have hYk : Y k.castSucc = Y₀ := by rw [hYdef, Function.update_self]
+  have hβk : β k.castSucc = β₀ := by rw [hβdef, Function.update_self]
+  have hYk1 : Y k.succ = Y' k.succ := by rw [hYdef, Function.update_of_ne hkk]
+  have hβk1 : β k.succ = β' k.succ - β₀ := by
+    rw [hβdef, Function.update_of_ne hkk, Function.update_self]
+  have hlater : ∀ ℓ : Fin L, k.succ ≤ ℓ.castSucc →
+      Y ℓ.castSucc = Y' ℓ.castSucc ∧ Y ℓ.succ = Y' ℓ.succ ∧ β ℓ.succ = β' ℓ.succ := by
+    intro ℓ hℓ
+    rw [Fin.le_def, Fin.val_succ, Fin.val_castSucc] at hℓ
+    have h1 : ℓ.castSucc ≠ k.castSucc := fun h => by
+      have := congrArg Fin.val h
+      rw [Fin.val_castSucc, Fin.val_castSucc] at this
+      omega
+    have h2 : ℓ.succ ≠ k.castSucc := fun h => by
+      have := congrArg Fin.val h
+      rw [Fin.val_succ, Fin.val_castSucc] at this
+      omega
+    have h3 : ℓ.succ ≠ k.succ := fun h => by
+      have := congrArg Fin.val h
+      rw [Fin.val_succ, Fin.val_succ] at this
+      omega
+    refine ⟨by rw [hYdef, Function.update_of_ne h1], by rw [hYdef, Function.update_of_ne h2], ?_⟩
+    rw [hβdef, Function.update_of_ne h2, Function.update_of_ne h3]
+  have hYlast : Y (Fin.last L) = Y' (Fin.last L) := by
+    rw [hYdef, Function.update_of_ne (Fin.castSucc_lt_last k).ne']
+  have hYanti : ∀ ℓ, k.castSucc ≤ ℓ → Y ℓ ∈ antisymmetric d := by
+    intro ℓ hℓ
+    rcases eq_or_ne ℓ k.castSucc with rfl | hne
+    · rw [hYk]
+      exact hY₀
+    · rw [hYdef, Function.update_of_ne hne]
+      refine hYa ℓ ?_
+      have hlt : k.castSucc < ℓ := lt_of_le_of_ne hℓ (Ne.symm hne)
+      rw [Fin.lt_def, Fin.val_castSucc] at hlt
+      rw [Fin.le_def, Fin.val_succ]
+      omega
+  -- the symmetry satisfies (16) for `k` with `Y_k + β_k I = Z`; so `η° = η − sym` with `0`
+  have hsym := suffixFlatZero_cobDir_add_scaleDir (Arch.mlp gelu (rmsNorm 0) hid) θ rfl hf hθ
+    k.castSucc Y hYanti β
+  rw [hYk, hβk, ← hZ] at hsym
+  obtain ⟨ηo, hηo⟩ : ∃ ηo : Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut,
+      ηo = η - (cobDir θ Y + scaleDir θ β) := ⟨_, rfl⟩
+  have h16o : SuffixFlatZero (Arch.mlp gelu (rmsNorm 0) hid) θ k.castSucc 0 ηo := by
+    intro h hh
+    have e1 := h16 h hh
+    have e2 := hsym h hh
+    rw [Matrix.mul_zero, map_zero, zero_add, hηo, map_sub]
+    have e3 := congrArg₂ (· - ·) e1 e2
+    simp only [sub_zero, add_sub_add_left_eq_sub] at e3
+    exact e3
+  -- the components of `η°`: zero after the block and at `D`; `η°_W`, `η°_V` at the block
+  have hro : ∀ ℓ : Fin L, k.succ ≤ ℓ.castSucc → ηo.read ℓ = 0 := by
+    intro ℓ hℓ
+    rw [hηo]
+    show η.read ℓ - (-(Y ℓ.castSucc * θ.read ℓ) + 0) = 0
+    rw [(hlater ℓ hℓ).1, (hY ℓ hℓ).1, add_zero, sub_self]
+  have hwo : ∀ ℓ : Fin L, k.succ ≤ ℓ.castSucc → ηo.write ℓ = 0 := by
+    intro ℓ hℓ
+    rw [hηo]
+    show η.write ℓ - (θ.write ℓ * Y ℓ.succ + β ℓ.succ • θ.write ℓ) = 0
+    rw [(hlater ℓ hℓ).2.1, (hlater ℓ hℓ).2.2, (hY ℓ hℓ).2, Matrix.mul_add, Matrix.mul_smul,
+      Matrix.mul_one, sub_self]
+  have hDo : ηo.D = 0 := by
+    rw [hηo]
+    show η.D - (-(Y (Fin.last L) * θ.D) + 0) = 0
+    rw [hYlast, hYD, add_zero, sub_self]
+  have hηW : ηo.read k = η.read k + Y₀ * θ.read k := by
+    rw [hηo]
+    show η.read k - (-(Y k.castSucc * θ.read k) + 0) = _
+    rw [hYk, add_zero, sub_neg_eq_add]
+  have hηV : ηo.write k
+      = η.write k - (θ.write k * Y' k.succ + (β' k.succ - β₀) • θ.write k) := by
+    rw [hηo]
+    show η.write k - (θ.write k * Y k.succ + β k.succ • θ.write k) = _
+    rw [hYk1, hβk1]
+  -- (51): `η°_W V + W η°_V = 0`, from (49), `Z' = Y_{k+1} + β' I` and `Z = Y₀ + β₀ I`
+  have h51 : ηo.read k * θ.write k + θ.read k * ηo.write k = 0 := by
+    have e := h49
+    rw [hZ'eq, hZ] at e
+    simp only [Matrix.add_mul, Matrix.mul_add, Matrix.smul_mul, Matrix.mul_smul, Matrix.one_mul,
+      Matrix.mul_one] at e
+    rw [hηW, hηV, Matrix.add_mul, Matrix.mul_sub, Matrix.mul_add, Matrix.mul_smul,
+      ← Matrix.mul_assoc (θ.read k) (θ.write k) (Y' k.succ), Matrix.mul_assoc Y₀ (θ.read k)]
+    generalize θ.read k * θ.write k = P at e ⊢
+    generalize η.read k * θ.write k = a at e ⊢
+    generalize θ.read k * η.write k = b at e ⊢
+    have e' : a + b = P * Y' k.succ + β' k.succ • P - Y₀ * P - β₀ • P := by
+      rw [← e]
+      abel
+    calc a + Y₀ * P + (b - (P * Y' k.succ + (β' k.succ - β₀) • P))
+        = (a + b) + Y₀ * P - P * Y' k.succ - (β' k.succ - β₀) • P := by abel
+      _ = 0 := by rw [e']; module
   sorry
 
 end Skips
