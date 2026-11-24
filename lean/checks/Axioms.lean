@@ -1184,3 +1184,10 @@ import SkipsLean
 #print axioms Skips.ae_funDim_add_le_skipless_attention_reglu_rmsNorm
 #print axioms Skips.ae_funDim_add_le_residual_attention_reglu
 #print axioms Skips.ae_funDim_add_le_residual_attention_reglu_rmsNorm
+#print axioms Skips.smallWritesLimitNorm_eq_zero_attentionMlp_rmsNorm
+#print axioms Skips.eventually_funDim_smallWrites_attentionMlp_rmsNorm
+#print axioms Skips.ae_smallWritesGeneric_attentionMlp_rmsNorm
+#print axioms Skips.ae_funDim_attentionMlp_residual_rmsNorm
+#print axioms Skips.ae_funDim_attentionMlp_residual_rmsNorm_ge_add
+#print axioms Skips.ae_funDim_attention_tanh_residual_rmsNorm
+#print axioms Skips.ae_funDim_attention_gelu_residual_rmsNorm
