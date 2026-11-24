@@ -330,7 +330,24 @@ theorem mem_flat_of_hasDerivAt'
     (γ : ℝ → Params A dIn dOut) (η : Params A dIn dOut) (hγ : HasDerivAt γ η 0) (hγ0 : γ 0 = θ)
     (hconst : ∀ᶠ τ in 𝓝 (0 : ℝ), ∀ x : Matrix T dIn ℝ, eval A S (γ τ) x = eval A S θ x) :
     η ∈ flat A S θ := by
-  sorry
+  rw [flat, Submodule.mem_iInf]
+  intro x
+  rw [LinearMap.mem_ker]
+  show fderiv ℝ (fun θ' => eval A S θ' x) θ η = 0
+  by_cases hx : DifferentiableAt ℝ (fun θ' : Params A dIn dOut => eval A S θ' x) θ
+  · -- the chain rule: `τ ↦ F_{γ(τ)}(x)` has derivative `D_θ F(x) η` at `0`
+    have hl : HasFDerivAt (fun θ' => eval A S θ' x) (fderiv ℝ (fun θ' => eval A S θ' x) θ)
+        (γ 0) := by
+      rw [hγ0]
+      exact hx.hasFDerivAt
+    have h1 := hl.comp_hasDerivAt (0 : ℝ) hγ
+    -- the same map is constant near `0`, so its derivative there is `0`
+    have h2 : HasDerivAt ((fun θ' => eval A S θ' x) ∘ γ) 0 0 :=
+      (hasDerivAt_const (0 : ℝ) (eval A S θ x)).congr_of_eventuallyEq
+        (hconst.mono fun τ hτ => hτ x)
+    exact h1.unique h2
+  · -- not differentiable at `θ`: Mathlib's derivative is `0`
+    rw [fderiv_zero_of_not_differentiableAt hx, _root_.zero_apply]
 
 /-- `fd(θ) = P - dim K(θ)`, with no hypothesis of differentiability. -/
 theorem funDim_add_finrank_flat' :
