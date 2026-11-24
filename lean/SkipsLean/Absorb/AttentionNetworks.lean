@@ -43,6 +43,120 @@ variable {T d dIn dOut : Type*} {L : ℕ} [Fintype T] [Fintype d] [DecidableEq d
   [Fintype dOut]
 variable {H dh : Fin L → Type} [∀ ℓ, Fintype (H ℓ)] [∀ ℓ, Fintype (dh ℓ)]
 
+omit [Fintype T] in
+/-- Helper: RMSNorm vanishes at `0` (as `rmsNorm_zero_mat` in `Absorb/Networks.lean`). -/
+private theorem rmsNorm_zero_mat_atn {m : Type*} [Fintype m] (ε : ℝ) :
+    rmsNorm ε (0 : Matrix T m ℝ) = 0 := by
+  ext t i
+  simp [rmsNorm, rmsRow]
+
+/-- Helper: RMSNorm with `ε > 0` has the derivative `I / √ε` at `0` (as
+`hasFDerivAt_rmsNorm_zero` in `Absorb/Networks.lean`). -/
+private theorem hasFDerivAt_rmsNorm_zero_atn {m : Type*} [Fintype m] {ε : ℝ} (hε : 0 < ε) :
+    HasFDerivAt (rmsNorm ε : Matrix T m ℝ → Matrix T m ℝ)
+      ((Real.sqrt ε)⁻¹ • ContinuousLinearMap.id ℝ (Matrix T m ℝ)) 0 := by
+  refine hasFDerivAt_pi'' fun t => hasFDerivAt_pi'' fun i => ?_
+  have hq : Differentiable ℝ fun h : Matrix T m ℝ => (h t ⬝ᵥ h t) / (Fintype.card m : ℝ) + ε := by
+    simp only [dotProduct]
+    fun_prop
+  have h00 : (0 : Matrix T m ℝ) t = 0 := rfl
+  have hq0 : ((0 : Matrix T m ℝ) t ⬝ᵥ (0 : Matrix T m ℝ) t) / (Fintype.card m : ℝ) + ε = ε := by
+    rw [h00, zero_dotProduct, zero_div, zero_add]
+  have hs : DifferentiableAt ℝ
+      (fun h : Matrix T m ℝ => (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card m : ℝ) + ε))⁻¹) 0 := by
+    have hpos : 0 < ((0 : Matrix T m ℝ) t ⬝ᵥ (0 : Matrix T m ℝ) t) / (Fintype.card m : ℝ) + ε := by
+      rw [hq0]
+      exact hε
+    exact ((hq 0).sqrt hpos.ne').inv (Real.sqrt_pos.2 hpos).ne'
+  have hp : HasFDerivAt (fun h : Matrix T m ℝ => h t i)
+      ((ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : m => ℝ) i).comp
+        (ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : T => m → ℝ) t)) 0 :=
+    ((ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : m => ℝ) i).comp
+      (ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : T => m → ℝ) t)).hasFDerivAt
+  have h := hs.hasFDerivAt.mul hp
+  show HasFDerivAt (fun h : Matrix T m ℝ =>
+    (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card m : ℝ) + ε))⁻¹ * h t i) _ 0
+  refine h.congr_fderiv (ContinuousLinearMap.ext fun M => ?_)
+  show (Real.sqrt (((0 : Matrix T m ℝ) t ⬝ᵥ (0 : Matrix T m ℝ) t) / (Fintype.card m : ℝ) + ε))⁻¹
+      * M t i + (0 : Matrix T m ℝ) t i * _ = (Real.sqrt ε)⁻¹ * M t i
+  rw [hq0, Matrix.zero_apply, zero_mul, add_zero]
+
+/-- Helper: `(c A_1) ⋯ (c A_k) = c^k A_1 ⋯ A_k`. -/
+private theorem prod_ofFn_smul_atn {m : Type*} [Fintype m] [DecidableEq m] (c : ℝ) {k : ℕ}
+    (A : Fin k → Matrix m m ℝ) :
+    (List.ofFn fun ℓ => c • A ℓ).prod = c ^ k • (List.ofFn A).prod := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    simp only [List.ofFn_succ, List.prod_cons]
+    rw [ih fun ℓ => A ℓ.succ, Matrix.smul_mul, Matrix.mul_smul, smul_smul, pow_succ']
+
+/-- Helper: `ξ E ∏_ℓ (I + ξ λ V_ℓ) D`: the residual network multiplies the row `b` by this
+matrix along `a b`, for `U a = λ a`. -/
+private noncomputable def resMat_atn {sees : T → T → Prop} [DecidableRel sees]
+    {χ : Matrix T d ℝ → Matrix T d ℝ} (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (ξ lam : ℝ) : Matrix dIn dOut ℝ :=
+  ξ • (θ.E * (List.ofFn fun ℓ => 1 + (ξ * lam) • valueOutput θ ℓ).prod * θ.D)
+
+/-- Helper, **the core of the proof of Theorem 4.2**: if the residual network (stream matrices
+`1`) equals the skipless one (stream matrices `0`, `L' + 1` blocks), then for every eigenvalue
+`λ` of `U` with an eigencolumn `a ≠ 0`, `ξ E ∏_ℓ (I + ξ λ V_ℓ) D = λ^{L'+1} Λ'`, with
+`Λ' = ξ'^{L'+2} E' V'_1 ⋯ V'_{L'+1} D'` not depending on `λ`. -/
+private theorem core_atn {sees : T → T → Prop} [DecidableRel sees]
+    {χ : Matrix T d ℝ → Matrix T d ℝ} {ξ : ℝ} (hχ0 : χ 0 = 0)
+    (hχ : HasFDerivAt χ (ξ • ContinuousLinearMap.id ℝ (Matrix T d ℝ)) 0)
+    {L' : ℕ} {d' : Type*} [Fintype d'] [DecidableEq d'] {χ' : Matrix T d' ℝ → Matrix T d' ℝ}
+    {ξ' : ℝ} (hχ0' : χ' 0 = 0)
+    (hχ' : HasFDerivAt χ' (ξ' • ContinuousLinearMap.id ℝ (Matrix T d' ℝ)) 0)
+    {H' dh' : Fin (L' + 1) → Type} [∀ ℓ, Fintype (H' ℓ)] [∀ ℓ, Fintype (dh' ℓ)]
+    (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (θ' : Params (Arch.attention sees χ' H' dh') dIn dOut)
+    (heq : ∀ X, eval (Arch.attention sees χ H dh) 1 θ X
+      = eval (Arch.attention sees χ' H' dh') 0 θ' X)
+    {a : T → ℝ} {lam : ℝ} (ha : attnWeights sees 0 *ᵥ a = lam • a) (ha0 : a ≠ 0) :
+    resMat_atn θ ξ lam = lam ^ (L' + 1) • (ξ' ^ (L' + 2)
+      • (θ'.E * (List.ofFn fun ℓ => valueOutput θ' ℓ).prod * θ'.D)) := by
+  -- a token `t` with `a t ≠ 0`
+  obtain ⟨t, ht⟩ := Function.ne_iff.1 ha0
+  -- the two networks agree on the line `τ a b`, so their derivatives at `τ = 0` agree
+  have hrow : ∀ b : dIn → ℝ,
+      ξ • (b ᵥ* (θ.E * (List.ofFn fun ℓ => (1 : ℝ) • (1 : Matrix d d ℝ)
+        + (ξ * lam) • valueOutput θ ℓ).prod * θ.D))
+      = ξ' • (b ᵥ* (θ'.E * (List.ofFn fun ℓ => (0 : ℝ) • (1 : Matrix d' d' ℝ)
+        + (ξ' * lam) • valueOutput θ' ℓ).prod * θ'.D)) := by
+    intro b
+    have h1 := hasDerivAt_eval_attention_zero sees χ ξ hχ0 hχ H dh θ 1 a lam ha b
+    have h2 := hasDerivAt_eval_attention_zero sees χ' ξ' hχ0' hχ' H' dh' θ' 0 a lam ha b
+    have hfun : (fun τ : ℝ => eval (Arch.attention sees χ H dh)
+        (fun _ => (1 : ℝ) • (1 : Matrix d d ℝ)) θ (τ • vecMulVec a b))
+        = fun τ => eval (Arch.attention sees χ' H' dh')
+          (fun _ => (0 : ℝ) • (1 : Matrix d' d' ℝ)) θ' (τ • vecMulVec a b) := by
+      funext τ
+      simp only [one_smul, zero_smul]
+      exact heq _
+    rw [hfun] at h1
+    have h := h1.unique h2
+    -- the entry `(t, o)` of `a (ξ b M) = a (ξ' b M')`, divided by `a t ≠ 0`
+    funext o
+    have h' := congrFun (congrFun h t) o
+    simp only [vecMulVec_apply] at h'
+    exact mul_left_cancel₀ ht h'
+  -- the rows `b = e_i` give the matrices
+  have hM : ξ • (θ.E * (List.ofFn fun ℓ => (1 : ℝ) • (1 : Matrix d d ℝ)
+        + (ξ * lam) • valueOutput θ ℓ).prod * θ.D)
+      = ξ' • (θ'.E * (List.ofFn fun ℓ => (0 : ℝ) • (1 : Matrix d' d' ℝ)
+        + (ξ' * lam) • valueOutput θ' ℓ).prod * θ'.D) := by
+    classical
+    ext i o
+    have h := congrFun (hrow (Pi.single i 1)) o
+    simp only [single_one_vecMul, Pi.smul_apply, Matrix.row_apply] at h
+    simpa only [Matrix.smul_apply] using h
+  simp only [one_smul, zero_smul, zero_add] at hM
+  -- pull `ξ' λ` out of the `L' + 1` factors
+  rw [resMat_atn, hM, prod_ofFn_smul_atn, Matrix.mul_smul, Matrix.smul_mul, smul_smul, smul_smul]
+  congr 1
+  ring
+
 /-- **Theorem 4.2 (i), no mask, without normalization:** with at least two tokens, a residual
 network of `L` attention blocks with `E D ≠ 0` differs from every skipless network of one or more
 attention blocks, with any heads, head dimensions and model dimension. -/
