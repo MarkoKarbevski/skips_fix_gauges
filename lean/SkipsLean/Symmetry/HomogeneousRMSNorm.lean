@@ -60,7 +60,11 @@ theorem rowHomogeneous_mlp {σ : ℝ → ℝ} {k : ℕ}
     (hσ : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z)
     (χ : Matrix T d ℝ → Matrix T d ℝ) (hid : Fin L → Type) [∀ ℓ, Fintype (hid ℓ)] :
     RowHomogeneous (Arch.mlp (T := T) (d := d) σ χ hid) k := by
-  sorry
+  -- entry by entry: `σ (c_t m) = c_t^k σ(m)`
+  intro ℓ c hc M
+  ext t i
+  show σ (c t * M t i) = c t ^ k * σ (M t i)
+  exact hσ (c t) (M t i) (hc t)
 
 /-- Gated blocks with a gate activation that is positively homogeneous of degree `k` (ReGLU:
 `k = 1`) are positively homogeneous of degree `k + 1`, row by row. -/
@@ -68,9 +72,406 @@ theorem rowHomogeneous_gated {σ : ℝ → ℝ} {k : ℕ}
     (hσ : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z)
     (χ : Matrix T d ℝ → Matrix T d ℝ) (hid : Fin L → Type) [∀ ℓ, Fintype (hid ℓ)] :
     RowHomogeneous (Arch.gated (T := T) (d := d) σ χ hid) (k + 1) := by
-  sorry
+  -- entry by entry: `σ (c_t g) (c_t v) = c_t^k σ(g) c_t v = c_t^(k+1) σ(g) v`
+  intro ℓ c hc M
+  ext t i
+  show σ (c t * M t (Sum.inl i)) * (c t * M t (Sum.inr i))
+    = c t ^ (k + 1) * (σ (M t (Sum.inl i)) * M t (Sum.inr i))
+  rw [hσ _ _ (hc t)]
+  ring
 
 variable {A : Arch T d L}
+
+/-! ### One row: the scalars `β` and `γ` -/
+
+omit [DecidableEq d] in
+/-- Helper: `N_ε(v) = (√(r² + ε))⁻¹ v`. -/
+private theorem rmsRow_eq_hom (ε : ℝ) (v : d → ℝ) :
+    rmsRow ε v = (Real.sqrt (meanSq v + ε))⁻¹ • v := rfl
+
+omit [DecidableEq d] in
+/-- Helper: `r² ≥ 0`. -/
+private theorem meanSq_nonneg_hom (v : d → ℝ) : 0 ≤ meanSq v :=
+  div_nonneg (Finset.sum_nonneg fun i _ => mul_self_nonneg (v i)) (Nat.cast_nonneg _)
+
+omit [DecidableEq d] in
+/-- Helper: `r² > 0` for a nonzero row. -/
+private theorem meanSq_pos_hom {v : d → ℝ} (hv : v ≠ 0) : 0 < meanSq v := by
+  obtain ⟨i, -⟩ := Function.ne_iff.mp hv
+  have h1 : v ⬝ᵥ v ≠ 0 := fun h => hv (dotProduct_self_eq_zero.mp h)
+  have h2 : 0 < (Fintype.card d : ℝ) := Nat.cast_pos.2 (Fintype.card_pos_iff.2 ⟨i⟩)
+  exact div_pos (lt_of_le_of_ne (Finset.sum_nonneg fun j _ => mul_self_nonneg (v j)) h1.symm) h2
+
+omit [DecidableEq d] in
+/-- Helper: `r²(μ v) = μ² r²(v)`. -/
+private theorem meanSq_smul_hom (μ : ℝ) (v : d → ℝ) : meanSq (μ • v) = μ ^ 2 * meanSq v := by
+  unfold meanSq
+  rw [smul_dotProduct, dotProduct_smul, smul_eq_mul, smul_eq_mul]
+  ring
+
+/-- The scalar of RMSNorm on a row scaled by `μ`: `β = μ √(r² + ε) / √(μ² r² + ε)`. -/
+private noncomputable def betaF_hom (ε s μ : ℝ) : ℝ :=
+  μ * Real.sqrt (s + ε) / Real.sqrt (μ ^ 2 * s + ε)
+
+/-- Helper: `β > 0` for `μ > 0`, `ε > 0`. -/
+private theorem betaF_pos_hom {ε s μ : ℝ} (hε : 0 < ε) (hs : 0 ≤ s) (hμ : 0 < μ) :
+    0 < betaF_hom ε s μ :=
+  div_pos (mul_pos hμ (Real.sqrt_pos.2 (by linarith)))
+    (Real.sqrt_pos.2 (add_pos_of_nonneg_of_pos (mul_nonneg (sq_nonneg μ) hs) hε))
+
+/-- Helper: `β = 1` at `μ = 1`. -/
+private theorem betaF_one_hom {ε s : ℝ} (hε : 0 < ε) (hs : 0 ≤ s) : betaF_hom ε s 1 = 1 := by
+  unfold betaF_hom
+  rw [one_pow, one_mul, one_mul, div_self (Real.sqrt_pos.2 (by linarith)).ne']
+
+omit [DecidableEq d] in
+/-- Helper: `N_ε(μ v) = β N_ε(v)` for `ε > 0`. -/
+private theorem rmsRow_smul_hom {ε : ℝ} (hε : 0 < ε) (μ : ℝ) (v : d → ℝ) :
+    rmsRow ε (μ • v) = betaF_hom ε (meanSq v) μ • rmsRow ε v := by
+  have hs := meanSq_nonneg_hom v
+  have h1 : 0 < Real.sqrt (meanSq v + ε) := Real.sqrt_pos.2 (by linarith)
+  have h2 : 0 < Real.sqrt (μ ^ 2 * meanSq v + ε) :=
+    Real.sqrt_pos.2 (add_pos_of_nonneg_of_pos (mul_nonneg (sq_nonneg μ) hs) hε)
+  rw [rmsRow_eq_hom, rmsRow_eq_hom, meanSq_smul_hom, smul_smul, smul_smul]
+  congr 1
+  unfold betaF_hom
+  field_simp
+
+omit [DecidableEq d] in
+/-- Helper: `N_0(c w) = N_0(w)` for `c > 0` (a copy of the private `rmsRow_zero_smul`). -/
+private theorem rmsRow_zero_smul_hom {c : ℝ} (hc : 0 < c) (w : d → ℝ) :
+    rmsRow 0 (c • w) = rmsRow 0 w := by
+  rw [rmsRow_eq_hom, rmsRow_eq_hom, meanSq_smul_hom, add_zero, add_zero,
+    Real.sqrt_mul (sq_nonneg c), Real.sqrt_sq hc.le, mul_inv, smul_smul]
+  congr 1
+  rw [mul_comm c⁻¹, mul_assoc, inv_mul_cancel₀ hc.ne', mul_one]
+
+/-- The scalar of RMSNorm after a change of basis `G`: `γ = √(r² + ε) / √(‖v G‖²/d + ε)`. -/
+private noncomputable def gammaF_hom (ε s q : ℝ) : ℝ := Real.sqrt (s + ε) / Real.sqrt (q + ε)
+
+/-- Helper: `γ > 0`. -/
+private theorem gammaF_pos_hom {ε s q : ℝ} (hs : 0 < s + ε) (hq : 0 < q + ε) :
+    0 < gammaF_hom ε s q :=
+  div_pos (Real.sqrt_pos.2 hs) (Real.sqrt_pos.2 hq)
+
+/-- Helper: `N_ε(v G) G⁻¹ = γ N_ε(v)`. -/
+private theorem rmsRow_vecMul_inv_hom (ε : ℝ) (G : GL d ℝ) (v : d → ℝ)
+    (hs : 0 < meanSq v + ε) :
+    rmsRow ε (v ᵥ* (G : Matrix d d ℝ)) ᵥ* (↑G⁻¹ : Matrix d d ℝ) =
+      gammaF_hom ε (meanSq v) (meanSq (v ᵥ* (G : Matrix d d ℝ))) • rmsRow ε v := by
+  have h1 : 0 < Real.sqrt (meanSq v + ε) := Real.sqrt_pos.2 hs
+  -- `N_ε(v G) G⁻¹ = (√(‖vG‖²/d + ε))⁻¹ v`
+  rw [rmsRow_eq_hom, rmsRow_eq_hom, Matrix.smul_vecMul, Matrix.vecMul_vecMul, Units.mul_inv,
+    Matrix.vecMul_one, smul_smul]
+  congr 1
+  unfold gammaF_hom
+  rw [div_eq_mul_inv, mul_right_comm, mul_inv_cancel₀ h1.ne', one_mul]
+
+/-- Helper: for `ε ≥ 0` there is `γ > 0` with `N_ε(v G) G⁻¹ = γ N_ε(v)` (`γ = 1` for `v = 0`). -/
+private theorem exists_rmsRow_vecMul_inv_hom {ε : ℝ} (hε : 0 ≤ ε) (G : GL d ℝ) (v : d → ℝ) :
+    ∃ γ : ℝ, 0 < γ ∧
+      rmsRow ε (v ᵥ* (G : Matrix d d ℝ)) ᵥ* (↑G⁻¹ : Matrix d d ℝ) = γ • rmsRow ε v := by
+  by_cases hv : v = 0
+  · -- a zero row stays zero
+    refine ⟨1, one_pos, ?_⟩
+    simp only [hv, Matrix.zero_vecMul, rmsRow_eq_hom, smul_zero]
+  · -- `v ≠ 0` and `v G ≠ 0`, so both norms are positive
+    have hvG : v ᵥ* (G : Matrix d d ℝ) ≠ 0 := by
+      intro h
+      apply hv
+      have h' := congrArg (· ᵥ* (↑G⁻¹ : Matrix d d ℝ)) h
+      simpa only [Matrix.vecMul_vecMul, Units.mul_inv, Matrix.vecMul_one,
+        Matrix.zero_vecMul] using h'
+    have hs := meanSq_pos_hom hv
+    have hq := meanSq_pos_hom hvG
+    exact ⟨_, gammaF_pos_hom (by linarith) (by linarith),
+      rmsRow_vecMul_inv_hom ε G v (by linarith)⟩
+
+/-! ### Hidden states: rows scaled by positive numbers -/
+
+/-- Row `t` of `M` scaled by `μ t`. -/
+private def rowScale_hom {n : Type*} (μ : T → ℝ) (M : Matrix T n ℝ) : Matrix T n ℝ :=
+  Matrix.of fun t i => μ t * M t i
+
+omit [Fintype T] in
+/-- Helper: scaling rows commutes with a product on the right. -/
+private theorem rowScale_mul_hom {n p : Type*} [Fintype n] (μ : T → ℝ) (M : Matrix T n ℝ)
+    (W : Matrix n p ℝ) : rowScale_hom μ M * W = rowScale_hom μ (M * W) := by
+  ext t j
+  simp only [rowScale_hom, Matrix.mul_apply, Matrix.of_apply, Finset.mul_sum, mul_assoc]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] in
+/-- Helper: `RowHomogeneous` with `rowScale_hom`. -/
+private theorem f_rowScale_hom {k : ℕ} (hf : RowHomogeneous A k) (j : Fin L) (β : T → ℝ)
+    (hβ : ∀ t, 0 < β t) (M : Matrix T (A.r j) ℝ) :
+    A.f j (rowScale_hom β M) = rowScale_hom (fun t => β t ^ k) (A.f j M) :=
+  hf j β hβ M
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: `N_ε(diag(μ) h) = diag(β) N_ε(h)` for `ε > 0`. -/
+private theorem rmsNorm_rowScale_hom {ε : ℝ} (hε : 0 < ε) (μ : T → ℝ) (h : Matrix T d ℝ) :
+    rmsNorm ε (rowScale_hom μ h) =
+      rowScale_hom (fun t => betaF_hom ε (meanSq (h t)) (μ t)) (rmsNorm ε h) := by
+  ext t i
+  show rmsRow ε (μ t • h t) i = betaF_hom ε (meanSq (h t)) (μ t) * rmsRow ε (h t) i
+  rw [rmsRow_smul_hom hε]
+  rfl
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: `N_0(diag(μ) h) = N_0(h)` for `μ > 0`. -/
+private theorem rmsNorm_zero_rowScale_hom (μ : T → ℝ) (hμ : ∀ t, 0 < μ t) (h : Matrix T d ℝ) :
+    rmsNorm 0 (rowScale_hom μ h) = rmsNorm 0 h := by
+  ext t i
+  show rmsRow 0 (μ t • h t) i = rmsRow 0 (h t) i
+  rw [rmsRow_zero_smul_hom (hμ t)]
+
+omit [Fintype T] in
+/-- Helper: for `ε ≥ 0`, `N_ε(h G) G⁻¹ = diag(γ) N_ε(h)` with `γ > 0`. -/
+private theorem exists_rmsNorm_mul_inv_hom {ε : ℝ} (hε : 0 ≤ ε) (G : GL d ℝ)
+    (h : Matrix T d ℝ) : ∃ γ : T → ℝ, (∀ t, 0 < γ t) ∧
+      rmsNorm ε (h * (G : Matrix d d ℝ)) * (↑G⁻¹ : Matrix d d ℝ) =
+        rowScale_hom γ (rmsNorm ε h) := by
+  choose γ hγ heq using fun t => exists_rmsRow_vecMul_inv_hom hε G (h t)
+  refine ⟨γ, hγ, ?_⟩
+  ext t i
+  exact congrFun (heq t) i
+
+omit [Fintype T] in
+/-- Helper: for `ε > 0`, `N_ε(h G) G⁻¹ = diag(γ) N_ε(h)` with the explicit `γ`. -/
+private theorem rmsNorm_mul_inv_hom {ε : ℝ} (hε : 0 < ε) (G : GL d ℝ) (h : Matrix T d ℝ) :
+    rmsNorm ε (h * (G : Matrix d d ℝ)) * (↑G⁻¹ : Matrix d d ℝ) =
+      rowScale_hom (fun t => gammaF_hom ε (meanSq (h t)) (meanSq (h t ᵥ* (G : Matrix d d ℝ))))
+        (rmsNorm ε h) := by
+  ext t i
+  exact congrFun (rmsRow_vecMul_inv_hom ε G (h t) (by linarith [meanSq_nonneg_hom (h t)])) i
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: a block whose normalized input is scaled row by row by `β > 0` writes its hidden
+state scaled by `β^k`. -/
+private theorem hidden_succ_of_read_hom {k : ℕ} (hf : RowHomogeneous A k)
+    (θ θ' : Params A dIn dOut) (x : Matrix T dIn ℝ) (j : Fin L) (β : T → ℝ)
+    (hβ : ∀ t, 0 < β t)
+    (hin : A.χ (hidden A 0 θ' x j.castSucc) * θ'.read j =
+      rowScale_hom β (A.χ (hidden A 0 θ x j.castSucc) * θ.read j))
+    (hw : θ'.write j = θ.write j) :
+    hidden A 0 θ' x j.succ = rowScale_hom (fun t => β t ^ k) (hidden A 0 θ x j.succ) := by
+  rw [hidden_succ, hidden_succ, hin, hw, f_rowScale_hom hf j β hβ, rowScale_mul_hom]
+  simp only [Pi.zero_apply, Matrix.mul_zero, zero_add]
+
+omit [Fintype T] in
+/-- Helper: before the hidden state `h_j`, the change of basis at `h_j` changes nothing. -/
+private theorem hidden_cobAt_of_lt_hom (θ : Params A dIn dOut) (x : Matrix T dIn ℝ)
+    (j : Fin (L + 1)) (G : GL d ℝ) :
+    ∀ i : Fin (L + 1), i < j → hidden A 0 (θ.cobAt j G) x i = hidden A 0 θ x i := by
+  intro i
+  induction i using Fin.induction with
+  | zero =>
+    intro hj
+    rw [hidden_zero, hidden_zero, θ.cobAt_E_of_ne G hj.ne']
+  | succ i ih =>
+    intro hj
+    have h1 : i.castSucc < j := lt_trans (Fin.castSucc_lt_succ (i := i)) hj
+    rw [hidden_succ, hidden_succ, ih h1, θ.cobAt_read_of_ne G i h1.ne',
+      θ.cobAt_write_of_ne G i hj.ne']
+
+omit [Fintype T] in
+/-- Helper: the change of basis `G` at `h_j` turns `h_j` into `h_j G`. -/
+private theorem hidden_cobAt_self_hom (θ : Params A dIn dOut) (x : Matrix T dIn ℝ)
+    (j : Fin (L + 1)) (G : GL d ℝ) :
+    hidden A 0 (θ.cobAt j G) x j = hidden A 0 θ x j * (G : Matrix d d ℝ) := by
+  cases j using Fin.cases with
+  | zero => rw [hidden_zero, hidden_zero, θ.cobAt_E_zero, Matrix.mul_assoc]
+  | succ i =>
+    rw [hidden_succ, hidden_succ,
+      hidden_cobAt_of_lt_hom θ x i.succ G i.castSucc (Fin.castSucc_lt_succ (i := i)),
+      θ.cobAt_read_of_ne G i (Fin.castSucc_lt_succ (i := i)).ne', θ.cobAt_write_succ]
+    simp only [Pi.zero_apply, Matrix.mul_zero, zero_add, Matrix.mul_assoc]
+
+omit [Fintype T] [Fintype dIn] in
+/-- Helper: after block `ℓ`, the change of basis at `h_ℓ` changes no weight. -/
+private theorem cobAt_read_write_hom (θ : Params A dIn dOut) (ℓ : Fin L) (G : GL d ℝ)
+    (j : Fin L) (hj : ℓ.succ ≤ j.castSucc) :
+    (θ.cobAt ℓ.castSucc G).read j = θ.read j ∧ (θ.cobAt ℓ.castSucc G).write j = θ.write j := by
+  rw [Fin.le_iff_val_le_val, Fin.val_succ, Fin.val_castSucc] at hj
+  refine ⟨θ.cobAt_read_of_ne G j ?_, θ.cobAt_write_of_ne G j ?_⟩
+  · rw [ne_eq, Fin.ext_iff, Fin.val_castSucc, Fin.val_castSucc]; omega
+  · rw [ne_eq, Fin.ext_iff, Fin.val_castSucc, Fin.val_succ]; omega
+
+omit [Fintype T] in
+/-- Helper: block `ℓ` after the change of basis `G` at `h_ℓ`: it reads `N(h G) G⁻¹ W`; if
+`N(h G) G⁻¹ = diag(γ) N(h)`, it writes `diag(γ^k) h_{ℓ+1}`. -/
+private theorem hidden_succ_cobAt_hom {k : ℕ} (hf : RowHomogeneous A k)
+    (θ : Params A dIn dOut) (x : Matrix T dIn ℝ) (ℓ : Fin L) (G : GL d ℝ) (γ : T → ℝ)
+    (hγ : ∀ t, 0 < γ t)
+    (heq : A.χ (hidden A 0 θ x ℓ.castSucc * (G : Matrix d d ℝ)) * (↑G⁻¹ : Matrix d d ℝ) =
+      rowScale_hom γ (A.χ (hidden A 0 θ x ℓ.castSucc))) :
+    hidden A 0 (θ.cobAt ℓ.castSucc G) x ℓ.succ =
+      rowScale_hom (fun t => γ t ^ k) (hidden A 0 θ x ℓ.succ) := by
+  refine hidden_succ_of_read_hom hf θ _ x ℓ γ hγ ?_
+    (θ.cobAt_write_of_ne G ℓ (Fin.castSucc_lt_succ (i := ℓ)).ne)
+  rw [hidden_cobAt_self_hom, θ.cobAt_read_castSucc, ← Matrix.mul_assoc, heq, rowScale_mul_hom]
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: if `χ` agrees on `h_{i₀}` and the later weights agree, `χ` agrees on every later
+hidden state (`i = i₀ + m`). -/
+private theorem chi_hidden_eq_hom (θ θ' : Params A dIn dOut) (x : Matrix T dIn ℝ)
+    (i₀ : Fin (L + 1))
+    (hrw : ∀ j : Fin L, i₀ ≤ j.castSucc → θ'.read j = θ.read j ∧ θ'.write j = θ.write j)
+    (h₀ : A.χ (hidden A 0 θ' x i₀) = A.χ (hidden A 0 θ x i₀)) :
+    ∀ (m : ℕ) (i : Fin (L + 1)), (i : ℕ) = i₀ + m →
+      A.χ (hidden A 0 θ' x i) = A.χ (hidden A 0 θ x i) := by
+  intro m
+  induction m with
+  | zero =>
+    intro i hi
+    rw [show i = i₀ from Fin.ext hi]
+    exact h₀
+  | succ m ih =>
+    intro i hi
+    have hi' := i.isLt
+    obtain ⟨j, hj⟩ : ∃ j : Fin L, (j : ℕ) = i₀ + m := ⟨⟨i₀ + m, by omega⟩, rfl⟩
+    have hle : i₀ ≤ j.castSucc := by rw [Fin.le_iff_val_le_val, Fin.val_castSucc]; omega
+    rw [show i = j.succ from Fin.ext (by rw [Fin.val_succ]; omega), hidden_succ, hidden_succ]
+    simp only [Pi.zero_apply, Matrix.mul_zero, zero_add]
+    rw [ih j.castSucc (by rw [Fin.val_castSucc]; omega), (hrw j hle).1, (hrw j hle).2]
+
+omit [Fintype T] in
+/-- Helper, Lemma A.3 (i) for `ε = 0`: the change of basis `G` at `h_ℓ`, `ℓ < L`. -/
+private theorem eval_cobAt_zero_hom (hA : A.χ = rmsNorm 0) {k : ℕ} (hf : RowHomogeneous A k)
+    (θ : Params A dIn dOut) (ℓ : Fin L) (G : GL d ℝ) (x : Matrix T dIn ℝ) :
+    eval A 0 (θ.cobAt ℓ.castSucc G) x = eval A 0 θ x := by
+  -- block `ℓ` reads `N_0(h G) G⁻¹ = diag(γ) N_0(h)` and writes `diag(γ^k) h_{ℓ+1}`
+  obtain ⟨γ, hγ, heq⟩ := exists_rmsNorm_mul_inv_hom le_rfl G (hidden A 0 θ x ℓ.castSucc)
+  rw [← hA] at heq
+  have h1 := hidden_succ_cobAt_hom hf θ x ℓ G γ hγ heq
+  -- `N_0` forgets the positive scalars; from then on the hidden states agree
+  have h2 : A.χ (hidden A 0 (θ.cobAt ℓ.castSucc G) x ℓ.succ) = A.χ (hidden A 0 θ x ℓ.succ) := by
+    rw [h1, hA, rmsNorm_zero_rowScale_hom _ fun t => pow_pos (hγ t) k]
+  have hL := ℓ.isLt
+  have h3 := chi_hidden_eq_hom θ _ x ℓ.succ (cobAt_read_write_hom θ ℓ G) h2 (L - (ℓ + 1))
+    (Fin.last L) (by rw [Fin.val_last, Fin.val_succ]; omega)
+  rw [eval, eval, h3, θ.cobAt_D_of_ne G (Fin.castSucc_lt_last ℓ).ne]
+
+omit [Fintype T] in
+/-- Helper: `h (c I) = diag(c) h`. -/
+private theorem mul_smul_one_hom (h : Matrix T d ℝ) (c : ℝ) :
+    h * (c • (1 : Matrix d d ℝ)) = rowScale_hom (fun _ => c) h := by
+  ext t i
+  simp only [Matrix.mul_smul, Matrix.mul_one, rowScale_hom, Matrix.of_apply, Matrix.smul_apply,
+    smul_eq_mul]
+
+omit [Fintype T] in
+/-- Helper: the output after the change of basis `G` at `h_L` with `D` unchanged. -/
+private theorem eval_scale_last_eq_hom (θ : Params A dIn dOut) (G : GL d ℝ)
+    (x : Matrix T dIn ℝ) :
+    eval A 0 { θ.cobAt (Fin.last L) G with D := θ.D } x =
+      A.χ (hidden A 0 θ x (Fin.last L) * (G : Matrix d d ℝ)) * θ.D := by
+  rw [← hidden_cobAt_self_hom θ x (Fin.last L) G]
+  rfl
+
+omit [Fintype T] in
+/-- Helper, Lemma A.3 (i) for `ε = 0`: the scaling at `h_L`. -/
+private theorem eval_scale_last_zero_hom (hA : A.χ = rmsNorm 0) (θ : Params A dIn dOut) {c : ℝ}
+    (hc : 0 < c) (G : GL d ℝ) (hG : (G : Matrix d d ℝ) = c • (1 : Matrix d d ℝ))
+    (x : Matrix T dIn ℝ) :
+    eval A 0 { θ.cobAt (Fin.last L) G with D := θ.D } x = eval A 0 θ x := by
+  rw [eval_scale_last_eq_hom, eval, hG, mul_smul_one_hom, hA,
+    rmsNorm_zero_rowScale_hom _ fun _ => hc]
+
+
+/-! ### The scalars along the network, for `ε > 0` -/
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: `β` has the derivative `ε/(r² + ε)` at `μ = 1`. -/
+private theorem hasDerivAt_betaF_hom {ε s : ℝ} (hε : 0 < ε) (hs : 0 ≤ s) :
+    HasDerivAt (betaF_hom ε s) (ε / (s + ε)) 1 := by
+  have hp : 0 < s + ε := by linarith
+  have hr : 0 < Real.sqrt (s + ε) := Real.sqrt_pos.2 hp
+  -- `a ↦ a² s + ε` has the derivative `2 s` at `1`
+  have h1 : HasDerivAt (fun a : ℝ => a ^ 2 * s + ε) (2 * s) 1 := by
+    have h := ((hasDerivAt_pow 2 (1 : ℝ)).mul_const s).add_const ε
+    convert h using 1
+    norm_num
+  have h2 := h1.sqrt (by simp only [one_pow, one_mul]; exact hp.ne')
+  have h3 := ((hasDerivAt_id' (1 : ℝ)).mul_const (Real.sqrt (s + ε))).fun_div h2
+    (by simp only [one_pow, one_mul]; exact hr.ne')
+  refine (h3 : HasDerivAt (betaF_hom ε s) _ 1).congr_deriv ?_
+  have hsq : Real.sqrt (s + ε) ^ 2 = s + ε := Real.sq_sqrt hp.le
+  simp only [one_pow, one_mul]
+  field_simp
+  rw [hsq]
+  ring
+
+/-- Helper: the scalars along the network for `ε > 0`. If a hidden state `h_{i₀}` becomes
+`diag(μ) h_{i₀}` with `μ > 0` and the later weights are unchanged, then `h_i`, `i = i₀ + m`,
+becomes `diag(F(μ)) h_i`, where `F` (one function per token) depends only on `θ` and `x`:
+`F = 1` at `1`, with the derivative `k^m ∏_{i₀ ≤ j < i} ε/(r_j² + ε)` there. -/
+private theorem exists_scale_fun_hom {ε : ℝ} (hε : 0 < ε) (hA : A.χ = rmsNorm ε) {k : ℕ}
+    (hf : RowHomogeneous A k) (θ : Params A dIn dOut) (x : Matrix T dIn ℝ)
+    (i₀ : Fin (L + 1)) :
+    ∀ (m : ℕ) (i : Fin (L + 1)), (i : ℕ) = i₀ + m → ∃ F : T → ℝ → ℝ,
+      (∀ t a, 0 < a → 0 < F t a) ∧ (∀ t, F t 1 = 1) ∧
+      (∀ t, HasDerivAt (F t) ((k : ℝ) ^ m * ∏ j ∈ Finset.univ.filter
+          (fun j : Fin (L + 1) => i₀ ≤ j ∧ j < i),
+          ε / (meanSq (hidden A 0 θ x j t) + ε)) 1) ∧
+      ∀ (θ' : Params A dIn dOut) (μ : T → ℝ), (∀ t, 0 < μ t) →
+        (∀ j : Fin L, i₀ ≤ j.castSucc → θ'.read j = θ.read j ∧ θ'.write j = θ.write j) →
+        hidden A 0 θ' x i₀ = rowScale_hom μ (hidden A 0 θ x i₀) →
+        hidden A 0 θ' x i = rowScale_hom (fun t => F t (μ t)) (hidden A 0 θ x i) := by
+  intro m
+  induction m with
+  | zero =>
+    -- `i = i₀`: `F(a) = a`
+    intro i hi
+    obtain rfl : i = i₀ := Fin.ext hi
+    refine ⟨fun _ a => a, fun _ _ ha => ha, fun _ => rfl, fun t => ?_,
+      fun θ' μ _ _ h0 => h0⟩
+    have hP : ∏ j ∈ Finset.univ.filter (fun j : Fin (L + 1) => i ≤ j ∧ j < i),
+        ε / (meanSq (hidden A 0 θ x j t) + ε) = 1 :=
+      Finset.prod_eq_one fun j hj => absurd (Finset.mem_filter.1 hj).2.2
+        (not_lt.2 (Finset.mem_filter.1 hj).2.1)
+    rw [hP, pow_zero, one_mul]
+    exact hasDerivAt_id' 1
+  | succ m ih =>
+    -- `i = j + 1` for the block `j` that reads `h_{i₀ + m}`
+    intro i hi
+    have hi' := i.isLt
+    obtain ⟨j, hj⟩ : ∃ j : Fin L, (j : ℕ) = i₀ + m := ⟨⟨i₀ + m, by omega⟩, rfl⟩
+    obtain rfl : i = j.succ := Fin.ext (by rw [Fin.val_succ]; omega)
+    obtain ⟨F, hFpos, hF1, hFd, hFrel⟩ := ih j.castSucc (by rw [Fin.val_castSucc]; omega)
+    have hle : i₀ ≤ j.castSucc := by rw [Fin.le_iff_val_le_val, Fin.val_castSucc]; omega
+    -- the new scalar is `β(F(μ))^k`
+    refine ⟨fun t a => betaF_hom ε (meanSq (hidden A 0 θ x j.castSucc t)) (F t a) ^ k,
+      fun t a ha => pow_pos (betaF_pos_hom hε (meanSq_nonneg_hom _) (hFpos t a ha)) k,
+      fun t => by dsimp only; rw [hF1, betaF_one_hom hε (meanSq_nonneg_hom _), one_pow],
+      fun t => ?_, ?_⟩
+    · -- the chain rule: one more factor `k ε/(r_j² + ε)`
+      have hb := hasDerivAt_betaF_hom hε (meanSq_nonneg_hom (hidden A 0 θ x j.castSucc t))
+      have h2 := (hb.comp_of_eq 1 (hFd t) (hF1 t).symm).fun_pow k
+      refine (h2 : HasDerivAt (fun a => betaF_hom ε (meanSq (hidden A 0 θ x j.castSucc t))
+        (F t a) ^ k) _ 1).congr_deriv ?_
+      have hfil : Finset.univ.filter (fun j' : Fin (L + 1) => i₀ ≤ j' ∧ j' < j.succ) =
+          insert j.castSucc
+            (Finset.univ.filter (fun j' : Fin (L + 1) => i₀ ≤ j' ∧ j' < j.castSucc)) := by
+        ext j'
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_insert,
+          Fin.ext_iff, Fin.le_iff_val_le_val, Fin.lt_def, Fin.val_succ,
+          Fin.val_castSucc]
+        omega
+      have hnot : j.castSucc ∉
+          Finset.univ.filter (fun j' : Fin (L + 1) => i₀ ≤ j' ∧ j' < j.castSucc) := by
+        simp
+      rw [hfil, Finset.prod_insert hnot, Function.comp_apply, hF1,
+        betaF_one_hom hε (meanSq_nonneg_hom _), one_pow, pow_succ]
+      ring
+    · -- block `j` reads `N_ε(diag(F(μ)) h) W = diag(β) N_ε(h) W`
+      intro θ' μ hμ hrw h0
+      have h := hFrel θ' μ hμ hrw h0
+      exact hidden_succ_of_read_hom hf θ θ' x j
+        (fun t => betaF_hom ε (meanSq (hidden A 0 θ x j.castSucc t)) (F t (μ t)))
+        (fun t => betaF_pos_hom hε (meanSq_nonneg_hom _) (hFpos t _ (hμ t)))
+        (by rw [hA, h, rmsNorm_rowScale_hom hε, (hrw j hle).1, rowScale_mul_hom])
+        (hrw j hle).2
 
 /-- **Lemma A.3, the scalar `Λ`, for a change of basis before the last hidden state:** for
 `ε ≥ 0` and blocks that are positively homogeneous of degree `k`, the change of basis `G` at
@@ -80,7 +481,26 @@ theorem exists_pos_smul_eval_cobAt_of_rowHomogeneous {ε : ℝ} (hε : 0 ≤ ε)
     (ℓ : Fin L) (G : GL d ℝ) (x : Matrix T dIn ℝ) :
     ∃ Λ : T → ℝ, (∀ t, 0 < Λ t) ∧
       ∀ t, eval A 0 (θ.cobAt ℓ.castSucc G) x t = Λ t • eval A 0 θ x t := by
-  sorry
+  rcases hε.eq_or_lt with h0 | hpos
+  · -- `ε = 0`: the function is unchanged (part (i)), `Λ = 1`
+    subst h0
+    exact ⟨fun _ => 1, fun _ => one_pos,
+      fun t => by rw [eval_cobAt_zero_hom hA hf θ ℓ G x, one_smul]⟩
+  · -- block `ℓ` reads `N_ε(h G) G⁻¹ W = diag(γ) N_ε(h) W` and writes `diag(γ^k) h_{ℓ+1}`
+    obtain ⟨γ, hγ, heq⟩ := exists_rmsNorm_mul_inv_hom hε G (hidden A 0 θ x ℓ.castSucc)
+    rw [← hA] at heq
+    have h1 := hidden_succ_cobAt_hom hf θ x ℓ G γ hγ heq
+    -- the later blocks give `h_L ↦ diag(μ_L) h_L`, and the readout reads `diag(β_L) N_ε(h_L)`
+    have hL := ℓ.isLt
+    obtain ⟨F, hFpos, -, -, hFrel⟩ := exists_scale_fun_hom hpos hA hf θ x ℓ.succ (L - (ℓ + 1))
+      (Fin.last L) (by rw [Fin.val_last, Fin.val_succ]; omega)
+    have h2 := hFrel _ _ (fun t => pow_pos (hγ t) k) (cobAt_read_write_hom θ ℓ G) h1
+    refine ⟨fun t => betaF_hom ε (meanSq (hidden A 0 θ x (Fin.last L) t)) (F t (γ t ^ k)),
+      fun t => betaF_pos_hom hpos (meanSq_nonneg_hom _) (hFpos t _ (pow_pos (hγ t) k)),
+      fun t => ?_⟩
+    rw [eval, eval, h2, hA, rmsNorm_rowScale_hom hpos,
+      θ.cobAt_D_of_ne G (Fin.castSucc_lt_last ℓ).ne, rowScale_mul_hom]
+    rfl
 
 /-- **Lemma A.3, the scalar `Λ`, for the scaling at the last hidden state:** for `ε ≥ 0`, the
 scaling `G = cI`, `c > 0`, at `h_L` with the readout `D` unchanged multiplies the output at every
@@ -90,7 +510,17 @@ theorem exists_pos_smul_eval_scale_last {ε : ℝ} (hε : 0 ≤ ε) (hA : A.χ =
     (hG : (G : Matrix d d ℝ) = c • (1 : Matrix d d ℝ)) (x : Matrix T dIn ℝ) :
     ∃ Λ : T → ℝ, (∀ t, 0 < Λ t) ∧
       ∀ t, eval A 0 { θ.cobAt (Fin.last L) G with D := θ.D } x t = Λ t • eval A 0 θ x t := by
-  sorry
+  rcases hε.eq_or_lt with h0 | hpos
+  · -- `ε = 0`: the function is unchanged (part (i)), `Λ = 1`
+    subst h0
+    exact ⟨fun _ => 1, fun _ => one_pos,
+      fun t => by rw [eval_scale_last_zero_hom hA θ hc G hG x, one_smul]⟩
+  · -- `h_L ↦ diag(c) h_L`, and the readout reads `diag(β_L) N_ε(h_L)`
+    refine ⟨fun t => betaF_hom ε (meanSq (hidden A 0 θ x (Fin.last L) t)) c,
+      fun t => betaF_pos_hom hpos (meanSq_nonneg_hom _) hc, fun t => ?_⟩
+    rw [eval_scale_last_eq_hom, hG, mul_smul_one_hom, hA, rmsNorm_rowScale_hom hpos,
+      rowScale_mul_hom, eval, hA]
+    rfl
 
 /-- **Lemma A.3 (i) for `ε = 0`, a change of basis before the last hidden state:** for blocks
 that are positively homogeneous of degree `k` under pre-RMSNorm with `ε = 0`, every invertible
@@ -99,7 +529,7 @@ theorem eval_cobAt_rmsNorm_zero_of_rowHomogeneous (hA : A.χ = rmsNorm 0) {k : �
     (hf : RowHomogeneous A k) (θ : Params A dIn dOut) (ℓ : Fin L) (G : GL d ℝ)
     (x : Matrix T dIn ℝ) :
     eval A 0 (θ.cobAt ℓ.castSucc G) x = eval A 0 θ x := by
-  sorry
+  exact eval_cobAt_zero_hom hA hf θ ℓ G x
 
 /-- **Lemma A.3 (i) for `ε = 0`, the scaling at the last hidden state:** under pre-RMSNorm with
 `ε = 0`, the scaling `G = cI`, `c > 0`, at `h_L` with the readout `D` unchanged preserves the
@@ -108,7 +538,7 @@ theorem eval_scale_last_rmsNorm_zero (hA : A.χ = rmsNorm 0) (θ : Params A dIn 
     (hc : 0 < c) (G : GL d ℝ) (hG : (G : Matrix d d ℝ) = c • (1 : Matrix d d ℝ))
     (x : Matrix T dIn ℝ) :
     eval A 0 { θ.cobAt (Fin.last L) G with D := θ.D } x = eval A 0 θ x := by
-  sorry
+  exact eval_scale_last_zero_hom hA θ hc G hG x
 
 /-- **Lemma A.3 (ii), a change of basis before the last hidden state:** for `ε > 0`, blocks that
 are positively homogeneous of degree `k` and `G = e^{τ S}` at `h_ℓ`, `ℓ < L`, the derivative of
