@@ -308,6 +308,13 @@ Notes for the authors on these statements:
   as a hypothesis, and a continuous map has it. ReLU² and ReGLU blocks satisfy it. The homogeneity
   is assumed of the fixed map `f_ℓ`, which makes the block homogeneous for all weights.
 - Proposition A.11 (i) does not use that `M` is invertible.
+- Which statements hold for every `σ` with `σ(z) − σ(−z) = cz`: only those of the direction "more
+  units suffice" (Theorem 3.1 (i) "if", Theorem 3.1 (ii) first half, Propositions A.11 (i), 4.4 and
+  5.4). The converse statements (Theorem 3.1 (i) "only if" and its generic clause, "none with
+  fewer", Proposition 3.2) are stated for ReLU and GELU only, as in the paper, and are false for
+  some such `σ`: for `σ(z) = z/2 + |z|³` (Remark A.8) the rescaling `(c_i, a_i) ↦ (λc_i, a_i/λ³)` of
+  a hidden unit changes the block by a linear term, so a block of the same width absorbs `xM` for
+  many `M`.
 - Corollary A.9 and Theorem 3.1 (i), first sentence: the proof does not use `p ≥ 2` (for one input a
   nondegenerate read has at most one hidden unit), so the Lean statements leave it out. The generic
   clause needs it (two rows, for the columns to be pairwise non-collinear at generic weights).
