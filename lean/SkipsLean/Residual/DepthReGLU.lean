@@ -537,6 +537,49 @@ theorem eventually_funDim_smallWrites_reglu
   have h3 := hτ.2
   omega
 
+/-! ### Helpers: open conditions near `θ_τ` -/
+
+omit [Fintype T] [Nonempty T] in
+/-- Helper: near parameters whose embedding has rank `d`, the embedding still has rank `d` (with a
+left inverse `B` of `E`, `det (B E') ≠ 0` near `E`, and `rank E' ≥ rank (B E') = d`). -/
+private theorem eventually_rank_E_drg
+    (θ₀ : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut)
+    (h : θ₀.E.rank = Fintype.card d) :
+    ∀ᶠ θ' in 𝓝 θ₀, θ'.E.rank = Fintype.card d := by
+  obtain ⟨B, hB⟩ := Matrix.vecMul_surjective_iff_exists_left_inverse.mp
+    (Matrix.vecMul_surjective_iff_rank_eq_card.mpr h)
+  have hE : Continuous fun θ' : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut =>
+      θ'.E :=
+    (Params.linE (A := Arch.gated (T := T) (d := d) relu id hid) (dIn := dIn)
+      (dOut := dOut)).continuous_of_finiteDimensional
+  have hc : Continuous fun θ' : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut =>
+      (B * θ'.E).det := (continuous_const.matrix_mul hE).matrix_det
+  have h0 : (B * θ₀.E).det ≠ 0 := by
+    rw [hB, Matrix.det_one]
+    exact one_ne_zero
+  filter_upwards [hc.continuousAt.eventually_ne h0] with θ' hθ'
+  have h1 := Matrix.rank_of_isUnit (B * θ'.E) ((Matrix.isUnit_iff_isUnit_det _).2 (Ne.isUnit hθ'))
+  have h2 := Matrix.rank_mul_le_right B θ'.E
+  have h3 := Matrix.rank_le_card_width θ'.E
+  omega
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper: near parameters no column of whose reads is zero, no column of a read is zero (each
+column has a nonzero entry, a continuous function of the parameters). -/
+private theorem eventually_col_ne_zero_drg
+    (θ₀ : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut)
+    (h : ∀ ℓ (j : hid ℓ ⊕ hid ℓ), (fun a => θ₀.read ℓ a j) ≠ 0) :
+    ∀ᶠ θ' in 𝓝 θ₀, ∀ ℓ (j : hid ℓ ⊕ hid ℓ), (fun a => θ'.read ℓ a j) ≠ 0 := by
+  refine Filter.eventually_all.2 fun ℓ => Filter.eventually_all.2 fun j => ?_
+  obtain ⟨a, ha⟩ := Function.ne_iff.1 (h ℓ j)
+  have hc : Continuous fun θ' : Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut =>
+      θ'.read ℓ a j :=
+    ((Matrix.entryLinearMap ℝ ℝ a j).comp
+      (Params.linRead (A := Arch.gated (T := T) (d := d) relu id hid) (dIn := dIn) (dOut := dOut)
+        ℓ)).continuous_of_finiteDimensional
+  filter_upwards [hc.continuousAt.eventually_ne ha] with θ' hθ' h0
+  exact hθ' (congrFun h0 a)
+
 /-- **Lemma A.30 for ReGLU blocks, second sentence, near `θ_τ`:** under the conditions
 `SmallWritesGenericReGLU`, for all small `τ ≠ 0` the residual network has
 `fd = P − d² − 2 ∑_ℓ d_hidden^ℓ` at every parameter near `θ_τ`. -/
@@ -547,7 +590,31 @@ theorem eventually_eventually_funDim_smallWrites_reglu
       funDim (Arch.gated relu id hid) 1 θ'
           + (Fintype.card d ^ 2 + 2 * ∑ ℓ, Fintype.card (hid ℓ))
         = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut) := by
-  sorry
+  obtain ⟨n, X, -, h⟩ := exists_eventually_jacobianRank_smallWrites_reglu θ hθ
+  obtain ⟨hv, hg⟩ := read_cols_ne_zero_drg θ hθ.gated
+  have hcol : ∀ ℓ (j : hid ℓ ⊕ hid ℓ), (fun a => θ.read ℓ a j) ≠ 0 := by
+    intro ℓ j
+    rcases j with i | i
+    · exact hg ℓ i
+    · exact hv ℓ i
+  filter_upwards [h] with τ hτ
+  -- near `θ_τ` the pre-activations on the batch stay off the kinks, and the rank on the batch
+  -- does not drop below `P − d² − 2 s`
+  have hnear := eventually_jacobianRank_ge_of_contDiffOn (Arch.gated relu id hid)
+    (θ.smallWrites τ) rfl 1
+    (fun ℓ => {M : Matrix T (hid ℓ ⊕ hid ℓ) ℝ | ∀ t i, M t (Sum.inl i) ≠ 0})
+    (fun ℓ => isOpen_gateSet_drg ℓ) (fun ℓ => (contDiffOn_f_drg ℓ).of_le (by norm_num)) X
+    (fun i ℓ t j => hτ.1 i ℓ t j)
+  -- near `θ_τ` the embedding has rank `d` and no column of a read is zero, so the symmetries
+  -- give `fd + d² + 2 s ≤ P`
+  filter_upwards [hnear, eventually_rank_E_drg (θ.smallWrites τ) hθ.gated.rank_E,
+    eventually_col_ne_zero_drg (θ.smallWrites τ) hcol] with θ' h1 h2 h3
+  have h4 := jacobianRank_le_funDim (A := Arch.gated relu id hid) (S := 1) θ' X
+  have h5 := funDim_add_le_residual_gated_gate relu_homogeneous θ' h2
+    (fun ℓ i => h3 ℓ (Sum.inr i)) (fun ℓ i => h3 ℓ (Sum.inl i))
+  have h6 := hτ.2
+  have h7 := h1.2
+  omega
 
 /-- **Lemma A.30 for ReGLU blocks, first sentence:** with `d_in, d_out ≥ d ≥ 2` and blocks of
 any widths, for generic parameters `θ` there is a finite batch of inputs at which no limit
@@ -567,7 +634,8 @@ theorem ae_exists_eventually_jacobianRank_smallWrites_reglu
         jacobianRank (Arch.gated relu id hid) 1 X (θ.smallWrites τ)
             + (Fintype.card d ^ 2 + 2 * ∑ ℓ, Fintype.card (hid ℓ))
           = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut) := by
-  sorry
+  filter_upwards [ae_smallWritesGenericReGLU μ hd hdIn hdOut] with θ hθ
+  exact exists_eventually_jacobianRank_smallWrites_reglu θ hθ
 
 /-- **Lemma A.30 for ReGLU blocks, second sentence:** with `d_in, d_out ≥ d ≥ 2` and blocks of
 any widths, there is an open set `U` of weights on which the residual network has
@@ -587,6 +655,24 @@ theorem exists_isOpen_funDim_smallWrites_reglu
         [μ.IsAddHaarMeasure], (∀ ℓ, Fintype.card d ≤ Fintype.card (hid ℓ)) →
         ∀ᵐ θ ∂μ, θ ∈ U → funDim (Arch.gated relu id hid) 0 θ + L * Fintype.card d ^ 2
           ≤ funDim (Arch.gated relu id hid) 1 θ) := by
-  sorry
+  -- `U`: the interior of the set where `fd = P − d² − 2 s`
+  refine ⟨interior {θ | funDim (Arch.gated relu id hid) 1 θ
+      + (Fintype.card d ^ 2 + 2 * ∑ ℓ, Fintype.card (hid ℓ))
+      = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut)},
+    isOpen_interior, fun θ hθ => interior_subset hθ, fun μ _ => ?_, fun μ _ hhid => ?_⟩
+  · -- at generic `θ` and small `τ ≠ 0`, the equality holds on a neighborhood of `θ_τ`
+    filter_upwards [ae_smallWritesGenericReGLU μ hd hdIn hdOut] with θ hθ
+    filter_upwards [eventually_eventually_funDim_smallWrites_reglu θ hθ] with τ hτ
+    exact mem_interior_iff_mem_nhds.2 hτ
+  · -- the gain: `fd_0 + (L + 1) d² + 2 s ≤ P` at generic `θ`, and `fd_1 + d² + 2 s = P` on `U`
+    have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+    filter_upwards [ae_funDim_add_le_skipless_reglu μ hdIn hhid] with θ h hU
+    have h1 : funDim (Arch.gated relu id hid) 1 θ
+        + (Fintype.card d ^ 2 + 2 * ∑ ℓ, Fintype.card (hid ℓ))
+        = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) relu id hid) dIn dOut) :=
+      interior_subset hU
+    have h2 : (L + 1) * Fintype.card d ^ 2 = L * Fintype.card d ^ 2 + Fintype.card d ^ 2 :=
+      add_one_mul _ _
+    omega
 
 end Skips
