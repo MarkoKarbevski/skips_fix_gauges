@@ -239,7 +239,7 @@ statements, generated at 21:19 UTC from their twins for any `ε`),
 `OneBlock/ResidualRMSZeroGainHomogeneous.lean` (3 statements, written at 21:21 UTC),
 `OneBlock/SkiplessRMSZeroReadout.lean`, `OneBlock/UnitsParallel.lean` and
 `OneBlock/SkiplessHomogeneousRMSZeroEq.lean` (written at 21:30 UTC),
-`Residual/GainUnderEquality.lean` and `Residual/LearnedSkipsConformal.lean` (written at 21:41 UTC).
+`Residual/GainUnderEquality.lean` and `Residual/LearnedSkipsConformal.lean` (written at 21:39 UTC).
 A ninth reader (part A, 24 November) compared the six files on
 GELU at complex arguments (`Activations/MillsC.lean`, `Activations/MillsCExpansion.lean`,
 `Activations/MillsAtInfinityC.lean`, `Activations/GeluOnPath.lean`,
