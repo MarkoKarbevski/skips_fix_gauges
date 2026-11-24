@@ -459,3 +459,36 @@ import SkipsLean
 #print axioms Skips.ae_funDim_reglu_oneBlock_residual
 #print axioms Skips.ae_exists_jacobianRank_reglu_oneBlock_residual
 #print axioms Skips.ae_funDim_reglu_oneBlock_residual_eq_add
+-- Dimension/GenericRank.lean
+#print axioms Skips.analyticOnNhd_eval_params
+#print axioms Skips.ae_jacobianRank_ge
+#print axioms Skips.ae_jacobianRank_le_funDim
+#print axioms Skips.ae_funDim_ge
+-- Activations/Analytic.lean
+#print axioms Skips.analyticOnNhd_gaussPdf
+#print axioms Skips.analyticOnNhd_gaussCdf
+#print axioms Skips.analyticOnNhd_gelu
+#print axioms Skips.analyticOnNhd_silu
+#print axioms Skips.analyticOnNhd_f_gated
+-- Depth/SuffixGated.lean
+#print axioms Skips.claimGated_last
+#print axioms Skips.claimGated_last_rmsNorm
+#print axioms Skips.flat_le_cobDir_add_rescaleDir_of_claimGated
+#print axioms Skips.funDim_of_claimGated
+#print axioms Skips.flat_le_cobDir_add_rescaleDir_of_claimGated_rmsNorm
+#print axioms Skips.funDim_of_claimGated_rmsNorm
+-- Absorb/RMSNormGeneric.lean (the theorems that do not use Absorb/RMSNormRays.lean)
+#print axioms Skips.ae_turnGeneric
+#print axioms Skips.locallyLipschitz_f_mlp
+#print axioms Skips.locallyLipschitz_f_gated
+#print axioms Skips.ae_someBlockNonzero_mlp
+#print axioms Skips.ae_someBlockNonzero_gated
+-- Absorb/RMSNormRays.lean and the rest of Absorb/RMSNormGeneric.lean
+#print axioms Skips.exists_ne_skipless_rmsNorm_of_turn
+#print axioms Skips.not_dense_eq_skipless_rmsNorm_zero_of_turn
+#print axioms Skips.ae_ne_skipless_rmsNorm
+#print axioms Skips.ae_not_dense_eq_skipless_rmsNorm_zero
+#print axioms Skips.ae_ne_skipless_rmsNorm_mlp
+#print axioms Skips.ae_not_dense_eq_skipless_rmsNorm_zero_mlp
+#print axioms Skips.ae_ne_skipless_rmsNorm_gated
+#print axioms Skips.ae_not_dense_eq_skipless_rmsNorm_zero_gated
