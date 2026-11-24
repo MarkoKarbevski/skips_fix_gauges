@@ -38,7 +38,8 @@ Lean statement here. (For residual networks the two characterizations are in
 `eval_cob_skipless`.)
 
 Stated here for MLP blocks and for gated blocks, with what the proof uses of the activation or
-gate as hypotheses, and then for the seven kinds of block. Every block has at least one hidden
+gate as hypotheses, and the facts that the seven kinds of block satisfy these hypotheses (the
+lemma for one kind is the general statement with these facts). Every block has at least one hidden
 unit (a block without hidden units writes `0`, and the hidden state after it carries no
 condition). Attention blocks are not defined in this library, so the lemma is not stated for
 them. A change of basis is `Params.cob θ G G`.
