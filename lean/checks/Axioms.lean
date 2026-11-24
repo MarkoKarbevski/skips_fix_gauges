@@ -352,3 +352,96 @@ import SkipsLean
 #print axioms Skips.ae_funDim_reluSq_oneBlock_residual
 #print axioms Skips.ae_exists_jacobianRank_reluSq_oneBlock_residual
 #print axioms Skips.ae_funDim_reluSq_oneBlock_residual_eq_add
+
+-- Public helper theorems of the files above that were not listed before
+-- Absorb/FewerUnits.lean
+#print axioms Skips.exists_ne_zero_forall_dotProduct_eq_zero
+-- Absorb/Limits.lean
+#print axioms Skips.norm_mul_norm_inv_smul_sub_le
+#print axioms Skips.norm_mul_norm_rmsRow_zero_sub_le
+#print axioms Skips.rmsNorm_zero_smul
+#print axioms Skips.norm_rmsNorm_zero_sub_le
+#print axioms Skips.norm_rmsNorm_zero_le
+#print axioms Skips.norm_mul_le_card
+#print axioms Skips.lipschitzWith_mul_right
+-- Absorb/SameWidth.lean
+#print axioms Skips.exists_dotProduct_eq_zero_and_ne_zero
+#print axioms Skips.write_eq_sum_of_abs_eq
+-- Activations/Gaussian.lean
+#print axioms Skips.gaussPdf_pos
+#print axioms Skips.gaussPdf_neg
+#print axioms Skips.hasDerivAt_gaussPdf
+#print axioms Skips.continuous_gaussPdf
+#print axioms Skips.gaussPdf_eq
+#print axioms Skips.integrable_gaussPdf
+#print axioms Skips.integral_gaussPdf_Ioi
+#print axioms Skips.tendsto_gaussCdf_atBot
+#print axioms Skips.strictMono_gaussCdf
+#print axioms Skips.gaussCdf_pos
+#print axioms Skips.gaussCdf_lt_one
+#print axioms Skips.tendsto_gaussPdf_atTop
+-- Basic/RMSNorm.lean
+#print axioms Skips.dotProduct_vecMul_orthogonal
+#print axioms Skips.rmsRow_vecMul_orthogonal
+-- Depth/StepTanhRMS.lean
+#print axioms Skips.differentiable_suffix_prod_of_differentiable
+-- Depth/Suffix.lean
+#print axioms Skips.suffix_last
+#print axioms Skips.suffix_castSucc
+#print axioms Skips.fderiv_suffix_last
+#print axioms Skips.fderiv_params_suffix_last
+#print axioms Skips.suffix_last_eq_mul
+#print axioms Skips.suffix_castSucc_eq_comp
+#print axioms Skips.analyticOnNhd_block
+#print axioms Skips.analyticOnNhd_suffix
+#print axioms Skips.fderiv_suffix_castSucc
+#print axioms Skips.differentiable_suffix_prod
+#print axioms Skips.differentiable_params_suffix
+#print axioms Skips.differentiable_suffix
+#print axioms Skips.fderiv_eval_eq_fderiv_suffix
+-- Depth/SuffixRMS.lean
+#print axioms Skips.analyticOnNhd_matrix_mul
+#print axioms Skips.fderiv_rmsNorm_apply
+#print axioms Skips.injective_fderiv_rmsNorm
+#print axioms Skips.isOpenMap_rmsNorm
+#print axioms Skips.isOpen_dense_preimage_rmsNorm
+#print axioms Skips.fderiv_suffix_last_of_differentiable
+#print axioms Skips.fderiv_params_suffix_last_eq_mul
+#print axioms Skips.suffix_castSucc_eq_comp_block
+#print axioms Skips.analyticOnNhd_block_comp
+#print axioms Skips.fderiv_suffix_castSucc_of_analytic
+#print axioms Skips.fderiv_eval_eq_fderiv_suffix_of_analytic
+#print axioms Skips.fderiv_eval_eq_fderiv_suffix_rmsNorm
+-- Dimension/Functional.lean
+#print axioms Skips.jacobianRank_le_finrank
+#print axioms Skips.jacobianRank_le_funDim
+-- Dimension/UpperBound.lean
+#print axioms Skips.cobDir_mem_flat_skipless
+#print axioms Skips.cobDir_const_mem_flat_residual
+-- Dimension/UpperBoundRMSNorm.lean
+#print axioms Skips.cobDir_mem_flat_skipless_rmsNorm
+-- Network/Analytic.lean
+#print axioms Skips.analyticOnNhd_matrix_entry
+-- OneBlock/Common.lean
+#print axioms Skips.cobDirLin_apply
+#print axioms Skips.finrank_cobDomain
+#print axioms Skips.analyticOnNhd_linear
+#print axioms Skips.analyticOnNhd_mul_apply
+#print axioms Skips.ae_ne_zero_of_analytic
+#print axioms Skips.analyticOnNhd_E_mul_read
+#print axioms Skips.analyticOnNhd_write_mul_D
+#print axioms Skips.rank_eq_card_of_isUnit_det
+#print axioms Skips.sum_one_mul_one_ne_zero
+#print axioms Skips.exists_minor_ne_zero
+#print axioms Skips.hasDerivAt_quad
+#print axioms Skips.hasDerivAt_eval_line
+#print axioms Skips.differentiable_f_mlp
+#print axioms Skips.differentiable_f_gated
+-- OneBlock/GELU.lean
+#print axioms Skips.gelu_unitsRigid
+-- OneBlock/GeGLU.lean
+#print axioms Skips.gelu_gatedUnitsRescale
+-- OneBlock/Tanh.lean
+#print axioms Skips.hasDerivAt_tanh
+-- Symmetry/Normalized.lean
+#print axioms Skips.coe_inv_of_mem_orthogonalGroup
