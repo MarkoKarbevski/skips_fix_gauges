@@ -1191,3 +1191,9 @@ import SkipsLean
 #print axioms Skips.ae_funDim_attentionMlp_residual_rmsNorm_ge_add
 #print axioms Skips.ae_funDim_attention_tanh_residual_rmsNorm
 #print axioms Skips.ae_funDim_attention_gelu_residual_rmsNorm
+#print axioms Skips.funDim_add_le_skipless_ends_of_insideBlocks
+#print axioms Skips.funDim_add_le_skipless_ends_of_insideBlocks_rmsNorm
+#print axioms Skips.jacobianRank_add_le_skipless_ends_attentionMlp
+#print axioms Skips.jacobianRank_add_le_skipless_ends_attentionMlp_rmsNorm
+#print axioms Skips.jacobianRank_add_le_skipless_ends_attentionGated
+#print axioms Skips.jacobianRank_add_le_skipless_ends_attentionGated_rmsNorm
