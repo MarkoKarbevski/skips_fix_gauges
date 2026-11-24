@@ -206,6 +206,20 @@ private theorem linearIndependent_abs_tps {ι : Type*} [Fintype ι] (x s : ι �
     simp only [Rat.smul_def]
     rw [this, hg', mul_zero]
 
+/-- The coefficient `c₃ = −(α/4) ⟨aZ, a⟩ aW` of `t³` in `ż` on the path `α (t a + t⁻¹ b)` (and, with
+`b` for `a`, the coefficient `c₋₃` of `t⁻³`); `α = √d/2`, `a = ν`, `b = ν̄` in the paper. -/
+private noncomputable def cCube_tps {m : Type*} (ZC : Matrix d d ℂ) (WC : Matrix d m ℂ)
+    (a : d → ℂ) (α : ℂ) : m → ℂ :=
+  (-(α / 4) * ((a ᵥ* ZC) ⬝ᵥ a)) • (a ᵥ* WC)
+
+/-- The coefficient `c₁ = α (a (ZW + η_W) − (1/4) ((⟨aZ, b⟩ + ⟨bZ, a⟩) a + ⟨aZ, a⟩ b) W)` of `t`
+in `ż` on the path `α (t a + t⁻¹ b)` (and, with `a, b` exchanged, the coefficient `c₋₁` of
+`t⁻¹`). -/
+private noncomputable def cPlus_tps {m : Type*} (ZC : Matrix d d ℂ)
+    (WC EW : Matrix d m ℂ) (a b : d → ℂ) (α : ℂ) : m → ℂ :=
+  α • (a ᵥ* (ZC * WC + EW) - (1 / 4 : ℂ) • ((((a ᵥ* ZC) ⬝ᵥ b + (b ᵥ* ZC) ⬝ᵥ a) • a
+    + ((a ᵥ* ZC) ⬝ᵥ a) • b) ᵥ* WC))
+
 omit [DecidableEq d] in
 /-- Step 2: the row of `ż(n)` on the path `n = α (t a + t⁻¹ b)`, with `α² = d/4`, is
 `t³ c₃ + t c₁ + t⁻¹ c₋₁ + t⁻³ c₋₃`. -/
@@ -216,12 +230,9 @@ private theorem zdot_row_tps {m : Type*} [Fintype m] (ZC : Matrix d d ℂ) (WC E
         - ((((α • (t • a + t⁻¹ • b)) ᵥ* ZC) ⬝ᵥ (α • (t • a + t⁻¹ • b)))
           / (Fintype.card d : ℂ)) • (α • (t • a + t⁻¹ • b))) ᵥ* WC
         + (α • (t • a + t⁻¹ • b)) ᵥ* EW
-      = t ^ 3 • ((-(α / 4) * ((a ᵥ* ZC) ⬝ᵥ a)) • (a ᵥ* WC))
-        + t • (α • (a ᵥ* (ZC * WC + EW) - (1 / 4 : ℂ) • ((((a ᵥ* ZC) ⬝ᵥ b + (b ᵥ* ZC) ⬝ᵥ a) • a
-          + ((a ᵥ* ZC) ⬝ᵥ a) • b) ᵥ* WC)))
-        + t⁻¹ • (α • (b ᵥ* (ZC * WC + EW) - (1 / 4 : ℂ) • ((((a ᵥ* ZC) ⬝ᵥ b + (b ᵥ* ZC) ⬝ᵥ a) • b
-          + ((b ᵥ* ZC) ⬝ᵥ b) • a) ᵥ* WC)))
-        + t⁻¹ ^ 3 • ((-(α / 4) * ((b ᵥ* ZC) ⬝ᵥ b)) • (b ᵥ* WC)) := by
+      = t ^ 3 • cCube_tps ZC WC a α + t • cPlus_tps ZC WC EW a b α
+        + t⁻¹ • cPlus_tps ZC WC EW b a α + t⁻¹ ^ 3 • cCube_tps ZC WC b α := by
+  simp only [cCube_tps, cPlus_tps]
   -- `⟨n Z, n⟩ = α² (t² q(a,a) + q(a,b) + q(b,a) + t⁻² q(b,b))`
   have hdot : ((α • (t • a + t⁻¹ • b)) ᵥ* ZC) ⬝ᵥ (α • (t • a + t⁻¹ • b))
       = α ^ 2 * (t ^ 2 * ((a ᵥ* ZC) ⬝ᵥ a) + ((a ᵥ* ZC) ⬝ᵥ b) + ((b ᵥ* ZC) ⬝ᵥ a)
@@ -463,6 +474,200 @@ private theorem sum_seven_tps {M : Type*} [AddCommMonoid M] [Module ℂ M] (t : 
       = t⁻¹ ^ 3 • f 0 + t⁻¹ ^ 2 • f 1 + t⁻¹ • f 2 + f 3 + t • f 4 + t ^ 2 • f 5 + t ^ 3 • f 6 := by
   rw [Fin.sum_univ_seven]
   norm_num [_root_.zpow_neg, inv_pow]
+
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Step 1 on the path, at one real `t ≥ 1`: with `ζ_j(t) = exp(−(t + t⁻¹) u_j − i (t − t⁻¹) u'_j)`,
+`‖ζ_j(t)‖ < ρ/3`, `tanh` is holomorphic at every hidden unit `z_j(t)`, and
+`tanh(z_j(t)) = w̃(ζ(t))_j`, `tanh'(z_j(t)) = 1 − w̃(ζ(t))_j²`. -/
+private theorem path_facts_tps
+    (θ : Params (Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm 0) hid) dIn dOut) (k : Fin L)
+    (s : hid k → ℝ) (hs : ∀ j, s j = 1 ∨ s j = -1) {ρ : ℝ} (hρ1 : ρ ≤ 1) (ξ ξ' : d → ℝ)
+    (hsd : 0 < Real.sqrt (Fintype.card d))
+    (hsign : ∀ j : hid k, 0 < s j * (ξ ᵥ* θ.read k) j)
+    (hdecay : ∀ j : hid k,
+      Real.exp (-(2 * (Real.sqrt (Fintype.card d) * |(ξ ᵥ* θ.read k) j|))) < ρ / 3)
+    (t : ℝ) (ht : 1 ≤ t) (ζ : hid k → ℂ)
+    (hζ : ζ = fun j => Complex.exp
+      (-(((t + t⁻¹) * (Real.sqrt (Fintype.card d) * |(ξ ᵥ* θ.read k) j|) : ℝ) : ℂ)
+        - Complex.I * (((t - t⁻¹) * (Real.sqrt (Fintype.card d) * s j * (ξ' ᵥ* θ.read k) j) : ℝ)
+          : ℂ))) :
+    (∀ j, ‖ζ j‖ < ρ / 3) ∧
+    (∀ τ j, AnalyticAt ℂ Complex.tanh
+      ((pathMatrix (Matrix.of fun (_ : T) => ξ) (Matrix.of fun (_ : T) => ξ') (t : ℂ)
+        * θ.toC.1 k) τ j)) ∧
+    (pathMatrix (Matrix.of fun (_ : T) => ξ) (Matrix.of fun (_ : T) => ξ') (t : ℂ)
+        * θ.toC.1 k).map Complex.tanh = (Matrix.of fun (_ : T) j => wt_tps s ζ j) ∧
+    (pathMatrix (Matrix.of fun (_ : T) => ξ) (Matrix.of fun (_ : T) => ξ') (t : ℂ)
+        * θ.toC.1 k).map (deriv Complex.tanh)
+      = (Matrix.of fun (_ : T) j => 1 - wt_tps s ζ j ^ 2) := by
+  -- `|ξc_j| = s_j ξc_j` and `u_j = √d |ξc_j| > 0`
+  have habs : ∀ j, |(ξ ᵥ* θ.read k) j| = s j * (ξ ᵥ* θ.read k) j := by
+    intro j
+    have h := hsign j
+    rcases hs j with h1 | h1 <;> rw [h1] at h ⊢
+    · rw [one_mul] at h ⊢; exact abs_of_pos h
+    · rw [abs_of_neg (by linarith)]; ring
+  have hu : ∀ j, 0 < Real.sqrt (Fintype.card d) * |(ξ ᵥ* θ.read k) j| := by
+    intro j
+    refine mul_pos hsd (abs_pos.2 fun h0 => ?_)
+    have := hsign j
+    rw [h0, mul_zero] at this
+    exact lt_irrefl _ this
+  have hn : ∀ j, ‖ζ j‖ < ρ / 3 := fun j => by
+    rw [hζ]; exact (norm_zeta_tps t _ _ ht (hu j)).trans_lt (hdecay j)
+  -- the hidden units `z_j(t)` on the path
+  obtain ⟨z, hz⟩ : ∃ z : hid k → ℂ, ∀ j, z j
+      = ((Real.sqrt (Fintype.card d) * ((t + t⁻¹) / 2 * (ξ ᵥ* θ.read k) j) : ℝ) : ℂ)
+        + Complex.I * ((Real.sqrt (Fintype.card d) * ((t - t⁻¹) / 2 * (ξ' ᵥ* θ.read k) j) : ℝ)
+          : ℂ) := ⟨_, fun j => rfl⟩
+  have hent : ∀ τ j, (pathMatrix (Matrix.of fun (_ : T) => ξ) (Matrix.of fun (_ : T) => ξ')
+      (t : ℂ) * θ.toC.1 k) τ j = z j := by
+    intro τ j; rw [hz]; exact path_entry_tps ξ ξ' (θ.read k) t τ j
+  -- `ζ_j(t) = exp(−2 s_j z_j(t))`, so `tanh(z_j(t)) = s_j (1 − ζ_j)/(1 + ζ_j)`
+  have hexp : ∀ j, Complex.exp (-2 * (s j : ℂ) * z j) = ζ j := fun j => by
+    rw [hζ, hz]; exact exp_path_tps _ _ _ _ _ (habs j)
+  have htanh : ∀ j, Complex.cosh (z j) ≠ 0 ∧ Complex.tanh (z j) = wt_tps s ζ j := fun j => by
+    have h1 : ‖Complex.exp (-2 * (s j : ℂ) * z j)‖ < 1 := by rw [hexp]; linarith [hn j]
+    obtain ⟨hc, ht'⟩ := tanh_eq_tps (z j) (s j) (hs j) h1
+    refine ⟨hc, ?_⟩
+    rw [ht', hexp]
+    rfl
+  refine ⟨hn, fun τ j => ?_, ?_, ?_⟩
+  · rw [hent]; exact analyticAt_ctanh_tps (htanh j).1
+  · ext τ j; rw [Matrix.map_apply, hent, (htanh j).2]; rfl
+  · ext τ j
+    rw [Matrix.map_apply, hent, (hasDerivAt_ctanh_tps (htanh j).1).deriv, (htanh j).2]
+    rfl
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Step 2: every row of `ż(n(t))` is `t³ c₃ + t c₁ + t⁻¹ c₋₁ + t⁻³ c₋₃`. -/
+private theorem zdotC_path_tps
+    (θ : Params (Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm 0) hid) dIn dOut) (k : Fin L)
+    (Z : Matrix d d ℝ)
+    (η : Params (Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm 0) hid) dIn dOut)
+    (ξ ξ' : d → ℝ) (hd0 : 0 < Fintype.card d) (t : ℂ) (ht : t ≠ 0) (τ : T) :
+    zdotC θ k Z η (pathMatrix (Matrix.of fun (_ : T) => ξ) (Matrix.of fun (_ : T) => ξ') t) τ
+      = t ^ 3 • cCube_tps (Z.map (fun x : ℝ => (x : ℂ))) (θ.toC.1 k)
+          (fun i => (ξ i : ℂ) + Complex.I * (ξ' i : ℂ)) (((Real.sqrt (Fintype.card d) : ℝ) : ℂ) / 2)
+        + t • cPlus_tps (Z.map (fun x : ℝ => (x : ℂ))) (θ.toC.1 k) (η.toC.1 k)
+          (fun i => (ξ i : ℂ) + Complex.I * (ξ' i : ℂ))
+          (fun i => (ξ i : ℂ) + (-Complex.I) * (ξ' i : ℂ))
+          (((Real.sqrt (Fintype.card d) : ℝ) : ℂ) / 2)
+        + t⁻¹ • cPlus_tps (Z.map (fun x : ℝ => (x : ℂ))) (θ.toC.1 k) (η.toC.1 k)
+          (fun i => (ξ i : ℂ) + (-Complex.I) * (ξ' i : ℂ))
+          (fun i => (ξ i : ℂ) + Complex.I * (ξ' i : ℂ)) (((Real.sqrt (Fintype.card d) : ℝ) : ℂ) / 2)
+        + t⁻¹ ^ 3 • cCube_tps (Z.map (fun x : ℝ => (x : ℂ))) (θ.toC.1 k)
+          (fun i => (ξ i : ℂ) + (-Complex.I) * (ξ' i : ℂ))
+          (((Real.sqrt (Fintype.card d) : ℝ) : ℂ) / 2) := by
+  -- the row of the path is `α (t ν + t⁻¹ ν̄)` with `α = √d/2`
+  have hrow : pathMatrix (Matrix.of fun (_ : T) => ξ) (Matrix.of fun (_ : T) => ξ') t τ
+      = (((Real.sqrt (Fintype.card d) : ℝ) : ℂ) / 2)
+        • (t • (fun i => (ξ i : ℂ) + Complex.I * (ξ' i : ℂ))
+        + t⁻¹ • (fun i => (ξ i : ℂ) + (-Complex.I) * (ξ' i : ℂ))) := by
+    funext i
+    simp only [pathMatrix, Matrix.of_apply, pathRow, Pi.smul_apply, Pi.add_apply, smul_eq_mul]
+    ring
+  have hsd : (0 : ℝ) < Real.sqrt (Fintype.card d) := Real.sqrt_pos.2 (by exact_mod_cast hd0)
+  have hα0 : (((Real.sqrt (Fintype.card d) : ℝ) : ℂ) / 2) ≠ 0 := by
+    have : ((Real.sqrt (Fintype.card d) : ℝ) : ℂ) ≠ 0 := by exact_mod_cast hsd.ne'
+    exact div_ne_zero this two_ne_zero
+  have hα : (Fintype.card d : ℂ) = 4 * (((Real.sqrt (Fintype.card d) : ℝ) : ℂ) / 2) ^ 2 := by
+    have h2 : ((Real.sqrt (Fintype.card d) : ℝ) : ℂ) ^ 2 = (Fintype.card d : ℂ) := by
+      rw [← Complex.ofReal_pow, Real.sq_sqrt (Nat.cast_nonneg _)]; push_cast; rfl
+    rw [div_pow, h2]; ring
+  -- `ż_τ = (n Z − (⟨nZ, n⟩/d) n) W + n η_W` with `n = n(t)`
+  have e : zdotC θ k Z η (pathMatrix (Matrix.of fun (_ : T) => ξ) (Matrix.of fun (_ : T) => ξ') t) τ
+      = ((pathMatrix (Matrix.of fun (_ : T) => ξ) (Matrix.of fun (_ : T) => ξ') t τ)
+            ᵥ* Z.map (fun x : ℝ => (x : ℂ))
+          - ((((pathMatrix (Matrix.of fun (_ : T) => ξ) (Matrix.of fun (_ : T) => ξ') t τ)
+            ᵥ* Z.map (fun x : ℝ => (x : ℂ)))
+            ⬝ᵥ (pathMatrix (Matrix.of fun (_ : T) => ξ) (Matrix.of fun (_ : T) => ξ') t τ))
+              / (Fintype.card d : ℂ))
+            • (pathMatrix (Matrix.of fun (_ : T) => ξ) (Matrix.of fun (_ : T) => ξ') t τ))
+          ᵥ* θ.toC.1 k
+        + (pathMatrix (Matrix.of fun (_ : T) => ξ) (Matrix.of fun (_ : T) => ξ') t τ)
+          ᵥ* η.toC.1 k := rfl
+  rw [e, hrow]
+  exact zdot_row_tps _ _ _ _ _ _ t ht hα0 hα
+
+
+/-- Steps 1 and 2: the identity (42) of Lemma D.15 on the path is `∑_i t^i 𝒯_i(ζ(t)) = 0`, in the
+form of `path_separation` with `K = 3`. -/
+private theorem path_sum_tps [Nonempty d] [Nonempty T]
+    (θ : Params (Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm 0) hid) dIn dOut)
+    (hθ : RegularZero (Arch.mlp Real.tanh (rmsNorm 0) hid) θ) (k : Fin L)
+    {κ : ℝ} (hκ : 0 < κ) (hhol : HolomorphicOnCone Complex.tanh θ k.succ κ)
+    (s : hid k → ℝ) (hs : ∀ j, s j = 1 ∨ s j = -1) {ρ : ℝ} (hρ1 : ρ ≤ 1)
+    (hcone : ∀ w : hid k → ℂ, (∀ j, ‖w j - (s j : ℂ)‖ ≤ ρ) →
+      w ᵥ* θ.toC.2.1 k ∈ complexCone κ)
+    (Z : Matrix d d ℝ)
+    (η : Params (Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm 0) hid) dIn dOut)
+    (h16 : SuffixFlatZero (Arch.mlp Real.tanh (rmsNorm 0) hid) θ k.castSucc Z η)
+    (ξ ξ' : d → ℝ) (hξ : ξ ⬝ᵥ ξ = 1) (hξ' : ξ' ⬝ᵥ ξ' = 1) (hξξ' : ξ ⬝ᵥ ξ' = 0)
+    (hsd : 0 < Real.sqrt (Fintype.card d))
+    (hsign : ∀ j : hid k, 0 < s j * (ξ ᵥ* θ.read k) j)
+    (hdecay : ∀ j : hid k,
+      Real.exp (-(2 * (Real.sqrt (Fintype.card d) * |(ξ ᵥ* θ.read k) j|))) < ρ / 3)
+    (c3 c1 cm1 cm3 : hid k → ℂ)
+    (hz : ∀ t : ℝ, 1 ≤ t → ∀ τ j, zdotC θ k Z η (pathMatrix (Matrix.of fun (_ : T) => ξ)
+      (Matrix.of fun (_ : T) => ξ') (t : ℂ)) τ j
+        = (t : ℂ) ^ 3 * c3 j + (t : ℂ) * c1 j + (t : ℂ)⁻¹ * cm1 j + (t : ℂ)⁻¹ ^ 3 * cm3 j)
+    (t : ℝ) (ht : 1 ≤ t) :
+    ∑ i : Fin (2 * 3 + 1), (t : ℂ) ^ (((i : ℕ) : ℤ) - ((3 : ℕ) : ℤ)) •
+      bigT_tps θ k η s (![cm3, 0, cm1, 0, c1, 0, c3] i) (![0, 0, 0, 1, 0, 0, 0] i)
+        (fun j => Complex.exp
+          (-(((t + t⁻¹) * (Real.sqrt (Fintype.card d) * |(ξ ᵥ* θ.read k) j|) : ℝ) : ℂ)
+            - Complex.I * (((t - t⁻¹) * (Real.sqrt (Fintype.card d) * s j * (ξ' ᵥ* θ.read k) j)
+              : ℝ) : ℂ))) = 0 := by
+  obtain ⟨ζ, hζ⟩ : ∃ ζ : hid k → ℂ, ζ = fun j => Complex.exp
+      (-(((t + t⁻¹) * (Real.sqrt (Fintype.card d) * |(ξ ᵥ* θ.read k) j|) : ℝ) : ℂ)
+        - Complex.I * (((t - t⁻¹) * (Real.sqrt (Fintype.card d) * s j * (ξ' ᵥ* θ.read k) j) : ℝ)
+          : ℂ)) := ⟨_, rfl⟩
+  rw [← hζ]
+  obtain ⟨hn, -, hw, hw'⟩ := path_facts_tps θ k s hs hρ1 ξ ξ' hsd hsign hdecay t ht ζ hζ
+  -- the hypothesis of Lemma D.15, for every `t' ≥ 1`
+  have hpath : ∀ t' : ℝ, 1 ≤ t' →
+      (∀ τ j, AnalyticAt ℂ Complex.tanh ((pathMatrix (Matrix.of fun (_ : T) => ξ)
+        (Matrix.of fun (_ : T) => ξ') (t' : ℂ) * θ.toC.1 k) τ j)) ∧
+      ∀ τ, ((pathMatrix (Matrix.of fun (_ : T) => ξ) (Matrix.of fun (_ : T) => ξ') (t' : ℂ)
+        * θ.toC.1 k).map Complex.tanh * θ.toC.2.1 k) τ ∈ complexCone κ := by
+    intro t' ht'
+    obtain ⟨hn', han', hw2, -⟩ := path_facts_tps θ k s hs hρ1 ξ ξ' hsd hsign hdecay t' ht' _ rfl
+    refine ⟨han', fun τ => ?_⟩
+    rw [hw2]
+    exact rows_mem_cone_tps θ k s hs hρ1 hcone _ hn' τ
+  have hσC : ∀ x : ℝ, AnalyticAt ℂ Complex.tanh (x : ℂ) := fun x => by
+    refine analyticAt_ctanh_tps ?_
+    rw [← Complex.ofReal_cosh]
+    exact_mod_cast (Real.cosh_pos x).ne'
+  -- (42)
+  have h42 := blockLHSC_pathMatrix_eq_zero (σ' := fun z => 1 - Real.tanh z ^ 2) hasDerivAt_tanh
+    analyticOnNhd_tanh (fun x => (Complex.ofReal_tanh x).symm) hσC θ hθ k hκ hhol Z η h16
+    (Matrix.of fun (_ : T) => ξ) (Matrix.of fun (_ : T) => ξ')
+    (fun _ => hξ) (fun _ => hξ') (fun _ => hξξ') hpath t ht
+  rw [hw, hw', blockLHSC_eq_tps θ k η _ _ _
+    (hhol _ (rows_mem_cone_tps θ k s hs hρ1 hcone ζ hn)).differentiableAt] at h42
+  -- the seven terms
+  refine (sum_seven_tps (t : ℂ) _).trans ?_
+  show (t : ℂ)⁻¹ ^ 3 • bigT_tps θ k η s cm3 0 ζ + (t : ℂ)⁻¹ ^ 2 • bigT_tps θ k η s 0 0 ζ
+      + (t : ℂ)⁻¹ • bigT_tps θ k η s cm1 0 ζ + bigT_tps θ k η s 0 1 ζ
+      + (t : ℂ) • bigT_tps θ k η s c1 0 ζ + (t : ℂ) ^ 2 • bigT_tps θ k η s 0 0 ζ
+      + (t : ℂ) ^ 3 • bigT_tps θ k η s c3 0 ζ = 0
+  rw [← h42]
+  unfold bigT_tps
+  simp only [← map_smul, ← map_add]
+  congr 1
+  -- the directions agree: `∑_i t^i (1 − w̃²) ⊙ c_i = (1 − w̃²) ⊙ ż` row by row
+  simp only [Prod.smul_mk, Prod.mk_add_mk, zero_smul, one_smul, smul_zero, zero_add, add_zero,
+    Prod.mk.injEq]
+  refine ⟨trivial, ?_⟩
+  ext τ l
+  simp only [Matrix.add_apply, Matrix.smul_apply, Matrix.mul_apply, Matrix.of_apply, smul_eq_mul,
+    Pi.zero_apply, mul_zero, zero_mul, Finset.sum_const_zero, hz t ht, Finset.mul_sum,
+    add_zero, zero_add, ← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  ring
 
 /-- **Proof of Lemma D.18, the path and the powers of `t`, for one pair `ξ, ξ'`.** Let `σ = tanh`,
 in the case (0), `d ≥ 2`, `θ` regular with (S1) for block `k`, `𝓑_{>k+1}` holomorphic on `C_κ`, and
