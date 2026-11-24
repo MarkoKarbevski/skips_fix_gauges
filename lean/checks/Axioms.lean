@@ -550,3 +550,8 @@ import SkipsLean
 #print axioms Skips.blockLHSGated_neg
 #print axioms Skips.suffixFlat_castSucc_iff_gated
 #print axioms Skips.suffixFlat_castSucc_iff_gated_rmsNorm
+#print axioms Skips.gateFar_silu
+#print axioms Skips.gateFar_gelu
+#print axioms Skips.dense_setOf_linearIndependent_abs_dotProduct
+#print axioms Skips.dense_setOf_linearIndependent_sq_dotProduct
+#print axioms Skips.suffixFlat_cobDir_add_rescaleDir
