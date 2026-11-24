@@ -26,11 +26,11 @@ open scoped Matrix.Norms.Elementwise
 
 variable {T d dIn dOut : Type*} {L : ℕ} [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn]
   [Fintype dOut]
-variable {hid : Fin L → Type} [∀ ℓ, Fintype (hid ℓ)]
+variable {hid : Fin L → Type} [∀ ℓ, Fintype (hid ℓ)] {χ : Matrix T d ℝ → Matrix T d ℝ}
 
 /-- The conditions on the parameters of a network of `tanh` blocks that the proof of
-Theorem 5.2 (i) uses in the case without normalization. -/
-structure TanhDepthGeneric (θ : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut) :
+Theorem 5.2 (i) uses (without normalization, and under pre-RMSNorm; the conditions do not involve the map `χ`). -/
+structure TanhDepthGeneric (θ : Params (Arch.mlp (T := T) (d := d) Real.tanh χ hid) dIn dOut) :
     Prop where
   /-- (R1) -/
   rank_E : θ.E.rank = Fintype.card d
@@ -59,12 +59,12 @@ private theorem hasFDerivAt_map_tanh_zero {m n : Type*} [Fintype m] [Fintype n] 
   rw [Matrix.zero_apply, Real.tanh_zero]
   ring
 
-variable (θ : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut)
 
 /-- Under the conditions `θ` is regular: the derivative of block `ℓ` at `0` is
 `v ↦ v W_read W_write`, which is injective. -/
-theorem regular_of_tanhDepthGeneric (hθ : TanhDepthGeneric θ) :
-    Regular (Arch.mlp Real.tanh id hid) θ := by
+theorem regular_of_tanhDepthGeneric (θ : Params (Arch.mlp (T := T) (d := d) Real.tanh χ hid) dIn dOut)
+    (hθ : TanhDepthGeneric θ) :
+    Regular (Arch.mlp Real.tanh χ hid) θ := by
   refine ⟨hθ.rank_E, hθ.rank_D, hθ.rank_write, fun ℓ => ⟨0, ?_⟩⟩
   -- the right multiplications by the read and by the write, as continuous linear maps
   let mR : Matrix T d ℝ →L[ℝ] Matrix T (hid ℓ) ℝ := LinearMap.toContinuousLinearMap
@@ -81,7 +81,7 @@ theorem regular_of_tanhDepthGeneric (hθ : TanhDepthGeneric θ) :
     rw [map_zero]
     exact hasFDerivAt_map_tanh_zero
   have hf : HasFDerivAt
-      (fun n' : Matrix T d ℝ => (Arch.mlp Real.tanh id hid).f ℓ (n' * θ.read ℓ) * θ.write ℓ)
+      (fun n' : Matrix T d ℝ => (Arch.mlp Real.tanh χ hid).f ℓ (n' * θ.read ℓ) * θ.write ℓ)
       (mW.comp ((ContinuousLinearMap.id ℝ _).comp mR)) 0 :=
     mW.hasFDerivAt.comp (0 : Matrix T d ℝ) (h1.comp (0 : Matrix T d ℝ) mR.hasFDerivAt)
   rw [hf.fderiv]
@@ -93,6 +93,8 @@ theorem regular_of_tanhDepthGeneric (hθ : TanhDepthGeneric θ) :
   intro v w hvw
   have hvw' : v * θ.read ℓ * θ.write ℓ = w * θ.read ℓ * θ.write ℓ := hvw
   rw [← key v, ← key w, hvw']
+
+variable (θ : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut)
 
 /-- Under the conditions Claim `(D_k)` holds at every hidden state: `(D_L)` by Lemma D.5, and then
 `(D_k)` for `k = L - 1, …, 0` by Lemma D.7. -/
@@ -136,7 +138,7 @@ private theorem indicator_mul_transpose {m : Type*} [Fintype m] [DecidableEq m] 
 /-- The conditions hold at generic parameters, when `d_in, d_out ≥ d ≥ 1` and every block has at
 least `d` hidden units. -/
 theorem ae_tanhDepthGeneric [Nonempty d]
-    (μ : Measure (Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut))
+    (μ : Measure (Params (Arch.mlp (T := T) (d := d) Real.tanh χ hid) dIn dOut))
     [μ.IsAddHaarMeasure] (hdIn : Fintype.card d ≤ Fintype.card dIn)
     (hdOut : Fintype.card d ≤ Fintype.card dOut)
     (hhid : ∀ ℓ, Fintype.card d ≤ Fintype.card (hid ℓ)) :
@@ -151,9 +153,9 @@ theorem ae_tanhDepthGeneric [Nonempty d]
   -- nonzero at generic parameters
   have h3 : ∀ᵐ θ ∂μ, ∀ ℓ (i : hid ℓ), θ.write ℓ i k₀ ≠ 0 := by
     refine ae_all_iff.2 fun ℓ => ae_all_iff.2 fun i => ?_
-    let l : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut →ₗ[ℝ] ℝ :=
+    let l : Params (Arch.mlp (T := T) (d := d) Real.tanh χ hid) dIn dOut →ₗ[ℝ] ℝ :=
       (Matrix.entryLinearMap ℝ ℝ i k₀).comp (Params.linWrite
-        (A := Arch.mlp (T := T) (d := d) Real.tanh id hid) (dIn := dIn) (dOut := dOut) ℓ)
+        (A := Arch.mlp (T := T) (d := d) Real.tanh χ hid) (dIn := dIn) (dOut := dOut) ℓ)
     have hl : ∀ θ, l θ = θ.write ℓ i k₀ := fun θ => rfl
     -- it is `1` at the parameters whose writes have all entries `1`
     have h₁ : l ⟨0, 0, fun _ => Matrix.of fun _ _ => 1, 0⟩ ≠ 0 := by
@@ -170,13 +172,13 @@ theorem ae_tanhDepthGeneric [Nonempty d]
     · exact Filter.Eventually.of_forall fun _ _ => hκ
     obtain ⟨j₀, hj₀⟩ := not_forall.1 hκ
     have hg : AnalyticOnNhd ℝ
-        (fun θ : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut =>
+        (fun θ : Params (Arch.mlp (T := T) (d := d) Real.tanh χ hid) dIn dOut =>
           ∑ j, (κ j : ℝ) * θ.read ℓ k₀ j) Set.univ :=
       Finset.analyticOnNhd_fun_sum _ fun j _ => analyticOnNhd_const.mul
         (analyticOnNhd_linear ((Matrix.entryLinearMap ℝ ℝ k₀ j).comp (Params.linRead
-          (A := Arch.mlp (T := T) (d := d) Real.tanh id hid) (dIn := dIn) (dOut := dOut) ℓ)))
+          (A := Arch.mlp (T := T) (d := d) Real.tanh χ hid) (dIn := dIn) (dOut := dOut) ℓ)))
     -- it is `κ_{j₀}` at the parameters whose read `ℓ` has the column `j₀` of ones, zeros elsewhere
-    let θ₀ : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut :=
+    let θ₀ : Params (Arch.mlp (T := T) (d := d) Real.tanh χ hid) dIn dOut :=
       ⟨0, Pi.single (M := fun ℓ => Matrix d (hid ℓ) ℝ) ℓ
         (Matrix.of fun _ j => if j = j₀ then 1 else 0), 0, 0⟩
     have hθ₀ : ∑ j, (κ j : ℝ) * θ₀.read ℓ k₀ j ≠ 0 := by
@@ -199,12 +201,12 @@ theorem ae_tanhDepthGeneric [Nonempty d]
       (Function.Embedding.nonempty_of_card_le (hhid ℓ)).some
     let R : ∀ ℓ, Matrix d (hid ℓ) ℝ := fun ℓ =>
       Matrix.of fun i j => if cR ℓ i = j then 1 else 0
-    let θ₀ : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut :=
+    let θ₀ : Params (Arch.mlp (T := T) (d := d) Real.tanh χ hid) dIn dOut :=
       ⟨0, R, fun ℓ => (R ℓ)ᵀ, 0⟩
     refine ae_all_iff.2 fun ℓ => ae_ne_zero_of_analytic μ (analyticOnNhd_det_mul
-      (Params.linRead (A := Arch.mlp (T := T) (d := d) Real.tanh id hid) (dIn := dIn)
+      (Params.linRead (A := Arch.mlp (T := T) (d := d) Real.tanh χ hid) (dIn := dIn)
         (dOut := dOut) ℓ)
-      (Params.linWrite (A := Arch.mlp (T := T) (d := d) Real.tanh id hid) (dIn := dIn)
+      (Params.linWrite (A := Arch.mlp (T := T) (d := d) Real.tanh χ hid) (dIn := dIn)
         (dOut := dOut) ℓ)) ⟨θ₀, ?_⟩
     show (R ℓ * (R ℓ)ᵀ).det ≠ 0
     rw [indicator_mul_transpose, Matrix.det_one]
