@@ -35,13 +35,39 @@ open scoped Matrix.Norms.Elementwise
 variable {T d dIn dOut : Type*} {L : ℕ} [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn]
   [Fintype dOut] {hid : Fin L → Type} [∀ ℓ, Fintype (hid ℓ)] {σ σ' : ℝ → ℝ}
 
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: a row of `N(h)`, `N` RMSNorm with `ε = 0`, is `ρ⁻¹ h_t` with `ρ = √(‖h_t‖² / d)`. -/
+private theorem rmsNorm_zero_row_szv (h : Matrix T d ℝ) (t : T) :
+    rmsNorm 0 h t = (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)))⁻¹ • h t := by
+  show rmsRow 0 (h t) = _
+  unfold rmsRow
+  rw [add_zero]
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: a row of `N(h) Z` is `ρ⁻¹ (h Z)_t`. -/
+private theorem rmsNorm_zero_mul_row_szv (Z : Matrix d d ℝ) (h : Matrix T d ℝ) (t : T) :
+    (rmsNorm 0 h * Z) t = (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)))⁻¹ • (h * Z) t := by
+  rw [Matrix.mul_apply_eq_vecMul, Matrix.mul_apply_eq_vecMul, rmsNorm_zero_row_szv]
+  exact Matrix.smul_vecMul (R := ℝ) _ (h t) Z
+
 omit [DecidableEq d] in
 /-- **Equation (14) in the case (0):** `𝐃N(h)(hZ) = nZ − (⟨nZ, n⟩/d) n` at `n = N(h)`, for `N`
 RMSNorm with `ε = 0` and `h` without a zero row. -/
 theorem fderiv_rmsNorm_zero_mul (Z : Matrix d d ℝ) (h : Matrix T d ℝ) (hh : ∀ t, h t ≠ 0) :
     fderiv ℝ (rmsNorm 0 : Matrix T d ℝ → Matrix T d ℝ) h (h * Z)
       = tangentRMS Z (rmsNorm 0 h) := by
-  sorry
+  rw [fderiv_rmsNorm_zero_apply h (h * Z) hh]
+  ext t i
+  -- with `ρ = √(‖h_t‖² / d)`: `n_t = ρ⁻¹ h_t` and `(n Z)_t = ρ⁻¹ (h Z)_t`
+  show (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)))⁻¹ * (h * Z) t i
+      - ((h t ⬝ᵥ (h * Z) t) / (Fintype.card d : ℝ)
+        * (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ)))⁻¹ ^ 3) * h t i
+    = (rmsNorm 0 h * Z) t i
+      - ((rmsNorm 0 h * Z) t ⬝ᵥ rmsNorm 0 h t) / (Fintype.card d : ℝ) * rmsNorm 0 h t i
+  rw [rmsNorm_zero_mul_row_szv, rmsNorm_zero_row_szv, smul_dotProduct, dotProduct_smul,
+    Pi.smul_apply, Pi.smul_apply, smul_eq_mul, smul_eq_mul, smul_eq_mul, smul_eq_mul,
+    dotProduct_comm ((h * Z) t) (h t)]
+  ring
 
 /-- **The identity for one block, case (0)** (equation (22), by the chain rule and (14)): for an
 MLP block with a real-analytic activation `σ` with derivative `σ'`, and regular `θ`, the identity
