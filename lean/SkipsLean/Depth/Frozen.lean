@@ -84,12 +84,88 @@ theorem frozen_block_apply (A : ∀ ℓ, Finset (hid ℓ))
     (t : T) :
     ((Arch.frozen (T := T) (d := d) A).f ℓ (n * θ.read ℓ) * θ.write ℓ) t
       = frozenGated θ ℓ (A ℓ) (n t) := by
-  sorry
+  funext k
+  -- entry `k` of row `t`: a sum over the hidden units, in which only those of `A ℓ` count
+  change ((Matrix.of fun t => Set.indicator (↑(A ℓ) : Set (hid ℓ))
+      fun i => (n * θ.read ℓ) t (Sum.inl i) * (n * θ.read ℓ) t (Sum.inr i)) * θ.write ℓ) t k = _
+  rw [Matrix.mul_apply, frozenGated, Finset.sum_apply,
+    ← Finset.sum_indicator_subset _ (Finset.subset_univ (A ℓ))]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [Matrix.of_apply]
+  by_cases hi : i ∈ A ℓ
+  · -- an active unit: `(n_t c_i) (n_t e_i) a_i`
+    rw [Set.indicator_of_mem (Finset.mem_coe.2 hi), Set.indicator_of_mem (Finset.mem_coe.2 hi)]
+    simp only [Pi.smul_apply, smul_eq_mul, Matrix.mul_apply, dotProduct, Matrix.transpose_apply]
+  · -- an inactive unit contributes `0`
+    rw [Set.indicator_of_notMem (Finset.mem_coe.not.2 hi),
+      Set.indicator_of_notMem (Finset.mem_coe.not.2 hi), zero_mul]
 
 /-- The fixed maps of the frozen network are real-analytic (they are polynomial). -/
 theorem analyticOnNhd_f_frozen (A : ∀ ℓ, Finset (hid ℓ)) (ℓ : Fin L) :
     AnalyticOnNhd ℝ ((Arch.frozen (T := T) (d := d) A).f ℓ) Set.univ := by
-  sorry
+  -- entrywise: the gate times the value on `A ℓ`, and `0` off it
+  show AnalyticOnNhd ℝ (fun M : Matrix T (hid ℓ ⊕ hid ℓ) ℝ => fun t => fun i =>
+    Set.indicator (↑(A ℓ) : Set (hid ℓ)) (fun i => M t (Sum.inl i) * M t (Sum.inr i)) i) Set.univ
+  refine AnalyticOnNhd.pi fun t => AnalyticOnNhd.pi fun i => ?_
+  by_cases hi : i ∈ A ℓ
+  · have h : (fun M : Matrix T (hid ℓ ⊕ hid ℓ) ℝ => Set.indicator (↑(A ℓ) : Set (hid ℓ))
+        (fun i => M t (Sum.inl i) * M t (Sum.inr i)) i)
+          = fun M => M t (Sum.inl i) * M t (Sum.inr i) :=
+      funext fun M => Set.indicator_of_mem (Finset.mem_coe.2 hi) _
+    have h2 : AnalyticOnNhd ℝ (fun M : Matrix T (hid ℓ ⊕ hid ℓ) ℝ => Set.indicator
+        (↑(A ℓ) : Set (hid ℓ)) (fun i => M t (Sum.inl i) * M t (Sum.inr i)) i) Set.univ := by
+      rw [h]
+      exact (analyticOnNhd_matrix_entry t (Sum.inl i)).mul (analyticOnNhd_matrix_entry t (Sum.inr i))
+    exact h2
+  · have h : (fun M : Matrix T (hid ℓ ⊕ hid ℓ) ℝ => Set.indicator (↑(A ℓ) : Set (hid ℓ))
+        (fun i => M t (Sum.inl i) * M t (Sum.inr i)) i) = fun _ => 0 :=
+      funext fun M => Set.indicator_of_notMem (Finset.mem_coe.not.2 hi) _
+    have h2 : AnalyticOnNhd ℝ (fun M : Matrix T (hid ℓ ⊕ hid ℓ) ℝ => Set.indicator
+        (↑(A ℓ) : Set (hid ℓ)) (fun i => M t (Sum.inl i) * M t (Sum.inr i)) i) Set.univ := by
+      rw [h]
+      exact analyticOnNhd_const
+    exact h2
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper (a copy of the private `dotCLM` of `Depth/Cones.lean`): `v ↦ v ⬝ c`, as a continuous
+linear map. -/
+private noncomputable def dotCLMFr (c : d → ℝ) : (d → ℝ) →L[ℝ] ℝ :=
+  LinearMap.toContinuousLinearMap
+    { toFun := fun v => v ⬝ᵥ c
+      map_add' := fun v w => add_dotProduct v w c
+      map_smul' := fun r v => smul_dotProduct r v c }
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (a copy of the private `analyticOnNhd_frozenGated` of `Depth/Cones.lean`): the frozen
+gated block is a polynomial, hence analytic. -/
+private theorem analyticOnNhd_frozenGatedFr
+    (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut) (ℓ : Fin L) (B : Finset (hid ℓ)) :
+    AnalyticOnNhd ℝ (frozenGated θ ℓ B) Set.univ := by
+  show AnalyticOnNhd ℝ (fun n => ∑ j ∈ B, ((n ⬝ᵥ (θ.read ℓ)ᵀ (Sum.inl j)) *
+    (n ⬝ᵥ (θ.read ℓ)ᵀ (Sum.inr j))) • θ.write ℓ j) Set.univ
+  refine Finset.analyticOnNhd_fun_sum _ fun j _ => ?_
+  have h := (((dotCLMFr ((θ.read ℓ)ᵀ (Sum.inl j))).analyticOnNhd Set.univ).mul
+    ((dotCLMFr ((θ.read ℓ)ᵀ (Sum.inr j))).analyticOnNhd Set.univ)).smul
+      (analyticOnNhd_const (v := θ.write ℓ j))
+  exact h
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper (a copy of the private `injective_fderiv_rowwise` of `Depth/Cones.lean`): a map acting
+row by row, `n ↦ (t ↦ g (n t))`, has at the matrix all of whose rows are `x` the derivative
+`V ↦ (t ↦ G (V t))`, which is injective if `G` is. -/
+private theorem injective_fderiv_rowwiseFr [Finite T] {g : (d → ℝ) → (d → ℝ)}
+    {G : (d → ℝ) →L[ℝ] (d → ℝ)} {x : d → ℝ} (hg : HasFDerivAt g G x)
+    (hG : Function.Injective G) :
+    Function.Injective (fderiv ℝ (fun n : T → d → ℝ => fun t => g (n t)) (fun _ => x)) := by
+  have : Fintype T := Fintype.ofFinite T
+  have h : HasFDerivAt (fun n : T → d → ℝ => fun t => g (n t))
+      (ContinuousLinearMap.pi fun t => G.comp (ContinuousLinearMap.proj t)) (fun _ => x) :=
+    hasFDerivAt_pi.2 fun t =>
+      hg.comp (fun _ : T => x) (hasFDerivAt_apply (𝕜 := ℝ) (F' := fun _ : T => d → ℝ) t _)
+  rw [h.fderiv]
+  intro V W hVW
+  funext t
+  exact hG (congrFun hVW t)
 
 /-- **A good `θ` is regular for the frozen network:** (R1), and by (K2) the derivative of every
 frozen block is invertible at some hidden state. So Lemmas D.2 and D.3 hold for the frozen
@@ -98,7 +174,24 @@ theorem regular_frozen_of_goodForConesGated {C : Fin (L + 1) → Set (d → ℝ)
     {A : ∀ ℓ, Finset (hid ℓ)} {θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut}
     (hθ : GoodForConesGated C A θ) :
     Regular (Arch.frozen (T := T) (d := d) A) (θ.toFrozen A) := by
-  sorry
+  -- (R1): the matrices of `θ.toFrozen A` are those of `θ`
+  refine ⟨hθ.rank_E, hθ.rank_D, hθ.rank_write, fun ℓ => ?_⟩
+  -- (K2): a row `ν` at which the derivative `G` of the frozen block `g°_ℓ` is injective
+  obtain ⟨ν, hν⟩ := hθ.frozen_deriv ℓ
+  have hg : HasFDerivAt (frozenGated θ ℓ (A ℓ)) (fderiv ℝ (frozenGated θ ℓ (A ℓ)) ν) ν :=
+    (analyticOnNhd_frozenGatedFr θ ℓ (A ℓ) ν (Set.mem_univ _)).differentiableAt.hasFDerivAt
+  -- the frozen block acts row by row: row `t` of its value at `n` is `g°_ℓ(n_t)`
+  have hfun : (fun n : Matrix T d ℝ => (Arch.frozen (T := T) (d := d) A).f ℓ
+      (n * (θ.toFrozen A).read ℓ) * (θ.toFrozen A).write ℓ)
+        = fun n : Matrix T d ℝ => (fun t => frozenGated θ ℓ (A ℓ) (n t) : Matrix T d ℝ) :=
+    funext fun n => funext fun t => frozen_block_apply A θ ℓ n t
+  -- at the matrix all of whose rows are `ν`, its derivative is `V ↦ (t ↦ G (V t))`, injective
+  refine ⟨fun _ => ν, ?_⟩
+  have key : Function.Injective (fderiv ℝ (fun n : Matrix T d ℝ =>
+      (fun t => frozenGated θ ℓ (A ℓ) (n t) : Matrix T d ℝ)) (fun _ => ν)) :=
+    injective_fderiv_rowwiseFr hg hν
+  rw [← hfun] at key
+  exact key
 
 /-- **The frozen network is homogeneous:** `𝓑°_{>k}(c h) = c^{2^{L−k}} 𝓑°_{>k}(h)`. -/
 theorem suffix_frozen_smul (A : ∀ ℓ, Finset (hid ℓ))
