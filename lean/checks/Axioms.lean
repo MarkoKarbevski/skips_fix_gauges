@@ -979,3 +979,10 @@ import SkipsLean
 #print axioms Skips.exists_isOpen_funDim_smallWrites_relu
 #print axioms Skips.ae_exists_eventually_jacobianRank_smallWrites_reluSq
 #print axioms Skips.exists_isOpen_funDim_smallWrites_reluSq
+#print axioms Skips.ae_smallWritesGenericReGLU
+#print axioms Skips.smallWritesLimit_eq_zero_reglu
+#print axioms Skips.exists_eventually_jacobianRank_smallWrites_reglu
+#print axioms Skips.eventually_funDim_smallWrites_reglu
+#print axioms Skips.eventually_eventually_funDim_smallWrites_reglu
+#print axioms Skips.ae_exists_eventually_jacobianRank_smallWrites_reglu
+#print axioms Skips.exists_isOpen_funDim_smallWrites_reglu
