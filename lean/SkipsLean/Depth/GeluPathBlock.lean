@@ -496,12 +496,102 @@ private theorem p2_gpb (hd : 2 ≤ Fintype.card d) {l ε η κ : ℝ} (m : ℕ) 
     rw [← hr]
     linarith
 
+/-- Helper: an `η ∈ (0, 1]` with `η A < m₀` (`η = min 1 (m₀ / (2 (A + 1)))`). -/
+private theorem exists_eta_gpb {A m₀ : ℝ} (hA : 0 ≤ A) (hm₀ : 0 < m₀) :
+    ∃ η : ℝ, 0 < η ∧ η ≤ 1 ∧ η * A < m₀ := by
+  have h0 : 0 < m₀ / (2 * (A + 1)) := by positivity
+  refine ⟨min 1 (m₀ / (2 * (A + 1))), lt_min one_pos h0, min_le_left _ _, ?_⟩
+  calc min 1 (m₀ / (2 * (A + 1))) * A ≤ m₀ / (2 * (A + 1)) * A :=
+        mul_le_mul_of_nonneg_right (min_le_right _ _) hA
+    _ < m₀ := by
+        rw [div_mul_eq_mul_div, div_lt_iff₀ (by positivity)]
+        nlinarith
+
+omit [Fintype d] [DecidableEq d] in
+/-- Helper: `(x ∘ e) (V reindexed) = x V` for a reindexing `e` of the hidden units. -/
+private theorem comp_vecMul_submatrix_gpb {q q' : Type*} [Fintype q] [Fintype q'] (e : q' ≃ q)
+    (M : Matrix q d ℝ) (x : q → ℝ) : (x ∘ e) ᵥ* M.submatrix e id = x ᵥ* M := by
+  funext i
+  simp only [Matrix.vecMul, dotProduct, Matrix.submatrix_apply, Function.comp_apply, id]
+  exact e.sum_comp (fun k => x k * M k i)
+
+/-- Helper: the conditions do not depend on the order of the hidden units. -/
+private theorem geluPathBlock_submatrix_gpb {q q' : Type*} [Fintype q] [Fintype q'] (e : q' ≃ q)
+    {W : Matrix d q ℝ} {V : Matrix q d ℝ} {κ : ℝ} (h : GeluPathBlock W V κ) :
+    GeluPathBlock (W.submatrix id e) (V.submatrix e id) κ := by
+  -- `g(n) = GELU(nW) V` is the same function, and `W V` the same matrix
+  have hpt : ∀ n : d → ℝ, (fun j => gelu ((n ᵥ* W.submatrix id e) j)) ᵥ* V.submatrix e id
+      = (fun j => gelu ((n ᵥ* W) j)) ᵥ* V := fun n =>
+    comp_vecMul_submatrix_gpb e V (fun j => gelu ((n ᵥ* W) j))
+  have hfun : (fun n : d → ℝ => (fun j => gelu ((n ᵥ* W.submatrix id e) j)) ᵥ*
+      V.submatrix e id) = fun n => (fun j => gelu ((n ᵥ* W) j)) ᵥ* V := funext hpt
+  have hWV : W.submatrix id e * V.submatrix e id = W * V := by
+    rw [Matrix.submatrix_mul_equiv, Matrix.submatrix_id_id]
+  refine ⟨?_, fun n hn => ?_, ?_, ?_, fun j => h.rows_ne (e j), ?_, ?_⟩
+  · exact (Matrix.rank_submatrix V e (Equiv.refl d)).trans h.rank_write
+  · rw [hpt]
+    exact h.ne_zero n hn
+  · obtain ⟨n, hn, h3⟩ := h.deriv
+    refine ⟨n, hn, fun v hv ha => h3 v hv ?_⟩
+    rw [hfun, hpt] at ha
+    exact ha
+  · exact fun i j hij hc => h.cols_ne (e i) (e j) (e.injective.ne hij) hc
+  · rw [hWV]
+    exact h.det_unit
+  · obtain ⟨ξ₀, h1, h2⟩ := h.p2
+    refine ⟨ξ₀, h1, fun ξ' h1' h0' => ?_⟩
+    obtain ⟨p1, p2, p3⟩ := h2 ξ' h1' h0'
+    refine ⟨fun j => p1 (e j), ?_, ?_⟩
+    · rw [hWV]
+      exact p2
+    · rw [hWV]
+      refine lt_of_eq_of_lt ?_ p3
+      exact e.sum_comp (fun j => Real.exp (-((Fintype.card d : ℝ) * ((ξ₀ ᵥ* W) j) ^ 2 / 2)) *
+        Real.sqrt (V j ⬝ᵥ V j))
+
+/-- Helper: the theorem for the hidden units `d ⊕ Fin m`, with the explicit pair:
+`ε = min 1 (κ/2)`, `λ = 1 + 8 (D + m)/κ`, then `η` small. -/
+private theorem exists_geluPathBlock_sum_gpb (hd : 2 ≤ Fintype.card d) (m : ℕ) {κ : ℝ}
+    (hκ : 0 < κ) :
+    ∃ (W : Matrix d (d ⊕ Fin m) ℝ) (V : Matrix (d ⊕ Fin m) d ℝ), GeluPathBlock W V κ := by
+  have : Nontrivial d := Fintype.one_lt_card_iff_nontrivial.1 (by omega)
+  have hD : (0 : ℝ) ≤ Fintype.card d := Nat.cast_nonneg _
+  -- `ε = min 1 (κ/2)`
+  obtain ⟨ε, hε, hε1, hεκ⟩ : ∃ ε : ℝ, 0 < ε ∧ ε ≤ 1 ∧ ε ≤ κ / 2 :=
+    ⟨min 1 (κ / 2), lt_min one_pos (by linarith), min_le_left _ _, min_le_right _ _⟩
+  -- `λ = 1 + 8 (D + m)/κ`
+  obtain ⟨l, hl, hlκ⟩ : ∃ l : ℝ, 1 ≤ l ∧ (Fintype.card d : ℝ) + m < κ * l / 8 := by
+    have hX : 0 ≤ (Fintype.card d : ℝ) + m := by positivity
+    refine ⟨1 + 8 * ((Fintype.card d : ℝ) + m) / κ, ?_, ?_⟩
+    · have : 0 ≤ 8 * ((Fintype.card d : ℝ) + m) / κ := by positivity
+      linarith
+    · have e : κ * (1 + 8 * ((Fintype.card d : ℝ) + m) / κ) / 8
+          = κ / 8 + ((Fintype.card d : ℝ) + m) := by
+        field_simp
+      rw [e]
+      linarith
+  have hl0 : 0 < l := by linarith
+  -- `η ≤ 1` with `η λ S D < (λε/2) Φ(−2λD)`
+  obtain ⟨η, hη, hη1, hηm⟩ := exists_eta_gpb
+    (A := l * (∑ j : Fin m, (((j : ℕ) : ℝ) + 1)) * Fintype.card d)
+    (m₀ := l * ε / 2 * gaussCdf (-(2 * l * Fintype.card d))) (by positivity)
+    (mul_pos (by positivity) (gaussCdf_pos _))
+  exact ⟨readGpb l ε m, writeGpb η m, rank_write_gpb η m, ne_zero_gpb m hl0 hε hε1 hη.le hηm,
+    deriv_gpb m hl0 hε hη.le, cols_ne_gpb m hl0.ne' hε.ne', rows_ne_gpb m hη.ne',
+    det_unit_gpb m hl0 hε hη.le, p2_gpb hd m hκ hl hε hε1 hεκ hη.le hη1 hlκ⟩
+
 /-- **"Parameters that satisfy all conditions, in the case (0)", one GELU block:** for `d ≥ 2`, at
 least `d` hidden units and every `κ > 0`, there are a read `W` and a write `V` that satisfy (R1)
 for the write, (R2), (R3), (P1), and (P2) for `κ`. -/
 theorem exists_geluPathBlock {q : Type*} [Fintype q] (hd : 2 ≤ Fintype.card d)
     (hq : Fintype.card d ≤ Fintype.card q) {κ : ℝ} (hκ : 0 < κ) :
     ∃ (W : Matrix d q ℝ) (V : Matrix q d ℝ), GeluPathBlock W V κ := by
-  sorry
+  classical
+  -- the pair on `d ⊕ Fin m`, `m = q − d`, moved to `q` along `q ≃ d ⊕ Fin m`
+  obtain ⟨W, V, h⟩ := exists_geluPathBlock_sum_gpb hd (Fintype.card q - Fintype.card d) hκ
+  have hcard : Fintype.card q = Fintype.card (d ⊕ Fin (Fintype.card q - Fintype.card d)) := by
+    rw [Fintype.card_sum, Fintype.card_fin]
+    omega
+  exact ⟨_, _, geluPathBlock_submatrix_gpb (Fintype.equivOfCardEq hcard) h⟩
 
 end Skips
