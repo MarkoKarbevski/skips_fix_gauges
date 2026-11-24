@@ -107,6 +107,7 @@ private theorem smul_rmsRow_ray_eq (ε : ℝ) {w v : d → ℝ} {t a y : ℝ} (h
   have h1 : rmsRow ε (t • w + v) = (t * Real.sqrt (a + t⁻¹ * y))⁻¹ • (t • w + v) := by
     unfold rmsRow
     rw [hq, hsq]
+  -- `t ((t √Q)⁻¹ (t w + v) - w/√a) = v/√Q + t (1/√Q - 1/√a) w`
   rw [h0, h1, ← mul_inv_sqrt_sub_inv_sqrt ha ht hQ]
   generalize Real.sqrt (a + t⁻¹ * y) = s
   generalize Real.sqrt a = r
