@@ -934,6 +934,309 @@ private theorem frozen_lip (A : ∀ ℓ, Finset (hid ℓ))
     exact (mul_le_mul_of_nonneg_left (hC₃ z₁ hz₁ z₂ hz₂) (pow_nonneg hc0 _)).trans
       (hnum _ le_rfl C₃ _ _ hC₃0 (by linarith) (norm_nonneg _) hle)
 
+/-! ### Step 5: putting the bounds together -/
+
+/-- **Step 5, abstractly.** The network after the block (`G`, its derivative `DG` in the hidden
+state, its derivative `P` in the weights) and the frozen one (`G₀`, `DG₀`, `P₀`), at the outputs
+`x` and `x₀` of the gated and the frozen block, with the directions `w`, `w₀` (in the hidden
+state) and `q`, `q₀` (in the weights) through the block: if the networks after the block are
+exponentially close at `x` (the induction hypothesis), the frozen one is Lipschitz with polynomial
+growth between `x₀` and `x`, and the block bounds hold, then the three differences before the block
+are exponentially small. -/
+private theorem combine_bounds {ι X Y : Type*} [SeminormedAddCommGroup X]
+    [SeminormedAddCommGroup Y] {S : Set ι} (G G₀ P P₀ : X → Y) (DG DG₀ : X → X → Y)
+    (hlin : ∀ x a b, DG₀ x a - DG₀ x b = DG₀ x (a - b))
+    (x x₀ w w₀ q q₀ : ℝ → ι → X) {κ C : ℝ} (hκ : 0 < κ) (hC : 0 ≤ C) (N : ℕ)
+    (hx : ExpSmall p S fun t i => ‖x t i - x₀ t i‖)
+    (hw : PolyB S fun t i => ‖w t i‖) (hww : ExpSmall p S fun t i => ‖w t i - w₀ t i‖)
+    (hq : PolyB S fun t i => ‖q t i‖) (hqq : ExpSmall p S fun t i => ‖q t i - q₀ t i‖)
+    (hnet : ∀ᶠ t in atTop, ∀ i ∈ S,
+      (‖G (x t i) - G₀ (x t i)‖ ≤ Real.exp (-(κ * t ^ p)) ∧
+        (∀ v, ‖DG (x t i) v - DG₀ (x t i) v‖ ≤ Real.exp (-(κ * t ^ p)) * ‖v‖) ∧
+        ‖P (x t i) - P₀ (x t i)‖ ≤ Real.exp (-(κ * t ^ p))) ∧
+      (‖G₀ (x t i) - G₀ (x₀ t i)‖ ≤ C * t ^ N * ‖x t i - x₀ t i‖ ∧
+        (∀ v, ‖DG₀ (x t i) v - DG₀ (x₀ t i) v‖ ≤ C * t ^ N * ‖x t i - x₀ t i‖ * ‖v‖) ∧
+        (∀ v, ‖DG₀ (x₀ t i) v‖ ≤ C * t ^ N * ‖v‖) ∧
+        ‖P₀ (x t i) - P₀ (x₀ t i)‖ ≤ C * t ^ N * ‖x t i - x₀ t i‖)) :
+    ExpSmall p S (fun t i => ‖G (x t i) - G₀ (x₀ t i)‖) ∧
+    ExpSmall p S (fun t i => ‖DG (x t i) (w t i) - DG₀ (x₀ t i) (w₀ t i)‖) ∧
+    ExpSmall p S (fun t i =>
+      ‖(P (x t i) + DG (x t i) (q t i)) - (P₀ (x₀ t i) + DG₀ (x₀ t i) (q₀ t i))‖) := by
+  have he : ExpSmall p S (fun t (_ : ι) => Real.exp (-(κ * t ^ p))) :=
+    (expSmall_monomial hκ 1 0).mono (Eventually.of_forall fun t i _ => by simp)
+  have hCt : PolyB S (fun t (_ : ι) => C * t ^ N) := polyB_monomial C N
+  have hCt0 : ∀ᶠ t in atTop, ∀ i ∈ S, 0 ≤ C * t ^ N := by
+    filter_upwards [eventually_ge_atTop 0] with t ht i _ using mul_nonneg hC (pow_nonneg ht N)
+  have hn : ∀ f : ℝ → ι → X, ∀ᶠ t in atTop, ∀ i ∈ S, 0 ≤ ‖f t i‖ := fun f =>
+    Eventually.of_forall fun _ _ _ => norm_nonneg _
+  have he0 : ∀ᶠ t in atTop, ∀ i ∈ S, 0 ≤ Real.exp (-(κ * t ^ p)) :=
+    Eventually.of_forall fun _ _ _ => (Real.exp_pos _).le
+  -- `‖x − x₀‖ C t^N` is exponentially small
+  have hxC := hx.mul hCt (hn _) hCt0
+  have hxC0 : ∀ᶠ t in atTop, ∀ i ∈ S, 0 ≤ ‖x t i - x₀ t i‖ * (C * t ^ N) := by
+    filter_upwards [hCt0] with t h i hi using mul_nonneg (norm_nonneg _) (h i hi)
+  -- the derivative of the networks after the block, along `u` and `u₀`
+  have hD : ∀ u u₀ : ℝ → ι → X, (PolyB S fun t i => ‖u t i‖) →
+      (ExpSmall p S fun t i => ‖u t i - u₀ t i‖) →
+      ExpSmall p S (fun t i => ‖DG (x t i) (u t i) - DG₀ (x₀ t i) (u₀ t i)‖) := by
+    intro u u₀ hu huu
+    refine (((he.mul hu he0 (hn _)).add (hxC.mul hu hxC0 (hn _))).add
+      (huu.mul hCt (hn _) hCt0)).mono ?_
+    filter_upwards [hnet] with t hb i hi
+    obtain ⟨⟨-, h2, -⟩, -, h5, h6, -⟩ := hb i hi
+    have t1 := norm_sub_le_norm_sub_add_norm_sub (DG (x t i) (u t i)) (DG₀ (x t i) (u t i))
+      (DG₀ (x₀ t i) (u₀ t i))
+    have t2 := norm_sub_le_norm_sub_add_norm_sub (DG₀ (x t i) (u t i)) (DG₀ (x₀ t i) (u t i))
+      (DG₀ (x₀ t i) (u₀ t i))
+    rw [hlin] at t2
+    have b2 := h2 (u t i)
+    have b5 := h5 (u t i)
+    have b6 := h6 (u t i - u₀ t i)
+    nlinarith
+  refine ⟨?_, hD w w₀ hw hww, ?_⟩
+  · refine (he.add hxC).mono ?_
+    filter_upwards [hnet] with t hb i hi
+    obtain ⟨⟨h1, -, -⟩, h4, -, -, -⟩ := hb i hi
+    have t1 := norm_sub_le_norm_sub_add_norm_sub (G (x t i)) (G₀ (x t i)) (G₀ (x₀ t i))
+    nlinarith
+  · refine ((he.add hxC).add (hD q q₀ hq hqq)).mono ?_
+    filter_upwards [hnet] with t hb i hi
+    obtain ⟨⟨-, -, h3⟩, -, -, -, h7⟩ := hb i hi
+    have e : (P (x t i) + DG (x t i) (q t i)) - (P₀ (x₀ t i) + DG₀ (x₀ t i) (q₀ t i))
+        = (P (x t i) - P₀ (x₀ t i)) + (DG (x t i) (q t i) - DG₀ (x₀ t i) (q₀ t i)) := by abel
+    rw [e]
+    have t1 := norm_add_le (P (x t i) - P₀ (x₀ t i))
+      (DG (x t i) (q t i) - DG₀ (x₀ t i) (q₀ t i))
+    have t2 := norm_sub_le_norm_sub_add_norm_sub (P (x t i)) (P₀ (x t i)) (P₀ (x₀ t i))
+    nlinarith
+
+/-! ### The induction -/
+
+/-- A positive function on a finite type has a positive lower bound `2μ`. -/
+private theorem exists_pos_two_mul_le {α : Type*} [Finite α] (f : α → ℝ) (hf : ∀ a, 0 < f a) :
+    ∃ μ : ℝ, 0 < μ ∧ ∀ a, 2 * μ ≤ f a := by
+  cases isEmpty_or_nonempty α with
+  | inl h => exact ⟨1, one_pos, fun a => (IsEmpty.false a).elim⟩
+  | inr h =>
+    obtain ⟨a₀, ha₀⟩ := Finite.exists_min f
+    exact ⟨f a₀ / 2, half_pos (hf a₀), fun a => by linarith [ha₀ a]⟩
+
+/-- The claim of Lemma D.11 at `k`, for all `H` with rows in `C k` at once. -/
+private def FarBound (p : ℕ) (C : Fin (L + 1) → Set (d → ℝ)) (A : ∀ ℓ, Finset (hid ℓ))
+    (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) (k : Fin (L + 1)) : Prop :=
+  ∀ H : Matrix T d ℝ, (∀ t, H t ∈ C k) →
+    ∃ ϱ : ℝ, 0 < ϱ ∧ ∃ κ : ℝ, 0 < κ ∧ ∃ t₀ : ℝ, ∀ t : ℝ, t₀ ≤ t → ∀ U : Matrix T d ℝ, ‖U‖ ≤ ϱ →
+      ‖suffix (Arch.gated σ id hid) 0 θ k (t • (H + U))
+          - suffix (Arch.frozen A) 0 (θ.toFrozen A) k (t • (H + U))‖ ≤ Real.exp (-(κ * t ^ p)) ∧
+      (∀ v : Matrix T d ℝ,
+        ‖fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.gated σ id hid) 0 θ k h') (t • (H + U)) v
+            - fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.frozen A) 0 (θ.toFrozen A) k h')
+                (t • (H + U)) v‖ ≤ Real.exp (-(κ * t ^ p)) * ‖v‖) ∧
+      ‖fderiv ℝ (fun θ' : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut =>
+              suffix (Arch.gated σ id hid) 0 θ' k (t • (H + U))) θ η
+          - fderiv ℝ (fun θ' : Params (Arch.frozen (T := T) (d := d) A) dIn dOut =>
+              suffix (Arch.frozen A) 0 θ' k (t • (H + U))) (θ.toFrozen A) (η.toFrozen A)‖
+        ≤ Real.exp (-(κ * t ^ p))
+
+/-- `k = L`: both networks are `h ↦ h D`, and all three differences vanish. -/
+private theorem farBound_last {C : Fin (L + 1) → Set (d → ℝ)} {A : ∀ ℓ, Finset (hid ℓ)}
+    (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) :
+    FarBound p C A θ η (Fin.last L) := by
+  intro H _
+  refine ⟨1, one_pos, 1, one_pos, 0, fun t _ U _ => ⟨?_, fun v => ?_, ?_⟩⟩
+  · rw [suffix_last_eq_mul _ θ rfl, suffix_last_eq_mul _ (θ.toFrozen A) rfl,
+      show (θ.toFrozen A).D = θ.D from rfl, sub_self, norm_zero]
+    exact (Real.exp_pos _).le
+  · rw [fderiv_suffix_last _ θ rfl, fderiv_suffix_last _ (θ.toFrozen A) rfl,
+      show (θ.toFrozen A).D = θ.D from rfl, sub_self, norm_zero]
+    exact mul_nonneg (Real.exp_pos _).le (norm_nonneg v)
+  · rw [fderiv_params_suffix_last _ θ rfl, fderiv_params_suffix_last _ (θ.toFrozen A) rfl,
+      show (η.toFrozen A).D = η.D from rfl, sub_self, norm_zero]
+    exact (Real.exp_pos _).le
+
+/-- **The step from `ℓ + 1` to `ℓ`** (steps 1 to 5 of the proof): the bounds after block `ℓ`, at
+every `H'` with rows in `C_{ℓ+1}`, give them before the block, at every `H` with rows in `C_ℓ`. -/
+private theorem farBound_castSucc (hg : GateFar σ σ' p) {C : Fin (L + 1) → Set (d → ℝ)}
+    {A : ∀ ℓ, Finset (hid ℓ)} {θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut}
+    (hθ : GoodForConesGated C A θ) (η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (ℓ : Fin L) (ih : FarBound p C A θ η ℓ.succ) : FarBound p C A θ η ℓ.castSucc := by
+  intro H hH
+  have hp1 := hg.one_le
+  -- step 1: the gates of `H` have the signs of the active set, and are `2μ` away from zero
+  have hgp : ∀ τ, ∀ j ∈ A ℓ, 0 < (H * θ.read ℓ) τ (Sum.inl j) := fun τ j hj =>
+    hθ.gate_pos ℓ (H τ) (hH τ) j hj
+  have hgn : ∀ τ, ∀ j ∉ A ℓ, (H * θ.read ℓ) τ (Sum.inl j) < 0 := fun τ j hj =>
+    hθ.gate_neg ℓ (H τ) (hH τ) j hj
+  have hsign : ∀ τ j, 0 < |(H * θ.read ℓ) τ (Sum.inl j)| := by
+    intro τ j
+    by_cases hj : j ∈ A ℓ
+    · exact abs_pos.2 (hgp τ j hj).ne'
+    · exact abs_pos.2 (hgn τ j hj).ne
+  obtain ⟨μ, hμ, hμle⟩ := exists_pos_two_mul_le
+    (fun a : T × hid ℓ => |(H * θ.read ℓ) a.1 (Sum.inl a.2)|) fun a => hsign a.1 a.2
+  have hpos : ∀ τ, ∀ j ∈ A ℓ, 2 * μ ≤ (H * θ.read ℓ) τ (Sum.inl j) := fun τ j hj => by
+    have h1 := hμle (τ, j)
+    rwa [abs_of_pos (hgp τ j hj)] at h1
+  have hneg : ∀ τ, ∀ j ∉ A ℓ, (H * θ.read ℓ) τ (Sum.inl j) ≤ -(2 * μ) := fun τ j hj => by
+    have h1 := hμle (τ, j)
+    rw [abs_of_neg (hgn τ j hj)] at h1
+    linarith
+  -- step 3: the frozen block sends `H` to `H'`, with rows in `C_{ℓ+1}`
+  obtain ⟨H', hH'⟩ : ∃ H', H' = qa (aF (A ℓ)) (H * θ.read ℓ) * θ.write ℓ := ⟨_, rfl⟩
+  have hH'C : ∀ τ, H' τ ∈ C ℓ.succ := fun τ => by
+    rw [hH', ← frozen_f_eq (d := d) A ℓ, frozen_block_apply A θ ℓ H τ]
+    exact hθ.frozen_mem ℓ (H τ) (hH τ)
+  -- the induction hypothesis at `H'`
+  obtain ⟨ϱ', hϱ', κ', hκ', t₀', hIH⟩ := ih H' hH'C
+  -- step 4: the frozen network after the block, on the dilations of the ball around `H'`
+  obtain ⟨Cf, hCf0, hCf⟩ := frozen_lip A (θ.toFrozen A) (η.toFrozen A) ℓ.succ H' ϱ'
+  -- the frozen block is continuous: `‖g°(H + U) − H'‖ ≤ ϱ'/2` for small `U`
+  have hcont : Continuous (fun n : Matrix T d ℝ => qa (aF (A ℓ)) (n * θ.read ℓ) * θ.write ℓ) := by
+    have h := analyticOnNhd_block (Arch.frozen (T := T) (d := d) A) (θ.toFrozen A)
+      (analyticOnNhd_f_frozen A) ℓ
+    have h2 := continuousOn_univ.mp h.continuousOn
+    have e : (fun n : Matrix T d ℝ => (Arch.frozen (T := T) (d := d) A).f ℓ
+        (n * (θ.toFrozen A).read ℓ) * (θ.toFrozen A).write ℓ)
+        = fun n => qa (aF (A ℓ)) (n * θ.read ℓ) * θ.write ℓ :=
+      funext fun n => by rw [frozen_f_eq]; rfl
+    rw [e] at h2
+    exact h2
+  obtain ⟨δ, hδ, hδc⟩ := Metric.continuousAt_iff.1 hcont.continuousAt (ϱ' / 2) (half_pos hϱ')
+  -- the radius `ϱ`
+  have hD0 : 0 < (Fintype.card d : ℝ) * ‖θ.read ℓ‖ + 1 := by positivity
+  obtain ⟨ϱ, hϱdef⟩ : ∃ ϱ : ℝ, ϱ = min (δ / 2) (μ / (Fintype.card d * ‖θ.read ℓ‖ + 1)) :=
+    ⟨_, rfl⟩
+  have hϱ : 0 < ϱ := by rw [hϱdef]; exact lt_min (half_pos hδ) (div_pos hμ hD0)
+  have hϱW : Fintype.card d * ϱ * ‖θ.read ℓ‖ ≤ μ := by
+    have h1 : ϱ ≤ μ / (Fintype.card d * ‖θ.read ℓ‖ + 1) := hϱdef ▸ min_le_right _ _
+    rw [le_div_iff₀ hD0] at h1
+    nlinarith [norm_nonneg (θ.read ℓ)]
+  have hϱδ : ∀ U : Matrix T d ℝ, ‖U‖ ≤ ϱ →
+      ‖qa (aF (A ℓ)) ((H + U) * θ.read ℓ) * θ.write ℓ - H'‖ ≤ ϱ' / 2 := by
+    intro U hU
+    have h1 : dist (H + U) H < δ := by
+      rw [dist_eq_norm, add_sub_cancel_left]
+      have : ϱ ≤ δ / 2 := hϱdef ▸ min_le_left _ _
+      linarith
+    have h2 : dist (qa (aF (A ℓ)) ((H + U) * θ.read ℓ) * θ.write ℓ)
+        (qa (aF (A ℓ)) (H * θ.read ℓ) * θ.write ℓ) < ϱ' / 2 := hδc h1
+    rw [dist_eq_norm, ← hH'] at h2
+    exact h2.le
+  -- step 2: the block bounds on `S = {(U, v) : ‖U‖ ≤ ϱ, ‖v‖ ≤ 1}`
+  obtain ⟨S, hS⟩ : ∃ S : Set (Matrix T d ℝ × Matrix T d ℝ), S = {i | ‖i.1‖ ≤ ϱ ∧ ‖i.2‖ ≤ 1} :=
+    ⟨_, rfl⟩
+  have hSm : ∀ i ∈ S, ‖i.1‖ ≤ ϱ ∧ ‖i.2‖ ≤ 1 := fun i hi => by rw [hS] at hi; exact hi
+  obtain ⟨hx, hw, hww, hq, hqq⟩ := block_bounds hg (A ℓ) (θ.read ℓ) (η.read ℓ) (θ.write ℓ)
+    (η.write ℓ) H hμ hpos hneg hϱ.le hϱW S hSm
+  -- step 5: the induction hypothesis and the frozen network at the outputs of the two blocks
+  obtain ⟨hv1, hv2, hv3⟩ := combine_bounds (S := S) (p := p)
+    (fun z => suffix (Arch.gated σ id hid) 0 θ ℓ.succ z)
+    (fun z => suffix (Arch.frozen A) 0 (θ.toFrozen A) ℓ.succ z)
+    (fun z => fderiv ℝ (fun θ' : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut =>
+      suffix (Arch.gated σ id hid) 0 θ' ℓ.succ z) θ η)
+    (fun z => fderiv ℝ (fun θ' : Params (Arch.frozen (T := T) (d := d) A) dIn dOut =>
+      suffix (Arch.frozen A) 0 θ' ℓ.succ z) (θ.toFrozen A) (η.toFrozen A))
+    (fun z v => fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.gated σ id hid) 0 θ ℓ.succ h') z v)
+    (fun z v => fderiv ℝ (fun h' : Matrix T d ℝ =>
+      suffix (Arch.frozen A) 0 (θ.toFrozen A) ℓ.succ h') z v)
+    (fun z a b => (map_sub _ a b).symm)
+    (fun t i => qa (fun _ => σ) ((t • (H + i.1)) * θ.read ℓ) * θ.write ℓ)
+    (fun t i => qa (aF (A ℓ)) ((t • (H + i.1)) * θ.read ℓ) * θ.write ℓ)
+    (fun t i => dqa (fun _ => σ) (fun _ => σ') ((t • (H + i.1)) * θ.read ℓ)
+      (i.2 * θ.read ℓ) * θ.write ℓ)
+    (fun t i => dqa (aF (A ℓ)) (aF' (A ℓ)) ((t • (H + i.1)) * θ.read ℓ)
+      (i.2 * θ.read ℓ) * θ.write ℓ)
+    (fun t i => dqa (fun _ => σ) (fun _ => σ') ((t • (H + i.1)) * θ.read ℓ)
+      ((t • (H + i.1)) * η.read ℓ) * θ.write ℓ
+        + qa (fun _ => σ) ((t • (H + i.1)) * θ.read ℓ) * η.write ℓ)
+    (fun t i => dqa (aF (A ℓ)) (aF' (A ℓ)) ((t • (H + i.1)) * θ.read ℓ)
+      ((t • (H + i.1)) * η.read ℓ) * θ.write ℓ
+        + qa (aF (A ℓ)) ((t • (H + i.1)) * θ.read ℓ) * η.write ℓ)
+    hκ' hCf0 (2 * 2 ^ (L - ((ℓ.succ : Fin (L + 1)) : ℕ))) hx hw hww hq hqq (by
+      filter_upwards [hx.eventually_le hp1 (half_pos hϱ'), eventually_ge_atTop (max 1 t₀')]
+        with t hxt ht i hi
+      have ht1 : 1 ≤ t := (le_max_left _ _).trans ht
+      have ht0 : 0 < t := zero_lt_one.trans_le ht1
+      have hc : t ^ 2 ≠ 0 := by positivity
+      have hxi := hxt i hi
+      have hUi : ‖i.1‖ ≤ ϱ := (hSm i hi).1
+      -- the outputs of the two blocks: `x = t² z₁` and `x₀ = t² z₂`
+      obtain ⟨X, hX⟩ : ∃ X, X = qa (fun _ => σ) ((t • (H + i.1)) * θ.read ℓ) * θ.write ℓ :=
+        ⟨_, rfl⟩
+      obtain ⟨X₀, hX₀⟩ : ∃ X₀, X₀ = qa (aF (A ℓ)) ((t • (H + i.1)) * θ.read ℓ) * θ.write ℓ :=
+        ⟨_, rfl⟩
+      rw [← hX, ← hX₀] at hxi ⊢
+      obtain ⟨z₂, hz₂⟩ : ∃ z₂, z₂ = qa (aF (A ℓ)) ((H + i.1) * θ.read ℓ) * θ.write ℓ := ⟨_, rfl⟩
+      have hX₀z : X₀ = t ^ 2 • z₂ := by
+        rw [hX₀, hz₂, Matrix.smul_mul, qa_smul (aF_mul (A ℓ)), Matrix.smul_mul]
+      have hz₂' : ‖z₂ - H'‖ ≤ ϱ' / 2 := by rw [hz₂]; exact hϱδ i.1 hUi
+      have hz₂b : z₂ ∈ Metric.closedBall H' ϱ' := by
+        rw [Metric.mem_closedBall, dist_eq_norm]; linarith
+      obtain ⟨z₁, hz₁⟩ : ∃ z₁, z₁ = (t ^ 2)⁻¹ • X := ⟨_, rfl⟩
+      have hXz : X = t ^ 2 • z₁ := by rw [hz₁, smul_smul, mul_inv_cancel₀ hc, one_smul]
+      have hz₁₂ : ‖z₁ - z₂‖ ≤ ‖X - X₀‖ := by
+        have e : z₁ - z₂ = (t ^ 2)⁻¹ • (X - X₀) := by
+          rw [hz₁, hX₀z, smul_sub, smul_smul, inv_mul_cancel₀ hc, one_smul]
+        rw [e, norm_smul, norm_inv, Real.norm_eq_abs, abs_of_nonneg (by positivity)]
+        exact mul_le_of_le_one_left (norm_nonneg _) (inv_le_one_of_one_le₀ (by nlinarith))
+      have hz₁b : z₁ ∈ Metric.closedBall H' ϱ' := by
+        rw [Metric.mem_closedBall, dist_eq_norm]
+        have := norm_sub_le_norm_sub_add_norm_sub z₁ z₂ H'
+        linarith
+      -- the induction hypothesis at `t²` and `U'' = z₁ − H'`
+      have ht₀' : t₀' ≤ t ^ 2 := by nlinarith [le_max_right 1 t₀']
+      obtain ⟨i1, i2, i3⟩ := hIH (t ^ 2) ht₀' (z₁ - H') (by rw [← dist_eq_norm]; exact hz₁b)
+      rw [add_sub_cancel, ← hXz] at i1 i2 i3
+      have hexp : Real.exp (-(κ' * (t ^ 2) ^ p)) ≤ Real.exp (-(κ' * t ^ p)) :=
+        Real.exp_le_exp.2 (neg_le_neg (mul_le_mul_of_nonneg_left
+          (pow_le_pow_left₀ ht0.le (by nlinarith) p) hκ'.le))
+      -- the frozen network between `x₀` and `x`
+      obtain ⟨f1, f2, f3, f4⟩ := hCf t ht1 z₁ hz₁b z₂ hz₂b
+      rw [← hXz, ← hX₀z] at f1 f2 f4
+      rw [← hX₀z] at f3
+      exact ⟨⟨i1.trans hexp, fun v => (i2 v).trans
+        (mul_le_mul_of_nonneg_right hexp (norm_nonneg v)), i3.trans hexp⟩, f1, f2, f3, f4⟩)
+  -- absorbing the powers of `t`
+  obtain ⟨κ₁, hκ₁, e1⟩ := hv1.exists_bound hp1
+  obtain ⟨κ₂, hκ₂, e2⟩ := hv2.exists_bound hp1
+  obtain ⟨κ₃, hκ₃, e3⟩ := hv3.exists_bound hp1
+  obtain ⟨t₀, ht₀⟩ := eventually_atTop.1 (e1.and (e2.and (e3.and (eventually_ge_atTop 0))))
+  refine ⟨ϱ, hϱ, min κ₁ (min κ₂ κ₃), lt_min hκ₁ (lt_min hκ₂ hκ₃), t₀, fun t ht U hU => ?_⟩
+  obtain ⟨f1, f2, f3, ht0⟩ := ht₀ t ht
+  have hmono : ∀ κ'', min κ₁ (min κ₂ κ₃) ≤ κ'' →
+      Real.exp (-(κ'' * t ^ p)) ≤ Real.exp (-(min κ₁ (min κ₂ κ₃) * t ^ p)) := fun κ'' h =>
+    Real.exp_le_exp.2 (neg_le_neg (mul_le_mul_of_nonneg_right h (pow_nonneg ht0 p)))
+  have hS0 : (U, (0 : Matrix T d ℝ)) ∈ S := by rw [hS]; exact ⟨hU, by simp⟩
+  refine ⟨?_, fun v => ?_, ?_⟩
+  · -- the value
+    rw [suffix_gated_castSucc, suffix_frozen_castSucc]
+    exact (f1 _ hS0).trans (hmono _ (min_le_left _ _))
+  · -- the derivative in the hidden state, along `v = ‖v‖ u` with `‖u‖ ≤ 1`
+    rcases eq_or_ne v 0 with rfl | hv
+    · simp
+    have hnv : 0 < ‖v‖ := norm_pos_iff.2 hv
+    obtain ⟨u, hu⟩ : ∃ u, u = ‖v‖⁻¹ • v := ⟨_, rfl⟩
+    have hvu : v = ‖v‖ • u := by rw [hu, smul_smul, mul_inv_cancel₀ hnv.ne', one_smul]
+    have hu1 : ‖u‖ ≤ 1 := by
+      rw [hu, norm_smul, norm_inv, norm_norm, inv_mul_cancel₀ hnv.ne']
+    have hSu : (U, u) ∈ S := by rw [hS]; exact ⟨hU, hu1⟩
+    conv_lhs => rw [hvu, map_smul, map_smul, ← smul_sub, norm_smul, norm_norm]
+    rw [fderiv_gated_castSucc hg.hasDerivAt, fderiv_frozen_castSucc, mul_comm ‖v‖]
+    exact mul_le_mul_of_nonneg_right
+      ((f2 _ hSu).trans (hmono _ ((min_le_right _ _).trans (min_le_left _ _)))) hnv.le
+  · -- the derivative in the weights
+    rw [fderiv_params_gated_castSucc hg.hasDerivAt, fderiv_params_frozen_castSucc]
+    exact (f3 _ hS0).trans (hmono _ ((min_le_right _ _).trans (min_le_right _ _)))
+
+/-- The claim for every `k`, by reverse induction. -/
+private theorem farBound_all (hg : GateFar σ σ' p) {C : Fin (L + 1) → Set (d → ℝ)}
+    {A : ∀ ℓ, Finset (hid ℓ)} {θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut}
+    (hθ : GoodForConesGated C A θ) (η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (k : Fin (L + 1)) : FarBound p C A θ η k := by
+  induction k using Fin.reverseInduction with
+  | last => exact farBound_last θ η
+  | cast ℓ ih => exact farBound_castSucc hg hθ η ℓ ih
+
 /-- **Lemma D.11, for real hidden states, with the derivative in the hidden state.** Let `θ` be
 good for the cones, and let all rows of `H` lie in `C_k`. There are `ϱ, κ > 0` and `t₀` such that
 for `t ≥ t₀` and `‖U‖ ≤ ϱ`, at `h = t (H + U)`, the network after `h_k` and the frozen network
@@ -954,7 +1257,7 @@ theorem exists_far_frozen_bounds (hg : GateFar σ σ' p) {C : Fin (L + 1) → Se
               suffix (Arch.gated σ id hid) 0 θ' k (t • (H + U))) θ η
           - fderiv ℝ (fun θ' : Params (Arch.frozen (T := T) (d := d) A) dIn dOut =>
               suffix (Arch.frozen A) 0 θ' k (t • (H + U))) (θ.toFrozen A) (η.toFrozen A)‖
-        ≤ Real.exp (-(κ * t ^ p)) := by
-  sorry
+        ≤ Real.exp (-(κ * t ^ p)) :=
+  farBound_all hg hθ η k H hH
 
 end Skips
