@@ -122,7 +122,13 @@ theorem exists_ne_of_gated {σ₁ σ₂ : ℝ → ℝ} (h₁ : σ₁ 0 = 0) (hd�
 theorem vanillaBlock_reluSq_smul (Wr : Matrix p m ℝ) (Ww : Matrix m q ℝ) (lam : ℝ) (x : p → ℝ)
     (hlam : 0 < lam) :
     vanillaBlock reluSq Wr Ww (lam • x) = lam ^ (2 : ℝ) • vanillaBlock reluSq Wr Ww x := by
-  sorry
+  -- unit by unit: `max(λ y, 0)² = λ² max(y, 0)²`
+  have key : (fun i => reluSq (((lam • x) ᵥ* Wr) i))
+      = lam ^ 2 • fun i => reluSq ((x ᵥ* Wr) i) := by
+    funext i
+    rw [Matrix.smul_vecMul, Pi.smul_apply, smul_eq_mul, Pi.smul_apply, smul_eq_mul, reluSq,
+      reluSq, ← mul_zero lam, ← mul_max_of_nonneg _ _ hlam.le, mul_zero, mul_pow]
+  rw [vanillaBlock, vanillaBlock, key, Matrix.smul_vecMul, Real.rpow_two]
 
 /-- A ReGLU block is positively homogeneous of degree `2`. -/
 theorem gatedBlock_relu_smul (Wg Wv : Matrix p m ℝ) (Ww : Matrix m q ℝ) (lam : ℝ) (x : p → ℝ)
