@@ -52,7 +52,7 @@ private theorem hasDerivAt_affine_rzv {m n : Type*} [Fintype m] [Fintype n]
   rw [one_smul] at h
   exact h
 
-/-! ### Check 3: the condition of `blockFlatSphere` is the derivative of the block along `ψ` -/
+/-! ### The condition of `blockFlatSphere` is the derivative of the block along `ψ` -/
 
 omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- For a differentiable `f`: along the line `(R + τ R', W + τ W')` of weights of the block, the
@@ -74,10 +74,11 @@ private theorem hasDerivAt_block_rzv {r w : Type*} [Fintype r] [Fintype w]
   exact hFW
 
 
-/-! ### Check 6: the other direction of the residual count (not a statement of the library)
+/-! ### The other direction of the residual count
 
-The paper: "the residual network has functional dimension `P − dim CO(d) − dim V_θ`". The library
-has `P ≤ funDimOn + (d(d−1)/2 + 1) + dim V_θ`. Here: the other inequality, for `E` of rank `d`,
+The paper: "the residual network has functional dimension `P − dim CO(d) − dim V_θ`".
+`OneBlock/ResidualRMSZeroGain.lean` has `P ≤ funDimOn + (d(d−1)/2 + 1) + dim V_θ`. Here: the other
+inequality, for `E` of rank `d`,
 and the equality under the hypotheses of the library's statement. The helpers repeat private
 helpers of `OneBlock/ResidualRMSZeroGain.lean`. -/
 
