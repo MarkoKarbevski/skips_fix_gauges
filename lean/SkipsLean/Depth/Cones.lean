@@ -124,6 +124,7 @@ private noncomputable def dotCLM (c : d → ℝ) : (d → ℝ) →L[ℝ] ℝ :=
       map_add' := fun v w => add_dotProduct v w c
       map_smul' := fun r v => smul_dotProduct r v c }
 
+omit [DecidableEq d] in
 private theorem dotCLM_apply (c v : d → ℝ) : dotCLM c v = v ⬝ᵥ c := rfl
 
 omit [DecidableEq d] in
@@ -131,6 +132,7 @@ omit [DecidableEq d] in
 private noncomputable def dotSmul (c a : d → ℝ) : (d → ℝ) →L[ℝ] (d → ℝ) :=
   (dotCLM c).smulRight a
 
+omit [DecidableEq d] in
 private theorem dotSmul_apply (c a v : d → ℝ) : dotSmul c a v = (v ⬝ᵥ c) • a := rfl
 
 omit [DecidableEq d] in
@@ -303,7 +305,7 @@ private theorem analyticOnNhd_frozenMlp
   have h := (dotSmul ((θ.read ℓ)ᵀ j) (θ.write ℓ j)).analyticOnNhd Set.univ
   exact h
 
-omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- The derivative of the frozen gated block at `ξ`:
 `v ↦ ∑_{j ∈ A} ((ξ e_j)(v c_j) + (ξ c_j)(v e_j)) a_j`. -/
 private theorem hasFDerivAt_frozenGated
@@ -452,6 +454,7 @@ private theorem tendsto_div_of_eq_mul {S : ℝ → ℝ} (hS : ∀ y, σ y = y * 
   rw [hS]
   field_simp
 
+omit [DecidableEq d] [Fintype dIn] in
 /-- "A good `θ` is regular", for gated blocks whose gate `σ(y) = y S(y)` has `σ' → 1`, `S → 1` at
 `+∞` and `σ' → 0`, `S → 0` at `-∞`. For block `ℓ`: a row `ξ` of the cone `C_{ℓ-1}` at which the
 frozen block has an injective derivative, then the row `x = s ξ` for a large `s`, then the matrix
@@ -481,6 +484,7 @@ private theorem regular_of_goodForConesGated_of_limits [Nonempty T] {σ' S : ℝ
   exact injective_fderiv_rowwise (HasFDerivAt.fun_sum fun j _ =>
     hasFDerivAt_gatedUnit hσ ((θ.read ℓ)ᵀ (Sum.inl j)) ((θ.read ℓ)ᵀ (Sum.inr j)) (θ.write ℓ j) x) hx
 
+omit [DecidableEq d] [Fintype dIn] in
 /-- "A good `θ` is regular", for MLP blocks whose activation has `σ' → 1` at `+∞` and `σ' → 0` at
 `-∞`. -/
 private theorem regular_of_goodForConesMlp_of_limits [Nonempty T] {σ' : ℝ → ℝ}
