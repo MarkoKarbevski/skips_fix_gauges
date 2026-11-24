@@ -564,3 +564,10 @@ import SkipsLean
 #print axioms Skips.writeLHS_frozen_smul
 #print axioms Skips.one_small_factor_gelu
 #print axioms Skips.one_small_factor_silu
+#print axioms Skips.claimGated_castSucc_of_frozen
+#print axioms Skips.suffix_eq_suffixPost
+#print axioms Skips.suffix_pow_smul_eq_scaledSuffix
+#print axioms Skips.scaledSuffix_neg
+#print axioms Skips.analyticAt_scaledSuffix
+#print axioms Skips.fderiv_suffix_pow_smul
+#print axioms Skips.fderiv_params_suffix_pow_smul
