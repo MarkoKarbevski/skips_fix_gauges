@@ -1793,3 +1793,9 @@ import SkipsLean
 #print axioms Skips.funDimSkipsOn_tri_reglu_rmsNorm_zero
 #print axioms Skips.ae_funDimSkipsOn_tri_reglu_rmsNorm_zero
 #print axioms Skips.ae_funDimSkipsOn_tri_reglu_rmsNorm_zero_eq_residual_add
+#print axioms Skips.exists_posDef_mul_orthogonal_transpose
+#print axioms Skips.posDef_mul_orthogonal_transpose_unique
+#print axioms Skips.exists_upperTriangular_pos_mul_orthogonal_transpose
+#print axioms Skips.upperTriangular_pos_mul_orthogonal_transpose_unique
+#print axioms Skips.exists_cob_learned_upperTriangular_pos
+#print axioms Skips.exists_cob_learned_posDef
