@@ -1,4 +1,4 @@
-import Mathlib
+import SkipsLean.Imports
 
 /-!
 # A flat direction of tanh hidden units vanishes

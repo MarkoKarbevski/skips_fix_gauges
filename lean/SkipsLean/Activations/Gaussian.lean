@@ -1,4 +1,4 @@
-import Mathlib
+import SkipsLean.Imports
 
 /-!
 # The normal distribution function, its tail, and GELU

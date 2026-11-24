@@ -335,4 +335,52 @@ theorem funDim_add_le_residual_rmsNorm {ε : ℝ} (hε : 0 < ε) (hA : A.χ = rm
   rw [← hdim]
   exact funDim_add_finrank_le_of_le_flat θ hdiff _ hV
 
+/-! ### Without a hypothesis of differentiability on the blocks
+
+The same statements for arbitrary maps `f_ℓ` and every real `ε`, from `mem_flat_of_hasDerivAt'`
+and `funDim_add_finrank_le_of_le_flat'`. -/
+
+/-- Under pre-RMSNorm and without skip connections, the direction `cobDir θ X` of antisymmetric
+`X_0, …, X_L` is flat, for arbitrary maps `f_ℓ`. -/
+theorem cobDir_mem_flat_skipless_rmsNorm' (ε : ℝ) (hA : A.χ = rmsNorm ε)
+    (X : Fin (L + 1) → Matrix d d ℝ) (hX : ∀ ℓ, (X ℓ)ᵀ = -X ℓ) :
+    cobDir θ X ∈ flat A 0 θ := by
+  -- The orthogonal changes of basis `exp (τ X_ℓ)` move `θ` with velocity `cobDir θ X`, and keep
+  -- the function (Proposition 3.2 under pre-RMSNorm).
+  refine mem_flat_of_hasDerivAt' θ
+    (fun τ => θ.cob (fun ℓ => expGL (X ℓ) τ) (fun ℓ => expGL (X ℓ) τ)) (cobDir θ X)
+    (hasDerivAt_cob_expGL θ X) (cob_expGL_zero θ X) ?_
+  exact Filter.Eventually.of_forall fun τ x =>
+    eval_cob_rmsNorm θ x ε hA _ fun ℓ => expGL_mem_orthogonalGroup (hX ℓ) τ
+
+/-- **Theorem 4.3 under pre-RMSNorm, for the changes of basis, for arbitrary maps `f_ℓ`.** If `E`
+and every write have rank `d`, the functional dimension of a network without skip connections is
+at most `P - (L + 1) d (d - 1) / 2`. -/
+theorem funDim_add_le_skipless_rmsNorm' (ε : ℝ) (hA : A.χ = rmsNorm ε)
+    (hE : θ.E.rank = Fintype.card d) (hw : ∀ ℓ, (θ.write ℓ).rank = Fintype.card d) :
+    funDim A 0 θ + (L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2)
+      ≤ Module.finrank ℝ (Params A dIn dOut) := by
+  -- The directions `cobDir θ X`, `X_ℓ` antisymmetric, are the range of a linear map `Φ`.
+  let Φ : (Fin (L + 1) → antisymmetric d) →ₗ[ℝ] Params A dIn dOut :=
+    (cobDirLin θ).comp (LinearMap.compLeft (antisymmetric d).subtype (Fin (L + 1)))
+  -- `Φ` is injective (Lemma B.1).
+  have hΦ : Function.Injective Φ := by
+    intro X Y h
+    have h' : cobDir θ (fun ℓ => (X ℓ : Matrix d d ℝ))
+        = cobDir θ (fun ℓ => (Y ℓ : Matrix d d ℝ)) := h
+    exact funext fun ℓ => Subtype.ext (congrFun (cobDir_injective θ hE hw h') ℓ)
+  -- These directions are flat.
+  have hV : LinearMap.range Φ ≤ flat A 0 θ := by
+    intro v hv
+    obtain ⟨X, rfl⟩ := LinearMap.mem_range.1 hv
+    exact cobDir_mem_flat_skipless_rmsNorm' θ ε hA (fun ℓ => (X ℓ : Matrix d d ℝ))
+      fun ℓ => (X ℓ).2
+  -- They span a space of dimension `(L + 1) d (d - 1) / 2`.
+  have hdim : Module.finrank ℝ (LinearMap.range Φ)
+      = (L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2) := by
+    rw [LinearMap.finrank_range_of_inj hΦ, Module.finrank_pi_fintype, finrank_antisymmetric,
+      Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]
+  rw [← hdim]
+  exact funDim_add_finrank_le_of_le_flat' θ _ hV
+
 end Skips
