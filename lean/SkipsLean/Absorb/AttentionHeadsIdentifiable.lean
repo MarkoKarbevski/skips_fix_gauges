@@ -55,7 +55,10 @@ theorem attnHeads_identifiable_noMask (hT : 3 ≤ Fintype.card T) {m : ℕ}
     (h0 : ∀ h ∈ U,
       h * M + ∑ k, attnWeights (fun _ _ : T => True) (h * Γ k * hᵀ) * h * C k = 0) :
     M = 0 ∧ ∀ k, C k = 0 := by
-  sorry
+  -- there is a token, and without a mask it sees every token
+  obtain ⟨t₀⟩ : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  exact attnHeads_identifiable (fun _ _ : T => True) hT ⟨t₀, fun _ => trivial⟩ Γ hΓ C M U hU
+    hne h0
 
 /-- **Lemma A.14 with the causal mask:** on the tokens `0, …, n − 1`, `n ≥ 3`, token `t` sees the
 tokens `s ≤ t`. -/
@@ -65,7 +68,39 @@ theorem attnHeads_identifiable_causal {n : ℕ} (hn : 3 ≤ n) {m : ℕ}
     (h0 : ∀ h ∈ U,
       h * M + ∑ k, attnWeights (fun t s : Fin n => s ≤ t) (h * Γ k * hᵀ) * h * C k = 0) :
     M = 0 ∧ ∀ k, C k = 0 := by
-  sorry
+  -- the last token `n - 1` sees every token
+  have hT : 3 ≤ Fintype.card (Fin n) := by rw [Fintype.card_fin]; exact hn
+  refine attnHeads_identifiable (fun t s : Fin n => s ≤ t) hT ⟨⟨n - 1, by omega⟩, fun s => ?_⟩
+    Γ hΓ C M U hU hne h0
+  rw [Fin.le_def]
+  show s.val ≤ n - 1
+  omega
+
+open scoped Classical in
+/-- Grouping heads by score matrix: if every `Γ_j` is one of the distinct matrices `G_i`, then
+`∑_i P_{G_i}(h) h (∑_{j : Γ_j = G_i} C_j) = ∑_j P_{Γ_j}(h) h C_j`. -/
+private theorem sum_group_ahi (sees : T → T → Prop) [DecidableRel sees] {ι H : Type*}
+    [Fintype ι] [Fintype H] (G : ι → Matrix d d ℝ) (hG : Function.Injective G)
+    (Γ C : H → Matrix d d ℝ) (hS : ∀ j, ∃ i, G i = Γ j) (h : Matrix T d ℝ) :
+    ∑ i, attnWeights sees (h * G i * hᵀ) * h * (∑ j, if Γ j = G i then C j else 0)
+      = attnHeads sees Γ C h := by
+  have e1 : ∀ i, attnWeights sees (h * G i * hᵀ) * h * (∑ j, if Γ j = G i then C j else 0)
+      = ∑ j, if Γ j = G i then attnWeights sees (h * Γ j * hᵀ) * h * C j else 0 := by
+    intro i
+    rw [Matrix.mul_sum]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    by_cases hj : Γ j = G i
+    · simp only [hj, ite_true]
+    · simp only [hj, ite_false, Matrix.mul_zero]
+  simp only [e1]
+  rw [Finset.sum_comm]
+  unfold attnHeads
+  refine Finset.sum_congr rfl fun j _ => ?_
+  -- exactly one `i` has `G_i = Γ_j`
+  obtain ⟨i₀, hi₀⟩ := hS j
+  rw [Finset.sum_eq_single i₀ (fun i _ hi => ite_eq_right_iff.2 fun hc => absurd
+    (hG (hc.symm.trans hi₀.symm)) hi) (fun h' => absurd (Finset.mem_univ _) h')]
+  simp only [hi₀, ite_true]
 
 open scoped Classical in
 /-- **Proposition A.15 of the absorb paper (The softmaxes must match), for attention blocks given
@@ -80,7 +115,40 @@ theorem attnHeads_sum_eq_of_mul_add_eq (sees : T → T → Prop) [DecidableRel s
     (h0 : ∀ h ∈ U, h * M + attnHeads sees Γ C h = attnHeads sees Γ' C' h) :
     M = 0 ∧ ∀ G : Matrix d d ℝ,
       (∑ i, if Γ i = G then C i else 0) = ∑ i, if Γ' i = G then C' i else 0 := by
-  sorry
+  classical
+  -- the score matrices that occur, indexed by `Fin m`
+  set S : Finset (Matrix d d ℝ) := Finset.univ.image Γ ∪ Finset.univ.image Γ' with hS
+  let e : S ≃ Fin (Fintype.card S) := Fintype.equivFin S
+  let G₀ : Fin (Fintype.card S) → Matrix d d ℝ := fun i => (e.symm i : Matrix d d ℝ)
+  have hG₀ : Function.Injective G₀ := fun i j hij => e.symm.injective (Subtype.ext hij)
+  have hrange : ∀ A, A ∈ S → ∃ i, G₀ i = A := fun A hA => ⟨e ⟨A, hA⟩, by
+    show ((e.symm (e ⟨A, hA⟩) : S) : Matrix d d ℝ) = A
+    rw [Equiv.symm_apply_apply]⟩
+  have hmemΓ : ∀ j, Γ j ∈ S := fun j =>
+    Finset.mem_union_left _ (Finset.mem_image_of_mem Γ (Finset.mem_univ j))
+  have hmemΓ' : ∀ j, Γ' j ∈ S := fun j =>
+    Finset.mem_union_right _ (Finset.mem_image_of_mem Γ' (Finset.mem_univ j))
+  -- the coefficient of the score matrix `G₀ i`: the heads of `B` minus the heads of `B'`
+  obtain ⟨hM, hC⟩ := attnHeads_identifiable sees hT hsees G₀ hG₀
+    (fun i => (∑ j, if Γ j = G₀ i then C j else 0) - ∑ j, if Γ' j = G₀ i then C' j else 0)
+    M U hU hne (fun h hh => by
+      -- `h M + ∑_i P_{G₀ i}(h) h C̃_i = h M + B(h) - B'(h) = 0`
+      simp only [Matrix.mul_sub, Finset.sum_sub_distrib]
+      rw [sum_group_ahi sees G₀ hG₀ Γ C (fun j => hrange _ (hmemΓ j)) h,
+        sum_group_ahi sees G₀ hG₀ Γ' C' (fun j => hrange _ (hmemΓ' j)) h, ← add_sub_assoc,
+        h0 h hh, sub_self])
+  refine ⟨hM, fun G => ?_⟩
+  by_cases hG : G ∈ S
+  · -- `G = G₀ i`, and `C̃_i = 0`
+    obtain ⟨i, hi⟩ := hrange G hG
+    have h1 := hC i
+    rw [hi] at h1
+    exact sub_eq_zero.mp h1
+  · -- no head has the score matrix `G`
+    rw [Finset.sum_eq_zero fun j _ =>
+        ite_eq_right_iff.2 fun (h : Γ j = G) => absurd (h ▸ hmemΓ j) hG,
+      Finset.sum_eq_zero fun j _ =>
+        ite_eq_right_iff.2 fun (h : Γ' j = G) => absurd (h ▸ hmemΓ' j) hG]
 
 open scoped Classical in
 /-- **Proposition A.15 of the absorb paper (The softmaxes must match):** for attention blocks
@@ -100,6 +168,9 @@ theorem attentionBlock_sum_eq_of_mul_add_eq (sees : T → T → Prop) [Decidable
       (∑ i, if (Real.sqrt (Fintype.card dh))⁻¹ • (WQ i * (WK i)ᵀ) = G then WV i * WO i else 0)
         = ∑ i, if (Real.sqrt (Fintype.card dh'))⁻¹ • (WQ' i * (WK' i)ᵀ) = G
             then WV' i * WO' i else 0 := by
-  sorry
+  -- the blocks of equation (4) are `attnHeads` with `Γ_i = W_{Q,i} W_{K,i}ᵀ / √d_h`,
+  -- `C_i = W_{V,i} W_{O,i}`
+  unfold attentionBlock at h0
+  exact attnHeads_sum_eq_of_mul_add_eq sees hT hsees _ _ _ _ M U hU hne h0
 
 end Skips
