@@ -1030,3 +1030,6 @@ import SkipsLean
 #print axioms Skips.exists_ne_residual_skipless_attention_causal_rmsNorm
 #print axioms Skips.ae_forall_ne_residual_skipless_attention_causal
 #print axioms Skips.ae_forall_ne_residual_skipless_attention_causal_rmsNorm
+#print axioms Skips.analyticOnNhd_attnWeights
+#print axioms Skips.analyticOnNhd_f_attention
+#print axioms Skips.differentiable_f_attention
