@@ -477,7 +477,7 @@ private theorem exists_add_sub_mem_rz0 {X : Type*} [NormedAddCommGroup X] [Norme
       rw [Metric.mem_ball, dist_zero_right, norm_neg, Real.norm_eq_abs, abs_of_pos hr2]
       linarith)
     rwa [Set.mem_preimage, neg_smul, ← sub_eq_add_neg] at h
-    
+
 omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: a matrix `Z` with `u Z = 0` for every row vector `u` is `0`. -/
 private theorem eq_zero_of_vecMul_rz0 {m n : Type*} [Fintype m] [DecidableEq m]
@@ -639,6 +639,118 @@ private theorem exists_eq_smul_on_rz0 (hd : 2 ≤ Fintype.card d) {O : Set (Matr
     rw [e2, smul_add] at e1
     exact add_right_cancel e1
 
+/-! ### The good inputs form an open set -/
+
+omit [Nonempty T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: the inputs `w` at which, for every token, the rows of `w E` and of `g(w E)` are
+linearly independent form an open set (`g` is continuous where no row of `w E` vanishes, and
+linear independence is an open condition). -/
+private theorem isOpen_good_rz0 {A : Arch T d 1} (hf : Continuous (A.f 0))
+    (θ : Params A dIn dOut) :
+    IsOpen {w : Matrix T dIn ℝ |
+      ∀ t, LinearIndependent ℝ ![(w * θ.E) t, gOne_rz0 A θ (w * θ.E) t]} := by
+  rw [isOpen_iff_mem_nhds]
+  intro w₀ hw₀
+  have hrows : ∀ t, (w₀ * θ.E) t ≠ 0 := fun t => (hw₀ t).ne_zero 0
+  have hc1 : Continuous fun w : Matrix T dIn ℝ => w * θ.E :=
+    continuous_id.matrix_mul continuous_const
+  have hR : Continuous fun M : Matrix T d ℝ => M * θ.read 0 :=
+    continuous_id.matrix_mul continuous_const
+  have hW : Continuous fun M : Matrix T (A.w 0) ℝ => M * θ.write 0 :=
+    continuous_id.matrix_mul continuous_const
+  have hc2 : ContinuousAt (fun w : Matrix T dIn ℝ => gOne_rz0 A θ (w * θ.E)) w₀ := by
+    have hN : ContinuousAt (rmsNorm 0 : Matrix T d ℝ → Matrix T d ℝ) (w₀ * θ.E) :=
+      (analyticAt_rmsNorm_zero _ hrows).continuousAt
+    have h1 : ContinuousAt (fun w : Matrix T dIn ℝ => rmsNorm 0 (w * θ.E)) w₀ :=
+      ContinuousAt.comp (f := fun w : Matrix T dIn ℝ => w * θ.E) (x := w₀) hN hc1.continuousAt
+    have h2 : ContinuousAt (fun w : Matrix T dIn ℝ => rmsNorm 0 (w * θ.E) * θ.read 0) w₀ :=
+      ContinuousAt.comp (f := fun w : Matrix T dIn ℝ => rmsNorm 0 (w * θ.E)) (x := w₀)
+        hR.continuousAt h1
+    have h3 : ContinuousAt
+        (fun w : Matrix T dIn ℝ => A.f 0 (rmsNorm 0 (w * θ.E) * θ.read 0)) w₀ :=
+      ContinuousAt.comp (f := fun w : Matrix T dIn ℝ => rmsNorm 0 (w * θ.E) * θ.read 0)
+        (x := w₀) hf.continuousAt h2
+    exact ContinuousAt.comp (f := fun w : Matrix T dIn ℝ => A.f 0 (rmsNorm 0 (w * θ.E) * θ.read 0))
+      (x := w₀) hW.continuousAt h3
+  have ht : ∀ t, ∀ᶠ w in 𝓝 w₀,
+      LinearIndependent ℝ ![(w * θ.E) t, gOne_rz0 A θ (w * θ.E) t] := by
+    intro t
+    have hpair : ContinuousAt
+        (fun w : Matrix T dIn ℝ => ![(w * θ.E) t, gOne_rz0 A θ (w * θ.E) t]) w₀ := by
+      refine continuousAt_pi.2 fun i => ?_
+      fin_cases i
+      · exact ((continuous_apply t).comp hc1).continuousAt
+      · exact ContinuousAt.comp (f := fun w : Matrix T dIn ℝ => gOne_rz0 A θ (w * θ.E))
+          (x := w₀) (continuous_apply t).continuousAt hc2
+    exact hpair.eventually_mem (isOpen_setOfPred_linearIndependent.mem_nhds (hw₀ t))
+  exact Filter.eventually_all.2 ht
+
+/-! ### Step 4: analyticity, the connected set of matrices without a zero row -/
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the product of two matrix-valued maps analytic at a point is analytic there (as the
+private `analyticAt_matMul_hz` of `Depth/HiddenZero.lean`). -/
+private theorem analyticAt_matMul_rz0 {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
+    {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    {f : X → Matrix m n ℝ} {g : X → Matrix n p ℝ} {y : X}
+    (hf : AnalyticAt ℝ f y) (hg : AnalyticAt ℝ g y) :
+    AnalyticAt ℝ (fun y => f y * g y) y := by
+  let B : Matrix m n ℝ →ₗ[ℝ] Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ :=
+    LinearMap.mk₂ ℝ (fun a b => a * b) Matrix.add_mul (fun c a b => Matrix.smul_mul c a b)
+      Matrix.mul_add (fun c a b => Matrix.mul_smul a c b)
+  let B' : Matrix m n ℝ →L[ℝ] Matrix n p ℝ →L[ℝ] Matrix m p ℝ :=
+    LinearMap.toContinuousLinearMap
+      ((LinearMap.toContinuousLinearMap :
+        (Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ) ≃ₗ[ℝ] (Matrix n p ℝ →L[ℝ] Matrix m p ℝ)).toLinearMap ∘ₗ B)
+  have hB : (fun y => f y * g y) = fun y => B' (f y) (g y) := rfl
+  rw [hB]
+  exact (B'.analyticAt_bilinear (f y, g y)).comp₂ hf hg
+
+omit [Fintype T] [Nonempty T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: an analytic family of continuous linear maps, applied to an analytic family of
+vectors, is analytic (as the private `analyticOnNhd_clm_apply'` of `Depth/StepTanhRMS.lean`). -/
+private theorem analyticAt_clm_apply_rz0 {X E F : Type*} [NormedAddCommGroup X]
+    [NormedSpace ℝ X] [NormedAddCommGroup E] [NormedSpace ℝ E] [NormedAddCommGroup F]
+    [NormedSpace ℝ F] {J : X → E →L[ℝ] F} {v : X → E} {x : X} (hJ : AnalyticAt ℝ J x)
+    (hv : AnalyticAt ℝ v x) : AnalyticAt ℝ (fun x => J x (v x)) x :=
+  ((ContinuousLinearMap.id ℝ (E →L[ℝ] F)).analyticAt_bilinear (J x, v x)).comp₂ hJ hv
+
+omit [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (Step 4): for an analytic `f`, the derivative of `n ↦ f(n R) W` along `(R', W')` at
+`n = N_0(v)`, `v ↦ 𝐃f(N_0(v) R)(N_0(v) R') W + f(N_0(v) R) W'`, is analytic at every `v` without
+a zero row. -/
+private theorem analyticAt_Psi_rz0 {r w : Type*} [Fintype r] [Fintype w]
+    {f : Matrix T r ℝ → Matrix T w ℝ} (hf : AnalyticOnNhd ℝ f Set.univ) (R R' : Matrix d r ℝ)
+    (W W' : Matrix w d ℝ) {v : Matrix T d ℝ} (hv : ∀ t, v t ≠ 0) :
+    AnalyticAt ℝ (fun v : Matrix T d ℝ => fderiv ℝ f (rmsNorm 0 v * R) (rmsNorm 0 v * R') * W
+      + f (rmsNorm 0 v * R) * W') v := by
+  have hN := analyticAt_rmsNorm_zero v hv
+  have h1 : AnalyticAt ℝ (fun v : Matrix T d ℝ => rmsNorm 0 v * R) v :=
+    analyticAt_matMul_rz0 hN analyticAt_const
+  have h1' : AnalyticAt ℝ (fun v : Matrix T d ℝ => rmsNorm 0 v * R') v :=
+    analyticAt_matMul_rz0 hN analyticAt_const
+  have hfd := hf.fderiv (rmsNorm 0 v * R) trivial
+  have h2 := AnalyticAt.comp (f := fun v : Matrix T d ℝ => rmsNorm 0 v * R) (x := v) hfd h1
+  have h3 := analyticAt_clm_apply_rz0 h2 h1'
+  have h4 := AnalyticAt.comp (f := fun v : Matrix T d ℝ => rmsNorm 0 v * R) (x := v)
+    (hf _ trivial) h1
+  exact (analyticAt_matMul_rz0 h3 analyticAt_const).add (analyticAt_matMul_rz0 h4 analyticAt_const)
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (Step 4): for `d ≥ 2`, the matrices without a zero row form a connected set (a product
+of copies of `ℝ^d ∖ {0}`). -/
+private theorem isPreconnected_rows_rz0 (hd : 2 ≤ Fintype.card d) :
+    IsPreconnected {v : Matrix T d ℝ | ∀ t, v t ≠ 0} := by
+  have e : {v : Matrix T d ℝ | ∀ t, v t ≠ 0}
+      = Set.univ.pi (fun _ : T => ({0}ᶜ : Set (d → ℝ))) := by
+    ext v
+    exact ⟨fun h i _ => h i, fun h i => h i (Set.mem_univ i)⟩
+  rw [e]
+  refine isPreconnected_univ_pi fun _ => ?_
+  refine (isConnected_compl_singleton_of_one_lt_rank ?_ 0).isPreconnected
+  rw [rank_fun']
+  exact_mod_cast (by omega : 1 < Fintype.card d)
+
 end HelpersRz0
 
 /-- **Proof of Theorem B.1 (v) of the skips paper, "The residual network":** let `ε = 0`, `d ≥ 2`,
@@ -659,6 +771,182 @@ theorem exists_antisymm_scale_of_flatOn_residual_rmsNorm_zero {A : Arch T d 1}
       ∀ n : Matrix T d ℝ, (∀ t, n t ⬝ᵥ n t = Fintype.card d) →
         fderiv ℝ (A.f 0) (n * θ.read 0) (n * (η.read 0 + Y * θ.read 0)) * θ.write 0
           + A.f 0 (n * θ.read 0) * (η.write 0 - θ.write 0 * (Y + c • 1)) = 0 := by
-  sorry
+  classical
+  have hfd : Differentiable ℝ (A.f 0) := fun z => (hf z trivial).differentiableAt
+  -- a right inverse `D⁺` of `D` and a left inverse `E⁺` of `E` (both have rank `d`)
+  obtain ⟨Dp, hDp⟩ := Matrix.mulVec_surjective_iff_exists_right_inverse.1
+    (Matrix.mulVec_surjective_iff_rank_eq_card.2 hD)
+  obtain ⟨Ep, hEp⟩ := Matrix.vecMul_surjective_iff_exists_left_inverse.1
+    (Matrix.vecMul_surjective_iff_rank_eq_card.2 hE)
+  -- the good inputs `O`: for every token the rows of `w E` and `g(w E)` are independent; `O` is
+  -- open and contains `w₀`, and `s w ∈ U` for `w ∈ O`, `s > 0`
+  obtain ⟨O, hOdef⟩ : ∃ O : Set (Matrix T dIn ℝ), O = {w : Matrix T dIn ℝ |
+      ∀ t, LinearIndependent ℝ ![(w * θ.E) t, gOne_rz0 A θ (w * θ.E) t]} := ⟨_, rfl⟩
+  have hOo : IsOpen O := hOdef ▸ isOpen_good_rz0 hfd.continuous θ
+  obtain ⟨w₀, hw₀⟩ := hw
+  have hw₀O : w₀ ∈ O := by rw [hOdef]; exact hw₀
+  have hind : ∀ w ∈ O, ∀ t, LinearIndependent ℝ ![(w * θ.E) t, gOne_rz0 A θ (w * θ.E) t] :=
+    fun w hw => by rw [hOdef] at hw; exact hw
+  have hrows : ∀ w ∈ O, ∀ t, (w * θ.E) t ≠ 0 := fun w hw t => (hind w hw t).ne_zero 0
+  have hU : ∀ w ∈ O, ∀ s : ℝ, 0 < s → s • w ∈ residualZeroDomain A θ := fun w hw _ hs =>
+    smul_mem_domain_rz0 (hind w hw) hs
+  have t₀ : T := Classical.arbitrary T
+  -- Step 1, for a flat direction `η'`, at an input `x` of `U`: with `Y' = -η'_D D⁺`,
+  -- `𝐃N_0(h_1) k = N_0(h_1) Y'`, so `k_t = h_t Y' + μ_t h_t`, and `h_1 (Y' D + η'_D) = 0`
+  have step1 : ∀ η' : Params A dIn dOut, η' ∈ flatOn A 1 θ (residualZeroDomain A θ) →
+      ∀ x ∈ residualZeroDomain A θ,
+        (∀ t, kOne_rz0 A θ η' x t = hOne_rz0 A θ x t ᵥ* (-(η'.D * Dp))
+          + ((hOne_rz0 A θ x t ⬝ᵥ kOne_rz0 A θ η' x t)
+            / (hOne_rz0 A θ x t ⬝ᵥ hOne_rz0 A θ x t)) • hOne_rz0 A θ x t) ∧
+        hOne_rz0 A θ x * (-(η'.D * Dp) * θ.D + η'.D) = 0 := by
+    intro η' hη' x hx
+    have hx2 : ∀ t, hOne_rz0 A θ x t ≠ 0 := hx.2
+    have h0 := flat_eq_rz0 hA hfd θ η' hη' x hx
+    have hNY : fderiv ℝ (rmsNorm 0 : Matrix T d ℝ → Matrix T d ℝ) (hOne_rz0 A θ x)
+        (kOne_rz0 A θ η' x) = rmsNorm 0 (hOne_rz0 A θ x) * (-(η'.D * Dp)) := by
+      have e := congrArg (· * Dp) h0
+      simp only [Matrix.add_mul, Matrix.mul_assoc, hDp, Matrix.mul_one, Matrix.zero_mul] at e
+      rw [Matrix.mul_neg]
+      exact eq_neg_of_add_eq_zero_left e
+    refine ⟨row_of_fderiv_rmsNorm_zero_rz0 hx2 hNY, ?_⟩
+    refine mul_eq_zero_of_rmsNorm_zero_mul_rz0 hx2 _ ?_
+    rw [Matrix.mul_add, ← Matrix.mul_assoc, ← hNY]
+    exact h0
+  -- Step 1 for `η` on the rays `s w`, `w ∈ O`: `⟨(w E)_t Y, (w E)_t⟩ = 0` and
+  -- `(w E)(Y D + η_D) = 0`; hence `Y` is antisymmetric and `η_D = -Y D`
+  obtain ⟨Y, hYdef⟩ : ∃ Y : Matrix d d ℝ, Y = -(η.D * Dp) := ⟨_, rfl⟩
+  have hq : ∀ w ∈ O, (w * θ.E) t₀ ᵥ* Y ⬝ᵥ (w * θ.E) t₀ = 0 := by
+    intro w hw
+    refine quad_ray_rz0 (b := gOne_rz0 A θ (w * θ.E) t₀) fun s hs => ?_
+    have hx := hU w hw s hs
+    have hx2 : ∀ t, hOne_rz0 A θ (s • w) t ≠ 0 := hx.2
+    have e := quad_of_row_rz0 (hx2 t₀) ((step1 η hη _ hx).1 t₀)
+    rw [← hYdef, hOne_smul_rz0 θ w hs] at e
+    exact e
+  have hY : Yᵀ = -Y := transpose_eq_neg_rz0 (quad_zero_on_rz0 hOo hw₀O t₀ hEp hq)
+  have hZ : ∀ w ∈ O, w * (θ.E * (Y * θ.D + η.D)) = 0 := by
+    intro w hw
+    funext t
+    rw [← Matrix.mul_assoc, Matrix.mul_apply_eq_vecMul]
+    refine lin_ray_rz0 (b := gOne_rz0 A θ (w * θ.E) t) fun s hs => ?_
+    have e := congrFun (step1 η hη _ (hU w hw s hs)).2 t
+    rw [← hYdef, hOne_smul_rz0 θ w hs, Matrix.mul_apply_eq_vecMul] at e
+    exact e
+  have hZ0 : Y * θ.D + η.D = 0 := by
+    have e := congrArg (Ep * ·) (eq_zero_of_mul_on_rz0 hOo hw₀O hZ)
+    simp only [← Matrix.mul_assoc, hEp, Matrix.one_mul, Matrix.mul_zero] at e
+    exact e
+  have hYD : η.D = -(Y * θ.D) := eq_neg_of_add_eq_zero_right hZ0
+  -- Step 3, for a flat direction `ψ` with `ψ_D = 0`, on the rays `s w`, `w ∈ O`:
+  -- `s (w ψ_E)_t + γ_t = μ (s (w E)_t + g_t)`, so `(w ψ_E)_t = c (w E)_t` and `γ_t = c g_t`
+  have step3 : ∀ ψ : Params A dIn dOut, ψ ∈ flatOn A 1 θ (residualZeroDomain A θ) → ψ.D = 0 →
+      ∀ w ∈ O, ∀ t, ∃ c : ℝ, (w * ψ.E) t = c • (w * θ.E) t ∧
+        gam_rz0 A θ ψ (w * θ.E) (w * ψ.E) t = c • gOne_rz0 A θ (w * θ.E) t := by
+    intro ψ hψ hψD w hw t
+    refine three_ray_rz0 (hind w hw t) fun s hs => ?_
+    have e := (step1 ψ hψ _ (hU w hw s hs)).1 t
+    rw [hψD, Matrix.zero_mul, neg_zero, Matrix.vecMul_zero, zero_add,
+      kOne_smul_rz0 θ ψ w (hrows w hw) hs, hOne_smul_rz0 θ w hs] at e
+    exact ⟨_, e⟩
+  -- Step 2: `η' = η - η^Y` is flat on `U`, with `η'_D = 0`
+  obtain ⟨η', hη'def⟩ : ∃ η', η' = η - cobDir θ (fun _ => Y) := ⟨_, rfl⟩
+  have hη' : η' ∈ flatOn A 1 θ (residualZeroDomain A θ) := hη'def ▸
+    Submodule.sub_mem _ hη
+      (flat_le_flatOn θ _ (cobDir_const_mem_flat_residual_rmsNorm_zero θ hA Y hY))
+  have hη'E : η'.E = η.E - θ.E * Y := by
+    rw [hη'def]
+    rfl
+  have hη'r : η'.read 0 = η.read 0 + Y * θ.read 0 := by
+    rw [hη'def]
+    show η.read 0 - -(Y * θ.read 0) = _
+    exact sub_neg_eq_add _ _
+  have hη'w : η'.write 0 = η.write 0 - θ.write 0 * Y := by
+    rw [hη'def]
+    rfl
+  have hη'D : η'.D = 0 := by
+    rw [hη'def]
+    show η.D - -(Y * θ.D) = 0
+    rw [hYD, sub_neg_eq_add, neg_add_cancel]
+  -- Step 3 for `η'`: `(w η'_E)_t` is a multiple of `(w E)_t` on `O`, so `η'_E = c E`
+  obtain ⟨c, hcE⟩ : ∃ c : ℝ, η'.E = c • θ.E := by
+    refine exists_eq_smul_on_rz0 hd hOo hw₀O t₀ hEp (hrows w₀ hw₀O t₀) fun w hw => ?_
+    obtain ⟨c, hc1, -⟩ := step3 η' hη' hη'D w hw t₀
+    exact ⟨c, hc1⟩
+  -- Step 4: `ψ = η' - c η^{scale}` is flat on `U`, moves only the weights of the block
+  obtain ⟨ψ, hψdef⟩ : ∃ ψ, ψ = η' - scaleDir θ (fun _ => c) := ⟨_, rfl⟩
+  have hψ : ψ ∈ flatOn A 1 θ (residualZeroDomain A θ) := hψdef ▸
+    Submodule.sub_mem _ hη'
+      (flat_le_flatOn θ _ (scaleDir_const_mem_flat_residual_rmsNorm_zero θ hA c))
+  have hψE : ψ.E = 0 := by
+    rw [hψdef]
+    show η'.E - c • θ.E = 0
+    rw [hcE, sub_self]
+  have hψD : ψ.D = 0 := by
+    rw [hψdef]
+    show η'.D - 0 = 0
+    rw [hη'D, sub_zero]
+  have hψr : ψ.read 0 = η.read 0 + Y * θ.read 0 := by
+    rw [hψdef]
+    show η'.read 0 - 0 = _
+    rw [sub_zero, hη'r]
+  have hψw : ψ.write 0 = η.write 0 - θ.write 0 * (Y + c • 1) := by
+    rw [hψdef]
+    show η'.write 0 - c • θ.write 0 = _
+    rw [hη'w, Matrix.mul_add, Matrix.mul_smul, Matrix.mul_one]
+    abel
+  -- Step 3 for `ψ` (`ψ_E = 0`): the derivative `γ` of the block vanishes at `w E`, `w ∈ O`
+  have hgam : ∀ w ∈ O, gam_rz0 A θ ψ (w * θ.E) (w * ψ.E) = 0 := by
+    intro w hw
+    funext t
+    obtain ⟨c', h1, h2⟩ := step3 ψ hψ hψD w hw t
+    rw [hψE, Matrix.mul_zero] at h1
+    have hc' : c' = 0 :=
+      (smul_eq_zero.1 (show c' • (w * θ.E) t = 0 from h1.symm)).resolve_right (hrows w hw t)
+    rw [h2, hc', zero_smul]
+    rfl
+  -- `Ψ(v) = 𝐃f(N_0(v) W_read)(N_0(v) ψ_read) W_write + f(N_0(v) W_read) ψ_write`
+  obtain ⟨Ψ, hΨ⟩ : ∃ Ψ : Matrix T d ℝ → Matrix T d ℝ, Ψ = fun v =>
+      fderiv ℝ (A.f 0) (rmsNorm 0 v * θ.read 0) (rmsNorm 0 v * ψ.read 0) * θ.write 0
+        + A.f 0 (rmsNorm 0 v * θ.read 0) * ψ.write 0 := ⟨_, rfl⟩
+  have hΨgam : ∀ w : Matrix T dIn ℝ, Ψ (w * θ.E) = gam_rz0 A θ ψ (w * θ.E) (w * ψ.E) := by
+    intro w
+    rw [hΨ]
+    simp only [gam_rz0, hψE, Matrix.mul_zero, map_zero, Matrix.zero_mul, zero_add]
+  -- `Ψ` vanishes near `w₀ E` (every `v` near `w₀ E` is `w E` with `w ∈ O`), is analytic on the
+  -- connected set of the matrices without a zero row, hence vanishes there
+  have hΩ : Set.EqOn Ψ 0 {v : Matrix T d ℝ | ∀ t, v t ≠ 0} := by
+    refine AnalyticOnNhd.eqOn_zero_of_preconnected_of_eventuallyEq_zero (𝕜 := ℝ) (fun v hv => ?_)
+      (isPreconnected_rows_rz0 hd) (hrows w₀ hw₀O) ?_
+    · rw [hΨ]
+      exact analyticAt_Psi_rz0 hf _ _ _ _ hv
+    · have hσ : Continuous fun v : Matrix T d ℝ => w₀ + (v - w₀ * θ.E) * Ep :=
+        continuous_const.add ((continuous_id.sub continuous_const).matrix_mul continuous_const)
+      have hσ0 : w₀ + (w₀ * θ.E - w₀ * θ.E) * Ep = w₀ := by
+        rw [sub_self, Matrix.zero_mul, add_zero]
+      have hev : ∀ᶠ v in nhds (w₀ * θ.E), w₀ + (v - w₀ * θ.E) * Ep ∈ O :=
+        hσ.continuousAt.preimage_mem_nhds (by rw [hσ0]; exact hOo.mem_nhds hw₀O)
+      filter_upwards [hev] with v hv
+      have hvE : (w₀ + (v - w₀ * θ.E) * Ep) * θ.E = v := by
+        rw [Matrix.add_mul, Matrix.mul_assoc, hEp, Matrix.mul_one, add_sub_cancel]
+      rw [Pi.zero_apply, ← hvE, hΨgam, hgam _ hv]
+  -- at `n` with rows on the sphere: `n` has no zero row and `N_0(n) = n`
+  refine ⟨Y, c, hY, ?_, hYD, fun n hn => ?_⟩
+  · rw [hη'E] at hcE
+    rw [Matrix.mul_add, Matrix.mul_smul, Matrix.mul_one, ← hcE]
+    abel
+  · have hdpos : (0 : ℝ) < Fintype.card d := by exact_mod_cast (by omega : 0 < Fintype.card d)
+    have hn0 : ∀ t, n t ≠ 0 := fun t h0 => by
+      have := hn t
+      rw [h0, dotProduct_zero] at this
+      exact hdpos.ne this
+    have hNn : rmsNorm 0 n = n := by
+      funext t
+      show rmsRow 0 (n t) = n t
+      rw [rmsRow, hn t, div_self hdpos.ne', add_zero, Real.sqrt_one, inv_one, one_smul]
+    have e := hΩ hn0
+    rw [hΨ, Pi.zero_apply] at e
+    dsimp only at e
+    rw [hNn, hψr, hψw] at e
+    exact e
 
 end Skips
