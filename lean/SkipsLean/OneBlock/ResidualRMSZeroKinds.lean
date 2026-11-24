@@ -54,18 +54,6 @@ private theorem rmsRow_zero_of_sphere_rzk {x : d → ℝ} (hx : x ⬝ᵥ x = Fin
   unfold rmsRow
   rw [hx, div_self hd, add_zero, Real.sqrt_one, inv_one, one_smul]
 
-omit [DecidableEq d] in
-/-- Helper: a nonzero row normalized by RMSNorm with `ε = 0` lies on the sphere of radius `√d`. -/
-private theorem rmsRow_zero_dotProduct_self_rzk {u : d → ℝ} (hu : u ≠ 0) :
-    rmsRow 0 u ⬝ᵥ rmsRow 0 u = Fintype.card d := by
-  have hs : 0 < u ⬝ᵥ u := lt_of_le_of_ne (Finset.sum_nonneg fun i _ => mul_self_nonneg (u i))
-    (Ne.symm (dotProduct_self_eq_zero.not.2 hu))
-  obtain ⟨i, -⟩ := Function.ne_iff.1 hu
-  have hd : (0 : ℝ) < Fintype.card d := Nat.cast_pos.2 (Fintype.card_pos_iff.2 ⟨i⟩)
-  unfold rmsRow
-  rw [add_zero, smul_dotProduct, dotProduct_smul, smul_eq_mul, smul_eq_mul, ← mul_assoc,
-    ← mul_inv, Real.mul_self_sqrt (div_pos hs hd).le, inv_div, div_mul_cancel₀ _ hs.ne']
-
 omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dOut] in
 /-- Helper (the input of the proof): if `E` has rank `d` and some `x` on the sphere of radius
 `√d` has, at the state with every row `x`, every row of the output of the block not a multiple of
@@ -264,31 +252,6 @@ theorem ae_exists_linearIndependent_rows_attention (sees : T → T → Prop) [De
 
 /-! ### Theorem B.1 (v) at generic parameters -/
 
-/-- Helper: `funDimOn_skipless_add_le_funDimOn_residual_rmsNorm_zero` without its hypothesis
-`hB`, which follows from `hw`: at the input `w` of `hw` the state `N_0(w E)` has all rows on the
-sphere (no row of `w E` is `0`), and the output of the block there has a nonzero row. -/
-private theorem gain_rzk {A : Arch T d 1}
-    (hA : A.χ = rmsNorm 0) (hd : 2 ≤ Fintype.card d)
-    (hf : AnalyticOnNhd ℝ (A.f 0) Set.univ) (θ : Params A dIn dOut)
-    (hE : θ.E.rank = Fintype.card d) (hD : θ.D.rank = Fintype.card d)
-    (hw : ∃ w : Matrix T dIn ℝ, ∀ t, LinearIndependent ℝ
-      ![(w * θ.E) t, (A.f 0 (rmsNorm 0 (w * θ.E) * θ.read 0) * θ.write 0) t]) :
-    funDimOn A 0 θ (skiplessZeroDomain A θ) + (Fintype.card d * (Fintype.card d - 1) / 2 + 1)
-      ≤ funDimOn A 1 θ (residualZeroDomain A θ) := by
-  have hB : ∃ n : Matrix T d ℝ, (∀ t, n t ⬝ᵥ n t = Fintype.card d) ∧
-      A.f 0 (n * θ.read 0) * θ.write 0 ≠ 0 := by
-    obtain ⟨w, hw⟩ := hw
-    refine ⟨rmsNorm 0 (w * θ.E), fun t => rmsRow_zero_dotProduct_self_rzk ((hw t).ne_zero 0),
-      fun h => ?_⟩
-    -- the row of the block at a token is the second vector of an independent pair
-    obtain ⟨t₀⟩ := (inferInstance : Nonempty T)
-    apply (hw t₀).ne_zero 1
-    show (A.f 0 (rmsNorm 0 (w * θ.E) * θ.read 0) * θ.write 0) t₀ = 0
-    rw [h]
-    rfl
-  exact funDimOn_skipless_add_le_funDimOn_residual_rmsNorm_zero (hA := hA) (hd := hd) (hf := hf)
-    (θ := θ) (hE := hE) (hD := hD) (hw := hw) (hB := hB)
-
 /-- **Theorem B.1 (v) of the skips paper for an MLP block** whose activation is analytic and
 nonzero on the positive reals, with at least one hidden unit: with `d_in, d_out ≥ d ≥ 2`, under
 pre-RMSNorm with `ε = 0`, at generic parameters the skip raises the functional dimension by at
@@ -311,7 +274,8 @@ theorem ae_funDimOn_skipless_add_le_mlp_oneBlock_residual_rmsNorm_zero
     hdOut (ae_someBlockNonzero_mlp hσp ⟨0, inferInstance⟩ μ),
     ae_exists_linearIndependent_rows_mlp (continuousOn_univ.mp hσa.continuousOn) hσp μ hd hdIn
       hdOut] with θ hθ hw
-  exact gain_rzk rfl hd (hf 0) θ hθ.rank_E hθ.rank_D hw
+  exact funDimOn_skipless_add_le_funDimOn_residual_rmsNorm_zero rfl hd (hf 0) θ hθ.rank_E
+    hθ.rank_D hw
 
 /-- **Theorem B.1 (v) of the skips paper for a tanh block.** -/
 theorem ae_funDimOn_skipless_add_le_tanh_oneBlock_residual_rmsNorm_zero [Nonempty (hid 0)]
@@ -360,7 +324,8 @@ theorem ae_funDimOn_skipless_add_le_gated_oneBlock_residual_rmsNorm_zero
     hdOut (ae_someBlockNonzero_gated hσp ⟨0, inferInstance⟩ μ),
     ae_exists_linearIndependent_rows_gated (continuousOn_univ.mp hσa.continuousOn) hσp μ hd hdIn
       hdOut] with θ hθ hw
-  exact gain_rzk rfl hd (hf 0) θ hθ.rank_E hθ.rank_D hw
+  exact funDimOn_skipless_add_le_funDimOn_residual_rmsNorm_zero rfl hd (hf 0) θ hθ.rank_E
+    hθ.rank_D hw
 
 /-- **Theorem B.1 (v) of the skips paper for a SwiGLU block.** -/
 theorem ae_funDimOn_skipless_add_le_swiglu_oneBlock_residual_rmsNorm_zero [Nonempty (hid 0)]
@@ -411,6 +376,7 @@ theorem ae_funDimOn_skipless_add_le_attention_oneBlock_residual_rmsNorm_zero
   filter_upwards [ae_turnGeneric _ (fun ℓ => continuousOn_univ.mp (hf ℓ).continuousOn) μ hd hdIn
     hdOut (ae_someBlockNonzero_attention ⟨0, inferInstance, inferInstance⟩ t₁ s₁ hs₁ μ),
     ae_exists_linearIndependent_rows_attention sees hsees μ hd hdIn hdOut] with θ hθ hw
-  exact gain_rzk rfl hd (hf 0) θ hθ.rank_E hθ.rank_D hw
+  exact funDimOn_skipless_add_le_funDimOn_residual_rmsNorm_zero rfl hd (hf 0) θ hθ.rank_E
+    hθ.rank_D hw
 
 end Skips

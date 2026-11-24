@@ -30,8 +30,9 @@ at least `P − (d(d−1)/2 + 1) − dim V_θ`; the skipless network at most
 `P − 2 (d(d−1)/2 + 1) − dim V_θ`; so the skip raises it by at least `d(d−1)/2 + 1`. The
 conditions: `d ≥ 2`; `E` and `D` of rank `d`; one input `w` at which for every token the rows of
 `w E` and of `g(w)` are linearly independent (residual side); the block is not zero at some point
-of the sphere (skipless side: the scale at `h_1` then does not lie in `V_θ`). Not stated here: that
-these conditions hold at generic parameters for the five kinds of block.
+of the sphere (skipless side: the scale at `h_1` then does not lie in `V_θ`). The second condition
+follows from the first, so the gain is stated under the first alone. That these conditions hold at
+generic parameters for the five kinds of block is in `OneBlock/ResidualRMSZeroKinds.lean`.
 -/
 
 namespace Skips
@@ -599,16 +600,15 @@ private theorem exists_sphere_ne_zero_of_linearIndependent_rzg {A : Arch T d 1}
     rfl
 
 /-- **Theorem B.1 (v) of the skips paper, at one parameter, under the conditions of its proof:**
-with `ε = 0`, the skip raises the functional dimension by at least `d(d−1)/2 + 1`, the dimension
-of `CO(d)`. -/
+with `ε = 0`, if `d ≥ 2`, `E` and `D` have rank `d` and some input `w` has, for every token, the
+rows of `w E` and of `g(w)` linearly independent, the skip raises the functional dimension by at
+least `d(d−1)/2 + 1`, the dimension of `CO(d)`. -/
 theorem funDimOn_skipless_add_le_funDimOn_residual_rmsNorm_zero {A : Arch T d 1}
     (hA : A.χ = rmsNorm 0) (hd : 2 ≤ Fintype.card d)
     (hf : AnalyticOnNhd ℝ (A.f 0) Set.univ) (θ : Params A dIn dOut)
     (hE : θ.E.rank = Fintype.card d) (hD : θ.D.rank = Fintype.card d)
     (hw : ∃ w : Matrix T dIn ℝ, ∀ t, LinearIndependent ℝ
-      ![(w * θ.E) t, (A.f 0 (rmsNorm 0 (w * θ.E) * θ.read 0) * θ.write 0) t])
-    (hB : ∃ n : Matrix T d ℝ, (∀ t, n t ⬝ᵥ n t = Fintype.card d) ∧
-      A.f 0 (n * θ.read 0) * θ.write 0 ≠ 0) :
+      ![(w * θ.E) t, (A.f 0 (rmsNorm 0 (w * θ.E) * θ.read 0) * θ.write 0) t]) :
     funDimOn A 0 θ (skiplessZeroDomain A θ) + (Fintype.card d * (Fintype.card d - 1) / 2 + 1)
       ≤ funDimOn A 1 θ (residualZeroDomain A θ) := by
   -- the residual count, and the skipless count with `hB` obtained from `hw`
