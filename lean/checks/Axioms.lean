@@ -1073,3 +1073,6 @@ import SkipsLean
 #print axioms Skips.ae_eventually_funDim_smallWrites_attention_rmsNorm
 #print axioms Skips.ae_funDim_attention_residual_rmsNorm
 #print axioms Skips.ae_funDim_attention_residual_rmsNorm_ge_add
+#print axioms Skips.exists_cob_heads_of_eval_eq_skipless_attention_rmsNorm
+#print axioms Skips.exists_cob_heads_of_eval_eq_residual_attention_rmsNorm
+#print axioms Skips.ae_exists_cob_heads_of_eval_eq_attention_residual_rmsNorm
