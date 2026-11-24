@@ -100,20 +100,105 @@ def headDirVO (θ : Params (Arch.attention sees χ H dh) dIn dOut)
 
 variable (θ : Params (Arch.attention sees χ H dh) dIn dOut)
 
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: two parameters with the same `E`, the same `D` and the same output of every block on
+every hidden state compute the same function (induction along the hidden states). -/
+private theorem eval_eq_of_blocks_ath {A : Arch T d L} (θ₁ θ₂ : Params A dIn dOut)
+    (hE : θ₂.E = θ₁.E) (hD : θ₂.D = θ₁.D)
+    (hb : ∀ ℓ (h : Matrix T d ℝ),
+      A.f ℓ (h * θ₂.read ℓ) * θ₂.write ℓ = A.f ℓ (h * θ₁.read ℓ) * θ₁.write ℓ)
+    (S : Fin L → Matrix d d ℝ) (x : Matrix T dIn ℝ) :
+    eval A S θ₂ x = eval A S θ₁ x := by
+  -- the hidden states agree, by induction along the network
+  have hh : ∀ ℓ : Fin (L + 1), hidden A S θ₂ x ℓ = hidden A S θ₁ x ℓ := by
+    intro ℓ
+    induction ℓ using Fin.induction with
+    | zero => rw [hidden_zero, hidden_zero, hE]
+    | succ ℓ ih => rw [hidden_succ, hidden_succ, ih, hb]
+  -- hence the outputs agree
+  rw [eval, eval, hh, hD]
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the query matrices of `θ.headsQK K` are `W_{Q,i} K_i`. -/
+private theorem headsQK_query_ath (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ : Fin L) (i : H ℓ) :
+    ((θ.headsQK K).read ℓ).submatrix id (fun k : dh ℓ => (i, Sum.inl k))
+      = (θ.read ℓ).submatrix id (fun k : dh ℓ => (i, Sum.inl k))
+        * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) := by
+  ext a k
+  rfl
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the key matrices of `θ.headsQK K` are `W_{K,i} K_i^{-⊤}`. -/
+private theorem headsQK_key_ath (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ : Fin L) (i : H ℓ) :
+    ((θ.headsQK K).read ℓ).submatrix id (fun k : dh ℓ => (i, Sum.inr (Sum.inl k)))
+      = (θ.read ℓ).submatrix id (fun k : dh ℓ => (i, Sum.inr (Sum.inl k)))
+        * (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ)ᵀ := by
+  ext a k
+  rfl
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the value matrices of `θ.headsVO K` are `W_{V,i} K'_i`. -/
+private theorem headsVO_value_ath (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ : Fin L) (i : H ℓ) :
+    ((θ.headsVO K).read ℓ).submatrix id (fun k : dh ℓ => (i, Sum.inr (Sum.inr k)))
+      = (θ.read ℓ).submatrix id (fun k : dh ℓ => (i, Sum.inr (Sum.inr k)))
+        * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) := by
+  ext a k
+  rfl
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the output matrices of `θ.headsVO K` are `K'_i^{-1} W_{O,i}`. -/
+private theorem headsVO_output_ath (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ : Fin L) (i : H ℓ) :
+    ((θ.headsVO K).write ℓ).submatrix (fun k : dh ℓ => (i, k)) id
+      = (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ)
+        * (θ.write ℓ).submatrix (fun k : dh ℓ => (i, k)) id := by
+  ext k b
+  rfl
+
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the change of basis between queries and keys leaves the output of every block
+unchanged: `W_{Q,i} K (W_{K,i} K^{-⊤})ᵀ = W_{Q,i} K K^{-1} W_{K,i}ᵀ = W_{Q,i} W_{K,i}ᵀ`. -/
+private theorem block_headsQK_ath (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ : Fin L) (h : Matrix T d ℝ) :
+    (Arch.attention sees χ H dh).f ℓ (h * (θ.headsQK K).read ℓ) * (θ.headsQK K).write ℓ
+      = (Arch.attention sees χ H dh).f ℓ (h * θ.read ℓ) * θ.write ℓ := by
+  rw [f_attention_mul, f_attention_mul]
+  unfold attentionBlock
+  congr 1
+  funext i
+  dsimp only
+  rw [headsQK_query_ath, headsQK_key_ath, Matrix.transpose_mul, Matrix.transpose_transpose,
+    Matrix.mul_assoc, ← Matrix.mul_assoc (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ), Units.mul_inv,
+    Matrix.one_mul]
+
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the change of basis between values and outputs leaves the output of every block
+unchanged: `W_{V,i} K' K'^{-1} W_{O,i} = W_{V,i} W_{O,i}`. -/
+private theorem block_headsVO_ath (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ : Fin L) (h : Matrix T d ℝ) :
+    (Arch.attention sees χ H dh).f ℓ (h * (θ.headsVO K).read ℓ) * (θ.headsVO K).write ℓ
+      = (Arch.attention sees χ H dh).f ℓ (h * θ.read ℓ) * θ.write ℓ := by
+  rw [f_attention_mul, f_attention_mul]
+  unfold attentionBlock
+  congr 1
+  funext i
+  dsimp only
+  rw [headsVO_value_ath, headsVO_output_ath, Matrix.mul_assoc,
+    ← Matrix.mul_assoc (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ), Units.mul_inv, Matrix.one_mul]
+
 /-- **The changes of basis between queries and keys preserve the function** (Appendix B), for
 every mask, every `χ` and all stream matrices. -/
 theorem eval_headsQK (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (S : Fin L → Matrix d d ℝ)
     (x : Matrix T dIn ℝ) :
     eval (Arch.attention sees χ H dh) S (θ.headsQK K) x
       = eval (Arch.attention sees χ H dh) S θ x := by
-  sorry
+  -- `E` and `D` do not move, and every block computes the same map
+  exact eval_eq_of_blocks_ath θ (θ.headsQK K) rfl rfl (block_headsQK_ath θ K) S x
 
 /-- **The changes of basis between values and outputs preserve the function** (Appendix B). -/
 theorem eval_headsVO (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (S : Fin L → Matrix d d ℝ)
     (x : Matrix T dIn ℝ) :
     eval (Arch.attention sees χ H dh) S (θ.headsVO K) x
       = eval (Arch.attention sees χ H dh) S θ x := by
-  sorry
+  -- `E` and `D` do not move, and every block computes the same map
+  exact eval_eq_of_blocks_ath θ (θ.headsVO K) rfl rfl (block_headsVO_ath θ K) S x
 
 /-- The directions of the changes of basis between queries and keys are flat. -/
 theorem headDirQK_mem_flat (S : Fin L → Matrix d d ℝ) (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
