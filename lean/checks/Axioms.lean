@@ -1499,3 +1499,5 @@ import SkipsLean
 #print axioms Skips.nearReLU_silu
 #print axioms Skips.nearReLU_gelu
 #print axioms Skips.gateLinear_gateQuadratic_of_gatedBlockB_absorb
+#print axioms Skips.vanillaBlockB_reluSq_eq_reluSqCell
+#print axioms Skips.reluSqCell_eq_of_vanillaBlockB_absorb
