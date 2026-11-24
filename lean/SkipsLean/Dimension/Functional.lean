@@ -481,7 +481,10 @@ differentiability. -/
 theorem funDim_add_finrank_le_of_le_flat' (V : Submodule ℝ (Params A dIn dOut))
     (hV : V ≤ flat A S θ) :
     funDim A S θ + Module.finrank ℝ V ≤ Module.finrank ℝ (Params A dIn dOut) := by
-  sorry
+  -- `fd(θ) + dim K(θ) = P` and `dim V ≤ dim K(θ)`
+  have h := funDim_add_finrank_flat' (S := S) θ
+  have hV' := Submodule.finrank_mono hV
+  omega
 
 /-- On a set `U` of inputs at which `θ ↦ F_θ(x)` is differentiable at `θ`, some finite batch of
 inputs of `U` has a Jacobian of rank `P - dim K_U(θ)`, where `K_U(θ)` are the directions that are
