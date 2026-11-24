@@ -41,7 +41,8 @@ theorem relu_homogeneous (lam z : ℝ) (hlam : 0 < lam) : relu (lam * z) = lam ^
 /-- ReLU² is positively homogeneous of degree `2`. -/
 theorem reluSq_homogeneous (lam z : ℝ) (hlam : 0 < lam) :
     reluSq (lam * z) = lam ^ 2 * reluSq z := by
-  sorry
+  unfold reluSq
+  rw [max_mul_zero_of_pos lam z hlam, mul_pow]
 
 /-- The direction in which the rescalings `(c_i, a_i) ↦ (λ_i c_i, a_i / λ_i^k)` of the hidden
 units move `θ`, for `λ_i = e^{τ α_i}`: the read column of the hidden unit `i` of block `ℓ` times
