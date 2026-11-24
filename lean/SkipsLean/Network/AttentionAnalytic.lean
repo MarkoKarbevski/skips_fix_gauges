@@ -4,9 +4,11 @@ import SkipsLean.Network.Analytic
 /-!
 # Attention blocks are real-analytic
 
-Paper (dimension paper), Section 2: the attention block is one of the "analytic blocks"; the
-proofs of the dimension paper use that the output of a network of such blocks is a real-analytic
-function of the weights and of the input. For the attention block of `Network/Attention.lean`:
+Paper (skips paper), Section 1.1: "These five kinds of block are real-analytic, and we call them
+analytic blocks" (attention, tanh, GELU, SwiGLU and GeGLU blocks). The proofs of both papers use
+that the outputs of a network of such blocks are real-analytic in the weights (dimension paper,
+proof of Proposition 4.6: "The outputs are analytic in `θ`"). For the attention block of
+`Network/Attention.lean`:
 the weights of a matrix of scores are real-analytic in the scores (in a row of a token that sees
 some token the denominator is positive; the row of a token that sees no token is `0`), and the
 map `f_ℓ` of `Arch.attention` is real-analytic, for every mask.

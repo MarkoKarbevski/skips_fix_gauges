@@ -11,8 +11,7 @@ consider networks with one block, without normalization and without biases. The 
 attention block of `H` heads of width `d_h ≤ d_model` with `H d_h ≥ d_model`, causal or not, on
 sequences of at least two tokens. At generic parameters the functional dimension is
 `P − 2 d_model² − s`", with `s = 2 H d_h²` for an attention block. Its proof, Step 3: "So
-`dim K(θ) = 2 d_model² + 2 H d_h²`, and the functional dimension `P − dim K(θ)` is the value of
-the theorem."
+`dim K(θ) = 2 d_model² + 2 H d_h²`, and `s = 2 H d_h²` for an attention block."
 
 Paper (skips paper): Theorem B.1 (i) for an attention block, without biases: "Let the network
 have no normalization […] and let the block have width at least `d_model`, where the width of an

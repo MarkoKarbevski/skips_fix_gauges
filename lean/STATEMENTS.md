@@ -119,11 +119,18 @@ absorb paper and its proof (report `claude/lean-statement-audit-twelfth-a-2026-1
 found nothing false, vacuous or drifted: generic is almost every weight of the residual network,
 with one null set for all skipless networks; the conditions on the number of tokens are the
 paper's with `L′ = L' + 1`; Lean also covers `L = 0` and `ε' ≠ ε`; the paper's (ii) without a mask
-is (i). Not yet compared by such a reader (written after the eleventh audit
-began): `Symmetry/AttentionHeads.lean`, `Dimension/UpperBoundAttention.lean`,
-`Network/AttentionAnalytic.lean`, `OneBlock/Attention.lean`, `OneBlock/AttentionStepOne.lean`,
-`OneBlock/AttentionGeneric.lean`, `OneBlock/AttentionDim.lean`,
-`Absorb/ShortSequencesPoly.lean`, `Absorb/ShortSequences.lean`,
+is (i). A twelfth reader (part B, 24 November) compared `Symmetry/AttentionHeads.lean`,
+`Dimension/UpperBoundAttention.lean`, `Network/AttentionAnalytic.lean`, `OneBlock/Attention.lean`,
+`OneBlock/AttentionStepOne.lean`, `OneBlock/AttentionGeneric.lean` and
+`OneBlock/AttentionDim.lean` with Appendix B, Lemma B.1, Theorem 4.3 and Theorem 5.1 / C.1 of the
+dimension paper and with Theorems 4.2, A.17, Lemma A.18 and Theorem B.1 (i) of the skips paper
+(report `claude/lean-statement-audit-twelfth-b-2026-11-24.md`) and found nothing false, vacuous
+or drifted: all eight generic statements are `∀ᵐ θ ∂μ`; the one-block statements have the
+hypotheses of Theorem C.1 and hold for every mask with a token that sees itself and another; one
+statement for any stream matrix serves both papers; the statements of `OneBlock/Attention.lean`,
+`OneBlock/AttentionStepOne.lean` and `OneBlock/AttentionGeneric.lean` were judged by hand before
+their proofs were written. Not yet compared by such a reader (written after the twelfth audit
+began): `Absorb/ShortSequencesPoly.lean`, `Absorb/ShortSequences.lean`,
 `OneBlock/AttentionFamily.lean`, `Residual/DepthAttention.lean`,
 `Residual/DepthAttentionGeneric.lean` and `Residual/DepthAttentionDim.lean`. A ninth reader (part A, 24 November) compared the six files on
 GELU at complex arguments (`Activations/MillsC.lean`, `Activations/MillsCExpansion.lean`,
@@ -442,8 +449,9 @@ Notes for the authors on these statements:
   Theorem 4.3 uses. The statement about the group ("no continuous family fixes `θ`") and its
   equivalence with this form are not stated. The rescalings of ReLU and ReLU² hidden units and of
   the gate of a ReGLU unit are covered in the same infinitesimal form
-  (`cobDir_add_rescaleDirMlp_injective`, `cobDir_add_rescaleDir_add_rescaleDirGate_injective`);
-  attention is not.
+  (`cobDir_add_rescaleDirMlp_injective`, `cobDir_add_rescaleDir_add_rescaleDirGate_injective`),
+  and the changes of basis inside attention heads
+  (`cobDir_add_headDirQK_add_headDirVO_injective`, `Symmetry/AttentionHeads.lean`).
 - "At generic parameters" is written `∀ᵐ θ ∂μ` for an arbitrary additive Haar measure `μ` on the
   parameter space: a Lebesgue measure of that space, without a choice of coordinates. Any two
   differ by a positive constant, so they have the same sets of measure zero. Checked by machine by
@@ -479,7 +487,7 @@ Notes for the authors on these statements:
   the symmetries inside the blocks is counted, without normalization and under pre-RMSNorm, for
   SwiGLU and GeGLU blocks (`s = ∑ d_hidden`), for ReLU and ReLU² blocks (`s = ∑ d_hidden`) and for
   ReGLU blocks (`s = 2 ∑ d_hidden`); for tanh and GELU blocks `s = 0`. The bounds with `s` need
-  `d ≥ 1`. Not stated: attention blocks. The paper's form for `ε = 0`, with the group `CO(d)`, is proved
+  `d ≥ 1`. For attention blocks `s = 2 ∑ H d_h²` (`Dimension/UpperBoundAttention.lean`). The paper's form for `ε = 0`, with the group `CO(d)`, is proved
   (`Dimension/UpperBoundRMSNormZero.lean`; see the note on `ε = 0`).
 - ReLU blocks and the functional dimension. The paper takes the Jacobian of a ReLU, ReLU² or ReGLU
   network at the inputs at which no hidden unit sits at its kink. In Lean `funDim` is the largest
@@ -528,8 +536,8 @@ Notes for the authors on these statements:
 - Not stated yet from the main text: Example 4.2; the converse direction of Proposition 4.6
   (from local identifiability to the equality condition); Proposition 4.6 for
   attention blocks (Theorem 4.3 for attention blocks is proved,
-  `Dimension/UpperBoundAttention.lean`; Theorem 5.1 for an attention block is stated in
-  `OneBlock/AttentionDim.lean` and the three files it rests on). Proposition 4.6 is proved in one direction, at one
+  `Dimension/UpperBoundAttention.lean`; Theorem 5.1 for an attention block is proved,
+  `OneBlock/AttentionDim.lean`). Proposition 4.6 is proved in one direction, at one
   parameter, and Corollary 5.3 in all its seven cases. Definitions 4.4 and 4.5 are not Lean
   definitions: the equality condition is written as the equality `fd(θ) + … = P`, and local
   identifiability with its neighborhoods (`Dimension/LocalIdentifiability.lean`,
@@ -537,7 +545,7 @@ Notes for the authors on these statements:
   `Residual/LocalIdentifiability.lean`, `Residual/LocalIdentifiabilityGated.lean`). Theorem 5.2 is proved in all its cases: (i) for
   `ε = 0` in `Depth/TanhZero.lean`, (ii) for `ε = 0` in `Depth/GeluZero.lean` (with
   Lemma D.19, `Depth/StepZeroGelu.lean`), (ii) for `ε > 0` and (iii) in
-  `Depth/GeluGatedTheorem.lean`. No attention block is defined in Lean yet.
+  `Depth/GeluGatedTheorem.lean`.
 
 ### Skips paper
 
@@ -606,7 +614,8 @@ local identifiability to the equality condition; the other direction is proved a
 with Definition 4.4 written out, `Residual/LocalIdentifiability.lean`,
 `Residual/LocalIdentifiabilityGated.lean`, and for skipless networks
 `Dimension/LocalIdentifiability.lean`, `Dimension/LocalIdentifiabilityGated.lean`);
-Theorem 4.6 (i) for attention blocks and with biases; Theorem 4.6 (ii) for ReLU, ReLU², ReGLU and
+Theorem 4.6 (i) with biases (for an attention block without biases it is proved,
+`OneBlock/AttentionDim.lean`); Theorem 4.6 (ii) for ReLU, ReLU², ReGLU and
 attention blocks and its sentence on a learned skip (its first sentence and the gain are proved for
 tanh, GELU, SwiGLU and GeGLU blocks);
 Theorem 4.7 for attention blocks, and its clause "by exactly `L dim 𝒢` when the skipless network
@@ -679,12 +688,12 @@ the named kinds of network) as instances of the general statements.
 | **A proof of Theorem 4.2 (iii), the polynomial of the construction:** for `n ≤ L`, or `n = L + 1` and `L ≤ L'`, a real polynomial `Q` of degree at most `L` with `Q(0) = 1` and a number `γ ≠ 0` with `Q(1/(t+1)) = γ (1/(t+1))^{L'+1}` for the `n` tokens (equation (10); `γ ≠ 0` is not said in the paper); over `ℂ`, a real polynomial of degree at most `L` with `Q(0) = 1` is a product of `L` factors `1 + c z` (the paper pairs conjugate roots into real quadratic factors); a real polynomial that vanishes at the `n` points `1/(t+1)` vanishes at the matrix `U` of the causal attention weights at zero scores | `exists_polynomial_short`, `exists_complex_factors`, `aeval_attnWeights_causal_eq_zero` | `Absorb/ShortSequencesPoly.lean` | proved |
 | **A Theorem 4.2 (iii) (short sequences),** without normalization, with the causal mask on `n ≥ 1` tokens, when `n ≤ L`, or `n = L + 1` and `L ≤ L'`: for every model dimension `m + 2`, input and output dimensions `a + 1`, `b + 1`, some residual network of `L` attention blocks with `E D ≠ 0` equals, at every input, a skipless network of `L' + 1` attention blocks with the same model dimension; both have two heads of dimension one in every block; and their common function is not zero (this clause is not in the paper: for `n ≤ L` the paper's statement is also met by a residual network whose function is zero). And the sentence after the theorem: for two tokens, `I − 3U = −2U²` | `one_sub_three_smul_attnWeights_causal_two`, `exists_residual_eq_skipless_attention_causal_short` | `Absorb/ShortSequences.lean` | proved |
 | **D Appendix B, the symmetries inside the heads of an attention block, and Lemma B.1 for attention blocks in infinitesimal form** (any depth, mask, `χ`, stream matrices): the changes of basis `(W_Q, W_K) ↦ (W_Q K, W_K K^{-⊤})` and `(W_V, W_O) ↦ (W_V K', K'^{-1} W_O)` in every head (`Params.headsQK`, `Params.headsVO`) preserve the function; their directions (`headDirQK`: `η_Q = W_Q Γ`, `η_K = −W_K Γ^⊤`; `headDirVO`: `η_V = W_V Γ'`, `η_O = −Γ' W_O`) are flat; if `E` and the writes have rank `d` and the query and value matrices of every head have rank `d_h`, `(X, Γ, Γ') ↦ cobDir θ X + headDirQK θ Γ + headDirVO θ Γ'` is injective | `Params.headsQK`, `Params.headsVO`, `headDirQK`, `headDirVO`, `eval_headsQK`, `eval_headsVO`, `headDirQK_mem_flat`, `headDirVO_mem_flat`, `cobDir_add_headDirQK_add_headDirVO_injective` | `Symmetry/AttentionHeads.lean` | proved |
-| **D Theorem 4.3 and S Theorem 4.2 for attention blocks** (`s = 2 ∑_ℓ H_ℓ d_{h,ℓ}²`, any mask): without skips `fd ≤ P − (L+1) d² − s` and under pre-RMSNorm (any `ε`) `fd ≤ P − (L+1) d(d−1)/2 − s`, under the rank conditions of Lemma B.1 and at almost every parameter for `d_in ≥ d`, `d_h ≤ d`, `H d_h ≥ d`; with identity skips `fd ≤ P − d² − s` and `fd ≤ P − d(d−1)/2 − s`, when `E` has rank `d` and the query and value matrices have rank `d_h`, and at almost every parameter for `d_in ≥ d`, `d_h ≤ d` | `funDim_add_le_skipless_attention`, `funDim_add_le_skipless_attention_rmsNorm`, `funDim_add_le_residual_attention`, `funDim_add_le_residual_attention_rmsNorm` and the four with `ae_` | `Dimension/UpperBoundAttention.lean` | proved |
-| **Attention blocks are real-analytic** (D Section 2, "analytic blocks"): the attention weights are a real-analytic function of the matrix of scores, for every mask (the row of a token that sees no token is `0`); the map `f_ℓ` of `Arch.attention` is real-analytic, hence differentiable | `analyticOnNhd_attnWeights`, `analyticOnNhd_f_attention`, `differentiable_f_attention` | `Network/AttentionAnalytic.lean` | proved |
+| **D Theorem 4.3 and S Theorem 4.2 for attention blocks** (`s = 2 ∑_ℓ H_ℓ d_{h,ℓ}²`, any mask): without skips `fd ≤ P − (L+1) d² − s` and under pre-RMSNorm (any `ε`; for `ε = 0` this counts `O(d)`, one less per hidden state than the papers' `CO(d)`, and the bound with `CO(d)` and `s` for attention blocks is not stated) `fd ≤ P − (L+1) d(d−1)/2 − s`, under the rank conditions of Lemma B.1 and at almost every parameter for `d_in ≥ d`, `d_h ≤ d`, `H d_h ≥ d`; with identity skips `fd ≤ P − d² − s` and `fd ≤ P − d(d−1)/2 − s`, when `E` has rank `d` and the query and value matrices have rank `d_h`, and at almost every parameter for `d_in ≥ d`, `d_h ≤ d` | `funDim_add_le_skipless_attention`, `funDim_add_le_skipless_attention_rmsNorm`, `funDim_add_le_residual_attention`, `funDim_add_le_residual_attention_rmsNorm` and the four with `ae_` | `Dimension/UpperBoundAttention.lean` | proved |
+| **Attention blocks are real-analytic** (S Section 1.1: "These five kinds of block are real-analytic, and we call them analytic blocks"; D uses analyticity of the outputs in the proof of Proposition 4.6, "The outputs are analytic in `θ`"): the attention weights are a real-analytic function of the matrix of scores, for every mask (the row of a token that sees no token is `0`); the map `f_ℓ` of `Arch.attention` is real-analytic, hence differentiable | `analyticOnNhd_attnWeights`, `analyticOnNhd_f_attention`, `differentiable_f_attention` | `Network/AttentionAnalytic.lean` | proved |
 | **D Theorem 5.1 / C.1 and S Theorem 4.6 (i) / B.1 (i) for an attention block, the reduction and Step 2 of the proof** (one block, no normalization, no biases, any stream matrix `S_0`; a mask with a token `t₂` that sees itself and another token `t₁`): the matrices `B_i = E W_{Q,i} W_{K,i}^⊤ E^⊤/√d_h` and `C_i = E W_{V,i} W_{O,i} D` (`attnScore`, `attnValue`) and their derivatives along a direction `η` (`dAttnScore`, `dAttnValue`, with the two statements that they are these derivatives); the output is `x E S_0 D + ∑_i P_i(x) x C_i`; equation (8): at the input with the row `u` at `t₂` and `u − v` at every other token, the output at `t₂` is `u (E S_0 D + ∑ C_i) − ½ v ∑ C_i + ½ ∑_i tanh(½ (u B_i v^⊤ − log k)) v C_i`, `k` the number of other tokens that `t₂` sees; the conditions of the proof (`OneBlockGenericAttention`: ranks of `E`, `D`, of the four matrices of every head, of the queries of all heads and of the write; some `v` with the `B_i v^⊤` nonzero and pairwise non-collinear and every `v C_i` nonzero); Step 2: if such a `v` exists, a flat direction keeps `E S_0 D`, every `B_i` and every `C_i` to first order | `attnQ`, `attnK`, `attnV`, `attnO`, `attnScore`, `attnValue`, `dAttnScore`, `dAttnValue`, `hasDerivAt_attnScore`, `hasDerivAt_attnValue`, `eval_attention_oneBlock`, `eval_attention_two_tokens`, `OneBlockGenericAttention`, `flat_attention_oneBlock_keeps` | `OneBlock/Attention.lean` | proved |
 | **D Theorem 5.1 / C.1 for an attention block, Step 1 of the proof** (linear algebra, no mask and no input): under the conditions of the proof, a direction `η` with `D_θ B_i η = 0` and `D_θ C_i η = 0` for every head is the sum of the direction of two changes of basis of the hidden states and of the directions of the changes of basis inside the heads, `cobDir θ X + headDirQK θ Γ + headDirVO θ Γ'`. The rank of the keys of all heads, which the paper lists, is not used | `exists_cobDir_add_headDir_of_keeps` | `OneBlock/AttentionStepOne.lean` | proved |
 | **D Theorem 5.1 / C.1 for an attention block, the conditions at generic parameters:** for `d_in, d_out ≥ d ≥ 2`, `d_h ≤ d` and `H d_h ≥ d`, `OneBlockGenericAttention θ` holds at almost every `θ` | `ae_oneBlockGenericAttention` | `OneBlock/AttentionGeneric.lean` | proved |
-| **D Theorem 5.1 / C.1 for an attention block, and S Theorem 4.6 (i) / B.1 (i) for an attention block without biases:** one attention block of `H` heads of width `d_h ≤ d` with `H d_h ≥ d`, `d_in, d_out ≥ d ≥ 2`, no normalization, a mask with a token that sees itself and another token (two tokens at least; causal or not). Under the conditions of the proof and at almost every parameter: the flat directions (two changes of basis without the skip, one with it, and the changes of basis inside the heads); `fd = P − 2d² − 2 H d_h²` without the skip and `fd = P − d² − 2 H d_h²` with it; the skip raises `fd` by exactly `d²`. Not stated: with biases; a learned position embedding; grouped-query attention | `flat_attention_oneBlock`, `flat_attention_oneBlock_residual`, `funDim_attention_oneBlock`, `ae_funDim_attention_oneBlock`, `funDim_attention_oneBlock_residual`, `ae_funDim_attention_oneBlock_residual`, `ae_funDim_attention_oneBlock_residual_eq_add` | `OneBlock/AttentionDim.lean` | proved |
+| **D Theorem 5.1 / C.1 for an attention block, and S Theorem 4.6 (i) / B.1 (i) for an attention block without biases:** one attention block of `H` heads of width `d_h ≤ d` with `H d_h ≥ d`, `d_in, d_out ≥ d ≥ 2`, no normalization, a mask with a token that sees itself and another token (two tokens at least; causal or not). Under the conditions of the proof and at almost every parameter: the flat directions (two changes of basis without the skip, one with it, and the changes of basis inside the heads); `fd = P − 2d² − 2 H d_h²` without the skip and `fd = P − d² − 2 H d_h²` with it; the skip raises `fd` by exactly `d²`. Not stated: with biases; a learned position embedding; grouped-query attention; inputs in an open set; the equality condition as a definition | `flat_attention_oneBlock`, `flat_attention_oneBlock_residual`, `funDim_attention_oneBlock`, `ae_funDim_attention_oneBlock`, `funDim_attention_oneBlock_residual`, `ae_funDim_attention_oneBlock_residual`, `ae_funDim_attention_oneBlock_residual_eq_add` | `OneBlock/AttentionDim.lean` | proved |
 | **A sum of attention heads is determined to first order by its matrices** (Step 2 of the proof of D Theorem C.1 for attention and of S Theorem B.1 (i), for the heads of one block or of all blocks together, as in the proof of S Lemma A.27; no network): the input with the row `u` at a token `t₂` and `u − v` elsewhere (`twoTokenInput`); equation (8) for any finite family of heads given by matrices `B_j`, `C_j`; if along curves `M(τ)`, `B_j(τ)`, `C_j(τ)` the output `x M(τ) + ∑_j P_{B_j(τ)}(x) x C_j(τ)` has derivative `0` at `τ = 0` at every input, and some `v` has the `B_j(0) v^⊤` nonzero and pairwise non-collinear and every `v C_j(0)` nonzero, then the derivatives of `M`, `B_j`, `C_j` at `0` vanish (`t₂` sees itself and another token) | `twoTokenInput`, `attnFamily_two_tokens`, `attnFamily_rigid` | `OneBlock/AttentionFamily.lean` | in work |
 | **S Lemma A.27 (Small writes), first value, for attention blocks without normalization, under the conditions of its proof:** `L` attention blocks, heads `H ℓ` of width `dh ℓ` in block `ℓ`, a token that sees itself and another token. The matrices `B`, `C` of head `i` of block `ℓ` (`headScore`, `headValue`); the conditions (`SmallWritesGenericAttention`: `E`, `D` of rank `d`; the four matrices of every head of rank `d_h`; some `v` with the `B_j v^⊤` of the heads of all blocks nonzero and pairwise non-collinear and every `v C_j` nonzero); a direction that is flat for `J_0` has `η_E = E X`, `η_D = −X D` and in every block the reads and writes of the directions of the changes of basis inside the heads; `fd(θ_τ) = P − d² − 2 ∑_ℓ H_ℓ d_{h,ℓ}²` for all small `τ ≠ 0` | `headScore`, `headValue`, `SmallWritesGenericAttention`, `smallWritesLimit_eq_zero_attention`, `eventually_funDim_smallWrites_attention` | `Residual/DepthAttention.lean` | in work |
 | **S Lemma A.27 for attention blocks, the conditions at generic parameters:** for `d_in, d_out ≥ d ≥ 2` and heads of width `1 ≤ d_h ≤ d` (any numbers of heads and total widths), `SmallWritesGenericAttention θ` holds at almost every `θ` | `ae_smallWritesGenericAttention` | `Residual/DepthAttentionGeneric.lean` | in work |
