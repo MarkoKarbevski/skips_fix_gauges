@@ -749,3 +749,13 @@ import SkipsLean
 #print axioms Skips.ae_not_isPointwiseLimit_skipless_mlp_of_card_lt
 #print axioms Skips.ae_forall_widths_eval_residual_ne_skipless_gelu
 #print axioms Skips.ae_not_isPointwiseLimit_skipless_gelu_widths
+#print axioms Skips.scaleDir_mem_flat_skipless_rmsNorm_zero
+#print axioms Skips.cobDir_add_scaleDir_injective
+#print axioms Skips.funDim_add_le_skipless_rmsNorm_zero
+#print axioms Skips.ae_funDim_add_le_skipless_rmsNorm_zero
+#print axioms Skips.funDim_add_le_skipless_gated_rmsNorm_zero
+#print axioms Skips.ae_funDim_add_le_skipless_gated_rmsNorm_zero
+#print axioms Skips.analyticAt_rmsNorm_zero
+#print axioms Skips.fderiv_rmsNorm_zero_apply
+#print axioms Skips.fderiv_rmsNorm_zero_self
+#print axioms Skips.claimZero_last
