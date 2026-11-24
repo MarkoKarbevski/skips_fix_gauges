@@ -269,3 +269,6 @@ import SkipsLean.Absorb.AttentionHeadsIdentifiable
 import SkipsLean.Absorb.BiasesConstructions
 import SkipsLean.Absorb.BiasesAttention
 import SkipsLean.Absorb.BiasesVanillaLower
+import SkipsLean.Absorb.GatedBiasesCells
+import SkipsLean.Absorb.GatedBiasesCount
+import SkipsLean.Absorb.GatedBiasesLower
