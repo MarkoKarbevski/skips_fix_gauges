@@ -116,3 +116,4 @@ import SkipsLean.Depth.SuffixZero
 import SkipsLean.Depth.PathSeparation
 import SkipsLean.Depth.SuffixZeroDeriv
 import SkipsLean.Depth.SuffixZeroClaim
+import SkipsLean.Depth.ComplexRMSNorm
