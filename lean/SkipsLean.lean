@@ -107,3 +107,7 @@ import SkipsLean.Residual.SkiplessEnds
 import SkipsLean.Residual.DifferentClassesCriterion
 import SkipsLean.Residual.DifferentClasses
 import SkipsLean.Residual.DifferentClassesRMS
+import SkipsLean.Dimension.ParameterCount
+import SkipsLean.Residual.PointwiseLimitUnion
+import SkipsLean.Residual.SkiplessAll
+import SkipsLean.Residual.FewerHiddenUnits
