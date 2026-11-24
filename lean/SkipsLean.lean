@@ -188,3 +188,9 @@ import SkipsLean.Dimension.RankCriterionOn
 import SkipsLean.Absorb.PatternMaps
 import SkipsLean.Absorb.FullNetworks
 import SkipsLean.Residual.FoldingDim
+import SkipsLean.Network.Attention
+import SkipsLean.Absorb.AttentionBlock
+import SkipsLean.Absorb.AttentionZero
+import SkipsLean.Absorb.AttentionNetworks
+import SkipsLean.Symmetry.AttentionHeads
+import SkipsLean.Dimension.UpperBoundAttention
