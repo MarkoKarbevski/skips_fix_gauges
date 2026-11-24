@@ -1,5 +1,6 @@
 import SkipsLean.Dimension.GenericRank
 import SkipsLean.Generic.Params
+import SkipsLean.Depth.SuffixRMS
 
 /-!
 # Skipless networks: the bound of Theorem 4.2 at every parameter
@@ -33,7 +34,17 @@ theorem jacobianRank_add_le_skipless_all (hA : A.χ = id)
     (X : Fin n → Matrix T dIn ℝ) :
     jacobianRank A 0 X θ + (L + 1) * Fintype.card d ^ 2
       ≤ Module.finrank ℝ (Params A dIn dOut) := by
-  sorry
+  -- a Haar measure on the parameters
+  let μ : Measure (Params A dIn dOut) := Measure.addHaar
+  have hf' : ∀ ℓ, Differentiable ℝ (A.f ℓ) := fun ℓ =>
+    differentiableOn_univ.1 (hf ℓ).differentiableOn
+  have hχ : AnalyticOnNhd ℝ A.χ Set.univ := by rw [hA]; exact analyticOnNhd_id
+  -- generic parameters have at least the rank at `θ`, and the generic bound on `fd`
+  obtain ⟨θ', h1, h2⟩ := ((ae_jacobianRank_ge A 0 hf hχ μ X θ).and
+    (ae_funDim_add_le_skipless μ hA hf' hdIn hw)).exists
+  -- the rank on `X` is at most the functional dimension
+  have h3 := jacobianRank_le_funDim (A := A) (S := 0) θ' X
+  omega
 
 /-- **The same under pre-RMSNorm with `ε > 0`:** the Jacobian of the outputs of a skipless network
 on a batch has rank at most `P - (L + 1) d (d - 1)/2` at every parameter. -/
@@ -43,6 +54,16 @@ theorem jacobianRank_add_le_skipless_all_rmsNorm {ε : ℝ} (hε : 0 < ε) (hA :
     (X : Fin n → Matrix T dIn ℝ) :
     jacobianRank A 0 X θ + (L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2)
       ≤ Module.finrank ℝ (Params A dIn dOut) := by
-  sorry
+  -- a Haar measure on the parameters
+  let μ : Measure (Params A dIn dOut) := Measure.addHaar
+  have hf' : ∀ ℓ, Differentiable ℝ (A.f ℓ) := fun ℓ =>
+    differentiableOn_univ.1 (hf ℓ).differentiableOn
+  have hχ : AnalyticOnNhd ℝ A.χ Set.univ := by rw [hA]; exact analyticOnNhd_rmsNorm hε
+  -- generic parameters have at least the rank at `θ`, and the generic bound on `fd`
+  obtain ⟨θ', h1, h2⟩ := ((ae_jacobianRank_ge A 0 hf hχ μ X θ).and
+    (ae_funDim_add_le_skipless_rmsNorm μ hε hA hf' hdIn hw)).exists
+  -- the rank on `X` is at most the functional dimension
+  have h3 := jacobianRank_le_funDim (A := A) (S := 0) θ' X
+  omega
 
 end Skips
