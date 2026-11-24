@@ -407,6 +407,243 @@ theorem flatOn_noKinkGateRMS_le_reglu_residual_rmsNorm (hε : 0 < ε)
     rw [add_zero, add_zero]
     exact hYD
 
+/-! ### Helpers: the space of the directions of one antisymmetric `Y` and of the rescalings -/
+
+/-- Helper (as `rescaleDirLinQ` of `ReGLU.lean`): `α ↦ rescaleDir θ α` is linear. -/
+private noncomputable def rescaleDirLin_rglu
+    (θ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) :
+    (∀ ℓ : Fin 1, hid ℓ → ℝ) →ₗ[ℝ]
+      Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut where
+  toFun := rescaleDir θ
+  map_add' α β := by
+    apply Params.ext'
+    · exact (add_zero 0).symm
+    · intro ℓ
+      ext k j
+      rcases j with i | i
+      · exact (add_zero 0).symm
+      · show -((α + β) ℓ i) * θ.read ℓ k (Sum.inr i)
+          = -(α ℓ i) * θ.read ℓ k (Sum.inr i) + -(β ℓ i) * θ.read ℓ k (Sum.inr i)
+        rw [Pi.add_apply, Pi.add_apply]
+        ring
+    · intro ℓ
+      ext i k
+      show (α + β) ℓ i * θ.write ℓ i k = α ℓ i * θ.write ℓ i k + β ℓ i * θ.write ℓ i k
+      rw [Pi.add_apply, Pi.add_apply]
+      ring
+    · exact (add_zero 0).symm
+  map_smul' c α := by
+    apply Params.ext'
+    · exact (smul_zero c).symm
+    · intro ℓ
+      ext k j
+      rcases j with i | i
+      · exact (smul_zero c).symm
+      · show -((c • α) ℓ i) * θ.read ℓ k (Sum.inr i) = c * (-(α ℓ i) * θ.read ℓ k (Sum.inr i))
+        rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+        ring
+    · intro ℓ
+      ext i k
+      show (c • α) ℓ i * θ.write ℓ i k = c * (α ℓ i * θ.write ℓ i k)
+      rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+      ring
+    · exact (smul_zero c).symm
+
+/-- Helper (as `rescaleDirGateLinQ` of `ReGLU.lean`): `β ↦ rescaleDirGate 1 θ β` is linear. -/
+private noncomputable def rescaleDirGateLin_rglu
+    (θ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) :
+    (∀ ℓ : Fin 1, hid ℓ → ℝ) →ₗ[ℝ]
+      Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut where
+  toFun := rescaleDirGate 1 θ
+  map_add' α β := by
+    apply Params.ext'
+    · exact (add_zero 0).symm
+    · intro ℓ
+      ext a j
+      rcases j with i | i
+      · show (α + β) ℓ i * θ.read ℓ a (Sum.inl i)
+          = α ℓ i * θ.read ℓ a (Sum.inl i) + β ℓ i * θ.read ℓ a (Sum.inl i)
+        rw [Pi.add_apply, Pi.add_apply]
+        ring
+      · exact (add_zero 0).symm
+    · intro ℓ
+      ext i a
+      show -(((1 : ℕ) : ℝ) * (α + β) ℓ i) * θ.write ℓ i a
+        = -(((1 : ℕ) : ℝ) * α ℓ i) * θ.write ℓ i a + -(((1 : ℕ) : ℝ) * β ℓ i) * θ.write ℓ i a
+      rw [Pi.add_apply, Pi.add_apply]
+      ring
+    · exact (add_zero 0).symm
+  map_smul' c α := by
+    apply Params.ext'
+    · exact (smul_zero c).symm
+    · intro ℓ
+      ext a j
+      rcases j with i | i
+      · show (c • α) ℓ i * θ.read ℓ a (Sum.inl i) = c * (α ℓ i * θ.read ℓ a (Sum.inl i))
+        rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+        ring
+      · exact (smul_zero c).symm
+    · intro ℓ
+      ext i a
+      show -(((1 : ℕ) : ℝ) * (c • α) ℓ i) * θ.write ℓ i a
+        = c * (-(((1 : ℕ) : ℝ) * α ℓ i) * θ.write ℓ i a)
+      rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+      ring
+    · exact (smul_zero c).symm
+
+/-- Helper: the directions of one antisymmetric change of basis at both hidden states and of the
+two rescalings, `(Y, α, β) ↦ cobDir θ (Y, Y) + rescaleDir θ α + rescaleDirGate 1 θ β`, as a
+linear map. -/
+private noncomputable def dirRG_rglu
+    (θ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) :
+    (antisymmetric d × (∀ ℓ : Fin 1, hid ℓ → ℝ) × (∀ ℓ : Fin 1, hid ℓ → ℝ)) →ₗ[ℝ]
+      Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut :=
+  ((cobDirLin θ).comp (LinearMap.pi fun _ => (antisymmetric d).subtype)).coprod
+    ((rescaleDirLin_rglu θ).coprod (rescaleDirGateLin_rglu θ))
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the values of `dirRG_rglu`. -/
+private theorem dirRG_apply_rglu
+    (θ : Params (Arch.gated (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
+    (p : antisymmetric d × (∀ ℓ : Fin 1, hid ℓ → ℝ) × (∀ ℓ : Fin 1, hid ℓ → ℝ)) :
+    dirRG_rglu θ p = cobDir θ (fun _ => (p.1 : Matrix d d ℝ))
+      + (rescaleDir θ p.2.1 + rescaleDirGate 1 θ p.2.2) :=
+  rfl
+
+/-- Helper: the triples `(Y, α, β)` with `Y` antisymmetric and two numbers per hidden unit form a
+space of dimension `d(d−1)/2 + 2 d_hidden`. -/
+private theorem finrank_dirDomain_rglu :
+    Module.finrank ℝ (antisymmetric d × (∀ ℓ : Fin 1, hid ℓ → ℝ) × (∀ ℓ : Fin 1, hid ℓ → ℝ))
+      = Fintype.card d * (Fintype.card d - 1) / 2 + 2 * Fintype.card (hid 0) := by
+  rw [Module.finrank_prod, Module.finrank_prod, finrank_antisymmetric, Module.finrank_pi_fintype]
+  simp only [Module.finrank_fintype_fun_eq_card, Finset.univ_unique, Fin.default_eq_zero,
+    Finset.sum_singleton]
+  ring
+
+/-- Helper: the directions flat at every input of `noKinkGateRMS θ` are among the directions
+`cobDir θ (Y, Y) + rescaleDir θ α + rescaleDirGate 1 θ β`, `Y` antisymmetric (Steps 1 to 4). -/
+private theorem flatOn_le_range_rglu (hε : 0 < ε)
+    (θ : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
+    (hθ : OneBlockGenericReGLURMS θ) :
+    flatOn (Arch.gated relu (rmsNorm ε) hid) 1 θ (noKinkGateRMS θ)
+      ≤ LinearMap.range (dirRG_rglu θ) := by
+  intro η hη
+  obtain ⟨Y, α, β, hY, rfl⟩ := flatOn_noKinkGateRMS_le_reglu_residual_rmsNorm hε θ hθ η hη
+  refine LinearMap.mem_range.2 ⟨(⟨Y, hY⟩, α, β), ?_⟩
+  rw [dirRG_apply_rglu]
+  exact (add_assoc _ _ _).symm
+
+/-! ### Helpers: the network is differentiable in the parameters at the inputs of `noKinkGateRMS` -/
+
+/-- Helper (as the private `differentiable_linear` of `Dimension/Functional.lean`): a linear map
+on a finite-dimensional space is differentiable. -/
+private theorem differentiable_linear_rglu {P F : Type*} [NormedAddCommGroup P]
+    [NormedSpace ℝ P] [FiniteDimensional ℝ P] [NormedAddCommGroup F] [NormedSpace ℝ F]
+    (l : P →ₗ[ℝ] F) : Differentiable ℝ l := by
+  rw [← LinearMap.coe_toContinuousLinearMap' l]
+  exact (LinearMap.toContinuousLinearMap l).differentiable
+
+/-- Helper: the product of two matrix-valued maps differentiable at a point is differentiable
+there (entry by entry, a sum of products). -/
+private theorem differentiableAt_matMul_rglu {P : Type*} [NormedAddCommGroup P]
+    [NormedSpace ℝ P] {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    {f : P → Matrix m n ℝ} {g : P → Matrix n p ℝ} {y : P} (hf : DifferentiableAt ℝ f y)
+    (hg : DifferentiableAt ℝ g y) : DifferentiableAt ℝ (fun y => f y * g y) y := by
+  refine differentiableAt_pi.2 fun i => differentiableAt_pi.2 fun k => ?_
+  simp only [Matrix.mul_apply]
+  exact DifferentiableAt.fun_sum fun j _ =>
+    (differentiableAt_pi.1 (differentiableAt_pi.1 hf i) j).mul
+      (differentiableAt_pi.1 (differentiableAt_pi.1 hg j) k)
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper: RMSNorm multiplies row `t` by `(‖h_t‖² / d + ε)^{-1/2}`, so the entries of
+`N_ε(h) R` are those of `h R` times this factor. -/
+private theorem rmsNorm_mul_apply_rglu {m : Type*} (h : Matrix T d ℝ) (R : Matrix d m ℝ)
+    (t : T) (j : m) :
+    (rmsNorm ε h * R) t j
+      = (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε))⁻¹ * (h * R) t j := by
+  rw [Matrix.mul_apply, Matrix.mul_apply, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun k _ => ?_
+  show (Real.sqrt ((h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε))⁻¹ * h t k * R k j = _
+  ring
+
+omit [Nonempty T] in
+/-- Helper (as `differentiableAt_eval_of_mem_noKinkGate` of `ReGLU.lean`, under pre-RMSNorm):
+at an input with no gate at its kink, the output of the residual network is differentiable in
+the parameters (RMSNorm is differentiable for `ε > 0`, and the gates of `N_ε(x E) W_read` are
+positive multiples of those of `x E W_read`, so not at the kink). -/
+private theorem differentiableAt_eval_rglu (hε : 0 < ε)
+    (θ : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut)
+    (x : Matrix T dIn ℝ) (hx : x ∈ noKinkGateRMS θ) :
+    DifferentiableAt ℝ
+      (fun θ' : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut =>
+        eval (Arch.gated relu (rmsNorm ε) hid) 1 θ' x) θ := by
+  -- the components of the parameters are linear in them
+  have hE : Differentiable ℝ
+      (fun θ' : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut => θ'.E) :=
+    differentiable_linear_rglu
+      (Params.linE (A := Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) (dIn := dIn)
+        (dOut := dOut))
+  have hR : Differentiable ℝ
+      (fun θ' : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut =>
+        θ'.read 0) :=
+    differentiable_linear_rglu
+      (Params.linRead (A := Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) (dIn := dIn)
+        (dOut := dOut) 0)
+  have hW : Differentiable ℝ
+      (fun θ' : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut =>
+        θ'.write 0) :=
+    differentiable_linear_rglu
+      (Params.linWrite (A := Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) (dIn := dIn)
+        (dOut := dOut) 0)
+  have hD : Differentiable ℝ
+      (fun θ' : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut => θ'.D) :=
+    differentiable_linear_rglu
+      (Params.linD (A := Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) (dIn := dIn)
+        (dOut := dOut))
+  -- `h_0 = x E`, `N_ε(h_0)` and `N_ε(h_0) W_read`
+  have h0 : DifferentiableAt ℝ
+      (fun θ' : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut =>
+        x * θ'.E) θ :=
+    differentiableAt_matMul_rglu (differentiableAt_const x) (hE θ)
+  have h1 : DifferentiableAt ℝ
+      (fun θ' : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut =>
+        rmsNorm ε (x * θ'.E)) θ := by
+    have hc := (differentiable_rmsNorm hε (x * θ.E)).comp θ h0
+    exact hc
+  have h2 : DifferentiableAt ℝ
+      (fun θ' : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut =>
+        rmsNorm ε (x * θ'.E) * θ'.read 0) θ :=
+    differentiableAt_matMul_rglu h1 (hR θ)
+  -- the block map is differentiable at `N_ε(x E) W_read`, whose gates are not at the kink
+  have hM : ∀ t i, (rmsNorm ε (x * θ.E) * θ.read 0) t (Sum.inl i) ≠ 0 := by
+    intro t i
+    rw [rmsNorm_mul_apply_rglu]
+    exact mul_ne_zero (scale_pos_rglu hε _).ne' (hx t i)
+  have h3 : DifferentiableAt ℝ
+      (fun θ' : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut =>
+        (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid).f 0
+          (rmsNorm ε (x * θ'.E) * θ'.read 0)) θ := by
+    have hc := (contDiffAt_f_rglu (d := d) (ε := ε) _ hM).differentiableAt_one.comp θ h2
+    exact hc
+  -- `h_1 = h_0 + f(N_ε(h_0) W_read) W_write` and the output `N_ε(h_1) D`
+  have h4 := h0.add (differentiableAt_matMul_rglu h3 (hW θ))
+  have h5 : DifferentiableAt ℝ
+      (fun θ' : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut =>
+        rmsNorm ε (x * θ'.E + (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid).f 0
+          (rmsNorm ε (x * θ'.E) * θ'.read 0) * θ'.write 0)) θ := by
+    have hc := (differentiable_rmsNorm hε _).comp θ h4
+    exact hc
+  have heq : (fun θ' : Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut =>
+        eval (Arch.gated relu (rmsNorm ε) hid) 1 θ' x)
+      = fun θ' => rmsNorm ε (x * θ'.E + (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid).f 0
+          (rmsNorm ε (x * θ'.E) * θ'.read 0) * θ'.write 0) * θ'.D := by
+    funext θ'
+    have hl : (Fin.last 1 : Fin 2) = (0 : Fin 1).succ := rfl
+    rw [eval, hl, hidden_succ, Fin.castSucc_zero, hidden_zero, Pi.one_apply, Matrix.mul_one]
+  rw [heq]
+  exact differentiableAt_matMul_rglu h5 (hD θ)
+
 /-- **Theorem B.1 (ii), first sentence, for a ReGLU block, at one parameter:** under the
 conditions `OneBlockGenericReGLURMS`, `funDim = P − d(d−1)/2 − 2 d_hidden`. -/
 theorem funDim_reglu_oneBlock_residual_rmsNorm (hε : 0 < ε)
@@ -416,7 +653,25 @@ theorem funDim_reglu_oneBlock_residual_rmsNorm (hε : 0 < ε)
         + (Fintype.card d * (Fintype.card d - 1) / 2 + 2 * Fintype.card (hid 0))
       = Module.finrank ℝ
           (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  have hv : ∀ ℓ i, (fun a => θ.read ℓ a (Sum.inr i)) ≠ 0 := by
+    intro ℓ i
+    obtain rfl := Subsingleton.elim ℓ 0
+    exact hθ.gated.value_ne_zero i
+  have hg : ∀ ℓ i, (fun a => θ.read ℓ a (Sum.inl i)) ≠ 0 := by
+    intro ℓ i
+    obtain rfl := Subsingleton.elim ℓ 0
+    exact hθ.gated.gate_ne_zero i
+  -- `≤`: the directions of one antisymmetric `Y` and of the two rescalings are flat and
+  -- independent (Theorem 4.2 with identity skips under pre-RMSNorm)
+  have h1 := funDim_add_le_residual_gated_gate_rmsNorm relu_homogeneous ε θ hθ.gated.rank_E hv hg
+  rw [Fin.sum_univ_one] at h1
+  -- `≥`: `fd(θ) = P - dim K(θ)` (Appendix C), and the sandwich `K(θ) ≤ K_U(θ) ≤` the
+  -- directions `cobDir θ (Y, Y) + rescaleDir θ α + rescaleDirGate 1 θ β` (Steps 1 to 4)
+  have h2 := funDim_add_finrank_flat' (S := 1) θ
+  have h3 := (Submodule.finrank_mono ((flat_le_flatOn θ (noKinkGateRMS θ)).trans
+    (flatOn_le_range_rglu hε θ hθ))).trans (LinearMap.finrank_range_le _)
+  rw [finrank_dirDomain_rglu] at h3
+  omega
 
 /-- **Theorem B.1 (ii) in the paper's own sense, for a ReGLU block, at one parameter:** a
 finite batch of inputs with no gate at its kink on which the Jacobian has the rank
@@ -429,7 +684,18 @@ theorem exists_jacobianRank_reglu_oneBlock_residual_rmsNorm (hε : 0 < ε)
           + (Fintype.card d * (Fintype.card d - 1) / 2 + 2 * Fintype.card (hid 0))
         = Module.finrank ℝ
             (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  -- a batch of inputs of `noKinkGateRMS θ`, where the network is differentiable in `θ`, with the
+  -- rank `P - dim K_U(θ)`, `U = noKinkGateRMS θ`
+  obtain ⟨n, X, hX, h⟩ := exists_jacobianRank_add_finrank_flatOn (S := 1) θ (noKinkGateRMS θ)
+    (fun x hx => differentiableAt_eval_rglu hε θ x hx)
+  -- the sandwich: `dim K(θ) ≤ dim K_U(θ) ≤ d(d-1)/2 + 2 d_hidden`, and `dim K(θ)` is that number
+  have h1 := funDim_reglu_oneBlock_residual_rmsNorm hε θ hθ
+  have h2 := funDim_add_finrank_flat' (S := 1) θ
+  have h3 := Submodule.finrank_mono (flat_le_flatOn (S := 1) θ (noKinkGateRMS θ))
+  have h4 := (Submodule.finrank_mono (flatOn_le_range_rglu hε θ hθ)).trans
+    (LinearMap.finrank_range_le _)
+  rw [finrank_dirDomain_rglu] at h4
+  exact ⟨n, X, hX, by omega⟩
 
 /-- **Theorem B.1 (ii), first sentence, for one ReGLU block:** for `ε > 0` and
 `d_in, d_out ≥ d ≥ 2`, at almost every parameter the residual network of one ReGLU block of any
@@ -442,7 +708,9 @@ theorem ae_funDim_reglu_oneBlock_residual_rmsNorm (hε : 0 < ε)
         + (Fintype.card d * (Fintype.card d - 1) / 2 + 2 * Fintype.card (hid 0))
       = Module.finrank ℝ
           (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  -- the conditions of the proof hold at generic parameters
+  exact (ae_oneBlockGenericReGLURMS μ hd hdIn hdOut).mono fun θ hθ =>
+    funDim_reglu_oneBlock_residual_rmsNorm hε θ hθ
 
 /-- **Theorem B.1 (ii) in the paper's own sense, for one ReGLU block:** at almost every
 parameter there is a finite batch of inputs with no gate at its kink on which the Jacobian has
@@ -456,7 +724,9 @@ theorem ae_exists_jacobianRank_reglu_oneBlock_residual_rmsNorm (hε : 0 < ε)
           + (Fintype.card d * (Fintype.card d - 1) / 2 + 2 * Fintype.card (hid 0))
         = Module.finrank ℝ
             (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  -- the conditions of the proof hold at generic parameters
+  exact (ae_oneBlockGenericReGLURMS μ hd hdIn hdOut).mono fun θ hθ =>
+    exists_jacobianRank_reglu_oneBlock_residual_rmsNorm hε θ hθ
 
 /-- **Theorem B.1 (ii), second sentence, for one ReGLU block:** if the block has at least `d`
 hidden units, at almost every parameter the skip raises `funDim` by at least `d(d−1)/2`. -/
@@ -468,6 +738,12 @@ theorem ae_funDim_skipless_add_le_reglu_oneBlock_residual_rmsNorm (hε : 0 < ε)
     ∀ᵐ θ ∂μ, funDim (Arch.gated relu (rmsNorm ε) hid) 0 θ
         + Fintype.card d * (Fintype.card d - 1) / 2
       ≤ funDim (Arch.gated relu (rmsNorm ε) hid) 1 θ := by
-  sorry
+  have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+  -- `fd_1 + d(d-1)/2 + 2 d_hidden = P` with the skip, `fd_0 + 2 · d(d-1)/2 + 2 d_hidden ≤ P`
+  -- without (Theorem 4.2 with the rescalings of the gates)
+  filter_upwards [ae_funDim_reglu_oneBlock_residual_rmsNorm hε μ hd hdIn hdOut,
+    ae_funDim_add_le_skipless_reglu_rmsNorm ε μ hdIn hhid] with θ h1 h0
+  rw [Fin.sum_univ_one] at h0
+  omega
 
 end Skips
