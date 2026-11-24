@@ -555,3 +555,10 @@ import SkipsLean
 #print axioms Skips.dense_setOf_linearIndependent_abs_dotProduct
 #print axioms Skips.dense_setOf_linearIndependent_sq_dotProduct
 #print axioms Skips.suffixFlat_cobDir_add_rescaleDir
+#print axioms Skips.frozen_block_apply
+#print axioms Skips.analyticOnNhd_f_frozen
+#print axioms Skips.regular_frozen_of_goodForConesGated
+#print axioms Skips.suffix_frozen_smul
+#print axioms Skips.fderiv_suffix_frozen_smul
+#print axioms Skips.fderiv_params_suffix_frozen_smul
+#print axioms Skips.writeLHS_frozen_smul
