@@ -44,3 +44,6 @@ import SkipsLean.Absorb.NoWidth
 import SkipsLean.Absorb.Networks
 import SkipsLean.Absorb.SameWidth
 import SkipsLean.Absorb.FewerUnits
+import SkipsLean.Depth.SuffixRMS
+import SkipsLean.Depth.StepTanhRMS
+import SkipsLean.Depth.TanhRMS

@@ -202,3 +202,20 @@ import SkipsLean
 #print axioms Skips.ae_forall_isUnit_det_add_subProd
 #print axioms Skips.ae_not_relu_absorb_of_card_lt
 #print axioms Skips.ae_not_gelu_absorb_of_card_lt
+-- Dimension paper, Appendix D, tanh blocks under pre-RMSNorm with ε > 0 (case (+)): Theorem 5.2 (i)
+#print axioms Skips.analyticOnNhd_rmsNorm
+#print axioms Skips.analyticOnNhd_suffix_prod_of_analytic
+#print axioms Skips.analyticOnNhd_suffix_of_analytic
+#print axioms Skips.exists_open_dense_injective_fderiv_suffix_rmsNorm
+#print axioms Skips.suffixFlat_of_flat_at_write_rmsNorm
+#print axioms Skips.claimRMS_last
+#print axioms Skips.flat_le_range_cobDir_of_claimRMS
+#print axioms Skips.funDim_of_claimRMS
+#print axioms Skips.fderiv_rmsNorm_mul
+#print axioms Skips.suffixFlat_castSucc_iff_mlp_rmsNorm_values
+#print axioms Skips.suffixFlat_castSucc_iff_mlp_rmsNorm
+#print axioms Skips.eq_zero_of_fderiv_suffix_one_sub_sq_rmsNorm
+#print axioms Skips.claimRMS_castSucc_tanh
+#print axioms Skips.claimRMS_of_tanhDepthGeneric
+#print axioms Skips.funDim_tanh_skipless_rmsNorm
+#print axioms Skips.ae_funDim_tanh_skipless_rmsNorm
