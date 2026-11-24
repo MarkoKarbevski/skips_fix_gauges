@@ -79,13 +79,93 @@ theorem hidden_succ_eq_blockMapRes
   simp only [Pi.one_apply, Matrix.mul_one, id, blockMapRes, Matrix.add_apply, Pi.add_apply]
   rfl
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- `Φ_ℓ` is continuous. -/
+private theorem continuous_blockMapRes_fold
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (ℓ : Fin L) :
+    Continuous (blockMapRes θ ℓ) := by
+  have hr : Continuous relu := continuous_id.max continuous_const
+  have h1 : Continuous fun h : d → ℝ => h ᵥ* θ.read ℓ :=
+    continuous_id.matrix_vecMul continuous_const
+  have h2 : Continuous fun h : d → ℝ => fun i => relu ((h ᵥ* θ.read ℓ) i) :=
+    continuous_pi fun i => hr.comp ((continuous_apply i).comp h1)
+  exact continuous_id.add (h2.matrix_vecMul continuous_const)
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- `Φ_ℓ` is positively homogeneous: `Φ_ℓ (c h) = c Φ_ℓ h` for `c ≥ 0`. -/
+private theorem blockMapRes_smul_fold
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (ℓ : Fin L) {c : ℝ}
+    (hc : 0 ≤ c) (h : d → ℝ) : blockMapRes θ ℓ (c • h) = c • blockMapRes θ ℓ h := by
+  have e : (fun i => relu (((c • h) ᵥ* θ.read ℓ) i))
+      = c • fun i => relu ((h ᵥ* θ.read ℓ) i) := by
+    funext i
+    simp only [Matrix.smul_vecMul, Pi.smul_apply, smul_eq_mul, relu]
+    rw [mul_max_of_nonneg _ _ hc, mul_zero]
+  simp only [blockMapRes]
+  rw [e, Matrix.smul_vecMul, smul_add]
+
 /-- **Proposition A.32 (i), under invariance of domain:** if residual ReLU block `ℓ` does not
 fold, `Φ_ℓ` is a homeomorphism of `ℝ^{1×d}`. -/
 theorem exists_homeomorph_blockMapRes_of_not_folds (hinv : InvarianceOfDomain d)
     (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) (ℓ : Fin L)
     (hℓ : ¬ Folds θ ℓ) :
     ∃ e : (d → ℝ) ≃ₜ (d → ℝ), ∀ h, e h = blockMapRes θ ℓ h := by
-  sorry
+  -- `Φ` is continuous and injective, hence open (invariance of domain)
+  have hinj : Function.Injective (blockMapRes θ ℓ) := not_not.1 hℓ
+  have hc := continuous_blockMapRes_fold θ ℓ
+  have hopen : IsOpenMap (blockMapRes θ ℓ) := hinv _ hc hinj
+  -- its range is open and contains `Φ 0 = 0`, so it contains a ball around `0`
+  have h0 : blockMapRes θ ℓ 0 = 0 := by
+    have := blockMapRes_smul_fold θ ℓ le_rfl (0 : d → ℝ)
+    rwa [zero_smul, zero_smul] at this
+  obtain ⟨ε, hε, hball⟩ := Metric.isOpen_iff.1 hopen.isOpen_range 0 ⟨0, h0⟩
+  -- the range is a cone, so it is everything: `c y` is in the ball for a small `c > 0`
+  have hsurj : Function.Surjective (blockMapRes θ ℓ) := by
+    intro y
+    have hy : 0 < ‖y‖ + 1 := by positivity
+    set c : ℝ := ε / (‖y‖ + 1) with hc_def
+    have hcpos : 0 < c := div_pos hε hy
+    have hmem : c • y ∈ Metric.ball (0 : d → ℝ) ε := by
+      rw [mem_ball_zero_iff, norm_smul, Real.norm_of_nonneg hcpos.le, hc_def,
+        div_mul_eq_mul_div, div_lt_iff₀ hy]
+      nlinarith [norm_nonneg y]
+    obtain ⟨h, hh⟩ := hball hmem
+    refine ⟨c⁻¹ • h, ?_⟩
+    rw [blockMapRes_smul_fold θ ℓ (inv_nonneg.2 hcpos.le), hh, inv_smul_smul₀ hcpos.ne']
+  -- a continuous open bijection is a homeomorphism
+  exact ⟨(Equiv.ofBijective _ ⟨hinj, hsurj⟩).toHomeomorphOfContinuousOpen hc hopen,
+    fun h => rfl⟩
+
+/-- Row `t` of the hidden state `k` is a continuous map of the input onto `ℝ^d`, when `E` has
+rank `d` and no block folds: by induction on `k`, with `Φ_ℓ` onto by part (i). -/
+private theorem continuous_surjective_row_fold (hinv : InvarianceOfDomain d)
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut)
+    (hE : θ.E.rank = Fintype.card d) (hfold : ∀ ℓ, ¬ Folds θ ℓ) (t : T) (k : Fin (L + 1)) :
+    Continuous (fun x : Matrix T dIn ℝ => hidden (Arch.mlp relu id hid) 1 θ x k t) ∧
+      Function.Surjective
+        (fun x : Matrix T dIn ℝ => hidden (Arch.mlp relu id hid) 1 θ x k t) := by
+  induction k using Fin.induction with
+  | zero =>
+    -- row `t` of `h_0 = x E` is `x_t E`, and `v ↦ v E` is onto
+    have e : (fun x : Matrix T dIn ℝ => hidden (Arch.mlp relu id hid) 1 θ x 0 t)
+        = fun x => x t ᵥ* θ.E := by
+      funext x
+      rw [hidden_zero, Matrix.mul_apply_eq_vecMul]
+    rw [e]
+    refine ⟨(continuous_apply t).matrix_vecMul continuous_const, fun y => ?_⟩
+    obtain ⟨v, hv⟩ := (Matrix.vecMul_surjective_iff_rank_eq_card (M := θ.E)).2 hE y
+    exact ⟨Matrix.of fun _ => v, hv⟩
+  | succ k ih =>
+    -- row `t` of `h_{k+1}` is `Φ_k` of row `t` of `h_k`
+    have e : (fun x : Matrix T dIn ℝ => hidden (Arch.mlp relu id hid) 1 θ x k.succ t)
+        = blockMapRes θ k ∘ fun x => hidden (Arch.mlp relu id hid) 1 θ x k.castSucc t := by
+      funext x
+      exact hidden_succ_eq_blockMapRes θ x k t
+    obtain ⟨φ, hφ⟩ := exists_homeomorph_blockMapRes_of_not_folds hinv θ k (hfold k)
+    have hs : Function.Surjective (blockMapRes θ k) := fun y => ⟨φ.symm y, by
+      rw [← hφ, Homeomorph.apply_symm_apply]⟩
+    rw [e]
+    exact ⟨(continuous_blockMapRes_fold θ k).comp ih.1, hs.comp ih.2⟩
 
 /-- **Proposition A.32 (ii), under invariance of domain:** let `E` have rank `d` and let no block
 of a residual ReLU network fold. For a unit `j` of block `m` with a nonzero read and a token `t`,
@@ -99,7 +179,31 @@ theorem exists_isOpen_active_of_not_folds (hinv : InvarianceOfDomain d)
         ∀ x ∈ U, 0 < (hidden (Arch.mlp relu id hid) 1 θ x m.castSucc * θ.read m) t j) ∧
       ∃ U : Set (Matrix T dIn ℝ), IsOpen U ∧ U.Nonempty ∧
         ∀ x ∈ U, (hidden (Arch.mlp relu id hid) 1 θ x m.castSucc * θ.read m) t j < 0 := by
-  sorry
+  set r : d → ℝ := fun a => θ.read m a j with hr_def
+  obtain ⟨hcont, hsurj⟩ := continuous_surjective_row_fold hinv θ hE hfold t m.castSucc
+  set g := fun x : Matrix T dIn ℝ => hidden (Arch.mlp relu id hid) 1 θ x m.castSucc t
+  -- the pre-activation at `t` is `g x ⬝ᵥ r`, continuous in `x`
+  have hz : ∀ x, (hidden (Arch.mlp relu id hid) 1 θ x m.castSucc * θ.read m) t j = g x ⬝ᵥ r :=
+    fun x => rfl
+  have hzc : Continuous fun x => g x ⬝ᵥ r := hcont.dotProduct continuous_const
+  have hrr : 0 < r ⬝ᵥ r := by
+    have h0 : 0 ≤ r ⬝ᵥ r := Finset.sum_nonneg fun i _ => mul_self_nonneg (r i)
+    exact lt_of_le_of_ne h0 (Ne.symm (mt dotProduct_self_eq_zero.1 hr))
+  -- `g` is onto: some input has `g x = r`, another `g x = -r`
+  obtain ⟨x₁, hx₁⟩ := hsurj r
+  obtain ⟨x₂, hx₂⟩ := hsurj (-r)
+  refine ⟨⟨{x | 0 < g x ⬝ᵥ r}, isOpen_lt continuous_const hzc, ⟨x₁, ?_⟩, fun x hx => ?_⟩,
+    {x | g x ⬝ᵥ r < 0}, isOpen_lt hzc continuous_const, ⟨x₂, ?_⟩, fun x hx => ?_⟩
+  · show 0 < g x₁ ⬝ᵥ r
+    rw [hx₁]
+    exact hrr
+  · rw [hz]
+    exact hx
+  · show g x₂ ⬝ᵥ r < 0
+    rw [hx₂, neg_dotProduct]
+    exact neg_lt_zero.2 hrr
+  · rw [hz]
+    exact hx
 
 /-- **Proposition A.32 (ii), "In particular, no unit with a nonzero read is dead"** (with at
 least one token). -/
@@ -107,7 +211,10 @@ theorem not_unitInactiveRes_of_not_folds [Nonempty T] (hinv : InvarianceOfDomain
     (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut)
     (hE : θ.E.rank = Fintype.card d) (hfold : ∀ ℓ, ¬ Folds θ ℓ) (m : Fin L) (j : hid m)
     (hr : (fun a => θ.read m a j) ≠ 0) : ¬ UnitInactiveRes θ m j := by
-  sorry
+  intro hdead
+  obtain ⟨⟨U, -, ⟨x, hx⟩, hU⟩, -⟩ :=
+    exists_isOpen_active_of_not_folds hinv θ hE hfold m j hr (Classical.arbitrary T)
+  exact absurd (hdead x _) (not_le.2 (hU x hx))
 
 /-- `|ReLU x - ReLU y| ≤ |x - y|`, squared. -/
 private theorem relu_sub_sq_le_fold (x y : ℝ) :
