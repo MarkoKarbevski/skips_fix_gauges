@@ -1003,3 +1003,10 @@ import SkipsLean
 #print axioms Skips.ae_isFull_imp_eval_ne_skipless_relu
 #print axioms Skips.ae_eventually_isFull_smallWrites
 #print axioms Skips.f_attention_mul
+#print axioms Skips.attnHeads_const_row
+#print axioms Skips.attnHeads_zero_row
+#print axioms Skips.exists_row_attnHeads_sub_ge
+#print axioms Skips.ae_mul_add_attnHeads_ne
+#print axioms Skips.exists_ne_residual_skipless_attnHeads
+#print axioms Skips.ae_mul_add_attentionBlock_ne
+#print axioms Skips.exists_row_attentionBlock_sub_ge
