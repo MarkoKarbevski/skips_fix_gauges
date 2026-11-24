@@ -1451,3 +1451,15 @@ import SkipsLean
 #print axioms Skips.iteratedDeriv_eq_zero_of_sum_ridge_eq_zero
 #print axioms Skips.exists_polynomial_of_sum_ridge_eq_zero
 #print axioms Skips.eq_zero_of_sum_smul_scaled_eq_polynomial
+#print axioms Skips.exists_jacobianRankSkips_tri_mlp_rescale_rmsNorm
+#print axioms Skips.jacobianRankSkips_tri_add_le_mlp_rescale_rmsNorm
+#print axioms Skips.funDimSkipsOn_tri_mlp_rescale_rmsNorm
+#print axioms Skips.ae_funDimSkipsOn_tri_relu_rmsNorm
+#print axioms Skips.ae_funDimSkipsOn_tri_relu_rmsNorm_eq_residual_add
+#print axioms Skips.ae_funDimSkipsOn_tri_reluSq_rmsNorm
+#print axioms Skips.ae_funDimSkipsOn_tri_reluSq_rmsNorm_eq_residual_add
+#print axioms Skips.exists_jacobianRankSkips_tri_reglu_rmsNorm
+#print axioms Skips.jacobianRankSkips_tri_add_le_reglu_rmsNorm
+#print axioms Skips.funDimSkipsOn_tri_reglu_rmsNorm
+#print axioms Skips.ae_funDimSkipsOn_tri_reglu_rmsNorm
+#print axioms Skips.ae_funDimSkipsOn_tri_reglu_rmsNorm_eq_residual_add
