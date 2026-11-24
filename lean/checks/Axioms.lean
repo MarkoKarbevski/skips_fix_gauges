@@ -523,3 +523,16 @@ import SkipsLean
 #print axioms Skips.exists_goodForConesGated_cols
 #print axioms Skips.exists_goodForConesGated_outer
 #print axioms Skips.exists_goodForConesMlp_outer
+#print axioms Skips.gelu_eq_sub_millsRatio
+#print axioms Skips.geluDeriv_eq_sub_millsRatio
+#print axioms Skips.abs_millsRatio_sub_sum_le
+#print axioms Skips.millsRatio_pos_le
+#print axioms Skips.abs_millsRatio_sub_inv_le
+#print axioms Skips.mul_millsRatio_bounds
+#print axioms Skips.gelu_neg_eq
+#print axioms Skips.silu_neg_eq
+#print axioms Skips.gelu_gap_eq
+#print axioms Skips.silu_gap_eq
+#print axioms Skips.gelu_gap_bounds
+#print axioms Skips.silu_gap_bounds
+#print axioms Skips.silu_gap_bounds'

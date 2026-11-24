@@ -16,9 +16,9 @@ Theorem 5.2 (ii) with `ε > 0` and (iii): there is a regular parameter, with no 
 column for gated blocks, at which Claim `(D_0)` holds. The scope is that of Theorem 5.2:
 `d_in, d_out ≥ d ≥ 2` and at least `d` hidden units in every block.
 
-These statements are the whole of Appendix D.5 (Lemmas D.8 to D.13). Their proofs are not written
-yet; the lemmas of Appendix D.5 will be stated in files of their own, and these five statements
-will follow from them.
+The proofs below take Lemma D.12 from `Depth/StepGated.lean`, Lemma D.13 and "a good `θ` is
+regular" from `Depth/Cones.lean`, and Lemma D.5 from `Depth/SuffixGated.lean` and
+`Depth/SuffixRMS.lean`.
 -/
 
 namespace Skips
