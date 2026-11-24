@@ -116,6 +116,81 @@ theorem unitInactive_of_mem_negReadSet (hσ : ∀ z : ℝ, 0 ≤ σ z) (ℓ : Fi
   refine Finset.sum_nonpos fun k _ => mul_nonpos_of_nonneg_of_nonpos (hσ _) ?_
   exact (hθ k).le
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] [∀ ℓ, DecidableEq (hid ℓ)] in
+/-- A matrix with `d` columns and an invertible `d × d` submatrix of rows has rank `d` (a copy of
+the private `rank_eq_of_isUnit_det_submatrix` of `Generic/Params.lean`). -/
+private theorem rank_eq_of_isUnit_det_submatrix_iur {m : Type*} (M : Matrix m d ℝ) (ρ : d ↪ m)
+    (h : IsUnit (M.submatrix ρ id).det) : M.rank = Fintype.card d :=
+  le_antisymm (Matrix.rank_le_card_width M)
+    ((Matrix.rank_of_isUnit _ ((Matrix.isUnit_iff_isUnit_det _).2 h)).symm.le.trans
+      (Matrix.rank_submatrix_le M ρ id))
+
+/-- Proposition E.1 for an activation `σ ≥ 0` that is positively homogeneous of degree `k` and
+vanishes on `z ≤ 0` (ReLU and ReLU²). -/
+private theorem exists_isOpen_unitInactive_iur [Nonempty d] {k : ℕ}
+    (hσ : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z)
+    (hσ0 : ∀ z : ℝ, z ≤ 0 → σ z = 0) (hσnn : ∀ z : ℝ, 0 ≤ σ z)
+    (μ : Measure (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)) [μ.IsAddHaarMeasure]
+    (hdIn : Fintype.card d ≤ Fintype.card dIn)
+    (hhid : ∀ m, Fintype.card d ≤ Fintype.card (hid m)) (ℓ : Fin L) (j : hid ℓ.succ)
+    (hj : Fintype.card d < Fintype.card (hid ℓ.succ)) :
+    ∃ U : Set (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut),
+      IsOpen U ∧ U.Nonempty ∧ (∀ θ ∈ U, UnitInactive θ ℓ.succ j) ∧
+      ∀ᵐ θ ∂μ, θ ∈ U → funDim (Arch.mlp σ id hid) 0 θ
+          + ((L + 2) * Fintype.card d ^ 2 + ∑ m, Fintype.card (hid m) + (2 * Fintype.card d - 1))
+        ≤ Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) := by
+  -- the open set: `a_k r < 0` for every hidden unit `k` of block `ℓ.castSucc`
+  refine ⟨negReadSet σ id dIn dOut ℓ j, isOpen_negReadSet ℓ j, nonempty_negReadSet ℓ j,
+    fun θ hθ => unitInactive_of_mem_negReadSet hσnn ℓ j hθ, ?_⟩
+  -- `d` rows of the write of block `ℓ.succ` other than the row `j`
+  have hcard : Fintype.card d ≤ Fintype.card {i : hid ℓ.succ // i ≠ j} := by
+    rw [Fintype.card_subtype_compl, Fintype.card_subtype_eq]
+    omega
+  obtain ⟨ρ⟩ := Function.Embedding.nonempty_of_card_le hcard
+  -- at generic parameters `E` and the writes have rank `d`, no read column vanishes, and every
+  -- `d` rows of a write form an invertible matrix
+  filter_upwards [ae_rank_E_write μ hdIn hhid, ae_read_col_ne_zero μ,
+    ae_isUnit_det_submatrix μ] with θ h1 h2 h3 hθU
+  -- the unit is inactive at every input at all parameters near `θ`
+  have hθ : ∀ᶠ θ' in 𝓝 θ, UnitInactive θ' ℓ.succ j :=
+    Filter.mem_of_superset ((isOpen_negReadSet (σ := σ) (χ := id) ℓ j).mem_nhds hθU)
+      fun _ h => unitInactive_of_mem_negReadSet hσnn ℓ j h
+  -- the write of block `ℓ.succ` without the row `j` still has rank `d`
+  have hwj : ((θ.write ℓ.succ).submatrix (fun i : {i : hid ℓ.succ // i ≠ j} => (i : hid ℓ.succ))
+      id).rank = Fintype.card d :=
+    rank_eq_of_isUnit_det_submatrix_iur _ ρ
+      (h3.2.2.2 ℓ.succ (ρ.trans (Function.Embedding.subtype _)))
+  -- the bound at one parameter, for a network of `L + 1` blocks
+  exact funDim_add_le_of_eventually_unitInactive hσ hσ0 θ ℓ.succ j hθ h1.1 h1.2 hwj h2
+
+/-- "So these networks do not satisfy the equality condition", for an activation as in
+`exists_isOpen_unitInactive_iur`. -/
+private theorem not_ae_funDim_add_eq_iur [Nonempty d] {k : ℕ}
+    (hσ : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z)
+    (hσ0 : ∀ z : ℝ, z ≤ 0 → σ z = 0) (hσnn : ∀ z : ℝ, 0 ≤ σ z)
+    (μ : Measure (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)) [μ.IsAddHaarMeasure]
+    (hL : 0 < L) (hdIn : Fintype.card d ≤ Fintype.card dIn)
+    (hhid : ∀ m, Fintype.card d < Fintype.card (hid m)) :
+    ¬ ∀ᵐ θ ∂μ, funDim (Arch.mlp σ id hid) 0 θ
+        + ((L + 2) * Fintype.card d ^ 2 + ∑ m, Fintype.card (hid m))
+      = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) := by
+  intro hae
+  -- the inactive unit: a hidden unit `j` of the second block
+  let ℓ : Fin L := ⟨0, hL⟩
+  have hd1 : 0 < Fintype.card d := Fintype.card_pos
+  have : Nonempty (hid ℓ.succ) := Fintype.card_pos_iff.mp (hd1.trans (hhid _))
+  obtain j : hid ℓ.succ := Classical.arbitrary _
+  obtain ⟨U, hUo, hUne, -, hU⟩ :=
+    exists_isOpen_unitInactive_iur hσ hσ0 hσnn μ hdIn (fun m => (hhid m).le) ℓ j (hhid _)
+  -- at almost every point of `U` both the equality and the bound with `2d - 1 ≥ 1` would hold
+  have hnull : μ U = 0 := by
+    rw [measure_eq_zero_iff_ae_notMem]
+    filter_upwards [hae, hU] with θ he hle hθU
+    have := hle hθU
+    omega
+  -- but a nonempty open set has positive measure
+  exact (hUo.measure_pos μ hUne).ne' hnull
+
 /-- **Proposition E.1 for ReLU blocks:** for `d_in ≥ d ≥ 1`, at least `d` hidden units in every
 block and more than `d` in block `ℓ.succ`, there is a nonempty open set of weights on which hidden
 unit `j` of block `ℓ.succ` is inactive at every input, and at almost every point of this set
@@ -130,7 +205,8 @@ theorem exists_isOpen_unitInactive_relu [Nonempty d]
       ∀ᵐ θ ∂μ, θ ∈ U → funDim (Arch.mlp relu id hid) 0 θ
           + ((L + 2) * Fintype.card d ^ 2 + ∑ m, Fintype.card (hid m) + (2 * Fintype.card d - 1))
         ≤ Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) := by
-  sorry
+  exact exists_isOpen_unitInactive_iur relu_homogeneous (fun _ hz => max_eq_right hz)
+    (fun _ => le_max_right _ _) μ hdIn hhid ℓ j hj
 
 /-- **Proposition E.1 for ReLU² blocks:** the same as for ReLU blocks. -/
 theorem exists_isOpen_unitInactive_reluSq [Nonempty d]
@@ -143,7 +219,9 @@ theorem exists_isOpen_unitInactive_reluSq [Nonempty d]
       ∀ᵐ θ ∂μ, θ ∈ U → funDim (Arch.mlp reluSq id hid) 0 θ
           + ((L + 2) * Fintype.card d ^ 2 + ∑ m, Fintype.card (hid m) + (2 * Fintype.card d - 1))
         ≤ Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) reluSq id hid) dIn dOut) := by
-  sorry
+  exact exists_isOpen_unitInactive_iur reluSq_homogeneous
+    (fun _ hz => by rw [reluSq, max_eq_right hz, zero_pow two_ne_zero])
+    (fun _ => sq_nonneg _) μ hdIn hhid ℓ j hj
 
 /-- **Proposition E.1, "So these networks do not satisfy the equality condition", for ReLU
 blocks:** for at least two blocks (`L ≥ 1`), `d_in ≥ d ≥ 1` and more than `d` hidden units in every
@@ -155,7 +233,8 @@ theorem not_ae_funDim_add_eq_relu_skipless [Nonempty d]
     ¬ ∀ᵐ θ ∂μ, funDim (Arch.mlp relu id hid) 0 θ
         + ((L + 2) * Fintype.card d ^ 2 + ∑ m, Fintype.card (hid m))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) := by
-  sorry
+  exact not_ae_funDim_add_eq_iur relu_homogeneous (fun _ hz => max_eq_right hz)
+    (fun _ => le_max_right _ _) μ hL hdIn hhid
 
 /-- **Proposition E.1, "So these networks do not satisfy the equality condition", for ReLU²
 blocks.** -/
@@ -166,6 +245,8 @@ theorem not_ae_funDim_add_eq_reluSq_skipless [Nonempty d]
     ¬ ∀ᵐ θ ∂μ, funDim (Arch.mlp reluSq id hid) 0 θ
         + ((L + 2) * Fintype.card d ^ 2 + ∑ m, Fintype.card (hid m))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) reluSq id hid) dIn dOut) := by
-  sorry
+  exact not_ae_funDim_add_eq_iur reluSq_homogeneous
+    (fun _ hz => by rw [reluSq, max_eq_right hz, zero_pow two_ne_zero])
+    (fun _ => sq_nonneg _) μ hL hdIn hhid
 
 end Skips
