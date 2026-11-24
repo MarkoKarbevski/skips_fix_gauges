@@ -585,6 +585,7 @@ theorem eventually_jacobianRank_smallWrites_ge_of_contDiffOn (hA : A.χ = id)
     exact Submodule.finrank_mono (LinearMap.range_comp_le_range _ _)
   exact hrank
 
+omit [DecidableEq d] in
 /-- **Proof of Lemma A.30, "Near such parameters the signs on the batch do not change" and the
 lower semicontinuity of the rank:** blocks without normalization, any stream matrices, `f_ℓ`
 continuously differentiable on the open set `V ℓ`, and parameters `θ` at which the

@@ -969,3 +969,5 @@ import SkipsLean
 #print axioms Skips.ae_funDim_reglu_oneBlock_residual_rmsNorm
 #print axioms Skips.ae_exists_jacobianRank_reglu_oneBlock_residual_rmsNorm
 #print axioms Skips.ae_funDim_skipless_add_le_reglu_oneBlock_residual_rmsNorm
+#print axioms Skips.eventually_jacobianRank_smallWrites_ge_of_contDiffOn
+#print axioms Skips.eventually_jacobianRank_ge_of_contDiffOn
