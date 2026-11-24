@@ -126,3 +126,7 @@ import SkipsLean.Depth.ComplexOneSubSq
 import SkipsLean.Depth.FlatAtWriteRows
 import SkipsLean.Depth.StepZeroTanhPath
 import SkipsLean.Depth.StepZeroTanh
+import SkipsLean.Depth.SuffixZeroBatch
+import SkipsLean.Generic.AnalyticZeroSetOn
+import SkipsLean.Dimension.GenericRankOn
+import SkipsLean.Generic.ConnectedCompl
