@@ -39,3 +39,6 @@ import SkipsLean.Network.Analytic
 import SkipsLean.Depth.RaySeparation
 import SkipsLean.Depth.StepTanh
 import SkipsLean.Depth.Tanh
+import SkipsLean.Absorb.Block
+import SkipsLean.Absorb.NoWidth
+import SkipsLean.Absorb.Networks
