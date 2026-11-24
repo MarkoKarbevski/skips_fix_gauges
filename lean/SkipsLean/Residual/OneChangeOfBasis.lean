@@ -85,13 +85,14 @@ private theorem hidden_single_write (θ : Params A dIn dOut) (x : Matrix T dIn �
     hidden A 1 θ x j = if (j : ℕ) ≤ ℓ₀ then x * θ.E
       else x * θ.E + A.f ℓ₀ (A.χ (x * θ.E) * θ.read ℓ₀) * θ.write ℓ₀ := by
   induction j using Fin.induction with
-  | zero => simp
+  | zero => simp only [hidden_zero, Fin.coe_ofNat_eq_mod, Nat.zero_mod, zero_le, ↓reduceIte]
   | succ k ih =>
     rw [hidden_succ, ih, Pi.one_apply, Matrix.mul_one]
     by_cases hk : k = ℓ₀
     · -- block `ℓ₀` itself: its input is `x E`
       subst hk
-      simp
+      simp only [Fin.val_castSucc, Std.le_refl, ↓reduceIte, Fin.val_succ, add_le_iff_nonpos_right,
+        nonpos_iff_eq_zero, one_ne_zero]
     · -- another block writes nothing
       rw [hw k hk, Matrix.mul_zero, add_zero]
       have e : (k : ℕ) ≠ ℓ₀ := fun e => hk (Fin.ext e)
@@ -128,7 +129,7 @@ theorem cob_eq_of_eval_cob_residual [Nonempty T] [Nonempty dIn] [Nonempty dOut]
     apply Units.ext
     refine eq_of_forall_mul_mul (Matrix.single t i (1 : ℝ)) (fun h0 => ?_) fun E => ?_
     · have := congrFun (congrFun h0 t) i
-      simp at this
+      simp only [Matrix.single_apply_same, Matrix.zero_apply, one_ne_zero] at this
     refine eq_of_forall_mul_right (dOut := dOut) fun D => ?_
     -- the readout `G_L D`
     let θ : Params A dIn dOut := ⟨E, 0, 0, (G (Fin.last L) : Matrix d d ℝ) * D⟩
@@ -237,7 +238,8 @@ theorem cob_eq_orthogonal_of_eval_cob_residual_rmsNorm [Nonempty T] [Nonempty dI
     let E : Matrix dIn d ℝ := Matrix.of fun _ => v
     have hxE : (x * E) t = v := by
       funext k
-      simp [x, E, Matrix.mul_apply, Pi.single_apply]
+      simp only [Matrix.mul_apply, Matrix.of_apply, Pi.single_apply, ite_mul, one_mul, zero_mul,
+        Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte, x, E]
     have hmat : rmsNorm ε (x * E * (G 0 : Matrix d d ℝ))
         = rmsNorm ε (x * E) * (G (Fin.last L) : Matrix d d ℝ) := by
       refine eq_of_forall_mul_right (dOut := dOut) fun D => ?_
