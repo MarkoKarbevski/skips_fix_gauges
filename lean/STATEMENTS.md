@@ -97,12 +97,12 @@ in work are on the branch `lean-wip`.
 | ReLU `max(z,0)` and ReLU² `max(z,0)²`, with their derivatives `1[z>0]` (for `z ≠ 0`) and `2 max(z,0)` | `relu`, `reluDeriv`, `reluSq`, `reluSqDeriv`, `hasDerivAt_relu`, `hasDerivAt_reluSq` | `Activations/ReLU.lean` | proved |
 | D Lemma C.3 for ReLU and for ReLU², with the linear term, the constant and the biases: a direction that is flat at every input with no hidden unit at its kink only rescales each hidden unit, `(ψ_c, ψ_β) = λ(c, β)`, `ψ_a = −λa` (ReLU), `ψ_a = −2λa` (ReLU²) | `relu_units_flat`, `reluSq_units_flat` | `OneBlock/UnitsReLU.lean` | proved |
 | D Lemma C.3 for ReGLU: `(ψ_c, ψ_β) = λ(c, β)`, `(ψ_e, ψ_β') = −α(e, β')`, `ψ_a = (α − λ)a`, with the paper's hypothesis that `(e, β')` is not proportional to `(c, β)` | `relu_gated_units_flat` | `OneBlock/UnitsReGLU.lean` | proved |
-| D Appendix D.3: `𝓑_{>k}(h)`, the output of the network when its hidden state `h_k` is set to `h`; `F_θ(x) = 𝓑_{>0}(xE)` | `suffix`, `suffix_last`, `suffix_castSucc`, `suffix_hidden`, `eval_eq_suffix_zero` | `Depth/Suffix.lean` | in work |
+| D Appendix D.3: `𝓑_{>k}(h)`, the output of the network when its hidden state `h_k` is set to `h`; `F_θ(x) = 𝓑_{>0}(xE)` | `suffix`, `suffix_last`, `suffix_castSucc`, `suffix_hidden`, `eval_eq_suffix_zero` | `Depth/Suffix.lean` | proved |
 | D Appendix D.3, case (n): the identity (16), `𝐃𝓑_{>k}(h)(hZ) + 𝐃_θ𝓑_{>k}(h)η = 0` for all `h`; Claim `(D_k)` for blocks without symmetries inside; "regular" (R1), (R3) | `SuffixFlat`, `Claim`, `Regular` | `Depth/Suffix.lean` | defined |
-| D Lemma D.2, case (n): for regular `θ` and analytic blocks the derivative of `𝓑_{>k}` is injective on an open dense set | `exists_open_dense_injective_fderiv_suffix` | `Depth/Suffix.lean` | in work |
-| D Lemma D.3, case (n): a direction at a write | `suffixFlat_of_flat_at_write` | `Depth/Suffix.lean` | in work |
-| D Proposition D.4, case (n): `(D_0)` at a regular `θ` gives `fd = P − (L+1)d²` | `flat_le_range_cobDir_of_claim`, `funDim_of_claim` | `Depth/Suffix.lean` | in work |
-| D Lemma D.5, case (n): `(D_L)` holds | `claim_last` | `Depth/Suffix.lean` | in work |
+| D Lemma D.2, case (n): for regular `θ` and analytic blocks the derivative of `𝓑_{>k}` is injective on an open dense set | `exists_open_dense_injective_fderiv_suffix` | `Depth/Suffix.lean` | proved |
+| D Lemma D.3, case (n): a direction at a write | `suffixFlat_of_flat_at_write` | `Depth/Suffix.lean` | proved |
+| D Proposition D.4, case (n): `(D_0)` at a regular `θ` gives `fd = P − (L+1)d²` | `flat_le_range_cobDir_of_claim`, `funDim_of_claim` | `Depth/Suffix.lean` | proved |
+| D Lemma D.5, case (n): `(D_L)` holds | `claim_last` | `Depth/Suffix.lean` | proved |
 | `tanh` is real-analytic; an MLP block with a real-analytic activation is real-analytic | `analyticOnNhd_tanh`, `analyticOnNhd_matrix_entry`, `analyticOnNhd_f_mlp` | `Network/Analytic.lean` | proved |
 | D proof of Lemma D.1, its middle step: rates `λ_j > 0` linearly independent over `ℚ`, `G_0, …, G_K` real-analytic near `0`; if `∑_i t^i G_i(e^{−λ_1 t}, …, e^{−λ_q t}) = 0` for all large `t`, every `G_i` vanishes near `0` | `eventually_eq_zero_of_sum_pow_mul_exp_ray` | `Depth/RaySeparation.lean` | in work |
 | D Lemma D.1 (separation on a ray): `u_1, …, u_q` linearly independent over `ℚ`, `𝒯_0, …, 𝒯_K` real-analytic on `ℝ^q`; if `∑_i t^i 𝒯_i(tanh(t u_1), …, tanh(t u_q)) = 0` for all `t > 0`, every `𝒯_i` vanishes. Also with the `u` arranged in a matrix (tokens × hidden units) | `tanh_ray_separation`, `tanh_ray_separation_matrix` | `Depth/RaySeparation.lean` | in work |
@@ -113,6 +113,7 @@ in work are on the branch `lean-wip`.
 | D Lemma D.7 (the step for `tanh` on rays), case (n): `θ` regular, block `k+1` with (T1) and (T2); then `(D_{k+1})` implies `(D_k)` | `claim_castSucc_tanh` | `Depth/StepTanh.lean` | in work |
 | D proof of Theorem 5.2 (i), case (n): the conditions (R1), (T1), (T2), `W_read W_write` invertible; they make `θ` regular; they hold at generic parameters (`d_in, d_out ≥ d ≥ 1`, at least `d` hidden units per block) | `TanhDepthGeneric`, `regular_of_tanhDepthGeneric`, `ae_tanhDepthGeneric` | `Depth/Tanh.lean` | in work |
 | **D Theorem 5.2 (i), without normalization:** `L` `tanh` blocks, `d_in, d_out ≥ d ≥ 2`, at least `d` hidden units per block: `fd = P − (L+1)d²`, under the conditions of the proof and at generic parameters | `claim_of_tanhDepthGeneric`, `funDim_tanh_skipless`, `ae_funDim_tanh_skipless` | `Depth/Tanh.lean` | in work |
+| D Appendix D.3, case (n): `𝓑_{>k}` is real-analytic in the hidden state and differentiable in the hidden state and the weights together; the chain rules `𝐃𝓑_{>k−1}(h) = 𝐃𝓑_{>k}(g_k(h)) ∘ 𝐃g_k(h)` and `𝐃_θF(x)η = 𝐃𝓑_{>0}(xE)(xη_E) + 𝐃_θ𝓑_{>0}(xE)η` | `analyticOnNhd_block`, `analyticOnNhd_suffix`, `differentiable_suffix_prod`, `differentiable_params_suffix`, `differentiable_suffix`, `suffix_castSucc_eq_comp`, `fderiv_suffix_castSucc`, `fderiv_suffix_last`, `fderiv_params_suffix_last`, `suffix_last_eq_mul`, `fderiv_eval_eq_fderiv_suffix` | `Depth/Suffix.lean` | proved |
 | helpers shared by the one-block theorems: `X ↦ cobDir θ X` as a linear map, the weights as linear maps of `θ`, analyticity of the entries of `E W_read` and `W_write D`, the derivative along a line `θ + τη` | `cobDirLin`, `finrank_cobDomain`, `Params.linE`, `Params.linRead`, `Params.linWrite`, `Params.linD`, `analyticOnNhd_E_mul_read`, `analyticOnNhd_write_mul_D`, `ae_ne_zero_of_analytic`, `rank_eq_card_of_isUnit_det`, `exists_minor_ne_zero`, `hasDerivAt_eval_line`, `differentiable_f_mlp`, `differentiable_f_gated` | `OneBlock/Common.lean` | proved |
 
 Notes for the authors on these statements:
@@ -138,7 +139,7 @@ Notes for the authors on these statements:
   statements keep hidden states with the rows `T` (any nonempty finite set of tokens), as the rest
   of the library: a row `ξ` of the paper is a matrix `Ξ` with one row per token, and Lemma D.1 is
   applied to the numbers `ξ_t c_j` over all tokens `t` and hidden units `j`. Lemmas D.3, D.5, D.7
-  and Proposition D.4 assume at least one token (they fail for none).
+  and Proposition D.4 are stated for at least one token; D.3, D.5 and D.7 fail for none.
 - Theorem 5.2 (i) without normalization: the proof uses `d ≥ 1` only; the paper's `d ≥ 2` is kept in
   the final statement.
 - Theorem 4.3 is stated under the conditions that its proof uses (`E` and every write have rank
