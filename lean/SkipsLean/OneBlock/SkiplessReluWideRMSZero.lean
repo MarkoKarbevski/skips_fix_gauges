@@ -70,7 +70,8 @@ theorem ae_funDim_relu_oneBlock_skipless_rmsNorm_zero_of_le
         + (Fintype.card d ^ 2 + (Fintype.card d * (Fintype.card d - 1) / 2 + 1)
           + Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu (rmsNorm 0) hid) dIn dOut) := by
-  filter_upwards [ae_rank_E_D_srw μ hdIn hdOut hcard, ae_unitsGeneralPosition μ hd hcard] with θ hθ hG
+  filter_upwards [ae_rank_E_D_srw μ hdIn hdOut hcard,
+    ae_unitsGeneralPosition μ hd hcard] with θ hθ hG
   obtain ⟨hR, hW, hc⟩ := rank_of_unitsGeneralPosition hd hcard hG
   exact funDim_mlp_oneBlock_rescale_skipless_rmsNorm_zero_of_unitsParallelAt
     (fun _ hz => hasDerivAt_relu hz) relu_homogeneous θ hd hθ.1 hθ.2 hR hW hc
@@ -92,7 +93,8 @@ theorem ae_exists_jacobianRank_relu_oneBlock_skipless_rmsNorm_zero_of_le
             + Fintype.card (hid 0))
         = Module.finrank ℝ
             (Params (Arch.mlp (T := T) (d := d) relu (rmsNorm 0) hid) dIn dOut) := by
-  filter_upwards [ae_rank_E_D_srw μ hdIn hdOut hcard, ae_unitsGeneralPosition μ hd hcard] with θ hθ hG
+  filter_upwards [ae_rank_E_D_srw μ hdIn hdOut hcard,
+    ae_unitsGeneralPosition μ hd hcard] with θ hθ hG
   obtain ⟨hR, hW, hc⟩ := rank_of_unitsGeneralPosition hd hcard hG
   exact exists_jacobianRank_mlp_oneBlock_rescale_skipless_rmsNorm_zero_of_unitsParallelAt
     (fun _ hz => hasDerivAt_relu hz) relu_homogeneous θ hd hθ.1 hθ.2 hR hW hc
