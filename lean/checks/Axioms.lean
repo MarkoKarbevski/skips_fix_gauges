@@ -808,3 +808,5 @@ import SkipsLean
 #print axioms Skips.measure_zeroSet_of_analyticOnNhd_of_isPreconnected
 #print axioms Skips.ae_finrank_range_fderiv_ge_of_isPreconnected
 #print axioms Skips.ae_jacobianRank_ge_of_isPreconnected
+#print axioms Skips.isPreconnected_diff_of_forall_exists_nhds
+#print axioms Skips.isPreconnected_diff_zeroSet_of_surjective
