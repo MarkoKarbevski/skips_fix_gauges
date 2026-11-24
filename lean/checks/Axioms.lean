@@ -1002,3 +1002,4 @@ import SkipsLean
 #print axioms Skips.isOpen_setOf_isFull
 #print axioms Skips.ae_isFull_imp_eval_ne_skipless_relu
 #print axioms Skips.ae_eventually_isFull_smallWrites
+#print axioms Skips.f_attention_mul
