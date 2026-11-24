@@ -51,7 +51,8 @@ reader (written after the sixth audit began): `Symmetry/OnlyOrthogonal.lean`,
 `Residual/DifferentClassesCriterion.lean`, `Residual/DifferentClasses.lean`,
 `Residual/DifferentClassesRMS.lean`, `Dimension/ParameterCount.lean`,
 `Residual/PointwiseLimitUnion.lean`, `Residual/SkiplessAll.lean`,
-`Residual/FewerHiddenUnits.lean` and `Dimension/UpperBoundRMSNormZero.lean`.
+`Residual/FewerHiddenUnits.lean`, `Dimension/UpperBoundRMSNormZero.lean` and
+`Depth/SuffixZero.lean`.
 
 ## Definitions
 
@@ -135,6 +136,7 @@ the paper's object is checked by reading it.
 | D Theorem 4.3, without normalization, changes of basis only, under the conditions of the proof (`E` and every write of rank `d`): `fd ≤ P − (L+1)d²` | `cobDir_mem_flat_skipless`, `funDim_add_le_skipless` | `Dimension/UpperBound.lean` | proved |
 | D Theorem 4.3, under pre-RMSNorm (`ε > 0`), changes of basis only, under the conditions of the proof (`E` and every write of rank `d`): `fd ≤ P − (L+1)d(d−1)/2` | `differentiable_rmsNorm`, `cobDir_mem_flat_skipless_rmsNorm`, `finrank_antisymmetric`, `funDim_add_le_skipless_rmsNorm` | `Dimension/UpperBoundRMSNorm.lean` | proved |
 | **D Theorem 4.3, the sentence for `ε = 0`:** "For `ε = 0` the same bound holds, with `𝒢 = CO(d_model)`" (the matrices `cQ`, dimension `d(d−1)/2 + 1`): `fd ≤ P − (L+1)(d(d−1)/2 + 1) − s` for a skipless network under pre-RMSNorm with `ε = 0`, where `E` and every write have rank `d ≥ 1` (gated blocks: and no value column of a read vanishes), and at generic parameters for `d_in ≥ d` and blocks of at least `d` hidden units. The directions are `cobDir θ Y` with antisymmetric `Y_ℓ` and `scaleDir θ β` (`E ↦ β_0 E`, `W_write^ℓ ↦ β_ℓ W_write^ℓ`); in Lean for arbitrary maps `f_ℓ` and at every such parameter (the Lean `rmsNorm 0` maps a zero row to `0`, and the derivative in the parameters is taken to be `0` where the output is not differentiable) | `scaleDir`, `scaleDir_mem_flat_skipless_rmsNorm_zero`, `cobDir_add_scaleDir_injective`, `funDim_add_le_skipless_rmsNorm_zero`, `ae_funDim_add_le_skipless_rmsNorm_zero`, `funDim_add_le_skipless_gated_rmsNorm_zero`, `ae_funDim_add_le_skipless_gated_rmsNorm_zero` | `Dimension/UpperBoundRMSNormZero.lean` | in work |
+| **D Appendix D.3 in the case (0), first part:** RMSNorm with `ε = 0` at a matrix without a zero row (real-analytic; its derivative `𝐃N(h) u = u/ρ − ⟨h,u⟩ h/(dρ³)`, `ρ = ‖h‖/√d`; `𝐃N(h) h = 0`, the source of (15)); the identity (16) "for all rows `h ≠ 0`" and Claim `(D_k)` in the form (18) (`Z = Y_k + β_k I`, reads `−Y_{ℓ−1} W_read^ℓ`, writes `W_write^ℓ (Y_ℓ + β_ℓ I)`, `−Y_L D`) as definitions; **Lemma D.5 (the readout), the case (0):** if `D` has rank `d ≥ 2`, `(D_L)` holds. In Lean a hidden state has the rows `T`, and "`h ≠ 0`" is "no row of `h` vanishes" | `analyticAt_rmsNorm_zero`, `fderiv_rmsNorm_zero_apply`, `fderiv_rmsNorm_zero_self`, `SuffixFlatZero`, `ClaimZero`, `claimZero_last` | `Depth/SuffixZero.lean` | in work |
 | a real-analytic function that is not identically zero vanishes on a set of measure zero (not in Mathlib at this version) | `volume_zeroSet_of_analytic_pi`, `measure_zeroSet_of_analytic` | `Generic/AnalyticZeroSet.lean` | proved |
 | D proof of Proposition 3.3, its last sentence: at generic parameters every `d` columns of a read or of `D`, and every `d` rows of `E` or of a write, form an invertible matrix | `ae_isUnit_det_submatrix` | `Generic/Params.lean` | proved |
 | at generic parameters `E` and the writes have rank `d` (`d_in ≥ d`, at least `d` rows in each write) | `ae_rank_E_write` | `Generic/Params.lean` | proved |
