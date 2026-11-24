@@ -73,13 +73,16 @@ omit [Fintype T] in
 /-- Without an embedding, `h_0 = x`. -/
 theorem hidden_toParams_zero (β : BlockParams A) (x : Matrix T d ℝ) :
     hidden A S β.toParams x 0 = x := by
-  sorry
+  -- `h_0 = x E` with `E = I`
+  rw [hidden_zero]
+  exact Matrix.mul_one x
 
 omit [Fintype T] in
 /-- Without a readout, `y = χ(h_L)`. -/
 theorem evalBlocks_eq (β : BlockParams A) (x : Matrix T d ℝ) :
     evalBlocks A S β x = A.χ (hidden A S β.toParams x (Fin.last L)) := by
-  sorry
+  -- `y = χ(h_L) D` with `D = I`
+  exact Matrix.mul_one _
 
 omit [Fintype T] [DecidableEq d] in
 /-- **The number of parameters of the blocks alone:** `P = ∑_ℓ d r_ℓ + ∑_ℓ w_ℓ d`. -/
@@ -87,21 +90,36 @@ theorem finrank_blockParams (A : Arch T d L) :
     Module.finrank ℝ (BlockParams A)
       = ∑ ℓ, Fintype.card d * Fintype.card (A.r ℓ)
         + ∑ ℓ, Fintype.card (A.w ℓ) * Fintype.card d := by
-  sorry
+  -- the embedding and the readout are empty: `d_in = d_out = 0`
+  rw [finrank_params]
+  simp only [Fintype.card_eq_zero, zero_mul, mul_zero, zero_add, add_zero]
 
 /-- The rank of the Jacobian on any batch is at most the number of parameters of the blocks. -/
 theorem jacobianRankBlocks_le_finrank {n : ℕ} (X : Fin n → Matrix T d ℝ) (β : BlockParams A) :
     jacobianRankBlocks A S X β ≤ Module.finrank ℝ (BlockParams A) := by
-  sorry
+  -- the range of a linear map has at most the dimension of its domain
+  exact LinearMap.finrank_range_le _
+
+/-- The ranks in the definition of `funDimBlocks` are at most the number of parameters. -/
+private theorem funDimBlocks_set_bddAbove_bla (β : BlockParams A) :
+    BddAbove {r : ℕ | ∃ (n : ℕ) (X : Fin n → Matrix T d ℝ), r = jacobianRankBlocks A S X β} := by
+  refine ⟨Module.finrank ℝ (BlockParams A), ?_⟩
+  rintro _ ⟨n, X, rfl⟩
+  exact jacobianRankBlocks_le_finrank X β
 
 /-- The rank of the Jacobian on any batch is at most the functional dimension. -/
 theorem jacobianRankBlocks_le_funDimBlocks {n : ℕ} (X : Fin n → Matrix T d ℝ)
     (β : BlockParams A) : jacobianRankBlocks A S X β ≤ funDimBlocks A S β := by
-  sorry
+  -- a member of a set of naturals bounded above is at most its supremum
+  exact le_csSup (funDimBlocks_set_bddAbove_bla β) ⟨n, X, rfl⟩
 
 /-- Some finite batch attains the functional dimension. -/
 theorem exists_jacobianRankBlocks_eq_funDimBlocks (β : BlockParams A) :
     ∃ (n : ℕ) (X : Fin n → Matrix T d ℝ), jacobianRankBlocks A S X β = funDimBlocks A S β := by
-  sorry
+  -- a nonempty set of naturals that is bounded above contains its supremum
+  obtain ⟨n, X, h⟩ := Nat.sSup_mem (s := {r : ℕ | ∃ (n : ℕ) (X : Fin n → Matrix T d ℝ),
+      r = jacobianRankBlocks A S X β}) ⟨_, 0, fun i => i.elim0, rfl⟩
+    (funDimBlocks_set_bddAbove_bla β)
+  exact ⟨n, X, h.symm⟩
 
 end Skips
