@@ -725,6 +725,187 @@ private theorem injective_rowScale_of_rk_zd {G : Matrix T d ℝ → Matrix T d �
   rw [ha t, ha0, zero_smul]
   rfl
 
+omit [DecidableEq d] in
+/-- Helper (the step of Lemma D.2, for a general `G`): let `G` be analytic at the matrices
+without a zero row, with `G ∘ N_0 = G` and no zero row in its values, and let `n` (no zero row) be
+such that `𝐃G(n) v` has rows multiples of those of `G(n)` only for `v` with rows multiples of
+those of `n`. For a dense set `U'` closed under positive row scalings, there is `h₁` without a zero
+row with `G(h₁) ∈ U'` and the same property at `h₁`. (`𝐃Ψ(n)` is invertible, so `Ψ` maps a
+neighbourhood `V` of `n` on which `𝐃Ψ` is injective onto a neighbourhood of `Ψ(n)`; it meets `U'`
+at some `Ψ(h₁)`, and `G(h₁)` is `Ψ(h₁)` with its rows multiplied by positive numbers.) -/
+private theorem exists_good_point_zd (hd : 2 ≤ Fintype.card d)
+    {G : Matrix T d ℝ → Matrix T d ℝ} (hGN : ∀ h, G (rmsNorm 0 h) = G h)
+    (hGa : ∀ h : Matrix T d ℝ, (∀ t, h t ≠ 0) → AnalyticAt ℝ G h)
+    (hG0 : ∀ h : Matrix T d ℝ, (∀ t, h t ≠ 0) → ∀ t, G h t ≠ 0)
+    {n : Matrix T d ℝ} (hn : ∀ t, n t ≠ 0)
+    (hrk : ∀ v : Matrix T d ℝ, (∀ t, ∃ b : ℝ, fderiv ℝ G n v t = b • G n t) →
+      ∀ t, ∃ a : ℝ, v t = a • n t)
+    {U' : Set (Matrix T d ℝ)} (hU'd : Dense U')
+    (hU's : ∀ h ∈ U', ∀ c : T → ℝ, (∀ t, 0 < c t) → (Matrix.of fun t => c t • h t) ∈ U') :
+    ∃ h₁ : Matrix T d ℝ, (∀ t, h₁ t ≠ 0) ∧ G h₁ ∈ U' ∧
+      ∀ v : Matrix T d ℝ, (∀ t, ∃ b : ℝ, fderiv ℝ G h₁ v t = b • G h₁ t) →
+        ∀ t, ∃ a : ℝ, v t = a • h₁ t := by
+  -- `Ψ` is analytic at the matrices without a zero row
+  have hΨa : ∀ h : Matrix T d ℝ, (∀ t, h t ≠ 0) → AnalyticAt ℝ (rowScale_zd G) h :=
+    fun h hh => analyticAt_rowScale_zd (hGa h hh)
+  have hGd : ∀ h : Matrix T d ℝ, (∀ t, h t ≠ 0) → DifferentiableAt ℝ G (rmsNorm 0 h) :=
+    fun h hh => (hGa _ (rmsNorm_zero_ne_zero_zd h hh)).differentiableAt
+  -- `𝐃Ψ(n)` is injective
+  have hinjn : Function.Injective (fderiv ℝ (rowScale_zd G) n) :=
+    injective_rowScale_of_rk_zd hGN hn (hGd n hn) (hGa n hn).differentiableAt
+      (hΨa n hn).differentiableAt (hG0 n hn) hrk
+  -- an open set `V ∋ n` of matrices without a zero row on which `𝐃Ψ` is injective
+  obtain ⟨V, hVo, hnV, hVD, hVinj, -⟩ := exists_open_injective_of_analytic_zd
+    isOpen_nzRows_zd (isPreconnected_nzRows_zd hd)
+    (J := fun h => (fderiv ℝ (rowScale_zd G) h : Matrix T d ℝ →ₗ[ℝ] Matrix T d ℝ))
+    (analyticOnNhd_fderiv_apply_zd (fun h hh => hΨa h hh)) hn hinjn
+  -- inverse function theorem at `n`: `Ψ(V)` is a neighbourhood of `Ψ(n)`
+  let e := (LinearEquiv.ofInjectiveEndo
+    (fderiv ℝ (rowScale_zd G) n : Matrix T d ℝ →ₗ[ℝ] Matrix T d ℝ) hinjn).toContinuousLinearEquiv
+  have hs : HasStrictFDerivAt (rowScale_zd G) (e : Matrix T d ℝ →L[ℝ] Matrix T d ℝ) n := by
+    have he : (e : Matrix T d ℝ →L[ℝ] Matrix T d ℝ) = fderiv ℝ (rowScale_zd G) n :=
+      ContinuousLinearMap.ext fun v => rfl
+    rw [he]
+    exact (hΨa n hn).hasStrictFDerivAt
+  have hnhds : rowScale_zd G '' V ∈ nhds (rowScale_zd G n) := by
+    have hm := Filter.image_mem_map (m := rowScale_zd G) (hVo.mem_nhds hnV)
+    rw [hs.map_nhds_eq_of_equiv] at hm
+    exact hm
+  -- it meets the dense set `U'`: `Ψ(h₁) ∈ U'` for some `h₁ ∈ V`
+  obtain ⟨_, hyU', h₁, hh₁V, rfl⟩ := hU'd.inter_nhds_nonempty hnhds
+  have hh₁ : ∀ t, h₁ t ≠ 0 := hVD hh₁V
+  refine ⟨h₁, hh₁, ?_, rk_of_injective_rowScale_zd hGN hh₁ (hGd h₁ hh₁)
+    (hGa h₁ hh₁).differentiableAt (hΨa h₁ hh₁).differentiableAt (hVinj h₁ hh₁V)⟩
+  -- `G(h₁) = (‖h₁_t‖⁻² Ψ(h₁)_t)_t ∈ U'`
+  have hc : ∀ t, 0 < (h₁ t ⬝ᵥ h₁ t)⁻¹ := fun t => inv_pos.2 (dotProduct_self_pos_zd (hh₁ t))
+  have e1 : (Matrix.of fun t => (h₁ t ⬝ᵥ h₁ t)⁻¹ • rowScale_zd G h₁ t) = G h₁ := by
+    ext t i
+    show (h₁ t ⬝ᵥ h₁ t)⁻¹ * ((h₁ t ⬝ᵥ h₁ t) * G h₁ t i) = G h₁ t i
+    rw [← mul_assoc, inv_mul_cancel₀ (dotProduct_self_pos_zd (hh₁ t)).ne', one_mul]
+  rw [← e1]
+  exact hU's _ hyU' _ hc
+
+/-- Helper (the step `k = ℓ + 1 → ℓ` of Lemma D.2): given `U' = U_{ℓ+1}`, some `h₁` without a
+zero row has `𝐃𝓑_{>ℓ}(h₁) v = 0` only for `v` with rows multiples of those of `h₁`. Here
+`G(h) = g_ℓ(N_0(h))`, `𝓑_{>ℓ} = 𝓑_{>ℓ+1} ∘ G`, and at the point `n` of (R3) (rows on the
+sphere) `N_0(n) = n` and `𝐃N_0(n) v = v⊥`, the part of `v` orthogonal to the rows of `n`. -/
+private theorem exists_kerProp_castSucc_zd (hχ : A.χ = rmsNorm 0)
+    (hf : ∀ ℓ, AnalyticOnNhd ℝ (A.f ℓ) Set.univ) (hθ : RegularZero A θ)
+    (hd : 2 ≤ Fintype.card d) (ℓ : Fin L) {U' : Set (Matrix T d ℝ)} (hU'd : Dense U')
+    (hU'0 : ∀ h ∈ U', ∀ t, h t ≠ 0)
+    (hU's : ∀ h ∈ U', ∀ c : T → ℝ, (∀ t, 0 < c t) → (Matrix.of fun t => c t • h t) ∈ U')
+    (hU'k : ∀ h ∈ U', ∀ v : Matrix T d ℝ,
+      fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ ℓ.succ h') h v = 0 →
+        ∀ t, ∃ a : ℝ, v t = a • h t) :
+    ∃ h₁ : Matrix T d ℝ, (∀ t, h₁ t ≠ 0) ∧ ∀ v : Matrix T d ℝ,
+      fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ ℓ.castSucc h') h₁ v = 0 →
+        ∀ t, ∃ a : ℝ, v t = a • h₁ t := by
+  -- the block `g_ℓ` is analytic; `G = g_ℓ ∘ N_0` is analytic at the matrices without a zero row,
+  -- `G ∘ N_0 = G`, and `G(h)` has no zero row (R2)
+  have hg : AnalyticOnNhd ℝ (fun n : Matrix T d ℝ => A.f ℓ (n * θ.read ℓ) * θ.write ℓ)
+      Set.univ := analyticOnNhd_block A θ hf ℓ
+  have hGN : ∀ h : Matrix T d ℝ,
+      A.f ℓ (rmsNorm 0 (rmsNorm 0 h) * θ.read ℓ) * θ.write ℓ
+        = A.f ℓ (rmsNorm 0 h * θ.read ℓ) * θ.write ℓ := fun h => by
+    rw [rmsNorm_zero_idem_zd]
+  have hGa : ∀ h : Matrix T d ℝ, (∀ t, h t ≠ 0) → AnalyticAt ℝ
+      (fun h' : Matrix T d ℝ => A.f ℓ (rmsNorm 0 h' * θ.read ℓ) * θ.write ℓ) h := fun h hh => by
+    have hc := (hg (rmsNorm 0 h) (Set.mem_univ _)).comp (analyticAt_rmsNorm_zero h hh)
+    exact hc
+  have hG0 : ∀ h : Matrix T d ℝ, (∀ t, h t ≠ 0) →
+      ∀ t, (A.f ℓ (rmsNorm 0 h * θ.read ℓ) * θ.write ℓ) t ≠ 0 := fun h hh =>
+    hθ.block_ne_zero ℓ _ fun t => rmsNorm_zero_dotProduct_self h t (hh t)
+  -- the point `n` of (R3): rows on the sphere `‖n_t‖² = d`
+  obtain ⟨n, hnS, hn3⟩ := hθ.deriv_block ℓ
+  have hcard : (0 : ℝ) < Fintype.card d := Nat.cast_pos.2 (by omega)
+  have hn : ∀ t, n t ≠ 0 := fun t h0 => by
+    have h1 := hnS t
+    rw [h0, zero_dotProduct] at h1
+    linarith
+  -- `N_0(n) = n`
+  have hNn : rmsNorm 0 n = n := by
+    ext t i
+    show (Real.sqrt ((n t ⬝ᵥ n t) / (Fintype.card d : ℝ) + 0))⁻¹ * n t i = n t i
+    rw [hnS t, add_zero, div_self hcard.ne', Real.sqrt_one, inv_one, one_mul]
+  -- `𝐃N_0(n) v = v⊥ = (v_t - (⟨n_t, v_t⟩/d) n_t)_t`
+  have hDNn : ∀ v : Matrix T d ℝ, fderiv ℝ (rmsNorm 0 : Matrix T d ℝ → Matrix T d ℝ) n v
+      = Matrix.of fun t => v t - ((n t ⬝ᵥ v t) / (Fintype.card d : ℝ)) • n t := by
+    intro v
+    rw [fderiv_rmsNorm_zero_apply _ _ hn]
+    ext t i
+    simp only [Matrix.of_apply, hnS t, div_self hcard.ne', Real.sqrt_one, inv_one, one_smul,
+      one_pow, mul_one]
+  -- `𝐃G(n) = 𝐃g_ℓ(n) ∘ 𝐃N_0(n)`
+  have hDGn : ∀ v : Matrix T d ℝ,
+      fderiv ℝ (fun h' : Matrix T d ℝ => A.f ℓ (rmsNorm 0 h' * θ.read ℓ) * θ.write ℓ) n v
+        = fderiv ℝ (fun n' : Matrix T d ℝ => A.f ℓ (n' * θ.read ℓ) * θ.write ℓ) n
+            (fderiv ℝ (rmsNorm 0 : Matrix T d ℝ → Matrix T d ℝ) n v) := by
+    intro v
+    have hc := fderiv_comp (g := fun n' : Matrix T d ℝ => A.f ℓ (n' * θ.read ℓ) * θ.write ℓ)
+      (f := rmsNorm 0) n (hg _ (Set.mem_univ _)).differentiableAt
+      (analyticAt_rmsNorm_zero n hn).differentiableAt
+    have h1 : fderiv ℝ ((fun n' : Matrix T d ℝ => A.f ℓ (n' * θ.read ℓ) * θ.write ℓ) ∘
+        rmsNorm 0) n v
+        = fderiv ℝ (fun n' : Matrix T d ℝ => A.f ℓ (n' * θ.read ℓ) * θ.write ℓ) (rmsNorm 0 n)
+            (fderiv ℝ (rmsNorm 0 : Matrix T d ℝ → Matrix T d ℝ) n v) :=
+      DFunLike.congr_fun hc v
+    rw [hNn] at h1
+    exact h1
+  -- at `n`: `𝐃G(n) v ∈ ℝ G(n)` row by row gives `𝐃g_ℓ(n) v⊥ ∈ ℝ g_ℓ(n)`, so `v⊥ = 0` by (R3)
+  have hrk : ∀ v : Matrix T d ℝ, (∀ t, ∃ b : ℝ,
+      fderiv ℝ (fun h' : Matrix T d ℝ => A.f ℓ (rmsNorm 0 h' * θ.read ℓ) * θ.write ℓ) n v t
+        = b • (A.f ℓ (rmsNorm 0 n * θ.read ℓ) * θ.write ℓ) t) →
+      ∀ t, ∃ a : ℝ, v t = a • n t := by
+    intro v hv
+    obtain ⟨vp, hvp⟩ : ∃ vp : Matrix T d ℝ,
+        vp = Matrix.of fun t => v t - ((n t ⬝ᵥ v t) / (Fintype.card d : ℝ)) • n t := ⟨_, rfl⟩
+    have hvpn : ∀ t, vp t ⬝ᵥ n t = 0 := by
+      intro t
+      rw [hvp]
+      show (v t - ((n t ⬝ᵥ v t) / (Fintype.card d : ℝ)) • n t) ⬝ᵥ n t = 0
+      rw [sub_dotProduct, smul_dotProduct, smul_eq_mul, hnS t, div_mul_cancel₀ _ hcard.ne',
+        dotProduct_comm, sub_self]
+    have hvpg : ∀ t, ∃ a : ℝ,
+        fderiv ℝ (fun n' : Matrix T d ℝ => A.f ℓ (n' * θ.read ℓ) * θ.write ℓ) n vp t
+          = a • (A.f ℓ (n * θ.read ℓ) * θ.write ℓ) t := by
+      intro t
+      obtain ⟨b, hb⟩ := hv t
+      refine ⟨b, ?_⟩
+      rw [hDGn v, hDNn v, ← hvp, hNn] at hb
+      exact hb
+    have h0 := hn3 vp hvpn hvpg
+    intro t
+    refine ⟨(n t ⬝ᵥ v t) / (Fintype.card d : ℝ), ?_⟩
+    have h0t : v t - ((n t ⬝ᵥ v t) / (Fintype.card d : ℝ)) • n t = 0 := by
+      have h1 := congrFun h0 t
+      rw [hvp] at h1
+      exact h1
+    exact sub_eq_zero.1 h0t
+  -- a point `h₁` with `G(h₁) ∈ U'` and the property of `𝐃G(h₁)`
+  obtain ⟨h₁, hh₁, hGU', hrk₁⟩ := exists_good_point_zd hd
+    (G := fun h' : Matrix T d ℝ => A.f ℓ (rmsNorm 0 h' * θ.read ℓ) * θ.write ℓ) hGN hGa hG0 hn
+    hrk hU'd hU's
+  refine ⟨h₁, hh₁, fun v hv => hrk₁ v ?_⟩
+  -- the chain rule: `𝐃𝓑_{>ℓ}(h₁) v = 𝐃𝓑_{>ℓ+1}(G(h₁)) (𝐃G(h₁) v)`, then the property of `U'`
+  have hcomp : (fun h' : Matrix T d ℝ => suffix A 0 θ ℓ.castSucc h')
+      = (fun h' : Matrix T d ℝ => suffix A 0 θ ℓ.succ h') ∘
+          (fun h' : Matrix T d ℝ => A.f ℓ (rmsNorm 0 h' * θ.read ℓ) * θ.write ℓ) := by
+    funext h'
+    rw [suffix_castSucc, hχ, Function.comp_apply, Pi.zero_apply, Matrix.mul_zero, zero_add]
+  have hc := fderiv_comp (g := fun h' : Matrix T d ℝ => suffix A 0 θ ℓ.succ h')
+    (f := fun h' : Matrix T d ℝ => A.f ℓ (rmsNorm 0 h' * θ.read ℓ) * θ.write ℓ) h₁
+    (analyticAt_suffix_zd A θ hχ hf hθ ℓ.succ (hU'0 _ hGU')).differentiableAt
+    (hGa h₁ hh₁).differentiableAt
+  have h1 : fderiv ℝ ((fun h' : Matrix T d ℝ => suffix A 0 θ ℓ.succ h') ∘
+      (fun h' : Matrix T d ℝ => A.f ℓ (rmsNorm 0 h' * θ.read ℓ) * θ.write ℓ)) h₁ v
+      = fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ ℓ.succ h')
+          (A.f ℓ (rmsNorm 0 h₁ * θ.read ℓ) * θ.write ℓ)
+          (fderiv ℝ (fun h' : Matrix T d ℝ => A.f ℓ (rmsNorm 0 h' * θ.read ℓ) * θ.write ℓ)
+            h₁ v) :=
+    DFunLike.congr_fun hc v
+  rw [← hcomp, hv] at h1
+  exact hU'k _ hGU' _ h1.symm
+
 /-- **Lemma D.2 of the dimension paper (the derivative of `𝓑_{>k}`), the case (0):** let the
 blocks be real-analytic, `d ≥ 2`, and `θ` regular. For every `k` there is an open dense set `U_k`
 of matrices without a zero row, closed under multiplication of the rows by positive numbers, such
@@ -738,6 +919,24 @@ theorem exists_open_dense_fderiv_suffix_zero (hχ : A.χ = rmsNorm 0)
       ∀ h ∈ U, ∀ v : Matrix T d ℝ,
         fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ k h') h v = 0 →
           ∀ t, ∃ a : ℝ, v t = a • h t := by
-  sorry
+  have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+  -- for every `k`, one point `h₀` without a zero row with the property; by induction from `L`
+  have hpt : ∀ k : Fin (L + 1), ∃ h₀ : Matrix T d ℝ, (∀ t, h₀ t ≠ 0) ∧ ∀ v : Matrix T d ℝ,
+      fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ k h') h₀ v = 0 →
+        ∀ t, ∃ a : ℝ, v t = a • h₀ t := by
+    intro k
+    induction k using Fin.reverseInduction with
+    | last =>
+      -- `k = L`: every matrix without a zero row
+      obtain ⟨h₀, hh₀⟩ := (dense_nzRows_zd (T := T) (d := d)).nonempty
+      exact ⟨h₀, hh₀, kerProp_last_zd A θ hχ hθ hh₀⟩
+    | cast ℓ ih =>
+      -- the step: `U_{ℓ+1}` from the point at `ℓ + 1`, then a point at `ℓ`
+      obtain ⟨h₀, hh₀, hk₀⟩ := ih
+      obtain ⟨U', -, hU'd, hU'0, hU's, hU'k⟩ := kerSet_zd A θ hχ hf hθ hd ℓ.succ hh₀ hk₀
+      exact exists_kerProp_castSucc_zd A θ hχ hf hθ hd ℓ hU'd hU'0 hU's hU'k
+  -- the set of all such points has the five properties
+  obtain ⟨h₀, hh₀, hk₀⟩ := hpt k
+  exact kerSet_zd A θ hχ hf hθ hd k hh₀ hk₀
 
 end Skips
