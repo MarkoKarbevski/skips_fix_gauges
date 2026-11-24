@@ -192,3 +192,5 @@ import SkipsLean.Network.Attention
 import SkipsLean.Absorb.AttentionBlock
 import SkipsLean.Absorb.AttentionZero
 import SkipsLean.Absorb.AttentionNetworks
+import SkipsLean.Symmetry.AttentionHeads
+import SkipsLean.Dimension.UpperBoundAttention
