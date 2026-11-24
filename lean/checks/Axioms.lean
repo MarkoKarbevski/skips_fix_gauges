@@ -477,3 +477,9 @@ import SkipsLean
 #print axioms Skips.funDim_of_claimGated
 #print axioms Skips.flat_le_cobDir_add_rescaleDir_of_claimGated_rmsNorm
 #print axioms Skips.funDim_of_claimGated_rmsNorm
+-- Absorb/RMSNormGeneric.lean (the theorems that do not use Absorb/RMSNormRays.lean)
+#print axioms Skips.ae_turnGeneric
+#print axioms Skips.locallyLipschitz_f_mlp
+#print axioms Skips.locallyLipschitz_f_gated
+#print axioms Skips.ae_someBlockNonzero_mlp
+#print axioms Skips.ae_someBlockNonzero_gated
