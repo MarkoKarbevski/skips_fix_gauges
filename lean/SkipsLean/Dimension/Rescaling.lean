@@ -151,14 +151,15 @@ private theorem hasDerivAt_rescaleCurve (α : ∀ ℓ, hid ℓ → ℝ) :
       (dOut := dOut)).symm.toLinearMap).hasFDerivAt.comp_hasDerivAt 0 hprod
 
 /-- The directions of the rescalings are flat, for every differentiable map `χ` before the reads
-(the identity, or RMSNorm with `ε > 0`). -/
-theorem rescaleDir_mem_flat_of_differentiable (hσ : Differentiable ℝ σ)
+(the identity, or RMSNorm with `ε > 0`) and for every stream matrices `S` (without skips, with
+identity skips, with learned skips): the rescalings act inside the blocks. -/
+theorem rescaleDir_mem_flat_stream (S : Fin L → Matrix d d ℝ) (hσ : Differentiable ℝ σ)
     (hχ : Differentiable ℝ χ) (α : ∀ ℓ, hid ℓ → ℝ) :
-    rescaleDir θ α ∈ flat (Arch.gated σ χ hid) 0 θ := by
+    rescaleDir θ α ∈ flat (Arch.gated σ χ hid) S θ := by
   -- `θ' ↦ F_θ'(x)` is differentiable
   have hdiff : ∀ x, DifferentiableAt ℝ
       (fun θ' : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut =>
-        eval (Arch.gated σ χ hid) 0 θ' x) θ :=
+        eval (Arch.gated σ χ hid) S θ' x) θ :=
     fun x => (differentiable_eval (differentiable_gated hσ) hχ x).differentiableAt
   -- the curve passes through `θ` with velocity `rescaleDir θ α`, and at every `τ` it is the
   -- rescaling `λ = e^{τ α ℓ i}`, which preserves the function
@@ -166,10 +167,17 @@ theorem rescaleDir_mem_flat_of_differentiable (hσ : Differentiable ℝ σ)
     (hasDerivAt_rescaleCurve θ α) (rescaleCurve_zero θ α)
     (Filter.Eventually.of_forall fun τ x => ?_)
   refine eval_rescale θ (fun ℓ i => Real.exp (τ * α ℓ i)) (fun _ _ => Real.exp_ne_zero _)
-    (rescaleCurve θ α τ) rfl rfl (fun _ _ _ => rfl) (fun ℓ k i => ?_) (fun _ _ _ => rfl) 0 x
+    (rescaleCurve θ α τ) rfl rfl (fun _ _ _ => rfl) (fun ℓ k i => ?_) (fun _ _ _ => rfl) S x
   -- the value columns: `e^{-τ α} = (e^{τ α})⁻¹`
   show Real.exp (τ * -(α ℓ i)) * θ.read ℓ k (Sum.inr i) = _
   rw [mul_neg, Real.exp_neg]
+
+/-- The directions of the rescalings are flat in a network without skips, for every differentiable
+map `χ` before the reads. -/
+theorem rescaleDir_mem_flat_of_differentiable (hσ : Differentiable ℝ σ)
+    (hχ : Differentiable ℝ χ) (α : ∀ ℓ, hid ℓ → ℝ) :
+    rescaleDir θ α ∈ flat (Arch.gated σ χ hid) 0 θ :=
+  rescaleDir_mem_flat_stream θ 0 hσ hχ α
 
 /-- The directions of the rescalings are flat, without normalization. -/
 theorem rescaleDir_mem_flat (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
