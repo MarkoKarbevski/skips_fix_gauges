@@ -494,6 +494,145 @@ theorem exists_ne_residual_skipless_attention_causal_rmsNorm {n : ℕ} {ε ε' :
     (hasFDerivAt_rmsNorm_zero_atn hε) θ hED (rmsNorm_zero_mat_atn ε')
     (hasFDerivAt_rmsNorm_zero_atn hε') θ' hn
 
+/-- Helper: the entries of a product of two matrices with analytic entries are analytic (as
+`analyticOnNhd_mul_entry` in `Absorb/Networks.lean`). -/
+private theorem analyticOnNhd_mul_entry_atn {P m n p : Type*} [NormedAddCommGroup P]
+    [NormedSpace ℝ P] [Fintype n] {M : P → Matrix m n ℝ} {N : P → Matrix n p ℝ}
+    (hM : ∀ i j, AnalyticOnNhd ℝ (fun y => M y i j) Set.univ)
+    (hN : ∀ i j, AnalyticOnNhd ℝ (fun y => N y i j) Set.univ) (i : m) (j : p) :
+    AnalyticOnNhd ℝ (fun y => (M y * N y) i j) Set.univ := by
+  simp only [Matrix.mul_apply]
+  exact Finset.analyticOnNhd_fun_sum _ fun k _ => (hM i k).mul (hN k j)
+
+/-- Helper: the entries of `A_1 ⋯ A_k` are analytic if those of every `A_ℓ` are. -/
+private theorem analyticOnNhd_prod_atn {P m : Type*} [NormedAddCommGroup P] [NormedSpace ℝ P]
+    [Fintype m] [DecidableEq m] {k : ℕ} {A : P → Fin k → Matrix m m ℝ}
+    (hA : ∀ ℓ i j, AnalyticOnNhd ℝ (fun y => A y ℓ i j) Set.univ) (i j : m) :
+    AnalyticOnNhd ℝ (fun y => (List.ofFn (A y)).prod i j) Set.univ := by
+  induction k generalizing i j with
+  | zero =>
+    simp only [List.ofFn_zero, List.prod_nil]
+    exact analyticOnNhd_const
+  | succ k ih =>
+    simp only [List.ofFn_succ, List.prod_cons]
+    exact analyticOnNhd_mul_entry_atn (hA 0) (ih (A := fun y ℓ => A y ℓ.succ) fun ℓ => hA ℓ.succ)
+      i j
+
+/-- Helper: a linear functional on a finite-dimensional space is analytic. -/
+private theorem analyticOnNhd_of_linear_atn {P : Type*} [NormedAddCommGroup P]
+    [NormedSpace ℝ P] [FiniteDimensional ℝ P] (l : P →ₗ[ℝ] ℝ) : AnalyticOnNhd ℝ l Set.univ := by
+  rw [← LinearMap.coe_toContinuousLinearMap' l]
+  exact (LinearMap.toContinuousLinearMap l).analyticOnNhd _
+
+/-- Helper: every entry of `ξ E ∏_ℓ (I + ξ λ V_ℓ) D` is an analytic (polynomial) function of the
+weights: the entries of `E`, `D`, the reads and the writes are linear in them. -/
+private theorem analyticOnNhd_resMat_atn {sees : T → T → Prop} [DecidableRel sees]
+    {χ : Matrix T d ℝ → Matrix T d ℝ} (ξ lam : ℝ) (i : dIn) (o : dOut) :
+    AnalyticOnNhd ℝ (fun θ : Params (Arch.attention sees χ H dh) dIn dOut =>
+      resMat_atn θ ξ lam i o) Set.univ := by
+  have hE : ∀ i j, AnalyticOnNhd ℝ
+      (fun θ : Params (Arch.attention sees χ H dh) dIn dOut => θ.E i j) Set.univ := fun i j =>
+    analyticOnNhd_of_linear_atn
+      { toFun := fun θ : Params (Arch.attention sees χ H dh) dIn dOut => θ.E i j
+        map_add' := fun _ _ => rfl
+        map_smul' := fun _ _ => rfl }
+  have hD : ∀ i j, AnalyticOnNhd ℝ
+      (fun θ : Params (Arch.attention sees χ H dh) dIn dOut => θ.D i j) Set.univ := fun i j =>
+    analyticOnNhd_of_linear_atn
+      { toFun := fun θ : Params (Arch.attention sees χ H dh) dIn dOut => θ.D i j
+        map_add' := fun _ _ => rfl
+        map_smul' := fun _ _ => rfl }
+  -- `V_ℓ = ∑_h W_{V,h} W_{O,h}` is quadratic in the weights
+  have hV : ∀ ℓ i j, AnalyticOnNhd ℝ
+      (fun θ : Params (Arch.attention sees χ H dh) dIn dOut => valueOutput θ ℓ i j)
+      Set.univ := by
+    intro ℓ i j
+    simp only [valueOutput, Matrix.sum_apply, Matrix.mul_apply, Matrix.submatrix_apply, id]
+    refine Finset.analyticOnNhd_fun_sum _ fun h _ => Finset.analyticOnNhd_fun_sum _ fun k _ => ?_
+    exact (analyticOnNhd_of_linear_atn
+      { toFun := fun θ : Params (Arch.attention sees χ H dh) dIn dOut =>
+          θ.read ℓ i (h, Sum.inr (Sum.inr k))
+        map_add' := fun _ _ => rfl
+        map_smul' := fun _ _ => rfl }).mul (analyticOnNhd_of_linear_atn
+      { toFun := fun θ : Params (Arch.attention sees χ H dh) dIn dOut => θ.write ℓ (h, k) j
+        map_add' := fun _ _ => rfl
+        map_smul' := fun _ _ => rfl })
+  have hF : ∀ ℓ i j, AnalyticOnNhd ℝ (fun θ : Params (Arch.attention sees χ H dh) dIn dOut =>
+      (1 + (ξ * lam) • valueOutput θ ℓ) i j) Set.univ := by
+    intro ℓ i j
+    simp only [Matrix.add_apply, Matrix.smul_apply, smul_eq_mul]
+    exact analyticOnNhd_const.add (analyticOnNhd_const.mul (hV ℓ i j))
+  simp only [resMat_atn, Matrix.smul_apply, smul_eq_mul]
+  exact analyticOnNhd_const.mul (analyticOnNhd_mul_entry_atn (analyticOnNhd_mul_entry_atn hE
+    (analyticOnNhd_prod_atn (A := fun θ ℓ => 1 + (ξ * lam) • valueOutput θ ℓ) hF)) hD i o)
+
+/-- Helper, **Theorem 4.2 (ii)**, for any `χ` as in `noMask_atn`: let `F_θ(λ) =
+ξ E ∏_ℓ (I + ξ λ V_ℓ) D` and `Q_{L'}(θ) = F_θ(1/2) − 2^{−(L'+1)} F_θ(1)`. A skipless network of
+`L' + 1` blocks equal to `θ` gives `Q_{L'}(θ) = 0` (the core at the eigenvalues `1` and `1/2`).
+An entry of `Q_{L'}` is a polynomial in the weights, equal to `ξ (1 − 2^{−(L'+1)}) ≠ 0` at
+weights with all writes `0` and `(E D)_{io} = 1`, so it vanishes only on a null set; and so does
+the union over `L'`. -/
+private theorem ae_causal_atn [Nonempty d] [Nonempty dIn] [Nonempty dOut] {n : ℕ} (hn : 2 ≤ n)
+    {χ : Matrix (Fin n) d ℝ → Matrix (Fin n) d ℝ} {ξ : ℝ} (hξ : ξ ≠ 0) (hχ0 : χ 0 = 0)
+    (hχ : HasFDerivAt χ (ξ • ContinuousLinearMap.id ℝ (Matrix (Fin n) d ℝ)) 0)
+    (μ : Measure (Params (Arch.attention (T := Fin n) (d := d) (fun t s => s ≤ t) χ H dh)
+      dIn dOut)) [μ.IsAddHaarMeasure] :
+    ∀ᵐ θ ∂μ, ∀ (L' : ℕ) (d' : Type) [Fintype d'] [DecidableEq d'] (H' dh' : Fin (L' + 1) → Type)
+      [∀ ℓ, Fintype (H' ℓ)] [∀ ℓ, Fintype (dh' ℓ)] (χ' : Matrix (Fin n) d' ℝ → Matrix (Fin n) d' ℝ)
+      (ξ' : ℝ), χ' 0 = 0 → HasFDerivAt χ' (ξ' • ContinuousLinearMap.id ℝ (Matrix (Fin n) d' ℝ)) 0 →
+      ∀ θ' : Params (Arch.attention (T := Fin n) (d := d') (fun t s => s ≤ t) χ' H' dh') dIn dOut,
+      ∃ X : Matrix (Fin n) dIn ℝ,
+        eval (Arch.attention (fun t s => s ≤ t) χ H dh) 1 θ X
+          ≠ eval (Arch.attention (fun t s => s ≤ t) χ' H' dh') 0 θ' X := by
+  obtain ⟨i₀⟩ := ‹Nonempty dIn›
+  obtain ⟨o₀⟩ := ‹Nonempty dOut›
+  obtain ⟨k₀⟩ := ‹Nonempty d›
+  -- the entry `(i₀, o₀)` of `Q_{L'}(θ)`
+  let g : ℕ → Params (Arch.attention (T := Fin n) (d := d) (fun t s => s ≤ t) χ H dh) dIn dOut
+      → ℝ := fun L' θ =>
+    resMat_atn θ ξ (1 / 2) i₀ o₀ - (1 / 2) ^ (L' + 1) * resMat_atn θ ξ 1 i₀ o₀
+  have hg : ∀ L', AnalyticOnNhd ℝ (g L') Set.univ := fun L' =>
+    (analyticOnNhd_resMat_atn ξ (1 / 2) i₀ o₀).sub
+      (analyticOnNhd_const.mul (analyticOnNhd_resMat_atn ξ 1 i₀ o₀))
+  -- at weights with all writes `0` and `(E D)_{i₀ o₀} = 1`: `g = ξ (1 − 2^{−(L'+1)}) ≠ 0`
+  have hne : ∀ L', ∃ θ₀, g L' θ₀ ≠ 0 := by
+    intro L'
+    classical
+    let θ₀ : Params (Arch.attention (T := Fin n) (d := d) (fun t s => s ≤ t) χ H dh) dIn dOut :=
+      ⟨Matrix.single i₀ k₀ 1, fun _ => 0, fun _ => 0, Matrix.single k₀ o₀ 1⟩
+    have hV : ∀ ℓ, valueOutput θ₀ ℓ = 0 := fun ℓ => by
+      simp [valueOutput, θ₀]
+    have hR : ∀ lam, resMat_atn θ₀ ξ lam = ξ • (θ₀.E * θ₀.D) := fun lam => by
+      simp [resMat_atn, hV]
+    have hED : (θ₀.E * θ₀.D) i₀ o₀ = 1 := by
+      simp [θ₀]
+    have hlt : ((1 : ℝ) / 2) ^ (L' + 1) < 1 :=
+      pow_lt_one₀ (by norm_num) (by norm_num) (Nat.succ_ne_zero L')
+    refine ⟨θ₀, fun h => ?_⟩
+    simp only [g, hR, Matrix.smul_apply, hED, smul_eq_mul, mul_one] at h
+    exact mul_ne_zero hξ (sub_ne_zero.2 hlt.ne') (by linear_combination h)
+  -- so almost everywhere `g_{L'} ≠ 0` for all `L'` at once
+  have hgen : ∀ᵐ θ ∂μ, ∀ L', g L' θ ≠ 0 := by
+    rw [ae_all_iff]
+    intro L'
+    rw [ae_iff]
+    simpa only [ne_eq, not_not] using measure_zeroSet_of_analytic μ (hg L') (hne L')
+  filter_upwards [hgen] with θ hθ
+  intro L' d' _ _ H' dh' _ _ χ' ξ' hχ0' hχ' θ'
+  by_contra hne'
+  have heq : ∀ X, eval (Arch.attention (fun t s : Fin n => s ≤ t) χ H dh) 1 θ X
+      = eval (Arch.attention (fun t s : Fin n => s ≤ t) χ' H' dh') 0 θ' X :=
+    fun X => by_contra fun hX => hne' ⟨X, hX⟩
+  -- the eigenvalues `1` (token `0`) and `1/2` (token `1`): `F(1) = Λ'`, `F(1/2) = 2^{−(L'+1)} Λ'`
+  obtain ⟨a₁, ha₁0, ha₁⟩ := exists_eigen_causal_atn (⟨0, by omega⟩ : Fin n) (lam := 1)
+    (by norm_num)
+  obtain ⟨a₂, ha₂0, ha₂⟩ := exists_eigen_causal_atn (⟨1, by omega⟩ : Fin n) (lam := 1 / 2)
+    (by norm_num)
+  have h1 := core_atn hχ0 hχ hχ0' hχ' θ θ' heq ha₁ ha₁0
+  have h2 := core_atn hχ0 hχ hχ0' hχ' θ θ' heq ha₂ ha₂0
+  apply hθ L'
+  simp only [g, h1, h2, one_pow, Matrix.smul_apply, smul_eq_mul, one_mul, sub_self]
+
 /-- **Theorem 4.2 (ii), causal mask, without normalization:** on `n ≥ 2` tokens with the causal
 mask, for almost every choice of weights of the residual network of `L` attention blocks, no
 skipless network of one or more attention blocks equals it, whatever its depth, heads, head
@@ -509,7 +648,11 @@ theorem ae_forall_ne_residual_skipless_attention_causal [Nonempty d] [Nonempty d
       ∃ X : Matrix (Fin n) dIn ℝ,
         eval (Arch.attention (fun t s => s ≤ t) id H dh) 1 θ X
           ≠ eval (Arch.attention (fun t s => s ≤ t) id H' dh') 0 θ' X := by
-  sorry
+  -- without normalization `χ = id`: `χ(0) = 0` and the derivative is `1 • I`
+  filter_upwards [ae_causal_atn hn (χ := id) one_ne_zero rfl
+    (by rw [one_smul]; exact hasFDerivAt_id 0) μ] with θ hθ
+  intro L' d' _ _ H' dh' _ _ θ'
+  exact hθ L' d' H' dh' id 1 rfl (by rw [one_smul]; exact hasFDerivAt_id 0) θ'
 
 /-- **Theorem 4.2 (ii), causal mask, under pre-RMSNorm with `ε > 0`.** -/
 theorem ae_forall_ne_residual_skipless_attention_causal_rmsNorm [Nonempty d] [Nonempty dIn]
@@ -524,6 +667,11 @@ theorem ae_forall_ne_residual_skipless_attention_causal_rmsNorm [Nonempty d] [No
       ∃ X : Matrix (Fin n) dIn ℝ,
         eval (Arch.attention (fun t s => s ≤ t) (rmsNorm ε) H dh) 1 θ X
           ≠ eval (Arch.attention (fun t s => s ≤ t) (rmsNorm ε') H' dh') 0 θ' X := by
-  sorry
+  -- RMSNorm: `N(0) = 0` and the derivative `I / √ε` at `0`, with `1 / √ε ≠ 0`
+  filter_upwards [ae_causal_atn hn (χ := rmsNorm ε) (inv_ne_zero (Real.sqrt_pos.2 hε).ne')
+    (rmsNorm_zero_mat_atn ε) (hasFDerivAt_rmsNorm_zero_atn hε) μ] with θ hθ
+  intro L' d' _ _ H' dh' _ _ ε' hε' θ'
+  exact hθ L' d' H' dh' (rmsNorm ε') _ (rmsNorm_zero_mat_atn ε') (hasFDerivAt_rmsNorm_zero_atn hε')
+    θ'
 
 end Skips
