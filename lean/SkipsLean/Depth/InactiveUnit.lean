@@ -140,20 +140,26 @@ theorem unitDir_mem_flat (hσ0 : ∀ z : ℝ, z ≤ 0 → σ z = 0)
   -- the line moves only the read column and the write row of the unit, so the hidden states, and
   -- then the outputs, are those of `θ`
   have hh := hidden_eq_of_unitInactive_iu hσ0 θ (θ + τ • η) m j hθ.self_of_nhds hτ
-    (by simp [η, unitDir])
+    (by simp only [η, unitDir, Params.add_E, Params.smul_E, smul_zero, add_zero])
     (fun ℓ hℓ => by
-      simp [η, unitDir, Function.update_of_ne hℓ])
+      simp only [η, unitDir, Params.add_read, Params.smul_read, Function.update_of_ne hℓ,
+        smul_zero, add_zero])
     (fun ℓ hℓ => by
-      simp [η, unitDir, Function.update_of_ne hℓ])
+      simp only [η, unitDir, Params.add_write, Params.smul_write, Function.update_of_ne hℓ,
+        smul_zero, add_zero])
     (fun a i hi => by
-      simp [η, unitDir, hi])
+      simp only [η, unitDir, Params.add_read, Params.smul_read, Function.update_self, smul_of,
+        Matrix.add_apply, of_apply, Pi.smul_apply, hi, ↓reduceIte, smul_eq_mul, mul_zero,
+        add_zero])
     (fun i a hi => by
-      simp [η, unitDir, hi])
+      simp only [η, unitDir, Params.add_write, Params.smul_write, Function.update_self, smul_of,
+        Matrix.add_apply, of_apply, Pi.smul_apply, hi, ↓reduceIte, smul_eq_mul, mul_zero,
+        add_zero])
     x (Fin.last L)
   show (Arch.mlp σ id hid).χ (hidden _ 0 (θ + τ • η) x (Fin.last L)) * (θ + τ • η).D =
     (Arch.mlp σ id hid).χ (hidden _ 0 θ x (Fin.last L)) * θ.D
   rw [hh]
-  simp [η, unitDir]
+  simp only [η, unitDir, Params.add_D, Params.smul_D, smul_zero, add_zero]
 
 omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper (as the private `cancel_left_of_rank` of `RescalingMlp.lean`): a matrix `M` of rank
@@ -287,6 +293,118 @@ private noncomputable def unitDirLin_iu (m : Fin L) (j : hid m) :
       · simp only [Params.smul_write, unitDir_write_ne_iu m j _ _ hℓ, smul_zero]
     · simp [unitDir]
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (Lemma B.1 with the inactive unit, in the form for directions): if
+`cobDir θ X + rescaleDirMlp k θ α + unitDir m j δr δa = 0` with `α m j = 0`, then `X`, `α`, `δr`
+and `δa` vanish, when `E` and the writes have rank `d`, the write of block `m` without row `j` has
+rank `d`, and no read column vanishes. -/
+private theorem eq_zero_of_dir_eq_zero_iu (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) (m : Fin L) (j : hid m)
+    (hE : θ.E.rank = Fintype.card d) (hw : ∀ ℓ, (θ.write ℓ).rank = Fintype.card d)
+    (hwj : ((θ.write m).submatrix (fun i : {i : hid m // i ≠ j} => (i : hid m)) id).rank
+      = Fintype.card d)
+    (hc : ∀ ℓ i, (fun a => θ.read ℓ a i) ≠ 0)
+    (X : Fin (L + 1) → Matrix d d ℝ) (α : ∀ ℓ, hid ℓ → ℝ) (hαj : α m j = 0) (δr δa : d → ℝ)
+    (h : cobDir θ X + (rescaleDirMlp k θ α + unitDir m j δr δa) = 0) :
+    X = 0 ∧ α = 0 ∧ δr = 0 ∧ δa = 0 := by
+  -- the direction of the unit, with its components
+  obtain ⟨U, hU⟩ : ∃ U : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut,
+      U = unitDir m j δr δa := ⟨_, rfl⟩
+  rw [← hU] at h
+  have hUr : ∀ ℓ, ℓ ≠ m → U.read ℓ = 0 := fun ℓ hℓ => by rw [hU, unitDir_read_ne_iu m j δr δa hℓ]
+  have hUw : ∀ ℓ, ℓ ≠ m → U.write ℓ = 0 := fun ℓ hℓ => by
+    rw [hU, unitDir_write_ne_iu m j δr δa hℓ]
+  have hUrm : ∀ a i, U.read m a i = if i = j then δr a else 0 := fun a i => by
+    rw [hU, unitDir_read_self_iu]
+  have hUwm : ∀ i a, U.write m i a = if i = j then δa a else 0 := fun i a => by
+    rw [hU, unitDir_write_self_iu]
+  -- the components of the equation: `E`, the reads and the writes
+  have h0 : θ.E * X 0 = θ.E * (0 : Matrix d d ℝ) := by
+    have hE0 := congrArg Params.E h
+    change θ.E * X 0 + (0 + U.E) = 0 at hE0
+    rw [show U.E = 0 by rw [hU]; rfl, add_zero, add_zero] at hE0
+    rw [hE0, Matrix.mul_zero]
+  have hr : ∀ ℓ a i,
+      -(X ℓ.castSucc * θ.read ℓ) a i + (α ℓ i * θ.read ℓ a i + U.read ℓ a i) = 0 :=
+    fun ℓ a i => congrFun (congrFun (congrArg (fun η => η.read ℓ) h) a) i
+  have hwr : ∀ ℓ i a, (θ.write ℓ * X ℓ.succ) i a
+      + (-((k : ℝ) * α ℓ i) * θ.write ℓ i a + U.write ℓ i a) = 0 :=
+    fun ℓ i a => congrFun (congrFun (congrArg (fun η => η.write ℓ) h) i) a
+  -- the embedding: `E X_0 = 0`, and `E` has rank `d`
+  have hX0 : X 0 = 0 := cancel_left_of_rank_iu θ.E hE h0
+  -- block `ℓ`: if `X_{ℓ-1} = 0`, then `α_ℓ = 0` and `X_ℓ = 0`
+  have key : ∀ ℓ : Fin L, X ℓ.castSucc = 0 → α ℓ = 0 ∧ X ℓ.succ = 0 := by
+    intro ℓ hℓ
+    -- the read column `c_i` of hidden unit `i` moves by `α_i c_i`, and by `δr` for `(m, j)`, where
+    -- `α_i = 0`; an entry `a` with `c_i a ≠ 0` gives `α_i = 0`
+    have hα : α ℓ = 0 := by
+      funext i
+      obtain ⟨a, ha⟩ := Function.ne_iff.mp (hc ℓ i)
+      have hU0 : U.read ℓ a i = 0 ∨ α ℓ i = 0 := by
+        by_cases hℓm : ℓ = m
+        · subst hℓm
+          by_cases hi : i = j
+          · right
+            rw [hi]
+            exact hαj
+          · left
+            rw [hUrm, ite_eq_right hi]
+        · left
+          rw [hUr ℓ hℓm]
+          rfl
+      rcases hU0 with h' | h'
+      · have h'' := hr ℓ a i
+        rw [hℓ, h', Matrix.zero_mul, Matrix.zero_apply, neg_zero, zero_add, add_zero] at h''
+        exact (mul_eq_zero.mp h'').resolve_right ha
+      · exact h'
+    refine ⟨hα, ?_⟩
+    -- the write moves by `W X_ℓ`, and by `δa` on row `j` of block `m`
+    have hw0 : ∀ i a, (θ.write ℓ * X ℓ.succ) i a + U.write ℓ i a = 0 := by
+      intro i a
+      have h'' := hwr ℓ i a
+      rwa [hα, Pi.zero_apply, mul_zero, neg_zero, zero_mul, zero_add] at h''
+    by_cases hℓm : ℓ = m
+    · -- block `m`: the rows `i ≠ j` of `W X_m` vanish, and they are `W' X_m` for the write `W'`
+      -- without row `j`, which has rank `d`
+      subst hℓm
+      have hsub : (θ.write ℓ).submatrix (fun i : {i : hid ℓ // i ≠ j} => (i : hid ℓ)) id
+          * X ℓ.succ =
+          (θ.write ℓ).submatrix (fun i : {i : hid ℓ // i ≠ j} => (i : hid ℓ)) id
+            * (0 : Matrix d d ℝ) := by
+        rw [Matrix.mul_zero]
+        ext ⟨i, hi⟩ a
+        have h'' := hw0 i a
+        rw [hUwm, ite_eq_right hi, add_zero] at h''
+        exact h''
+      exact cancel_left_of_rank_iu _ hwj hsub
+    · -- another block: `W X_ℓ = 0`, and `W` has rank `d`
+      have hsub : θ.write ℓ * X ℓ.succ = θ.write ℓ * (0 : Matrix d d ℝ) := by
+        rw [Matrix.mul_zero]
+        ext i a
+        have h'' := hw0 i a
+        rwa [hUw ℓ hℓm, Matrix.zero_apply, add_zero] at h''
+      exact cancel_left_of_rank_iu _ (hw ℓ) hsub
+  -- by induction along the network, `X = 0`; then `α = 0`
+  have hX : ∀ ℓ : Fin (L + 1), X ℓ = 0 := by
+    intro ℓ
+    induction ℓ using Fin.induction with
+    | zero => exact hX0
+    | succ ℓ ih => exact (key ℓ ih).2
+  have hα : α = 0 := funext fun ℓ => (key ℓ (hX ℓ.castSucc)).1
+  refine ⟨funext hX, hα, ?_, ?_⟩
+  · -- read column `j` of block `m` moves by `δr` alone
+    funext a
+    have h'' := hr m a j
+    rw [hX, hα, hUrm, ite_eq_left rfl] at h''
+    simpa only [Pi.zero_apply, Matrix.zero_mul, Matrix.zero_apply, neg_zero, zero_mul, zero_add]
+      using h''
+  · -- write row `j` of block `m` moves by `δa` alone
+    funext a
+    have h'' := hwr m j a
+    rw [hX, hα, hUwm, ite_eq_left rfl] at h''
+    simpa only [Pi.zero_apply, Matrix.mul_zero, Matrix.zero_apply, mul_zero, neg_zero, zero_mul,
+      zero_add] using h''
+
 /-- **Proposition E.1, the bound, at one parameter (ReLU and ReLU² blocks):** let `σ` be positively
 homogeneous of degree `k` and vanish on `z ≤ 0`, and let hidden unit `j` of block `m` be inactive
 at every input at all parameters near `θ`. If `E` and the writes have rank `d`, the write of block
@@ -304,6 +422,52 @@ theorem funDim_add_le_of_eventually_unitInactive {k : ℕ}
     funDim (Arch.mlp σ id hid) 0 θ
         + ((L + 1) * Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ) + (2 * Fintype.card d - 1))
       ≤ Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  -- the numbers `α` of the rescalings with `α m j = 0`: the kernel `K` of `α ↦ α m j`
+  let ev : (∀ ℓ, hid ℓ → ℝ) →ₗ[ℝ] ℝ :=
+    (LinearMap.proj (R := ℝ) (φ := fun _ : hid m => ℝ) j).comp
+      (LinearMap.proj (R := ℝ) (φ := fun ℓ => hid ℓ → ℝ) m)
+  let K := LinearMap.ker ev
+  -- the linear map `(X, α, δr, δa) ↦ cobDir θ X + rescaleDirMlp k θ α + unitDir m j δr δa`
+  let Φ := (cobDirLin θ).coprod
+    (((rescaleDirMlpLin_iu k θ).comp K.subtype).coprod (unitDirLin_iu m j))
+  -- its directions are flat, since the three summands are
+  have hV : LinearMap.range Φ ≤ flat (Arch.mlp σ id hid) 0 θ := by
+    rintro _ ⟨p, rfl⟩
+    rw [LinearMap.coprod_apply, LinearMap.coprod_apply]
+    exact Submodule.add_mem _ (cobDir_mem_flat_skipless' θ rfl p.1)
+      (Submodule.add_mem _ (rescaleDirMlp_mem_flat hσ θ 0 _)
+        (unitDir_mem_flat hσ0 θ m j hθ _ _))
+  -- it is injective (Lemma B.1 with the inactive unit)
+  have hinj : Function.Injective Φ := by
+    rw [← LinearMap.ker_eq_bot, LinearMap.ker_eq_bot']
+    rintro ⟨X, ⟨α, hα⟩, δr, δa⟩ hp
+    rw [LinearMap.coprod_apply, LinearMap.coprod_apply] at hp
+    obtain ⟨h1, h2, h3, h4⟩ :=
+      eq_zero_of_dir_eq_zero_iu k θ m j hE hw hwj hc X α (LinearMap.mem_ker.mp hα) δr δa hp
+    exact Prod.ext h1 (Prod.ext (Subtype.ext h2) (Prod.ext h3 h4))
+  -- `K` has dimension `s - 1`: `α ↦ α m j` is onto `ℝ`
+  have hK : Module.finrank ℝ K + 1 = ∑ ℓ, Fintype.card (hid ℓ) := by
+    have hsurj : Function.Surjective ev := fun c =>
+      ⟨Function.update 0 m (Function.update 0 j c), by
+        simp only [ev, LinearMap.coe_comp, LinearMap.coe_proj, Function.comp_apply,
+          Function.eval, Function.update_self]⟩
+    have h1 := LinearMap.finrank_range_add_finrank_ker ev
+    rw [LinearMap.range_eq_top.2 hsurj, finrank_top, Module.finrank_self,
+      Module.finrank_pi_fintype] at h1
+    simp only [Module.finrank_fintype_fun_eq_card] at h1
+    exact (add_comm _ _).trans h1
+  -- `d ≥ 1`, since a read column does not vanish
+  have hd : 1 ≤ Fintype.card d := by
+    obtain ⟨a, -⟩ := Function.ne_iff.mp (hc m j)
+    exact Fintype.card_pos_iff.2 ⟨a⟩
+  -- the domain has dimension `(L + 1) d² + (s - 1) + 2d`
+  have hdim : Module.finrank ℝ ((Fin (L + 1) → Matrix d d ℝ) × (K × ((d → ℝ) × (d → ℝ)))) =
+      (L + 1) * Fintype.card d ^ 2 + (Module.finrank ℝ K + (Fintype.card d + Fintype.card d)) := by
+    rw [Module.finrank_prod, Module.finrank_prod, Module.finrank_prod, finrank_cobDomain,
+      Module.finrank_fintype_fun_eq_card]
+  have h := funDim_add_finrank_le_of_le_flat' θ _ hV
+  rw [LinearMap.finrank_range_of_inj hinj, hdim] at h
+  generalize (L + 1) * Fintype.card d ^ 2 = c at h ⊢
+  omega
 
 end Skips
