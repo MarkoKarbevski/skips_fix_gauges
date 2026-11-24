@@ -135,6 +135,7 @@ private theorem rescale_one_eog : θ.rescale (fun _ _ => 1) = θ := by
     rw [one_mul]
 
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- At `(m, α) = 0` the map gives `θ`. -/
 theorem cobExpRescale_zero : cobExpRescale θ 0 = θ := by
   -- `e^0 = 1` on every hidden unit, and `exp 0 = 1` on every hidden state
@@ -271,6 +272,7 @@ private theorem hasStrictFDerivAt_D_eog :
   show -v.1 (Fin.last L) * θ.D + _ * (0 : Matrix d dOut ℝ) = -(v.1 (Fin.last L) * θ.D) + 0
   rw [Matrix.mul_zero, Matrix.neg_mul]
 
+omit [Fintype T] in
 /-- The map `(m, α) ↦ (θ.rescale (e^α)).cob (exp m) (exp m)` is strictly differentiable at `0`,
 with the derivative `(m, α) ↦ cobDir θ m + rescaleDir θ α`. -/
 theorem hasStrictFDerivAt_cobExpRescale :

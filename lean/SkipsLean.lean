@@ -166,3 +166,8 @@ import SkipsLean.Dimension.LocalIdentifiabilityGated
 import SkipsLean.Residual.LocalIdentifiabilityGated
 import SkipsLean.Dimension.ExpOrbit
 import SkipsLean.Dimension.ExpOrbitGated
+import SkipsLean.Depth.InactiveUnit
+import SkipsLean.Depth.InactiveGate
+import SkipsLean.Depth.InactiveUnitRelu
+import SkipsLean.Depth.InactiveGateOpen
+import SkipsLean.Depth.InactiveGateReGLU
