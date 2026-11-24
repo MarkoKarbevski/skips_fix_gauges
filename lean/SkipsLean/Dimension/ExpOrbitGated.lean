@@ -41,11 +41,160 @@ noncomputable def cobExpRescale (θ : Params (Arch.gated (T := T) (d := d) σ χ
     Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut :=
   cobExp (θ.rescale fun ℓ i => Real.exp (p.2 ℓ i)) p.1
 
+/-- Helper: matrix multiplication as a continuous bilinear map. -/
+private noncomputable def mulB_eog (m n p : Type*) [Fintype m] [Fintype n] [Fintype p] :
+    Matrix m n ℝ →L[ℝ] Matrix n p ℝ →L[ℝ] Matrix m p ℝ :=
+  LinearMap.toContinuousLinearMap
+    ((LinearMap.toContinuousLinearMap :
+      (Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ) ≃ₗ[ℝ] (Matrix n p ℝ →L[ℝ] Matrix m p ℝ)).toLinearMap ∘ₗ
+      LinearMap.mk₂ ℝ (fun a b => a * b) Matrix.add_mul (fun c a b => Matrix.smul_mul c a b)
+        Matrix.mul_add (fun c a b => Matrix.mul_smul a c b))
+
+/-- Helper: the product rule for matrix-valued maps, strict form, with the value of the
+derivative, `(f g)' v = f' v g + f g' v`. -/
+private theorem hasStrictFDerivAt_mul_eog {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    {m n p : Type*} [Fintype m] [Fintype n] [Fintype p] {f : E → Matrix m n ℝ}
+    {g : E → Matrix n p ℝ} {f' : E →L[ℝ] Matrix m n ℝ} {g' : E →L[ℝ] Matrix n p ℝ} {y : E}
+    (hf : HasStrictFDerivAt f f' y) (hg : HasStrictFDerivAt g g' y) :
+    ∃ h' : E →L[ℝ] Matrix m p ℝ, HasStrictFDerivAt (fun z => f z * g z) h' y ∧
+      ∀ v, h' v = f' v * g y + f y * g' v := by
+  -- the derivative of the bilinear map `(a, b) ↦ a b` along `(f, g)`
+  have h := (mulB_eog m n p).hasStrictFDerivAt_of_bilinear hf hg
+  refine ⟨_, h, fun v => ?_⟩
+  show f y * g' v + f' v * g y = _
+  exact add_comm _ _
+
+/-- Helper: `z ↦ e^{π z} c` for a linear form `π`, with derivative `v ↦ π v c` at `0`. -/
+private theorem hasStrictFDerivAt_exp_mul_eog {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] (π : E →L[ℝ] ℝ) (c : ℝ) :
+    ∃ D : E →L[ℝ] ℝ, HasStrictFDerivAt (fun z => Real.exp (π z) * c) D 0 ∧
+      ∀ v, D v = π v * c := by
+  have he := (Real.hasStrictDerivAt_exp (π 0)).comp_hasStrictFDerivAt (0 : E) π.hasStrictFDerivAt
+  have hc := he.mul_const c
+  refine ⟨_, hc, fun v => ?_⟩
+  show c * (Real.exp (π 0) * π v) = π v * c
+  rw [map_zero, Real.exp_zero]
+  ring
+
+/-- Helper: `z ↦ (e^{π z})⁻¹ c` for a linear form `π`, with derivative `v ↦ -π v c` at `0`. -/
+private theorem hasStrictFDerivAt_exp_inv_mul_eog {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] (π : E →L[ℝ] ℝ) (c : ℝ) :
+    ∃ D : E →L[ℝ] ℝ, HasStrictFDerivAt (fun z => (Real.exp (π z))⁻¹ * c) D 0 ∧
+      ∀ v, D v = -π v * c := by
+  have he := (Real.hasStrictDerivAt_exp (π 0)).comp_hasStrictFDerivAt (0 : E) π.hasStrictFDerivAt
+  have hi := (hasStrictDerivAt_inv (Real.exp_pos (π 0)).ne').comp_hasStrictFDerivAt (0 : E) he
+  have hc := hi.mul_const c
+  refine ⟨_, hc, fun v => ?_⟩
+  show c * (-(Real.exp (π 0) ^ 2)⁻¹ * (Real.exp (π 0) * π v)) = -π v * c
+  rw [map_zero, Real.exp_zero]
+  ring
+
+/-- Helper: `p ↦ exp (m_ℓ)`, with derivative `v ↦ v.1 ℓ` at `0`. -/
+private theorem hasStrictFDerivAt_exp_fst_eog {F : Type*} [NormedAddCommGroup F]
+    [NormedSpace ℝ F] (ℓ : Fin (L + 1)) :
+    ∃ D : (Fin (L + 1) → Matrix d d ℝ) × F →L[ℝ] Matrix d d ℝ,
+      HasStrictFDerivAt (fun p : (Fin (L + 1) → Matrix d d ℝ) × F => NormedSpace.exp (p.1 ℓ))
+        D 0 ∧ ∀ v, D v = v.1 ℓ := by
+  let π := (ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : Fin (L + 1) => Matrix d d ℝ) ℓ).comp
+    (ContinuousLinearMap.fst ℝ (Fin (L + 1) → Matrix d d ℝ) F)
+  have hg : HasStrictFDerivAt (fun Y : Matrix d d ℝ => NormedSpace.exp Y)
+      (ContinuousLinearMap.id ℝ (Matrix d d ℝ)) (π 0) := by
+    rw [map_zero]
+    exact hasStrictFDerivAt_matrix_exp_zero
+  have hc := hg.comp (0 : (Fin (L + 1) → Matrix d d ℝ) × F) π.hasStrictFDerivAt
+  exact ⟨_, hc, fun v => rfl⟩
+
+/-- Helper: `p ↦ exp (-m_ℓ)`, with derivative `v ↦ -v.1 ℓ` at `0`. -/
+private theorem hasStrictFDerivAt_exp_neg_fst_eog {F : Type*} [NormedAddCommGroup F]
+    [NormedSpace ℝ F] (ℓ : Fin (L + 1)) :
+    ∃ D : (Fin (L + 1) → Matrix d d ℝ) × F →L[ℝ] Matrix d d ℝ,
+      HasStrictFDerivAt (fun p : (Fin (L + 1) → Matrix d d ℝ) × F => NormedSpace.exp (-p.1 ℓ))
+        D 0 ∧ ∀ v, D v = -v.1 ℓ := by
+  let π := -(ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : Fin (L + 1) => Matrix d d ℝ) ℓ).comp
+    (ContinuousLinearMap.fst ℝ (Fin (L + 1) → Matrix d d ℝ) F)
+  have hg : HasStrictFDerivAt (fun Y : Matrix d d ℝ => NormedSpace.exp Y)
+      (ContinuousLinearMap.id ℝ (Matrix d d ℝ)) (π 0) := by
+    rw [map_zero]
+    exact hasStrictFDerivAt_matrix_exp_zero
+  have hc := hg.comp (0 : (Fin (L + 1) → Matrix d d ℝ) × F) π.hasStrictFDerivAt
+  exact ⟨_, hc, fun v => rfl⟩
+
 variable (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut)
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the rescaling by `1` is the identity. -/
+private theorem rescale_one_eog : θ.rescale (fun _ _ => 1) = θ := by
+  refine Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl
+  · ext k j
+    rcases j with i | i
+    · rfl
+    · show (1 : ℝ)⁻¹ * θ.read ℓ k (Sum.inr i) = θ.read ℓ k (Sum.inr i)
+      rw [inv_one, one_mul]
+  · ext i k
+    show (1 : ℝ) * θ.write ℓ i k = θ.write ℓ i k
+    rw [one_mul]
+
 
 /-- At `(m, α) = 0` the map gives `θ`. -/
 theorem cobExpRescale_zero : cobExpRescale θ 0 = θ := by
-  sorry
+  -- `e^0 = 1` on every hidden unit, and `exp 0 = 1` on every hidden state
+  simp only [cobExpRescale, Prod.snd_zero, Prod.fst_zero, Pi.zero_apply, Real.exp_zero,
+    rescale_one_eog]
+  exact cobExp_zero θ
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the read of block `ℓ` after the rescaling `e^α`, as a map of `p = (m, α)`, with
+derivative `v ↦ (rescaleDir θ v.2).read ℓ` at `0`, entry by entry. -/
+private theorem hasStrictFDerivAt_rescale_read_eog (ℓ : Fin L) :
+    ∃ D : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) →L[ℝ] Matrix d (hid ℓ ⊕ hid ℓ) ℝ,
+      HasStrictFDerivAt (fun p : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) =>
+        (θ.rescale fun ℓ i => Real.exp (p.2 ℓ i)).read ℓ) D 0 ∧
+      ∀ v, D v = (rescaleDir θ v.2).read ℓ := by
+  -- the gate columns are constant, the value column `i` is `(e^{α ℓ i})⁻¹ W_read k i`
+  have h : ∀ (k : d) (j : hid ℓ ⊕ hid ℓ),
+      ∃ D : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) →L[ℝ] ℝ,
+        HasStrictFDerivAt (fun p : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) =>
+          (θ.rescale fun ℓ i => Real.exp (p.2 ℓ i)).read ℓ k j) D 0 ∧
+        ∀ v, D v = (rescaleDir θ v.2).read ℓ k j := by
+    intro k j
+    rcases j with i | i
+    · exact ⟨0, hasStrictFDerivAt_const (θ.read ℓ k (Sum.inl i)) 0, fun v => rfl⟩
+    · obtain ⟨D, hD, hDv⟩ := hasStrictFDerivAt_exp_inv_mul_eog
+        ((ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : hid ℓ => ℝ) i).comp
+          ((ContinuousLinearMap.proj (R := ℝ) (φ := fun ℓ => hid ℓ → ℝ) ℓ).comp
+            (ContinuousLinearMap.snd ℝ (Fin (L + 1) → Matrix d d ℝ) (∀ ℓ, hid ℓ → ℝ))))
+        (θ.read ℓ k (Sum.inr i))
+      exact ⟨D, hD, hDv⟩
+  choose D hD hDv using h
+  exact ⟨ContinuousLinearMap.pi fun k => ContinuousLinearMap.pi fun j => D k j,
+    hasStrictFDerivAt_pi.2 fun k => hasStrictFDerivAt_pi.2 fun j => hD k j,
+    fun v => Matrix.ext fun k j => hDv k j v⟩
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the write of block `ℓ` after the rescaling `e^α`, as a map of `p = (m, α)`, with
+derivative `v ↦ (rescaleDir θ v.2).write ℓ` at `0`, entry by entry. -/
+private theorem hasStrictFDerivAt_rescale_write_eog (ℓ : Fin L) :
+    ∃ D : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) →L[ℝ] Matrix (hid ℓ) d ℝ,
+      HasStrictFDerivAt (fun p : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) =>
+        (θ.rescale fun ℓ i => Real.exp (p.2 ℓ i)).write ℓ) D 0 ∧
+      ∀ v, D v = (rescaleDir θ v.2).write ℓ := by
+  -- row `i` is `e^{α ℓ i} W_write i`
+  have h : ∀ (i : hid ℓ) (k : d),
+      ∃ D : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) →L[ℝ] ℝ,
+        HasStrictFDerivAt (fun p : (Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ) =>
+          (θ.rescale fun ℓ i => Real.exp (p.2 ℓ i)).write ℓ i k) D 0 ∧
+        ∀ v, D v = (rescaleDir θ v.2).write ℓ i k := by
+    intro i k
+    obtain ⟨D, hD, hDv⟩ := hasStrictFDerivAt_exp_mul_eog
+      ((ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : hid ℓ => ℝ) i).comp
+        ((ContinuousLinearMap.proj (R := ℝ) (φ := fun ℓ => hid ℓ → ℝ) ℓ).comp
+          (ContinuousLinearMap.snd ℝ (Fin (L + 1) → Matrix d d ℝ) (∀ ℓ, hid ℓ → ℝ))))
+      (θ.write ℓ i k)
+    exact ⟨D, hD, hDv⟩
+  choose D hD hDv using h
+  exact ⟨ContinuousLinearMap.pi fun i => ContinuousLinearMap.pi fun k => D i k,
+    hasStrictFDerivAt_pi.2 fun i => hasStrictFDerivAt_pi.2 fun k => hD i k,
+    fun v => Matrix.ext fun i k => hDv i k v⟩
 
 /-- The map `(m, α) ↦ (θ.rescale (e^α)).cob (exp m) (exp m)` is strictly differentiable at `0`,
 with the derivative `(m, α) ↦ cobDir θ m + rescaleDir θ α`. -/
