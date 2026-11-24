@@ -258,6 +258,7 @@ private theorem reluSq_nonpos_rzq (z : ℝ) (hz : z ≤ 0) : reluSq z = 0 := by
   rw [reluSq, max_eq_right hz]
   norm_num
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReLU block turns a dense set of the active rows at almost every parameter,** for
 `d ≥ 2`. -/
 theorem ae_turnsActiveRows_relu
@@ -272,6 +273,7 @@ theorem ae_turnsActiveRows_relu
   intro v hv hact
   exact mem_closure_of_wPoly_rzq relu_pos_rzq relu_nonpos_rzq _ _ hθ v hv hact
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReLU² block turns a dense set of the active rows at almost every parameter,** for
 `d ≥ 2`. -/
 theorem ae_turnsActiveRows_reluSq
@@ -286,6 +288,7 @@ theorem ae_turnsActiveRows_reluSq
   intro v hv hact
   exact mem_closure_of_wPoly_rzq reluSq_pos_rzq reluSq_nonpos_rzq _ _ hθ v hv hact
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReLU block with a hidden unit turns some row off the kinks at almost every parameter,**
 for `d ≥ 2`. -/
 theorem ae_exists_turned_row_relu [Nonempty (hid 0)]
@@ -303,6 +306,7 @@ theorem ae_exists_turned_row_relu [Nonempty (hid 0)]
   rw [relu_pos_rzq z hz, pow_one]
   exact hz.ne'
 
+omit [Fintype T] [Nonempty T] in
 /-- **A ReLU² block with a hidden unit turns some row off the kinks at almost every parameter,**
 for `d ≥ 2`. -/
 theorem ae_exists_turned_row_reluSq [Nonempty (hid 0)]

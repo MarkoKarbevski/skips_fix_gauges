@@ -1613,3 +1613,14 @@ import SkipsLean
 #print axioms Skips.exists_antisymm_scale_of_flatOn_residual_rmsNorm_zero_on
 #print axioms Skips.cob_eq_of_eval_cob_residual_rmsNorm_zero
 #print axioms Skips.eval_cob_residual_rmsNorm_zero_iff
+#print axioms Skips.flatOn_noKink_le_mlp_rescale_residual_rmsNorm_zero
+#print axioms Skips.funDim_mlp_oneBlock_rescale_residual_rmsNorm_zero
+#print axioms Skips.exists_jacobianRank_mlp_oneBlock_rescale_residual_rmsNorm_zero
+#print axioms Skips.ae_turnsActiveRows_relu
+#print axioms Skips.ae_turnsActiveRows_reluSq
+#print axioms Skips.ae_exists_turned_row_relu
+#print axioms Skips.ae_exists_turned_row_reluSq
+#print axioms Skips.ae_funDim_relu_oneBlock_residual_rmsNorm_zero
+#print axioms Skips.ae_exists_jacobianRank_relu_oneBlock_residual_rmsNorm_zero
+#print axioms Skips.ae_funDim_reluSq_oneBlock_residual_rmsNorm_zero
+#print axioms Skips.ae_exists_jacobianRank_reluSq_oneBlock_residual_rmsNorm_zero
