@@ -1047,3 +1047,6 @@ import SkipsLean
 #print axioms Skips.funDim_attention_oneBlock_residual
 #print axioms Skips.ae_funDim_attention_oneBlock_residual
 #print axioms Skips.ae_funDim_attention_oneBlock_residual_eq_add
+#print axioms Skips.exists_polynomial_short
+#print axioms Skips.exists_complex_factors
+#print axioms Skips.aeval_attnWeights_causal_eq_zero
