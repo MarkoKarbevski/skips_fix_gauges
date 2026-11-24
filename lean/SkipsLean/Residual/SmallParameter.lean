@@ -1,4 +1,6 @@
 import SkipsLean.Imports
+import Mathlib.Analysis.Calculus.FDeriv.Symmetric
+import Mathlib.Analysis.Calculus.Deriv.Slope
 
 /-!
 # The rank of a Jacobian along a small parameter
@@ -30,6 +32,63 @@ open Filter Topology
 
 variable {P Y : Type*} [NormedAddCommGroup P] [NormedSpace ℝ P] [FiniteDimensional ℝ P]
   [NormedAddCommGroup Y] [NormedSpace ℝ Y] [FiniteDimensional ℝ Y]
+
+omit [FiniteDimensional ℝ P] [FiniteDimensional ℝ Y] in
+/-- Steps 1 to 3: for a fixed direction `w`, the map `τ ↦ D_θ G(τ, θ) w` has derivative
+`D_θ (∂_τ G(0, ·))(θ) w` at `τ = 0`, by the symmetry of the second derivative of
+`F (τ, θ') = G τ θ'`. -/
+private theorem hasDerivAt_fderiv_small_parameter (G : ℝ → P → Y)
+    (hG : ContDiff ℝ 2 (fun p : ℝ × P => G p.1 p.2)) (θ w : P) :
+    HasDerivAt (fun τ => fderiv ℝ (G τ) θ w)
+      (fderiv ℝ (fun θ' => deriv (fun τ => G τ θ') 0) θ w) 0 := by
+  set F : ℝ × P → Y := fun p => G p.1 p.2 with hF
+  set A : ℝ × P → (ℝ × P →L[ℝ] Y) := fderiv ℝ F with hA
+  have hFd : ∀ p, HasFDerivAt F (A p) p := fun p =>
+    ((hG.differentiable (by norm_num)) p).hasFDerivAt
+  have hA1 : ContDiff ℝ 1 A := hG.fderiv_right (by norm_num)
+  have hAd : ∀ p, HasFDerivAt A (fderiv ℝ A p) p := fun p =>
+    ((hA1.differentiable (by norm_num)) p).hasFDerivAt
+  -- step 1: `D_θ G(τ, θ') = D F(τ, θ') ∘ inr`
+  have h1 : ∀ τ θ', fderiv ℝ (G τ) θ' = (A (τ, θ')).comp (ContinuousLinearMap.inr ℝ ℝ P) := by
+    intro τ θ'
+    have hc := (hFd (τ, θ')).comp θ' (hasFDerivAt_prodMk_right (𝕜 := ℝ) τ θ')
+    exact hc.fderiv
+  -- `∂_τ G(0, θ') = D F(0, θ') (1, 0)`
+  have h2 : ∀ θ', deriv (fun τ => G τ θ') 0 = A (0, θ') (1, 0) := by
+    intro θ'
+    have hin : HasDerivAt (fun τ : ℝ => (τ, θ')) ((1 : ℝ), (0 : P)) 0 :=
+      (hasDerivAt_id (0 : ℝ)).prodMk (hasDerivAt_const (0 : ℝ) θ')
+    have hc := (hFd (0, θ')).comp_hasDerivAt (0 : ℝ) hin
+    exact hc.deriv
+  -- the derivative in `τ` of `D F(τ, θ) (0, w)`
+  have h3 : HasDerivAt (fun τ => A (τ, θ) (0, w)) (fderiv ℝ A (0, θ) (1, 0) (0, w)) 0 := by
+    have hin : HasDerivAt (fun τ : ℝ => (τ, θ)) ((1 : ℝ), (0 : P)) 0 :=
+      (hasDerivAt_id (0 : ℝ)).prodMk (hasDerivAt_const (0 : ℝ) θ)
+    have hc := (hAd (0, θ)).comp_hasDerivAt (0 : ℝ) hin
+    have hc2 := (ContinuousLinearMap.apply ℝ Y ((0 : ℝ), w)).hasFDerivAt.comp_hasDerivAt
+      (0 : ℝ) hc
+    exact hc2
+  -- step 3: symmetry of the second derivative
+  have hsymm : fderiv ℝ A (0, θ) (1, 0) (0, w) = fderiv ℝ A (0, θ) (0, w) (1, 0) :=
+    (hG.contDiffAt.isSymmSndFDerivAt (by simp)) (1, 0) (0, w)
+  -- the derivative in `θ'` of `∂_τ G(0, θ')`
+  have h4 : fderiv ℝ (fun θ' => deriv (fun τ => G τ θ') 0) θ w
+      = fderiv ℝ A (0, θ) (0, w) (1, 0) := by
+    have he : (fun θ' => deriv (fun τ => G τ θ') 0) = fun θ' => A (0, θ') (1, 0) :=
+      funext h2
+    have hc := (hAd (0, θ)).comp θ (hasFDerivAt_prodMk_right (𝕜 := ℝ) (0 : ℝ) θ)
+    have hc2 := (ContinuousLinearMap.apply ℝ Y ((1 : ℝ), (0 : P))).hasFDerivAt.comp θ hc
+    have hc3 : HasFDerivAt (fun θ' => A (0, θ') (1, 0))
+        ((ContinuousLinearMap.apply ℝ Y ((1 : ℝ), (0 : P))).comp
+          ((fderiv ℝ A (0, θ)).comp (ContinuousLinearMap.inr ℝ ℝ P))) θ := hc2
+    rw [he, hc3.fderiv]
+    rfl
+  have he : (fun τ => fderiv ℝ (G τ) θ w) = fun τ => A (τ, θ) (0, w) := by
+    funext τ
+    rw [h1]
+    rfl
+  rw [he, h4, ← hsymm]
+  exact h3
 
 /-- **Proof of Lemma A.27 of the skips paper, "`J_τ S_τ → J_0`" and "the rank is lower
 semicontinuous", without networks.** Let `G τ θ` be twice continuously differentiable in `(τ, θ)`,
