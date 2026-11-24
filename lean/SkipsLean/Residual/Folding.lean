@@ -73,7 +73,11 @@ theorem hidden_succ_eq_blockMapRes
     (t : T) :
     hidden (Arch.mlp σ id hid) 1 θ x ℓ.succ t
       = blockMapRes θ ℓ (hidden (Arch.mlp σ id hid) 1 θ x ℓ.castSucc t) := by
-  sorry
+  -- the stream matrix is `1` and `χ = id`; entry `i` of the row is then the same sum
+  rw [hidden_succ]
+  funext i
+  simp only [Pi.one_apply, Matrix.mul_one, id, blockMapRes, Matrix.add_apply, Pi.add_apply]
+  rfl
 
 /-- **Proposition A.32 (i), under invariance of domain:** if residual ReLU block `ℓ` does not
 fold, `Φ_ℓ` is a homeomorphism of `ℝ^{1×d}`. -/
@@ -105,6 +109,20 @@ theorem not_unitInactiveRes_of_not_folds [Nonempty T] (hinv : InvarianceOfDomain
     (hr : (fun a => θ.read m a j) ≠ 0) : ¬ UnitInactiveRes θ m j := by
   sorry
 
+/-- `|ReLU x - ReLU y| ≤ |x - y|`, squared. -/
+private theorem relu_sub_sq_le_fold (x y : ℝ) :
+    (relu x - relu y) * (relu x - relu y) ≤ (x - y) * (x - y) := by
+  rw [← abs_mul_abs_self, ← abs_mul_abs_self (x - y)]
+  have h := abs_max_sub_max_le_abs x y 0
+  exact mul_self_le_mul_self (abs_nonneg _) h
+
+/-- The Euclidean norm vanishes only at `0`. -/
+private theorem eq_zero_of_sqrt_dotProduct_fold {n : Type*} [Fintype n] {v : n → ℝ}
+    (h : Real.sqrt (v ⬝ᵥ v) = 0) : v = 0 := by
+  have h0 : 0 ≤ v ⬝ᵥ v := Finset.sum_nonneg fun i _ => mul_self_nonneg (v i)
+  rw [Real.sqrt_eq_zero h0] at h
+  exact dotProduct_self_eq_zero.1 h
+
 /-- **Proposition A.32 (iii):** a residual ReLU block with `‖W_read‖ ‖W_write‖ < 1` in spectral
 norm does not fold. The spectral norms enter as Lipschitz constants `a`, `b` in the Euclidean
 norm. -/
@@ -115,6 +133,39 @@ theorem not_folds_of_norm_mul_norm_lt_one
     (hb : ∀ u : hid ℓ → ℝ,
       Real.sqrt ((u ᵥ* θ.write ℓ) ⬝ᵥ (u ᵥ* θ.write ℓ)) ≤ b * Real.sqrt (u ⬝ᵥ u))
     (hab : a * b < 1) : ¬ Folds θ ℓ := by
-  sorry
+  intro hF
+  apply hF
+  intro h h' heq
+  -- `Φ h = Φ h'` gives `h' - h = u W` with `u = ReLU(h R) - ReLU(h' R)`
+  set R := θ.read ℓ
+  set W := θ.write ℓ
+  set u : hid ℓ → ℝ := (fun i => relu ((h ᵥ* R) i)) - fun i => relu ((h' ᵥ* R) i) with hu
+  have hdiff : h' - h = u ᵥ* W := by
+    have heq' : h + (fun i => relu ((h ᵥ* R) i)) ᵥ* W
+        = h' + (fun i => relu ((h' ᵥ* R) i)) ᵥ* W := heq
+    rw [hu, Matrix.sub_vecMul]
+    linear_combination -heq'
+  -- `‖u‖₂ ≤ ‖(h' - h) R‖₂`, entrywise, since ReLU is 1-Lipschitz
+  have hu_le : Real.sqrt (u ⬝ᵥ u) ≤ Real.sqrt (((h' - h) ᵥ* R) ⬝ᵥ ((h' - h) ᵥ* R)) := by
+    apply Real.sqrt_le_sqrt
+    apply Finset.sum_le_sum
+    intro i _
+    have e : ((h' - h) ᵥ* R) i = -((h ᵥ* R) i - (h' ᵥ* R) i) := by
+      rw [Matrix.sub_vecMul, Pi.sub_apply]; ring
+    rw [e, neg_mul_neg]
+    exact relu_sub_sq_le_fold _ _
+  -- with `N = ‖h' - h‖₂`: `N ≤ b ‖u‖₂` and `‖u‖₂ ≤ a N`
+  set N := Real.sqrt ((h' - h) ⬝ᵥ (h' - h)) with hN
+  have hN0 : 0 ≤ N := Real.sqrt_nonneg _
+  have hM0 : 0 ≤ Real.sqrt (u ⬝ᵥ u) := Real.sqrt_nonneg _
+  have h1 : N ≤ b * Real.sqrt (u ⬝ᵥ u) := by rw [hN, hdiff]; exact hb u
+  have h2 : Real.sqrt (u ⬝ᵥ u) ≤ a * N := hu_le.trans (ha _)
+  -- hence `N ≤ 0` if `b < 0`, and `N ≤ a b N` with `a b < 1` if `b ≥ 0`: `N = 0`
+  have hN_eq : N = 0 := by
+    rcases lt_or_ge b 0 with hb0 | hb0
+    · nlinarith
+    · nlinarith [mul_le_mul_of_nonneg_left h2 hb0]
+  have := eq_zero_of_sqrt_dotProduct_fold hN_eq
+  exact (sub_eq_zero.1 this).symm
 
 end Skips
