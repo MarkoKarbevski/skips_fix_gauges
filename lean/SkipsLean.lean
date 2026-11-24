@@ -194,3 +194,10 @@ import SkipsLean.Absorb.AttentionZero
 import SkipsLean.Absorb.AttentionNetworks
 import SkipsLean.Symmetry.AttentionHeads
 import SkipsLean.Dimension.UpperBoundAttention
+import SkipsLean.Network.AttentionAnalytic
+import SkipsLean.OneBlock.Attention
+import SkipsLean.OneBlock.AttentionStepOne
+import SkipsLean.OneBlock.AttentionGeneric
+import SkipsLean.OneBlock.AttentionDim
+import SkipsLean.Absorb.ShortSequencesPoly
+import SkipsLean.Absorb.ShortSequences
