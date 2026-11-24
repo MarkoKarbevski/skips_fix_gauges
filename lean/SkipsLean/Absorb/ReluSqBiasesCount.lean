@@ -34,7 +34,9 @@ away in a fixed direction (`F₁`) and those whose argument is positive far away
 direction (`F₂`), and each `τ_o` lies in the span of the `φ(w_i, b_i)`, `i ∈ U`, with the `φ` of
 the units of `F₁`, and also with those of `F₂`. A hyperplane of the paper's set `N` has a unit in
 `F₁` and one in `F₂`, so this contains "`τ_o` lies in the span of `|U| + |N|` vectors", and the
-count `n ≥ |U| + |F₁| + |F₂|` contains `n ≥ |U| + 2|N|`.
+count `n ≥ |U| + |F₁| + |F₂|` contains `n ≥ |U| + 2|N|`. The statement gives the four sets by
+existence and does not name `N`: with `N′ = min(|F₁|, |F₂|)` it gives the span of `|U| + N′`
+vectors and `n ≥ |U| + 2 N′`, which is what the paper's "Conclusion" uses.
 
 The generic condition is used in the form: for disjoint `S`, `U` with `|U| < 2 d`, the vectors
 `τ_o` and `φ(w_i, b_i)`, `i ∈ U`, are linearly independent (for `|U| ≥ 2 d` the count alone gives
