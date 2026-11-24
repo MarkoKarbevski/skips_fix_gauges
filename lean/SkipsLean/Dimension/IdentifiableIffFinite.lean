@@ -62,7 +62,9 @@ theorem ae_funDim_mlp_skipless_iff_ae_locally_cob_perm
         = eval (Arch.mlp σ id hid) 0 θ x) →
         ∃ p : ∀ ℓ, Equiv.Perm (hid ℓ), ∃ G : Fin (L + 1) → GL d ℝ,
             θ' = (θ.permUnits p).cob G G) := by
-  sorry
+  -- the case of the statement with countably many images: the permutations of the hidden units
+  exact ae_funDim_mlp_skipless_iff_ae_locally_cob_family hσ μ hdIn hhid
+    (fun (p : ∀ ℓ, Equiv.Perm (hid ℓ)) θ => θ.permUnits p) (fun _ => 1) permUnits_one
 
 /-- **Proposition 4.6 of the dimension paper and Proposition 4.5 of the skips paper, for skipless
 networks of MLP blocks with a real-analytic activation (tanh, GELU), without normalization, with the
@@ -85,7 +87,16 @@ theorem ae_funDim_mlp_skipless_iff_ae_locally_cob_perm_flip
         = eval (Arch.mlp σ id hid) 0 θ x) →
         ∃ (p : ∀ ℓ, Equiv.Perm (hid ℓ)) (s : ∀ ℓ, hid ℓ → ℤˣ), ∃ G : Fin (L + 1) → GL d ℝ,
             θ' = ((θ.permUnits p).flipUnits s).cob G G) := by
-  sorry
+  -- the case of the statement with countably many images: the permutations and the sign flips
+  -- of the hidden units, the trivial permutation with the signs `1` as the identity
+  rw [ae_funDim_mlp_skipless_iff_ae_locally_cob_family hσ μ hdIn hhid
+    (fun (j : (∀ ℓ, Equiv.Perm (hid ℓ)) × (∀ ℓ, hid ℓ → ℤˣ)) θ => (θ.permUnits j.1).flipUnits j.2)
+    (fun _ => 1, fun _ _ => 1) (fun θ => by rw [permUnits_one, flipUnits_one])]
+  -- the existential over the pairs `(p, s)` is the existential over `p` and `s`
+  refine eventually_congr (Eventually.of_forall fun θ => ?_)
+  refine exists_congr fun U => and_congr_right fun _ =>
+    forall₂_congr fun θ' _ => imp_congr_right fun _ => ?_
+  exact ⟨fun ⟨⟨p, s⟩, h⟩ => ⟨p, s, h⟩, fun ⟨p, s, h⟩ => ⟨(p, s), h⟩⟩
 
 /-- **Proposition 4.6 of the dimension paper and Proposition 4.5 of the skips paper, for skipless
 networks of MLP blocks with a real-analytic activation (tanh, GELU), under pre-RMSNorm with `ε > 0`,
@@ -108,7 +119,9 @@ theorem ae_funDim_mlp_skipless_iff_ae_locally_cob_rmsNorm_perm
         ∃ p : ∀ ℓ, Equiv.Perm (hid ℓ), ∃ Q : Fin (L + 1) → GL d ℝ,
             (∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ) ∧
             θ' = (θ.permUnits p).cob Q Q) := by
-  sorry
+  -- the case of the statement with countably many images: the permutations of the hidden units
+  exact ae_funDim_mlp_skipless_iff_ae_locally_cob_rmsNorm_family hε hσ μ hdIn hhid
+    (fun (p : ∀ ℓ, Equiv.Perm (hid ℓ)) θ => θ.permUnits p) (fun _ => 1) permUnits_one
 
 /-- **Proposition 4.6 of the dimension paper and Proposition 4.5 of the skips paper, for skipless
 networks of MLP blocks with a real-analytic activation (tanh, GELU), under pre-RMSNorm with `ε > 0`,
@@ -133,7 +146,16 @@ theorem ae_funDim_mlp_skipless_iff_ae_locally_cob_rmsNorm_perm_flip
         ∃ (p : ∀ ℓ, Equiv.Perm (hid ℓ)) (s : ∀ ℓ, hid ℓ → ℤˣ), ∃ Q : Fin (L + 1) → GL d ℝ,
             (∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ) ∧
             θ' = ((θ.permUnits p).flipUnits s).cob Q Q) := by
-  sorry
+  -- the case of the statement with countably many images: the permutations and the sign flips
+  -- of the hidden units, the trivial permutation with the signs `1` as the identity
+  rw [ae_funDim_mlp_skipless_iff_ae_locally_cob_rmsNorm_family hε hσ μ hdIn hhid
+    (fun (j : (∀ ℓ, Equiv.Perm (hid ℓ)) × (∀ ℓ, hid ℓ → ℤˣ)) θ => (θ.permUnits j.1).flipUnits j.2)
+    (fun _ => 1, fun _ _ => 1) (fun θ => by rw [permUnits_one, flipUnits_one])]
+  -- the existential over the pairs `(p, s)` is the existential over `p` and `s`
+  refine eventually_congr (Eventually.of_forall fun θ => ?_)
+  refine exists_congr fun U => and_congr_right fun _ =>
+    forall₂_congr fun θ' _ => imp_congr_right fun _ => ?_
+  exact ⟨fun ⟨⟨p, s⟩, h⟩ => ⟨p, s, h⟩, fun ⟨p, s, h⟩ => ⟨(p, s), h⟩⟩
 
 /-- **Proposition 4.6 of the dimension paper and Proposition 4.5 of the skips paper, for skipless
 networks of gated blocks with a real-analytic gate (SwiGLU, GeGLU), without normalization, with the
@@ -158,7 +180,9 @@ theorem ae_funDim_gated_skipless_iff_ae_locally_cob_rescale_perm
         ∃ p : ∀ ℓ, Equiv.Perm (hid ℓ), ∃ c : ∀ ℓ, hid ℓ → ℝ, (∀ ℓ i, c ℓ i ≠ 0) ∧
           ∃ G : Fin (L + 1) → GL d ℝ,
             θ' = ((θ.permUnitsGated p).rescale c).cob G G) := by
-  sorry
+  -- the case of the statement with countably many images: the permutations of the hidden units
+  exact ae_funDim_gated_skipless_iff_ae_locally_cob_rescale_family hσ μ hdIn hhid
+    (fun (p : ∀ ℓ, Equiv.Perm (hid ℓ)) θ => θ.permUnitsGated p) (fun _ => 1) permUnitsGated_one
 
 /-- **Proposition 4.6 of the dimension paper and Proposition 4.5 of the skips paper, for skipless
 networks of gated blocks with a real-analytic gate (SwiGLU, GeGLU), under pre-RMSNorm with `ε > 0`,
@@ -185,7 +209,9 @@ theorem ae_funDim_gated_skipless_iff_ae_locally_cob_rescale_rmsNorm_perm
           ∃ Q : Fin (L + 1) → GL d ℝ,
             (∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ) ∧
             θ' = ((θ.permUnitsGated p).rescale c).cob Q Q) := by
-  sorry
+  -- the case of the statement with countably many images: the permutations of the hidden units
+  exact ae_funDim_gated_skipless_iff_ae_locally_cob_rescale_rmsNorm_family hε hσ μ hdIn hhid
+    (fun (p : ∀ ℓ, Equiv.Perm (hid ℓ)) θ => θ.permUnitsGated p) (fun _ => 1) permUnitsGated_one
 
 /-- **Proposition 4.6 of the dimension paper and Proposition 4.5 of the skips paper, for skipless
 networks of attention blocks, without normalization, with the permutations of the heads:** `fd = P −
@@ -209,7 +235,9 @@ theorem ae_funDim_attention_skipless_iff_ae_locally_cob_heads_perm
         ∃ q : ∀ ℓ, Equiv.Perm (H ℓ), ∃ K K' : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ,
           ∃ G : Fin (L + 1) → GL d ℝ,
             θ' = (((θ.permHeads q).headsQK K).headsVO K').cob G G) := by
-  sorry
+  -- the case of the statement with countably many images: the permutations of the heads
+  exact ae_funDim_attention_skipless_iff_ae_locally_cob_heads_family μ hdIn hdh hH
+    (fun (q : ∀ ℓ, Equiv.Perm (H ℓ)) θ => θ.permHeads q) (fun _ => 1) permHeads_one
 
 /-- **Proposition 4.6 of the dimension paper and Proposition 4.5 of the skips paper, for skipless
 networks of attention blocks, under pre-RMSNorm with `ε > 0`, with the permutations of the heads:**
@@ -236,6 +264,8 @@ theorem ae_funDim_attention_skipless_iff_ae_locally_cob_heads_rmsNorm_perm
           ∃ Q : Fin (L + 1) → GL d ℝ,
             (∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ) ∧
             θ' = (((θ.permHeads q).headsQK K).headsVO K').cob Q Q) := by
-  sorry
+  -- the case of the statement with countably many images: the permutations of the heads
+  exact ae_funDim_attention_skipless_iff_ae_locally_cob_heads_rmsNorm_family hε μ hdIn hdh hH
+    (fun (q : ∀ ℓ, Equiv.Perm (H ℓ)) θ => θ.permHeads q) (fun _ => 1) permHeads_one
 
 end Skips
