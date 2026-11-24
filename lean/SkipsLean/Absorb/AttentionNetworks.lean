@@ -264,6 +264,202 @@ theorem exists_ne_residual_skipless_attention_noMask_rmsNorm (hT : 2 ≤ Fintype
     (hasFDerivAt_rmsNorm_zero_atn hε) θ hED (rmsNorm_zero_mat_atn ε')
     (hasFDerivAt_rmsNorm_zero_atn hε') θ'
 
+/-- Helper: the factor `I + ξ z V` of a block, as a matrix of polynomials in `z`. -/
+private noncomputable def polyFactor_atn (ξ : ℝ) (V : Matrix d d ℝ) :
+    Matrix d d (Polynomial ℝ) :=
+  1 + (Polynomial.C ξ * Polynomial.X) • V.map Polynomial.C
+
+/-- Helper: the entry `(i, o)` of `ξ E ∏_ℓ (I + ξ z V_ℓ) D`, a polynomial in `z`. -/
+private noncomputable def polyEntry_atn {sees : T → T → Prop} [DecidableRel sees]
+    {χ : Matrix T d ℝ → Matrix T d ℝ} (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (ξ : ℝ) (i : dIn) (o : dOut) : Polynomial ℝ :=
+  Polynomial.C ξ * (θ.E.map Polynomial.C
+    * (List.ofFn fun ℓ => polyFactor_atn ξ (valueOutput θ ℓ)).prod * θ.D.map Polynomial.C) i o
+
+omit [Fintype dIn] [Fintype dOut] in
+/-- Helper: at `z = λ` the entry polynomial is the entry of `ξ E ∏_ℓ (I + ξ λ V_ℓ) D`. -/
+private theorem eval_polyEntry_atn {sees : T → T → Prop} [DecidableRel sees]
+    {χ : Matrix T d ℝ → Matrix T d ℝ} (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (ξ lam : ℝ) (i : dIn) (o : dOut) :
+    (polyEntry_atn θ ξ i o).eval lam = resMat_atn θ ξ lam i o := by
+  have hE : (θ.E.map Polynomial.C).map (Polynomial.evalRingHom lam) = θ.E := by
+    ext
+    simp
+  have hD : (θ.D.map Polynomial.C).map (Polynomial.evalRingHom lam) = θ.D := by
+    ext
+    simp
+  -- evaluation at `λ` is a ring map, so it commutes with the product of the factors
+  have hprod : ((List.ofFn fun ℓ => polyFactor_atn ξ (valueOutput θ ℓ)).prod).map
+      (Polynomial.evalRingHom lam) = (List.ofFn fun ℓ => 1 + (ξ * lam) • valueOutput θ ℓ).prod := by
+    rw [← RingHom.mapMatrix_apply, map_list_prod, List.map_ofFn]
+    refine congrArg List.prod (congrArg List.ofFn (funext fun ℓ => ?_))
+    ext a b
+    by_cases hab : a = b <;> simp [polyFactor_atn, hab]
+  have hentry : (polyEntry_atn θ ξ i o).eval lam
+      = ξ * ((θ.E.map Polynomial.C * (List.ofFn fun ℓ => polyFactor_atn ξ (valueOutput θ ℓ)).prod
+        * θ.D.map Polynomial.C).map (Polynomial.evalRingHom lam)) i o := by
+    rw [polyEntry_atn, Polynomial.eval_mul, Polynomial.eval_C]
+    rfl
+  rw [hentry, Matrix.map_mul, Matrix.map_mul, hE, hD, hprod, resMat_atn, Matrix.smul_apply,
+    smul_eq_mul]
+
+/-- Helper: the entries of a product of matrices of polynomials of degrees `≤ a` and `≤ b` have
+degree `≤ a + b`. -/
+private theorem natDegree_mul_apply_le_atn {m n p : Type*} [Fintype n]
+    {M : Matrix m n (Polynomial ℝ)} {N : Matrix n p (Polynomial ℝ)} {a b : ℕ}
+    (hM : ∀ i j, (M i j).natDegree ≤ a) (hN : ∀ i j, (N i j).natDegree ≤ b) (i : m) (j : p) :
+    ((M * N) i j).natDegree ≤ a + b := by
+  rw [Matrix.mul_apply]
+  exact Polynomial.natDegree_sum_le_of_forall_le _ _ fun k _ =>
+    Polynomial.natDegree_mul_le.trans (add_le_add (hM i k) (hN k j))
+
+/-- Helper: the entries of `∏_{ℓ < k} (I + ξ z V_ℓ)` have degree `≤ k`. -/
+private theorem natDegree_prod_atn (ξ : ℝ) {k : ℕ} (V : Fin k → Matrix d d ℝ) (i j : d) :
+    ((List.ofFn fun ℓ => polyFactor_atn ξ (V ℓ)).prod i j).natDegree ≤ k := by
+  induction k generalizing i j with
+  | zero =>
+    simp only [List.ofFn_zero, List.prod_nil, Matrix.one_apply]
+    split_ifs <;> simp
+  | succ k ih =>
+    simp only [List.ofFn_succ, List.prod_cons]
+    -- each factor has entries of degree `≤ 1`
+    have hF : ∀ i j, (polyFactor_atn ξ (V 0) i j).natDegree ≤ 1 := by
+      intro i j
+      simp only [polyFactor_atn, Matrix.add_apply, Matrix.smul_apply, Matrix.map_apply,
+        smul_eq_mul, Matrix.one_apply]
+      refine Polynomial.natDegree_add_le_of_degree_le ?_ ?_
+      · split_ifs <;> simp
+      · compute_degree
+    have h := natDegree_mul_apply_le_atn hF (ih fun ℓ => V ℓ.succ) i j
+    omega
+
+omit [Fintype dIn] [Fintype dOut] in
+/-- Helper: the entry polynomial has degree `≤ L`. -/
+private theorem natDegree_polyEntry_atn {sees : T → T → Prop} [DecidableRel sees]
+    {χ : Matrix T d ℝ → Matrix T d ℝ} (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (ξ : ℝ) (i : dIn) (o : dOut) : (polyEntry_atn θ ξ i o).natDegree ≤ L := by
+  have hE : ∀ i j, (θ.E.map Polynomial.C i j).natDegree ≤ 0 := fun i j => by simp
+  have hD : ∀ i j, (θ.D.map Polynomial.C i j).natDegree ≤ 0 := fun i j => by simp
+  have h := natDegree_mul_apply_le_atn (natDegree_mul_apply_le_atn hE
+    (natDegree_prod_atn ξ fun ℓ => valueOutput θ ℓ)) hD i o
+  rw [polyEntry_atn]
+  exact (Polynomial.natDegree_C_mul_le _ _).trans (h.trans (by omega))
+
+/-- Helper: a list has fewer sign variations than entries. -/
+private theorem signVariations_le_length_atn (l : List ℝ) :
+    l.signVariations ≤ l.length - 1 := by
+  unfold List.signVariations
+  apply Nat.sub_le_sub_right
+  exact (List.destutter_sublist _ _).length_le.trans
+    ((List.length_filter_le _ _).trans (List.length_map _).le)
+
+/-- Helper: a polynomial has at most as many sign variations as its degree. -/
+private theorem signVariations_le_natDegree_atn (q : Polynomial ℝ) :
+    q.signVariations ≤ q.natDegree := by
+  classical
+  have h := signVariations_le_length_atn q.coeffList
+  rw [Polynomial.length_coeffList_eq_ite] at h
+  unfold Polynomial.signVariations
+  split_ifs at h <;> omega
+
+/-- Helper, **the root count**: let `p = q − c z^m`, `deg q ≤ L`, vanish at the `n` points
+`1 / (t + 1)`. If `n ≥ L + 2`, or `n = L + 1` and `m ≤ L`, then `p = 0`. If `c = 0` or `m ≤ L`,
+`p` has degree `≤ L < n` and `n` roots. Otherwise `m > L`, `n ≥ L + 2`, and by Descartes' rule
+of signs `p ≠ 0` would have at most `L + 1` positive roots (dropping its leading term `−c z^m`
+leaves `q`, with at most `L` sign variations). -/
+private theorem poly_eq_zero_atn {n m : ℕ} (q : Polynomial ℝ) (c : ℝ) (hq : q.natDegree ≤ L)
+    (hroot : ∀ t : Fin n,
+      (q - Polynomial.C c * Polynomial.X ^ m).eval (1 / ((t : ℝ) + 1)) = 0)
+    (hn : L + 2 ≤ n ∨ (n = L + 1 ∧ m ≤ L)) : q - Polynomial.C c * Polynomial.X ^ m = 0 := by
+  -- the points `1 / (t + 1)` are distinct
+  have hinj : Function.Injective fun t : Fin n => 1 / ((t : ℝ) + 1) := by
+    intro x y hxy
+    simp only [one_div, _root_.inv_inj, add_left_inj, Nat.cast_inj] at hxy
+    exact Fin.ext hxy
+  -- a polynomial of degree `< n` with these `n` roots is `0`
+  have hcard : (q - Polynomial.C c * Polynomial.X ^ m).natDegree < n →
+      q - Polynomial.C c * Polynomial.X ^ m = 0 := fun h =>
+    Polynomial.eq_zero_of_natDegree_lt_card_of_eval_eq_zero _ hinj hroot
+      (by rwa [Fintype.card_fin])
+  by_cases hc : c = 0
+  · apply hcard
+    rw [hc, Polynomial.C_0, zero_mul, sub_zero]
+    omega
+  by_cases hm : m ≤ L
+  · apply hcard
+    have := (Polynomial.natDegree_sub_le _ _).trans
+      (max_le hq ((Polynomial.natDegree_C_mul_X_pow_le c m).trans hm))
+    omega
+  -- `m > L`, so `n ≥ L + 2`: Descartes' rule of signs
+  have hn2 : L + 2 ≤ n := by omega
+  by_contra hp0
+  -- `p` has the `n` distinct positive roots `1 / (t + 1)`
+  have hroots : n ≤ (q - Polynomial.C c * Polynomial.X ^ m).roots.countP (0 < ·) := by
+    classical
+    have hS : (Finset.univ.image fun t : Fin n => 1 / ((t : ℝ) + 1)).card = n := by
+      rw [Finset.card_image_of_injective _ hinj, Finset.card_univ, Fintype.card_fin]
+    rw [Multiset.countP_eq_card_filter, ← hS]
+    refine Multiset.card_le_card ((Multiset.le_iff_subset (Finset.nodup _)).2 fun x hx => ?_)
+    obtain ⟨t, -, rfl⟩ := Finset.mem_image.1 (Finset.mem_def.2 hx)
+    refine Multiset.mem_filter.2 ⟨(Polynomial.mem_roots hp0).2 (hroot t), ?_⟩
+    show 0 < 1 / ((t : ℝ) + 1)
+    positivity
+  -- dropping the leading term `−c z^m` leaves `q`
+  have hlead : (q - Polynomial.C c * Polynomial.X ^ m).eraseLead = q := by
+    rw [sub_eq_add_neg, ← neg_mul, ← Polynomial.C_neg,
+      Polynomial.eraseLead_add_of_natDegree_lt_right, Polynomial.eraseLead_C_mul_X_pow, add_zero]
+    rw [Polynomial.natDegree_C_mul_X_pow m (-c) (neg_ne_zero.2 hc)]
+    omega
+  have h1 := Polynomial.roots_countP_pos_le_signVariations (q - Polynomial.C c * Polynomial.X ^ m)
+  have h2 := Polynomial.signVariations_le_eraseLead_succ (q - Polynomial.C c * Polynomial.X ^ m)
+  have h3 := signVariations_le_natDegree_atn q
+  rw [hlead] at h2
+  omega
+
+/-- Helper, **Theorem 4.2 (i) with the causal mask**, for any `χ` as in `noMask_atn`: every
+entry of `ξ E ∏_ℓ (I + ξ z V_ℓ) D − z^{L'+1} Λ'` vanishes at the `n` eigenvalues `1 / (t + 1)`
+of `U`, so it is the zero polynomial (`poly_eq_zero_atn`); at `z = 0` it is `ξ E D`. -/
+private theorem causal_atn {n : ℕ} {χ : Matrix (Fin n) d ℝ → Matrix (Fin n) d ℝ} {ξ : ℝ}
+    (hξ : ξ ≠ 0) (hχ0 : χ 0 = 0)
+    (hχ : HasFDerivAt χ (ξ • ContinuousLinearMap.id ℝ (Matrix (Fin n) d ℝ)) 0)
+    (θ : Params (Arch.attention (fun t s : Fin n => s ≤ t) χ H dh) dIn dOut)
+    (hED : θ.E * θ.D ≠ 0) {L' : ℕ} {d' : Type*} [Fintype d'] [DecidableEq d']
+    {χ' : Matrix (Fin n) d' ℝ → Matrix (Fin n) d' ℝ} {ξ' : ℝ} (hχ0' : χ' 0 = 0)
+    (hχ' : HasFDerivAt χ' (ξ' • ContinuousLinearMap.id ℝ (Matrix (Fin n) d' ℝ)) 0)
+    {H' dh' : Fin (L' + 1) → Type} [∀ ℓ, Fintype (H' ℓ)] [∀ ℓ, Fintype (dh' ℓ)]
+    (θ' : Params (Arch.attention (fun t s : Fin n => s ≤ t) χ' H' dh') dIn dOut)
+    (hn : L + 2 ≤ n ∨ (n = L + 1 ∧ L' + 1 ≤ L)) :
+    ∃ X : Matrix (Fin n) dIn ℝ,
+      eval (Arch.attention (fun t s : Fin n => s ≤ t) χ H dh) 1 θ X
+        ≠ eval (Arch.attention (fun t s : Fin n => s ≤ t) χ' H' dh') 0 θ' X := by
+  by_contra hne
+  have heq : ∀ X, eval (Arch.attention (fun t s : Fin n => s ≤ t) χ H dh) 1 θ X
+      = eval (Arch.attention (fun t s : Fin n => s ≤ t) χ' H' dh') 0 θ' X :=
+    fun X => by_contra fun hX => hne ⟨X, hX⟩
+  -- `Λ' = ξ'^{L'+2} E' V'_1 ⋯ V'_{L'+1} D'`
+  obtain ⟨Λ', hΛ'⟩ : ∃ Λ' : Matrix dIn dOut ℝ,
+      Λ' = ξ' ^ (L' + 2) • (θ'.E * (List.ofFn fun ℓ => valueOutput θ' ℓ).prod * θ'.D) :=
+    ⟨_, rfl⟩
+  apply hED
+  ext i o
+  -- the entry polynomial `q − Λ'_{io} z^{L'+1}` vanishes at every `1 / (t + 1)`
+  have hroot : ∀ t : Fin n, (polyEntry_atn θ ξ i o
+      - Polynomial.C (Λ' i o) * Polynomial.X ^ (L' + 1)).eval (1 / ((t : ℝ) + 1)) = 0 := by
+    intro t
+    obtain ⟨a, ha0, ha⟩ := exists_eigen_causal_atn t rfl
+    have h := core_atn hχ0 hχ hχ0' hχ' θ θ' heq ha ha0
+    rw [← hΛ'] at h
+    rw [Polynomial.eval_sub, eval_polyEntry_atn, h, Polynomial.eval_mul, Polynomial.eval_C,
+      Polynomial.eval_pow, Polynomial.eval_X, Matrix.smul_apply, smul_eq_mul]
+    ring
+  have hp := poly_eq_zero_atn _ _ (natDegree_polyEntry_atn θ ξ i o) hroot hn
+  -- at `z = 0`: `ξ (E D)_{io} = 0`
+  have h0 := congrArg (Polynomial.eval 0) hp
+  rw [Polynomial.eval_sub, eval_polyEntry_atn, resMat_zero_atn, Polynomial.eval_mul,
+    Polynomial.eval_C, Polynomial.eval_pow, Polynomial.eval_X, zero_pow (Nat.succ_ne_zero L'),
+    mul_zero, sub_zero, Polynomial.eval_zero, Matrix.smul_apply, smul_eq_mul] at h0
+  exact (mul_eq_zero.1 h0).resolve_left hξ
+
 /-- **Theorem 4.2 (i), causal mask, without normalization:** on `n` tokens with the causal mask,
 a residual network of `L` attention blocks with `E D ≠ 0` differs from every skipless network of
 `L' + 1` attention blocks when `n ≥ L + 2`, and when `n = L + 1` and `L' + 1 ≤ L`. -/
@@ -276,7 +472,9 @@ theorem exists_ne_residual_skipless_attention_causal {n : ℕ}
     ∃ X : Matrix (Fin n) dIn ℝ,
       eval (Arch.attention (fun t s => s ≤ t) id H dh) 1 θ X
         ≠ eval (Arch.attention (fun t s => s ≤ t) id H' dh') 0 θ' X := by
-  sorry
+  -- without normalization `χ = id`: `χ(0) = 0` and the derivative is `1 • I`
+  exact causal_atn one_ne_zero rfl (by rw [one_smul]; exact hasFDerivAt_id 0) θ hED rfl
+    (by rw [one_smul]; exact hasFDerivAt_id 0) θ' hn
 
 /-- **Theorem 4.2 (i), causal mask, under pre-RMSNorm with `ε > 0`.** -/
 theorem exists_ne_residual_skipless_attention_causal_rmsNorm {n : ℕ} {ε ε' : ℝ} (hε : 0 < ε)
@@ -291,7 +489,10 @@ theorem exists_ne_residual_skipless_attention_causal_rmsNorm {n : ℕ} {ε ε' :
     ∃ X : Matrix (Fin n) dIn ℝ,
       eval (Arch.attention (fun t s => s ≤ t) (rmsNorm ε) H dh) 1 θ X
         ≠ eval (Arch.attention (fun t s => s ≤ t) (rmsNorm ε') H' dh') 0 θ' X := by
-  sorry
+  -- RMSNorm: `N(0) = 0` and the derivative `I / √ε` at `0`, with `1 / √ε ≠ 0`
+  exact causal_atn (inv_ne_zero (Real.sqrt_pos.2 hε).ne') (rmsNorm_zero_mat_atn ε)
+    (hasFDerivAt_rmsNorm_zero_atn hε) θ hED (rmsNorm_zero_mat_atn ε')
+    (hasFDerivAt_rmsNorm_zero_atn hε') θ' hn
 
 /-- **Theorem 4.2 (ii), causal mask, without normalization:** on `n ≥ 2` tokens with the causal
 mask, for almost every choice of weights of the residual network of `L` attention blocks, no
