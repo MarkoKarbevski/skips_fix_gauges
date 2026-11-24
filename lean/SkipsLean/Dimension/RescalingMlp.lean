@@ -351,7 +351,25 @@ theorem funDim_add_le_skipless_mlp_rescale_rmsNorm {k : ℕ}
 theorem ae_read_col_ne_zero [Nonempty d]
     (μ : Measure (Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut)) [μ.IsAddHaarMeasure] :
     ∀ᵐ θ ∂μ, ∀ ℓ i, (fun a => θ.read ℓ a i) ≠ 0 := by
-  sorry
+  -- finitely many conditions, one for each hidden unit `i` of each block `ℓ`
+  refine ae_all_iff.2 fun ℓ => ae_all_iff.2 fun i => ?_
+  -- an entry `a₀` of the read column
+  obtain a₀ : d := Classical.arbitrary d
+  -- the entry `θ ↦ θ.read ℓ a₀ i` is a linear functional of the parameters
+  let l : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut →ₗ[ℝ] ℝ :=
+    (Matrix.entryLinearMap ℝ ℝ a₀ i).comp
+      (Params.linRead (A := Arch.mlp (T := T) (d := d) σ χ hid) (dIn := dIn) (dOut := dOut) ℓ)
+  have hl : ∀ θ, l θ = θ.read ℓ a₀ i := fun θ => rfl
+  -- it is not zero at the parameters whose reads have all entries `1`
+  have h₁ : l ⟨0, fun _ => Matrix.of fun _ _ => 1, 0, 0⟩ ≠ 0 := by
+    rw [hl]
+    exact one_ne_zero
+  -- an analytic function that is not identically zero is nonzero almost everywhere
+  have hne : ∀ᵐ θ ∂μ, l θ ≠ 0 :=
+    ae_ne_zero_of_analytic μ (analyticOnNhd_linear l) ⟨_, h₁⟩
+  -- and a function with a nonzero entry is not zero
+  filter_upwards [hne] with θ h hz
+  exact h (by rw [hl]; exact congrFun hz a₀)
 
 /-- **Theorem 4.3 for ReLU blocks at generic parameters, without normalization** (`d_in ≥ d`, at
 least `d` hidden units per block): `fd ≤ P - (L + 1) d² - s`. -/
