@@ -29,6 +29,16 @@ section General
 
 variable (A : Arch T d L) (θ : Params A dIn dOut)
 
+/-- Helper: `𝓑_{>j}` has the derivative `fderiv` at every hidden state without a zero row. -/
+private theorem hasFDerivAt_suffix_zero_szr (hχ : A.χ = rmsNorm 0)
+    (hf : ∀ ℓ, AnalyticOnNhd ℝ (A.f ℓ) Set.univ) (hθ : RegularZero A θ) (j : Fin (L + 1))
+    (h₀ : Matrix T d ℝ) (hh₀ : ∀ t, h₀ t ≠ 0) :
+    HasFDerivAt (fun h' : Matrix T d ℝ => suffix A 0 θ j h')
+      (fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ j h') h₀) h₀ := by
+  have hA := (analyticAt_suffix_prod_zero A θ hχ hf hθ j h₀ hh₀).differentiableAt
+  have hc := hA.hasFDerivAt.comp h₀ (hasFDerivAt_prodMk_right (𝕜 := ℝ) θ h₀)
+  exact hc.differentiableAt.hasFDerivAt
+
 /-- **"A derivative of order `1` of `𝓑` is homogeneous of degree `−1`":**
 `𝐃𝓑_{>j}(ch)(cv) = 𝐃𝓑_{>j}(h)v` for `c > 0`, regular `θ` and `h` without a zero row. -/
 theorem fderiv_suffix_zero_smul (hχ : A.χ = rmsNorm 0)
@@ -36,7 +46,19 @@ theorem fderiv_suffix_zero_smul (hχ : A.χ = rmsNorm 0)
     (h v : Matrix T d ℝ) (hh : ∀ t, h t ≠ 0) {c : ℝ} (hc : 0 < c) :
     fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ j h') (c • h) (c • v)
       = fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ j h') h v := by
-  sorry
+  set B := fun h' : Matrix T d ℝ => suffix A 0 θ j h' with hB
+  -- `𝓑_{>j}` is differentiable at every hidden state without a zero row
+  have hd : ∀ h₀ : Matrix T d ℝ, (∀ s, h₀ s ≠ 0) → HasFDerivAt B (fderiv ℝ B h₀) h₀ :=
+    hasFDerivAt_suffix_zero_szr A θ hχ hf hθ j
+  -- the scaling `S = c • id`, and `𝓑_{>j} ∘ S = 𝓑_{>j}`
+  let S : Matrix T d ℝ →L[ℝ] Matrix T d ℝ := c • ContinuousLinearMap.id ℝ (Matrix T d ℝ)
+  have hfac : B ∘ ⇑S = B := funext fun h' =>
+    suffix_zero_smul_rows A θ hχ j h' (fun _ => c) fun _ => hc
+  -- the chain rule at `h` through `S`, and uniqueness of the derivative
+  have h1 := (hd (S h) fun t => smul_ne_zero hc.ne' (hh t)).comp h S.hasFDerivAt
+  rw [hfac] at h1
+  have e := DFunLike.congr_fun (h1.unique (hd h hh)) v
+  exact e
 
 /-- **`𝐃𝓑_{>j}(h) h = 0`** for regular `θ` and `h` without a zero row (the derivative at `c = 1` of
 `𝓑_{>j}(ch) = 𝓑_{>j}(h)`). -/
@@ -44,14 +66,32 @@ theorem fderiv_suffix_zero_apply_self (hχ : A.χ = rmsNorm 0)
     (hf : ∀ ℓ, AnalyticOnNhd ℝ (A.f ℓ) Set.univ) (hθ : RegularZero A θ) (j : Fin (L + 1))
     (h : Matrix T d ℝ) (hh : ∀ t, h t ≠ 0) :
     fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ j h') h h = 0 := by
-  sorry
+  set B := fun h' : Matrix T d ℝ => suffix A 0 θ j h' with hB
+  -- the curve `τ ↦ 𝓑_{>j}((1 + τ) h)` has the derivative `𝐃𝓑_{>j}(h) h` at `0`
+  have hγ : HasDerivAt (fun τ : ℝ => (1 + τ) • h) ((1 : ℝ) • h) 0 :=
+    ((hasDerivAt_id (0 : ℝ)).const_add 1).smul_const h
+  have h1 := (hasFDerivAt_suffix_zero_szr A θ hχ hf hθ j h hh).comp_hasDerivAt_of_eq (0 : ℝ) hγ
+    (by rw [add_zero, one_smul])
+  -- and it is constant near `0`, since `1 + τ > 0` there
+  have hconst : (B ∘ fun τ : ℝ => (1 + τ) • h) =ᶠ[nhds 0] fun _ => B h := by
+    filter_upwards [Ioi_mem_nhds (show (-1 : ℝ) < 0 by norm_num)] with τ hτ
+    exact suffix_zero_smul_rows A θ hχ j h (fun _ => 1 + τ) fun _ => by
+      rw [Set.mem_Ioi] at hτ; linarith
+  have h2 := (hasDerivAt_const (0 : ℝ) (B h)).congr_of_eventuallyEq hconst
+  have e := h1.unique h2
+  rw [one_smul] at e
+  exact e
 
 /-- **`𝐃_θ𝓑_{>j}(ch) = 𝐃_θ𝓑_{>j}(h)`** for `c > 0`. -/
 theorem fderiv_param_suffix_zero_smul (hχ : A.χ = rmsNorm 0) (j : Fin (L + 1))
     (h : Matrix T d ℝ) (η : Params A dIn dOut) {c : ℝ} (hc : 0 < c) :
     fderiv ℝ (fun θ' : Params A dIn dOut => suffix A 0 θ' j (c • h)) θ η
       = fderiv ℝ (fun θ' : Params A dIn dOut => suffix A 0 θ' j h) θ η := by
-  sorry
+  -- the two maps of `θ'` are equal
+  have e : (fun θ' : Params A dIn dOut => suffix A 0 θ' j (c • h))
+      = fun θ' : Params A dIn dOut => suffix A 0 θ' j h :=
+    funext fun θ' => suffix_zero_smul_rows A θ' hχ j h (fun _ => c) fun _ => hc
+  rw [e]
 
 end General
 
