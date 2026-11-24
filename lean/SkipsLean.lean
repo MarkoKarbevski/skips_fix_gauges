@@ -67,3 +67,5 @@ import SkipsLean.Depth.GeluGatedTheorem
 import SkipsLean.Depth.Cones
 import SkipsLean.Depth.StepGated
 import SkipsLean.Absorb.RMSNormKinds
+import SkipsLean.Activations.FarFromZero
+import SkipsLean.Activations.MillsAtInfinity
