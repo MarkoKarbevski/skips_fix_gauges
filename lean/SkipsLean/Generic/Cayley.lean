@@ -154,6 +154,60 @@ theorem exists_cayley_mul_diagonal_of_mem_orthogonalGroup {Q : Matrix d d ℝ}
     (hQ : Q ∈ Matrix.orthogonalGroup d ℝ) :
     ∃ (s : d → Bool) (A : Matrix d d ℝ), A ∈ antisymmetric d ∧
       Q = (1 - A) * (1 + A)⁻¹ * Matrix.diagonal fun i => if s i then (1 : ℝ) else -1 := by
-  sorry
+  -- Signs `D` with `1 + Q D` invertible; `D D = 1`, `Dᵀ = D`.
+  obtain ⟨s, hs⟩ := exists_det_one_add_mul_diagonal_ne_zero Q
+  set D := Matrix.diagonal fun i => if s i then (1 : ℝ) else -1 with hD
+  have hDD : D * D = 1 := by
+    rw [hD, Matrix.diagonal_mul_diagonal, ← Matrix.diagonal_one]
+    congr 1; funext i; cases s i <;> norm_num
+  have hDt : Dᵀ = D := by rw [hD, Matrix.diagonal_transpose]
+  -- `Q' = Q D` is orthogonal: `Q'ᵀ Q' = D Qᵀ Q D = 1`.
+  set Q' := Q * D with hQ'
+  have hQtQ : Qᵀ * Q = 1 := (Matrix.mem_orthogonalGroup_iff' d ℝ).1 hQ
+  have hRQ : Q'ᵀ * Q' = 1 := by
+    rw [hQ', Matrix.transpose_mul, hDt, Matrix.mul_assoc, ← Matrix.mul_assoc Qᵀ, hQtQ,
+      Matrix.one_mul, hDD]
+  -- `P = 1 + Q'` is invertible, with inverse `X`; `A = (1 − Q') X`.
+  set P := 1 + Q' with hP
+  have hPu : IsUnit P.det := isUnit_iff_ne_zero.2 hs
+  set X := P⁻¹ with hX
+  have hPX : P * X = 1 := Matrix.mul_nonsing_inv _ hPu
+  have hXP : X * P = 1 := Matrix.nonsing_inv_mul _ hPu
+  refine ⟨s, (1 - Q') * X, ?_, ?_⟩
+  · -- `Aᵀ = Xᵀ (1 − Q'ᵀ) = Xᵀ (1 − Q'ᵀ) P X = Xᵀ (1 + Q'ᵀ)(Q' − 1) X = (Q' − 1) X = −A`,
+    -- from `(1 − Q'ᵀ)(1 + Q') = Q' − Q'ᵀ = (1 + Q'ᵀ)(Q' − 1)` and `Xᵀ (1 + Q'ᵀ) = (P X)ᵀ = 1`.
+    show ((1 - Q') * X)ᵀ = -((1 - Q') * X)
+    have hXt : Xᵀ * (1 + Q'ᵀ) = 1 := by
+      have h := congrArg Matrix.transpose hPX
+      rwa [Matrix.transpose_mul, Matrix.transpose_one, hP, Matrix.transpose_add,
+        Matrix.transpose_one] at h
+    rw [Matrix.transpose_mul, Matrix.transpose_sub, Matrix.transpose_one]
+    calc Xᵀ * (1 - Q'ᵀ) = Xᵀ * (1 - Q'ᵀ) * (P * X) := by rw [hPX, Matrix.mul_one]
+      _ = Xᵀ * ((1 - Q'ᵀ) * P) * X := by simp only [Matrix.mul_assoc]
+      _ = Xᵀ * ((1 + Q'ᵀ) * (Q' - 1)) * X := by
+        congr 2
+        rw [hP]
+        simp only [Matrix.sub_mul, Matrix.add_mul, Matrix.mul_sub, Matrix.mul_add,
+          Matrix.one_mul, Matrix.mul_one, hRQ]
+        abel
+      _ = Xᵀ * (1 + Q'ᵀ) * (Q' - 1) * X := by simp only [Matrix.mul_assoc]
+      _ = -((1 - Q') * X) := by rw [hXt, Matrix.one_mul, ← Matrix.neg_mul, neg_sub]
+  · -- `1 + A = (P + 1 − Q') X = 2 X`, so `(1 + A)⁻¹ = P / 2`; `(1 − A) P = P − (1 − Q') = 2 Q'`;
+    -- so `(1 − A)(1 + A)⁻¹ D = Q' D = Q D D = Q`.
+    have h1A : 1 + (1 - Q') * X = (2 : ℝ) • X := by
+      calc 1 + (1 - Q') * X = (P + (1 - Q')) * X := by rw [Matrix.add_mul, hPX]
+        _ = (2 : ℝ) • X := by
+          rw [hP, show (1 + Q' + (1 - Q') : Matrix d d ℝ) = (2 : ℝ) • 1 by
+            rw [two_smul]; abel, Matrix.smul_mul, Matrix.one_mul]
+    have hinv : (1 + (1 - Q') * X)⁻¹ = (1 / 2 : ℝ) • P := by
+      apply Matrix.inv_eq_right_inv
+      rw [h1A, Matrix.smul_mul, Matrix.mul_smul, hXP, smul_smul]
+      norm_num
+    have hC : (1 - (1 - Q') * X) * P = (2 : ℝ) • Q' := by
+      rw [Matrix.sub_mul, Matrix.one_mul, Matrix.mul_assoc, hXP, Matrix.mul_one, hP, two_smul]
+      abel
+    rw [hinv, Matrix.mul_smul, hC, smul_smul]
+    norm_num
+    rw [hQ', Matrix.mul_assoc, hDD, Matrix.mul_one]
 
 end Skips
