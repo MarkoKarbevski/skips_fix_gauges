@@ -305,3 +305,14 @@ import SkipsLean
 #print axioms Skips.ae_exists_jacobianRank_relu_oneBlock
 #print axioms Skips.ae_funDim_reluSq_oneBlock
 #print axioms Skips.ae_exists_jacobianRank_reluSq_oneBlock
+
+-- ReGLU blocks: the rescaling of the gates, Theorem 4.3 with both rescalings
+#print axioms Skips.rescaleDir_mem_flat'
+#print axioms Skips.eval_rescale_gate
+#print axioms Skips.rescaleDirGate_mem_flat
+#print axioms Skips.cobDir_add_rescaleDir_add_rescaleDirGate_injective
+#print axioms Skips.funDim_add_le_skipless_gated_gate
+#print axioms Skips.funDim_add_le_skipless_gated_gate_rmsNorm
+#print axioms Skips.ae_gate_ne_zero
+#print axioms Skips.ae_funDim_add_le_skipless_reglu
+#print axioms Skips.ae_funDim_add_le_skipless_reglu_rmsNorm

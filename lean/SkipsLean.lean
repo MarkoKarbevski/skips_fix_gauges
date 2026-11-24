@@ -52,3 +52,4 @@ import SkipsLean.Symmetry.AtOneState
 import SkipsLean.Absorb.PaperForms
 import SkipsLean.Dimension.RescalingMlp
 import SkipsLean.OneBlock.Rescale
+import SkipsLean.Dimension.RescalingGate
