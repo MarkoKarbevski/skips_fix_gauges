@@ -109,6 +109,7 @@ private theorem block_rowScale_she {A : Arch T d 1} {k : ℕ} (hf : RowHomogeneo
   ext t j
   simp only [Matrix.mul_apply, Matrix.of_apply, Finset.mul_sum, mul_assoc]
 
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dOut] in
 /-- **Proof of Theorem B.1 (iv) of the skips paper, "Its normalization before the block drops
 out":** for one skipless block that is positively homogeneous row by row, under pre-RMSNorm with
 `ε = 0`, at an input `x` with no zero row of `x E`, the network is `N_0(f(x E W_read) W_write) D`,
@@ -493,6 +494,7 @@ private theorem exists_open_she {k : ℕ}
     · rw [hrow]
       exact hv0
 
+omit [Nonempty T] [DecidableEq d] in
 /-- Helper (the derivative at an input of `U`): `𝐃N_0(g(x))[k(x)] D + N_0(g(x)) η_D = 0` for a
 direction `η` with derivative `0` at `x`. Near `θ` the output is `N_0(g_θ(x)) D` by
 `eval_skipless_rmsNorm_zero_of_rowHomogeneous`. -/
@@ -845,6 +847,7 @@ theorem exists_jacobianRank_mlp_oneBlock_rescale_skipless_rmsNorm_zero {k : ℕ}
   generalize Fintype.card d ^ 2 = M at hfd h3 ⊢
   omega
 
+omit [Nonempty T] in
 /-- **The conditions of the proof at generic parameters:** for `d_in, d_out ≥ d` and a block of
 exactly `d` hidden units, at almost every parameter `E`, `D`, `W_read` and `W_write` have rank
 `d`. -/
