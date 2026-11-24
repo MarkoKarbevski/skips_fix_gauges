@@ -4,9 +4,10 @@ import SkipsLean.Dimension.IdentifiableIffTransformer
 # The equality condition and local identifiability: the symmetries are close to the identity,
 skipless networks of attention blocks and MLP or gated blocks
 
-Paper (dimension paper), Proposition 4.6: "A network satisfies the equality condition if and only
+Paper (skips paper), Proposition 4.5: "A network satisfies the equality condition if and only
 if, at generic parameters, it is locally identifiable up to its symmetries. Every symmetry that is
-needed is then close to the identity." (Skips paper, Proposition 4.5, has the same sentences.)
+needed is then close to the identity." (The dimension paper, Proposition 4.6, has the same
+sentences for skipless networks of one kind of block.)
 
 The library has the last sentence at one parameter, under the rank conditions of the proof (the
 theorems `exists_…_of_eval_eq_…`). Here it is one statement under the equality condition, for
@@ -136,7 +137,7 @@ private theorem ae_value_ne_zero_sum_iu3 [Nonempty d] {A : Arch T d L}
   filter_upwards [hne] with θ h hz
   exact h (by rw [hl]; exact congrFun hz k₀)
 
-/-- **Proposition 4.6 of the dimension paper and 4.5 of the skips paper, last sentence, under the
+/-- **Proposition 4.5 of the skips paper, last sentence, under the
 equality condition:** the form at almost every parameter of
 `exists_cob_heads_of_eval_eq_skipless_attentionMlp`.
 If the bound is attained at almost every `θ`, then at almost every `θ`, for all neighborhoods of
@@ -178,7 +179,7 @@ theorem ae_exists_cob_heads_of_eval_eq_skipless_attentionMlp_of_ae_funDim
   filter_upwards [ae_rank_E_write μ hdIn hw, ae_rank_QV_sum_iu3 μ hdh, hfd] with θ hθ hQV hθfd
   exact exists_cob_heads_of_eval_eq_skipless_attentionMlp hσ θ hθ.1 hθ.2 hQV.1 hQV.2 hθfd
 
-/-- **Proposition 4.6 of the dimension paper and 4.5 of the skips paper, last sentence, under the
+/-- **Proposition 4.5 of the skips paper, last sentence, under the
 equality condition:** the form at almost every parameter of
 `exists_cob_heads_of_eval_eq_skipless_attentionMlp_rmsNorm`.
 If the bound is attained at almost every `θ`, then at almost every `θ`, for all neighborhoods of
@@ -222,7 +223,7 @@ theorem ae_exists_cob_heads_of_eval_eq_skipless_attentionMlp_rmsNorm_of_ae_funDi
   exact exists_cob_heads_of_eval_eq_skipless_attentionMlp_rmsNorm hε hσ θ hθ.1 hθ.2 hQV.1 hQV.2
     hθfd
 
-/-- **Proposition 4.6 of the dimension paper and 4.5 of the skips paper, last sentence, under the
+/-- **Proposition 4.5 of the skips paper, last sentence, under the
 equality condition:** the form at almost every parameter of
 `exists_cob_heads_of_eval_eq_skipless_attentionGated`.
 If the bound is attained at almost every `θ`, then at almost every `θ`, for all neighborhoods of
@@ -268,7 +269,7 @@ theorem ae_exists_cob_heads_of_eval_eq_skipless_attentionGated_of_ae_funDim
     ae_value_ne_zero_sum_iu3 μ, hfd] with θ hθ hQV hv hθfd
   exact exists_cob_heads_of_eval_eq_skipless_attentionGated hσ θ hθ.1 hθ.2 hQV.1 hQV.2 hv hθfd
 
-/-- **Proposition 4.6 of the dimension paper and 4.5 of the skips paper, last sentence, under the
+/-- **Proposition 4.5 of the skips paper, last sentence, under the
 equality condition:** the form at almost every parameter of
 `exists_cob_heads_of_eval_eq_skipless_attentionGated_rmsNorm`.
 If the bound is attained at almost every `θ`, then at almost every `θ`, for all neighborhoods of

@@ -15,10 +15,10 @@ Here it is one statement under the equality condition: if the bound is attained 
 parameter, then at almost every parameter `θ`, for every neighborhood `V` of the identity, every
 `θ'` close enough to `θ` with the same function is the image of `θ` under changes of basis in `V`.
 Stated for skipless networks of real-analytic blocks with no symmetry inside the blocks (tanh and
-GELU blocks are of this kind), for `d_in ≥ d` and writes of at least `d` rows. Not stated here: the
-same for blocks with symmetries inside (SwiGLU, GeGLU, attention) and for residual networks, whose
-statements at one parameter are in `Dimension/LocalIdentifiabilityGated.lean` and the files after
-it.
+GELU blocks are of this kind), for `d_in ≥ d` and writes of at least `d` rows. The same for blocks
+with symmetries inside (SwiGLU, GeGLU, attention), for residual networks and for networks with two
+kinds of block: `Dimension/IdentifiableUnderEquality.lean`,
+`Residual/IdentifiableUnderEquality.lean`, `Dimension/IdentifiableUnderEqualityTransformer.lean`.
 -/
 
 namespace Skips
