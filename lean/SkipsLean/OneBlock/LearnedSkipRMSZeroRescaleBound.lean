@@ -496,6 +496,7 @@ private noncomputable def scaleSkipLin_lzr {L : ℕ} (S : Fin L → Matrix d d �
     simp only [Pi.smul_apply, smul_eq_mul, RingHom.id_apply]
     rw [← mul_sub, mul_smul]
 
+omit [Nonempty T] in
 /-- **Proof of Theorem B.1 (iii) of the skips paper, "The case `ε = 0`", the bound for the learned
 skip with symmetries inside the block:** for one block with a full learned skip `A` that is
 invertible, under pre-RMSNorm with `ε = 0`, if `E` has rank `d ≥ 1` and `U` is a space spanned by
@@ -667,6 +668,7 @@ private theorem half_add_half_lzr (n : ℕ) : n * (n + 1) / 2 + n * (n - 1) / 2 
   generalize n ^ 2 = q at h3 ⊢
   omega
 
+omit [Nonempty T] in
 /-- Helper (the common part of the three corollaries): if at almost every `θ` a condition `Q`
 holds that gives a space of dimension `s` of directions of symmetries inside the block, and the
 residual network has `fd + (d(d−1)/2 + 1 + s) = P`, then at almost every `(θ, A)` the functional
