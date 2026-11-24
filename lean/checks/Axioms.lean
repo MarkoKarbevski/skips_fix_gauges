@@ -1360,3 +1360,4 @@ import SkipsLean
 #print axioms Skips.ae_finrank_le_funDim_add_of_ae_locally_cob_const_family
 #print axioms Skips.ae_finrank_le_funDim_add_of_ae_locally_cob_orthogonal_family
 #print axioms Skips.ae_finrank_le_funDim_add_of_ae_locally_cob_const_orthogonal_family
+#print axioms Skips.exists_of_flatSkipsOn_learned_rmsNorm
