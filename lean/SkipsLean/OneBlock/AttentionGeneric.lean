@@ -207,6 +207,119 @@ private theorem analyticOnNhd_value_obg (i : H 0) (v : dIn → ℝ) (o : dOut) :
   simp only [attnValue, Matrix.vecMul, dotProduct]
   exact Finset.analyticOnNhd_fun_sum _ fun a _ => analyticOnNhd_const.mul (h4 a o)
 
+/-! ### Helpers: one parameter at which the conditions on `v₀ = (1, …, 1)` hold -/
+
+section Witness
+
+variable [DecidableEq dIn] [DecidableEq dOut] [DecidableEq (dh 0)] (c : d ↪ dIn) (p : d)
+  (k₀ : dh 0) (o₀ : dOut) (r : H 0 → d)
+
+/-- Helper: the witness. `E` sends `e_b` to `e_{c b}`; the query matrix of head `i` has the single
+entry `1` at `(r i, k₀)`; every key and value matrix has the single entry `1` at `(p, k₀)`; every
+output matrix has the single entry `1` at `(k₀, p)`; `D` has the single entry `1` at `(p, o₀)`. -/
+private noncomputable def wit_obg :
+    Params (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut where
+  E := Matrix.of fun a b => if a = c b then 1 else 0
+  read ℓ := Fin.cases (Matrix.of fun (b : d) (x : H 0 × (dh 0 ⊕ (dh 0 ⊕ dh 0))) =>
+      Sum.elim (fun k => if b = r x.1 ∧ k = k₀ then (1 : ℝ) else 0)
+        (fun k => if b = p ∧ Sum.elim id id k = k₀ then 1 else 0) x.2) (fun l => l.elim0) ℓ
+  write ℓ := Fin.cases (Matrix.of fun (x : H 0 × dh 0) (b : d) =>
+      if x.2 = k₀ ∧ b = p then (1 : ℝ) else 0) (fun l => l.elim0) ℓ
+  D := Matrix.of fun b o => if b = p ∧ o = o₀ then 1 else 0
+
+omit [Fintype d] [Fintype dOut] in
+/-- Helper: `E^⊤ v₀` is the vector of ones. -/
+private theorem wit_Et_obg :
+    (wit_obg (T := T) (sees := sees) c p k₀ o₀ r).Eᵀ *ᵥ (fun _ => (1 : ℝ)) = fun _ => 1 := by
+  funext b
+  show ∑ a, (if a = c b then (1 : ℝ) else 0) * 1 = 1
+  simp
+
+omit [Fintype dIn] [Fintype dOut] in
+/-- Helper: `W_{K,i}^⊤ (1, …, 1) = e_{k₀}`. -/
+private theorem wit_Kt_obg (i : H 0) :
+    (attnK (wit_obg (T := T) (sees := sees) c p k₀ o₀ r) i)ᵀ *ᵥ (fun _ => (1 : ℝ))
+      = fun k => if k = k₀ then 1 else 0 := by
+  funext k
+  show ∑ b, (if b = p ∧ k = k₀ then (1 : ℝ) else 0) * 1 = if k = k₀ then 1 else 0
+  by_cases hk : k = k₀ <;> simp [hk]
+
+omit [Fintype d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `W_{Q,i} e_{k₀} = e_{r i}`. -/
+private theorem wit_Q_obg (i : H 0) :
+    attnQ (wit_obg (T := T) (sees := sees) c p k₀ o₀ r) i *ᵥ (fun k => if k = k₀ then 1 else 0)
+      = fun b => if b = r i then 1 else 0 := by
+  funext b
+  show ∑ k, (if b = r i ∧ k = k₀ then (1 : ℝ) else 0) * (if k = k₀ then 1 else 0)
+    = if b = r i then 1 else 0
+  by_cases hb : b = r i <;> simp [hb]
+
+omit [Fintype dIn] [Fintype dOut] in
+/-- Helper: `E e_q = e_{c q}`. -/
+private theorem wit_E_obg (q : d) :
+    (wit_obg (T := T) (sees := sees) c p k₀ o₀ r).E *ᵥ (fun b => if b = q then 1 else 0)
+      = fun a => if a = c q then 1 else 0 := by
+  funext a
+  show ∑ b, (if a = c b then (1 : ℝ) else 0) * (if b = q then 1 else 0)
+    = if a = c q then 1 else 0
+  simp
+
+omit [Fintype d] [Fintype dOut] in
+/-- Helper: `v₀ E` is the vector of ones. -/
+private theorem wit_vE_obg :
+    (fun _ => (1 : ℝ)) ᵥ* (wit_obg (T := T) (sees := sees) c p k₀ o₀ r).E = fun _ => 1 := by
+  funext b
+  show ∑ a, 1 * (if a = c b then (1 : ℝ) else 0) = 1
+  simp
+
+omit [Fintype dIn] [Fintype dOut] in
+/-- Helper: `(1, …, 1) W_{V,i} = e_{k₀}`. -/
+private theorem wit_vV_obg (i : H 0) :
+    (fun _ => (1 : ℝ)) ᵥ* attnV (wit_obg (T := T) (sees := sees) c p k₀ o₀ r) i
+      = fun k => if k = k₀ then 1 else 0 := by
+  funext k
+  show ∑ b, 1 * (if b = p ∧ k = k₀ then (1 : ℝ) else 0) = if k = k₀ then 1 else 0
+  by_cases hk : k = k₀ <;> simp [hk]
+
+omit [Fintype d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `e_{k₀} W_{O,i} = e_p`. -/
+private theorem wit_vO_obg (i : H 0) :
+    (fun k => if k = k₀ then (1 : ℝ) else 0)
+        ᵥ* attnO (wit_obg (T := T) (sees := sees) c p k₀ o₀ r) i
+      = fun b => if b = p then 1 else 0 := by
+  funext b
+  show ∑ k, (if k = k₀ then (1 : ℝ) else 0) * (if k = k₀ ∧ b = p then 1 else 0)
+    = if b = p then 1 else 0
+  by_cases hb : b = p <;> simp [hb]
+
+omit [Fintype dIn] [Fintype dOut] in
+/-- Helper: `e_p D = e_{o₀}`. -/
+private theorem wit_vD_obg :
+    (fun b => if b = p then (1 : ℝ) else 0) ᵥ* (wit_obg (T := T) (sees := sees) c p k₀ o₀ r).D
+      = fun o => if o = o₀ then 1 else 0 := by
+  funext o
+  show ∑ b, (if b = p then (1 : ℝ) else 0) * (if b = p ∧ o = o₀ then 1 else 0)
+    = if o = o₀ then 1 else 0
+  by_cases ho : o = o₀ <;> simp [ho]
+
+omit [Fintype dOut] in
+/-- Helper: at the witness, `B_i v₀ = (√d_h)⁻¹ e_{c (r i)}`. -/
+private theorem wit_score_obg (i : H 0) :
+    attnScore (wit_obg (T := T) (sees := sees) c p k₀ o₀ r) i *ᵥ (fun _ => (1 : ℝ))
+      = (Real.sqrt (Fintype.card (dh 0)))⁻¹ • fun a => if a = c (r i) then 1 else 0 := by
+  rw [attnScore, Matrix.smul_mulVec, ← Matrix.mulVec_mulVec, ← Matrix.mulVec_mulVec,
+    ← Matrix.mulVec_mulVec, wit_Et_obg, wit_Kt_obg, wit_Q_obg, wit_E_obg]
+
+omit [Fintype dOut] in
+/-- Helper: at the witness, `v₀ C_i = e_{o₀}`. -/
+private theorem wit_value_obg (i : H 0) :
+    (fun _ => (1 : ℝ)) ᵥ* attnValue (wit_obg (T := T) (sees := sees) c p k₀ o₀ r) i
+      = fun o => if o = o₀ then 1 else 0 := by
+  rw [attnValue, ← Matrix.vecMul_vecMul, ← Matrix.vecMul_vecMul, ← Matrix.vecMul_vecMul,
+    wit_vE_obg, wit_vV_obg, wit_vO_obg, wit_vD_obg]
+
+end Witness
+
 /-- The conditions of the proof of Theorem C.1 for an attention block hold at generic
 parameters, for `d_in, d_out ≥ d ≥ 2`, heads of width `d_h ≤ d` and total width `H d_h ≥ d`. -/
 theorem ae_oneBlockGenericAttention
