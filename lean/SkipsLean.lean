@@ -247,3 +247,4 @@ import SkipsLean.OneBlock.LearnedSkip
 import SkipsLean.OneBlock.LearnedSkipZero
 import SkipsLean.OneBlock.LearnedSkipBound
 import SkipsLean.OneBlock.LearnedSkipKinds
+import SkipsLean.OneBlock.LearnedSkipTriangular
