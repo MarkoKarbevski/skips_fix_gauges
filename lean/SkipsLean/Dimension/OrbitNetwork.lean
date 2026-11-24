@@ -50,6 +50,25 @@ theorem exists_mem_orbit_of_eval_eq (A : Arch T d L) (S : Fin L → Matrix d d �
     (hfd : funDim A S θ + Module.finrank ℝ M = Module.finrank ℝ (Params A dIn dOut)) :
     ∀ V ∈ 𝓝 (0 : M), ∃ U ∈ 𝓝 θ, ∀ θ' ∈ U,
       (∀ x : Matrix T dIn ℝ, eval A S θ' x = eval A S θ x) → ∃ m ∈ V, Φ m = θ' := by
-  sorry
+  intro V hV
+  -- a batch `X` on which the rank of the Jacobian is the functional dimension
+  obtain ⟨n, X, hX⟩ := exists_jacobianRank_eq_funDim (S := S) θ
+  -- the outputs `F` on the batch are analytic in the parameters, hence strictly differentiable
+  have hFa : AnalyticAt ℝ (evalBatch A S X) θ :=
+    AnalyticAt.pi fun i => analyticOnNhd_eval_params A S hf hχ (X i) θ (Set.mem_univ _)
+  have hF := hFa.hasStrictFDerivAt
+  -- rank–nullity: the kernel of the Jacobian has the dimension of `M`
+  have hdim : Module.finrank ℝ (LinearMap.ker (fderiv ℝ (evalBatch A S X) θ).toLinearMap)
+      = Module.finrank ℝ M := by
+    have h := LinearMap.finrank_range_add_finrank_ker (fderiv ℝ (evalBatch A S X) θ).toLinearMap
+    have h' : jacobianRank A S X θ
+        = Module.finrank ℝ (LinearMap.range (fderiv ℝ (evalBatch A S X) θ).toLinearMap) := rfl
+    omega
+  -- the family keeps the outputs on the batch near `0`
+  have hconst' : ∀ᶠ m in 𝓝 (0 : M), evalBatch A S X (Φ m) = evalBatch A S X θ :=
+    hconst.mono fun m h => funext fun i => h (X i)
+  -- the family fills the level set near `θ`
+  obtain ⟨U, hU, hUV⟩ := exists_mem_orbit_of_level_set hF hΦ hΦ0 hinj hconst' hdim V hV
+  exact ⟨U, hU, fun θ' hθ' heq => hUV θ' hθ' (funext fun i => heq (X i))⟩
 
 end Skips
