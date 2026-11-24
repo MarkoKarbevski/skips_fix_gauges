@@ -119,3 +119,17 @@ import SkipsLean
 #print axioms Skips.relu_units_flat
 #print axioms Skips.reluSq_units_flat
 #print axioms Skips.relu_gated_units_flat
+-- Skips paper, Theorem 4.6 (i): one block with a skip
+#print axioms Skips.rescaleDir_mem_flat_stream
+#print axioms Skips.flat_le_range_cobDir_const_mlp_residual
+#print axioms Skips.funDim_mlp_oneBlock_residual
+#print axioms Skips.ae_funDim_mlp_oneBlock_residual
+#print axioms Skips.ae_funDim_mlp_oneBlock_residual_eq_add
+#print axioms Skips.flat_le_cobDir_const_add_rescaleDir_gated_residual
+#print axioms Skips.funDim_gated_oneBlock_residual
+#print axioms Skips.ae_funDim_gated_oneBlock_residual
+#print axioms Skips.ae_funDim_gated_oneBlock_residual_eq_add
+#print axioms Skips.ae_funDim_tanh_oneBlock_residual_eq_add
+#print axioms Skips.ae_funDim_gelu_oneBlock_residual_eq_add
+#print axioms Skips.ae_funDim_swiglu_oneBlock_residual_eq_add
+#print axioms Skips.ae_funDim_geglu_oneBlock_residual_eq_add
