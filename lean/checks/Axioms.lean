@@ -599,3 +599,9 @@ import SkipsLean
 #print axioms Skips.relu_gate_scale
 #print axioms Skips.silu_gate_scale
 #print axioms Skips.gelu_gate_scale
+#print axioms Skips.flat_at_generic_ray_mlp_rmsNorm
+#print axioms Skips.flat_of_suffixFlat_mlp_rmsNorm
+#print axioms Skips.flat_of_suffixFlat_gelu_rmsNorm
+#print axioms Skips.claimRMS_castSucc_gelu
+#print axioms Skips.exists_regular_claimRMS_gelu
+#print axioms Skips.ae_funDim_gelu_skipless_rmsNorm

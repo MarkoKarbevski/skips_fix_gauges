@@ -84,3 +84,8 @@ import SkipsLean.Depth.RayGatedPlus
 import SkipsLean.Depth.RayMlpPlus
 import SkipsLean.Depth.StepsPlus
 import SkipsLean.Symmetry.OnlyOrthogonal
+import SkipsLean.Residual.SmallParameter
+import SkipsLean.Residual.SmallWrites
+import SkipsLean.Residual.DepthMlp
+import SkipsLean.Residual.DepthGated
+import SkipsLean.Residual.ExactGain
