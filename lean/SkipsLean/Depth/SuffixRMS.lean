@@ -72,20 +72,76 @@ theorem analyticOnNhd_rmsNorm (hε : 0 < ε) :
     (f := fun h : Matrix T d ℝ => (h t ⬝ᵥ h t) / (Fintype.card d : ℝ) + ε) hq).inv
       (Real.sqrt_pos.2 hpos).ne').mul (analyticOnNhd_entry t i h (Set.mem_univ _))
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- The matrix product of two analytic matrix-valued maps is analytic (matrix multiplication is a
+continuous bilinear map). -/
+theorem analyticOnNhd_matrix_mul {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    {f : E → Matrix m n ℝ} {g : E → Matrix n p ℝ} {s : Set E}
+    (hf : AnalyticOnNhd ℝ f s) (hg : AnalyticOnNhd ℝ g s) :
+    AnalyticOnNhd ℝ (fun y => f y * g y) s := by
+  -- matrix multiplication as a bilinear map
+  let B : Matrix m n ℝ →ₗ[ℝ] Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ :=
+    LinearMap.mk₂ ℝ (fun a b => a * b) Matrix.add_mul (fun c a b => Matrix.smul_mul c a b)
+      Matrix.mul_add (fun c a b => Matrix.mul_smul a c b)
+  -- the same map with continuous linear maps (all spaces are finite-dimensional)
+  let B' : Matrix m n ℝ →L[ℝ] Matrix n p ℝ →L[ℝ] Matrix m p ℝ :=
+    LinearMap.toContinuousLinearMap
+      ((LinearMap.toContinuousLinearMap :
+        (Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ) ≃ₗ[ℝ] (Matrix n p ℝ →L[ℝ] Matrix m p ℝ)).toLinearMap ∘ₗ B)
+  have hB : (fun y => f y * g y) = fun y => B' (f y) (g y) := rfl
+  rw [hB]
+  exact fun y hy => (B'.analyticAt_bilinear (f y, g y)).comp₂ (hf y hy) (hg y hy)
+
 /-- For a real-analytic `χ` and real-analytic blocks, the network after a hidden state is
 real-analytic in the weights and the hidden state together. -/
 theorem analyticOnNhd_suffix_prod_of_analytic (hχ : AnalyticOnNhd ℝ A.χ Set.univ)
     (hf : ∀ ℓ, AnalyticOnNhd ℝ (A.f ℓ) Set.univ) (k : Fin (L + 1)) :
     AnalyticOnNhd ℝ
       (fun p : Params A dIn dOut × Matrix T d ℝ => suffix A 0 p.1 k p.2) Set.univ := by
-  sorry
+  -- the weights are linear, hence analytic, functions of the parameters
+  have hD : AnalyticOnNhd ℝ (fun p : Params A dIn dOut × Matrix T d ℝ => p.1.D) Set.univ :=
+    ((LinearMap.toContinuousLinearMap
+      (Params.linD (A := A) (dIn := dIn) (dOut := dOut))).analyticOnNhd _).comp
+      analyticOnNhd_fst (Set.mapsTo_univ _ _)
+  have hr : ∀ ℓ, AnalyticOnNhd ℝ
+      (fun p : Params A dIn dOut × Matrix T d ℝ => p.1.read ℓ) Set.univ := fun ℓ =>
+    ((LinearMap.toContinuousLinearMap
+      (Params.linRead (A := A) (dIn := dIn) (dOut := dOut) ℓ)).analyticOnNhd _).comp
+      analyticOnNhd_fst (Set.mapsTo_univ _ _)
+  have hw : ∀ ℓ, AnalyticOnNhd ℝ
+      (fun p : Params A dIn dOut × Matrix T d ℝ => p.1.write ℓ) Set.univ := fun ℓ =>
+    ((LinearMap.toContinuousLinearMap
+      (Params.linWrite (A := A) (dIn := dIn) (dOut := dOut) ℓ)).analyticOnNhd _).comp
+      analyticOnNhd_fst (Set.mapsTo_univ _ _)
+  -- `(θ, h) ↦ χ(h)` is analytic
+  have hχ' : AnalyticOnNhd ℝ (fun p : Params A dIn dOut × Matrix T d ℝ => A.χ p.2) Set.univ :=
+    hχ.comp analyticOnNhd_snd (Set.mapsTo_univ _ _)
+  induction k using Fin.reverseInduction with
+  | last =>
+    -- `(θ, h) ↦ χ(h) D`
+    simp only [suffix_last]
+    exact analyticOnNhd_matrix_mul hχ' hD
+  | cast ℓ ih =>
+    -- `(θ, h) ↦ 𝓑_{>ℓ}(f_ℓ(χ(h) W_read) W_write)`, with the weights `θ`
+    simp only [suffix_castSucc, Pi.zero_apply, Matrix.mul_zero, zero_add]
+    have hg : AnalyticOnNhd ℝ (fun p : Params A dIn dOut × Matrix T d ℝ =>
+        (p.1, A.f ℓ (A.χ p.2 * p.1.read ℓ) * p.1.write ℓ)) Set.univ :=
+      analyticOnNhd_fst.prod (analyticOnNhd_matrix_mul
+        ((hf ℓ).comp (analyticOnNhd_matrix_mul hχ' (hr ℓ)) (Set.mapsTo_univ _ _)) (hw ℓ))
+    have hc := ih.comp hg (Set.mapsTo_univ _ _)
+    exact hc
 
 /-- For a real-analytic `χ` and real-analytic blocks, `𝓑_{>k}` is real-analytic in the hidden
 state. -/
 theorem analyticOnNhd_suffix_of_analytic (hχ : AnalyticOnNhd ℝ A.χ Set.univ)
     (hf : ∀ ℓ, AnalyticOnNhd ℝ (A.f ℓ) Set.univ) (k : Fin (L + 1)) :
     AnalyticOnNhd ℝ (fun h : Matrix T d ℝ => suffix A 0 θ k h) Set.univ := by
-  sorry
+  -- compose with `h ↦ (θ, h)`
+  have h1 : AnalyticOnNhd ℝ (fun h : Matrix T d ℝ => (θ, h)) Set.univ :=
+    analyticOnNhd_const.prod analyticOnNhd_id
+  have hc := (analyticOnNhd_suffix_prod_of_analytic A hχ hf k).comp h1 (Set.mapsTo_univ _ _)
+  exact hc
 
 /-- **Claim `(D_k)` in the case (+),** for blocks without symmetries inside: every `Z` and `η` that
 satisfy the identity (16) for `k` come from changes of basis `Z_k = Z, Z_{k+1}, …, Z_L` at the
