@@ -302,10 +302,10 @@ theorem write_eq_sum_of_abs_eq {m' : Type*} [Fintype m'] (Wr : Matrix p m ℝ) (
 
 variable [DecidableEq m]
 
-/-- **Corollary A.9 / Theorem A.4, "only if", for ReLU.** Let `p ≥ 2` and let the block be
-nondegenerate. If a ReLU block of the same width computes `x M + B(x)`, then some set `S` of hidden
-units has `W_read[:,S] W_write[S,:] = -M`. -/
-theorem exists_subProd_eq_neg_of_relu_absorb (hp : 2 ≤ Fintype.card p) (Wr : Matrix p m ℝ)
+/-- **Corollary A.9 / Theorem A.4, "only if", for ReLU.** Let the block be nondegenerate. If a
+ReLU block of the same width computes `x M + B(x)`, then some set `S` of hidden units has
+`W_read[:,S] W_write[S,:] = -M`. (The paper assumes `p ≥ 2`; the proof does not use it.) -/
+theorem exists_subProd_eq_neg_of_relu_absorb (Wr : Matrix p m ℝ)
     (Ww : Matrix m q ℝ) (hnd : Nondegenerate Wr Ww) (M : Matrix p q ℝ) (Wr' : Matrix p m ℝ)
     (Ww' : Matrix m q ℝ)
     (h : ∀ x : p → ℝ, x ᵥ* M + vanillaBlock relu Wr Ww x = vanillaBlock relu Wr' Ww' x) :
@@ -435,39 +435,39 @@ theorem exists_subProd_eq_neg_of_relu_absorb (hp : 2 ≤ Fintype.card p) (Wr : M
   linarith
 
 /-- **Corollary A.9, "only if", for GELU.** -/
-theorem exists_subProd_eq_neg_of_gelu_absorb (hp : 2 ≤ Fintype.card p) (Wr : Matrix p m ℝ)
+theorem exists_subProd_eq_neg_of_gelu_absorb (Wr : Matrix p m ℝ)
     (Ww : Matrix m q ℝ) (hnd : Nondegenerate Wr Ww) (M : Matrix p q ℝ) (Wr' : Matrix p m ℝ)
     (Ww' : Matrix m q ℝ)
     (h : ∀ x : p → ℝ, x ᵥ* M + vanillaBlock gelu Wr Ww x = vanillaBlock gelu Wr' Ww' x) :
     ∃ S : Finset m, subProd S Wr Ww = -M :=
   -- the ReLU blocks with the same weights satisfy the same equation
-  exists_subProd_eq_neg_of_relu_absorb hp Wr Ww hnd M Wr' Ww'
+  exists_subProd_eq_neg_of_relu_absorb Wr Ww hnd M Wr' Ww'
     (relu_absorb_of_gelu_absorb Wr Ww Wr' Ww' M h)
 
 /-- **Theorem 3.1 (i), first sentence, for ReLU** (Corollary A.9): a nondegenerate block absorbs
 `x M` at the same width if and only if some set `S` of hidden units has
 `W_read[:,S] W_write[S,:] = -M`. -/
-theorem relu_absorb_same_width_iff (hp : 2 ≤ Fintype.card p) (Wr : Matrix p m ℝ)
+theorem relu_absorb_same_width_iff (Wr : Matrix p m ℝ)
     (Ww : Matrix m q ℝ) (hnd : Nondegenerate Wr Ww) (M : Matrix p q ℝ) :
     (∃ (Wr' : Matrix p m ℝ) (Ww' : Matrix m q ℝ),
         ∀ x : p → ℝ, x ᵥ* M + vanillaBlock relu Wr Ww x = vanillaBlock relu Wr' Ww' x)
       ↔ ∃ S : Finset m, subProd S Wr Ww = -M := by
   constructor
   · rintro ⟨Wr', Ww', h⟩
-    exact exists_subProd_eq_neg_of_relu_absorb hp Wr Ww hnd M Wr' Ww' h
+    exact exists_subProd_eq_neg_of_relu_absorb Wr Ww hnd M Wr' Ww' h
   · -- flip the reads of the units of `S`
     rintro ⟨S, hS⟩
     exact ⟨flipCols S Wr, Ww, vanillaBlock_flipCols_of_subProd relu_sub_relu_neg S Wr Ww M hS⟩
 
 /-- **Theorem 3.1 (i), first sentence, for GELU.** -/
-theorem gelu_absorb_same_width_iff (hp : 2 ≤ Fintype.card p) (Wr : Matrix p m ℝ)
+theorem gelu_absorb_same_width_iff (Wr : Matrix p m ℝ)
     (Ww : Matrix m q ℝ) (hnd : Nondegenerate Wr Ww) (M : Matrix p q ℝ) :
     (∃ (Wr' : Matrix p m ℝ) (Ww' : Matrix m q ℝ),
         ∀ x : p → ℝ, x ᵥ* M + vanillaBlock gelu Wr Ww x = vanillaBlock gelu Wr' Ww' x)
       ↔ ∃ S : Finset m, subProd S Wr Ww = -M := by
   constructor
   · rintro ⟨Wr', Ww', h⟩
-    exact exists_subProd_eq_neg_of_gelu_absorb hp Wr Ww hnd M Wr' Ww' h
+    exact exists_subProd_eq_neg_of_gelu_absorb Wr Ww hnd M Wr' Ww' h
   · -- flip the reads of the units of `S`
     rintro ⟨S, hS⟩
     exact ⟨flipCols S Wr, Ww, vanillaBlock_flipCols_of_subProd gelu_sub_gelu_neg S Wr Ww M hS⟩
@@ -599,7 +599,7 @@ theorem ae_not_relu_absorb_same_width (hp : 2 ≤ Fintype.card p) (M : Matrix p 
     exact hM (Matrix.ext fun _ o => (hq ⟨o⟩).elim)
   filter_upwards [ae_nondegenerate hp μ, ae_forall_subProd_ne_neg M hM μ] with W hnd hS
   rintro ⟨Wr', Ww', h⟩
-  obtain ⟨S, hS'⟩ := exists_subProd_eq_neg_of_relu_absorb hp W.1 W.2 hnd M Wr' Ww' h
+  obtain ⟨S, hS'⟩ := exists_subProd_eq_neg_of_relu_absorb W.1 W.2 hnd M Wr' Ww' h
   exact hS S hS'
 
 /-- **Theorem 3.1 (i), second sentence, for GELU.** -/
@@ -613,7 +613,7 @@ theorem ae_not_gelu_absorb_same_width (hp : 2 ≤ Fintype.card p) (M : Matrix p 
     exact hM (Matrix.ext fun _ o => (hq ⟨o⟩).elim)
   filter_upwards [ae_nondegenerate hp μ, ae_forall_subProd_ne_neg M hM μ] with W hnd hS
   rintro ⟨Wr', Ww', h⟩
-  obtain ⟨S, hS'⟩ := exists_subProd_eq_neg_of_gelu_absorb hp W.1 W.2 hnd M Wr' Ww' h
+  obtain ⟨S, hS'⟩ := exists_subProd_eq_neg_of_gelu_absorb W.1 W.2 hnd M Wr' Ww' h
   exact hS S hS'
 
 /-! ### Proposition 3.2: networks of one block -/
@@ -746,9 +746,9 @@ theorem ae_ne_skipless_oneBlock_relu [Nonempty T]
       ∃ X : Matrix T dIn ℝ,
         eval (Arch.mlp relu id hid) 1 θ X ≠ eval (Arch.mlp relu id hid) 0 θ' X := by
   classical
-  -- Corollary A.9 with `p = d_in` (`d_in ≥ d ≥ 2`)
+  -- Corollary A.9 with `p = d_in`
   exact ae_ne_skipless_oneBlock_of (fun Wr Ww hnd M Wr' Ww' h =>
-    exists_subProd_eq_neg_of_relu_absorb (by omega) Wr Ww hnd M Wr' Ww' h) μ hd hdIn hdOut hhid
+    exists_subProd_eq_neg_of_relu_absorb Wr Ww hnd M Wr' Ww' h) μ hd hdIn hdOut hhid
 
 /-- **Proposition 3.2 for GELU.** -/
 theorem ae_ne_skipless_oneBlock_gelu [Nonempty T]
@@ -760,9 +760,9 @@ theorem ae_ne_skipless_oneBlock_gelu [Nonempty T]
       ∃ X : Matrix T dIn ℝ,
         eval (Arch.mlp gelu id hid) 1 θ X ≠ eval (Arch.mlp gelu id hid) 0 θ' X := by
   classical
-  -- Corollary A.9 with `p = d_in` (`d_in ≥ d ≥ 2`)
+  -- Corollary A.9 with `p = d_in`
   exact ae_ne_skipless_oneBlock_of (fun Wr Ww hnd M Wr' Ww' h =>
-    exists_subProd_eq_neg_of_gelu_absorb (by omega) Wr Ww hnd M Wr' Ww' h) μ hd hdIn hdOut hhid
+    exists_subProd_eq_neg_of_gelu_absorb Wr Ww hnd M Wr' Ww' h) μ hd hdIn hdOut hhid
 
 end OneBlock
 
