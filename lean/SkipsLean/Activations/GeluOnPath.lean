@@ -32,18 +32,30 @@ of the read, `n(t) c = z(t)` with `ω = (√d/2)(ξc + i ξ'c)`. -/
 noncomputable def unitPath (ω : ℂ) (t : ℝ) : ℂ :=
   ω * (t : ℂ) + (starRingEnd ℂ) ω / (t : ℂ)
 
+/-- `z(t) = ω t + ω̄ · (1/t)` with a real factor `1/t`. -/
+private theorem unitPath_eq_gop (ω : ℂ) (t : ℝ) :
+    unitPath ω t = ω * (t : ℂ) + (starRingEnd ℂ) ω * ((1 / t : ℝ) : ℂ) := by
+  simp [unitPath, div_eq_mul_inv]
+
 /-- (44): `Re z(t) = Re ω (t + 1/t)`. -/
 theorem unitPath_re (ω : ℂ) {t : ℝ} (ht : 0 < t) : (unitPath ω t).re = ω.re * (t + 1 / t) := by
-  sorry
+  rw [unitPath_eq_gop]
+  simp [Complex.mul_re]
+  ring
 
 /-- (44): `Im z(t) = Im ω (t − 1/t)`. -/
 theorem unitPath_im (ω : ℂ) {t : ℝ} (ht : 0 < t) : (unitPath ω t).im = ω.im * (t - 1 / t) := by
-  sorry
+  rw [unitPath_eq_gop]
+  simp [Complex.mul_im]
+  ring
 
 /-- (44): `Re z(t)² = 4 (Re ω)² + ((Re ω)² − (Im ω)²)(t − 1/t)²`. -/
 theorem unitPath_sq_re (ω : ℂ) {t : ℝ} (ht : 0 < t) :
     ((unitPath ω t) ^ 2).re = 4 * ω.re ^ 2 + (ω.re ^ 2 - ω.im ^ 2) * (t - 1 / t) ^ 2 := by
-  sorry
+  -- `Re z² = (Re z)² − (Im z)²`, and `(t + 1/t)² = (t − 1/t)² + 4`
+  have h : t * (1 / t) = 1 := by field_simp
+  rw [pow_two, Complex.mul_re, unitPath_re ω ht, unitPath_im ω ht]
+  linear_combination (4 * ω.re ^ 2) * h
 
 /-- The absolute value of the normal density on the path:
 `|φ(z(t))| = e^{−2(Re ω)²} e^{−((Re ω)² − (Im ω)²)(t − 1/t)²/2} / √(2π)`. -/
@@ -52,7 +64,14 @@ theorem norm_gaussPdfC_unitPath (ω : ℂ) {t : ℝ} (ht : 0 < t) :
       = Real.exp (-(2 * ω.re ^ 2))
           * Real.exp (-((ω.re ^ 2 - ω.im ^ 2) * (t - 1 / t) ^ 2 / 2))
           / Real.sqrt (2 * Real.pi) := by
-  sorry
+  -- `|e^w| = e^{Re w}` with `Re(−z²/2) = −Re z²/2`, and (44) for `Re z²`
+  have hsq := unitPath_sq_re ω ht
+  unfold gaussPdfC
+  rw [norm_div, Complex.norm_exp, Complex.norm_real, Real.norm_of_nonneg (Real.sqrt_nonneg _),
+    ← Real.exp_add]
+  congr 2
+  simp [hsq]
+  ring
 
 /-- (45), first bound: for `t ≥ 1`, when `|Im ω| < Re ω`,
 `|δ(t)| = |z(t) − σ(z(t))| ≤ e^{−2(Re ω)²} e^{−((Re ω)² − (Im ω)²)(t−1/t)²/2}`. -/
