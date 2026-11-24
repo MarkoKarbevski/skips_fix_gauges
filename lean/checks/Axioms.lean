@@ -1340,3 +1340,4 @@ import SkipsLean
 #print axioms Skips.ae_funDimLearned_swiglu_rmsNorm_eq_residual_add
 #print axioms Skips.ae_funDimLearned_geglu_rmsNorm
 #print axioms Skips.ae_funDimLearned_geglu_rmsNorm_eq_residual_add
+#print axioms Skips.funDim_add_finrank_le_funDimSkips_zero
