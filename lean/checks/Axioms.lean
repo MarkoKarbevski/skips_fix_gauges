@@ -971,3 +971,11 @@ import SkipsLean
 #print axioms Skips.ae_funDim_skipless_add_le_reglu_oneBlock_residual_rmsNorm
 #print axioms Skips.eventually_jacobianRank_smallWrites_ge_of_contDiffOn
 #print axioms Skips.eventually_jacobianRank_ge_of_contDiffOn
+#print axioms Skips.smallWritesLimit_eq_zero_mlp_rescale
+#print axioms Skips.exists_eventually_jacobianRank_smallWrites_mlp_rescale
+#print axioms Skips.eventually_funDim_smallWrites_mlp_rescale
+#print axioms Skips.eventually_eventually_funDim_smallWrites_mlp_rescale
+#print axioms Skips.ae_exists_eventually_jacobianRank_smallWrites_relu
+#print axioms Skips.exists_isOpen_funDim_smallWrites_relu
+#print axioms Skips.ae_exists_eventually_jacobianRank_smallWrites_reluSq
+#print axioms Skips.exists_isOpen_funDim_smallWrites_reluSq
