@@ -240,7 +240,53 @@ theorem exists_cob_learned_upperTriangular_pos [LinearOrder d] (ε : ℝ) (hA : 
       (∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ) ∧
       (∀ ℓ, (cobSkip S Q ℓ).BlockTriangular id ∧ ∀ i, 0 < cobSkip S Q ℓ i i) ∧
       ∀ x : Matrix T dIn ℝ, eval A (cobSkip S Q) (θ.cob Q Q) x = eval A S θ x := by
-  sorry
+  -- one step: for `P` and an invertible `M`, an orthogonal `R` with `P⁻¹ M R` upper triangular
+  -- with positive diagonal (the RQ factorization of `P⁻¹ M`)
+  have step : ∀ (P : GL d ℝ) (M : Matrix d d ℝ), IsUnit M.det → ∃ R : GL d ℝ,
+      (R : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ ∧
+      ((↑P⁻¹ : Matrix d d ℝ) * M * (R : Matrix d d ℝ)).BlockTriangular id ∧
+      ∀ i, 0 < ((↑P⁻¹ : Matrix d d ℝ) * M * (R : Matrix d d ℝ)) i i := by
+    intro P M hM
+    have hX : IsUnit ((↑P⁻¹ : Matrix d d ℝ) * M).det := by
+      rw [det_mul]
+      exact ((Matrix.isUnit_iff_isUnit_det _).mp (P⁻¹).isUnit).mul hM
+    obtain ⟨R₀, R, htri, hpos, hR, hX⟩ :=
+      exists_upperTriangular_pos_mul_orthogonal_transpose ((↑P⁻¹ : Matrix d d ℝ) * M) hX
+    -- `P⁻¹ M R = R₀ Rᵀ R = R₀`
+    have e : (↑P⁻¹ : Matrix d d ℝ) * M * R = R₀ := by
+      rw [hX, Matrix.mul_assoc, (Matrix.mem_orthogonalGroup_iff' d ℝ).mp hR, Matrix.mul_one]
+    -- `R` is invertible, with inverse `Rᵀ`
+    refine ⟨⟨R, Rᵀ, (Matrix.mem_orthogonalGroup_iff d ℝ).mp hR,
+      (Matrix.mem_orthogonalGroup_iff' d ℝ).mp hR⟩, hR, ?_, ?_⟩
+    · change ((↑P⁻¹ : Matrix d d ℝ) * M * R).BlockTriangular id
+      rw [e]; exact htri
+    · change ∀ i, 0 < ((↑P⁻¹ : Matrix d d ℝ) * M * R) i i
+      rw [e]; exact hpos
+  choose R hR htri hpos using step
+  -- `Q_0 = I` and `Q_ℓ = R(Q_{ℓ-1}, A_ℓ)`
+  obtain ⟨Q, hQ0, hQs⟩ : ∃ Q : Fin (L + 1) → GL d ℝ,
+      Q 0 = 1 ∧ ∀ ℓ : Fin L, Q ℓ.succ = R (Q ℓ.castSucc) (S ℓ) (hS ℓ) :=
+    ⟨Fin.induction (motive := fun _ => GL d ℝ) 1 fun ℓ P => R P (S ℓ) (hS ℓ),
+      Fin.induction_zero _ _, fun ℓ => Fin.induction_succ _ _ ℓ⟩
+  -- every `Q_ℓ` is orthogonal
+  have hQ : ∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ := by
+    intro ℓ
+    induction ℓ using Fin.induction with
+    | zero => rw [hQ0, Units.val_one]; exact one_mem _
+    | succ ℓ _ => rw [hQs]; exact hR _ _ _
+  refine ⟨Q, hQ0, hQ, fun ℓ => ?_, fun x => ?_⟩
+  · -- `Q_{ℓ-1}⁻¹ A_ℓ Q_ℓ` is upper triangular with positive diagonal by the choice of `Q_ℓ`
+    change ((↑(Q ℓ.castSucc)⁻¹ : Matrix d d ℝ) * S ℓ * (Q ℓ.succ : Matrix d d ℝ)).BlockTriangular
+        id ∧ ∀ i, 0 < ((↑(Q ℓ.castSucc)⁻¹ : Matrix d d ℝ) * S ℓ * (Q ℓ.succ : Matrix d d ℝ)) i i
+    rw [hQs]
+    exact ⟨htri _ _ _, hpos _ _ _⟩
+  · -- pre-RMSNorm commutes with every orthogonal `Q_ℓ` (Lemma A.1); then Proposition 3.2
+    have hχ : ∀ ℓ (h : Matrix T d ℝ),
+        A.χ (h * (Q ℓ : Matrix d d ℝ)) = A.χ h * (Q ℓ : Matrix d d ℝ) := by
+      intro ℓ h
+      rw [hA]
+      exact rmsNorm_mul_orthogonal ε (hQ ℓ) h
+    exact eval_cob S θ Q Q x hχ
 
 /-- **Theorem A.12 (i), symmetric skips.** Under pre-RMSNorm, for invertible learned skips `A_ℓ`
 (the stream matrices `S ℓ`), there are orthogonal `Q_0 = I, Q_1, …, Q_L` such that every
@@ -253,6 +299,48 @@ theorem exists_cob_learned_posDef (ε : ℝ) (hA : A.χ = rmsNorm ε)
       (∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ) ∧
       (∀ ℓ, (cobSkip S Q ℓ).PosDef) ∧
       ∀ x : Matrix T dIn ℝ, eval A (cobSkip S Q) (θ.cob Q Q) x = eval A S θ x := by
-  sorry
+  -- one step: for `P` and an invertible `M`, an orthogonal `R` with `P⁻¹ M R` symmetric positive
+  -- definite (the polar decomposition of `P⁻¹ M`)
+  have step : ∀ (P : GL d ℝ) (M : Matrix d d ℝ), IsUnit M.det → ∃ R : GL d ℝ,
+      (R : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ ∧
+      ((↑P⁻¹ : Matrix d d ℝ) * M * (R : Matrix d d ℝ)).PosDef := by
+    intro P M hM
+    have hX : IsUnit ((↑P⁻¹ : Matrix d d ℝ) * M).det := by
+      rw [det_mul]
+      exact ((Matrix.isUnit_iff_isUnit_det _).mp (P⁻¹).isUnit).mul hM
+    obtain ⟨S₀, R, hpd, hR, hX⟩ :=
+      exists_posDef_mul_orthogonal_transpose ((↑P⁻¹ : Matrix d d ℝ) * M) hX
+    -- `P⁻¹ M R = S₀ Rᵀ R = S₀`
+    have e : (↑P⁻¹ : Matrix d d ℝ) * M * R = S₀ := by
+      rw [hX, Matrix.mul_assoc, (Matrix.mem_orthogonalGroup_iff' d ℝ).mp hR, Matrix.mul_one]
+    -- `R` is invertible, with inverse `Rᵀ`
+    refine ⟨⟨R, Rᵀ, (Matrix.mem_orthogonalGroup_iff d ℝ).mp hR,
+      (Matrix.mem_orthogonalGroup_iff' d ℝ).mp hR⟩, hR, ?_⟩
+    change ((↑P⁻¹ : Matrix d d ℝ) * M * R).PosDef
+    rw [e]; exact hpd
+  choose R hR hpd using step
+  -- `Q_0 = I` and `Q_ℓ = R(Q_{ℓ-1}, A_ℓ)`
+  obtain ⟨Q, hQ0, hQs⟩ : ∃ Q : Fin (L + 1) → GL d ℝ,
+      Q 0 = 1 ∧ ∀ ℓ : Fin L, Q ℓ.succ = R (Q ℓ.castSucc) (S ℓ) (hS ℓ) :=
+    ⟨Fin.induction (motive := fun _ => GL d ℝ) 1 fun ℓ P => R P (S ℓ) (hS ℓ),
+      Fin.induction_zero _ _, fun ℓ => Fin.induction_succ _ _ ℓ⟩
+  -- every `Q_ℓ` is orthogonal
+  have hQ : ∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ := by
+    intro ℓ
+    induction ℓ using Fin.induction with
+    | zero => rw [hQ0, Units.val_one]; exact one_mem _
+    | succ ℓ _ => rw [hQs]; exact hR _ _ _
+  refine ⟨Q, hQ0, hQ, fun ℓ => ?_, fun x => ?_⟩
+  · -- `Q_{ℓ-1}⁻¹ A_ℓ Q_ℓ` is symmetric positive definite by the choice of `Q_ℓ`
+    change ((↑(Q ℓ.castSucc)⁻¹ : Matrix d d ℝ) * S ℓ * (Q ℓ.succ : Matrix d d ℝ)).PosDef
+    rw [hQs]
+    exact hpd _ _ _
+  · -- pre-RMSNorm commutes with every orthogonal `Q_ℓ` (Lemma A.1); then Proposition 3.2
+    have hχ : ∀ ℓ (h : Matrix T d ℝ),
+        A.χ (h * (Q ℓ : Matrix d d ℝ)) = A.χ h * (Q ℓ : Matrix d d ℝ) := by
+      intro ℓ h
+      rw [hA]
+      exact rmsNorm_mul_orthogonal ε (hQ ℓ) h
+    exact eval_cob S θ Q Q x hχ
 
 end Skips
