@@ -176,6 +176,7 @@ private theorem mul_add_smul_inj_rz [Nonempty d] {m : Type*} (M : Matrix m d ℝ
     exact h
   exact antisymm_add_smul_one_inj_rz hX hX' (cancel_left_of_rank_rz M hM h')
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Lemma B.1 for `ε = 0`, infinitesimal form:** if `E` and every write have rank `d ≥ 1`, the
 antisymmetric matrices `Y_0, …, Y_L` and the numbers `β_0, …, β_L` are determined by the direction
 `cobDir θ Y + scaleDir θ β`. -/
