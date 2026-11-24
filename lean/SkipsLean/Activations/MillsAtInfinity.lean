@@ -36,13 +36,13 @@ def FasterThanPowers (f : ℝ → F) : Prop :=
 
 /-- The definition, written out. -/
 theorem fasterThanPowers_iff (f : ℝ → F) :
-    FasterThanPowers f ↔ ∀ m : ℕ, Tendsto (fun t : ℝ => t ^ m * ‖f t‖) atTop (𝓝 0) :=
-  Iff.rfl
+    FasterThanPowers f ↔ ∀ m : ℕ, Tendsto (fun t : ℝ => t ^ m * ‖f t‖) atTop (𝓝 0) := by
+  exact Iff.rfl
 
 /-- Two maps that agree for all large `t` tend to `0` faster than every power together. -/
 theorem FasterThanPowers.congr {f g : ℝ → F} (hf : FasterThanPowers f)
-    (hfg : ∀ᶠ t in atTop, f t = g t) : FasterThanPowers g :=
-  SuperpolynomialDecay.congr' hf (hfg.mono fun _ ht => congrArg norm ht)
+    (hfg : ∀ᶠ t in atTop, f t = g t) : FasterThanPowers g := by
+  exact SuperpolynomialDecay.congr' hf (hfg.mono fun _ ht => congrArg norm ht)
 
 /-- A map whose norm is, for all large `t`, at most a function with superpolynomial decay tends to
 `0` faster than every power. -/
@@ -55,14 +55,14 @@ private lemma fasterThanPowers_of_norm_le {g : ℝ → F} {u : ℝ → ℝ}
 /-- A map that is, for all large `t`, at most as large as one that tends to `0` faster than every
 power does so too. -/
 theorem FasterThanPowers.mono {G : Type*} [NormedAddCommGroup G] {f : ℝ → F} {g : ℝ → G}
-    (hf : FasterThanPowers f) (hgf : ∀ᶠ t in atTop, ‖g t‖ ≤ ‖f t‖) : FasterThanPowers g :=
-  fasterThanPowers_of_norm_le hf hgf
+    (hf : FasterThanPowers f) (hgf : ∀ᶠ t in atTop, ‖g t‖ ≤ ‖f t‖) : FasterThanPowers g := by
+  exact fasterThanPowers_of_norm_le hf hgf
 
 /-- A sum of two maps that tend to `0` faster than every power does so too. -/
 theorem FasterThanPowers.add {f g : ℝ → F} (hf : FasterThanPowers f) (hg : FasterThanPowers g) :
-    FasterThanPowers fun t => f t + g t :=
+    FasterThanPowers fun t => f t + g t := by
   -- `‖f(t) + g(t)‖ ≤ ‖f(t)‖ + ‖g(t)‖`
-  fasterThanPowers_of_norm_le (SuperpolynomialDecay.add hf hg)
+  exact fasterThanPowers_of_norm_le (SuperpolynomialDecay.add hf hg)
     (Eventually.of_forall fun t => norm_add_le (f t) (g t))
 
 /-- A map that tends to `0` faster than every power still does after multiplication by a function
