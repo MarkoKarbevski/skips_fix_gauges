@@ -20,7 +20,7 @@ block, for one row (the paper's one token): (R1) for the write, `V` has rank `d`
 `GELU(nW) V ≠ 0` for every row `n` on the sphere `‖n‖² = d`; (R3) at some such `n`, a `v ⊥ n` with
 `𝐃g(n) v ∈ ℝ g(n)` is `0`, where `g(n) = GELU(nW) V`; (P1); (P2) for `κ`.
 
-The existence needs one pair only, and the Lean proof may take an explicit one, with the hidden
+The existence needs one pair only, and the Lean proof takes an explicit one, with the hidden
 units `d ⊕ Fin m`: the columns of `W` are `λ (𝟙 + ε e_i)` (`i ∈ d`, `𝟙` the row of ones) and
 `λ μ_j 𝟙`, the rows of `V` are `e_i` and `η 𝟙`, with `ξ₀ = 𝟙/√d`, `ε` small, `λ` large, then `η`
 small.

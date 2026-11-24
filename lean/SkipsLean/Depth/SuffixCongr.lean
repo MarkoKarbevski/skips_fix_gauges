@@ -3,9 +3,10 @@ import SkipsLean.Depth.ComplexBlockIdentity
 /-!
 # The network after a hidden state depends only on the later blocks; `𝓛` at complex arguments
 
-Paper (dimension paper): Appendix D.3, "The network after the block does not depend on the
-weights of the block" (the derivative `𝐃_θ𝓑_{>k}(h) η` is the paper's `𝐃_θ𝓑_{>k}(h) η'`, with `η'`
-the components of `η` at the blocks after `h_k` and at `D`), and Appendix D.6 (the case `ε = 0`),
+Paper (dimension paper): Appendix D.3, "`𝓑_{>k}` depends on the weights of the blocks
+`k + 1, …, L` and on `D`" (the derivative `𝐃_θ𝓑_{>k}(h) η` is the paper's `𝐃_θ𝓑_{>k}(h) η'`, with
+`η'` the components of `η` at the blocks after `h_k` and at `D`), and Appendix D.6 (the case
+`ε = 0`),
 "The identity on the path": "`𝓛` is holomorphic in `w̃`, affine in `w̃'` and polynomial in `n`",
 together with "`𝓑_{>k}(λh) = 𝓑_{>k}(h)` for `λ > 0`" (Lemma D.14), which the proof of Lemma D.19
 uses as "a derivative of order `i` of `𝓑` is homogeneous of degree `−i`".
