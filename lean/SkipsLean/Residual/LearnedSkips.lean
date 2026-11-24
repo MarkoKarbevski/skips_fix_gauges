@@ -177,4 +177,26 @@ theorem exists_cob_residual_read_upperTriangular [LinearOrder d] (ε : ℝ) (hA 
   rw [submatrix_id_mul, coe_inv_of_mem_orthogonalGroup Q' hQ']
   exact htri
 
+/-- **Theorem 3.3 (iii), under pre-RMSNorm, for the readout.** One orthogonal change of basis at
+all hidden states preserves the function and turns the chosen columns of the readout `D` into an
+upper triangular matrix. -/
+theorem exists_cob_residual_D_upperTriangular [LinearOrder d] (ε : ℝ) (hA : A.χ = rmsNorm ε)
+    (cD : d → dOut) :
+    ∃ Q : GL d ℝ, (Q : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ ∧
+      (∀ x : Matrix T dIn ℝ, eval A 1 (θ.cob (fun _ => Q) (fun _ => Q)) x = eval A 1 θ x) ∧
+      ((θ.cob (fun _ => Q) (fun _ => Q)).D.submatrix id cD).BlockTriangular id := by
+  -- QR factorization of the chosen columns `W₁`: an orthogonal `Q` with `Qᵀ W₁` upper triangular.
+  obtain ⟨Q, hQ, htri⟩ :=
+    exists_orthogonal_transpose_mul_upperTriangular (θ.D.submatrix id cD)
+  -- `Q` is invertible, with inverse `Qᵀ`.
+  let Q' : GL d ℝ :=
+    ⟨Q, Qᵀ, (Matrix.mem_orthogonalGroup_iff d ℝ).mp hQ, (Matrix.mem_orthogonalGroup_iff' d ℝ).mp hQ⟩
+  have hQ' : (Q' : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ := hQ
+  -- The same orthogonal change of basis at all hidden states preserves the function.
+  refine ⟨Q', hQ', fun x => eval_cob_residual_rmsNorm θ x ε hA Q' hQ', ?_⟩
+  -- The chosen columns of the new readout are `Q⁻¹ W₁ = Qᵀ W₁`, upper triangular.
+  change (((↑Q'⁻¹ : Matrix d d ℝ) * θ.D).submatrix id cD).BlockTriangular id
+  rw [submatrix_id_mul, coe_inv_of_mem_orthogonalGroup Q' hQ']
+  exact htri
+
 end Skips
