@@ -310,6 +310,74 @@ theorem flatOn_noKinkRMS_le_mlp_rescale_residual_rmsNorm {k : ℕ} (hε : 0 < ε
   · rw [Params.add_D, hDY]
     exact (add_zero _).symm
 
+/-! ### Helpers: the directions of the symmetries, and differentiability at the inputs -/
+
+/-- Helper: `α ↦ rescaleDirMlp k θ α` is linear. -/
+private noncomputable def rescaleLin_rres (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) :
+    (∀ ℓ : Fin 1, hid ℓ → ℝ) →ₗ[ℝ]
+      Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut where
+  toFun := rescaleDirMlp k θ
+  map_add' α β := by
+    apply Params.ext'
+    · simp [rescaleDirMlp]
+    · intro ℓ
+      ext a i
+      simp only [rescaleDirMlp, Pi.add_apply, Params.add_read, Matrix.add_apply, Matrix.of_apply]
+      ring
+    · intro ℓ
+      ext i a
+      simp only [rescaleDirMlp, Pi.add_apply, Params.add_write, Matrix.add_apply, Matrix.of_apply]
+      ring
+    · simp [rescaleDirMlp]
+  map_smul' c α := by
+    apply Params.ext'
+    · simp [rescaleDirMlp]
+    · intro ℓ
+      ext a i
+      simp only [rescaleDirMlp, Pi.smul_apply, Params.smul_read, Matrix.smul_apply,
+        Matrix.of_apply, smul_eq_mul, RingHom.id_apply]
+      ring
+    · intro ℓ
+      ext i a
+      simp only [rescaleDirMlp, Pi.smul_apply, Params.smul_write, Matrix.smul_apply,
+        Matrix.of_apply, smul_eq_mul, RingHom.id_apply]
+      ring
+    · simp [rescaleDirMlp]
+
+/-- Helper: the directions of one orthogonal change of basis and of the rescalings,
+`(Y, α) ↦ cobDir θ (Y, Y) + rescaleDirMlp k θ α` with `Y` antisymmetric, as a linear map. -/
+private noncomputable def dirLin_rres (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) :
+    (antisymmetric d × (∀ ℓ : Fin 1, hid ℓ → ℝ)) →ₗ[ℝ]
+      Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut :=
+  ((cobDirLin θ).comp (LinearMap.pi fun _ => (antisymmetric d).subtype)).coprod
+    (rescaleLin_rres k θ)
+
+omit [Fintype T] [Nonempty T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: these directions span a space of dimension at most `d(d-1)/2 + s`. -/
+private theorem finrank_range_dirLin_le_rres (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) :
+    Module.finrank ℝ (LinearMap.range (dirLin_rres k θ))
+      ≤ Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0) := by
+  refine (LinearMap.finrank_range_le _).trans (le_of_eq ?_)
+  rw [Module.finrank_prod, finrank_antisymmetric, Module.finrank_pi_fintype]
+  simp only [Module.finrank_fintype_fun_eq_card, Finset.univ_unique, Fin.default_eq_zero,
+    Finset.sum_singleton]
+
+/-- Helper: the directions that are flat at every input of `noKinkRMS θ` are among them. -/
+private theorem flatOn_le_range_rres {k : ℕ} (hε : 0 < ε)
+    (hσ : ∀ z, z ≠ 0 → HasDerivAt σ (σ' z) z)
+    (hhom : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z)
+    (hU : UnitsRescale σ σ' k d d (hid 0))
+    (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
+    (hθ : OneBlockGenericRMS θ) :
+    flatOn (Arch.mlp σ (rmsNorm ε) hid) 1 θ (noKinkRMS θ) ≤ LinearMap.range (dirLin_rres k θ) := by
+  intro η hη
+  obtain ⟨Y, α, hY, rfl⟩ :=
+    flatOn_noKinkRMS_le_mlp_rescale_residual_rmsNorm hε hσ hhom hU θ hθ η hη
+  exact ⟨(⟨Y, hY⟩, α), rfl⟩
+
 /-- **Theorem B.1 (ii), first sentence, for ReLU-type MLP blocks, at one parameter:** under the
 conditions `OneBlockGenericRMS`, `funDim = P − d(d−1)/2 − s`, with `s` the number of hidden
 units. -/
@@ -322,7 +390,131 @@ theorem funDim_mlp_oneBlock_rescale_residual_rmsNorm {k : ℕ} (hε : 0 < ε)
     funDim (Arch.mlp σ (rmsNorm ε) hid) 1 θ
         + (Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  -- `≤`: the antisymmetric changes of basis shared by `h_0` and `h_1` and the rescalings of the
+  -- hidden units are flat (Theorem 4.2)
+  have hc : ∀ ℓ i, (fun a => θ.read ℓ a i) ≠ 0 := fun ℓ i => by
+    obtain rfl := Subsingleton.elim ℓ 0
+    exact hθ.col_ne_zero i
+  have hle := funDim_add_le_residual_mlp_rescale_rmsNorm hhom ε θ hθ.rank_E hc
+  rw [Fin.sum_univ_one] at hle
+  -- `≥`: `K(θ)` lies in the directions flat on `noKinkRMS θ`, which are of this form
+  have hflat : flat (Arch.mlp σ (rmsNorm ε) hid) 1 θ ≤ LinearMap.range (dirLin_rres k θ) :=
+    (flat_le_flatOn θ (noKinkRMS θ)).trans (flatOn_le_range_rres hε hσ hhom hU θ hθ)
+  -- `fd(θ) + dim K(θ) = P`
+  have h := funDim_add_finrank_flat' (S := 1) θ
+  have hmono := Submodule.finrank_mono hflat
+  have hdim := finrank_range_dirLin_le_rres k θ
+  generalize Fintype.card d * (Fintype.card d - 1) / 2 = N at hle hdim ⊢
+  omega
+
+omit [Fintype T] [Nonempty T] [Fintype dOut] in
+/-- Helper: the function of one residual block under pre-RMSNorm,
+`F_θ(x) = N_ε(x E + σ(N_ε(x E) W_read) W_write) D`. -/
+private theorem eval_eq_rres (θ' : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
+    (x : Matrix T dIn ℝ) :
+    eval (Arch.mlp σ (rmsNorm ε) hid) 1 θ' x
+      = rmsNorm ε (x * θ'.E + (rmsNorm ε (x * θ'.E) * θ'.read 0).map σ * θ'.write 0) * θ'.D := by
+  have h1 : (Fin.last 1 : Fin 2) = (0 : Fin 1).succ := rfl
+  rw [eval, h1, hidden_succ, Fin.castSucc_zero, hidden_zero]
+  simp only [Pi.one_apply, Matrix.mul_one]
+
+/-- Helper: the product of two matrix-valued maps differentiable at `y` is differentiable at `y`
+(matrix multiplication is bilinear; as `differentiable_matMul` of `Dimension/Functional.lean`). -/
+private theorem differentiableAt_matMul_rres {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] {m n p : Type*} [Fintype m] [Fintype n] [Fintype p] {f : E → Matrix m n ℝ}
+    {g : E → Matrix n p ℝ} {y : E} (hf : DifferentiableAt ℝ f y)
+    (hg : DifferentiableAt ℝ g y) : DifferentiableAt ℝ (fun y => f y * g y) y := by
+  let B : Matrix m n ℝ →ₗ[ℝ] Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ :=
+    LinearMap.mk₂ ℝ (fun a b => a * b) Matrix.add_mul (fun c a b => Matrix.smul_mul c a b)
+      Matrix.mul_add (fun c a b => Matrix.mul_smul a c b)
+  let B' : Matrix m n ℝ →L[ℝ] Matrix n p ℝ →L[ℝ] Matrix m p ℝ :=
+    LinearMap.toContinuousLinearMap
+      ((LinearMap.toContinuousLinearMap :
+        (Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ) ≃ₗ[ℝ] (Matrix n p ℝ →L[ℝ] Matrix m p ℝ)).toLinearMap ∘ₗ B)
+  have hB : (fun y => f y * g y) = fun y => B' (f y) (g y) := rfl
+  rw [hB]
+  exact (B'.differentiableAt.comp y hf).clm_apply hg
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper: a linear map of the parameters is differentiable. -/
+private theorem differentiable_lin_rres {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
+    (l : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut →ₗ[ℝ] F) :
+    Differentiable ℝ l := by
+  rw [← LinearMap.coe_toContinuousLinearMap' l]
+  exact (LinearMap.toContinuousLinearMap l).differentiable
+
+omit [Nonempty T] in
+/-- Helper: at an input of `noKinkRMS θ` the output is differentiable in the parameters: the
+pre-activations `N_ε(x E) W_read` have no zero entry, as `N_ε` scales the rows of `x E` by positive
+numbers. -/
+private theorem differentiableAt_eval_rres (hε : 0 < ε)
+    (hσ : ∀ z, z ≠ 0 → HasDerivAt σ (σ' z) z)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) (x : Matrix T dIn ℝ)
+    (hx : x ∈ noKinkRMS θ) :
+    DifferentiableAt ℝ (fun θ' : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut =>
+        eval (Arch.mlp σ (rmsNorm ε) hid) 1 θ' x) θ := by
+  have e : (fun θ' : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut =>
+      eval (Arch.mlp σ (rmsNorm ε) hid) 1 θ' x) = fun θ' => rmsNorm ε (x * θ'.E
+        + (rmsNorm ε (x * θ'.E) * θ'.read 0).map σ * θ'.write 0) * θ'.D :=
+    funext fun θ' => eval_eq_rres θ' x
+  rw [e]
+  -- the components of the parameters are linear, hence differentiable
+  have hE : Differentiable ℝ
+      (fun θ' : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut => θ'.E) := by
+    have h := differentiable_lin_rres (Params.linE
+      (A := Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) (dIn := dIn) (dOut := dOut))
+    exact h
+  have hR : Differentiable ℝ
+      (fun θ' : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut => θ'.read 0) := by
+    have h := differentiable_lin_rres (Params.linRead
+      (A := Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) (dIn := dIn) (dOut := dOut) 0)
+    exact h
+  have hW : Differentiable ℝ
+      (fun θ' : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut =>
+        θ'.write 0) := by
+    have h := differentiable_lin_rres (Params.linWrite
+      (A := Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) (dIn := dIn) (dOut := dOut) 0)
+    exact h
+  have hD : Differentiable ℝ
+      (fun θ' : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut => θ'.D) := by
+    have h := differentiable_lin_rres (Params.linD
+      (A := Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) (dIn := dIn) (dOut := dOut))
+    exact h
+  have hN := differentiable_rmsNorm (T := T) (d := d) hε
+  -- `x E`, `N_ε(x E)` and the pre-activations `N_ε(x E) W_read`
+  have hxE : DifferentiableAt ℝ
+      (fun θ' : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut => x * θ'.E) θ :=
+    differentiableAt_matMul_rres (differentiableAt_const x) (hE θ)
+  have hn : DifferentiableAt ℝ
+      (fun θ' : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut =>
+        rmsNorm ε (x * θ'.E)) θ := by
+    have h := (hN (x * θ.E)).comp θ hxE
+    exact h
+  have hpre : DifferentiableAt ℝ
+      (fun θ' : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut =>
+        rmsNorm ε (x * θ'.E) * θ'.read 0) θ :=
+    differentiableAt_matMul_rres hn (hR θ)
+  -- at `θ` they have no zero entry, so `σ` is differentiable there
+  have hP : ∀ t i, (rmsNorm ε (x * θ.E) * θ.read 0) t i ≠ 0 := by
+    intro t i
+    rw [rmsNorm_mul_apply_rres]
+    exact mul_ne_zero (inv_sqrt_pos_rres hε _).ne' (hx t i)
+  have hact : DifferentiableAt ℝ
+      (fun θ' : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut =>
+        (rmsNorm ε (x * θ'.E) * θ'.read 0).map σ) θ := by
+    have h := (differentiableAt_map_rres hσ hP).comp θ hpre
+    exact h
+  -- `h_1 = x E + σ(N_ε(x E) W_read) W_write`, and the output `N_ε(h_1) D`
+  have hh : DifferentiableAt ℝ
+      (fun θ' : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut =>
+        x * θ'.E + (rmsNorm ε (x * θ'.E) * θ'.read 0).map σ * θ'.write 0) θ :=
+    hxE.add (differentiableAt_matMul_rres hact (hW θ))
+  have hout : DifferentiableAt ℝ
+      (fun θ' : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut =>
+        rmsNorm ε (x * θ'.E + (rmsNorm ε (x * θ'.E) * θ'.read 0).map σ * θ'.write 0)) θ := by
+    have h := (hN _).comp θ hh
+    exact h
+  exact differentiableAt_matMul_rres hout (hD θ)
 
 /-- **Theorem B.1 (ii) in the paper's own sense, for ReLU-type MLP blocks, at one parameter:** a
 finite batch of inputs with no hidden unit at its kink on which the Jacobian has the rank
@@ -337,7 +529,19 @@ theorem exists_jacobianRank_mlp_oneBlock_rescale_residual_rmsNorm {k : ℕ} (hε
       jacobianRank (Arch.mlp σ (rmsNorm ε) hid) 1 X θ
           + (Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0))
         = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  -- a batch of inputs of `noKinkRMS θ`, where the network is differentiable in `θ`, with the rank
+  -- `P - dim K_U(θ)`, `U = noKinkRMS θ`
+  obtain ⟨n, X, hX, h⟩ := exists_jacobianRank_add_finrank_flatOn (S := 1) θ (noKinkRMS θ)
+    (fun x hx => differentiableAt_eval_rres hε hσ θ x hx)
+  -- the sandwich: `dim K(θ) ≤ dim K_U(θ) ≤ d(d-1)/2 + s = dim K(θ)`
+  have hfd := funDim_mlp_oneBlock_rescale_residual_rmsNorm hε hσ hhom hU θ hθ
+  have h' := funDim_add_finrank_flat' (S := 1) θ
+  have h1 := Submodule.finrank_mono (flat_le_flatOn (S := 1) θ (noKinkRMS θ))
+  have h2 := Submodule.finrank_mono (flatOn_le_range_rres hε hσ hhom hU θ hθ)
+  have h3 := finrank_range_dirLin_le_rres k θ
+  refine ⟨n, X, hX, ?_⟩
+  generalize Fintype.card d * (Fintype.card d - 1) / 2 = N at hfd h3 ⊢
+  omega
 
 /-- **Theorem B.1 (ii), first sentence, for one ReLU block:** for `ε > 0` and
 `d_in, d_out ≥ d ≥ 2`, at almost every parameter the residual network of one ReLU block of any
@@ -349,7 +553,10 @@ theorem ae_funDim_relu_oneBlock_residual_rmsNorm (hε : 0 < ε)
     ∀ᵐ θ ∂μ, funDim (Arch.mlp relu (rmsNorm ε) hid) 1 θ
         + (Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  -- the conditions of the proof hold at generic parameters (`ResidualRMSMlp.lean`)
+  filter_upwards [ae_oneBlockGenericRMS μ hd hdIn hdOut] with θ hθ
+  exact funDim_mlp_oneBlock_rescale_residual_rmsNorm hε (fun _ hz => hasDerivAt_relu hz)
+    relu_homogeneous (relu_unitsRescale d d (hid 0)) θ hθ
 
 /-- **Theorem B.1 (ii) in the paper's own sense, for one ReLU block:** at almost every
 parameter there is a finite batch of inputs with no hidden unit at its kink on which the Jacobian
@@ -362,7 +569,10 @@ theorem ae_exists_jacobianRank_relu_oneBlock_residual_rmsNorm (hε : 0 < ε)
       jacobianRank (Arch.mlp relu (rmsNorm ε) hid) 1 X θ
           + (Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0))
         = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  -- the conditions of the proof hold at generic parameters (`ResidualRMSMlp.lean`)
+  filter_upwards [ae_oneBlockGenericRMS μ hd hdIn hdOut] with θ hθ
+  exact exists_jacobianRank_mlp_oneBlock_rescale_residual_rmsNorm hε
+    (fun _ hz => hasDerivAt_relu hz) relu_homogeneous (relu_unitsRescale d d (hid 0)) θ hθ
 
 /-- **Theorem B.1 (ii), second sentence, for one ReLU block:** if the block has at least
 `d` hidden units, at almost every parameter the skip raises `funDim` by at least `d(d−1)/2`. -/
@@ -374,7 +584,13 @@ theorem ae_funDim_skipless_add_le_relu_oneBlock_residual_rmsNorm (hε : 0 < ε)
     ∀ᵐ θ ∂μ, funDim (Arch.mlp relu (rmsNorm ε) hid) 0 θ
         + Fintype.card d * (Fintype.card d - 1) / 2
       ≤ funDim (Arch.mlp relu (rmsNorm ε) hid) 1 θ := by
-  sorry
+  have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+  -- `fd_1 + d(d-1)/2 + s = P` with the skip, `fd_0 + 2 · d(d-1)/2 + s ≤ P` without (Theorem 4.3)
+  filter_upwards [ae_funDim_relu_oneBlock_residual_rmsNorm hε μ hd hdIn hdOut,
+    ae_funDim_add_le_skipless_relu_rmsNorm ε μ hdIn hhid] with θ h1 h0
+  rw [Fin.sum_univ_one] at h0
+  generalize Fintype.card d * (Fintype.card d - 1) / 2 = N at h1 h0 ⊢
+  omega
 
 /-- **Theorem B.1 (ii), first sentence, for one ReLU² block:** for `ε > 0` and
 `d_in, d_out ≥ d ≥ 2`, at almost every parameter the residual network of one ReLU² block of
@@ -386,7 +602,10 @@ theorem ae_funDim_reluSq_oneBlock_residual_rmsNorm (hε : 0 < ε)
     ∀ᵐ θ ∂μ, funDim (Arch.mlp reluSq (rmsNorm ε) hid) 1 θ
         + (Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0))
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) reluSq (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  -- the conditions of the proof hold at generic parameters (`ResidualRMSMlp.lean`)
+  filter_upwards [ae_oneBlockGenericRMS μ hd hdIn hdOut] with θ hθ
+  exact funDim_mlp_oneBlock_rescale_residual_rmsNorm hε (fun z _ => hasDerivAt_reluSq z)
+    reluSq_homogeneous (reluSq_unitsRescale d d (hid 0)) θ hθ
 
 /-- **Theorem B.1 (ii) in the paper's own sense, for one ReLU² block:** at almost every
 parameter there is a finite batch of inputs with no hidden unit at its kink on which the Jacobian
@@ -400,7 +619,10 @@ theorem ae_exists_jacobianRank_reluSq_oneBlock_residual_rmsNorm (hε : 0 < ε)
           + (Fintype.card d * (Fintype.card d - 1) / 2 + Fintype.card (hid 0))
         = Module.finrank ℝ
             (Params (Arch.mlp (T := T) (d := d) reluSq (rmsNorm ε) hid) dIn dOut) := by
-  sorry
+  -- the conditions of the proof hold at generic parameters (`ResidualRMSMlp.lean`)
+  filter_upwards [ae_oneBlockGenericRMS μ hd hdIn hdOut] with θ hθ
+  exact exists_jacobianRank_mlp_oneBlock_rescale_residual_rmsNorm hε
+    (fun z _ => hasDerivAt_reluSq z) reluSq_homogeneous (reluSq_unitsRescale d d (hid 0)) θ hθ
 
 /-- **Theorem B.1 (ii), second sentence, for one ReLU² block:** if the block has at least
 `d` hidden units, at almost every parameter the skip raises `funDim` by at least `d(d−1)/2`. -/
@@ -412,6 +634,12 @@ theorem ae_funDim_skipless_add_le_reluSq_oneBlock_residual_rmsNorm (hε : 0 < ε
     ∀ᵐ θ ∂μ, funDim (Arch.mlp reluSq (rmsNorm ε) hid) 0 θ
         + Fintype.card d * (Fintype.card d - 1) / 2
       ≤ funDim (Arch.mlp reluSq (rmsNorm ε) hid) 1 θ := by
-  sorry
+  have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+  -- `fd_1 + d(d-1)/2 + s = P` with the skip, `fd_0 + 2 · d(d-1)/2 + s ≤ P` without (Theorem 4.3)
+  filter_upwards [ae_funDim_reluSq_oneBlock_residual_rmsNorm hε μ hd hdIn hdOut,
+    ae_funDim_add_le_skipless_reluSq_rmsNorm ε μ hdIn hhid] with θ h1 h0
+  rw [Fin.sum_univ_one] at h0
+  generalize Fintype.card d * (Fintype.card d - 1) / 2 = N at h1 h0 ⊢
+  omega
 
 end Skips
