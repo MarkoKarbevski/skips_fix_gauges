@@ -289,6 +289,7 @@ import SkipsLean.OneBlock.ResidualRMSZeroRescale
 import SkipsLean.OneBlock.ResidualRMSZeroRescaleGeneric
 import SkipsLean.OneBlock.ResidualRMSZeroReGLU
 import SkipsLean.OneBlock.ResidualRMSZeroReGLUGeneric
+import SkipsLean.OneBlock.ResidualRMSZeroGainHomogeneous
 import SkipsLean.Symmetry.InsideBlocksRMSNormZero
 import SkipsLean.Dimension.UpperBoundSymmetriesRMSNormZero
 import SkipsLean.OneBlock.ResidualRMSZeroGain

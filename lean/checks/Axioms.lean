@@ -1693,3 +1693,6 @@ import SkipsLean
 #print axioms Skips.ae_funDim_add_le_skipless_relu_rmsNorm_zero_co
 #print axioms Skips.ae_funDim_add_le_skipless_reluSq_rmsNorm_zero_co
 #print axioms Skips.ae_funDim_add_le_skipless_reglu_rmsNorm_zero_co
+#print axioms Skips.ae_funDim_skipless_add_le_relu_oneBlock_residual_rmsNorm_zero
+#print axioms Skips.ae_funDim_skipless_add_le_reluSq_oneBlock_residual_rmsNorm_zero
+#print axioms Skips.ae_funDim_skipless_add_le_reglu_oneBlock_residual_rmsNorm_zero
