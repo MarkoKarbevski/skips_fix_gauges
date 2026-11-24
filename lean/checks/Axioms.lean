@@ -1286,3 +1286,14 @@ import SkipsLean
 #print axioms Skips.ae_funDim_gated_skipless_iff_ae_locally_cob_rescale_rmsNorm
 #print axioms Skips.ae_funDim_attention_skipless_iff_ae_locally_cob_heads
 #print axioms Skips.ae_funDim_attention_skipless_iff_ae_locally_cob_heads_rmsNorm
+#print axioms Skips.exists_subgroup_eq_cobPreserving
+#print axioms Skips.cobPreserving_skipless
+#print axioms Skips.dimH_cobPreservingMat_skipless
+#print axioms Skips.dimH_cobPreservingMat_skipless_rmsNorm
+#print axioms Skips.dimH_cobPreservingMat_skipless_rmsNorm_mlp
+#print axioms Skips.dimH_cobPreservingMat_skipless_rmsNorm_gated
+#print axioms Skips.dimH_cobPreservingMat_skipless_rmsNorm_attention
+#print axioms Skips.dimH_cobPreservingMat_skipless_rmsNorm_attentionMlp
+#print axioms Skips.dimH_cobPreservingMat_skipless_rmsNorm_attentionGated
+#print axioms Skips.dimH_cobPreservingMat_residual
+#print axioms Skips.dimH_cobPreservingMat_residual_rmsNorm

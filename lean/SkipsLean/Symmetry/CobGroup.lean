@@ -67,6 +67,7 @@ private theorem cob_one_cgrp (A : Arch T d L) (θ : Params A dIn dOut) :
   refine Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_ <;>
     simp only [Params.cob, Pi.one_apply, inv_one, Units.val_one, Matrix.mul_one, Matrix.one_mul]
 
+omit [Fintype T] in
 /-- **Theorem 3.3 (ii), "form a group":** for any network, the changes of basis that preserve the
 function at all parameters are a subgroup of the families of invertible matrices. -/
 theorem exists_subgroup_eq_cobPreserving (A : Arch T d L) (S : Fin L → Matrix d d ℝ) :
@@ -87,6 +88,7 @@ theorem exists_subgroup_eq_cobPreserving (A : Arch T d L) (S : Fin L → Matrix 
 
 /-! ### Skipless networks -/
 
+omit [Fintype T] in
 /-- Without normalization every family of changes of basis preserves the function of a skipless
 network (Proposition 3.2). -/
 theorem cobPreserving_skipless (A : Arch T d L) (hA : A.χ = id) :
@@ -110,6 +112,7 @@ private theorem isUnit_det_of_mem_orthogonalGroup_cgrp {Q : Matrix d d ℝ}
     (hQ : Q ∈ Matrix.orthogonalGroup d ℝ) : IsUnit Q.det :=
   Matrix.isUnit_det_of_right_inverse ((Matrix.mem_orthogonalGroup_iff d ℝ).mp hQ)
 
+omit [Fintype T] in
 /-- **Theorem 3.3 (ii), skipless, no normalization:** the group has dimension `(L + 1) d²`. -/
 theorem dimH_cobPreservingMat_skipless (A : Arch T d L) (hA : A.χ = id) :
     dimH (cobPreservingMat A 0 dIn dOut) = (((L + 1) * Fintype.card d ^ 2 : ℕ) : ℝ≥0∞) := by
@@ -127,6 +130,7 @@ theorem dimH_cobPreservingMat_skipless (A : Arch T d L) (hA : A.χ = id) :
   rw [himg]
   exact dimH_setOf_forall_isUnit_det (L + 1)
 
+omit [Fintype T] in
 /-- **Theorem 3.3 (ii), skipless, pre-RMSNorm, for any network for which only orthogonal changes
 of basis pass** (the conclusion of Lemma A.4, as the hypothesis `hOnly`): the group has dimension
 `(L + 1) d (d − 1)/2`. -/
@@ -209,6 +213,7 @@ theorem dimH_cobPreservingMat_skipless_rmsNorm_attentionGated [Nonempty T] [None
 
 /-! ### Residual networks -/
 
+omit [Fintype T] in
 /-- **Theorem 3.3 (ii), residual, no normalization:** if every block is nonzero for some value of
 its parameters, the changes of basis that preserve the function at all parameters are the
 families with all `G_ℓ` equal, a group of dimension `d²`. -/
@@ -235,6 +240,7 @@ theorem dimH_cobPreservingMat_residual [Nonempty T] [Nonempty dIn] [Nonempty dOu
   rw [himg]
   exact dimH_setOf_const_isUnit_det (Nat.succ_pos L)
 
+omit [Fintype T] in
 /-- **Theorem 3.3 (ii), residual, pre-RMSNorm (`ε > 0`):** if every block is nonzero for some
 value of its parameters, the changes of basis that preserve the function at all parameters are
 the families with all `G_ℓ` equal to one orthogonal matrix, a group of dimension
