@@ -84,7 +84,8 @@ theorem ae_forall_eval_residual_ne_skipless_mlp
   -- Lemma A.26 (i) with `F` the residual and `G` the skipless networks of the same widths
   obtain ⟨r₀, hr₀, θ₀, hθ₀⟩ := exists_rank_gap_mlp_dc hσ hσa hU μ hd hdIn hdOut hL
   exact ae_forall_eval_ne_of_jacobianRank_lt _ 1 _ 0 hSard
-    (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
+    (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_mlp hσa ℓ)
+    analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
 
 /-- **Theorem A.28 (iv) of the skips paper for MLP blocks whose hidden units have no symmetry (`s =
 0`) without normalization, given Sard's theorem and the property of definable sets:** there is a
@@ -107,7 +108,8 @@ theorem exists_batch_ae_exists_pos_le_norm_sub_skipless_mlp
   -- Lemma A.26 (ii) with `F` the residual and `G` the skipless networks of the same widths
   obtain ⟨r₀, hr₀, θ₀, hθ₀⟩ := exists_rank_gap_mlp_dc hσ hσa hU μ hd hdIn hdOut hL
   exact exists_batch_ae_exists_pos_le_norm_sub_of_jacobianRank_lt _ 1 _ 0 hSard hOmin
-    (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
+    (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_mlp hσa ℓ)
+    analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
 
 /-- **Theorem 4.11 (i) of the skips paper, "is not a pointwise limit of such networks", for MLP
 blocks whose hidden units have no symmetry (`s = 0`) without normalization, given Sard's theorem and
@@ -131,7 +133,8 @@ theorem ae_not_isPointwiseLimit_skipless_mlp
   -- Theorem A.28 (iv) with `F` the residual and `G` the skipless networks of the same widths
   obtain ⟨r₀, hr₀, θ₀, hθ₀⟩ := exists_rank_gap_mlp_dc hσ hσa hU μ hd hdIn hdOut hL
   exact ae_not_isPointwiseLimit_of_jacobianRank_lt _ 1 _ 0 hSard hOmin
-    (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
+    (fun ℓ => analyticOnNhd_f_mlp hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_mlp hσa ℓ)
+    analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
 
 /-! ### gated blocks whose only symmetries inside the blocks are the rescalings -/
 
@@ -183,7 +186,8 @@ theorem ae_forall_eval_residual_ne_skipless_gated
   -- Lemma A.26 (i) with `F` the residual and `G` the skipless networks of the same widths
   obtain ⟨r₀, hr₀, θ₀, hθ₀⟩ := exists_rank_gap_gated_dc hσ hσa hU μ hd hdIn hdOut hL
   exact ae_forall_eval_ne_of_jacobianRank_lt _ 1 _ 0 hSard
-    (fun ℓ => analyticOnNhd_f_gated hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_gated hσa ℓ) analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
+    (fun ℓ => analyticOnNhd_f_gated hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_gated hσa ℓ)
+    analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
 
 /-- **Theorem A.28 (iv) of the skips paper for gated blocks whose only symmetries inside the blocks
 are the rescalings without normalization, given Sard's theorem and the property of definable sets:**
@@ -206,7 +210,8 @@ theorem exists_batch_ae_exists_pos_le_norm_sub_skipless_gated
   -- Lemma A.26 (ii) with `F` the residual and `G` the skipless networks of the same widths
   obtain ⟨r₀, hr₀, θ₀, hθ₀⟩ := exists_rank_gap_gated_dc hσ hσa hU μ hd hdIn hdOut hL
   exact exists_batch_ae_exists_pos_le_norm_sub_of_jacobianRank_lt _ 1 _ 0 hSard hOmin
-    (fun ℓ => analyticOnNhd_f_gated hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_gated hσa ℓ) analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
+    (fun ℓ => analyticOnNhd_f_gated hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_gated hσa ℓ)
+    analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
 
 /-- **Theorem 4.11 (i) of the skips paper, "is not a pointwise limit of such networks", for gated
 blocks whose only symmetries inside the blocks are the rescalings without normalization, given
@@ -231,7 +236,8 @@ theorem ae_not_isPointwiseLimit_skipless_gated
   -- Theorem A.28 (iv) with `F` the residual and `G` the skipless networks of the same widths
   obtain ⟨r₀, hr₀, θ₀, hθ₀⟩ := exists_rank_gap_gated_dc hσ hσa hU μ hd hdIn hdOut hL
   exact ae_not_isPointwiseLimit_of_jacobianRank_lt _ 1 _ 0 hSard hOmin
-    (fun ℓ => analyticOnNhd_f_gated hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_gated hσa ℓ) analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
+    (fun ℓ => analyticOnNhd_f_gated hσa ℓ) analyticOnNhd_id (fun ℓ => analyticOnNhd_f_gated hσa ℓ)
+    analyticOnNhd_id r₀ hr₀ θ₀ hθ₀ μ
 
 /-! ### `tanh` blocks -/
 
@@ -247,7 +253,8 @@ theorem ae_forall_eval_residual_ne_skipless_tanh
     (hdOut : Fintype.card d ≤ Fintype.card dOut) (hL : 0 < L) :
     ∀ᵐ θ ∂μ, ∀ η : Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut,
       eval (Arch.mlp Real.tanh id hid) 1 θ ≠ eval (Arch.mlp Real.tanh id hid) 0 η := by
-  exact ae_forall_eval_residual_ne_skipless_mlp hSard hasDerivAt_tanh analyticOnNhd_tanh (tanh_unitsRigid _ _ _)
+  exact ae_forall_eval_residual_ne_skipless_mlp hSard hasDerivAt_tanh analyticOnNhd_tanh
+    (tanh_unitsRigid _ _ _)
     μ hd hdIn hdOut hL
 
 /-- **Theorem 4.11 (i) of the skips paper, "is not a pointwise limit of such networks", for `tanh`
@@ -268,7 +275,8 @@ theorem ae_not_isPointwiseLimit_skipless_tanh
         Params (Arch.mlp (T := T) (d := d) Real.tanh id hid) dIn dOut →
           Matrix T dIn ℝ → Matrix T dOut ℝ))
       (eval (Arch.mlp Real.tanh id hid) 1 θ) := by
-  exact ae_not_isPointwiseLimit_skipless_mlp hSard hOmin hasDerivAt_tanh analyticOnNhd_tanh (tanh_unitsRigid _ _ _)
+  exact ae_not_isPointwiseLimit_skipless_mlp hSard hOmin hasDerivAt_tanh analyticOnNhd_tanh
+    (tanh_unitsRigid _ _ _)
     μ hd hdIn hdOut hL
 
 /-! ### GELU blocks -/
@@ -285,7 +293,8 @@ theorem ae_forall_eval_residual_ne_skipless_gelu
     (hdOut : Fintype.card d ≤ Fintype.card dOut) (hL : 0 < L) :
     ∀ᵐ θ ∂μ, ∀ η : Params (Arch.mlp (T := T) (d := d) gelu id hid) dIn dOut,
       eval (Arch.mlp gelu id hid) 1 θ ≠ eval (Arch.mlp gelu id hid) 0 η := by
-  exact ae_forall_eval_residual_ne_skipless_mlp hSard hasDerivAt_gelu analyticOnNhd_gelu (gelu_unitsRigid _ _ _)
+  exact ae_forall_eval_residual_ne_skipless_mlp hSard hasDerivAt_gelu analyticOnNhd_gelu
+    (gelu_unitsRigid _ _ _)
     μ hd hdIn hdOut hL
 
 /-- **Theorem 4.11 (i) of the skips paper, "is not a pointwise limit of such networks", for GELU
@@ -306,7 +315,8 @@ theorem ae_not_isPointwiseLimit_skipless_gelu
         Params (Arch.mlp (T := T) (d := d) gelu id hid) dIn dOut →
           Matrix T dIn ℝ → Matrix T dOut ℝ))
       (eval (Arch.mlp gelu id hid) 1 θ) := by
-  exact ae_not_isPointwiseLimit_skipless_mlp hSard hOmin hasDerivAt_gelu analyticOnNhd_gelu (gelu_unitsRigid _ _ _)
+  exact ae_not_isPointwiseLimit_skipless_mlp hSard hOmin hasDerivAt_gelu analyticOnNhd_gelu
+    (gelu_unitsRigid _ _ _)
     μ hd hdIn hdOut hL
 
 /-! ### SwiGLU blocks -/
@@ -323,7 +333,8 @@ theorem ae_forall_eval_residual_ne_skipless_swiglu
     (hdOut : Fintype.card d ≤ Fintype.card dOut) (hL : 0 < L) :
     ∀ᵐ θ ∂μ, ∀ η : Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut,
       eval (Arch.gated silu id hid) 1 θ ≠ eval (Arch.gated silu id hid) 0 η := by
-  exact ae_forall_eval_residual_ne_skipless_gated hSard hasDerivAt_silu analyticOnNhd_silu (silu_gatedUnitsRescale _ _ _)
+  exact ae_forall_eval_residual_ne_skipless_gated hSard hasDerivAt_silu analyticOnNhd_silu
+    (silu_gatedUnitsRescale _ _ _)
     μ hd hdIn hdOut hL
 
 /-- **Theorem 4.11 (i) of the skips paper, "is not a pointwise limit of such networks", for SwiGLU
@@ -344,7 +355,8 @@ theorem ae_not_isPointwiseLimit_skipless_swiglu
         Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut →
           Matrix T dIn ℝ → Matrix T dOut ℝ))
       (eval (Arch.gated silu id hid) 1 θ) := by
-  exact ae_not_isPointwiseLimit_skipless_gated hSard hOmin hasDerivAt_silu analyticOnNhd_silu (silu_gatedUnitsRescale _ _ _)
+  exact ae_not_isPointwiseLimit_skipless_gated hSard hOmin hasDerivAt_silu analyticOnNhd_silu
+    (silu_gatedUnitsRescale _ _ _)
     μ hd hdIn hdOut hL
 
 /-! ### GeGLU blocks -/
@@ -361,7 +373,8 @@ theorem ae_forall_eval_residual_ne_skipless_geglu
     (hdOut : Fintype.card d ≤ Fintype.card dOut) (hL : 0 < L) :
     ∀ᵐ θ ∂μ, ∀ η : Params (Arch.gated (T := T) (d := d) gelu id hid) dIn dOut,
       eval (Arch.gated gelu id hid) 1 θ ≠ eval (Arch.gated gelu id hid) 0 η := by
-  exact ae_forall_eval_residual_ne_skipless_gated hSard hasDerivAt_gelu analyticOnNhd_gelu (gelu_gatedUnitsRescale _ _ _)
+  exact ae_forall_eval_residual_ne_skipless_gated hSard hasDerivAt_gelu analyticOnNhd_gelu
+    (gelu_gatedUnitsRescale _ _ _)
     μ hd hdIn hdOut hL
 
 /-- **Theorem 4.11 (i) of the skips paper, "is not a pointwise limit of such networks", for GeGLU
@@ -382,7 +395,8 @@ theorem ae_not_isPointwiseLimit_skipless_geglu
         Params (Arch.gated (T := T) (d := d) gelu id hid) dIn dOut →
           Matrix T dIn ℝ → Matrix T dOut ℝ))
       (eval (Arch.gated gelu id hid) 1 θ) := by
-  exact ae_not_isPointwiseLimit_skipless_gated hSard hOmin hasDerivAt_gelu analyticOnNhd_gelu (gelu_gatedUnitsRescale _ _ _)
+  exact ae_not_isPointwiseLimit_skipless_gated hSard hOmin hasDerivAt_gelu analyticOnNhd_gelu
+    (gelu_gatedUnitsRescale _ _ _)
     μ hd hdIn hdOut hL
 
 end Skips
