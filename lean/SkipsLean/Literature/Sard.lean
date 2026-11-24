@@ -5,7 +5,8 @@ import SkipsLean.Imports
 
 Paper (skips paper): proofs of Proposition 4.5, of Lemma A.24 and of Lemma A.26 ("so all its values
 are critical, and by Sard's theorem its image has measure zero"). The paper names the theorem and
-gives no reference. In this library only the step of Lemma A.26 uses it.
+gives no reference. In this library the step of Lemma A.26 uses it, and Step 4 of the proof of
+Proposition 4.7 of the absorb paper (`Dimension/RankCriterionOn.lean`).
 
 We rely on the result "if `f : M → N` is a `C^r` map between `C^r` manifolds and
 `r > max {0, dim M - dim N}`, then the critical values of `f` form a set of measure zero" from
