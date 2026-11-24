@@ -321,6 +321,85 @@ private theorem fderiv_maskedBatch_eq_zero_pat (S : Fin L → Matrix d d ℝ) {n
   have h := (Submodule.mem_iInf _).1 (hη i) (X i)
   exact LinearMap.mem_ker.1 h
 
+omit [Fintype T] [DecidableEq d] in
+/-- Helper (copy of the private `rescaleDirMlpLin` of `RescalingMlp.lean`): `α ↦ rescaleDirMlp k θ α`
+is linear. -/
+private noncomputable def rescaleDirLin_pat (k : ℕ)
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) :
+    (∀ ℓ, hid ℓ → ℝ) →ₗ[ℝ] Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut where
+  toFun := rescaleDirMlp k θ
+  map_add' α β := by
+    apply Params.ext'
+    · simp [rescaleDirMlp]
+    · intro ℓ
+      ext a i
+      simp only [rescaleDirMlp, Pi.add_apply, Params.add_read, Matrix.add_apply, Matrix.of_apply]
+      ring
+    · intro ℓ
+      ext i a
+      simp only [rescaleDirMlp, Pi.add_apply, Params.add_write, Matrix.add_apply, Matrix.of_apply]
+      ring
+    · simp [rescaleDirMlp]
+  map_smul' c α := by
+    apply Params.ext'
+    · simp [rescaleDirMlp]
+    · intro ℓ
+      ext a i
+      simp only [rescaleDirMlp, Pi.smul_apply, Params.smul_read, Matrix.smul_apply,
+        Matrix.of_apply, smul_eq_mul, RingHom.id_apply]
+      ring
+    · intro ℓ
+      ext i a
+      simp only [rescaleDirMlp, Pi.smul_apply, Params.smul_write, Matrix.smul_apply,
+        Matrix.of_apply, smul_eq_mul, RingHom.id_apply]
+      ring
+    · simp [rescaleDirMlp]
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (copy of a private helper of `RescalingMlp.lean`): the pairs `(Y, α)` form a space of
+dimension `(L + 1) d² + s`. -/
+private theorem finrank_dirDomain_pat :
+    Module.finrank ℝ ((Fin (L + 1) → Matrix d d ℝ) × (∀ ℓ, hid ℓ → ℝ)) =
+      (L + 1) * Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ) := by
+  rw [Module.finrank_prod, Module.finrank_pi_fintype, Module.finrank_matrix,
+    Module.finrank_pi_fintype]
+  simp [sq, Module.finrank_fintype_fun_eq_card]
+
+/-- Helper (Step 2, the bound at a generic parameter): if `E` and every write have rank `d` and
+no column of a read vanishes, the directions `cobDir θ Y + rescaleDirMlp 1 θ α` span a space of
+dimension `(L + 1) d² + s` in the kernel of the derivative of `F'^π_Z` at `θ`; rank–nullity. -/
+private theorem finrank_range_add_le_of_generic_pat {n : ℕ}
+    (X : Fin n → Matrix T dIn ℝ) (π : Fin n → ∀ ℓ : Fin L, T → hid ℓ → Bool)
+    (θ : Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut)
+    (hE : θ.E.rank = Fintype.card d) (hw : ∀ ℓ, (θ.write ℓ).rank = Fintype.card d)
+    (hc : ∀ ℓ i, (fun a => θ.read ℓ a i) ≠ 0) :
+    Module.finrank ℝ (LinearMap.range
+        (fderiv ℝ (maskedBatch (d := d) (dOut := dOut) 0 X π) θ).toLinearMap)
+        + ((L + 1) * Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
+      ≤ Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) := by
+  -- the linear map `(Y, α) ↦ cobDir θ Y + rescaleDirMlp 1 θ α`
+  let Φ := (cobDirLin θ).coprod (rescaleDirLin_pat 1 θ)
+  -- its directions are in the kernel: for every pattern `π i`, the change of basis and the
+  -- rescaling keep the network of `π i`
+  have hV : LinearMap.range Φ ≤
+      LinearMap.ker (fderiv ℝ (maskedBatch (d := d) (dOut := dOut) 0 X π) θ).toLinearMap := by
+    rintro _ ⟨p, rfl⟩
+    rw [LinearMap.mem_ker]
+    refine fderiv_maskedBatch_eq_zero_pat 0 X π θ _ fun i => ?_
+    show cobDir (θ.toMasked (π i)) p.1 + (rescaleDirMlp 1 θ p.2).toMasked (π i) ∈ _
+    exact Submodule.add_mem _ (cobDir_mem_flat_skipless' (θ.toMasked (π i)) rfl p.1)
+      (rescale_mem_flat_masked_pat (π i) θ p.2 0)
+  -- it is injective (Lemma B.1), so its range has dimension `(L + 1) d² + s`
+  have hinj : Function.Injective Φ := by
+    intro p q hpq
+    rw [LinearMap.coprod_apply, LinearMap.coprod_apply] at hpq
+    exact cobDir_add_rescaleDirMlp_injective 1 θ hE hw hc hpq
+  have h1 := LinearMap.finrank_range_add_finrank_ker
+    (fderiv ℝ (maskedBatch (d := d) (dOut := dOut) 0 X π) θ).toLinearMap
+  have h2 := Submodule.finrank_mono hV
+  rw [LinearMap.finrank_range_of_inj hinj, finrank_dirDomain_pat] at h2
+  omega
+
 /-- **Proof of Proposition 4.7, Step 2, for a skipless network:** for `d_in ≥ d ≥ 1` and blocks
 of at least `d` hidden units, the Jacobian of every pattern map `F'^π_Z` of the skipless network
 has rank at most `P − (L + 1) d² − s` at every parameter, with `s` the number of hidden units. -/
@@ -333,6 +412,45 @@ theorem finrank_range_fderiv_maskedBatch_skipless_add_le [Nonempty d]
         (fderiv ℝ (maskedBatch (d := d) (dOut := dOut) 0 X π) θ).toLinearMap)
         + ((L + 1) * Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
       ≤ Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) := by
-  sorry
+  -- `G = F'^π_Z` is analytic, so its derivative is continuous in the parameters
+  have hGa := analyticOnNhd_maskedBatch (dOut := dOut) (hid := hid) (0 : Fin L → Matrix d d ℝ) X π
+  have hJ := continuousOn_univ.mp hGa.fderiv.continuousOn
+  -- `r` directions `v k` whose images at `θ` are linearly independent, `r` the rank at `θ`
+  set r := Module.finrank ℝ (LinearMap.range
+    (fderiv ℝ (maskedBatch (d := d) (dOut := dOut) 0 X π) θ).toLinearMap)
+  let b := Module.finBasis ℝ
+    (LinearMap.range (fderiv ℝ (maskedBatch (d := d) (dOut := dOut) 0 X π) θ).toLinearMap)
+  have hb : ∀ k, ∃ v, fderiv ℝ (maskedBatch (d := d) (dOut := dOut) 0 X π) θ v
+      = (b k : Fin n → Matrix T dOut ℝ) := fun k => LinearMap.mem_range.1 (b k).2
+  choose v hv using hb
+  have hli0 : LinearIndependent ℝ
+      (fun k => fderiv ℝ (maskedBatch (d := d) (dOut := dOut) 0 X π) θ (v k)) := by
+    have hl := b.linearIndependent.map' (LinearMap.range _).subtype (Submodule.ker_subtype _)
+    convert hl using 1
+    funext k
+    exact hv k
+  -- "a polynomial map reaches its largest rank on a nonempty open set": the images of the `v k`
+  -- stay linearly independent on an open set `U` that contains `θ`
+  let U := {θ' | LinearIndependent ℝ
+    (fun k => fderiv ℝ (maskedBatch (d := d) (dOut := dOut) 0 X π) θ' (v k))}
+  have hU : IsOpen U := isOpen_setOfPred_linearIndependent.preimage
+    (continuous_pi fun k => hJ.clm_apply continuous_const)
+  -- `U` has positive Haar measure, so it contains a generic parameter `θ'`
+  let μ : Measure (Params (Arch.mlp (T := T) (d := d) relu id hid) dIn dOut) := Measure.addHaar
+  have hμU : μ U ≠ 0 := hU.measure_ne_zero μ ⟨θ, hli0⟩
+  have hae := (ae_rank_E_write μ hdIn hhid).and (ae_read_col_ne_zero μ)
+  obtain ⟨θ', hθ'U, hθ'⟩ :=
+    Measure.exists_mem_of_measure_ne_zero_of_ae hμU (ae_restrict_of_ae hae)
+  -- at `θ'` the rank is at least `r`, and at most `P - (L + 1) d² - s`
+  have h1 : r ≤ Module.finrank ℝ (LinearMap.range
+      (fderiv ℝ (maskedBatch (d := d) (dOut := dOut) 0 X π) θ').toLinearMap) := by
+    calc r = Fintype.card (Fin r) := (Fintype.card_fin r).symm
+      _ = Module.finrank ℝ (Submodule.span ℝ (Set.range
+          (fun k => fderiv ℝ (maskedBatch (d := d) (dOut := dOut) 0 X π) θ' (v k)))) :=
+        (finrank_span_eq_card hθ'U).symm
+      _ ≤ _ := Submodule.finrank_mono
+        (Submodule.span_le.2 (by rintro _ ⟨k, rfl⟩; exact ⟨_, rfl⟩))
+  have h2 := finrank_range_add_le_of_generic_pat X π θ' hθ'.1.1 hθ'.1.2 hθ'.2
+  omega
 
 end Skips
