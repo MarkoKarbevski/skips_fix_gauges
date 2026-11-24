@@ -62,4 +62,8 @@ import SkipsLean.Absorb.RMSNormGeneric
 import SkipsLean.Dimension.GenericRank
 import SkipsLean.Activations.Analytic
 import SkipsLean.Depth.SuffixGated
+import SkipsLean.Depth.Cones
 import SkipsLean.Absorb.RMSNormKinds
+import SkipsLean.Activations.FarFromZero
+import SkipsLean.Activations.MillsAtInfinity
+import SkipsLean.Depth.BlockIdentityGated
