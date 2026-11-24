@@ -1468,3 +1468,6 @@ import SkipsLean
 #print axioms Skips.attnHeads_identifiable_causal
 #print axioms Skips.attnHeads_sum_eq_of_mul_add_eq
 #print axioms Skips.attentionBlock_sum_eq_of_mul_add_eq
+#print axioms Skips.forall_exists_ne_attentionBlockB
+#print axioms Skips.forall_exists_ne_attentionBlockB_noMask
+#print axioms Skips.forall_exists_ne_attentionBlockB_causal
