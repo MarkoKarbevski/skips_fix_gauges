@@ -1799,3 +1799,6 @@ import SkipsLean
 #print axioms Skips.upperTriangular_pos_mul_orthogonal_transpose_unique
 #print axioms Skips.exists_cob_learned_upperTriangular_pos
 #print axioms Skips.exists_cob_learned_posDef
+#print axioms Skips.flatOn_le_mlp_rescale_skipless_rmsNorm_zero_of_unitsParallelAt
+#print axioms Skips.funDim_mlp_oneBlock_rescale_skipless_rmsNorm_zero_of_unitsParallelAt
+#print axioms Skips.exists_jacobianRank_mlp_oneBlock_rescale_skipless_rmsNorm_zero_of_unitsParallelAt
