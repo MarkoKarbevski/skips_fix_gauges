@@ -410,7 +410,8 @@ theorem tendstoUniformlyOn_eval_limitScale (hχ : A.χ = id)
     (h𝒳 : Bornology.IsBounded 𝒳) :
     TendstoUniformlyOn (fun (t : ℝ) (X : Matrix T dIn ℝ) => eval A 1 (θ.limitScale t) X)
       (fun X => eval A 0 θ X) atTop 𝒳 := by
-  sorry
+  obtain ⟨C, hC⟩ := exists_bound_eval_limitScale A θ hχ hf 𝒳 h𝒳
+  exact tendstoUniformlyOn_of_le_div hC
 
 /-- **Proposition 5.1 (ii) with the rate of Remark A.16:** under pre-RMSNorm with `ε = 0`, if the
 maps `f_ℓ` of the blocks are locally Lipschitz, then on every compact set `𝒳` of inputs at which
