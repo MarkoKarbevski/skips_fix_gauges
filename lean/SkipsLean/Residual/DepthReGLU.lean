@@ -73,7 +73,39 @@ theorem ae_smallWritesGenericReGLU
     (hd : 2 ≤ Fintype.card d) (hdIn : Fintype.card d ≤ Fintype.card dIn)
     (hdOut : Fintype.card d ≤ Fintype.card dOut) :
     ∀ᵐ θ ∂μ, SmallWritesGenericReGLU θ := by
-  sorry
+  classical
+  -- two distinct coordinates of `h` and two distinct input coordinates
+  obtain ⟨k₁, k₂, hk⟩ := Fintype.exists_pair_of_one_lt_card (show 1 < Fintype.card d by omega)
+  obtain ⟨a₁, a₂, ha⟩ := Fintype.exists_pair_of_one_lt_card (show 1 < Fintype.card dIn by omega)
+  have hC : ∀ ℓ (a : dIn) (j : hid ℓ ⊕ hid ℓ), AnalyticOnNhd ℝ
+      (fun θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut =>
+        (θ.E * θ.read ℓ) a j) Set.univ := fun ℓ a j =>
+    analyticOnNhd_E_mul_read (A := Arch.gated (T := T) (d := d) σ id hid) (dOut := dOut) ℓ a j
+  -- the value column `e_{ℓ,i}` and the gate column `c_{ℓ,i}` of one unit are not proportional:
+  -- a `2 × 2` minor of the two columns does not vanish (as `h6` in `ae_oneBlockGenericReGLU`)
+  have h6 : ∀ᵐ θ ∂μ, ∀ ℓ (i : hid ℓ),
+      (θ.E * θ.read ℓ) a₁ (Sum.inr i) * (θ.E * θ.read ℓ) a₂ (Sum.inl i)
+        - (θ.E * θ.read ℓ) a₁ (Sum.inl i) * (θ.E * θ.read ℓ) a₂ (Sum.inr i) ≠ 0 := by
+    refine ae_all_iff.2 fun ℓ => ae_all_iff.2 fun i => ?_
+    -- the columns of the reads of all blocks together, indexed by `Σ ℓ, hid ℓ ⊕ hid ℓ`
+    obtain ⟨E₀, W₀, hEW⟩ := exists_minor_ne_zero (q := Σ ℓ, hid ℓ ⊕ hid ℓ)
+      (i := ⟨ℓ, Sum.inr i⟩) (j := ⟨ℓ, Sum.inl i⟩) ha hk
+      (fun h => Sum.inr_ne_inl (eq_of_heq (Sigma.mk.inj_iff.1 h).2))
+    let θ₀ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut :=
+      ⟨E₀, fun ℓ' => Matrix.of fun k j => W₀ k ⟨ℓ', j⟩, 0, 0⟩
+    have hg := ((hC ℓ a₁ (Sum.inr i)).mul (hC ℓ a₂ (Sum.inl i))).sub
+      ((hC ℓ a₁ (Sum.inl i)).mul (hC ℓ a₂ (Sum.inr i)))
+    exact ae_ne_zero_of_analytic μ hg ⟨θ₀, hEW⟩
+  -- the conditions of Lemma A.27 for gated blocks hold at generic parameters (`DepthGated.lean`)
+  filter_upwards [ae_smallWritesGenericGated μ hd hdIn hdOut, h6] with θ hg h6
+  refine ⟨hg, fun ℓ i r hr => h6 ℓ i ?_⟩
+  -- if `e_{ℓ,i} = r c_{ℓ,i}`, the minor vanishes
+  have e1 : (θ.E * θ.read ℓ) a₁ (Sum.inr i) = r * (θ.E * θ.read ℓ) a₁ (Sum.inl i) :=
+    congrFun hr a₁
+  have e2 : (θ.E * θ.read ℓ) a₂ (Sum.inr i) = r * (θ.E * θ.read ℓ) a₂ (Sum.inl i) :=
+    congrFun hr a₂
+  rw [e1, e2]
+  ring
 
 /-- **Proof of Lemma A.30, the kernel of `J_0`, for ReGLU blocks:** under the conditions
 `SmallWritesGenericReGLU`, a direction `η` with `(J_0 η)(x) = 0` at every input at which no limit
