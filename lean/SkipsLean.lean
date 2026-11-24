@@ -135,3 +135,5 @@ import SkipsLean.Depth.TanhPathBlock
 import SkipsLean.Depth.HiddenZero
 import SkipsLean.Depth.DomainZero
 import SkipsLean.Depth.DomainZeroConnected
+import SkipsLean.Depth.RegularZeroTanh
+import SkipsLean.Depth.TanhZero

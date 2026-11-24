@@ -810,3 +810,9 @@ import SkipsLean
 #print axioms Skips.ae_jacobianRank_ge_of_isPreconnected
 #print axioms Skips.isPreconnected_diff_of_forall_exists_nhds
 #print axioms Skips.isPreconnected_diff_zeroSet_of_surjective
+#print axioms Skips.tanh_path_step
+#print axioms Skips.claimZero_castSucc_tanh
+#print axioms Skips.holomorphicOnCone_last
+#print axioms Skips.exists_holomorphicOnCone_castSucc
+#print axioms Skips.HolomorphicOnCone.congr
+#print axioms Skips.exists_holomorphicOnCone_of_ne_zero
