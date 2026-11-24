@@ -192,11 +192,11 @@ inputs, `q` outputs), which contains the paper's `p = q = d`.
 
 | Paper | Lean statement | File | Status |
 |---|---|---|---|
-| A eq. (1): a vanilla block `B(x) = σ(x W_read) W_write`; a gated block; on a hidden state a block acts on each token | `vanillaBlock`, `gatedBlock`, `map_mul_mul_row` | `Absorb/Block.lean` | defined, in work |
-| A eq. (3) for ReLU: `σ(z) − σ(−z) = z` (for GELU: `gelu_sub_gelu_neg`) | `relu_sub_relu_neg` | `Absorb/Block.lean` | in work |
-| A Section 3.1, "At the same width": for `σ(z) − σ(−z) = cz`, flipping the reads of the units in `S` changes the block by `−c x W_read[:,S] W_write[S,:]` | `flipCols`, `subProd`, `vanillaBlock_flipCols` | `Absorb/Block.lean` | in work |
-| A Theorem 3.1 (i), "if": `W_read[:,S] W_write[S,:] = −M` gives a block of the same width that computes `xM + B(x)` | `vanillaBlock_flipCols_of_subProd` | `Absorb/Block.lean` | in work |
-| A Proposition A.11 (i) / Theorem 3.1 (ii), first half: read of rank `d` ⇒ a block with `d` more hidden units computes `xM + B(x)` (stated for every `M` and for `σ(z) − σ(−z) = cz`, `c ≠ 0`) | `exists_vanillaBlock_add_linear` | `Absorb/Block.lean` | in work |
+| A eq. (1): a vanilla block `B(x) = σ(x W_read) W_write`; a gated block; on a hidden state a block acts on each token | `vanillaBlock`, `gatedBlock`, `map_mul_mul_row` | `Absorb/Block.lean` | proved |
+| A eq. (3) for ReLU: `σ(z) − σ(−z) = z` (for GELU: `gelu_sub_gelu_neg`) | `relu_sub_relu_neg` | `Absorb/Block.lean` | proved |
+| A Section 3.1, "At the same width": for `σ(z) − σ(−z) = cz`, flipping the reads of the units in `S` changes the block by `−c x W_read[:,S] W_write[S,:]` | `flipCols`, `subProd`, `vanillaBlock_flipCols` | `Absorb/Block.lean` | proved |
+| A Theorem 3.1 (i), "if": `W_read[:,S] W_write[S,:] = −M` gives a block of the same width that computes `xM + B(x)` | `vanillaBlock_flipCols_of_subProd` | `Absorb/Block.lean` | proved |
+| A Proposition A.11 (i) / Theorem 3.1 (ii), first half: read of rank `d` ⇒ a block with `d` more hidden units computes `xM + B(x)` (stated for every `M` and for `σ(z) − σ(−z) = cz`, `c ≠ 0`) | `exists_vanillaBlock_add_linear` | `Absorb/Block.lean` | proved |
 | A Proposition A.1 (homogeneous blocks, degree `k ≠ 1`) | `exists_ne_of_homogeneous` | `Absorb/NoWidth.lean` | in work |
 | A Proposition A.2 (gated blocks whose gates vanish at `0` and are differentiable there) | `exists_ne_of_gated` | `Absorb/NoWidth.lean` | in work |
 | A Theorem 3.3 (a): ReLU² and ReGLU blocks (homogeneous of degree 2) | `vanillaBlock_reluSq_smul`, `gatedBlock_relu_smul`, `exists_ne_reluSq`, `exists_ne_reglu` | `Absorb/NoWidth.lean` | in work |
