@@ -1,8 +1,9 @@
 # Statements: the papers beside the Lean code
 
 For the authors. Each row puts a statement of a paper beside its Lean statement. "D" is "On the
-Functional Dimension of a Family of Analytic Neural Networks" and "S" is "Skip Connections Unlock
-at Least d_model² Parameters per Layer" (numbers of the PDFs of 22 November 2026). A row is
+Functional Dimension of a Family of Analytic Neural Networks", "S" is "Skip Connections Unlock
+at Least d_model² Parameters per Layer" and "A" is "Can an MLP Absorb Its Skip Connection Exactly?"
+(numbers of the PDFs in the repository on 24 November 2026). A row is
 "proved" only when `lake build` passes with no `sorry` in the file and `#print axioms` shows the
 three standard axioms. Please check the middle column against the paper: a proof of a statement
 that differs from the paper's says nothing about the paper.
@@ -180,3 +181,40 @@ Notes for the authors on these statements:
 | S Theorem 4.6 (i) for a tanh, a GELU, a SwiGLU and a GeGLU block: at generic parameters `fd(residual) = fd(skipless) + d²` | `ae_funDim_tanh_oneBlock_residual_eq_add`, `ae_funDim_gelu_oneBlock_residual_eq_add`, `ae_funDim_swiglu_oneBlock_residual_eq_add`, `ae_funDim_geglu_oneBlock_residual_eq_add` | `OneBlock/Residual.lean` | proved |
 
 Not stated yet from Section 3 of the skips paper: Theorem 3.3 (ii), the dimensions of the groups.
+
+### Absorb paper
+
+A block of the paper acts on a row `x`; a width is an index type, so "of any width" is a
+quantifier over index types. Networks are those of the library (`eval`, with the stream matrices
+`1`, `0` or learned skips); a skipless network that is compared with a residual one has its own
+depth, widths and model dimension. The one-block statements are for rectangular weights (`p`
+inputs, `q` outputs), which contains the paper's `p = q = d`.
+
+| Paper | Lean statement | File | Status |
+|---|---|---|---|
+| A eq. (1): a vanilla block `B(x) = σ(x W_read) W_write`; a gated block; on a hidden state a block acts on each token | `vanillaBlock`, `gatedBlock`, `map_mul_mul_row` | `Absorb/Block.lean` | defined, in work |
+| A eq. (3) for ReLU: `σ(z) − σ(−z) = z` (for GELU: `gelu_sub_gelu_neg`) | `relu_sub_relu_neg` | `Absorb/Block.lean` | in work |
+| A Section 3.1, "At the same width": for `σ(z) − σ(−z) = cz`, flipping the reads of the units in `S` changes the block by `−c x W_read[:,S] W_write[S,:]` | `flipCols`, `subProd`, `vanillaBlock_flipCols` | `Absorb/Block.lean` | in work |
+| A Theorem 3.1 (i), "if": `W_read[:,S] W_write[S,:] = −M` gives a block of the same width that computes `xM + B(x)` | `vanillaBlock_flipCols_of_subProd` | `Absorb/Block.lean` | in work |
+| A Proposition A.11 (i) / Theorem 3.1 (ii), first half: read of rank `d` ⇒ a block with `d` more hidden units computes `xM + B(x)` (stated for every `M` and for `σ(z) − σ(−z) = cz`, `c ≠ 0`) | `exists_vanillaBlock_add_linear` | `Absorb/Block.lean` | in work |
+| A Proposition A.1 (homogeneous blocks, degree `k ≠ 1`) | `exists_ne_of_homogeneous` | `Absorb/NoWidth.lean` | in work |
+| A Proposition A.2 (gated blocks whose gates vanish at `0` and are differentiable there) | `exists_ne_of_gated` | `Absorb/NoWidth.lean` | in work |
+| A Theorem 3.3 (a): ReLU² and ReGLU blocks (homogeneous of degree 2) | `vanillaBlock_reluSq_smul`, `gatedBlock_relu_smul`, `exists_ne_reluSq`, `exists_ne_reglu` | `Absorb/NoWidth.lean` | in work |
+| A Theorem 3.3 (b): SwiGLU and GeGLU blocks | `exists_ne_swiglu`, `exists_ne_geglu` | `Absorb/NoWidth.lean` | in work |
+| A Theorem 3.3 (c): `tanh` blocks | `exists_ne_tanh` | `Absorb/NoWidth.lean` | in work |
+| A Proposition 4.4: `σ(z) − σ(−z) = z`, no normalization, reads of rank `d` ⇒ the residual network equals a skipless network with `d` more hidden units per block and the same `E`, `D` | `exists_skipless_eq_residual_of_rank_read` | `Absorb/Networks.lean` | in work |
+| A Corollary A.3, what its proof uses of the blocks: each block maps `0` to `0` and has derivative `0` there; true for gated blocks whose gate vanishes at `0` and is differentiable there, and for ReLU² and ReGLU blocks | `Arch.FlatAtZero`, `flatAtZero_gated`, `hasFDerivAt_zero_of_homogeneous`, `flatAtZero_mlp_reluSq`, `flatAtZero_gated_relu` | `Absorb/Networks.lean` | in work |
+| A Theorem 4.1 (i) / Corollary A.3: `ED ≠ 0`, such blocks in both networks, no normalization or pre-RMSNorm with `ε > 0`: no skipless network of one or more blocks equals the residual one | `exists_ne_residual_skipless_of_flatAtZero`, `exists_ne_residual_skipless_of_flatAtZero_rmsNorm` | `Absorb/Networks.lean` | in work |
+| A Theorem 4.1 (ii): `tanh` blocks without normalization | `exists_ne_residual_skipless_tanh` | `Absorb/Networks.lean` | in work |
+| A Proposition 5.4 (i): for `σ(z) − σ(−z) = cz` the skipless network equals the network with the learned skips `cK_ℓ` and flipped reads (an identity, for any sets `S_ℓ`); at generic weights the skips are invertible | `Params.flipReads`, `eval_skipless_eq_learned_flipReads`, `ae_exists_learned_skips_eq_skipless` | `Absorb/Networks.lean` | in work |
+| A Proposition 5.4 (ii): at generic weights the skipless network equals a residual network with the same `D`, `d` and widths, with `E′D ≠ 0` | `ae_exists_residual_eq_skipless` | `Absorb/Networks.lean` | in work |
+
+Notes for the authors on these statements:
+- Proposition A.1 is stated for arbitrary maps `B`, `B′` with `B(λx) = λ^k B(x)` for `λ > 0`: its
+  proof uses nothing else.
+- Theorem 4.1 (i): the paper's "positively homogeneous of degree `k > 1`" gives derivative `0` at
+  `0` only for blocks that are bounded on the unit sphere (`O(‖x‖^k)` in the proof of Corollary A.3);
+  the Lean lemma `hasFDerivAt_zero_of_homogeneous` carries this hypothesis. ReLU² and ReGLU blocks
+  satisfy it. The two networks may have different `ε > 0`, and blocks of different kinds.
+- Proposition A.11 (i) does not use that `M` is invertible.
+
