@@ -556,6 +556,7 @@ theorem tendstoUniformlyOn_eval_writeScale (hχ : A.χ = rmsNorm 0)
     (hdef : ∀ X ∈ 𝒳, DefinedAt A 0 θ X) :
     TendstoUniformlyOn (fun (t : ℝ) (X : Matrix T dIn ℝ) => eval A 1 (θ.writeScale t) X)
       (fun X => eval A 0 θ X) atTop 𝒳 := by
-  sorry
+  obtain ⟨C, t₀, hC⟩ := exists_bound_eval_writeScale A θ hχ hf 𝒳 h𝒳 hdef
+  exact tendstoUniformlyOn_of_le_div fun X hX t ht => (hC X hX t ht).2
 
 end Skips
