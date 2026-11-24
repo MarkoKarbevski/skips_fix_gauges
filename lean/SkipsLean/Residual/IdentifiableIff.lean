@@ -27,8 +27,9 @@ blocks the rescalings of the values of the hidden units by nonzero factors, for 
 the changes of basis inside the heads. The permutations of hidden units or heads and the sign
 flips of tanh units, which the paper lists among the symmetries inside the blocks and counts in
 the proof of the converse, are not in the family: the direction from local identifiability to the
-equality condition is proved here for this smaller family. The first statements are for any real-analytic blocks, with the change of basis
-alone (`s = 0`): they contain tanh and GELU blocks, and are also stated for MLP blocks by name.
+equality condition is proved here for this smaller family. The first statements are for any
+real-analytic blocks, with the change of basis alone (`s = 0`): they contain tanh and GELU blocks,
+and are also stated for MLP blocks by name.
 For tanh, GELU, SwiGLU, GeGLU and attention blocks both sides hold (Theorem 4.7, Corollary 4.9).
 
 The direction from the equality condition to local identifiability, with the symmetries close to
