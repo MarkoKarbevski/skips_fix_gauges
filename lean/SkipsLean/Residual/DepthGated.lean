@@ -331,6 +331,15 @@ theorem eventually_funDim_smallWrites_gated (hσ : ∀ z, HasDerivAt σ (σ' z) 
   have hle := funDim_add_le_residual_gated (θ.smallWrites τ) hθ.rank_E hv
   omega
 
+omit [Fintype T] [Nonempty T] in
+/-- Helper (the private `rank_eq_of_isUnit_det_submatrix` of `Generic/Params.lean`): a matrix
+with `d` columns has rank `d` if some `d` of its rows form an invertible matrix. -/
+private theorem rank_eq_of_isUnit_det_submatrix_dg {m : Type*} (M : Matrix m d ℝ) (ρ : d ↪ m)
+    (h : IsUnit (M.submatrix ρ id).det) : M.rank = Fintype.card d :=
+  le_antisymm (Matrix.rank_le_card_width M)
+    ((Matrix.rank_of_isUnit _ ((Matrix.isUnit_iff_isUnit_det _).2 h)).symm.le.trans
+      (Matrix.rank_submatrix_le M ρ id))
+
 /-- The conditions of Lemma A.27 for gated blocks hold at generic parameters, for
 `d_in, d_out ≥ d ≥ 2` and blocks of any widths. -/
 theorem ae_smallWritesGenericGated
@@ -338,7 +347,64 @@ theorem ae_smallWritesGenericGated
     (hd : 2 ≤ Fintype.card d) (hdIn : Fintype.card d ≤ Fintype.card dIn)
     (hdOut : Fintype.card d ≤ Fintype.card dOut) :
     ∀ᵐ θ ∂μ, SmallWritesGenericGated θ := by
-  sorry
+  classical
+  -- two distinct coordinates of `h`, two distinct input coordinates, one output coordinate
+  obtain ⟨k₁, k₂, hk⟩ := Fintype.exists_pair_of_one_lt_card (show 1 < Fintype.card d by omega)
+  obtain ⟨a₁, a₂, ha⟩ := Fintype.exists_pair_of_one_lt_card (show 1 < Fintype.card dIn by omega)
+  obtain ⟨o₀⟩ : Nonempty dOut := Fintype.card_pos_iff.1 (by omega)
+  obtain ⟨ρE⟩ := Function.Embedding.nonempty_of_card_le hdIn
+  obtain ⟨cD⟩ := Function.Embedding.nonempty_of_card_le hdOut
+  -- the parameters with all entries `1`
+  let θ₁ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut :=
+    ⟨Matrix.of fun _ _ => 1, fun _ => Matrix.of fun _ _ => 1, fun _ => Matrix.of fun _ _ => 1,
+      Matrix.of fun _ _ => 1⟩
+  -- the ranks of `E` and `D`: invertible `d × d` minors
+  have h2 := ae_isUnit_det_submatrix μ
+  -- the rows of `W_write^ℓ D` are nonzero: their entries at `o₀` are
+  have h3 : ∀ᵐ θ ∂μ, ∀ ℓ (i : hid ℓ), (θ.write ℓ * θ.D) i o₀ ≠ 0 := by
+    refine ae_all_iff.2 fun ℓ => ae_all_iff.2 fun i => ?_
+    exact ae_ne_zero_of_analytic μ
+      (analyticOnNhd_write_mul_D (A := Arch.gated (T := T) (d := d) σ id hid) (dIn := dIn) ℓ i o₀)
+      ⟨θ₁, sum_one_mul_one_ne_zero hd⟩
+  -- the gate and value columns of `E W_read^ℓ` are nonzero: their entries at `a₁` are
+  have h4 : ∀ᵐ θ ∂μ, ∀ ℓ (j : hid ℓ ⊕ hid ℓ), (θ.E * θ.read ℓ) a₁ j ≠ 0 := by
+    refine ae_all_iff.2 fun ℓ => ae_all_iff.2 fun j => ?_
+    exact ae_ne_zero_of_analytic μ
+      (analyticOnNhd_E_mul_read (A := Arch.gated (T := T) (d := d) σ id hid) (dOut := dOut) ℓ a₁ j)
+      ⟨θ₁, sum_one_mul_one_ne_zero hd⟩
+  -- two gate columns, of the same block or of two blocks, are not collinear: a `2 × 2` minor does
+  -- not vanish
+  have hC : ∀ ℓ (a : dIn) (j : hid ℓ ⊕ hid ℓ), AnalyticOnNhd ℝ
+      (fun θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut =>
+        (θ.E * θ.read ℓ) a j) Set.univ := fun ℓ a j =>
+    analyticOnNhd_E_mul_read (A := Arch.gated (T := T) (d := d) σ id hid) (dOut := dOut) ℓ a j
+  have h5 : ∀ᵐ θ ∂μ, ∀ p q : (Σ ℓ, hid ℓ), p ≠ q →
+      (θ.E * θ.read p.1) a₁ (Sum.inl p.2) * (θ.E * θ.read q.1) a₂ (Sum.inl q.2)
+        - (θ.E * θ.read q.1) a₁ (Sum.inl q.2) * (θ.E * θ.read p.1) a₂ (Sum.inl p.2) ≠ 0 := by
+    refine ae_all_iff.2 fun p => ae_all_iff.2 fun q => ?_
+    by_cases hpq : p = q
+    · exact Filter.Eventually.of_forall fun _ h _ => absurd hpq h
+    · -- the gate column of unit `p` of the read is column `p` of `W₀`, all other columns `0`
+      obtain ⟨E₀, W₀, hEW⟩ := exists_minor_ne_zero (q := Σ ℓ, hid ℓ) ha hk hpq
+      let θ₀ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut :=
+        ⟨E₀, fun ℓ => Matrix.of fun k j => Sum.elim (fun i => W₀ k ⟨ℓ, i⟩) (fun _ => 0) j, 0, 0⟩
+      have hg := ((hC p.1 a₁ (Sum.inl p.2)).mul (hC q.1 a₂ (Sum.inl q.2))).sub
+        ((hC q.1 a₁ (Sum.inl q.2)).mul (hC p.1 a₂ (Sum.inl p.2)))
+      exact (ae_ne_zero_of_analytic μ hg ⟨θ₀, hEW⟩).mono fun _ h _ => h
+  filter_upwards [h2, h3, h4, h5] with θ h2 h3 h4 h5
+  refine ⟨rank_eq_of_isUnit_det_submatrix_dg θ.E ρE (h2.2.2.1 ρE),
+    rank_eq_card_of_isUnit_det θ.D cD (h2.2.1 cD), fun ℓ i hi => h3 ℓ i (congrFun hi o₀),
+    fun ℓ i hi => h4 ℓ (Sum.inl i) (congrFun hi a₁), ?_,
+    fun ℓ i hi => h4 ℓ (Sum.inr i) (congrFun hi a₁)⟩
+  -- if `c_p = r c_q`, the minor of the gate columns `p`, `q` vanishes
+  intro p q hpq r hr
+  have e1 : (θ.E * θ.read p.1) a₁ (Sum.inl p.2) = r * (θ.E * θ.read q.1) a₁ (Sum.inl q.2) :=
+    congrFun hr a₁
+  have e2 : (θ.E * θ.read p.1) a₂ (Sum.inl p.2) = r * (θ.E * θ.read q.1) a₂ (Sum.inl q.2) :=
+    congrFun hr a₂
+  apply h5 p q hpq
+  rw [e1, e2]
+  ring
 
 /-- **Lemma A.27 (Small writes), first value, for gated blocks:** with `d_in, d_out ≥ d ≥ 2` and
 blocks of any widths, for generic parameters `θ` and all small `τ ≠ 0`, the residual network has
@@ -352,7 +418,8 @@ theorem ae_eventually_funDim_smallWrites_gated (hσ : ∀ z, HasDerivAt σ (σ' 
       funDim (Arch.gated σ id hid) 1 (θ.smallWrites τ)
           + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
         = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  filter_upwards [ae_smallWritesGenericGated μ hd hdIn hdOut] with θ hθ
+  exact eventually_funDim_smallWrites_gated hσ hσa hU θ hθ
 
 /-- **Theorem 4.7 of the skips paper for gated blocks, without normalization:** with
 `d_in, d_out ≥ d ≥ 2` and `L` blocks of any widths, at generic parameters the residual network has
@@ -365,7 +432,14 @@ theorem ae_funDim_gated_residual (hσ : ∀ z, HasDerivAt σ (σ' z) z)
     ∀ᵐ θ ∂μ, funDim (Arch.gated σ id hid) 1 θ
         + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
       = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
+  -- one parameter `θ₀` with the conditions, and one small `τ ≠ 0`: `fd(θ₀_τ) = P - d² - s`
+  obtain ⟨θ₀, hθ₀⟩ := (ae_smallWritesGenericGated μ hd hdIn hdOut).exists
+  obtain ⟨τ, hτ⟩ := (eventually_funDim_smallWrites_gated hσ hσa hU θ₀ hθ₀).exists
+  -- at generic `θ`, `fd(θ) ≥ fd(θ₀_τ)` (analytic blocks), and `fd(θ) ≤ P - d² - s`
+  filter_upwards [ae_funDim_ge (Arch.gated σ id hid) 1 (fun ℓ => analyticOnNhd_f_gated hσa ℓ)
+    analyticOnNhd_id μ (θ₀.smallWrites τ), ae_funDim_add_le_residual_gated μ hdIn] with θ h1 h2
+  omega
 
 /-! ### The two kinds of block -/
 
@@ -378,7 +452,8 @@ theorem ae_eventually_funDim_smallWrites_swiglu
       funDim (Arch.gated silu id hid) 1 (θ.smallWrites τ)
           + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
         = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut) := by
-  sorry
+  exact ae_eventually_funDim_smallWrites_gated hasDerivAt_silu analyticOnNhd_silu
+    (silu_gatedUnitsRescale _ _ _) μ hd hdIn hdOut
 
 /-- **Lemma A.27 (Small writes) for GeGLU blocks, without normalization and without biases.** -/
 theorem ae_eventually_funDim_smallWrites_geglu
@@ -389,7 +464,8 @@ theorem ae_eventually_funDim_smallWrites_geglu
       funDim (Arch.gated gelu id hid) 1 (θ.smallWrites τ)
           + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
         = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) gelu id hid) dIn dOut) := by
-  sorry
+  exact ae_eventually_funDim_smallWrites_gated hasDerivAt_gelu analyticOnNhd_gelu
+    (gelu_gatedUnitsRescale _ _ _) μ hd hdIn hdOut
 
 /-- **Theorem 4.7 of the skips paper for SwiGLU blocks, without normalization:** at generic
 parameters the residual network of `L` blocks has the functional dimension `P - d² - s`. -/
@@ -400,7 +476,8 @@ theorem ae_funDim_swiglu_residual
     ∀ᵐ θ ∂μ, funDim (Arch.gated silu id hid) 1 θ
         + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
       = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) silu id hid) dIn dOut) := by
-  sorry
+  exact ae_funDim_gated_residual hasDerivAt_silu analyticOnNhd_silu (silu_gatedUnitsRescale _ _ _)
+    μ hd hdIn hdOut
 
 /-- **Theorem 4.7 of the skips paper for GeGLU blocks, without normalization:** at generic
 parameters the residual network of `L` blocks has the functional dimension `P - d² - s`. -/
@@ -411,6 +488,7 @@ theorem ae_funDim_geglu_residual
     ∀ᵐ θ ∂μ, funDim (Arch.gated gelu id hid) 1 θ
         + (Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ))
       = Module.finrank ℝ (Params (Arch.gated (T := T) (d := d) gelu id hid) dIn dOut) := by
-  sorry
+  exact ae_funDim_gated_residual hasDerivAt_gelu analyticOnNhd_gelu (gelu_gatedUnitsRescale _ _ _)
+    μ hd hdIn hdOut
 
 end Skips
