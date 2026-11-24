@@ -629,6 +629,311 @@ private theorem block_bounds {m ι n : Type*} [Fintype m] [Fintype ι] [Fintype 
 end Block
 
 
+/-! ### A `C¹` map is Lipschitz on a closed ball -/
+
+/-- A `C¹` map on a finite-dimensional space is Lipschitz on every closed ball (its derivative is
+bounded there, and the ball is convex). -/
+private theorem exists_lipschitz_closedBall {E F : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] [FiniteDimensional ℝ E] [NormedAddCommGroup F] [NormedSpace ℝ F]
+    {f : E → F} (hf : ContDiff ℝ 1 f) (x₀ : E) (r : ℝ) :
+    ∃ C : ℝ, 0 ≤ C ∧ ∀ x ∈ Metric.closedBall x₀ r, ∀ y ∈ Metric.closedBall x₀ r,
+      ‖f x - f y‖ ≤ C * ‖x - y‖ := by
+  obtain ⟨C, hC⟩ := (isCompact_closedBall x₀ r).exists_bound_of_continuousOn
+    (hf.continuous_fderiv one_ne_zero).continuousOn
+  refine ⟨max C 0, le_max_right _ _, fun x hx y hy => ?_⟩
+  exact (convex_closedBall x₀ r).norm_image_sub_le_of_norm_fderiv_le
+    (fun z _ => (hf.differentiable one_ne_zero) z) (fun z hz => (hC z hz).trans (le_max_left _ _))
+    hy hx
+
+/-- The derivative of a `C²` map is bounded and Lipschitz on every closed ball, applied to `v`. -/
+private theorem exists_fderiv_lipschitz_closedBall {E F : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] [FiniteDimensional ℝ E] [NormedAddCommGroup F] [NormedSpace ℝ F]
+    {f : E → F} (hf : ContDiff ℝ 2 f) (x₀ : E) (r : ℝ) :
+    ∃ C : ℝ, 0 ≤ C ∧ (∀ x ∈ Metric.closedBall x₀ r, ∀ v, ‖fderiv ℝ f x v‖ ≤ C * ‖v‖) ∧
+      ∀ x ∈ Metric.closedBall x₀ r, ∀ y ∈ Metric.closedBall x₀ r, ∀ v,
+        ‖fderiv ℝ f x v - fderiv ℝ f y v‖ ≤ C * ‖x - y‖ * ‖v‖ := by
+  have hf1 : ContDiff ℝ 1 (fderiv ℝ f) := hf.fderiv_right (by norm_num)
+  obtain ⟨C₁, hC₁0, hC₁⟩ := exists_lipschitz_closedBall hf1 x₀ r
+  obtain ⟨C₂, hC₂⟩ := (isCompact_closedBall x₀ r).exists_bound_of_continuousOn
+    (hf.continuous_fderiv (by norm_num)).continuousOn
+  refine ⟨max C₁ C₂, le_max_of_le_left hC₁0, fun x hx v => ?_, fun x hx y hy v => ?_⟩
+  · exact ((fderiv ℝ f x).le_opNorm v).trans
+      (mul_le_mul_of_nonneg_right ((hC₂ x hx).trans (le_max_right _ _)) (norm_nonneg v))
+  · rw [← _root_.sub_apply]
+    exact ((fderiv ℝ f x - fderiv ℝ f y).le_opNorm v).trans (mul_le_mul_of_nonneg_right
+      ((hC₁ x hx y hy).trans (mul_le_mul_of_nonneg_right (le_max_left _ _) (norm_nonneg _)))
+      (norm_nonneg v))
+
+/-! ### The chain rule through one block, for any architecture without normalization -/
+
+/-- Helper: for `Φ` differentiable at `(x, y)`, the derivatives of its two partial maps, along `b`
+and `a`, add up to its derivative along `(a, b)` (as in `Depth/StepTanh.lean`). -/
+private theorem fderiv_partial_addF {E₁ E₂ F : Type*} [NormedAddCommGroup E₁] [NormedSpace ℝ E₁]
+    [NormedAddCommGroup E₂] [NormedSpace ℝ E₂] [NormedAddCommGroup F] [NormedSpace ℝ F]
+    {Φ : E₁ → E₂ → F} {x : E₁} {y : E₂}
+    (hΦ : DifferentiableAt ℝ (fun p : E₁ × E₂ => Φ p.1 p.2) (x, y)) (a : E₁) (b : E₂) :
+    fderiv ℝ (fun y' => Φ x y') y b + fderiv ℝ (fun x' => Φ x' y) x a
+      = fderiv ℝ (fun p : E₁ × E₂ => Φ p.1 p.2) (x, y) (a, b) := by
+  have h1 : HasFDerivAt (fun x' => Φ x' y)
+      ((fderiv ℝ (fun p : E₁ × E₂ => Φ p.1 p.2) (x, y)).comp
+        (ContinuousLinearMap.inl ℝ E₁ E₂)) x := by
+    have hc := hΦ.hasFDerivAt.comp x (hasFDerivAt_prodMk_left (𝕜 := ℝ) x y)
+    exact hc
+  have h2 : HasFDerivAt (fun y' => Φ x y')
+      ((fderiv ℝ (fun p : E₁ × E₂ => Φ p.1 p.2) (x, y)).comp
+        (ContinuousLinearMap.inr ℝ E₁ E₂)) y := by
+    have hc := hΦ.hasFDerivAt.comp y (hasFDerivAt_prodMk_right (𝕜 := ℝ) x y)
+    exact hc
+  rw [h1.fderiv, h2.fderiv, ContinuousLinearMap.comp_apply, ContinuousLinearMap.comp_apply,
+    ContinuousLinearMap.inl_apply, ContinuousLinearMap.inr_apply, ← map_add, Prod.mk_add_mk,
+    zero_add, add_zero]
+
+/-- The chain rule for `𝓑_{>ℓ-1} = 𝓑_{>ℓ} ∘ g_ℓ` along `v`, with the derivative `w` of the block
+along the line `h + s v`. -/
+private theorem fderiv_suffix_castSucc_line (A : Arch T d L) (hχ : A.χ = id)
+    (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ)) (θ : Params A dIn dOut) (ℓ : Fin L)
+    (h v w : Matrix T d ℝ)
+    (hw : HasDerivAt (fun s : ℝ => A.f ℓ ((h + s • v) * θ.read ℓ) * θ.write ℓ) w 0) :
+    fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ ℓ.castSucc h') h v
+      = fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ ℓ.succ h')
+          (A.f ℓ (h * θ.read ℓ) * θ.write ℓ) w := by
+  have hB := differentiable_suffix A θ hχ hf ℓ.succ
+  have hB' := differentiable_suffix A θ hχ hf ℓ.castSucc
+  have e1 : HasDerivAt (fun s : ℝ => suffix A 0 θ ℓ.castSucc (h + s • v))
+      (fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ ℓ.castSucc h') h v) 0 := by
+    have hc := (hB' h).hasFDerivAt.comp_hasDerivAt_of_eq 0 (hasDerivAt_lineF h v) (by simp)
+    exact hc
+  have e2 : HasDerivAt (fun s : ℝ => suffix A 0 θ ℓ.castSucc (h + s • v))
+      (fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ ℓ.succ h')
+        (A.f ℓ (h * θ.read ℓ) * θ.write ℓ) w) 0 := by
+    have hc := (hB (A.f ℓ (h * θ.read ℓ) * θ.write ℓ)).hasFDerivAt.comp_hasDerivAt_of_eq 0 hw
+      (by simp)
+    have hfun : (fun s : ℝ => suffix A 0 θ ℓ.castSucc (h + s • v))
+        = (fun h' : Matrix T d ℝ => suffix A 0 θ ℓ.succ h') ∘
+          fun s : ℝ => A.f ℓ ((h + s • v) * θ.read ℓ) * θ.write ℓ := by
+      funext s
+      rw [suffix_castSucc_eq_comp A θ hχ ℓ]
+      rfl
+    rw [hfun]
+    exact hc
+  exact e1.unique e2
+
+/-- The chain rule for `θ ↦ 𝓑_{>ℓ-1}(h) = 𝓑_{>ℓ}(g_ℓ(h))` along `η`, with the derivative `w` of
+the block along the line of weights `θ + s η`. -/
+private theorem fderiv_params_suffix_castSucc_line (A : Arch T d L) (hχ : A.χ = id)
+    (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ)) (θ η : Params A dIn dOut) (ℓ : Fin L)
+    (h w : Matrix T d ℝ)
+    (hw : HasDerivAt (fun s : ℝ =>
+      A.f ℓ (h * (θ.read ℓ + s • η.read ℓ)) * (θ.write ℓ + s • η.write ℓ)) w 0) :
+    fderiv ℝ (fun θ' : Params A dIn dOut => suffix A 0 θ' ℓ.castSucc h) θ η
+      = fderiv ℝ (fun θ' : Params A dIn dOut =>
+          suffix A 0 θ' ℓ.succ (A.f ℓ (h * θ.read ℓ) * θ.write ℓ)) θ η
+        + fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ ℓ.succ h')
+          (A.f ℓ (h * θ.read ℓ) * θ.write ℓ) w := by
+  have hΦ := differentiable_suffix_prod A (dIn := dIn) (dOut := dOut) hχ hf ℓ.succ
+  have hP := differentiable_params_suffix A (dIn := dIn) (dOut := dOut) hχ hf ℓ.castSucc h
+  have e1 : HasDerivAt (fun s : ℝ => suffix A 0 (θ + s • η) ℓ.castSucc h)
+      (fderiv ℝ (fun θ' : Params A dIn dOut => suffix A 0 θ' ℓ.castSucc h) θ η) 0 := by
+    have hc := (hP θ).hasFDerivAt.comp_hasDerivAt_of_eq 0 (hasDerivAt_lineF θ η) (by simp)
+    exact hc
+  have e2 : HasDerivAt (fun s : ℝ => suffix A 0 (θ + s • η) ℓ.castSucc h)
+      (fderiv ℝ (fun p : Params A dIn dOut × Matrix T d ℝ => suffix A 0 p.1 ℓ.succ p.2)
+        (θ, A.f ℓ (h * θ.read ℓ) * θ.write ℓ) (η, w)) 0 := by
+    have hc := (hΦ (θ, A.f ℓ (h * θ.read ℓ) * θ.write ℓ)).hasFDerivAt.comp_hasDerivAt_of_eq 0
+      ((hasDerivAt_lineF θ η).prodMk hw) (by simp)
+    have hfun : (fun s : ℝ => suffix A 0 (θ + s • η) ℓ.castSucc h)
+        = (fun p : Params A dIn dOut × Matrix T d ℝ => suffix A 0 p.1 ℓ.succ p.2) ∘
+          fun s : ℝ => (θ + s • η,
+            A.f ℓ (h * (θ.read ℓ + s • η.read ℓ)) * (θ.write ℓ + s • η.write ℓ)) := by
+      funext s
+      simp only [Function.comp_apply, suffix_castSucc, hχ, id, Pi.zero_apply, Matrix.mul_zero,
+        zero_add, Params.add_read, Params.smul_read, Params.add_write, Params.smul_write]
+    rw [hfun]
+    exact hc
+  calc _ = fderiv ℝ (fun p : Params A dIn dOut × Matrix T d ℝ => suffix A 0 p.1 ℓ.succ p.2)
+        (θ, A.f ℓ (h * θ.read ℓ) * θ.write ℓ) (η, w) := e1.unique e2
+    _ = fderiv ℝ (fun h' : Matrix T d ℝ => suffix A 0 θ ℓ.succ h')
+          (A.f ℓ (h * θ.read ℓ) * θ.write ℓ) w
+        + fderiv ℝ (fun θ' : Params A dIn dOut =>
+          suffix A 0 θ' ℓ.succ (A.f ℓ (h * θ.read ℓ) * θ.write ℓ)) θ η :=
+      (fderiv_partial_addF (Φ := fun θ' h' => suffix A 0 θ' ℓ.succ h') (hΦ _) η w).symm
+    _ = _ := add_comm _ _
+
+/-! ### The two networks through block `ℓ` -/
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+private theorem toFrozen_read (A : ∀ ℓ, Finset (hid ℓ))
+    (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) (ℓ : Fin L) :
+    (θ.toFrozen A).read ℓ = θ.read ℓ := rfl
+
+/-- The gated network through block `ℓ`: `𝓑_{>ℓ-1}(h) = 𝓑_{>ℓ}(qa σ (h W) V)`. -/
+private theorem suffix_gated_castSucc (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (ℓ : Fin L) (h : Matrix T d ℝ) :
+    suffix (Arch.gated σ id hid) 0 θ ℓ.castSucc h
+      = suffix (Arch.gated σ id hid) 0 θ ℓ.succ (qa (fun _ => σ) (h * θ.read ℓ) * θ.write ℓ) := by
+  rw [suffix_castSucc_eq_comp _ θ rfl ℓ]
+  rfl
+
+/-- The frozen network through block `ℓ`: `𝓑°_{>ℓ-1}(h) = 𝓑°_{>ℓ}(qa aF (h W) V)`. -/
+private theorem suffix_frozen_castSucc (A : ∀ ℓ, Finset (hid ℓ))
+    (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) (ℓ : Fin L) (h : Matrix T d ℝ) :
+    suffix (Arch.frozen A) 0 (θ.toFrozen A) ℓ.castSucc h
+      = suffix (Arch.frozen A) 0 (θ.toFrozen A) ℓ.succ
+          (qa (aF (A ℓ)) (h * θ.read ℓ) * θ.write ℓ) := by
+  rw [suffix_castSucc_eq_comp _ _ rfl ℓ, Function.comp_apply, frozen_f_eq]
+  rfl
+
+/-- The derivative of the gated network through block `ℓ`, along `v`. -/
+private theorem fderiv_gated_castSucc (hσ : ∀ z, HasDerivAt σ (σ' z) z)
+    (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) (ℓ : Fin L)
+    (h v : Matrix T d ℝ) :
+    fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.gated σ id hid) 0 θ ℓ.castSucc h') h v
+      = fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.gated σ id hid) 0 θ ℓ.succ h')
+          (qa (fun _ => σ) (h * θ.read ℓ) * θ.write ℓ)
+          (dqa (fun _ => σ) (fun _ => σ') (h * θ.read ℓ) (v * θ.read ℓ) * θ.write ℓ) :=
+  fderiv_suffix_castSucc_line _ rfl (differentiable_f_gated fun z => (hσ z).differentiableAt)
+    θ ℓ h v _ (hasDerivAt_block_line (a := fun _ => σ) (fun _ z => hσ z) _ _ h v)
+
+/-- The derivative of the frozen network through block `ℓ`, along `v`. -/
+private theorem fderiv_frozen_castSucc (A : ∀ ℓ, Finset (hid ℓ))
+    (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) (ℓ : Fin L)
+    (h v : Matrix T d ℝ) :
+    fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.frozen A) 0 (θ.toFrozen A) ℓ.castSucc h') h v
+      = fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.frozen A) 0 (θ.toFrozen A) ℓ.succ h')
+          (qa (aF (A ℓ)) (h * θ.read ℓ) * θ.write ℓ)
+          (dqa (aF (A ℓ)) (aF' (A ℓ)) (h * θ.read ℓ) (v * θ.read ℓ) * θ.write ℓ) := by
+  have hfF : ∀ ℓ, Differentiable ℝ ((Arch.frozen (T := T) (d := d) A).f ℓ) := fun ℓ =>
+    differentiableOn_univ.1 (analyticOnNhd_f_frozen A ℓ).differentiableOn
+  have hfe : (Arch.frozen (T := T) (d := d) A).f ℓ = qa (aF (A ℓ)) := funext (frozen_f_eq A ℓ)
+  have c := fderiv_suffix_castSucc_line (Arch.frozen A) rfl hfF (θ.toFrozen A) ℓ h v
+    (dqa (aF (A ℓ)) (aF' (A ℓ)) (h * θ.read ℓ) (v * θ.read ℓ) * θ.write ℓ) (by
+      rw [hfe]
+      exact hasDerivAt_block_line (hasDerivAt_aF (A ℓ)) (θ.read ℓ) (θ.write ℓ) h v)
+  rw [hfe] at c
+  exact c
+
+/-- The derivative of the gated network through block `ℓ` in the weights, along `η`. -/
+private theorem fderiv_params_gated_castSucc (hσ : ∀ z, HasDerivAt σ (σ' z) z)
+    (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) (ℓ : Fin L)
+    (h : Matrix T d ℝ) :
+    fderiv ℝ (fun θ' : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut =>
+        suffix (Arch.gated σ id hid) 0 θ' ℓ.castSucc h) θ η
+      = fderiv ℝ (fun θ' : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut =>
+          suffix (Arch.gated σ id hid) 0 θ' ℓ.succ (qa (fun _ => σ) (h * θ.read ℓ) * θ.write ℓ))
+          θ η
+        + fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.gated σ id hid) 0 θ ℓ.succ h')
+          (qa (fun _ => σ) (h * θ.read ℓ) * θ.write ℓ)
+          (dqa (fun _ => σ) (fun _ => σ') (h * θ.read ℓ) (h * η.read ℓ) * θ.write ℓ
+            + qa (fun _ => σ) (h * θ.read ℓ) * η.write ℓ) :=
+  fderiv_params_suffix_castSucc_line _ rfl
+    (differentiable_f_gated fun z => (hσ z).differentiableAt) θ η ℓ h _
+    (hasDerivAt_block_params (a := fun _ => σ) (fun _ z => hσ z) _ _ _ _ h)
+
+/-- The derivative of the frozen network through block `ℓ` in the weights, along `η`. -/
+private theorem fderiv_params_frozen_castSucc (A : ∀ ℓ, Finset (hid ℓ))
+    (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) (ℓ : Fin L)
+    (h : Matrix T d ℝ) :
+    fderiv ℝ (fun θ' : Params (Arch.frozen (T := T) (d := d) A) dIn dOut =>
+        suffix (Arch.frozen A) 0 θ' ℓ.castSucc h) (θ.toFrozen A) (η.toFrozen A)
+      = fderiv ℝ (fun θ' : Params (Arch.frozen (T := T) (d := d) A) dIn dOut =>
+          suffix (Arch.frozen A) 0 θ' ℓ.succ (qa (aF (A ℓ)) (h * θ.read ℓ) * θ.write ℓ))
+          (θ.toFrozen A) (η.toFrozen A)
+        + fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.frozen A) 0 (θ.toFrozen A) ℓ.succ h')
+          (qa (aF (A ℓ)) (h * θ.read ℓ) * θ.write ℓ)
+          (dqa (aF (A ℓ)) (aF' (A ℓ)) (h * θ.read ℓ) (h * η.read ℓ) * θ.write ℓ
+            + qa (aF (A ℓ)) (h * θ.read ℓ) * η.write ℓ) := by
+  have hfF : ∀ ℓ, Differentiable ℝ ((Arch.frozen (T := T) (d := d) A).f ℓ) := fun ℓ =>
+    differentiableOn_univ.1 (analyticOnNhd_f_frozen A ℓ).differentiableOn
+  have hfe : (Arch.frozen (T := T) (d := d) A).f ℓ = qa (aF (A ℓ)) := funext (frozen_f_eq A ℓ)
+  have c := fderiv_params_suffix_castSucc_line (Arch.frozen A) rfl hfF (θ.toFrozen A)
+    (η.toFrozen A) ℓ h (dqa (aF (A ℓ)) (aF' (A ℓ)) (h * θ.read ℓ) (h * η.read ℓ) * θ.write ℓ
+      + qa (aF (A ℓ)) (h * θ.read ℓ) * η.write ℓ) (by
+      rw [hfe]
+      exact hasDerivAt_block_params (hasDerivAt_aF (A ℓ)) (θ.read ℓ) (η.read ℓ) (θ.write ℓ)
+        (η.write ℓ) h)
+  rw [hfe] at c
+  exact c
+
+/-! ### Step 4: the frozen network on the dilations of a ball -/
+
+/-- **The frozen network is Lipschitz with polynomial growth** on the dilations `t² z` of a closed
+ball (`t ≥ 1`), by its homogeneity of the degree `M = 2^{L−k}` and since it is real-analytic: its
+value, its derivative in the hidden state, and its derivative in the weights along `η₀`. -/
+private theorem frozen_lip (A : ∀ ℓ, Finset (hid ℓ))
+    (θ₀ η₀ : Params (Arch.frozen (T := T) (d := d) A) dIn dOut) (k : Fin (L + 1))
+    (H' : Matrix T d ℝ) (r : ℝ) :
+    ∃ C : ℝ, 0 ≤ C ∧ ∀ t : ℝ, 1 ≤ t →
+      ∀ z₁ ∈ Metric.closedBall H' r, ∀ z₂ ∈ Metric.closedBall H' r,
+      ‖suffix (Arch.frozen A) 0 θ₀ k (t ^ 2 • z₁) - suffix (Arch.frozen A) 0 θ₀ k (t ^ 2 • z₂)‖
+          ≤ C * t ^ (2 * 2 ^ (L - (k : ℕ))) * ‖t ^ 2 • z₁ - t ^ 2 • z₂‖ ∧
+      (∀ v, ‖fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.frozen A) 0 θ₀ k h') (t ^ 2 • z₁) v
+          - fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.frozen A) 0 θ₀ k h') (t ^ 2 • z₂) v‖
+          ≤ C * t ^ (2 * 2 ^ (L - (k : ℕ))) * ‖t ^ 2 • z₁ - t ^ 2 • z₂‖ * ‖v‖) ∧
+      (∀ v, ‖fderiv ℝ (fun h' : Matrix T d ℝ => suffix (Arch.frozen A) 0 θ₀ k h')
+          (t ^ 2 • z₂) v‖ ≤ C * t ^ (2 * 2 ^ (L - (k : ℕ))) * ‖v‖) ∧
+      ‖fderiv ℝ (fun θ' : Params (Arch.frozen (T := T) (d := d) A) dIn dOut =>
+            suffix (Arch.frozen A) 0 θ' k (t ^ 2 • z₁)) θ₀ η₀
+          - fderiv ℝ (fun θ' : Params (Arch.frozen (T := T) (d := d) A) dIn dOut =>
+            suffix (Arch.frozen A) 0 θ' k (t ^ 2 • z₂)) θ₀ η₀‖
+          ≤ C * t ^ (2 * 2 ^ (L - (k : ℕ))) * ‖t ^ 2 • z₁ - t ^ 2 • z₂‖ := by
+  have hfa : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.frozen (T := T) (d := d) A).f ℓ) Set.univ :=
+    analyticOnNhd_f_frozen A
+  -- the value and the derivative in the hidden state, on the ball
+  have hB : ContDiff ℝ 2 (fun h' : Matrix T d ℝ => suffix (Arch.frozen A) 0 θ₀ k h') :=
+    (analyticOnNhd_suffix (Arch.frozen A) θ₀ rfl hfa k).contDiff
+  obtain ⟨C₁, hC₁0, hC₁⟩ := exists_lipschitz_closedBall (hB.of_le (by norm_num)) H' r
+  obtain ⟨C₂, hC₂0, hC₂b, hC₂⟩ := exists_fderiv_lipschitz_closedBall hB H' r
+  -- the derivative in the weights along `η₀`, a `C¹` function of the hidden state
+  have hP : ContDiff ℝ 1 (fun z : Matrix T d ℝ =>
+      fderiv ℝ (fun θ' : Params (Arch.frozen (T := T) (d := d) A) dIn dOut =>
+        suffix (Arch.frozen A) 0 θ' k z) θ₀ η₀) := by
+    have hj : ContDiff ℝ 2 (fun p : Params (Arch.frozen (T := T) (d := d) A) dIn dOut ×
+        Matrix T d ℝ => suffix (Arch.frozen A) 0 p.1 k p.2) :=
+      (analyticOnNhd_suffix_prod (Arch.frozen A) rfl hfa k).contDiff
+    have hsw : ContDiff ℝ 2 (fun q : Matrix T d ℝ ×
+        Params (Arch.frozen (T := T) (d := d) A) dIn dOut => (q.2, q.1)) :=
+      contDiff_snd.prodMk contDiff_fst
+    have hc := hj.comp hsw
+    have hj' : ContDiff ℝ 2 (Function.uncurry fun (z : Matrix T d ℝ)
+        (θ' : Params (Arch.frozen (T := T) (d := d) A) dIn dOut) =>
+          suffix (Arch.frozen A) 0 θ' k z) := hc
+    exact (hj'.fderiv contDiff_const (by norm_num)).clm_apply contDiff_const
+  obtain ⟨C₃, hC₃0, hC₃⟩ := exists_lipschitz_closedBall hP H' r
+  refine ⟨C₁ + C₂ + C₃, by positivity, fun t ht z₁ hz₁ z₂ hz₂ => ?_⟩
+  -- homogeneity: `t^2` to the powers `M` and `M - 1`, `M = 2^{L-k}`
+  have hc0 : 0 ≤ t ^ 2 := by positivity
+  have hc : t ^ 2 ≠ 0 := by positivity
+  have hnum : ∀ j : ℕ, j ≤ 2 ^ (L - (k : ℕ)) → ∀ C' Y Y' : ℝ, 0 ≤ C' → C' ≤ C₁ + C₂ + C₃ →
+      0 ≤ Y → Y ≤ Y' → (t ^ 2) ^ j * (C' * Y) ≤ (C₁ + C₂ + C₃) * t ^ (2 * 2 ^ (L - (k : ℕ))) * Y' := by
+    intro j hj C' Y Y' hC' hC'C hY hYY'
+    have h1 : (t ^ 2) ^ j ≤ t ^ (2 * 2 ^ (L - (k : ℕ))) := by
+      rw [pow_mul]
+      exact pow_le_pow_right₀ (by nlinarith) hj
+    calc (t ^ 2) ^ j * (C' * Y) ≤ t ^ (2 * 2 ^ (L - (k : ℕ))) * ((C₁ + C₂ + C₃) * Y') :=
+          mul_le_mul h1 (mul_le_mul hC'C hYY' hY (by positivity)) (by positivity) (by positivity)
+      _ = _ := by ring
+  have hsub : ‖t ^ 2 • z₁ - t ^ 2 • z₂‖ = t ^ 2 * ‖z₁ - z₂‖ := by
+    rw [← smul_sub, norm_smul, Real.norm_eq_abs, abs_of_nonneg hc0]
+  have hle : ‖z₁ - z₂‖ ≤ ‖t ^ 2 • z₁ - t ^ 2 • z₂‖ := by
+    rw [hsub]
+    exact le_mul_of_one_le_left (norm_nonneg _) (by nlinarith)
+  refine ⟨?_, fun v => ?_, fun v => ?_, ?_⟩
+  · rw [suffix_frozen_smul, suffix_frozen_smul, ← smul_sub, norm_smul, Real.norm_eq_abs, abs_of_nonneg (pow_nonneg hc0 _)]
+    exact hnum _ le_rfl C₁ _ _ hC₁0 (by linarith) (norm_nonneg _) hle |>.trans' (by
+      gcongr; exact hC₁ z₁ hz₁ z₂ hz₂)
+  · rw [fderiv_suffix_frozen_smul A θ₀ k hc, fderiv_suffix_frozen_smul A θ₀ k hc, ← smul_sub, norm_smul, Real.norm_eq_abs, abs_of_nonneg (pow_nonneg hc0 _)]
+    refine (mul_le_mul_of_nonneg_left (hC₂ z₁ hz₁ z₂ hz₂ v) (pow_nonneg hc0 _)).trans ?_
+    rw [mul_assoc C₂, mul_assoc _ _ ‖v‖]
+    exact hnum _ (Nat.sub_le _ _) C₂ _ _ hC₂0 (by linarith) (by positivity)
+      (mul_le_mul_of_nonneg_right hle (norm_nonneg v))
+  · rw [fderiv_suffix_frozen_smul A θ₀ k hc, norm_smul, Real.norm_eq_abs,
+      abs_of_nonneg (pow_nonneg hc0 _)]
+    exact (mul_le_mul_of_nonneg_left (hC₂b z₂ hz₂ v) (pow_nonneg hc0 _)).trans
+      (hnum _ (Nat.sub_le _ _) C₂ _ _ hC₂0 (by linarith) (norm_nonneg v) le_rfl)
+  · rw [fderiv_params_suffix_frozen_smul, fderiv_params_suffix_frozen_smul, ← smul_sub, norm_smul, Real.norm_eq_abs, abs_of_nonneg (pow_nonneg hc0 _)]
+    exact (mul_le_mul_of_nonneg_left (hC₃ z₁ hz₁ z₂ hz₂) (pow_nonneg hc0 _)).trans
+      (hnum _ le_rfl C₃ _ _ hC₃0 (by linarith) (norm_nonneg _) hle)
+
 /-- **Lemma D.11, for real hidden states, with the derivative in the hidden state.** Let `θ` be
 good for the cones, and let all rows of `H` lie in `C_k`. There are `ϱ, κ > 0` and `t₀` such that
 for `t ≥ t₀` and `‖U‖ ≤ ϱ`, at `h = t (H + U)`, the network after `h_k` and the frozen network
