@@ -692,6 +692,7 @@ private theorem cobLin_inv_cobLin_lst {A : Arch T d L} (Q : Fin (L + 1) → GL d
     simp only [cobLin_lst_apply, Params.cob, cobSkip, inv_inv, Matrix.mul_assoc, Units.mul_inv,
       Matrix.mul_one, gl_mul_inv_mul_lst]
 
+omit [LinearOrder d] in
 /-- **The functional dimension with full learned skips is invariant under orthogonal changes of
 basis** (pre-RMSNorm, `ε > 0`): at `(θ.cob Q Q, (Q_{ℓ-1}⁻¹ A_ℓ Q_ℓ))` it is the same as at
 `(θ, (A_ℓ))`. -/

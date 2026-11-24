@@ -1341,3 +1341,14 @@ import SkipsLean
 #print axioms Skips.ae_funDimLearned_geglu_rmsNorm
 #print axioms Skips.ae_funDimLearned_geglu_rmsNorm_eq_residual_add
 #print axioms Skips.funDim_add_finrank_le_funDimSkips_zero
+#print axioms Skips.finrank_upperTriangular
+#print axioms Skips.funDimLearnedTri_eq_funDimLearned
+#print axioms Skips.funDimLearned_cob
+#print axioms Skips.ae_funDimLearnedTri_tanh_rmsNorm
+#print axioms Skips.ae_funDimLearnedTri_tanh_rmsNorm_eq_residual_add
+#print axioms Skips.ae_funDimLearnedTri_gelu_rmsNorm
+#print axioms Skips.ae_funDimLearnedTri_gelu_rmsNorm_eq_residual_add
+#print axioms Skips.ae_funDimLearnedTri_swiglu_rmsNorm
+#print axioms Skips.ae_funDimLearnedTri_swiglu_rmsNorm_eq_residual_add
+#print axioms Skips.ae_funDimLearnedTri_geglu_rmsNorm
+#print axioms Skips.ae_funDimLearnedTri_geglu_rmsNorm_eq_residual_add
