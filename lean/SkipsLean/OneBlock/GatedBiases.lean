@@ -753,6 +753,275 @@ theorem funDimB_gated_oneBlock (hσ : ∀ z, HasDerivAt σ (σ' z) z)
   have h3 := funDimB_add_finrank_flatB p hdiff
   omega
 
+/-! ### Helpers: the residual network with biases and its derivative -/
+
+omit [Fintype T] [Nonempty T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: a matrix whose rank is its number of columns cancels on the left, via a left
+inverse. -/
+private theorem cancel_left_of_rank_gbi {m n k : Type*} [Fintype m] [Fintype n] [DecidableEq n]
+    (M : Matrix m n ℝ) (hM : M.rank = Fintype.card n) {X Y : Matrix n k ℝ}
+    (h : M * X = M * Y) : X = Y := by
+  obtain ⟨B, hB⟩ := Matrix.vecMul_surjective_iff_exists_left_inverse.mp
+    (Matrix.vecMul_surjective_iff_rank_eq_card.mpr hM)
+  have := congrArg (B * ·) h
+  simpa only [← Matrix.mul_assoc, hB, Matrix.one_mul] using this
+
+omit [Fintype T] [Nonempty T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: a matrix whose rank is its number of rows cancels on the right, via a right
+inverse. -/
+private theorem cancel_right_of_rank_gbi {m n k : Type*} [Fintype m] [Fintype n] [DecidableEq m]
+    (M : Matrix m n ℝ) (hM : M.rank = Fintype.card m) {X Y : Matrix k m ℝ}
+    (h : X * M = Y * M) : X = Y := by
+  obtain ⟨R, hR⟩ := Matrix.mulVec_surjective_iff_exists_right_inverse.mp
+    (Matrix.mulVec_surjective_iff_rank_eq_card.mpr hM)
+  have := congrArg (· * R) h
+  simpa only [Matrix.mul_assoc, hR, Matrix.mul_one] using this
+
+/-- Helper: `M = E D`, the linear part of the residual network. -/
+private def Mm_gbi (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) :
+    Matrix dIn dOut ℝ :=
+  θ.E * θ.D
+
+/-- Helper: the derivative `∂M = η_E D + E η_D` of `M` along `η`. -/
+private def dMm_gbi (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) :
+    Matrix dIn dOut ℝ :=
+  η.E * θ.D + θ.E * η.D
+
+/-- Helper: `γ = b_E D + γ_0`. -/
+private def γr_gbi (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (b : Biases (Arch.gated (T := T) (d := d) σ id hid) dOut) : dOut → ℝ :=
+  b.E ᵥ* θ.D + γm_gbi θ b
+
+/-- Helper: the derivative `∂γ = η_{b_E} D + b_E η_D + ∂γ_0` of `γ`. -/
+private def dγr_gbi (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (b : Biases (Arch.gated (T := T) (d := d) σ id hid) dOut)
+    (η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (ηb : Biases (Arch.gated (T := T) (d := d) σ id hid) dOut) : dOut → ℝ :=
+  ηb.E ᵥ* θ.D + b.E ᵥ* η.D + dγm_gbi θ b η ηb
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: along the line, `M(τ) = M + τ ∂M + τ² η_E η_D`. -/
+private theorem Mm_line_gbi (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (τ : ℝ) :
+    Mm_gbi (θ + τ • η) = Mm_gbi θ + τ • dMm_gbi θ η + (τ * τ) • Mm_gbi η := by
+  simp only [Mm_gbi, dMm_gbi, Params.add_E, Params.smul_E, Params.add_D, Params.smul_D,
+    Matrix.mul_add, Matrix.add_mul, Matrix.mul_smul, Matrix.smul_mul, smul_add, smul_smul]
+  abel
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: along the line, `γ(τ) = γ + τ ∂γ + τ² (η_{b_E} + η_{b_write}) η_D`. -/
+private theorem γr_line_gbi (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (b ηb : Biases (Arch.gated (T := T) (d := d) σ id hid) dOut) (τ : ℝ) :
+    γr_gbi (θ + τ • η) (b + τ • ηb)
+      = γr_gbi θ b + τ • dγr_gbi θ b η ηb
+        + (τ * τ) • (ηb.E ᵥ* η.D + ηb.write 0 ᵥ* η.D) := by
+  simp only [γr_gbi, dγr_gbi, γm_line_gbi, Params.add_D, Params.smul_D, Biases.add_E,
+    Biases.smul_E, Matrix.vecMul_add, Matrix.add_vecMul, Matrix.vecMul_smul, Matrix.smul_vecMul,
+    smul_add, smul_smul]
+  abel
+
+omit [Fintype T] [Nonempty T] [Fintype dOut] in
+/-- Helper: the residual network with biases,
+`F(θ, x) = x M + γ + (σ(x C_g + β) ⊙ (x C_v + β')) A` (stream matrix `1`). -/
+private theorem evalB_gated_res_eq_gbi
+    (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (b : Biases (Arch.gated (T := T) (d := d) σ id hid) dOut) (x : Matrix T dIn ℝ) :
+    evalB (Arch.gated σ id hid) 1 θ b x
+      = x * Mm_gbi θ + (Matrix.of fun _ : T => γr_gbi θ b)
+        + (Matrix.of fun t i => σ ((x * Cm_gbi θ) t (Sum.inl i) + βm_gbi θ b (Sum.inl i))
+          * ((x * Cm_gbi θ) t (Sum.inr i) + βm_gbi θ b (Sum.inr i))) * Am_gbi θ := by
+  have h1 : (Fin.last 1 : Fin 2) = (0 : Fin 1).succ := rfl
+  have hχ : (Arch.gated (T := T) (d := d) σ id hid).χ = id := rfl
+  have hf : (Arch.gated (T := T) (d := d) σ id hid).f 0
+      = fun M => Matrix.of fun t i => σ (M t (Sum.inl i)) * M t (Sum.inr i) := rfl
+  -- `h_1 = h_0 1 + f(h_0 W_read + b_read) W_write + b_write` with `h_0 = x E + b_E`
+  rw [evalB, h1, hiddenB_succ, Fin.castSucc_zero, hiddenB_zero, hχ, hf]
+  simp only [Pi.one_apply, Matrix.mul_one, id_eq, Matrix.add_mul, Matrix.mul_assoc,
+    of_const_mul_gbi, Mm_gbi, Cm_gbi, Am_gbi, rd_gbi, wr_gbi, γr_gbi, γm_gbi, βm_gbi]
+  rw [add_assoc (x * (θ.E * θ.read 0)), of_const_add_gbi]
+  ext t o
+  simp only [Matrix.add_apply, Matrix.of_apply, Pi.add_apply]
+  ring
+
+omit [Fintype T] [Nonempty T] [Fintype dOut] in
+/-- Helper: the entries of `F(θ, x)` of the residual network,
+`(x M)_{t o} + γ_o + ∑_i σ(z_i) w_i A_{i o}`. -/
+private theorem evalB_gated_res_apply_gbi
+    (θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (b : Biases (Arch.gated (T := T) (d := d) σ id hid) dOut) (x : Matrix T dIn ℝ) (t : T)
+    (o : dOut) :
+    evalB (Arch.gated σ id hid) 1 θ b x t o
+      = (x * Mm_gbi θ) t o + γr_gbi θ b o
+        + ∑ i : hid 0, σ ((x * Cm_gbi θ) t (Sum.inl i) + βm_gbi θ b (Sum.inl i))
+          * ((x * Cm_gbi θ) t (Sum.inr i) + βm_gbi θ b (Sum.inr i)) * Am_gbi θ i o := by
+  rw [evalB_gated_res_eq_gbi]
+  rfl
+
+omit [Fintype T] [Nonempty T] [Fintype dOut] in
+/-- Helper: the entries of `F(θ + τ η, b + τ η_b)(x)` of the residual network as functions of
+`τ`. -/
+private theorem evalB_res_line_apply_gbi
+    (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (b ηb : Biases (Arch.gated (T := T) (d := d) σ id hid) dOut) (x : Matrix T dIn ℝ) (t : T)
+    (o : dOut) (τ : ℝ) :
+    evalB (Arch.gated σ id hid) 1 (θ + τ • η) (b + τ • ηb) x t o
+      = ((x * Mm_gbi θ) t o + τ * (x * dMm_gbi θ η) t o + τ * τ * (x * Mm_gbi η) t o)
+        + (γr_gbi θ b o + τ * dγr_gbi θ b η ηb o
+          + τ * τ * (ηb.E ᵥ* η.D + ηb.write 0 ᵥ* η.D) o)
+        + ∑ i : hid 0,
+          σ (((x * Cm_gbi θ) t (Sum.inl i) + τ * (x * dCm_gbi θ η) t (Sum.inl i)
+                + τ * τ * (x * Cm_gbi η) t (Sum.inl i))
+              + (βm_gbi θ b (Sum.inl i) + τ * dβm_gbi θ b η ηb (Sum.inl i)
+                + τ * τ * (ηb.E ᵥ* rd_gbi η) (Sum.inl i)))
+            * (((x * Cm_gbi θ) t (Sum.inr i) + τ * (x * dCm_gbi θ η) t (Sum.inr i)
+                + τ * τ * (x * Cm_gbi η) t (Sum.inr i))
+              + (βm_gbi θ b (Sum.inr i) + τ * dβm_gbi θ b η ηb (Sum.inr i)
+                + τ * τ * (ηb.E ᵥ* rd_gbi η) (Sum.inr i)))
+            * (Am_gbi θ i o + τ * dAm_gbi θ η i o + τ * τ * Am_gbi η i o) := by
+  rw [evalB_gated_res_apply_gbi, Mm_line_gbi, Cm_line_gbi, Am_line_gbi, βm_line_gbi,
+    γr_line_gbi]
+  simp only [Matrix.mul_add, Matrix.mul_smul]
+  rfl
+
+omit [Nonempty T] in
+/-- Helper (the chain rule): the derivative of `(θ, b) ↦ F(θ, b, x)` of the residual network
+along `η` has the entries `(x ∂M)_{t o} + ∂γ_o` plus those of the skipless network. -/
+private theorem fderiv_evalB_res_apply_gbi (hσ : ∀ z, HasDerivAt σ (σ' z) z)
+    (p η : ParamsB (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (x : Matrix T dIn ℝ) (t : T) (o : dOut) :
+    fderiv ℝ (fun q : ParamsB (Arch.gated (T := T) (d := d) σ id hid) dIn dOut =>
+        evalB (Arch.gated σ id hid) 1 q.1 q.2 x) p η t o
+      = (x * dMm_gbi p.1 η.1) t o + dγr_gbi p.1 p.2 η.1 η.2 o + ∑ i : hid 0,
+        (σ ((x * Cm_gbi p.1) t (Sum.inl i) + βm_gbi p.1 p.2 (Sum.inl i))
+            * ((x * Cm_gbi p.1) t (Sum.inr i) + βm_gbi p.1 p.2 (Sum.inr i))
+            * dAm_gbi p.1 η.1 i o
+          + σ' ((x * Cm_gbi p.1) t (Sum.inl i) + βm_gbi p.1 p.2 (Sum.inl i))
+            * ((x * dCm_gbi p.1 η.1) t (Sum.inl i) + dβm_gbi p.1 p.2 η.1 η.2 (Sum.inl i))
+            * ((x * Cm_gbi p.1) t (Sum.inr i) + βm_gbi p.1 p.2 (Sum.inr i)) * Am_gbi p.1 i o
+          + σ ((x * Cm_gbi p.1) t (Sum.inl i) + βm_gbi p.1 p.2 (Sum.inl i))
+            * ((x * dCm_gbi p.1 η.1) t (Sum.inr i) + dβm_gbi p.1 p.2 η.1 η.2 (Sum.inr i))
+            * Am_gbi p.1 i o) := by
+  have hdiff := differentiable_evalB (A := Arch.gated (T := T) (d := d) σ id hid) (S := 1)
+    (dIn := dIn) (dOut := dOut)
+    (fun ℓ => differentiable_f_gated (fun z => (hσ z).differentiableAt) ℓ) differentiable_id x
+  -- the line `τ ↦ (θ + τ η, b + τ η_b)` has velocity `η` and passes through `p` at `τ = 0`
+  have hline : HasDerivAt (fun τ : ℝ => (p.1 + τ • η.1, p.2 + τ • η.2)) η 0 := by
+    have h1 := ((hasDerivAt_id (0 : ℝ)).smul_const η.1).const_add p.1
+    have h2 := ((hasDerivAt_id (0 : ℝ)).smul_const η.2).const_add p.2
+    rw [one_smul] at h1 h2
+    exact h1.prodMk h2
+  have h0 : p = (p.1 + (0 : ℝ) • η.1, p.2 + (0 : ℝ) • η.2) := by
+    rw [zero_smul, zero_smul, add_zero, add_zero]
+  -- the chain rule along the line
+  have h1 := (hdiff p).hasFDerivAt.comp_hasDerivAt_of_eq (0 : ℝ) hline h0
+  have h2 := hasDerivAt_pi.1 (hasDerivAt_pi.1 h1 t) o
+  refine h2.unique ?_
+  -- the same derivative computed entrywise: polynomials, products and sums of real functions
+  show HasDerivAt (fun τ : ℝ =>
+    evalB (Arch.gated σ id hid) 1 (p.1 + τ • η.1) (p.2 + τ • η.2) x t o) _ 0
+  rw [funext fun τ => evalB_res_line_apply_gbi p.1 η.1 p.2 η.2 x t o τ]
+  refine ((hasDerivAt_quad _ _ _).add (hasDerivAt_quad _ _ _)).add
+    (HasDerivAt.fun_sum fun i _ => ?_)
+  have hu := (hasDerivAt_quad ((x * Cm_gbi p.1) t (Sum.inl i))
+    ((x * dCm_gbi p.1 η.1) t (Sum.inl i)) ((x * Cm_gbi η.1) t (Sum.inl i))).add
+    (hasDerivAt_quad (βm_gbi p.1 p.2 (Sum.inl i)) (dβm_gbi p.1 p.2 η.1 η.2 (Sum.inl i))
+      ((η.2.E ᵥ* rd_gbi η.1) (Sum.inl i)))
+  have hw := (hasDerivAt_quad ((x * Cm_gbi p.1) t (Sum.inr i))
+    ((x * dCm_gbi p.1 η.1) t (Sum.inr i)) ((x * Cm_gbi η.1) t (Sum.inr i))).add
+    (hasDerivAt_quad (βm_gbi p.1 p.2 (Sum.inr i)) (dβm_gbi p.1 p.2 η.1 η.2 (Sum.inr i))
+      ((η.2.E ᵥ* rd_gbi η.1) (Sum.inr i)))
+  have hv := hasDerivAt_quad (Am_gbi p.1 i o) (dAm_gbi p.1 η.1 i o) (Am_gbi η.1 i o)
+  have h := (((hσ _).comp (0 : ℝ) hu).mul hw).mul hv
+  convert h using 1
+  · rfl
+  · simp only [Pi.mul_apply, Pi.add_apply, Function.comp_apply, zero_mul, mul_zero, add_zero]
+    ring
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `∂γ` is linear in the direction. -/
+private theorem dγr_sub_gbi (θ η ρ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (b ηb ρb : Biases (Arch.gated (T := T) (d := d) σ id hid) dOut) :
+    dγr_gbi θ b (η - ρ) (ηb - ρb) = dγr_gbi θ b η ηb - dγr_gbi θ b ρ ρb := by
+  show (ηb.E - ρb.E) ᵥ* θ.D + b.E ᵥ* (η.D - ρ.D) + dγm_gbi θ b (η - ρ) (ηb - ρb)
+    = (ηb.E ᵥ* θ.D + b.E ᵥ* η.D + dγm_gbi θ b η ηb)
+      - (ρb.E ᵥ* θ.D + b.E ᵥ* ρ.D + dγm_gbi θ b ρ ρb)
+  rw [dγm_sub_gbi, Matrix.sub_vecMul, Matrix.vecMul_sub]
+  abel
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: along a rescaling with biases, `γ` does not move. -/
+private theorem dγr_rescale_gbi
+    (p : ParamsB (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) (α : ∀ ℓ, hid ℓ → ℝ) :
+    dγr_gbi p.1 p.2 (rescaleDirB p α).1 (rescaleDirB p α).2 = 0 := by
+  show (0 : d → ℝ) ᵥ* p.1.D + p.2.E ᵥ* (0 : Matrix d dOut ℝ)
+    + dγm_gbi p.1 p.2 (rescaleDirB p α).1 (rescaleDirB p α).2 = 0
+  rw [dγm_rescale_gbi, Matrix.zero_vecMul, Matrix.vecMul_zero, add_zero, add_zero]
+
+omit [Fintype T] [Nonempty T] in
+/-- Helper (the end of the proof of `flatB_le_range_mlp_residual`): a direction that keeps `M`,
+`C`, `A`, `β` and `γ` to first order is the direction of one change of basis `X` of both hidden
+states and of the translations `g_0 = ρ_{b_E} − b_E X`, `g_1 = ρ_{b_write} − b_write X`. -/
+private theorem cobTr_of_keeps_gbi
+    (p : ParamsB (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) (hp : OneBlockGenericGated p.1)
+    (ρ : ParamsB (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
+    (hC : dCm_gbi p.1 ρ.1 = 0) (hA : dAm_gbi p.1 ρ.1 = 0) (hM : dMm_gbi p.1 ρ.1 = 0)
+    (hβ : dβm_gbi p.1 p.2 ρ.1 ρ.2 = 0) (hγ : dγr_gbi p.1 p.2 ρ.1 ρ.2 = 0) :
+    ∃ (X : Matrix d d ℝ) (g : Fin 2 → d → ℝ),
+      ρ = cobDirB p (fun _ => X) + (0, translateDir p.1 g) := by
+  -- Lemma C.2: a direction that keeps `C` and `A` moves the weights by two changes of basis
+  obtain ⟨X, hX⟩ := (keeps_products_iff_mem_range_cobDir p.1 ρ.1 hp.rank_E hp.rank_D
+    hp.rank_read hp.rank_write).1 ⟨hC, hA⟩
+  have hE : ρ.1.E = p.1.E * X 0 := by rw [hX]; rfl
+  have hR : ρ.1.read 0 = -(X 0 * p.1.read 0) := by rw [hX]; rfl
+  have hD : ρ.1.D = -(X 1 * p.1.D) := by rw [hX]; rfl
+  -- Lemma B.2: `∂M = E X_0 D − E X_1 D = 0`, so `X_0 = X_1` (`E` and `D` have rank `d`)
+  have h01 : X 0 = X 1 := by
+    have h : ρ.1.E * p.1.D + p.1.E * ρ.1.D = 0 := hM
+    rw [hE, hD, Matrix.mul_neg, Matrix.mul_assoc, add_neg_eq_zero] at h
+    exact cancel_right_of_rank_gbi p.1.D hp.rank_D (cancel_left_of_rank_gbi p.1.E hp.rank_E h)
+  have hX' : ρ.1 = cobDir p.1 (fun _ => X 0) := by
+    rw [hX]
+    exact congrArg (cobDir p.1) (funext (Fin.forall_fin_two.2 ⟨rfl, h01.symm⟩))
+  rw [← h01] at hD
+  -- `∂β = 0`: `ρ_{b_read} = −g_0 W_read` with `g_0 = ρ_{b_E} − b_E X`
+  have hbR : ρ.2.read 0 = -((ρ.2.E - p.2.E ᵥ* X 0) ᵥ* p.1.read 0) := by
+    have h : ρ.2.E ᵥ* p.1.read 0 + p.2.E ᵥ* ρ.1.read 0 + ρ.2.read 0 = 0 := hβ
+    rw [hR, Matrix.vecMul_neg, ← Matrix.vecMul_vecMul] at h
+    rw [Matrix.sub_vecMul]
+    linear_combination h
+  -- `∂γ = 0`: `ρ_{b_D} = −(g_0 + g_1) D` with `g_1 = ρ_{b_write} − b_write X`
+  have hbD : ρ.2.D = -(((ρ.2.E - p.2.E ᵥ* X 0) + (ρ.2.write 0 - p.2.write 0 ᵥ* X 0))
+      ᵥ* p.1.D) := by
+    have h : ρ.2.E ᵥ* p.1.D + p.2.E ᵥ* ρ.1.D
+        + (ρ.2.write 0 ᵥ* p.1.D + p.2.write 0 ᵥ* ρ.1.D + ρ.2.D) = 0 := hγ
+    simp only [hD, Matrix.vecMul_neg, ← Matrix.vecMul_vecMul] at h
+    rw [Matrix.add_vecMul, Matrix.sub_vecMul, Matrix.sub_vecMul]
+    linear_combination h
+  -- so `ρ` is the direction of the change of basis `X` and of the translations `g_0, g_1`
+  have hI : Finset.Iic (0 : Fin 1).castSucc = {0} := by decide
+  refine ⟨X 0, ![ρ.2.E - p.2.E ᵥ* X 0, ρ.2.write 0 - p.2.write 0 ᵥ* X 0], ?_⟩
+  refine Prod.ext ?_ ?_
+  · show ρ.1 = cobDir p.1 (fun _ => X 0) + 0
+    rw [add_zero]
+    exact hX'
+  · apply Biases.ext'
+    · show ρ.2.E = p.2.E ᵥ* X 0 + (ρ.2.E - p.2.E ᵥ* X 0)
+      abel
+    · intro ℓ
+      obtain rfl : ℓ = 0 := Subsingleton.elim ℓ 0
+      show ρ.2.read 0 = 0 + -((∑ k ∈ Finset.Iic (0 : Fin 1).castSucc,
+        ![ρ.2.E - p.2.E ᵥ* X 0, ρ.2.write 0 - p.2.write 0 ᵥ* X 0] k) ᵥ* p.1.read 0)
+      rw [hI, Finset.sum_singleton, zero_add]
+      exact hbR
+    · intro ℓ
+      obtain rfl : ℓ = 0 := Subsingleton.elim ℓ 0
+      show ρ.2.write 0 = p.2.write 0 ᵥ* X 0 + (ρ.2.write 0 - p.2.write 0 ᵥ* X 0)
+      abel
+    · show ρ.2.D = 0 + -((∑ k, ![ρ.2.E - p.2.E ᵥ* X 0, ρ.2.write 0 - p.2.write 0 ᵥ* X 0] k)
+        ᵥ* p.1.D)
+      rw [Fin.sum_univ_two, zero_add]
+      exact hbD
+
 /-- **Lemma B.2 with biases, after Lemma B.3, for one residual SwiGLU or GeGLU block:** under the
 conditions `OneBlockGenericGated` on the weights, every flat direction of the residual network
 with biases is the sum of the direction of one change of basis `X` of both hidden states and of
@@ -765,7 +1034,71 @@ theorem flatB_le_range_gated_residual (hσ : ∀ z, HasDerivAt σ (σ' z) z)
     (hη : η ∈ flatB (Arch.gated σ id hid) 1 p) :
     ∃ (X : Matrix d d ℝ) (g : Fin 2 → d → ℝ) (α : ∀ ℓ, hid ℓ → ℝ),
       η = cobDirB p (fun _ => X) + (0, translateDir p.1 g) + rescaleDirB p α := by
-  sorry
+  -- the derivative of `F(θ, b, x)` along `η` vanishes at every input, entry by entry
+  have hzero : ∀ (x : Matrix T dIn ℝ) (t : T) (o : dOut), (x * dMm_gbi p.1 η.1) t o
+      + dγr_gbi p.1 p.2 η.1 η.2 o + ∑ i : hid 0,
+        (σ ((x * Cm_gbi p.1) t (Sum.inl i) + βm_gbi p.1 p.2 (Sum.inl i))
+            * ((x * Cm_gbi p.1) t (Sum.inr i) + βm_gbi p.1 p.2 (Sum.inr i))
+            * dAm_gbi p.1 η.1 i o
+          + σ' ((x * Cm_gbi p.1) t (Sum.inl i) + βm_gbi p.1 p.2 (Sum.inl i))
+            * ((x * dCm_gbi p.1 η.1) t (Sum.inl i) + dβm_gbi p.1 p.2 η.1 η.2 (Sum.inl i))
+            * ((x * Cm_gbi p.1) t (Sum.inr i) + βm_gbi p.1 p.2 (Sum.inr i)) * Am_gbi p.1 i o
+          + σ ((x * Cm_gbi p.1) t (Sum.inl i) + βm_gbi p.1 p.2 (Sum.inl i))
+            * ((x * dCm_gbi p.1 η.1) t (Sum.inr i) + dβm_gbi p.1 p.2 η.1 η.2 (Sum.inr i))
+            * Am_gbi p.1 i o) = 0 := by
+    intro x t o
+    rw [← fderiv_evalB_res_apply_gbi hσ p η x t o]
+    have h := LinearMap.mem_ker.1 ((Submodule.mem_iInf _).1 hη x)
+    exact congrFun (congrFun h t) o
+  -- Lemma B.3 with the linear term (inputs `x` with all rows equal to `v`): `∂M = 0`, `∂γ = 0`,
+  -- the gate columns and the gate biases do not move, and every unit only rescales its value,
+  -- `∂(e_i, β'_i) = −α_i (e_i, β'_i)`, `∂a_i = α_i a_i`
+  obtain ⟨hm, hγ, hc, hβ, α, hα⟩ := hU (fun i => (Cm_gbi p.1)ᵀ (Sum.inl i))
+    (fun i => βm_gbi p.1 p.2 (Sum.inl i)) (fun i => (Cm_gbi p.1)ᵀ (Sum.inr i))
+    (fun i => βm_gbi p.1 p.2 (Sum.inr i)) (fun i => Am_gbi p.1 i) (dMm_gbi p.1 η.1)
+    (dγr_gbi p.1 p.2 η.1 η.2) (fun i => (dCm_gbi p.1 η.1)ᵀ (Sum.inl i))
+    (fun i => dβm_gbi p.1 p.2 η.1 η.2 (Sum.inl i)) (fun i => (dCm_gbi p.1 η.1)ᵀ (Sum.inr i))
+    (fun i => dβm_gbi p.1 p.2 η.1 η.2 (Sum.inr i)) (fun i => dAm_gbi p.1 η.1 i)
+    (fun i => hp.row_ne_zero i) (fun i => hp.gate_ne_zero i)
+    (fun i j hij => hp.gate_not_collinear i j hij) (fun i => hp.value_ne_zero i) (by
+      intro v
+      funext o
+      have h := hzero (Matrix.of fun _ => v) (Classical.arbitrary T) o
+      simp only [Pi.add_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, Pi.zero_apply]
+      exact h)
+  -- the rescaling with these `α_i` (one block: `ℓ = 0`)
+  let α' : ∀ ℓ : Fin 1, hid ℓ → ℝ := fun ℓ => Fin.cases α (fun l => l.elim0) ℓ
+  -- `η − rescaleDirB p α` keeps `C`, `A`, `M`, `β` and `γ` to first order
+  have hC : dCm_gbi p.1 (η.1 - rescaleDir p.1 α') = 0 := by
+    ext a j
+    rcases j with i | i
+    · rw [dCm_sub_gbi, Matrix.sub_apply, dCm_rescale_inl_gbi, sub_zero]
+      exact congrFun (congrFun hc i) a
+    · rw [dCm_sub_gbi, Matrix.sub_apply, dCm_rescale_inr_gbi, Matrix.zero_apply, sub_eq_zero]
+      exact congrFun (hα i).1 a
+  have hA : dAm_gbi p.1 (η.1 - rescaleDir p.1 α') = 0 := by
+    ext i o
+    rw [dAm_sub_gbi, Matrix.sub_apply, dAm_rescale_gbi, Matrix.zero_apply, sub_eq_zero]
+    exact congrFun (hα i).2.2 o
+  -- the rescaling leaves `E` and `D` alone
+  have hM : dMm_gbi p.1 (η.1 - rescaleDir p.1 α') = 0 := by
+    show (η.1.E - 0) * p.1.D + p.1.E * (η.1.D - 0) = 0
+    rw [sub_zero, sub_zero]
+    exact hm
+  have hβ' : dβm_gbi p.1 p.2 (η.1 - (rescaleDirB p α').1) (η.2 - (rescaleDirB p α').2) = 0 := by
+    funext j
+    rcases j with i | i
+    · rw [dβm_sub_gbi, Pi.sub_apply, dβm_rescale_inl_gbi, sub_zero]
+      exact congrFun hβ i
+    · rw [dβm_sub_gbi, Pi.sub_apply, dβm_rescale_inr_gbi, Pi.zero_apply, sub_eq_zero]
+      exact (hα i).2.1
+  have hγ' : dγr_gbi p.1 p.2 (η.1 - (rescaleDirB p α').1) (η.2 - (rescaleDirB p α').2) = 0 := by
+    rw [dγr_sub_gbi, dγr_rescale_gbi, sub_zero]
+    exact hγ
+  -- Lemma C.2 and Lemma B.2 with biases: `η − rescaleDirB p α` is a direction of one change of
+  -- basis and of translations
+  obtain ⟨X, g, hX⟩ := cobTr_of_keeps_gbi p hp (η - rescaleDirB p α') hC hA hM hβ' hγ'
+  exact ⟨X, g, α', sub_eq_iff_eq_add.1 hX⟩
 
 /-- **Theorem B.1 (i) of the skips paper with biases, the residual network, at one parameter, for
 a SwiGLU or GeGLU block:** under the conditions `OneBlockGenericGated` on the weights, the
@@ -778,7 +1111,39 @@ theorem funDimB_gated_oneBlock_residual (hσ : ∀ z, HasDerivAt σ (σ' z) z)
     funDimB (Arch.gated σ id hid) 1 p
         + (Fintype.card d ^ 2 + 2 * Fintype.card d + Fintype.card (hid 0))
       = Module.finrank ℝ (ParamsB (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  have hσd : Differentiable ℝ σ := fun z => (hσ z).differentiableAt
+  have hf : ∀ ℓ, Differentiable ℝ ((Arch.gated (T := T) (d := d) σ id hid).f ℓ) :=
+    fun ℓ => differentiable_f_gated hσd ℓ
+  have hdiff : ∀ x : Matrix T dIn ℝ, DifferentiableAt ℝ
+      (fun q : ParamsB (Arch.gated (T := T) (d := d) σ id hid) dIn dOut =>
+        evalB (Arch.gated σ id hid) 1 q.1 q.2 x) p := fun x =>
+    differentiable_evalB (A := Arch.gated (T := T) (d := d) σ id hid) (S := 1) hf
+      differentiable_id x p
+  -- no value column of `W_read` vanishes, since the value columns of `C = E W_read` do not
+  have hv : ∀ ℓ i, (fun a => p.1.read ℓ a (Sum.inr i)) ≠ 0 := by
+    intro ℓ i h0
+    obtain rfl := Subsingleton.elim ℓ 0
+    apply hp.value_ne_zero i
+    funext a
+    show ∑ k, p.1.E a k * p.1.read 0 k (Sum.inr i) = 0
+    exact Finset.sum_eq_zero fun k _ => by
+      rw [show p.1.read 0 k (Sum.inr i) = 0 from congrFun h0 k, mul_zero]
+  -- `≤`: one change of basis, the translations and the rescalings are flat and independent
+  -- (Lemma A.8 with `s = d_hidden`)
+  have hle := funDimB_add_le_residual_gated p hp.rank_E hv
+  have hs : ∑ ℓ : Fin 1, Fintype.card (hid ℓ) = Fintype.card (hid 0) := Fin.sum_univ_one _
+  -- `≥`: every flat direction is one of them (the previous theorem), and they span a space of
+  -- dimension at most `d² + 2 d + d_hidden`
+  let Φ := (cobTrLin_gbi p).coprod (rescaleDirBLin_gbi p)
+  have hflat : flatB (Arch.gated σ id hid) 1 p ≤ LinearMap.range Φ := by
+    intro η hη
+    obtain ⟨X, g, α, rfl⟩ := flatB_le_range_gated_residual hσ hU p hp η hη
+    exact LinearMap.mem_range.2 ⟨((X, g), α), rfl⟩
+  have h1 := Submodule.finrank_mono hflat
+  have h2 := (LinearMap.finrank_range_le Φ).trans_eq (finrank_dirDomain_gbi (d := d))
+  -- `fd(θ, b) = P − dim K(θ, b)`
+  have h3 := funDimB_add_finrank_flatB p hdiff
+  omega
 
 /-- **Theorem B.1 (i) of the skips paper with biases, the skipless network, for a SwiGLU or GeGLU
 block:** for `d_in, d_out, d_hidden ≥ d ≥ 2`, at generic weights and biases the skipless network
