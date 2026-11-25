@@ -415,3 +415,4 @@ import SkipsLean.OneBlock.RedundancySymmetriesRMSZero
 import SkipsLean.Symmetry.BiasesAffineGroupLaw
 import SkipsLean.Symmetry.BiasesGeneratedGroup
 import SkipsLean.Symmetry.BiasesGeneratedGroupRescale
+import SkipsLean.Symmetry.BiasesGeneratedGroupAttention
