@@ -1842,3 +1842,5 @@ import SkipsLean
 #print axioms Skips.ae_funDimLearnedTri_swiglu_rmsNorm_eq_residual_add_of_nonempty
 #print axioms Skips.ae_funDimLearnedTri_geglu_rmsNorm_of_nonempty
 #print axioms Skips.ae_funDimLearnedTri_geglu_rmsNorm_eq_residual_add_of_nonempty
+#print axioms Skips.eval_rescaleMlp_params
+#print axioms Skips.eval_rescaleGate_params
