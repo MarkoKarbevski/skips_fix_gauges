@@ -389,3 +389,4 @@ import SkipsLean.OneBlock.AttentionBiasesDim
 import SkipsLean.Network.Mixed
 import SkipsLean.Symmetry.MixedJunctions
 import SkipsLean.Residual.GaugeFixMixed
+import SkipsLean.Residual.GaugeFixLearned
