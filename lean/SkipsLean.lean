@@ -390,3 +390,5 @@ import SkipsLean.Network.Mixed
 import SkipsLean.Symmetry.MixedJunctions
 import SkipsLean.Residual.GaugeFixMixed
 import SkipsLean.Residual.GaugeFixLearned
+import SkipsLean.Residual.ExactReductionMixed
+import SkipsLean.Residual.ExactReductionCount
