@@ -59,6 +59,62 @@ noncomputable def inputRank (A : Arch T d L) (S : Fin L → Matrix d d ℝ) (θ 
     (x : Matrix T dIn ℝ) : ℕ :=
   Module.finrank ℝ (LinearMap.range (fderiv ℝ (eval A S θ) x).toLinearMap)
 
+/-- Helper: the product of two differentiable matrix-valued maps is differentiable (as
+`differentiable_matMul` in `Dimension/Functional.lean`, which is private there). -/
+private theorem differentiable_matMul_fhn {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    {f : E → Matrix m n ℝ} {g : E → Matrix n p ℝ}
+    (hf : Differentiable ℝ f) (hg : Differentiable ℝ g) :
+    Differentiable ℝ (fun y => f y * g y) := by
+  -- matrix multiplication as a bilinear map
+  let B : Matrix m n ℝ →ₗ[ℝ] Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ :=
+    LinearMap.mk₂ ℝ (fun a b => a * b) Matrix.add_mul (fun c a b => Matrix.smul_mul c a b)
+      Matrix.mul_add (fun c a b => Matrix.mul_smul a c b)
+  -- the same map with continuous linear maps (all spaces are finite-dimensional)
+  let B' : Matrix m n ℝ →L[ℝ] Matrix n p ℝ →L[ℝ] Matrix m p ℝ :=
+    LinearMap.toContinuousLinearMap
+      ((LinearMap.toContinuousLinearMap :
+        (Matrix n p ℝ →ₗ[ℝ] Matrix m p ℝ) ≃ₗ[ℝ] (Matrix n p ℝ →L[ℝ] Matrix m p ℝ)).toLinearMap ∘ₗ B)
+  have hB : (fun y => f y * g y) = fun y => B' (f y) (g y) := rfl
+  rw [hB]
+  exact (B'.differentiable.comp hf).clm_apply hg
+
+omit [Fintype dOut] in
+/-- Helper: with differentiable blocks and `χ`, every hidden state is a differentiable function
+of the input. -/
+private theorem differentiable_hidden_fhn {A : Arch T d L} (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ))
+    (hχ : Differentiable ℝ A.χ) (S : Fin L → Matrix d d ℝ) (θ : Params A dIn dOut)
+    (k : Fin (L + 1)) : Differentiable ℝ (fun x : Matrix T dIn ℝ => hidden A S θ x k) := by
+  induction k using Fin.induction with
+  | zero =>
+    -- `h_0 = x E`
+    simp only [hidden_zero]
+    exact differentiable_matMul_fhn differentiable_id (differentiable_const θ.E)
+  | succ ℓ ih =>
+    -- `h_{ℓ+1} = h_ℓ S_ℓ + f_ℓ (χ(h_ℓ) W_read) W_write`: products, compositions and a sum
+    simp only [hidden_succ]
+    exact (differentiable_matMul_fhn ih (differentiable_const (S ℓ))).add
+      (differentiable_matMul_fhn ((hf ℓ).comp (differentiable_matMul_fhn (hχ.comp ih)
+        (differentiable_const (θ.read ℓ)))) (differentiable_const (θ.write ℓ)))
+
+/-- Helper: in a network without skips, with differentiable blocks and `χ`, the network after
+the hidden state `h_k`, `h ↦ 𝓑_{>k}(h)`, is differentiable. -/
+private theorem differentiable_suffix_fhn {A : Arch T d L} (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ))
+    (hχ : Differentiable ℝ A.χ) (θ : Params A dIn dOut) (k : Fin (L + 1)) :
+    Differentiable ℝ (fun h : Matrix T d ℝ => suffix A 0 θ k h) := by
+  classical
+  induction k using Fin.reverseInduction with
+  | last =>
+    -- `𝓑_{>L}(h) = χ(h) D`
+    simp only [suffix_last]
+    exact differentiable_matMul_fhn hχ (differentiable_const θ.D)
+  | cast ℓ ih =>
+    -- `𝓑_{>ℓ-1}(h) = 𝓑_{>ℓ}(f_ℓ(χ(h) W_read) W_write)`
+    simp only [suffix_castSucc, Pi.zero_apply, Matrix.mul_zero, zero_add]
+    have hc := ih.comp (differentiable_matMul_fhn ((hf ℓ).comp (differentiable_matMul_fhn hχ
+      (differentiable_const (θ.read ℓ)))) (differentiable_const (θ.write ℓ)))
+    exact hc
+
 /-- **Theorem A.28 (iii) of the skips paper, "the hidden state `h_ℓ` of the skipless network lies
 in a subspace of dimension `d'_hidden,ℓ`, so the Jacobian of its output with respect to the input
 has rank below `d_model` at every input":** in a network without skips whose blocks and whose map
@@ -68,9 +124,119 @@ and for every block `ℓ`, rank at most `|T|` times the number of rows of the wr
 theorem inputRank_skipless_le {A : Arch T d L} (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ))
     (hχ : Differentiable ℝ A.χ) (θ : Params A dIn dOut) (x : Matrix T dIn ℝ) (ℓ : Fin L) :
     inputRank A 0 θ x ≤ Fintype.card T * Fintype.card (A.w ℓ) := by
-  sorry
+  classical
+  -- `a x`: the outputs of the hidden units of block `ℓ`; `Ψ b`: the output of the network when
+  -- they are `b`, so that `F_θ = Ψ ∘ a`
+  let a : Matrix T dIn ℝ → Matrix T (A.w ℓ) ℝ := fun y =>
+    A.f ℓ (A.χ (hidden A 0 θ y ℓ.castSucc) * θ.read ℓ)
+  let Ψ : Matrix T (A.w ℓ) ℝ → Matrix T dOut ℝ := fun b => suffix A 0 θ ℓ.succ (b * θ.write ℓ)
+  have hfac : eval A 0 θ = Ψ ∘ a := by
+    funext y
+    rw [← suffix_hidden A 0 θ y ℓ.succ, hidden_succ]
+    simp only [Pi.zero_apply, Matrix.mul_zero, zero_add]
+    rfl
+  have ha : Differentiable ℝ a := (hf ℓ).comp (differentiable_matMul_fhn
+    (hχ.comp (differentiable_hidden_fhn hf hχ 0 θ ℓ.castSucc)) (differentiable_const (θ.read ℓ)))
+  have hΨ : Differentiable ℝ Ψ := (differentiable_suffix_fhn hf hχ θ ℓ.succ).comp
+    (differentiable_matMul_fhn differentiable_id (differentiable_const (θ.write ℓ)))
+  -- the chain rule: the Jacobian factors through `Matrix T (A.w ℓ) ℝ`
+  have hd : HasFDerivAt (eval A 0 θ) ((fderiv ℝ Ψ (a x)).comp (fderiv ℝ a x)) x := by
+    rw [hfac]
+    exact (hΨ (a x)).hasFDerivAt.comp x (ha x).hasFDerivAt
+  have he : fderiv ℝ (eval A 0 θ) x = (fderiv ℝ Ψ (a x)).comp (fderiv ℝ a x) := hd.fderiv
+  have hle : LinearMap.range ((fderiv ℝ Ψ (a x)).comp (fderiv ℝ a x)).toLinearMap
+      ≤ LinearMap.range (fderiv ℝ Ψ (a x)).toLinearMap := by
+    rintro _ ⟨v, rfl⟩
+    exact ⟨fderiv ℝ a x v, rfl⟩
+  unfold inputRank
+  rw [he]
+  calc Module.finrank ℝ (LinearMap.range ((fderiv ℝ Ψ (a x)).comp (fderiv ℝ a x)).toLinearMap)
+      ≤ Module.finrank ℝ (LinearMap.range (fderiv ℝ Ψ (a x)).toLinearMap) :=
+        Submodule.finrank_mono hle
+    _ ≤ Module.finrank ℝ (Matrix T (A.w ℓ) ℝ) := LinearMap.finrank_range_le _
+    _ = Fintype.card T * Fintype.card (A.w ℓ) := by
+        rw [Module.finrank_matrix, Module.finrank_self, mul_one]
+
 
 variable [DecidableEq d] {σ : ℝ → ℝ} {hid : Fin L → Type} [∀ ℓ, Fintype (hid ℓ)]
+
+/-- Helper: `y ↦ y M`, as a continuous linear map. -/
+private noncomputable def mulRightCLM_fhn {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    (M : Matrix n p ℝ) : Matrix m n ℝ →L[ℝ] Matrix m p ℝ :=
+  LinearMap.toContinuousLinearMap
+    { toFun := fun y => y * M
+      map_add' := fun a b => Matrix.add_mul a b M
+      map_smul' := fun c a => Matrix.smul_mul c a M }
+
+/-- Helper: `M ↦ σ(M)` (entrywise) has the derivative `N ↦ c N` at `0`, if `σ'(0) = c`. -/
+private theorem hasFDerivAt_map_zero_fhn {m n : Type*} [Fintype m] [Fintype n] {c : ℝ}
+    (hσ : HasDerivAt σ c 0) :
+    HasFDerivAt (fun M : Matrix m n ℝ => M.map σ)
+      (c • ContinuousLinearMap.id ℝ (Matrix m n ℝ)) 0 := by
+  refine hasFDerivAt_pi'' fun t => hasFDerivAt_pi'' fun i => ?_
+  -- the entry `(t, i)` is `σ` of the entry `(t, i)` of `M`
+  have hσ' : HasDerivAt σ c ((0 : Matrix m n ℝ) t i) := hσ
+  have h := hσ'.comp_hasFDerivAt (0 : Matrix m n ℝ)
+    ((ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : n => ℝ) i).comp
+      (ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : m => n → ℝ) t)).hasFDerivAt
+  refine h.congr_fderiv (ContinuousLinearMap.ext fun M => ?_)
+  show c * M t i = c * M t i
+  rfl
+
+omit [Fintype dOut] in
+/-- Helper: in a residual network of MLP blocks with `σ(0) = 0` and `σ'(0) = c`, at the input
+`0` every hidden state vanishes, and the derivative of `x ↦ h_k(x)` there is `v ↦ v E P_k` with
+`P_k = ∏_{ℓ < k} (I + c W_read^ℓ W_write^ℓ)`, invertible if every factor is. -/
+private theorem hasFDerivAt_hidden_zero_fhn (hσ0 : σ 0 = 0) {c : ℝ} (hσ : HasDerivAt σ c 0)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)
+    (hu : ∀ ℓ, IsUnit (1 + c • (θ.read ℓ * θ.write ℓ)).det) (k : Fin (L + 1)) :
+    ∃ P : Matrix d d ℝ, IsUnit P.det ∧ hidden (Arch.mlp σ id hid) 1 θ 0 k = 0 ∧
+      HasFDerivAt (fun x => hidden (Arch.mlp σ id hid) 1 θ x k)
+        (mulRightCLM_fhn (m := T) (θ.E * P)) 0 := by
+  induction k using Fin.induction with
+  | zero =>
+    -- `h_0 = x E`, so `P_0 = 1`
+    refine ⟨1, by rw [Matrix.det_one]; exact isUnit_one, by rw [hidden_zero, Matrix.zero_mul],
+      ?_⟩
+    have h1 : (fun x => hidden (Arch.mlp σ id hid) 1 θ x 0)
+        = mulRightCLM_fhn (m := T) (θ.E * (1 : Matrix d d ℝ)) := by
+      funext x
+      rw [hidden_zero, Matrix.mul_one]
+      rfl
+    rw [h1]
+    exact (mulRightCLM_fhn (θ.E * (1 : Matrix d d ℝ))).hasFDerivAt
+  | succ ℓ ih =>
+    obtain ⟨P, hP, h0, hd⟩ := ih
+    refine ⟨P * (1 + c • (θ.read ℓ * θ.write ℓ)), ?_, ?_, ?_⟩
+    · -- a product of invertible matrices
+      rw [Matrix.det_mul]
+      exact hP.mul (hu ℓ)
+    · -- `h_{ℓ+1}(0) = 0 + σ(0) W_write = 0`
+      rw [hidden_succ, h0]
+      show (0 : Matrix T d ℝ) * 1 + ((0 : Matrix T d ℝ) * θ.read ℓ).map σ * θ.write ℓ = 0
+      rw [Matrix.zero_mul, Matrix.zero_mul, Matrix.map_zero σ hσ0, Matrix.zero_mul, add_zero]
+    · -- the chain rule, block by block: `x ↦ h_ℓ(x) W_read`, then `σ` at `0`, then `W_write`
+      have hR := (mulRightCLM_fhn (m := T) (θ.read ℓ)).hasFDerivAt.comp (0 : Matrix T dIn ℝ) hd
+      have hmap : HasFDerivAt (fun M : Matrix T (hid ℓ) ℝ => M.map σ)
+          (c • ContinuousLinearMap.id ℝ (Matrix T (hid ℓ) ℝ))
+          ((mulRightCLM_fhn (m := T) (θ.read ℓ))
+            (hidden (Arch.mlp σ id hid) 1 θ 0 ℓ.castSucc)) := by
+        have hz : (mulRightCLM_fhn (m := T) (θ.read ℓ))
+            (hidden (Arch.mlp σ id hid) 1 θ 0 ℓ.castSucc) = 0 := by
+          rw [h0, map_zero]
+        rw [hz]
+        exact hasFDerivAt_map_zero_fhn hσ
+      have hB := (mulRightCLM_fhn (m := T) (θ.write ℓ)).hasFDerivAt.comp (0 : Matrix T dIn ℝ)
+        (hmap.comp (0 : Matrix T dIn ℝ) hR)
+      have hS := (mulRightCLM_fhn (m := T) (1 : Matrix d d ℝ)).hasFDerivAt.comp
+        (0 : Matrix T dIn ℝ) hd
+      have hsum := hS.add hB
+      simp only [hidden_succ]
+      refine hsum.congr_fderiv (ContinuousLinearMap.ext fun v => ?_)
+      show v * (θ.E * P) * (1 : Matrix d d ℝ) + (c • (v * (θ.E * P) * θ.read ℓ)) * θ.write ℓ
+        = v * (θ.E * (P * (1 + c • (θ.read ℓ * θ.write ℓ))))
+      simp only [Matrix.mul_add, Matrix.mul_one, Matrix.mul_smul, Matrix.smul_mul,
+        Matrix.mul_assoc]
 
 /-- **The Jacobian of a residual network of MLP blocks with respect to the input, at the input
 `0`, at one parameter:** if `σ(0) = 0` and `σ` is differentiable at `0`, every hidden state
@@ -82,7 +248,40 @@ theorem le_inputRank_residual_mlp_zero (hσ0 : σ 0 = 0) (hσ : DifferentiableAt
     (hE : θ.E.rank = Fintype.card d) (hD : θ.D.rank = Fintype.card d)
     (hu : ∀ ℓ, IsUnit (1 + deriv σ 0 • (θ.read ℓ * θ.write ℓ)).det) :
     Fintype.card T * Fintype.card d ≤ inputRank (Arch.mlp σ id hid) 1 θ 0 := by
-  sorry
+  -- the Jacobian at `0` is `v ↦ v E P D` with `P` invertible
+  obtain ⟨P, hP, -, hd⟩ := hasFDerivAt_hidden_zero_fhn hσ0 hσ.hasDerivAt θ hu (Fin.last L)
+  have hev : HasFDerivAt (eval (Arch.mlp σ id hid) 1 θ)
+      ((mulRightCLM_fhn (m := T) θ.D).comp (mulRightCLM_fhn (m := T) (θ.E * P))) 0 :=
+    (mulRightCLM_fhn (m := T) θ.D).hasFDerivAt.comp (0 : Matrix T dIn ℝ) hd
+  have he : fderiv ℝ (eval (Arch.mlp σ id hid) 1 θ) 0
+      = (mulRightCLM_fhn (m := T) θ.D).comp (mulRightCLM_fhn (m := T) (θ.E * P)) := hev.fderiv
+  -- a left inverse of `E` and a right inverse of `D`, which have rank `d`
+  obtain ⟨E', hE'⟩ := Matrix.vecMul_surjective_iff_exists_left_inverse.mp
+    (Matrix.vecMul_surjective_iff_rank_eq_card.mpr hE)
+  obtain ⟨D', hD'⟩ := Matrix.mulVec_surjective_iff_exists_right_inverse.mp
+    (Matrix.mulVec_surjective_iff_rank_eq_card.mpr hD)
+  -- `u ↦ u D` is injective, and its range lies in that of the Jacobian (`v = u P⁻¹ E'`)
+  let g : Matrix T d ℝ →ₗ[ℝ] Matrix T dOut ℝ :=
+    { toFun := fun u => u * θ.D
+      map_add' := fun a b => Matrix.add_mul a b θ.D
+      map_smul' := fun c a => Matrix.smul_mul c a θ.D }
+  have hg : Function.Injective g := by
+    intro u u' huu
+    have h1 : u * θ.D * D' = u' * θ.D * D' := congrArg (· * D') huu
+    simpa only [Matrix.mul_assoc, hD', Matrix.mul_one] using h1
+  have hle : LinearMap.range g ≤ LinearMap.range
+      ((mulRightCLM_fhn (m := T) θ.D).comp (mulRightCLM_fhn (m := T) (θ.E * P))).toLinearMap := by
+    rintro _ ⟨u, rfl⟩
+    refine ⟨u * P⁻¹ * E', ?_⟩
+    show u * P⁻¹ * E' * (θ.E * P) * θ.D = u * θ.D
+    rw [Matrix.mul_assoc (u * P⁻¹) E', ← Matrix.mul_assoc E', hE', Matrix.one_mul,
+      Matrix.mul_assoc u, Matrix.nonsing_inv_mul _ hP, Matrix.mul_one]
+  unfold inputRank
+  rw [he]
+  calc Fintype.card T * Fintype.card d = Module.finrank ℝ (Matrix T d ℝ) := by
+        rw [Module.finrank_matrix, Module.finrank_self, mul_one]
+    _ = Module.finrank ℝ (LinearMap.range g) := (LinearMap.finrank_range_of_inj hg).symm
+    _ ≤ _ := Submodule.finrank_mono hle
 
 /-- **Theorem A.28 (iii) of the skips paper, "it has rank `d_model` at some input for almost every
 choice of weights", for MLP blocks whose activation has `σ(0) = 0` and is differentiable at `0`:**
