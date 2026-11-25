@@ -26,6 +26,35 @@ variable {A B : Arch T d L} {F₁ F₂ : Type*}
   {actB : F₂ → Params B dIn dOut × Biases B dOut → Params B dIn dOut × Biases B dOut}
   {SgA : Set F₁} {SgB : Set F₂}
 
+omit [Fintype T] [Fintype dOut] in
+/-- Helper: in a family that acts block by block and freely at `p`, two points that move `p` to
+the same reads, writes and read biases are equal. -/
+private theorem eq_of_parts_bsf {F : Type*}
+    {act : F → Params A dIn dOut × Biases A dOut → Params A dIn dOut × Biases A dOut}
+    {Sg : Set F} (h : InsideBlocksAction act Sg) (l : InsideBlocksLocal act Sg)
+    {p : Params A dIn dOut × Biases A dOut} (f : InsideBlocksFreeAt act Sg p) {σ σ' : F}
+    (hσ : σ ∈ Sg) (hσ' : σ' ∈ Sg) (hr : (act σ p).1.read = (act σ' p).1.read)
+    (hw : (act σ p).1.write = (act σ' p).1.write) (hb : (act σ p).2.read = (act σ' p).2.read) :
+    σ = σ' := by
+  -- `τ` undoes `σ'`, and `ρ` is `τ` after `σ`
+  obtain ⟨τ, hτ, -, hτσ'⟩ := h.inv σ' hσ'
+  obtain ⟨ρ, hρ, hρe⟩ := h.mul τ hτ σ hσ
+  have e' : act τ (act σ' p) = p := congrFun hτσ' p
+  have e : act τ (act σ p) = act ρ p := congrFun hρe p
+  obtain ⟨lr, lw, lb, ld⟩ := l.local_eq τ hτ (act σ p) (act σ' p) hr hw hb
+  rw [e, e'] at lr lb ld
+  -- `ρ` keeps the reads and the read biases of `p`, hence its write biases
+  have hρw : (act ρ p).2.write = p.2.write := funext fun ℓ =>
+    (f.write_eq_of_read_eq ρ hρ ℓ (congrFun lr ℓ) (congrFun lb ℓ)).2
+  rw [hρw] at ld
+  have hwb : (act σ p).2.write = (act σ' p).2.write := sub_right_inj.1 ld
+  -- so `σ` and `σ'` move `p` to the same weights and biases
+  refine f.injOn hσ hσ' (Prod.ext ?_ ?_)
+  · exact Params.ext' ((l.E_eq σ hσ p).trans (l.E_eq σ' hσ' p).symm) (congrFun hr) (congrFun hw)
+      ((l.D_eq σ hσ p).trans (l.D_eq σ' hσ' p).symm)
+  · exact Biases.ext' ((l.biasE_eq σ hσ p).trans (l.biasE_eq σ' hσ' p).symm) (congrFun hb)
+      (congrFun hwb) ((l.biasD_eq σ hσ p).trans (l.biasD_eq σ' hσ' p).symm)
+
 /-- **The family of the pairs acts freely block by block at `q`,** if the family of `A` does at
 the first part of `q` and the family of `B` at the second. -/
 theorem insideBlocksFreeAt_sumAct (hA : InsideBlocksAction actA SgA)
@@ -35,6 +64,59 @@ theorem insideBlocksFreeAt_sumAct (hA : InsideBlocksAction actA SgA)
     (fA : InsideBlocksFreeAt actA SgA (q.1.sumFst, q.2.sumFst))
     (fB : InsideBlocksFreeAt actB SgB (q.1.sumSnd, q.2.sumSnd)) :
     InsideBlocksFreeAt (sumAct actA actB) (SgA ×ˢ SgB) q := by
-  sorry
+  refine ⟨fun σ hσ => (sumAct_parts lA lB hσ q).2.2.2.2.2.2.2.1,
+    fun σ hσ => (sumAct_parts lA lB hσ q).2.2.2.2.2.2.2.2.2.1, ?_, ?_⟩
+  · intro σ hσ ℓ hr hb
+    obtain ⟨h1, h2, h3, h4, h5, h6, h7, -⟩ := sumAct_parts lA lB hσ q
+    -- the two parts keep the reads and the read biases of the parts of `q` at `ℓ`
+    have hrA : (actA σ.1 (q.1.sumFst, q.2.sumFst)).1.read ℓ = q.1.sumFst.read ℓ := by
+      rw [← h1]
+      show ((sumAct actA actB σ q).1.read ℓ).submatrix id Sum.inl
+        = (q.1.read ℓ).submatrix id Sum.inl
+      rw [hr]
+    have hbA : (actA σ.1 (q.1.sumFst, q.2.sumFst)).2.read ℓ = q.2.sumFst.read ℓ := by
+      rw [← h3]
+      show (fun j => (sumAct actA actB σ q).2.read ℓ (Sum.inl j))
+        = fun j => q.2.read ℓ (Sum.inl j)
+      rw [hb]
+    have hrB : (actB σ.2 (q.1.sumSnd, q.2.sumSnd)).1.read ℓ = q.1.sumSnd.read ℓ := by
+      rw [← h4]
+      show ((sumAct actA actB σ q).1.read ℓ).submatrix id Sum.inr
+        = (q.1.read ℓ).submatrix id Sum.inr
+      rw [hr]
+    have hbB : (actB σ.2 (q.1.sumSnd, q.2.sumSnd)).2.read ℓ = q.2.sumSnd.read ℓ := by
+      rw [← h6]
+      show (fun j => (sumAct actA actB σ q).2.read ℓ (Sum.inr j))
+        = fun j => q.2.read ℓ (Sum.inr j)
+      rw [hb]
+    -- so they keep the writes and the write biases of the parts of `q` at `ℓ`
+    obtain ⟨hwA, hcA⟩ := fA.write_eq_of_read_eq σ.1 (Set.mem_prod.1 hσ).1 ℓ hrA hbA
+    obtain ⟨hwB, hcB⟩ := fB.write_eq_of_read_eq σ.2 (Set.mem_prod.1 hσ).2 ℓ hrB hbB
+    refine ⟨Matrix.ext fun p c => ?_, ?_⟩
+    · -- the rows of `A` and of `B` of the write
+      rcases p with i | i
+      · have e := congrFun (congrFun ((congrFun h2 ℓ).trans hwA) i) c
+        exact e
+      · have e := congrFun (congrFun ((congrFun h5 ℓ).trans hwB) i) c
+        exact e
+    · -- the write bias: `b_write + b_write - b_write`
+      rw [congrFun h7 ℓ, Pi.sub_apply, Pi.add_apply, hcA, hcB]
+      exact add_sub_cancel_right _ _
+  · intro σ hσ σ' hσ' heq
+    have heq' : sumAct actA actB σ q = sumAct actA actB σ' q := heq
+    obtain ⟨h1, h2, h3, h4, h5, h6, -⟩ := sumAct_parts lA lB hσ q
+    obtain ⟨h1', h2', h3', h4', h5', h6', -⟩ := sumAct_parts lA lB hσ' q
+    have hσm := Set.mem_prod.1 hσ
+    have hσm' := Set.mem_prod.1 hσ'
+    -- the first parts, then the second parts, have the same reads, writes and read biases
+    refine Prod.ext (eq_of_parts_bsf hA lA fA hσm.1 hσm'.1 ?_ ?_ ?_)
+      (eq_of_parts_bsf hB lB fB hσm.2 hσm'.2 ?_ ?_ ?_)
+    · exact h1.symm.trans ((congrArg (fun P => P.1.sumFst.read) heq').trans h1')
+    · exact h2.symm.trans ((congrArg (fun P => P.1.sumFst.write) heq').trans h2')
+    · exact h3.symm.trans ((congrArg (fun P => P.2.sumFst.read) heq').trans h3')
+    · exact h4.symm.trans ((congrArg (fun P => P.1.sumSnd.read) heq').trans h4')
+    · exact h5.symm.trans ((congrArg (fun P => P.1.sumSnd.write) heq').trans h5')
+    · exact h6.symm.trans ((congrArg (fun P => P.2.sumSnd.read) heq').trans h6')
+
 
 end Skips
