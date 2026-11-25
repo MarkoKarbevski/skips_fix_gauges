@@ -95,6 +95,35 @@ private theorem kinkPt_dot_ssq {q : Type*} (M : Matrix d q ℝ) (i j l : q) :
       = (Mᵀ i ⬝ᵥ Mᵀ i) * (Mᵀ j ⬝ᵥ Mᵀ l) - (Mᵀ i ⬝ᵥ Mᵀ j) * (Mᵀ i ⬝ᵥ Mᵀ l) := by
   simp only [kinkPt_ssq, sub_dotProduct, smul_dotProduct, smul_eq_mul]
 
+omit [Fintype d] [DecidableEq d] in
+/-- Helper: the determinant of a square matrix whose entries are analytic in `y` is analytic in
+`y` (a finite sum of signed finite products of entries). -/
+private theorem analyticOnNhd_det_ssq {P n : Type*} [NormedAddCommGroup P] [NormedSpace ℝ P]
+    [Fintype n] [DecidableEq n] (N : P → Matrix n n ℝ)
+    (h : ∀ a b, AnalyticOnNhd ℝ (fun y => N y a b) Set.univ) :
+    AnalyticOnNhd ℝ (fun y => (N y).det) Set.univ := by
+  simp only [Matrix.det_apply']
+  exact Finset.analyticOnNhd_fun_sum _ fun σ _ => analyticOnNhd_const.mul
+    (Finset.analyticOnNhd_fun_prod _ fun i _ => h (σ i) i)
+
+omit [DecidableEq d] in
+/-- Helper: the entries of `∑_{i∈S} 2 (u w_i) w_i a_i`. -/
+private theorem sum_two_dot_apply_ssq {q : Type*} (u : d → ℝ) (R : Matrix d q ℝ)
+    (W : Matrix q d ℝ) (S : Finset q) (b c : d) :
+    (∑ i ∈ S, (2 * (u ⬝ᵥ Rᵀ i)) • vecMulVec (Rᵀ i) (W i)) b c
+      = ∑ i ∈ S, 2 * (u ⬝ᵥ Rᵀ i) * (R b i * W i c) := by
+  rw [Matrix.sum_apply]
+  rfl
+
+omit [Fintype d] [DecidableEq d] in
+/-- Helper: `2 max(z, 0) M` is `2 z M` if `z > 0` and `0` otherwise. -/
+private theorem reluSqDeriv_smul_ssq (z : ℝ) (M : Matrix d d ℝ) :
+    reluSqDeriv z • M = if 0 < z then (2 * z) • M else 0 := by
+  unfold reluSqDeriv
+  split_ifs with h
+  · rw [max_eq_left h.le]
+  · rw [max_eq_right (not_lt.1 h), mul_zero, zero_smul]
+
 section Generic
 
 variable {P q : Type*} [Fintype q] [NormedAddCommGroup P] [NormedSpace ℝ P] [FiniteDimensional ℝ P]
@@ -226,6 +255,116 @@ private theorem ae_kink_ssq (hRW : ∀ R₀ W₀, ∃ y, R y = R₀ ∧ W y = W�
     exact hy
   filter_upwards [h1, h2] with y hy1 hy2
   exact ⟨hy1, hy2⟩
+
+/-- Helper, condition 6, for `d` nonempty: at almost every `y` there is a point `u` on no
+hyperplane at which `∑_i 2 max(u w_i, 0) w_i a_i` is invertible. -/
+private theorem ae_isUnit_det_ssq [Nonempty d] (hRW : ∀ R₀ W₀, ∃ y, R y = R₀ ∧ W y = W₀)
+    (hq : Fintype.card d ≤ Fintype.card q) :
+    ∀ᵐ y ∂μ, ∃ u : d → ℝ, (∀ i, u ⬝ᵥ (R y)ᵀ i ≠ 0) ∧
+      IsUnit (∑ i, reluSqDeriv (u ⬝ᵥ (R y)ᵀ i) • vecMulVec ((R y)ᵀ i) (W y i)).det := by
+  classical
+  obtain ⟨ρ⟩ := Function.Embedding.nonempty_of_card_le hq
+  -- (A) the columns `ρ` of `W_read` are independent: the witness `w_{ρ a} = e_a`
+  have hA : ∀ᵐ y ∂μ, ((R y).submatrix id ρ).det ≠ 0 := by
+    obtain ⟨y₀, hR₀, -⟩ := hRW (Matrix.of fun a l => if l = ρ a then 1 else 0) 0
+    have h1 : (R y₀).submatrix id ρ = 1 := by
+      ext a b
+      simp only [hR₀, submatrix_apply, id_eq, of_apply, ρ.injective.eq_iff, Matrix.one_apply]
+      exact if_congr eq_comm rfl rfl
+    exact ae_ne_zero_of_analytic μ (analyticOnNhd_det_ssq (fun y => (R y).submatrix id ρ)
+      fun a b => analyticOnNhd_entry_ssq R a (ρ b)) ⟨y₀, by rw [h1, det_one]; exact one_ne_zero⟩
+  -- (B) no column of `W_read` is zero: an entry, with the witness `W_read = 1`
+  have hB : ∀ᵐ y ∂μ, ∀ i, (R y)ᵀ i ≠ 0 := by
+    obtain ⟨y₀, hR₀, -⟩ := hRW (Matrix.of fun _ _ => 1) 0
+    refine ae_all_iff.2 fun i => ?_
+    filter_upwards [ae_ne_zero_of_analytic μ (analyticOnNhd_entry_ssq R (Classical.arbitrary d) i)
+      ⟨y₀, by rw [hR₀]; exact one_ne_zero⟩] with y hy h0
+    exact hy (congrFun h0 (Classical.arbitrary d))
+  -- (C) for every `S ⊇ ρ(d)`, `det ∑_{i∈S} 2 (1 w_i) w_i a_i ≠ 0`: the witness `w_{ρ a} = a_{ρ a}
+  -- = e_a`, the other weights `0`, where the matrix is `2`
+  have hC : ∀ᵐ y ∂μ, ∀ S : Finset q, (∀ a, ρ a ∈ S) →
+      (∑ i ∈ S, (2 * ((1 : d → ℝ) ⬝ᵥ (R y)ᵀ i)) • vecMulVec ((R y)ᵀ i) (W y i)).det ≠ 0 := by
+    refine ae_all_iff.2 fun S => ?_
+    by_cases hS : ∀ a, ρ a ∈ S
+    swap
+    · exact Filter.Eventually.of_forall fun _ h => absurd h hS
+    obtain ⟨y₀, hR₀, hW₀⟩ := hRW (Matrix.of fun a l => if l = ρ a then 1 else 0)
+      (Matrix.of fun l a => if l = ρ a then 1 else 0)
+    have h2 : ∑ i ∈ S, (2 * ((1 : d → ℝ) ⬝ᵥ (R y₀)ᵀ i)) • vecMulVec ((R y₀)ᵀ i) (W y₀ i)
+        = (2 : ℝ) • (1 : Matrix d d ℝ) := by
+      ext b c
+      rw [sum_two_dot_apply_ssq, Finset.sum_eq_single_of_mem (ρ b) (hS b)]
+      · simp only [dotProduct, Pi.one_apply, hR₀, transpose_apply, of_apply, ρ.injective.eq_iff,
+          mul_ite, mul_one, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, ↓reduceIte, hW₀,
+          Matrix.smul_apply, Matrix.one_apply, smul_eq_mul]
+      · intro i _ hne
+        simp only [hR₀, transpose_of, of_apply, hne, ↓reduceIte, hW₀, mul_ite, mul_one, mul_zero,
+          ite_self]
+    have han := analyticOnNhd_det_ssq (fun y =>
+      ∑ i ∈ S, (2 * ((1 : d → ℝ) ⬝ᵥ (R y)ᵀ i)) • vecMulVec ((R y)ᵀ i) (W y i)) fun b c => by
+        simp only [sum_two_dot_apply_ssq]
+        exact Finset.analyticOnNhd_fun_sum _ fun i _ =>
+          (analyticOnNhd_const.mul (analyticOnNhd_dot_ssq R 1 i)).mul
+            ((analyticOnNhd_entry_ssq R b i).mul (analyticOnNhd_entry_ssq W i c))
+    filter_upwards [ae_ne_zero_of_analytic μ han ⟨y₀, by
+      rw [h2, det_smul, det_one, mul_one]; exact pow_ne_zero _ two_ne_zero⟩] with y hy _
+    exact hy
+  filter_upwards [hA, hB, hC] with y hA hB hC
+  -- for this `y`, the functions `u ↦ u c` and `D_S(u) = det ∑_{i∈S} 2 (u w_i) w_i a_i`
+  have hlin : ∀ c : d → ℝ, AnalyticOnNhd ℝ (fun u : d → ℝ => u ⬝ᵥ c) Set.univ := fun c =>
+    analyticOnNhd_linear
+      { toFun := fun u => u ⬝ᵥ c
+        map_add' := fun u v => add_dotProduct u v c
+        map_smul' := fun r u => smul_dotProduct r u c }
+  have hD : ∀ S : Finset q, AnalyticOnNhd ℝ (fun u : d → ℝ =>
+      (∑ i ∈ S, (2 * (u ⬝ᵥ (R y)ᵀ i)) • vecMulVec ((R y)ᵀ i) (W y i)).det) Set.univ :=
+    fun S => analyticOnNhd_det_ssq _ fun b c => by
+      simp only [sum_two_dot_apply_ssq]
+      exact Finset.analyticOnNhd_fun_sum _ fun i _ =>
+        (analyticOnNhd_const.mul (hlin _)).mul analyticOnNhd_const
+  -- at almost every `u`: no `u w_i` is zero (`w_i ≠ 0`), and `D_S(u) ≠ 0` (`D_S(1) ≠ 0`)
+  have hgood : ∀ᵐ u ∂(volume : Measure (d → ℝ)), (∀ i, u ⬝ᵥ (R y)ᵀ i ≠ 0) ∧
+      ∀ S : Finset q, (∀ a, ρ a ∈ S) →
+        (∑ i ∈ S, (2 * (u ⬝ᵥ (R y)ᵀ i)) • vecMulVec ((R y)ᵀ i) (W y i)).det ≠ 0 := by
+    have h1 : ∀ᵐ u ∂(volume : Measure (d → ℝ)), ∀ i, u ⬝ᵥ (R y)ᵀ i ≠ 0 :=
+      ae_all_iff.2 fun i => ae_ne_zero_of_analytic _ (hlin _)
+        ⟨(R y)ᵀ i, fun h => hB i (dotProduct_self_eq_zero.1 h)⟩
+    have h2 : ∀ᵐ u ∂(volume : Measure (d → ℝ)), ∀ S : Finset q, (∀ a, ρ a ∈ S) →
+        (∑ i ∈ S, (2 * (u ⬝ᵥ (R y)ᵀ i)) • vecMulVec ((R y)ᵀ i) (W y i)).det ≠ 0 := by
+      refine ae_all_iff.2 fun S => ?_
+      by_cases hS : ∀ a, ρ a ∈ S
+      swap
+      · exact Filter.Eventually.of_forall fun _ h => absurd h hS
+      filter_upwards [ae_ne_zero_of_analytic _ (hD S) ⟨1, hC S hS⟩] with u hu _
+      exact hu
+    exact h1.and h2
+  -- the open cone `V` where the units `ρ a` are active is not empty: `u* w_{ρ a} = 1`
+  set V := ⋂ a, {u : d → ℝ | 0 < u ⬝ᵥ (R y)ᵀ (ρ a)}
+  have hV : IsOpen V := isOpen_iInter_of_finite fun a =>
+    isOpen_lt continuous_const (continuousOn_univ.1 (hlin _).continuousOn)
+  have hVne : V.Nonempty := by
+    refine ⟨(1 : d → ℝ) ᵥ* ((R y).submatrix id ρ)⁻¹, Set.mem_iInter.2 fun a => ?_⟩
+    have h1 : (1 : d → ℝ) ᵥ* ((R y).submatrix id ρ)⁻¹ ᵥ* (R y).submatrix id ρ = 1 := by
+      rw [vecMul_vecMul, nonsing_inv_mul _ (isUnit_iff_ne_zero.2 hA), vecMul_one]
+    show 0 < ((1 : d → ℝ) ᵥ* ((R y).submatrix id ρ)⁻¹ ᵥ* (R y).submatrix id ρ) a
+    rw [h1]
+    exact one_pos
+  -- a good `u` in `V`; its active set `S` contains `ρ(d)`
+  have : (ae ((volume : Measure (d → ℝ)).restrict V)).NeBot :=
+    ae_neBot.2 (by rw [Ne, Measure.restrict_eq_zero]; exact hV.measure_ne_zero volume hVne)
+  obtain ⟨u, huV, hu1, hu2⟩ :=
+    ((ae_restrict_mem hV.measurableSet).and (ae_restrict_of_ae hgood)).exists
+  refine ⟨u, hu1, ?_⟩
+  have hS : ∀ a, ρ a ∈ Finset.univ.filter fun i => 0 < u ⬝ᵥ (R y)ᵀ i :=
+    fun a => Finset.mem_filter.2 ⟨Finset.mem_univ _, Set.mem_iInter.1 huV a⟩
+  -- there `2 max(u w_i, 0) = 2 u w_i` on `S` and `0` off `S`
+  have heq : ∑ i, reluSqDeriv (u ⬝ᵥ (R y)ᵀ i) • vecMulVec ((R y)ᵀ i) (W y i)
+      = ∑ i ∈ Finset.univ.filter (fun i => 0 < u ⬝ᵥ (R y)ᵀ i),
+        (2 * (u ⬝ᵥ (R y)ᵀ i)) • vecMulVec ((R y)ᵀ i) (W y i) := by
+    rw [Finset.sum_filter]
+    exact Finset.sum_congr rfl fun i _ => reluSqDeriv_smul_ssq _ _
+  rw [heq]
+  exact isUnit_iff_ne_zero.2 (hu2 _ hS)
 
 end Generic
 
@@ -511,6 +650,18 @@ theorem ae_exists_quadRes_ne_zero {σ : ℝ → ℝ}
   filter_upwards [ae_quadRes_ssq (q := hid 0) μ _ _ (exists_params_ssq (σ := σ)) hef]
     with θ hθ S hS
   exact ⟨Pi.single e 1, Pi.single f 1, e, f, hθ S hS⟩
+
+omit [Fintype T] [Nonempty T] in
+/-- Helper: condition 6 at almost every parameter, for `d` nonempty. (For `d` empty and at least
+one hidden unit the statement below is false: `u ⬝ᵥ w_i = 0` for every `u`.) -/
+private theorem ae_exists_isUnit_det_reluSqDeriv_ssq [Nonempty d] {σ : ℝ → ℝ}
+    (μ : Measure (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut))
+    [μ.IsAddHaarMeasure] (hcard : Fintype.card d ≤ Fintype.card (hid 0)) :
+    ∀ᵐ θ ∂μ, ∃ u : d → ℝ, (∀ i, u ⬝ᵥ (θ.read 0)ᵀ i ≠ 0) ∧
+      IsUnit (∑ i, reluSqDeriv (u ⬝ᵥ (θ.read 0)ᵀ i)
+        • Matrix.vecMulVec ((θ.read 0)ᵀ i) (θ.write 0 i)).det := by
+  have h := ae_isUnit_det_ssq (q := hid 0) μ _ _ (exists_params_ssq (σ := σ)) hcard
+  exact h
 
 /-- **"`h_1` takes all values in an open set", for ReLU² units, the derivative:** at almost every
 parameter of one MLP block of width at least `d`, there is a point `u` on no hyperplane at which
