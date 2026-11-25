@@ -421,3 +421,4 @@ import SkipsLean.Symmetry.BiasesGeneratedGroupSum
 import SkipsLean.Symmetry.BiasesGeneratedGroupSumFree
 import SkipsLean.Symmetry.BiasesGeneratedGroupLocalRescale
 import SkipsLean.Symmetry.BiasesGeneratedGroupLocalAttention
+import SkipsLean.Symmetry.BiasesGeneratedGroupTransformer
