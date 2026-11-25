@@ -44,6 +44,220 @@ variable {T d dIn dOut : Type*} [Fintype T] [Nonempty T] [Fintype d] [DecidableE
   [Fintype dOut]
 variable {hid : Fin 1 → Type} [∀ ℓ, Fintype (hid ℓ)]
 
+omit [Fintype d] [DecidableEq d] in
+/-- Helper: an entry of a matrix that depends linearly on `y` is analytic in `y`. -/
+private theorem analyticOnNhd_entry_ssq {P m n : Type*} [NormedAddCommGroup P] [NormedSpace ℝ P]
+    [FiniteDimensional ℝ P] (F : P →ₗ[ℝ] Matrix m n ℝ) (a : m) (b : n) :
+    AnalyticOnNhd ℝ (fun y => F y a b) Set.univ :=
+  analyticOnNhd_linear ((Matrix.entryLinearMap ℝ ℝ a b).comp F)
+
+omit [DecidableEq d] in
+/-- Helper: `u w_i` is analytic in `y` when `W_read` is linear in `y`. -/
+private theorem analyticOnNhd_dot_ssq {P q : Type*} [NormedAddCommGroup P] [NormedSpace ℝ P]
+    [FiniteDimensional ℝ P] (R : P →ₗ[ℝ] Matrix d q ℝ) (u : d → ℝ) (i : q) :
+    AnalyticOnNhd ℝ (fun y => u ⬝ᵥ (R y)ᵀ i) Set.univ := by
+  simp only [dotProduct, transpose_apply]
+  exact Finset.analyticOnNhd_fun_sum _ fun a _ =>
+    analyticOnNhd_const.mul (analyticOnNhd_entry_ssq R a i)
+
+omit [DecidableEq d] in
+/-- Helper: `w_i w_j` is analytic in `y` when `W_read` is linear in `y`. -/
+private theorem analyticOnNhd_colDot_ssq {P q : Type*} [NormedAddCommGroup P] [NormedSpace ℝ P]
+    [FiniteDimensional ℝ P] (R : P →ₗ[ℝ] Matrix d q ℝ) (i j : q) :
+    AnalyticOnNhd ℝ (fun y => (R y)ᵀ i ⬝ᵥ (R y)ᵀ j) Set.univ := by
+  simp only [dotProduct, transpose_apply]
+  exact Finset.analyticOnNhd_fun_sum _ fun a _ =>
+    (analyticOnNhd_entry_ssq R a i).mul (analyticOnNhd_entry_ssq R a j)
+
+omit [Fintype d] [DecidableEq d] in
+/-- Helper: the resultant of two quadratics whose coefficients are analytic in `y` is analytic
+in `y` (a polynomial in the six coefficients). -/
+private theorem analyticOnNhd_quadRes_ssq {P : Type*} [NormedAddCommGroup P] [NormedSpace ℝ P]
+    {p₀ p₁ p₂ r₀ r₁ r₂ : P → ℝ} (h₀ : AnalyticOnNhd ℝ p₀ Set.univ)
+    (h₁ : AnalyticOnNhd ℝ p₁ Set.univ) (h₂ : AnalyticOnNhd ℝ p₂ Set.univ)
+    (h₃ : AnalyticOnNhd ℝ r₀ Set.univ) (h₄ : AnalyticOnNhd ℝ r₁ Set.univ)
+    (h₅ : AnalyticOnNhd ℝ r₂ Set.univ) :
+    AnalyticOnNhd ℝ (fun y => quadRes (p₀ y) (p₁ y) (p₂ y) (r₀ y) (r₁ y) (r₂ y)) Set.univ := by
+  simp only [quadRes]
+  exact (((h₀.mul h₅).sub (h₂.mul h₃)).pow 2).sub
+    (((h₀.mul h₄).sub (h₁.mul h₃)).mul ((h₁.mul h₅).sub (h₂.mul h₄)))
+
+omit [DecidableEq d] in
+/-- Helper: the point `u₀ = |w_i|² w_j − (w_i w_j) w_i` of the hyperplane of the unit `i`, for
+the columns `w` of `M`. -/
+private def kinkPt_ssq {q : Type*} (M : Matrix d q ℝ) (i j : q) : d → ℝ :=
+  (Mᵀ i ⬝ᵥ Mᵀ i) • Mᵀ j - (Mᵀ i ⬝ᵥ Mᵀ j) • Mᵀ i
+
+omit [DecidableEq d] in
+/-- Helper: `u₀ w_l = |w_i|² (w_j w_l) − (w_i w_j) (w_i w_l)`. -/
+private theorem kinkPt_dot_ssq {q : Type*} (M : Matrix d q ℝ) (i j l : q) :
+    kinkPt_ssq M i j ⬝ᵥ Mᵀ l
+      = (Mᵀ i ⬝ᵥ Mᵀ i) * (Mᵀ j ⬝ᵥ Mᵀ l) - (Mᵀ i ⬝ᵥ Mᵀ j) * (Mᵀ i ⬝ᵥ Mᵀ l) := by
+  simp only [kinkPt_ssq, sub_dotProduct, smul_dotProduct, smul_eq_mul]
+
+section Generic
+
+variable {P q : Type*} [Fintype q] [NormedAddCommGroup P] [NormedSpace ℝ P] [FiniteDimensional ℝ P]
+  [MeasurableSpace P] [BorelSpace P] (μ : Measure P) [μ.IsAddHaarMeasure]
+  (R : P →ₗ[ℝ] Matrix d q ℝ) (W : P →ₗ[ℝ] Matrix q d ℝ)
+
+/-- Helper, condition 5: for two coordinates `e ≠ f`, at almost every `y` the resultant on the
+line `t ↦ e_e + t e_f` of the entries `e`, `f` is not zero, for every set `S` of at least two
+units. It is a polynomial in `y`, equal to `quadRes 1 0 0 0 0 1 = 1` where `w_p = a_p = e_e`,
+`w_r = a_r = e_f` for two units `p ≠ r` of `S` and all other weights are `0`. -/
+private theorem ae_quadRes_ssq (hRW : ∀ R₀ W₀, ∃ y, R y = R₀ ∧ W y = W₀) {e f : d}
+    (hef : e ≠ f) :
+    ∀ᵐ y ∂μ, ∀ S : Finset q, 2 ≤ S.card →
+      quadRes (∑ i ∈ S, (Pi.single e 1 ⬝ᵥ (R y)ᵀ i) ^ 2 * W y i e)
+        (2 * ∑ i ∈ S, (Pi.single e 1 ⬝ᵥ (R y)ᵀ i) * (Pi.single f 1 ⬝ᵥ (R y)ᵀ i) * W y i e)
+        (∑ i ∈ S, (Pi.single f 1 ⬝ᵥ (R y)ᵀ i) ^ 2 * W y i e)
+        (∑ i ∈ S, (Pi.single e 1 ⬝ᵥ (R y)ᵀ i) ^ 2 * W y i f)
+        (2 * ∑ i ∈ S, (Pi.single e 1 ⬝ᵥ (R y)ᵀ i) * (Pi.single f 1 ⬝ᵥ (R y)ᵀ i) * W y i f)
+        (∑ i ∈ S, (Pi.single f 1 ⬝ᵥ (R y)ᵀ i) ^ 2 * W y i f) ≠ 0 := by
+  classical
+  refine ae_all_iff.2 fun S => ?_
+  by_cases hS : 2 ≤ S.card
+  swap
+  · exact Filter.Eventually.of_forall fun _ h => absurd h hS
+  -- two units `p ≠ r` of `S`
+  obtain ⟨p, hp, r, hr, hpr⟩ := Finset.one_lt_card.1 hS
+  -- the point `w_p = a_p = e_e`, `w_r = a_r = e_f`, all other weights `0`
+  obtain ⟨y₀, hR₀, hW₀⟩ :=
+    hRW (Matrix.of fun a l => if (a = e ∧ l = p) ∨ (a = f ∧ l = r) then 1 else 0)
+      (Matrix.of fun l b => if (l = p ∧ b = e) ∨ (l = r ∧ b = f) then 1 else 0)
+  have hne : quadRes (∑ i ∈ S, (Pi.single e 1 ⬝ᵥ (R y₀)ᵀ i) ^ 2 * W y₀ i e)
+        (2 * ∑ i ∈ S, (Pi.single e 1 ⬝ᵥ (R y₀)ᵀ i) * (Pi.single f 1 ⬝ᵥ (R y₀)ᵀ i) * W y₀ i e)
+        (∑ i ∈ S, (Pi.single f 1 ⬝ᵥ (R y₀)ᵀ i) ^ 2 * W y₀ i e)
+        (∑ i ∈ S, (Pi.single e 1 ⬝ᵥ (R y₀)ᵀ i) ^ 2 * W y₀ i f)
+        (2 * ∑ i ∈ S, (Pi.single e 1 ⬝ᵥ (R y₀)ᵀ i) * (Pi.single f 1 ⬝ᵥ (R y₀)ᵀ i) * W y₀ i f)
+        (∑ i ∈ S, (Pi.single f 1 ⬝ᵥ (R y₀)ᵀ i) ^ 2 * W y₀ i f) ≠ 0 := by
+    rw [hR₀, hW₀]
+    simp only [single_dotProduct, one_mul, transpose_apply, of_apply, hef, Ne.symm hef,
+      true_and, false_and, and_true, and_false, or_false, false_or]
+    simp only [quadRes, ite_pow, one_pow, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow,
+      mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', hp, ↓reduceIte, hr, hpr, Ne.symm hpr,
+      sub_zero, sub_self, one_ne_zero]
+  -- the resultant is a polynomial in `y`
+  have hu := analyticOnNhd_dot_ssq R (Pi.single e 1)
+  have hv := analyticOnNhd_dot_ssq R (Pi.single f 1)
+  have han : AnalyticOnNhd ℝ (fun y => quadRes (∑ i ∈ S, (Pi.single e 1 ⬝ᵥ (R y)ᵀ i) ^ 2 * W y i e)
+        (2 * ∑ i ∈ S, (Pi.single e 1 ⬝ᵥ (R y)ᵀ i) * (Pi.single f 1 ⬝ᵥ (R y)ᵀ i) * W y i e)
+        (∑ i ∈ S, (Pi.single f 1 ⬝ᵥ (R y)ᵀ i) ^ 2 * W y i e)
+        (∑ i ∈ S, (Pi.single e 1 ⬝ᵥ (R y)ᵀ i) ^ 2 * W y i f)
+        (2 * ∑ i ∈ S, (Pi.single e 1 ⬝ᵥ (R y)ᵀ i) * (Pi.single f 1 ⬝ᵥ (R y)ᵀ i) * W y i f)
+        (∑ i ∈ S, (Pi.single f 1 ⬝ᵥ (R y)ᵀ i) ^ 2 * W y i f)) Set.univ :=
+    analyticOnNhd_quadRes_ssq
+    (Finset.analyticOnNhd_fun_sum _ fun i _ => ((hu i).pow 2).mul (analyticOnNhd_entry_ssq W i e))
+    (analyticOnNhd_const.mul (Finset.analyticOnNhd_fun_sum _ fun i _ =>
+      ((hu i).mul (hv i)).mul (analyticOnNhd_entry_ssq W i e)))
+    (Finset.analyticOnNhd_fun_sum _ fun i _ => ((hv i).pow 2).mul (analyticOnNhd_entry_ssq W i e))
+    (Finset.analyticOnNhd_fun_sum _ fun i _ => ((hu i).pow 2).mul (analyticOnNhd_entry_ssq W i f))
+    (analyticOnNhd_const.mul (Finset.analyticOnNhd_fun_sum _ fun i _ =>
+      ((hu i).mul (hv i)).mul (analyticOnNhd_entry_ssq W i f)))
+    (Finset.analyticOnNhd_fun_sum _ fun i _ => ((hv i).pow 2).mul (analyticOnNhd_entry_ssq W i f))
+  -- a polynomial that is not identically zero is nonzero at almost every `y`
+  filter_upwards [ae_ne_zero_of_analytic μ han ⟨y₀, hne⟩] with y hy _
+  exact hy
+
+omit [DecidableEq d] in
+/-- Helper, condition 4: for two units `i ≠ j` and two coordinates `e ≠ f`, at almost every `y`
+the point `u₀ = |w_i|² w_j − (w_i w_j) w_i` of the hyperplane of `i` is on no other hyperplane,
+and for every set `S ∋ j` of units without `i` the minor `e`, `f` of `a_i` and
+`∑_{l∈S} (u₀ w_l)² a_l` is not zero. Both are polynomials in `y`, nonzero where `w_i = a_i = e_e`,
+`w_l = e_f` for `l ≠ i`, `a_j = e_f` and the other rows of the write are `0`: there `u₀ = e_f`. -/
+private theorem ae_kink_ssq (hRW : ∀ R₀ W₀, ∃ y, R y = R₀ ∧ W y = W₀) {e f : d} (hef : e ≠ f)
+    {i j : q} (hij : i ≠ j) :
+    ∀ᵐ y ∂μ, (∀ l, l ≠ i → kinkPt_ssq (R y) i j ⬝ᵥ (R y)ᵀ l ≠ 0) ∧
+      ∀ S : Finset q, j ∈ S → i ∉ S →
+        W y i e * ∑ l ∈ S, (kinkPt_ssq (R y) i j ⬝ᵥ (R y)ᵀ l) ^ 2 * W y l f
+          - W y i f * ∑ l ∈ S, (kinkPt_ssq (R y) i j ⬝ᵥ (R y)ᵀ l) ^ 2 * W y l e ≠ 0 := by
+  classical
+  obtain ⟨y₀, hR₀, hW₀⟩ :=
+    hRW (Matrix.of fun a l => if l = i then (if a = e then 1 else 0) else (if a = f then 1 else 0))
+      (Matrix.of fun l b => if (l = i ∧ b = e) ∨ (l = j ∧ b = f) then 1 else 0)
+  -- at this point `u₀ w_l = 1` for every `l ≠ i`
+  have hk : ∀ l, l ≠ i → kinkPt_ssq (R y₀) i j ⬝ᵥ (R y₀)ᵀ l = 1 := by
+    intro l hl
+    rw [kinkPt_dot_ssq, hR₀]
+    simp only [dotProduct, transpose_apply, of_apply, ↓reduceIte, mul_ite, mul_one, mul_zero,
+      Finset.sum_ite_eq', Finset.mem_univ, Ne.symm hij, hl, Ne.symm hef, sub_zero]
+  have han_k : ∀ l, AnalyticOnNhd ℝ (fun y => kinkPt_ssq (R y) i j ⬝ᵥ (R y)ᵀ l) Set.univ := by
+    intro l
+    simp only [kinkPt_dot_ssq]
+    exact ((analyticOnNhd_colDot_ssq R i i).mul (analyticOnNhd_colDot_ssq R j l)).sub
+      ((analyticOnNhd_colDot_ssq R i j).mul (analyticOnNhd_colDot_ssq R i l))
+  have h1 : ∀ᵐ y ∂μ, ∀ l, l ≠ i → kinkPt_ssq (R y) i j ⬝ᵥ (R y)ᵀ l ≠ 0 := by
+    refine ae_all_iff.2 fun l => ?_
+    by_cases hl : l = i
+    · exact Filter.Eventually.of_forall fun _ h => absurd hl h
+    filter_upwards [ae_ne_zero_of_analytic μ (han_k l)
+      ⟨y₀, by rw [hk l hl]; exact one_ne_zero⟩] with y hy _
+    exact hy
+  have h2 : ∀ᵐ y ∂μ, ∀ S : Finset q, j ∈ S → i ∉ S →
+      W y i e * ∑ l ∈ S, (kinkPt_ssq (R y) i j ⬝ᵥ (R y)ᵀ l) ^ 2 * W y l f
+        - W y i f * ∑ l ∈ S, (kinkPt_ssq (R y) i j ⬝ᵥ (R y)ᵀ l) ^ 2 * W y l e ≠ 0 := by
+    refine ae_all_iff.2 fun S => ?_
+    by_cases hS : j ∈ S ∧ i ∉ S
+    swap
+    · exact Filter.Eventually.of_forall fun _ h h' => absurd ⟨h, h'⟩ hS
+    -- at the point, `∑_{l∈S} (u₀ w_l)² a_l = a_j = e_f`
+    have hs : ∀ b, ∑ l ∈ S, (kinkPt_ssq (R y₀) i j ⬝ᵥ (R y₀)ᵀ l) ^ 2 * W y₀ l b = W y₀ j b := by
+      intro b
+      rw [Finset.sum_eq_single_of_mem j hS.1]
+      · rw [hk j (Ne.symm hij), one_pow, one_mul]
+      · intro l hl hlj
+        have hli : l ≠ i := fun h => hS.2 (h ▸ hl)
+        rw [hW₀]
+        simp only [of_apply, hli, false_and, hlj, or_self, ↓reduceIte, mul_zero]
+    have hne : W y₀ i e * ∑ l ∈ S, (kinkPt_ssq (R y₀) i j ⬝ᵥ (R y₀)ᵀ l) ^ 2 * W y₀ l f
+        - W y₀ i f * ∑ l ∈ S, (kinkPt_ssq (R y₀) i j ⬝ᵥ (R y₀)ᵀ l) ^ 2 * W y₀ l e ≠ 0 := by
+      rw [hs, hs, hW₀]
+      simp only [of_apply, and_self, hij, hef, or_false, ↓reduceIte, Ne.symm hij, Ne.symm hef,
+        or_true, mul_one, and_false, and_true, or_self, mul_zero, sub_zero, ne_eq, one_ne_zero,
+        not_false_eq_true]
+    have han : AnalyticOnNhd ℝ (fun y =>
+        W y i e * ∑ l ∈ S, (kinkPt_ssq (R y) i j ⬝ᵥ (R y)ᵀ l) ^ 2 * W y l f
+          - W y i f * ∑ l ∈ S, (kinkPt_ssq (R y) i j ⬝ᵥ (R y)ᵀ l) ^ 2 * W y l e) Set.univ :=
+      ((analyticOnNhd_entry_ssq W i e).mul (Finset.analyticOnNhd_fun_sum _ fun l _ =>
+        ((han_k l).pow 2).mul (analyticOnNhd_entry_ssq W l f))).sub
+      ((analyticOnNhd_entry_ssq W i f).mul (Finset.analyticOnNhd_fun_sum _ fun l _ =>
+        ((han_k l).pow 2).mul (analyticOnNhd_entry_ssq W l e)))
+    filter_upwards [ae_ne_zero_of_analytic μ han ⟨y₀, hne⟩] with y hy _ _
+    exact hy
+  filter_upwards [h1, h2] with y hy1 hy2
+  exact ⟨hy1, hy2⟩
+
+end Generic
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the read and the write of the block take every value, at the parameter with
+`E = D = 0`. -/
+private theorem exists_params_ssq {σ : ℝ → ℝ} (R₀ : Matrix d (hid 0) ℝ)
+    (W₀ : Matrix (hid 0) d ℝ) :
+    ∃ θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut,
+      Params.linRead 0 θ = R₀ ∧ Params.linWrite 0 θ = W₀ :=
+  ⟨⟨0, Pi.single (M := fun ℓ => Matrix d (hid ℓ) ℝ) 0 R₀,
+      Pi.single (M := fun ℓ => Matrix (hid ℓ) d ℝ) 0 W₀, 0⟩,
+    Pi.single_eq_same (M := fun ℓ => Matrix d (hid ℓ) ℝ) 0 R₀,
+    Pi.single_eq_same (M := fun ℓ => Matrix (hid ℓ) d ℝ) 0 W₀⟩
+
+omit [Fintype d] [DecidableEq d] in
+/-- Helper: `max(z, 0)² a` is `z² a` if `z > 0` and `0` otherwise. -/
+private theorem reluSq_smul_ssq (z : ℝ) (a : d → ℝ) :
+    reluSq z • a = if 0 < z then z ^ 2 • a else 0 := by
+  unfold reluSq
+  split_ifs with h
+  · rw [max_eq_left h.le]
+  · rw [max_eq_right (not_lt.1 h), zero_pow two_ne_zero, zero_smul]
+
+omit [Fintype d] [DecidableEq d] in
+/-- Helper: `∑_i max(u w_i, 0)² a_i = ∑_{i∈S} (u w_i)² a_i` for the set `S` of units active at
+`u`. -/
+private theorem sum_reluSq_eq_ssq {q : Type*} [Fintype q] (z : q → ℝ) (a : q → d → ℝ) :
+    ∑ i, reluSq (z i) • a i = ∑ i ∈ Finset.univ.filter (fun i => 0 < z i), z i ^ 2 • a i := by
+  rw [Finset.sum_filter]
+  exact Finset.sum_congr rfl fun i _ => reluSq_smul_ssq (z i) (a i)
+
 /-- **"For generic parameters `h_1 ≠ 0` there", for ReLU² units:** at almost every parameter of
 one MLP block, `∑_i max(u w_i, 0)² a_i ≠ 0` at every `u` at which a unit is active. -/
 theorem ae_forall_sum_reluSq_ne_zero {σ : ℝ → ℝ}
@@ -63,7 +277,61 @@ theorem ae_exists_kink_point_reluSq {σ : ℝ → ℝ}
     ∀ᵐ θ ∂μ, ∀ i, ∃ u₀ : d → ℝ, u₀ ⬝ᵥ (θ.read 0)ᵀ i = 0 ∧
       (∀ j, j ≠ i → u₀ ⬝ᵥ (θ.read 0)ᵀ j ≠ 0) ∧
       ∀ r : ℝ, ∑ j, reluSq (u₀ ⬝ᵥ (θ.read 0)ᵀ j) • θ.write 0 j ≠ r • θ.write 0 i := by
-  sorry
+  classical
+  obtain ⟨e, f, hef⟩ := Fintype.exists_pair_of_one_lt_card (show 1 < Fintype.card d by omega)
+  -- for every unit `i` another unit `J i`
+  have hJ : ∀ i : hid 0, ∃ j, j ≠ i := fun i => Fintype.exists_ne_of_one_lt_card (by omega) i
+  choose J hJ using hJ
+  have hae : ∀ᵐ θ ∂μ, ∀ i,
+      (∀ l, l ≠ i → kinkPt_ssq (θ.read 0) i (J i) ⬝ᵥ (θ.read 0)ᵀ l ≠ 0) ∧
+      ∀ S : Finset (hid 0), J i ∈ S → i ∉ S →
+        θ.write 0 i e * ∑ l ∈ S, (kinkPt_ssq (θ.read 0) i (J i) ⬝ᵥ (θ.read 0)ᵀ l) ^ 2
+            * θ.write 0 l f
+          - θ.write 0 i f * ∑ l ∈ S, (kinkPt_ssq (θ.read 0) i (J i) ⬝ᵥ (θ.read 0)ᵀ l) ^ 2
+            * θ.write 0 l e ≠ 0 :=
+    ae_all_iff.2 fun i =>
+      ae_kink_ssq (q := hid 0) μ _ _ (exists_params_ssq (σ := σ)) hef (hJ i).symm
+  filter_upwards [hae] with θ hθ i
+  obtain ⟨h1, h2⟩ := hθ i
+  -- `u₀` or `-u₀`, the sign chosen so that the unit `J i` is active
+  set u₀ := kinkPt_ssq (θ.read 0) i (J i)
+  set w := (θ.read 0)ᵀ
+  set c : ℝ := if 0 < u₀ ⬝ᵥ w (J i) then 1 else -1 with hc
+  have hc2 : c ^ 2 = 1 := by rw [hc]; split_ifs <;> norm_num
+  have hc0 : c ≠ 0 := by rw [hc]; split_ifs <;> norm_num
+  have hdot : ∀ l, (c • u₀) ⬝ᵥ w l = c * (u₀ ⬝ᵥ w l) := fun l => by
+    rw [smul_dotProduct, smul_eq_mul]
+  have hi : u₀ ⬝ᵥ w i = 0 := by
+    rw [kinkPt_dot_ssq, dotProduct_comm (w (J i)) (w i)]
+    ring
+  have hj : 0 < (c • u₀) ⬝ᵥ w (J i) := by
+    rw [hdot, hc]
+    split_ifs with h
+    · rwa [one_mul]
+    · have := h1 (J i) (hJ i)
+      have : u₀ ⬝ᵥ w (J i) < 0 := lt_of_le_of_ne (not_lt.1 h) this
+      linarith
+  refine ⟨c • u₀, by rw [hdot, hi, mul_zero], fun l hl => by
+    rw [hdot]; exact mul_ne_zero hc0 (h1 l hl), fun r hr => ?_⟩
+  -- the active set `S` at `c u₀` contains `J i` and not `i`
+  set S := Finset.univ.filter (fun l => 0 < (c • u₀) ⬝ᵥ w l)
+  have hjS : J i ∈ S := Finset.mem_filter.2 ⟨Finset.mem_univ _, hj⟩
+  have hiS : i ∉ S := fun h => by
+    have := (Finset.mem_filter.1 h).2
+    rw [hdot, hi, mul_zero] at this
+    exact lt_irrefl 0 this
+  have hr' : ∑ l ∈ S, ((c • u₀) ⬝ᵥ w l) ^ 2 • θ.write 0 l = r • θ.write 0 i :=
+    (sum_reluSq_eq_ssq (q := hid 0) (fun l => (c • u₀) ⬝ᵥ w l) (fun l => θ.write 0 l)).symm.trans
+      hr
+  -- the entries `e`, `f` of `h_1 = r a_i`
+  have hb : ∀ b, ∑ l ∈ S, (u₀ ⬝ᵥ w l) ^ 2 * θ.write 0 l b = r * θ.write 0 i b := by
+    intro b
+    have := congrFun hr' b
+    simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul, hdot, mul_pow, hc2, one_mul] at this
+    exact this
+  apply h2 S hjS hiS
+  rw [hb e, hb f]
+  ring
 
 /-- **"Two entries `h_a` and `h_b` of `h_1` have no common factor", for ReLU² units, on a line:**
 at almost every parameter of one MLP block with `d ≥ 2`, for every set `S` of at least two units
@@ -80,7 +348,11 @@ theorem ae_exists_quadRes_ne_zero {σ : ℝ → ℝ}
         (∑ i ∈ S, (u ⬝ᵥ (θ.read 0)ᵀ i) ^ 2 * θ.write 0 i f)
         (2 * ∑ i ∈ S, (u ⬝ᵥ (θ.read 0)ᵀ i) * (v ⬝ᵥ (θ.read 0)ᵀ i) * θ.write 0 i f)
         (∑ i ∈ S, (v ⬝ᵥ (θ.read 0)ᵀ i) ^ 2 * θ.write 0 i f) ≠ 0 := by
-  sorry
+  -- two coordinates `e ≠ f`, and the line `t ↦ e_e + t e_f` for every `S`
+  obtain ⟨e, f, hef⟩ := Fintype.exists_pair_of_one_lt_card (show 1 < Fintype.card d by omega)
+  filter_upwards [ae_quadRes_ssq (q := hid 0) μ _ _ (exists_params_ssq (σ := σ)) hef]
+    with θ hθ S hS
+  exact ⟨Pi.single e 1, Pi.single f 1, e, f, hθ S hS⟩
 
 /-- **"`h_1` takes all values in an open set", for ReLU² units, the derivative:** at almost every
 parameter of one MLP block of width at least `d`, there is a point `u` on no hyperplane at which
