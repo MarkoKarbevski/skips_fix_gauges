@@ -363,6 +363,54 @@ theorem exists_dirs_of_keeps_attention_biases_residual
     ∃ (X : Matrix d d ℝ) (g : Fin 2 → d → ℝ)
       (Γ Γ' : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) (κ ν : ∀ ℓ, H ℓ → dh ℓ → ℝ),
       η = cobDirB p (fun _ => X) + (0, translateDir p.1 g) + headDirB p (Γ, Γ', κ, ν) := by
-  sorry
+  classical
+  -- Step 1 on the weights: `η_θ = cobDir θ X + headDirQK θ Γ + headDirVO θ Γ'`
+  obtain ⟨X, Γ, Γ', hη₁⟩ := exists_cobDir_add_headDir_of_keeps p.1 hp η.1 hB hC
+  obtain ⟨hE₁, hD₁, hQ₁, hK₁, hV₁, hO₁⟩ := comps_of_eq_abs p.1 η.1 X Γ Γ' hη₁
+  -- `D_θ M η = E X_0 D − E X_1 D = 0`, so `X_0 = X_1` since `E` and `D` have rank `d`
+  have h01 : X 0 = X 1 := by
+    rw [hE₁, hD₁, Matrix.mul_neg, Matrix.mul_assoc, add_neg_eq_zero] at hM
+    exact cancel_right_of_rank_abs p.1.D hp.rank_D (cancel_left_of_rank_abs p.1.E hp.rank_E hM)
+  -- the translation at `h_0`, and the query biases from `D_θ β_i η = 0`
+  obtain ⟨g₀, hg₀⟩ : ∃ g₀, g₀ = η.2.E - p.2.E ᵥ* X 0 := ⟨_, rfl⟩
+  have hQb := queryBias_abs p hp η X Γ g₀ hg₀ hE₁ hQ₁ hK₁ hβ
+  -- the shifts of the key biases and of the value biases, and the translation at `h_1`
+  obtain ⟨κ, hκ⟩ : ∃ κ : ∀ ℓ, H ℓ → dh ℓ → ℝ,
+      ∀ i, κ 0 i = attnBK η.2 i + g₀ ᵥ* attnK p.1 i + attnBK p.2 i ᵥ* (Γ 0 i)ᵀ :=
+    ⟨fun ℓ => Fin.cases (motive := fun ℓ => H ℓ → dh ℓ → ℝ)
+      (fun i => attnBK η.2 i + g₀ ᵥ* attnK p.1 i + attnBK p.2 i ᵥ* (Γ 0 i)ᵀ)
+      (fun j => j.elim0) ℓ, fun _ => rfl⟩
+  obtain ⟨ν, hν⟩ : ∃ ν : ∀ ℓ, H ℓ → dh ℓ → ℝ,
+      ∀ i, ν 0 i = attnBV η.2 i + g₀ ᵥ* attnV p.1 i - attnBV p.2 i ᵥ* Γ' 0 i :=
+    ⟨fun ℓ => Fin.cases (motive := fun ℓ => H ℓ → dh ℓ → ℝ)
+      (fun i => attnBV η.2 i + g₀ ᵥ* attnV p.1 i - attnBV p.2 i ᵥ* Γ' 0 i)
+      (fun j => j.elim0) ℓ, fun _ => rfl⟩
+  obtain ⟨g₁, hg₁⟩ : ∃ g₁, g₁ = η.2.write 0 - p.2.write 0 ᵥ* X 1 + ∑ i, ν 0 i ᵥ* attnO p.1 i :=
+    ⟨_, rfl⟩
+  -- the readout bias from `D_θ γ η = 0` with the stream `1`: `η_{b_D} = −(g_0 + g_1) D`
+  have hDb : η.2.D = -((g₀ + g₁) ᵥ* p.1.D) := by
+    have h := hγ
+    rw [dAttnConst_eq_abs 1 p η X Γ' g₀ ν hg₀ hν hD₁ hV₁ hO₁, ← hg₁] at h
+    simp only [Pi.one_apply, Matrix.one_mul] at h
+    have e : (g₀ + g₁) ᵥ* p.1.D
+        = η.2.E ᵥ* p.1.D - p.2.E ᵥ* (X 1 * p.1.D) + g₁ ᵥ* p.1.D := by
+      rw [hg₀, Matrix.add_vecMul, Matrix.sub_vecMul, Matrix.vecMul_vecMul, h01]
+    rw [← e] at h
+    exact eq_neg_of_add_eq_zero_right h
+  -- one change of basis `X_0 = X_1`
+  have hX : (fun _ : Fin 2 => X 0) = X := funext (Fin.forall_fin_two.2 ⟨rfl, h01⟩)
+  -- the translations of Lemma A.8 for one block
+  have hBr : (translateDir p.1 ![g₀, g₁]).read 0 = -(g₀ ᵥ* p.1.read 0) := by
+    show -((∑ k ∈ Finset.Iic (0 : Fin 2), ![g₀, g₁] k) ᵥ* p.1.read 0) = _
+    rw [sum_Iic_zero_abs]
+    rfl
+  have hBD : (translateDir p.1 ![g₀, g₁]).D = -((g₀ + g₁) ᵥ* p.1.D) := by
+    show -((∑ k : Fin 2, ![g₀, g₁] k) ᵥ* p.1.D) = _
+    rw [Fin.sum_univ_two]
+    rfl
+  refine ⟨X 0, ![g₀, g₁], Γ, Γ', κ, ν, ?_⟩
+  rw [hX]
+  exact eq_of_comps_abs p η X Γ Γ' κ ν g₀ g₁ (g₀ + g₁) (translateDir p.1 ![g₀, g₁]) hη₁ hg₀
+    hQb hκ hν hg₁ hDb rfl hBr rfl hBD
 
 end Skips
