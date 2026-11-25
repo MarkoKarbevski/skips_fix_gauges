@@ -378,3 +378,5 @@ import SkipsLean.OneBlock.ReGLUBiases
 import SkipsLean.OneBlock.MlpBiasesNamed
 import SkipsLean.OneBlock.GatedBiasesNamed
 import SkipsLean.OneBlock.KeepsProductsBiases
+import SkipsLean.Residual.SmallWritesBiases
+import SkipsLean.Residual.DepthMlpBiases
