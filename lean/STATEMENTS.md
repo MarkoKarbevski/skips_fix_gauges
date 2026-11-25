@@ -343,7 +343,8 @@ the paper's (Table 6: `286`); the two bounds are attained by the tanh networks c
 rows of Table 6 included; the seven statements together are Lemma D.13 for every admissible `μ`.
 Report: `lean-statement-audit-thirtyfirst-2026-11-25.md`.
 The reports of the readers are in `ai_notes/`. Not yet compared by such a reader (written after
-the thirty-first audit began at 03:15 UTC, 25 November): `Dimension/FunctionalBiasesKinks.lean`,
+the thirty-first audit began at 03:15 UTC, 25 November; they go to the thirty-second audit, in
+two parts, begun at 04:12 UTC): `Dimension/FunctionalBiasesKinks.lean`,
 `Symmetry/BiasesFlatKinks.lean`, `Symmetry/InsideBlocksBiases.lean` and `Symmetry/BiasesRescaleCount.lean`
 (written at 03:23 UTC, 25 November).
 `OneBlock/GatedBiases.lean` (written at 03:29 UTC, 25 November).
