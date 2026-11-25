@@ -29,9 +29,10 @@ write zero.
   columns are in general position: any `d` of the `2 d_hidden` gate and value columns are
   linearly independent, and there are more than `d` of them (so the read has rank `d`; at generic
   parameters this holds when the block has width at least `d ≥ 1`). Rank `d` alone is not enough:
-  for `d = 2` and one block with two hidden units, gate columns `e_1, e_2`, value columns
-  `e_2, e_1` and `E = 0`, the direction of `X_0 = diag(1, −1)`, `α = β = (1, −1)`, `X_1 = 0` is
-  `0` (`ai_notes/locally_free_readout_check_2026-11-25.py`).
+  for `d = 2` and one block with two hidden units, both with the gate column `e_1` and the value
+  column `e_2`, and `E = 0`, the direction of `X_0 = diag(1, −k)`, `β = (1, 1)`, `α = (k, k)`,
+  `X_1 = 0` is `0`, for every degree `k`
+  (`ai_notes/locally_free_readout_check_2026-11-25.py`).
 * For `ε = 0` the statement asks `E ≠ 0` and every write nonzero, and nothing of the matrices
   `Y_ℓ` (the twin with the embedding asks them antisymmetric).
 
