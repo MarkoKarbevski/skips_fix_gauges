@@ -2235,3 +2235,11 @@ import SkipsLean
 #print axioms Skips.exists_holomorphic_extension_real_param
 #print axioms Skips.exists_holomorphic_suffix_pow_bounded
 #print axioms Skips.exists_holomorphic_suffix_bounded
+#print axioms Skips.exists_cob_eq_one_of_choice
+#print axioms Skips.exists_cob_triangular_of_choice
+#print axioms Skips.finrank_span_choice_eq_zero
+#print axioms Skips.finrank_span_choice_triangular
+#print axioms Skips.exists_cob_mixed_eq_one_of_choice
+#print axioms Skips.exists_cob_mixed_triangular_of_choice
+#print axioms Skips.cobMixed_injective
+#print axioms Skips.cobMixed_eq_self_iff

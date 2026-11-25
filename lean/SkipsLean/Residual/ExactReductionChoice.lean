@@ -98,6 +98,7 @@ private theorem writeSub_cob_erc2 (G : Fin (L + 1) → GL d ℝ) (ρE : d → dI
     simp only [Params.writeSub, Fin.cases_succ]
     exact submatrix_mul_id_erc2 _ _ _
 
+omit [Fintype dOut] in
 /-- **Proposition A.9 (i), without normalization, one submatrix per hidden state:** at each
 hidden state choose `d` columns of the matrix that reads it or `d` rows of the matrix that writes
 it. If the chosen submatrices are invertible, changes of basis at the `L + 1` hidden states
@@ -160,6 +161,7 @@ private theorem exists_orthogonal_mul_lowerTriangular_erc2 [LinearOrder d] (W : 
   rw [Matrix.transpose_mul]
   exact htri
 
+omit [Fintype dOut] in
 /-- **Proposition A.9 (i), under pre-RMSNorm, one submatrix per hidden state:** orthogonal
 changes of basis at the `L + 1` hidden states preserve the function and turn the chosen
 submatrix at each hidden state into a triangular matrix: upper triangular for columns of a read,
@@ -310,6 +312,7 @@ private theorem choiceLin_surjective_erc2 (c : ∀ ℓ : Fin L, d → A.r ℓ) (
       ext j i
       exact (hρ ℓ hs').extend_apply (fun j => M ℓ.succ j i) 0 j
 
+omit [DecidableEq d] in
 /-- **Proposition A.9 (i), "this removes `d_model²` […] parameters per hidden state", one
 submatrix per hidden state:** the parameters whose chosen submatrices all vanish (the directions
 of the family in which these `L + 1` submatrices are the identity) have dimension
@@ -362,6 +365,7 @@ private theorem lowLin_surjective_erc2 [LinearOrder d] (s : Fin (L + 1) → Bool
   · rw [ite_eq_right_of_eq_false _ _ (eq_false hs), ite_eq_right_of_eq_false _ _ (eq_false hs),
       dite_eq_left p.2]
 
+omit [DecidableEq d] in
 /-- **Proposition A.9 (i), "respectively `d_model (d_model − 1)/2`, parameters per hidden
 state", one submatrix per hidden state:** the parameters whose chosen submatrices are triangular
 (upper for columns of a read, lower for rows of a write) have dimension
@@ -431,6 +435,7 @@ variable {T : Type*} {d : Type} {dIn dOut : Type*} {L : ℕ} [Fintype d] [Decida
   [Fintype dIn] [Fintype dOut]
 variable {A : Arch T d L} (θ : Params A.mixed dIn dOut)
 
+omit [Fintype dOut] in
 /-- **Proposition A.9 (i) for networks of mixed blocks, without normalization, one submatrix per
 hidden state:** columns of a read `[U_ℓ | W_read^ℓ]` or of the readout, or rows of the embedding
 or of a write (which stacks `V_ℓ` on `W_write^ℓ`). -/
@@ -448,6 +453,7 @@ theorem exists_cob_mixed_eq_one_of_choice (hA : A.χ = id)
   rw [evalMixed_eq_eval hA, evalMixed_eq_eval hA]
   exact hG x
 
+omit [Fintype dOut] in
 /-- **Proposition A.9 (i) for networks of mixed blocks, under pre-RMSNorm, one submatrix per
 hidden state.** -/
 theorem exists_cob_mixed_triangular_of_choice [LinearOrder d] (ε : ℝ) (hA : A.χ = rmsNorm ε)
