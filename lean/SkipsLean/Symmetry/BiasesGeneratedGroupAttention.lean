@@ -128,18 +128,43 @@ noncomputable def headsAct (σ : HeadsSpace H dh)
 
 /-- The set of the `σ` is open. -/
 theorem isOpen_headsSet : IsOpen (headsSet H dh) := by
-  sorry
+  -- finitely many conditions `det ≠ 0`, each open
+  have h : headsSet H dh = ⋂ ℓ, ⋂ i, ({σ : HeadsSpace H dh | (σ.1 ℓ i).det ≠ 0}
+      ∩ {σ | (σ.2.1 ℓ i).det ≠ 0}) := by
+    ext σ
+    simp [headsSet, isUnit_iff_ne_zero]
+  rw [h]
+  refine isOpen_iInter_of_finite fun ℓ => isOpen_iInter_of_finite fun i => IsOpen.inter ?_ ?_
+  · exact isOpen_ne_fun
+      ((continuous_apply i).comp ((continuous_apply ℓ).comp continuous_fst)).matrix_det
+      continuous_const
+  · exact isOpen_ne_fun ((continuous_apply i).comp
+      ((continuous_apply ℓ).comp (continuous_fst.comp continuous_snd))).matrix_det
+      continuous_const
 
 /-- The set of the `σ` is not empty. -/
-theorem headsSet_nonempty : (headsSet H dh).Nonempty := by
-  sorry
+theorem headsSet_nonempty : (headsSet H dh).Nonempty :=
+  -- all matrices `1`, all rows `0`
+  ⟨(fun _ _ => 1, fun _ _ => 1, fun _ _ => 0, fun _ _ => 0), fun _ _ =>
+    ⟨by simp, by simp⟩⟩
 
 /-- The space of the `σ` has dimension `2 ∑_ℓ H_ℓ d_{h,ℓ}² + 2 ∑_ℓ H_ℓ d_{h,ℓ}`. -/
 theorem finrank_headsSpace :
     Module.finrank ℝ (HeadsSpace H dh)
       = 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2
         + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) := by
-  sorry
+  have h1 : Module.finrank ℝ (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ)
+      = ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2 := by
+    rw [Module.finrank_pi_fintype]
+    simp only [Module.finrank_pi_fintype, Module.finrank_matrix, Module.finrank_self, mul_one,
+      Finset.sum_const, Finset.card_univ, smul_eq_mul, sq]
+  have h2 : Module.finrank ℝ (∀ ℓ, H ℓ → dh ℓ → ℝ)
+      = ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) := by
+    rw [Module.finrank_pi_fintype]
+    simp only [Module.finrank_pi_fintype, Module.finrank_self, mul_one, Finset.sum_const,
+      Finset.card_univ, smul_eq_mul]
+  rw [Module.finrank_prod, Module.finrank_prod, Module.finrank_prod, h1, h2]
+  ring
 
 /-- **The changes of basis inside the heads, the shifts of the key biases and the value biases
 moved into the output bias are a family of symmetries inside the blocks,** when every token sees
@@ -171,7 +196,8 @@ theorem dimH_generated_residual_attention [Nonempty T] [Nonempty dOut] :
       = ((Fintype.card d ^ 2 + (L + 1) * Fintype.card d
           + (2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2
             + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ)) : ℕ) : ℝ≥0∞) := by
-  sorry
+  rw [dimH_affMat_affPreservingResidual_prod _ rfl isOpen_headsSet headsSet_nonempty,
+    finrank_headsSpace]
 
 /-- **The same without skips:** dimension
 `(L + 1)(d² + d) + 2 ∑_ℓ H_ℓ d_{h,ℓ}² + 2 ∑_ℓ H_ℓ d_{h,ℓ}`. -/
@@ -181,6 +207,7 @@ theorem dimH_generated_skipless_attention :
       = (((L + 1) * (Fintype.card d ^ 2 + Fintype.card d)
           + (2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2
             + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ)) : ℕ) : ℝ≥0∞) := by
-  sorry
+  rw [dimH_affMat_affPreservingSkipless_prod _ rfl isOpen_headsSet headsSet_nonempty,
+    finrank_headsSpace]
 
 end Skips
