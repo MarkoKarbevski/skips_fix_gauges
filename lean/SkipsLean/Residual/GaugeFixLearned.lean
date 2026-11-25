@@ -1,5 +1,7 @@
 import SkipsLean.Residual.GaugeFixMixed
 import SkipsLean.OneBlock.LearnedSkip
+import SkipsLean.Dimension.FunDimFamily
+import SkipsLean.Symmetry.FiniteSymmetriesCompose
 
 /-!
 # The gauge fix for networks with learned skips: what it identifies
@@ -57,16 +59,92 @@ noncomputable def learnedToResidual (p : Params A dIn dOut × (Fin L → Matrix 
   write ℓ := p.1.write ℓ * skipProdMat p.2 ℓ.succ
   D := p.1.D
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- `Λ_L = I`. -/
+private theorem skipProdMat_last_gfl (S : Fin L → Matrix d d ℝ) :
+    skipProdMat S (Fin.last L) = 1 := by
+  simp [skipProdMat]
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- `Λ_{ℓ-1} = S_ℓ Λ_ℓ`. -/
+private theorem skipProdMat_castSucc_gfl (S : Fin L → Matrix d d ℝ) (ℓ : Fin L) :
+    skipProdMat S ℓ.castSucc = S ℓ * skipProdMat S ℓ.succ := by
+  simp [skipProdMat]
+
 /-- **Equation (12) for invertible learned skips:** `Φ(θ, A) = θ.cob Λ Λ`. -/
 theorem learnedToResidual_coe (θ : Params A dIn dOut) (S : Fin L → GL d ℝ) :
     learnedToResidual (θ, fun ℓ => (S ℓ : Matrix d d ℝ)) = θ.cob (skipProd S) (skipProd S) := by
-  sorry
+  -- the products of invertible skips are those of `skipProd`, and `Λ_L = I`
+  refine Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_
+  · simp only [learnedToResidual, Params.cob, skipProdMat_coe]
+  · simp only [learnedToResidual, Params.cob, skipProdMat_coe, Matrix.coe_units_inv]
+  · simp only [learnedToResidual, Params.cob, skipProdMat_coe]
+  · simp only [learnedToResidual, Params.cob, skipProd_last, inv_one, Units.val_one,
+      Matrix.one_mul]
 
 /-- **Theorem A.5 (ii) for learned skips, "Every parameter of the residual network is `Φ(θ)` for
 some `θ`":** the same weights with the skips `A_ℓ = I`. -/
 theorem learnedToResidual_one (θ : Params A dIn dOut) :
     learnedToResidual (θ, (1 : Fin L → Matrix d d ℝ)) = θ := by
-  sorry
+  -- every `Λ_ℓ` is `I`
+  have hΛ : ∀ ℓ, skipProdMat (1 : Fin L → Matrix d d ℝ) ℓ = 1 := by
+    intro ℓ
+    induction ℓ using Fin.reverseInduction with
+    | last => rw [skipProdMat_last_gfl]
+    | cast i ih => rw [skipProdMat_castSucc_gfl, ih, Pi.one_apply, Matrix.mul_one]
+  refine Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_
+  · simp only [learnedToResidual, hΛ, Matrix.mul_one]
+  · simp only [learnedToResidual, hΛ, inv_one, Matrix.one_mul]
+  · simp only [learnedToResidual, hΛ, Matrix.mul_one]
+  · rfl
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Invertible skips are the matrices of elements of `GL d ℝ`. -/
+private theorem exists_coe_gfl {M : Fin L → Matrix d d ℝ} (h : ∀ ℓ, IsUnit (M ℓ)) :
+    ∃ S : Fin L → GL d ℝ, M = fun ℓ => (S ℓ : Matrix d d ℝ) :=
+  ⟨fun ℓ => (h ℓ).unit, funext fun ℓ => ((h ℓ).unit_spec).symm⟩
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- The change of basis by `G = K = 1` is the identity. -/
+private theorem cob_one_gfl (φ : Params A dIn dOut) : φ.cob (fun _ => 1) (fun _ => 1) = φ := by
+  refine Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_ <;>
+    simp [Params.cob]
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- After `T_G` with `G_L = I`, the products of the skips are `G_ℓ⁻¹ Λ_ℓ` (any skips). -/
+private theorem skipProdMat_cobSkip_gfl (S : Fin L → Matrix d d ℝ) (G : Fin (L + 1) → GL d ℝ)
+    (hG : G (Fin.last L) = 1) (ℓ : Fin (L + 1)) :
+    skipProdMat (cobSkip S G) ℓ = (↑(G ℓ)⁻¹ : Matrix d d ℝ) * skipProdMat S ℓ := by
+  induction ℓ using Fin.reverseInduction with
+  | last =>
+    rw [skipProdMat_last_gfl, skipProdMat_last_gfl, hG, inv_one, Units.val_one, Matrix.one_mul]
+  | cast i ih =>
+    -- `(G_{i-1}⁻¹ S_i G_i)(G_i⁻¹ Λ_i) = G_{i-1}⁻¹ S_i Λ_i`
+    rw [skipProdMat_castSucc_gfl, skipProdMat_castSucc_gfl, ih]
+    simp only [cobSkip, Matrix.mul_assoc, Units.mul_inv_cancel_left]
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- `a (a⁻¹ B) = B` also for a rectangular `B`. -/
+private theorem gl_mul_inv_mul_gfl {n : Type*} (a : GL d ℝ) (B : Matrix d n ℝ) :
+    (a : Matrix d d ℝ) * ((↑a⁻¹ : Matrix d d ℝ) * B) = B := by
+  rw [← Matrix.mul_assoc, Units.mul_inv, Matrix.one_mul]
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- **The "if" direction of Theorem A.5 (ii) for learned skips:** `Φ(T_G(θ, A)) = Φ(θ, A)` when
+`G_L = I`, for any skips. -/
+private theorem learnedToResidual_cobSkip_gfl (θ : Params A dIn dOut) (S : Fin L → Matrix d d ℝ)
+    (G : Fin (L + 1) → GL d ℝ) (hG : G (Fin.last L) = 1) :
+    learnedToResidual (θ.cob G G, cobSkip S G) = learnedToResidual (θ, S) := by
+  refine Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_
+  · -- `E G_0 G_0⁻¹ Λ_0 = E Λ_0`
+    simp only [learnedToResidual, Params.cob, skipProdMat_cobSkip_gfl S G hG, Matrix.mul_assoc,
+      Units.mul_inv_cancel_left]
+  · -- `(G_{ℓ-1}⁻¹ Λ_{ℓ-1})⁻¹ G_{ℓ-1}⁻¹ W_read = Λ_{ℓ-1}⁻¹ W_read`
+    simp only [learnedToResidual, Params.cob, skipProdMat_cobSkip_gfl S G hG, Matrix.mul_inv_rev,
+      ← Matrix.coe_units_inv, inv_inv, Matrix.mul_assoc, gl_mul_inv_mul_gfl]
+  · simp only [learnedToResidual, Params.cob, skipProdMat_cobSkip_gfl S G hG, Matrix.mul_assoc,
+      Units.mul_inv_cancel_left]
+  · simp only [learnedToResidual, Params.cob, hG, inv_one, Units.val_one, Matrix.one_mul]
 
 /-- **Theorem A.5 (ii) for learned skips, "`Φ(θ̃) = Φ(θ)` exactly when `θ̃ = T_G(θ)` for some `G`
 with `G_L = I`"** ("without the `K_ℓ`"), for invertible skips: `T_G` multiplies the weights as
@@ -76,7 +154,43 @@ theorem learnedToResidual_eq_iff (p p' : Params A dIn dOut × (Fin L → Matrix 
     learnedToResidual p' = learnedToResidual p
       ↔ ∃ G : Fin (L + 1) → GL d ℝ,
           G (Fin.last L) = 1 ∧ p' = (p.1.cob G G, cobSkip p.2 G) := by
-  sorry
+  -- write the skips as elements of `GL d ℝ`
+  obtain ⟨θ, M⟩ := p
+  obtain ⟨θ', M'⟩ := p'
+  obtain ⟨S, rfl⟩ := exists_coe_gfl hp
+  obtain ⟨S', rfl⟩ := exists_coe_gfl hp'
+  constructor
+  · intro h
+    rw [learnedToResidual_coe, learnedToResidual_coe] at h
+    -- the products `Λ_ℓ` and `Λ'_ℓ`, with `Λ_{ℓ-1} = S_ℓ Λ_ℓ` and `Λ_L = I`
+    obtain ⟨Λ, hΛ⟩ : ∃ Λ, Λ = skipProd S := ⟨_, rfl⟩
+    obtain ⟨Λ', hΛ'⟩ : ∃ Λ', Λ' = skipProd S' := ⟨_, rfl⟩
+    have hc : ∀ ℓ : Fin L, Λ ℓ.castSucc = S ℓ * Λ ℓ.succ := fun ℓ => by
+      rw [hΛ, skipProd_castSucc]
+    have hc' : ∀ ℓ : Fin L, Λ' ℓ.castSucc = S' ℓ * Λ' ℓ.succ := fun ℓ => by
+      rw [hΛ', skipProd_castSucc]
+    have hl : Λ (Fin.last L) = 1 := by rw [hΛ, skipProd_last]
+    have hl' : Λ' (Fin.last L) = 1 := by rw [hΛ', skipProd_last]
+    rw [← hΛ, ← hΛ'] at h
+    -- `G_ℓ = Λ_ℓ Λ'_ℓ⁻¹`
+    refine ⟨fun ℓ => Λ ℓ * (Λ' ℓ)⁻¹, by simp only [hl, hl', inv_one, mul_one], ?_⟩
+    -- the weights: `θ' = (θ'.cob Λ' Λ').cob Λ'⁻¹ Λ'⁻¹ = (θ.cob Λ Λ).cob Λ'⁻¹ Λ'⁻¹`
+    have hθ : θ' = θ.cob (fun ℓ => Λ ℓ * (Λ' ℓ)⁻¹) (fun ℓ => Λ ℓ * (Λ' ℓ)⁻¹) := by
+      calc θ' = (θ'.cob Λ' Λ').cob (fun ℓ => (Λ' ℓ)⁻¹) (fun ℓ => (Λ' ℓ)⁻¹) := by
+            rw [cob_cob]
+            simp only [mul_inv_cancel]
+            exact (cob_one_gfl θ').symm
+        _ = _ := by rw [h, cob_cob]
+    refine Prod.ext hθ ?_
+    -- the skips: `G_{ℓ-1}⁻¹ S_ℓ G_ℓ = Λ'_{ℓ-1} Λ_{ℓ-1}⁻¹ S_ℓ Λ_ℓ Λ'_ℓ⁻¹ = S'_ℓ`
+    funext ℓ
+    simp only [cobSkip]
+    rw [← Units.val_mul, ← Units.val_mul, hc ℓ, hc' ℓ]
+    congr 1
+    group
+  · rintro ⟨G, hG, h⟩
+    rw [h]
+    exact learnedToResidual_cobSkip_gfl θ _ G hG
 
 /-- **Theorem A.5 (ii) for learned skips, "The derivative of `Φ` is onto at every `θ`"** (with
 invertible skips). -/
