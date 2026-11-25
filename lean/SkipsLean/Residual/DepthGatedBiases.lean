@@ -301,6 +301,120 @@ theorem smallWritesLimitB_eq_zero_gated (hσ : ∀ z, HasDerivAt σ (σ' z) z)
   · rw [hwrite ℓ]
     rfl
 
+/-! ### Helpers: the space of the flat directions of `J_0` -/
+
+/-- Helper: the flat directions of `J_0` found in `smallWritesLimitB_eq_zero_gated`, as a linear
+map of `(X, α, e, w)`: `η_E = E X`, the reads and the read biases with gate parts `0` and value
+parts `−α_{ℓ,i}` times those of `p`, the write rows `α_{ℓ,i}` times those of `W_write^ℓ`,
+`η_D = −X D`, `η_{b_E} = e`, `η_{b_write^ℓ} = w_ℓ`, `η_{b_D} = −(e − b_E X + ∑_ℓ w_ℓ) D`. -/
+private noncomputable def limitFlatLinB_dgb
+    (p : ParamsB (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) :
+    (Matrix d d ℝ × (∀ ℓ, hid ℓ → ℝ) × (d → ℝ) × (Fin L → d → ℝ)) →ₗ[ℝ]
+      ParamsB (Arch.gated (T := T) (d := d) σ id hid) dIn dOut where
+  toFun q := (⟨p.1.E * q.1,
+      fun ℓ => Matrix.of fun k j =>
+        Sum.elim (fun _ => 0) (fun i => -(q.2.1 ℓ i) * p.1.read ℓ k (Sum.inr i)) j,
+      fun ℓ => Matrix.of fun i k => q.2.1 ℓ i * p.1.write ℓ i k, -(q.1 * p.1.D)⟩,
+    ⟨q.2.2.1,
+      fun ℓ j => Sum.elim (fun _ => 0) (fun i => -(q.2.1 ℓ i) * p.2.read ℓ (Sum.inr i)) j,
+      q.2.2.2, -((q.2.2.1 - p.2.E ᵥ* q.1 + ∑ ℓ, q.2.2.2 ℓ) ᵥ* p.1.D)⟩)
+  map_add' a b := by
+    refine Prod.ext ?_ ?_
+    · apply Params.ext'
+      · exact Matrix.mul_add _ _ _
+      · intro ℓ
+        ext k j
+        rcases j with i | i
+        · exact (add_zero 0).symm
+        · show -((a.2.1 + b.2.1) ℓ i) * p.1.read ℓ k (Sum.inr i)
+            = -(a.2.1 ℓ i) * p.1.read ℓ k (Sum.inr i) + -(b.2.1 ℓ i) * p.1.read ℓ k (Sum.inr i)
+          rw [Pi.add_apply, Pi.add_apply]
+          ring
+      · intro ℓ
+        ext i k
+        show (a.2.1 + b.2.1) ℓ i * p.1.write ℓ i k
+          = a.2.1 ℓ i * p.1.write ℓ i k + b.2.1 ℓ i * p.1.write ℓ i k
+        rw [Pi.add_apply, Pi.add_apply]
+        ring
+      · show -((a.1 + b.1) * p.1.D) = -(a.1 * p.1.D) + -(b.1 * p.1.D)
+        rw [Matrix.add_mul, neg_add]
+    · apply Biases.ext'
+      · rfl
+      · intro ℓ
+        funext j
+        rcases j with i | i
+        · exact (add_zero 0).symm
+        · show -((a.2.1 + b.2.1) ℓ i) * p.2.read ℓ (Sum.inr i)
+            = -(a.2.1 ℓ i) * p.2.read ℓ (Sum.inr i) + -(b.2.1 ℓ i) * p.2.read ℓ (Sum.inr i)
+          rw [Pi.add_apply, Pi.add_apply]
+          ring
+      · intro ℓ
+        rfl
+      · show -((a.2.2.1 + b.2.2.1 - p.2.E ᵥ* (a.1 + b.1) + ∑ ℓ, (a.2.2.2 + b.2.2.2) ℓ) ᵥ* p.1.D)
+          = -((a.2.2.1 - p.2.E ᵥ* a.1 + ∑ ℓ, a.2.2.2 ℓ) ᵥ* p.1.D)
+            + -((b.2.2.1 - p.2.E ᵥ* b.1 + ∑ ℓ, b.2.2.2 ℓ) ᵥ* p.1.D)
+        simp only [Pi.add_apply, Finset.sum_add_distrib, Matrix.vecMul_add, Matrix.add_vecMul,
+          Matrix.sub_vecMul]
+        abel
+  map_smul' c a := by
+    refine Prod.ext ?_ ?_
+    · apply Params.ext'
+      · exact Matrix.mul_smul _ _ _
+      · intro ℓ
+        ext k j
+        rcases j with i | i
+        · exact (smul_zero c).symm
+        · show -((c • a.2.1) ℓ i) * p.1.read ℓ k (Sum.inr i)
+            = c * (-(a.2.1 ℓ i) * p.1.read ℓ k (Sum.inr i))
+          rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+          ring
+      · intro ℓ
+        ext i k
+        show (c • a.2.1) ℓ i * p.1.write ℓ i k = c * (a.2.1 ℓ i * p.1.write ℓ i k)
+        rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+        ring
+      · show -((c • a.1) * p.1.D) = c • -(a.1 * p.1.D)
+        rw [Matrix.smul_mul, smul_neg]
+    · apply Biases.ext'
+      · rfl
+      · intro ℓ
+        funext j
+        rcases j with i | i
+        · exact (smul_zero c).symm
+        · show -((c • a.2.1) ℓ i) * p.2.read ℓ (Sum.inr i)
+            = c * (-(a.2.1 ℓ i) * p.2.read ℓ (Sum.inr i))
+          rw [Pi.smul_apply, Pi.smul_apply, smul_eq_mul]
+          ring
+      · intro ℓ
+        rfl
+      · show -((c • a.2.2.1 - p.2.E ᵥ* (c • a.1) + ∑ ℓ, (c • a.2.2.2) ℓ) ᵥ* p.1.D)
+          = c • -((a.2.2.1 - p.2.E ᵥ* a.1 + ∑ ℓ, a.2.2.2 ℓ) ᵥ* p.1.D)
+        simp only [Pi.smul_apply, ← Finset.smul_sum, Matrix.vecMul_smul, Matrix.add_vecMul,
+          Matrix.sub_vecMul, Matrix.smul_vecMul]
+        module
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the tuples `(X, α, e, w)` of a `d × d` matrix, one number per hidden unit, a row and
+`L` rows form a space of dimension `d² + s + (L + 1) d`. -/
+private theorem finrank_limitFlatDomainB_dgb :
+    Module.finrank ℝ (Matrix d d ℝ × (∀ ℓ, hid ℓ → ℝ) × (d → ℝ) × (Fin L → d → ℝ))
+      = Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ) + (L + 1) * Fintype.card d := by
+  simp only [Module.finrank_prod, Module.finrank_matrix, Module.finrank_self,
+    Module.finrank_pi_fintype, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+    smul_eq_mul, mul_one]
+  ring
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] in
+/-- Helper: no value column of a read vanishes, since no value column of `E W_read^ℓ` does. -/
+private theorem value_col_ne_zero_dgb
+    {θ : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut}
+    (hθ : SmallWritesGenericGated θ) : ∀ ℓ i, (fun a => θ.read ℓ a (Sum.inr i)) ≠ 0 := by
+  intro ℓ i h0
+  apply hθ.value_ne_zero ℓ i
+  funext a
+  show ∑ k, θ.E a k * θ.read ℓ k (Sum.inr i) = 0
+  exact Finset.sum_eq_zero fun k _ => by
+    rw [show θ.read ℓ k (Sum.inr i) = 0 from congrFun h0 k, mul_zero]
 /-- **Lemma A.27 (Small writes), third value, for gated blocks, under the conditions of its
 proof:** for all small `τ ≠ 0` the residual network with biases has
 `fd(θ_τ) = P − d² − (L + 1) d − s`, with `s` the number of hidden units and `P` counting the
@@ -313,7 +427,46 @@ theorem eventually_funDimB_smallWritesB_gated (hσ : ∀ z, HasDerivAt σ (σ' z
       funDimB (Arch.gated σ id hid) 1 (smallWritesB p τ)
           + (Fintype.card d ^ 2 + (L + 1) * Fintype.card d + ∑ ℓ, Fintype.card (hid ℓ))
         = Module.finrank ℝ (ParamsB (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  -- `≥`: every flat direction of `J_0` lies in the range `V` of `limitFlatLinB_dgb p` (the
+  -- previous theorem), of dimension at most `d² + s + (L + 1) d`
+  have hV : ∀ η, (∀ x, smallWritesLimitB (Arch.gated σ id hid) p η x = 0) →
+      η ∈ LinearMap.range (limitFlatLinB_dgb p) := by
+    intro η hη
+    obtain ⟨X, α, hE, hD, hg, hv, hw, hbg, hbv, hbD⟩ :=
+      smallWritesLimitB_eq_zero_gated hσ hU p hp η hη
+    refine LinearMap.mem_range.2 ⟨(X, α, η.2.E, η.2.write), Prod.ext ?_ ?_⟩
+    · apply Params.ext'
+      · exact hE.symm
+      · intro ℓ
+        ext k j
+        rcases j with i | i
+        · exact (hg ℓ i k).symm
+        · exact (hv ℓ i k).symm
+      · intro ℓ
+        ext i k
+        exact (hw ℓ i k).symm
+      · exact hD.symm
+    · apply Biases.ext'
+      · rfl
+      · intro ℓ
+        funext j
+        rcases j with i | i
+        · exact (hbg ℓ i).symm
+        · exact (hbv ℓ i).symm
+      · intro ℓ
+        rfl
+      · exact hbD.symm
+  have hdim : Module.finrank ℝ (LinearMap.range (limitFlatLinB_dgb p))
+      ≤ Fintype.card d ^ 2 + ∑ ℓ, Fintype.card (hid ℓ) + (L + 1) * Fintype.card d :=
+    (LinearMap.finrank_range_le _).trans finrank_limitFlatDomainB_dgb.le
+  have hge := eventually_funDimB_smallWritesB_ge (Arch.gated σ id hid) p rfl
+    (fun ℓ => analyticOnNhd_f_gated hσa ℓ) _ hV
+  -- `≤`: at every `τ` the network has the symmetries of the change of basis, of the
+  -- translations and of the rescalings; `E` and the reads of `θ_τ` are those of `p`
+  filter_upwards [hge] with τ hτ
+  have hv := value_col_ne_zero_dgb hp
+  have hle := funDimB_add_le_residual_gated (smallWritesB p τ) hp.rank_E hv
+  omega
 
 /-- **Lemma A.27 (Small writes), third value, for gated blocks:** with `d_in, d_out ≥ d ≥ 2` and
 blocks of any widths, for generic weights and biases and all small `τ ≠ 0`, the residual network
