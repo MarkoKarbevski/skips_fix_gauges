@@ -404,7 +404,83 @@ theorem cob_rmsNorm_zero_rescale_eq_self_of_rank_D [Nonempty d]
     (ha : ∀ ℓ i, (fun a => θ.write ℓ i a) ≠ 0)
     (h : (θ.cob G Q).rescale c = θ) :
     (∀ ℓ, s ℓ = 1) ∧ Q = 1 ∧ ∀ ℓ i, c ℓ i = 1 := by
-  sorry
+  -- the readout: `Q_L⁻¹ D = D`, and `D` has rank `d`
+  have hL : Q (Fin.last L) = 1 := by
+    have hD0 : (↑(Q (Fin.last L))⁻¹ : Matrix d d ℝ) * θ.D = (1 : Matrix d d ℝ) * θ.D := by
+      rw [Matrix.one_mul]
+      have h1 := congrArg Params.D h
+      exact h1
+    exact inv_eq_one.mp (Units.ext (mul_right_cancel_of_rank_lfz θ.D hD hD0))
+  -- block `ℓ`: if `Q_ℓ = 1`, then `c_ℓ = 1`, `s_ℓ = 1` and `Q_{ℓ-1} = 1`
+  have key : ∀ ℓ : Fin L, Q ℓ.succ = 1 →
+      (∀ i, c ℓ i = 1) ∧ s ℓ.succ = 1 ∧ Q ℓ.castSucc = 1 := by
+    intro ℓ hℓ
+    have hGs : (G ℓ.succ : Matrix d d ℝ) = s ℓ.succ • (1 : Matrix d d ℝ) := by
+      rw [hG, hℓ, Units.val_one]
+    -- the write row `i` becomes `c_i s a_i`, and `a_i ≠ 0`: `c_i s = 1`, so `c_i = s⁻¹ > 0`
+    have hcs : ∀ i, c ℓ i * s ℓ.succ = 1 := by
+      intro i
+      obtain ⟨a, hwa⟩ := Function.ne_iff.mp (ha ℓ i)
+      have hr' := congrFun (congrFun (congrArg (fun η => η.write ℓ) h) i) a
+      change c ℓ i * (θ.write ℓ * (G ℓ.succ : Matrix d d ℝ)) i a = θ.write ℓ i a at hr'
+      rw [hGs, Matrix.mul_smul, Matrix.mul_one, Matrix.smul_apply, smul_eq_mul,
+        ← mul_assoc] at hr'
+      exact mul_right_cancel₀ hwa (hr'.trans (one_mul _).symm)
+    have hpos : ∀ i, 0 < c ℓ i := fun i => by
+      rw [eq_inv_of_mul_eq_one_left (hcs i)]
+      exact inv_pos.mpr (hs _)
+    -- the value column `i` becomes `c_i⁻¹ K e_i` with `K = Q_{ℓ-1}⁻¹`: `K e_i = c_i e_i`, so
+    -- `c_i = 1`
+    have hc1 : ∀ i, c ℓ i = 1 := by
+      intro i
+      have hK : (↑(Q ℓ.castSucc)⁻¹ : Matrix d d ℝ) *ᵥ (fun a => θ.read ℓ a (Sum.inr i))
+          = c ℓ i • (fun a => θ.read ℓ a (Sum.inr i)) := by
+        funext a
+        have hr' := congrFun (congrFun (congrArg (fun η => η.read ℓ) h) a) (Sum.inr i)
+        change (c ℓ i)⁻¹ * ((↑(Q ℓ.castSucc)⁻¹ : Matrix d d ℝ) * θ.read ℓ) a (Sum.inr i)
+          = θ.read ℓ a (Sum.inr i) at hr'
+        show ((↑(Q ℓ.castSucc)⁻¹ : Matrix d d ℝ) * θ.read ℓ) a (Sum.inr i)
+          = c ℓ i * θ.read ℓ a (Sum.inr i)
+        rw [← hr', ← mul_assoc, mul_inv_cancel₀ (hpos i).ne', one_mul]
+      exact eq_one_of_orthogonal_mulVec_lfz (Q ℓ.castSucc) (hQ _) hK (hv ℓ i) (hpos i)
+    -- there is a hidden unit: the read has rank `d ≥ 1`
+    obtain ⟨i₀⟩ : Nonempty (hid ℓ) := by
+      have h1 := Matrix.rank_le_card_width (θ.read ℓ)
+      rw [hr ℓ] at h1
+      obtain ⟨j⟩ := Fintype.card_pos_iff.mp (lt_of_lt_of_le Fintype.card_pos h1)
+      rcases j with i | i <;> exact ⟨i⟩
+    have hs1 : s ℓ.succ = 1 := by
+      have h1 := hcs i₀
+      rw [hc1 i₀, one_mul] at h1
+      exact h1
+    refine ⟨hc1, hs1, inv_eq_one.mp (Units.ext ?_)⟩
+    -- the read becomes `Q_{ℓ-1}⁻¹ W`, and `W` has rank `d`
+    refine mul_right_cancel_of_rank_lfz (θ.read ℓ) (hr ℓ) ?_
+    rw [Units.val_one, Matrix.one_mul]
+    ext a j
+    have hr' := congrFun (congrFun (congrArg (fun η => η.read ℓ) h) a) j
+    rcases j with i | i
+    · exact hr'
+    · change (c ℓ i)⁻¹ * ((↑(Q ℓ.castSucc)⁻¹ : Matrix d d ℝ) * θ.read ℓ) a (Sum.inr i)
+        = θ.read ℓ a (Sum.inr i) at hr'
+      rw [hc1 i, inv_one, one_mul] at hr'
+      exact hr'
+  -- by the mirror induction, from the readout down
+  have hQ1 : ∀ ℓ : Fin (L + 1), Q ℓ = 1 := by
+    intro ℓ
+    induction ℓ using Fin.reverseInduction with
+    | last => exact hL
+    | cast ℓ ih => exact (key ℓ ih).2.2
+  -- the embedding: `s_0 E = E`, and `E ≠ 0`
+  have hs0 : s 0 = 1 := by
+    have h1 := congrArg Params.E h
+    change θ.E * (G 0 : Matrix d d ℝ) = θ.E at h1
+    rw [hG 0, hQ1 0, Units.val_one] at h1
+    exact eq_one_of_mul_smul_one_lfz θ.E hE h1
+  refine ⟨fun ℓ => ?_, funext hQ1, fun ℓ => (key ℓ (hQ1 ℓ.succ)).1⟩
+  cases ℓ using Fin.cases with
+  | zero => exact hs0
+  | succ ℓ => exact (key ℓ (hQ1 ℓ.succ)).2.1
 
 /-- **Lemma A.18, second sentence, `ε = 0`, ReGLU blocks.** Let `G_ℓ = s_ℓ Q_ℓ` with `s_ℓ > 0`
 and `Q_ℓ` orthogonal. If `D` and every read have rank `d ≥ 1`, `E ≠ 0`, no gate column and no
@@ -422,7 +498,107 @@ theorem cob_rmsNorm_zero_rescale_rescaleGate_eq_self_of_rank_D [Nonempty d] (k :
     (ha : ∀ ℓ i, (fun a => θ.write ℓ i a) ≠ 0)
     (h : ((θ.cob G Q).rescale c').rescaleGate k c = θ) :
     (∀ ℓ, s ℓ = 1) ∧ Q = 1 ∧ (∀ ℓ i, c ℓ i = 1) ∧ ∀ ℓ i, c' ℓ i = 1 := by
-  sorry
+  -- the readout: `Q_L⁻¹ D = D`, and `D` has rank `d`
+  have hL : Q (Fin.last L) = 1 := by
+    have hD0 : (↑(Q (Fin.last L))⁻¹ : Matrix d d ℝ) * θ.D = (1 : Matrix d d ℝ) * θ.D := by
+      rw [Matrix.one_mul]
+      have h1 := congrArg Params.D h
+      exact h1
+    exact inv_eq_one.mp (Units.ext (mul_right_cancel_of_rank_lfz θ.D hD hD0))
+  -- block `ℓ`: if `Q_ℓ = 1`, then `c_ℓ = 1`, `c'_ℓ = 1`, `s_ℓ = 1` and `Q_{ℓ-1} = 1`
+  have key : ∀ ℓ : Fin L, Q ℓ.succ = 1 →
+      (∀ i, c ℓ i = 1) ∧ (∀ i, c' ℓ i = 1) ∧ s ℓ.succ = 1 ∧ Q ℓ.castSucc = 1 := by
+    intro ℓ hℓ
+    have hGs : (G ℓ.succ : Matrix d d ℝ) = s ℓ.succ • (1 : Matrix d d ℝ) := by
+      rw [hG, hℓ, Units.val_one]
+    -- the write row `i` becomes `(c_i ^ k)⁻¹ c'_i s a_i`, and `a_i ≠ 0`
+    have hcs : ∀ i, (c ℓ i ^ k)⁻¹ * c' ℓ i * s ℓ.succ = 1 := by
+      intro i
+      obtain ⟨a, hwa⟩ := Function.ne_iff.mp (ha ℓ i)
+      have hr' := congrFun (congrFun (congrArg (fun η => η.write ℓ) h) i) a
+      change (c ℓ i ^ k)⁻¹ * (c' ℓ i * (θ.write ℓ * (G ℓ.succ : Matrix d d ℝ)) i a)
+        = θ.write ℓ i a at hr'
+      rw [hGs, Matrix.mul_smul, Matrix.mul_one, Matrix.smul_apply, smul_eq_mul,
+        ← mul_assoc, ← mul_assoc] at hr'
+      exact mul_right_cancel₀ hwa (hr'.trans (one_mul _).symm)
+    -- the gate column `i` becomes `c_i K g_i` with `K = Q_{ℓ-1}⁻¹`: `K g_i = c_i⁻¹ g_i`, so
+    -- `c_i⁻¹ = 1`
+    have hc1 : ∀ i, c ℓ i = 1 := by
+      intro i
+      have hK : (↑(Q ℓ.castSucc)⁻¹ : Matrix d d ℝ) *ᵥ (fun a => θ.read ℓ a (Sum.inl i))
+          = (c ℓ i)⁻¹ • (fun a => θ.read ℓ a (Sum.inl i)) := by
+        funext a
+        have hr' := congrFun (congrFun (congrArg (fun η => η.read ℓ) h) a) (Sum.inl i)
+        change c ℓ i * ((↑(Q ℓ.castSucc)⁻¹ : Matrix d d ℝ) * θ.read ℓ) a (Sum.inl i)
+          = θ.read ℓ a (Sum.inl i) at hr'
+        show ((↑(Q ℓ.castSucc)⁻¹ : Matrix d d ℝ) * θ.read ℓ) a (Sum.inl i)
+          = (c ℓ i)⁻¹ * θ.read ℓ a (Sum.inl i)
+        rw [← hr', ← mul_assoc, inv_mul_cancel₀ (hc ℓ i).ne', one_mul]
+      exact inv_eq_one.mp (eq_one_of_orthogonal_mulVec_lfz (Q ℓ.castSucc) (hQ _) hK (hg ℓ i)
+        (inv_pos.mpr (hc ℓ i)))
+    -- so `c'_i s = 1`, and `c'_i = s⁻¹ > 0`
+    have hcs' : ∀ i, c' ℓ i * s ℓ.succ = 1 := fun i => by
+      have h1 := hcs i
+      rw [hc1 i, one_pow, inv_one, one_mul] at h1
+      exact h1
+    have hpos : ∀ i, 0 < c' ℓ i := fun i => by
+      rw [eq_inv_of_mul_eq_one_left (hcs' i)]
+      exact inv_pos.mpr (hs _)
+    -- the value column `i` becomes `c'_i⁻¹ K e_i`: `K e_i = c'_i e_i`, so `c'_i = 1`
+    have hc'1 : ∀ i, c' ℓ i = 1 := by
+      intro i
+      have hK : (↑(Q ℓ.castSucc)⁻¹ : Matrix d d ℝ) *ᵥ (fun a => θ.read ℓ a (Sum.inr i))
+          = c' ℓ i • (fun a => θ.read ℓ a (Sum.inr i)) := by
+        funext a
+        have hr' := congrFun (congrFun (congrArg (fun η => η.read ℓ) h) a) (Sum.inr i)
+        change (c' ℓ i)⁻¹ * ((↑(Q ℓ.castSucc)⁻¹ : Matrix d d ℝ) * θ.read ℓ) a (Sum.inr i)
+          = θ.read ℓ a (Sum.inr i) at hr'
+        show ((↑(Q ℓ.castSucc)⁻¹ : Matrix d d ℝ) * θ.read ℓ) a (Sum.inr i)
+          = c' ℓ i * θ.read ℓ a (Sum.inr i)
+        rw [← hr', ← mul_assoc, mul_inv_cancel₀ (hpos i).ne', one_mul]
+      exact eq_one_of_orthogonal_mulVec_lfz (Q ℓ.castSucc) (hQ _) hK (hv ℓ i) (hpos i)
+    -- there is a hidden unit: the read has rank `d ≥ 1`
+    obtain ⟨i₀⟩ : Nonempty (hid ℓ) := by
+      have h1 := Matrix.rank_le_card_width (θ.read ℓ)
+      rw [hr ℓ] at h1
+      obtain ⟨j⟩ := Fintype.card_pos_iff.mp (lt_of_lt_of_le Fintype.card_pos h1)
+      rcases j with i | i <;> exact ⟨i⟩
+    have hs1 : s ℓ.succ = 1 := by
+      have h1 := hcs' i₀
+      rw [hc'1 i₀, one_mul] at h1
+      exact h1
+    refine ⟨hc1, hc'1, hs1, inv_eq_one.mp (Units.ext ?_)⟩
+    -- the read becomes `Q_{ℓ-1}⁻¹ W`, and `W` has rank `d`
+    refine mul_right_cancel_of_rank_lfz (θ.read ℓ) (hr ℓ) ?_
+    rw [Units.val_one, Matrix.one_mul]
+    ext a j
+    have hr' := congrFun (congrFun (congrArg (fun η => η.read ℓ) h) a) j
+    rcases j with i | i
+    · change c ℓ i * ((↑(Q ℓ.castSucc)⁻¹ : Matrix d d ℝ) * θ.read ℓ) a (Sum.inl i)
+        = θ.read ℓ a (Sum.inl i) at hr'
+      rw [hc1 i, one_mul] at hr'
+      exact hr'
+    · change (c' ℓ i)⁻¹ * ((↑(Q ℓ.castSucc)⁻¹ : Matrix d d ℝ) * θ.read ℓ) a (Sum.inr i)
+        = θ.read ℓ a (Sum.inr i) at hr'
+      rw [hc'1 i, inv_one, one_mul] at hr'
+      exact hr'
+  -- by the mirror induction, from the readout down
+  have hQ1 : ∀ ℓ : Fin (L + 1), Q ℓ = 1 := by
+    intro ℓ
+    induction ℓ using Fin.reverseInduction with
+    | last => exact hL
+    | cast ℓ ih => exact (key ℓ ih).2.2.2
+  -- the embedding: `s_0 E = E`, and `E ≠ 0`
+  have hs0 : s 0 = 1 := by
+    have h1 := congrArg Params.E h
+    change θ.E * (G 0 : Matrix d d ℝ) = θ.E at h1
+    rw [hG 0, hQ1 0, Units.val_one] at h1
+    exact eq_one_of_mul_smul_one_lfz θ.E hE h1
+  refine ⟨fun ℓ => ?_, funext hQ1, fun ℓ => (key ℓ (hQ1 ℓ.succ)).1,
+    fun ℓ => (key ℓ (hQ1 ℓ.succ)).2.1⟩
+  cases ℓ using Fin.cases with
+  | zero => exact hs0
+  | succ ℓ => exact (key ℓ (hQ1 ℓ.succ)).2.2.1
 
 variable {sees : T → T → Prop} [DecidableRel sees]
 variable {H dh : Fin L → Type} [∀ ℓ, Fintype (H ℓ)] [∀ ℓ, Fintype (dh ℓ)]
