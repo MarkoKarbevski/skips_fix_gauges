@@ -398,3 +398,7 @@ import SkipsLean.Residual.GaugeFixBiases
 import SkipsLean.Network.LayerNorm
 import SkipsLean.Residual.LayerNormRedundancy
 import SkipsLean.Symmetry.BiasesSymmetryCount
+import SkipsLean.Depth.ScaledSuffixOrders
+import SkipsLean.Generic.HolomorphicExtension
+import SkipsLean.Depth.ScaledSuffixHolomorphic
+import SkipsLean.Dimension.RankCriterionLieGroup
