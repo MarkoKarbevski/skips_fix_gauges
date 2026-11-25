@@ -386,6 +386,73 @@ omit [Fintype m] [DecidableEq m] [Fintype dIn] in
 with `U^⊤ U = I` and `U U^⊤ = Z`. -/
 theorem exists_orthonormal_centering (d : Type*) [Fintype d] [DecidableEq d] :
     ∃ U : Matrix d (Fin (Fintype.card d - 1)) ℝ, Uᵀ * U = 1 ∧ U * Uᵀ = centering d := by
-  sorry
+  rcases isEmpty_or_nonempty d with hd | hd
+  · -- no coordinates: no columns, and all matrices on `d` are equal
+    have h0 : Fintype.card d - 1 = 0 := by rw [Fintype.card_eq_zero]
+    refine ⟨0, ?_, ?_⟩
+    · ext j k
+      have := j.isLt
+      omega
+    · ext a
+      exact isEmptyElim a
+  · have hpos : 0 < Fintype.card d := Fintype.card_pos
+    have hn : (Fintype.card d : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hpos.ne'
+    -- the constant row `c = 𝟙` in Euclidean space, and `K = V`, its orthogonal complement
+    let c : EuclideanSpace ℝ d := WithLp.toLp 2 (fun _ => (1 : ℝ))
+    have hc0 : c ≠ 0 := by
+      intro h
+      obtain ⟨a⟩ := hd
+      have h1 := congrArg (fun v : EuclideanSpace ℝ d => v a) h
+      simp only [PiLp.zero_apply, one_ne_zero, c] at h1
+    let K : Submodule ℝ (EuclideanSpace ℝ d) := (ℝ ∙ c)ᗮ
+    -- `K` has dimension `n - 1`; `B`: an orthonormal basis of `K`, indexed by `Fin (n - 1)`
+    have : Fact (Module.finrank ℝ (EuclideanSpace ℝ d) = (Fintype.card d - 1) + 1) :=
+      ⟨by rw [finrank_euclideanSpace]; omega⟩
+    have hK : Module.finrank ℝ K = Fintype.card d - 1 :=
+      Submodule.finrank_orthogonal_span_singleton hc0
+    let B : OrthonormalBasis (Fin (Fintype.card d - 1)) ℝ K :=
+      (stdOrthonormalBasis ℝ K).reindex (finCongr hK)
+    have hBc : ∀ j, inner ℝ c (B j : EuclideanSpace ℝ d) = 0 := fun j =>
+      Submodule.mem_orthogonal_singleton_iff_inner_right.mp (B j).2
+    -- `U`: the column `j` is the basis vector `B_j`
+    refine ⟨Matrix.of fun a j => (B j : EuclideanSpace ℝ d) a, ?_, ?_⟩
+    · -- `U^⊤ U = 1`: the columns are orthonormal
+      ext j k
+      have h := orthonormal_iff_ite.mp B.orthonormal j k
+      rw [Submodule.coe_inner, PiLp.inner_apply] at h
+      rw [Matrix.mul_apply, Matrix.one_apply, ← h]
+      refine Finset.sum_congr rfl fun a _ => ?_
+      simp only [transpose_apply, of_apply, RCLike.inner_apply, Real.ringHom_apply, mul_comm]
+    · ext a a'
+      -- `w = e_{a'} - n⁻¹ 𝟙` is orthogonal to `𝟙` (as `⟪𝟙, 𝟙⟫ = n`), so it lies in `K`
+      let w : EuclideanSpace ℝ d :=
+        EuclideanSpace.single a' (1 : ℝ) - (Fintype.card d : ℝ)⁻¹ • c
+      have hcc : inner ℝ c c = (Fintype.card d : ℝ) := by
+        rw [PiLp.inner_apply]
+        simp only [RCLike.inner_apply, Real.ringHom_apply, mul_one, Finset.sum_const,
+          Finset.card_univ, nsmul_eq_mul, c]
+      have hw : w ∈ K := by
+        rw [Submodule.mem_orthogonal_singleton_iff_inner_right]
+        simp only [w, inner_sub_right, inner_smul_right, hcc, EuclideanSpace.inner_single_right]
+        simp only [Real.ringHom_apply, mul_one, ne_eq, hn, not_false_eq_true, inv_mul_cancel₀,
+          sub_self, c]
+      -- `w = ∑_j ⟪B_j, w⟫ B_j`; take the coordinate `a`, the inner product with `e_a`
+      have hsum := congrArg (fun z : K =>
+        inner ℝ (EuclideanSpace.single a (1 : ℝ)) (z : EuclideanSpace ℝ d)) (B.sum_repr' ⟨w, hw⟩)
+      simp only [Submodule.coe_sum, Submodule.coe_smul, inner_sum, inner_smul_right,
+        EuclideanSpace.inner_single_left, Submodule.coe_inner] at hsum
+      -- `⟪B_j, w⟫ = (B_j)_{a'}`, since `B_j ⟂ 𝟙`
+      have hBw : ∀ j, inner ℝ (B j : EuclideanSpace ℝ d) w = (B j : EuclideanSpace ℝ d) a' := by
+        intro j
+        simp only [w, inner_sub_right, inner_smul_right, EuclideanSpace.inner_single_right,
+          real_inner_comm c (B j : EuclideanSpace ℝ d), hBc]
+        simp only [Real.ringHom_apply, one_mul, mul_zero, sub_zero]
+      simp only [hBw, map_one, one_mul] at hsum
+      -- so `(U U^⊤)_{a a'} = ∑_j (B_j)_a (B_j)_{a'} = w_a = δ_{a a'} - n⁻¹ = Z_{a a'}`
+      rw [Matrix.mul_apply]
+      simp only [Matrix.of_apply, Matrix.transpose_apply]
+      rw [Finset.sum_congr rfl fun j _ => mul_comm _ _, hsum]
+      simp only [PiLp.sub_apply, PiLp.single_apply, PiLp.smul_apply, smul_eq_mul, mul_one,
+        centering, smul_of, Matrix.sub_apply, Matrix.one_apply, of_apply, Pi.smul_apply, w, c]
 
 end Skips
