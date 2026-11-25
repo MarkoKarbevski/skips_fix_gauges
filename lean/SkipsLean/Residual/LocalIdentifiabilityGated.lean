@@ -31,8 +31,9 @@ network; the symmetries inside the blocks are the rescalings of the values of th
 The twin for networks without skip connections is `Dimension/LocalIdentifiabilityGated.lean`; the
 blocks without symmetries inside are in `Residual/LocalIdentifiability.lean`. All use
 `exists_mem_orbit_of_eval_eq` (`Dimension/OrbitNetwork.lean`) and `θ.rescale c`
-(`Dimension/RescaleAction.lean`). Not stated here: the converse direction of Proposition 4.5,
-attention blocks, and the case `ε = 0`.
+(`Dimension/RescaleAction.lean`). Not stated here: the converse direction of Proposition 4.5 (the
+equivalence: `Residual/IdentifiableIff.lean`), attention blocks (with gated blocks:
+`Residual/LocalIdentifiabilityTransformer.lean`). Not stated: the case `ε = 0`.
 -/
 
 namespace Skips

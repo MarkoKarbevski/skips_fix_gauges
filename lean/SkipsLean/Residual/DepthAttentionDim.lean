@@ -24,7 +24,8 @@ itself and another token (two tokens at least; causal or not):
   `L d²`, when every block has total width `H d_h ≥ d`;
 * `ae_funDim_attention_residual_of_width`: Corollary 4.10 (i) in the setting of the main text,
   `H` heads of total width `H d_h = d` in every block, with `s = 2 L d² / H`.
-Not stated: Corollary 4.10 (ii) (without an embedding and a readout); pre-RMSNorm.
+Not stated here: Corollary 4.10 (ii) (without an embedding and a readout:
+`Residual/BlocksAloneAttention.lean`); pre-RMSNorm (`Residual/DepthAttentionRMSDim.lean`).
 -/
 
 namespace Skips

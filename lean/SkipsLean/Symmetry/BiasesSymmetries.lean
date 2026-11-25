@@ -28,7 +28,9 @@ Here, for the networks with biases of `Network/Biases.lean`:
 
 The count of the lemma, as bounds on the functional dimension, is in `Symmetry/BiasesFlat.lean`
 (changes of basis and translations) and `Symmetry/InsideBlocksBiases.lean` (with the symmetries
-inside blocks); the dimensions of the groups themselves are not stated.
+inside blocks); the group of the changes of basis and translations, with its dimension, is
+`Symmetry/BiasesAffineGroup.lean` (as a group: `Symmetry/BiasesAffineGroupLaw.lean`); the group
+generated together with the symmetries inside the blocks, with its dimension, is not stated.
 -/
 
 namespace Skips

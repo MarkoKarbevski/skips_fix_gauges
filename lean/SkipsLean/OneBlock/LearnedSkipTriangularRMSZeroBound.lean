@@ -39,7 +39,8 @@ The functional dimensions are those on the inputs at which no normalized row van
 (`funDimSkipsOn` on `learnedZeroDomain`, `funDimOn` on `residualZeroDomain`), and the two networks
 have the same weights `θ`. As in `OneBlock/LearnedSkipRMSZeroBoundKinds.lean`, the blocks may have
 any width with at least one hidden unit (one head of positive width), and `d_in, d_out ≥ d ≥ 2`.
-Not stated: ReLU, ReLU², ReGLU blocks and the equality for them.
+ReLU, ReLU², ReGLU blocks and the equality for them:
+`OneBlock/LearnedSkipTriangularRMSZeroRescale.lean`.
 -/
 
 namespace Skips

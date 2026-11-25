@@ -38,10 +38,12 @@ Theorem C.1 (ii) for attention blocks is in `Absorb/BiasesAttention.lean`.
   units."
 * tanh: "`B_{θ′} − B_θ` is bounded, and `x M` is not."
 
-Not stated here: Theorem C.1 (iii), the lower bounds of Theorem C.2, Lemma C.8, the construction
-with `d (d + 3)/2` units of Remark C.3, rotary embeddings (Proposition C.6). The statements are for
-rectangular weights (`p` inputs, `q` outputs), as in `Absorb/Block.lean`; a width is an index type,
-and a block "with `k` more hidden units" has the units `m ⊕ k`.
+Not stated here: Theorem C.1 (iii) and the lower bounds of Theorem C.2
+(`Absorb/BiasesVanillaLower.lean`, `Absorb/GatedBiasesLower.lean`, `Absorb/ReluSqBiasesLower.lean`),
+Lemma C.8 (`Absorb/GatedBiasesLower.lean`), rotary embeddings (Proposition C.6:
+`Absorb/RotaryBiases.lean`). Not stated: the construction with `d (d + 3)/2` units of Remark C.3.
+The statements are for rectangular weights (`p` inputs, `q` outputs), as in `Absorb/Block.lean`; a
+width is an index type, and a block "with `k` more hidden units" has the units `m ⊕ k`.
 -/
 
 namespace Skips

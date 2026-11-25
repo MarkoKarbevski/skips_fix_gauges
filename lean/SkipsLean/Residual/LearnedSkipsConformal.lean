@@ -24,7 +24,8 @@ unchanged. Here:
 
 In `θ.cob G K` the embedding and the writes are multiplied by `G` and the reads and the readout
 by `K⁻¹`: with `G_ℓ = Π_ℓ⁻¹` and `K_ℓ = P_ℓ⁻¹` these are the paper's embedding `E`, reads
-`P_{ℓ−1} W_read^ℓ`, writes `W_write^ℓ Π_ℓ⁻¹` and readout `P_L D`. Not stated: the converse.
+`P_{ℓ−1} W_read^ℓ`, writes `W_write^ℓ Π_ℓ⁻¹` and readout `P_L D`. The converse:
+`Residual/LearnedSkipsConverse.lean`.
 -/
 
 namespace Skips

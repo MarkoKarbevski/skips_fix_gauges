@@ -35,7 +35,9 @@ Stated here:
   which is `d (d + 1)/2` more than the residual network at almost every `θ'`.
 
 Numeric check: `learned_skip_relu_attention_check_2026-11-24.py`. The upper triangular
-skip: `OneBlock/LearnedSkipTriangularSmooth.lean`. Not stated: `ε = 0`.
+skip: `OneBlock/LearnedSkipTriangularSmooth.lean`. `ε = 0`, where the paper has "at most":
+`OneBlock/LearnedSkipRMSZeroBoundKinds.lean` (triangular:
+`OneBlock/LearnedSkipTriangularRMSZeroBound.lean`).
 -/
 
 namespace Skips

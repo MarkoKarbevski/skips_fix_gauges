@@ -17,7 +17,7 @@ paper: `d_in, d_out ≥ d ≥ 2`; the block that must have a hidden unit is writ
 arbitrary `Arch`), of any depth `L'`, model dimension `d'` and widths; for `ε > 0` it may have its
 own constant `ε' > 0` and its blocks are locally Lipschitz; for `ε = 0` its blocks are continuous
 and equality is in the paper's sense for `ε = 0` (no dense set of inputs at which both networks are
-defined and agree). Attention blocks are not stated.
+defined and agree). Attention blocks and transformers: `Absorb/RMSNormAttention.lean`.
 -/
 
 namespace Skips
@@ -86,8 +86,8 @@ variable {hid : Fin L → Type} [∀ ℓ, Fintype (hid ℓ)]
 
 /-! ### Theorem 4.3 for each kind of block -/
 
-/-- **Theorem 4.3 for tanh blocks, `ε > 0`.** For almost every choice of weights, the residual network
-equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
+/-- **Theorem 4.3 for tanh blocks, `ε > 0`.** For almost every choice of weights, the residual
+network equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
 theorem ae_ne_skipless_rmsNorm_tanh [Nonempty T] {ε : ℝ} (hε : 0 < ε)
     (hhid : ∃ ℓ, Nonempty (hid ℓ))
     (μ : Measure (Params (Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm ε) hid) dIn dOut))
@@ -101,8 +101,8 @@ theorem ae_ne_skipless_rmsNorm_tanh [Nonempty T] {ε : ℝ} (hε : 0 < ε)
   exact ae_ne_skipless_rmsNorm_mlp hε (fun z hz => tanh_ne_zero_of_pos hz)
     locallyLipschitz_tanh hhid μ hd hdIn hdOut
 
-/-- **Theorem 4.3 for tanh blocks, `ε = 0`.** For almost every choice of weights, the residual network
-equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
+/-- **Theorem 4.3 for tanh blocks, `ε = 0`.** For almost every choice of weights, the residual
+network equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
 theorem ae_not_dense_eq_skipless_rmsNorm_zero_tanh [Nonempty T]
     (hhid : ∃ ℓ, Nonempty (hid ℓ))
     (μ : Measure (Params (Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm 0) hid) dIn dOut))
@@ -117,8 +117,8 @@ theorem ae_not_dense_eq_skipless_rmsNorm_zero_tanh [Nonempty T]
   exact ae_not_dense_eq_skipless_rmsNorm_zero_mlp (fun z hz => tanh_ne_zero_of_pos hz)
     locallyLipschitz_tanh hhid μ hd hdIn hdOut
 
-/-- **Theorem 4.3 for GELU blocks, `ε > 0`.** For almost every choice of weights, the residual network
-equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
+/-- **Theorem 4.3 for GELU blocks, `ε > 0`.** For almost every choice of weights, the residual
+network equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
 theorem ae_ne_skipless_rmsNorm_gelu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
     (hhid : ∃ ℓ, Nonempty (hid ℓ))
     (μ : Measure (Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm ε) hid) dIn dOut))
@@ -132,8 +132,8 @@ theorem ae_ne_skipless_rmsNorm_gelu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
   exact ae_ne_skipless_rmsNorm_mlp hε (fun z hz => gelu_ne_zero_of_pos hz)
     locallyLipschitz_gelu hhid μ hd hdIn hdOut
 
-/-- **Theorem 4.3 for GELU blocks, `ε = 0`.** For almost every choice of weights, the residual network
-equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
+/-- **Theorem 4.3 for GELU blocks, `ε = 0`.** For almost every choice of weights, the residual
+network equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
 theorem ae_not_dense_eq_skipless_rmsNorm_zero_gelu [Nonempty T]
     (hhid : ∃ ℓ, Nonempty (hid ℓ))
     (μ : Measure (Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut))
@@ -148,8 +148,8 @@ theorem ae_not_dense_eq_skipless_rmsNorm_zero_gelu [Nonempty T]
   exact ae_not_dense_eq_skipless_rmsNorm_zero_mlp (fun z hz => gelu_ne_zero_of_pos hz)
     locallyLipschitz_gelu hhid μ hd hdIn hdOut
 
-/-- **Theorem 4.3 for ReLU blocks, `ε > 0`.** For almost every choice of weights, the residual network
-equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
+/-- **Theorem 4.3 for ReLU blocks, `ε > 0`.** For almost every choice of weights, the residual
+network equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
 theorem ae_ne_skipless_rmsNorm_relu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
     (hhid : ∃ ℓ, Nonempty (hid ℓ))
     (μ : Measure (Params (Arch.mlp (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut))
@@ -163,8 +163,8 @@ theorem ae_ne_skipless_rmsNorm_relu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
   exact ae_ne_skipless_rmsNorm_mlp hε (fun z hz => relu_ne_zero_of_pos hz)
     locallyLipschitz_relu hhid μ hd hdIn hdOut
 
-/-- **Theorem 4.3 for ReLU blocks, `ε = 0`.** For almost every choice of weights, the residual network
-equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
+/-- **Theorem 4.3 for ReLU blocks, `ε = 0`.** For almost every choice of weights, the residual
+network equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
 theorem ae_not_dense_eq_skipless_rmsNorm_zero_relu [Nonempty T]
     (hhid : ∃ ℓ, Nonempty (hid ℓ))
     (μ : Measure (Params (Arch.mlp (T := T) (d := d) relu (rmsNorm 0) hid) dIn dOut))
@@ -179,8 +179,8 @@ theorem ae_not_dense_eq_skipless_rmsNorm_zero_relu [Nonempty T]
   exact ae_not_dense_eq_skipless_rmsNorm_zero_mlp (fun z hz => relu_ne_zero_of_pos hz)
     locallyLipschitz_relu hhid μ hd hdIn hdOut
 
-/-- **Theorem 4.3 for ReLU² blocks, `ε > 0`.** For almost every choice of weights, the residual network
-equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
+/-- **Theorem 4.3 for ReLU² blocks, `ε > 0`.** For almost every choice of weights, the residual
+network equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
 theorem ae_ne_skipless_rmsNorm_reluSq [Nonempty T] {ε : ℝ} (hε : 0 < ε)
     (hhid : ∃ ℓ, Nonempty (hid ℓ))
     (μ : Measure (Params (Arch.mlp (T := T) (d := d) reluSq (rmsNorm ε) hid) dIn dOut))
@@ -194,8 +194,8 @@ theorem ae_ne_skipless_rmsNorm_reluSq [Nonempty T] {ε : ℝ} (hε : 0 < ε)
   exact ae_ne_skipless_rmsNorm_mlp hε (fun z hz => reluSq_ne_zero_of_pos hz)
     locallyLipschitz_reluSq hhid μ hd hdIn hdOut
 
-/-- **Theorem 4.3 for ReLU² blocks, `ε = 0`.** For almost every choice of weights, the residual network
-equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
+/-- **Theorem 4.3 for ReLU² blocks, `ε = 0`.** For almost every choice of weights, the residual
+network equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
 theorem ae_not_dense_eq_skipless_rmsNorm_zero_reluSq [Nonempty T]
     (hhid : ∃ ℓ, Nonempty (hid ℓ))
     (μ : Measure (Params (Arch.mlp (T := T) (d := d) reluSq (rmsNorm 0) hid) dIn dOut))
@@ -210,8 +210,8 @@ theorem ae_not_dense_eq_skipless_rmsNorm_zero_reluSq [Nonempty T]
   exact ae_not_dense_eq_skipless_rmsNorm_zero_mlp (fun z hz => reluSq_ne_zero_of_pos hz)
     locallyLipschitz_reluSq hhid μ hd hdIn hdOut
 
-/-- **Theorem 4.3 for SwiGLU blocks, `ε > 0`.** For almost every choice of weights, the residual network
-equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
+/-- **Theorem 4.3 for SwiGLU blocks, `ε > 0`.** For almost every choice of weights, the residual
+network equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
 theorem ae_ne_skipless_rmsNorm_swiglu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
     (hhid : ∃ ℓ, Nonempty (hid ℓ))
     (μ : Measure (Params (Arch.gated (T := T) (d := d) silu (rmsNorm ε) hid) dIn dOut))
@@ -225,8 +225,8 @@ theorem ae_ne_skipless_rmsNorm_swiglu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
   exact ae_ne_skipless_rmsNorm_gated hε (fun z hz => silu_ne_zero_of_pos hz)
     locallyLipschitz_silu hhid μ hd hdIn hdOut
 
-/-- **Theorem 4.3 for SwiGLU blocks, `ε = 0`.** For almost every choice of weights, the residual network
-equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
+/-- **Theorem 4.3 for SwiGLU blocks, `ε = 0`.** For almost every choice of weights, the residual
+network equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
 theorem ae_not_dense_eq_skipless_rmsNorm_zero_swiglu [Nonempty T]
     (hhid : ∃ ℓ, Nonempty (hid ℓ))
     (μ : Measure (Params (Arch.gated (T := T) (d := d) silu (rmsNorm 0) hid) dIn dOut))
@@ -241,8 +241,8 @@ theorem ae_not_dense_eq_skipless_rmsNorm_zero_swiglu [Nonempty T]
   exact ae_not_dense_eq_skipless_rmsNorm_zero_gated (fun z hz => silu_ne_zero_of_pos hz)
     locallyLipschitz_silu hhid μ hd hdIn hdOut
 
-/-- **Theorem 4.3 for GeGLU blocks, `ε > 0`.** For almost every choice of weights, the residual network
-equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
+/-- **Theorem 4.3 for GeGLU blocks, `ε > 0`.** For almost every choice of weights, the residual
+network equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
 theorem ae_ne_skipless_rmsNorm_geglu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
     (hhid : ∃ ℓ, Nonempty (hid ℓ))
     (μ : Measure (Params (Arch.gated (T := T) (d := d) gelu (rmsNorm ε) hid) dIn dOut))
@@ -256,8 +256,8 @@ theorem ae_ne_skipless_rmsNorm_geglu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
   exact ae_ne_skipless_rmsNorm_gated hε (fun z hz => gelu_ne_zero_of_pos hz)
     locallyLipschitz_gelu hhid μ hd hdIn hdOut
 
-/-- **Theorem 4.3 for GeGLU blocks, `ε = 0`.** For almost every choice of weights, the residual network
-equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
+/-- **Theorem 4.3 for GeGLU blocks, `ε = 0`.** For almost every choice of weights, the residual
+network equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
 theorem ae_not_dense_eq_skipless_rmsNorm_zero_geglu [Nonempty T]
     (hhid : ∃ ℓ, Nonempty (hid ℓ))
     (μ : Measure (Params (Arch.gated (T := T) (d := d) gelu (rmsNorm 0) hid) dIn dOut))
@@ -272,8 +272,8 @@ theorem ae_not_dense_eq_skipless_rmsNorm_zero_geglu [Nonempty T]
   exact ae_not_dense_eq_skipless_rmsNorm_zero_gated (fun z hz => gelu_ne_zero_of_pos hz)
     locallyLipschitz_gelu hhid μ hd hdIn hdOut
 
-/-- **Theorem 4.3 for ReGLU blocks, `ε > 0`.** For almost every choice of weights, the residual network
-equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
+/-- **Theorem 4.3 for ReGLU blocks, `ε > 0`.** For almost every choice of weights, the residual
+network equals no pre-RMSNorm skipless network with locally Lipschitz blocks. -/
 theorem ae_ne_skipless_rmsNorm_reglu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
     (hhid : ∃ ℓ, Nonempty (hid ℓ))
     (μ : Measure (Params (Arch.gated (T := T) (d := d) relu (rmsNorm ε) hid) dIn dOut))
@@ -287,8 +287,8 @@ theorem ae_ne_skipless_rmsNorm_reglu [Nonempty T] {ε : ℝ} (hε : 0 < ε)
   exact ae_ne_skipless_rmsNorm_gated hε (fun z hz => relu_ne_zero_of_pos hz)
     locallyLipschitz_relu hhid μ hd hdIn hdOut
 
-/-- **Theorem 4.3 for ReGLU blocks, `ε = 0`.** For almost every choice of weights, the residual network
-equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
+/-- **Theorem 4.3 for ReGLU blocks, `ε = 0`.** For almost every choice of weights, the residual
+network equals no pre-RMSNorm skipless network with `ε = 0` and continuous blocks. -/
 theorem ae_not_dense_eq_skipless_rmsNorm_zero_reglu [Nonempty T]
     (hhid : ∃ ℓ, Nonempty (hid ℓ))
     (μ : Measure (Params (Arch.gated (T := T) (d := d) relu (rmsNorm 0) hid) dIn dOut))

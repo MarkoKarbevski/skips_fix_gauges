@@ -18,7 +18,9 @@ gated blocks with such a gate (SwiGLU and GeGLU by name), attention blocks. As i
 
 Both functional dimensions are those on the inputs at which no normalized row vanishes
 (`funDimSkipsOn` on `learnedZeroDomain`, `funDimOn` on `residualZeroDomain`), and the two networks
-have the same weights `θ`. Not stated: the upper triangular skip; ReLU, ReLU², ReGLU blocks.
+have the same weights `θ`. Not stated here: the upper triangular skip
+(`OneBlock/LearnedSkipTriangularRMSZeroBound.lean`); ReLU, ReLU², ReGLU blocks
+(`OneBlock/LearnedSkipRMSZeroRescaleBound.lean`).
 -/
 
 namespace Skips

@@ -30,7 +30,8 @@ the values for tanh, GELU, SwiGLU and GeGLU blocks of width at least `d`. Here:
   `P + d (d + 1)/2` parameters and its symmetries have dimension `d (d − 1)/2 + 2 H d_h²`), which is
   `d (d + 1)/2` more than the residual network at almost every `θ'`.
 
-ReLU, ReLU² and ReGLU blocks: `OneBlock/LearnedSkipTriangularRescale.lean`. Not stated: `ε = 0`.
+ReLU, ReLU² and ReGLU blocks: `OneBlock/LearnedSkipTriangularRescale.lean`. `ε = 0` ("at most"):
+`OneBlock/LearnedSkipTriangularRMSZeroBound.lean`.
 -/
 
 namespace Skips

@@ -35,7 +35,8 @@ The route: Steps 1 to 3 (`exists_of_flatSkipsOn_learned_rmsNorm`), Step 4 by hom
 `funDimLearned_eq_funDim_residual_add_of_noSymmetricPart_on` (`OneBlock/LearnedSkipGain.lean`), with
 the residual value `funDim_mlp_oneBlock_rescale_residual_rmsNorm`. Numeric check:
 `learned_skip_relu_attention_check_2026-11-24.py`. The upper triangular skip:
-`OneBlock/LearnedSkipTriangularRescale.lean`. Not stated: `ε = 0`.
+`OneBlock/LearnedSkipTriangularRescale.lean`. `ε = 0`: `OneBlock/LearnedSkipRMSZeroRescale.lean`,
+`OneBlock/LearnedSkipRMSZeroRescaleGeneric.lean`.
 -/
 
 namespace Skips

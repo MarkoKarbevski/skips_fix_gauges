@@ -31,7 +31,8 @@ has `L` blocks (stream matrices `1`), the skipless network `L' + 1` blocks (stre
 (`χ = id` in both) and under pre-RMSNorm (`rmsNorm ε`, `rmsNorm ε'`, `ε, ε' > 0`). Without a
 mask the tokens are any finite type with at least two elements and `sees = fun _ _ => True`;
 with the causal mask the tokens are `Fin n` and `sees t s` is `s ≤ t`. Descartes' rule of signs
-is Mathlib's `Polynomial.roots_countP_pos_le_signVariations`. Part (iii) is not stated here.
+is Mathlib's `Polynomial.roots_countP_pos_le_signVariations`. Part (iii):
+`Absorb/ShortSequences.lean`.
 -/
 
 namespace Skips
