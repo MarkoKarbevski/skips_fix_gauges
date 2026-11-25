@@ -44,16 +44,23 @@ def posRescalings (hid : Fin L → Type) : Set (∀ ℓ, hid ℓ → ℝ) := {c 
 
 /-- The positive rescalings are an open set. -/
 theorem isOpen_posRescalings : IsOpen (posRescalings hid) := by
-  sorry
+  -- finitely many open half-spaces `0 < c ℓ i`
+  have h : posRescalings hid = ⋂ ℓ, ⋂ i, {c : ∀ ℓ, hid ℓ → ℝ | 0 < c ℓ i} := by
+    ext c
+    simp only [posRescalings, Set.mem_ofPred_eq, Set.mem_iInter]
+  rw [h]
+  exact isOpen_iInter_of_finite fun ℓ => isOpen_iInter_of_finite fun i =>
+    isOpen_lt continuous_const ((continuous_apply i).comp (continuous_apply ℓ))
 
 /-- The positive rescalings are not empty. -/
-theorem posRescalings_nonempty : (posRescalings hid).Nonempty := by
-  sorry
+theorem posRescalings_nonempty : (posRescalings hid).Nonempty :=
+  ⟨fun _ _ => 1, fun _ _ => one_pos⟩
 
 /-- The space of the rescalings has dimension `∑_ℓ d_hidden^ℓ`. -/
 theorem finrank_rescalings :
     Module.finrank ℝ (∀ ℓ, hid ℓ → ℝ) = ∑ ℓ, Fintype.card (hid ℓ) := by
-  sorry
+  rw [Module.finrank_pi_fintype]
+  exact Finset.sum_congr rfl fun ℓ _ => Module.finrank_fintype_fun_eq_card ℝ
 
 /-! ### MLP blocks with a positively homogeneous activation -/
 
@@ -65,13 +72,115 @@ noncomputable def rescaleMlpAct (k : ℕ) (c : ∀ ℓ, hid ℓ → ℝ)
       × Biases (Arch.mlp (T := T) (d := d) σ χ hid) dOut :=
   (q.1.rescaleMlp k c, q.2.rescaleMlp c)
 
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the rescaling by `1` moves nothing. -/
+private theorem rescaleMlpAct_one_bgr (k : ℕ)
+    (q : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut
+      × Biases (Arch.mlp (T := T) (d := d) σ χ hid) dOut) :
+    rescaleMlpAct k (fun _ _ => 1) q = q := by
+  refine Prod.ext (Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl)
+    (Biases.ext' rfl (fun ℓ => ?_) (fun ℓ => rfl) rfl)
+  · ext a i
+    simp only [rescaleMlpAct, Params.rescaleMlp, Matrix.of_apply, one_mul]
+  · ext i a
+    simp only [rescaleMlpAct, Params.rescaleMlp, Matrix.of_apply, one_pow, inv_one, one_mul]
+  · funext i
+    simp only [rescaleMlpAct, Biases.rescaleMlp, one_mul]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the rescaling by `c'` then by `c` is the rescaling by `c c'`. -/
+private theorem rescaleMlpAct_mul_bgr (k : ℕ) (c c' : ∀ ℓ, hid ℓ → ℝ)
+    (q : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut
+      × Biases (Arch.mlp (T := T) (d := d) σ χ hid) dOut) :
+    rescaleMlpAct k c (rescaleMlpAct k c' q) = rescaleMlpAct k (fun ℓ i => c ℓ i * c' ℓ i) q := by
+  refine Prod.ext (Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl)
+    (Biases.ext' rfl (fun ℓ => ?_) (fun ℓ => rfl) rfl)
+  · ext a i
+    simp only [rescaleMlpAct, Params.rescaleMlp, Matrix.of_apply]
+    ring
+  · ext i a
+    simp only [rescaleMlpAct, Params.rescaleMlp, Matrix.of_apply, mul_pow, mul_inv]
+    ring
+  · funext i
+    simp only [rescaleMlpAct, Biases.rescaleMlp]
+    ring
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the rescaling commutes with the changes of basis, on the weights. -/
+private theorem cob_rescaleMlp_bgr (k : ℕ) (c : ∀ ℓ, hid ℓ → ℝ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) (G : Fin (L + 1) → GL d ℝ) :
+    (θ.rescaleMlp k c).cob G G = (θ.cob G G).rescaleMlp k c := by
+  refine Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl
+  · ext a i
+    simp only [Params.cob, Params.rescaleMlp, Matrix.of_apply, Matrix.mul_apply, Finset.mul_sum]
+    exact Finset.sum_congr rfl fun _ _ => by ring
+  · ext i a
+    simp only [Params.cob, Params.rescaleMlp, Matrix.of_apply, Matrix.mul_apply, Finset.mul_sum]
+    exact Finset.sum_congr rfl fun _ _ => by ring
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `g` times the rescaled read is the rescaled `g` times the read. -/
+private theorem vecMul_rescaleMlp_bgr (k : ℕ) (c : ∀ ℓ, hid ℓ → ℝ)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) (ℓ : Fin L) (g : d → ℝ)
+    (i : hid ℓ) : (g ᵥ* (θ.rescaleMlp k c).read ℓ) i = c ℓ i * (g ᵥ* θ.read ℓ) i := by
+  simp only [Matrix.vecMul, dotProduct, Params.rescaleMlp, Matrix.of_apply, Finset.mul_sum]
+  exact Finset.sum_congr rfl fun _ _ => by ring
+
 /-- **The rescalings of the hidden units are a family of symmetries inside the blocks,** for an
 activation that is positively homogeneous of degree `k`. -/
 theorem insideBlocksAction_rescaleMlp {k : ℕ}
     (hσ : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z) :
     InsideBlocksAction (A := Arch.mlp (T := T) (d := d) σ χ hid) (dIn := dIn) (dOut := dOut)
       (rescaleMlpAct k) (posRescalings hid) := by
-  sorry
+  refine ⟨⟨fun _ _ => 1, fun _ _ => one_pos, funext (rescaleMlpAct_one_bgr k)⟩, ?_, ?_, ?_, ?_,
+    ?_, ?_⟩
+  · -- the product of two positive rescalings
+    intro c hc c' hc'
+    exact ⟨fun ℓ i => c ℓ i * c' ℓ i, fun ℓ i => mul_pos (hc ℓ i) (hc' ℓ i),
+      funext (rescaleMlpAct_mul_bgr k c c')⟩
+  · -- the inverse rescaling
+    intro c hc
+    have h1 : (fun ℓ i => c ℓ i * (c ℓ i)⁻¹) = fun (ℓ : Fin L) (_ : hid ℓ) => (1 : ℝ) :=
+      funext fun ℓ => funext fun i => mul_inv_cancel₀ (hc ℓ i).ne'
+    have h2 : (fun ℓ i => (c ℓ i)⁻¹ * c ℓ i) = fun (ℓ : Fin L) (_ : hid ℓ) => (1 : ℝ) :=
+      funext fun ℓ => funext fun i => inv_mul_cancel₀ (hc ℓ i).ne'
+    refine ⟨fun ℓ i => (c ℓ i)⁻¹, fun ℓ i => inv_pos.2 (hc ℓ i), ?_, ?_⟩
+    · funext q
+      rw [Function.comp_apply, rescaleMlpAct_mul_bgr, h1, rescaleMlpAct_one_bgr, id]
+    · funext q
+      rw [Function.comp_apply, rescaleMlpAct_mul_bgr, h2, rescaleMlpAct_one_bgr, id]
+  · -- commutes with the changes of basis and translations, without skips
+    intro p c _
+    funext q
+    refine Prod.ext (cob_rescaleMlp_bgr k c q.1 p.1)
+      (Biases.ext' rfl (fun ℓ => funext fun i => ?_) (fun ℓ => rfl) rfl)
+    simp only [Function.comp_apply, affActSkipless, rescaleMlpAct, Biases.cob,
+      Biases.translateAllAt, Biases.rescaleMlp, Pi.sub_apply]
+    rw [vecMul_rescaleMlp_bgr]
+    ring
+  · -- commutes with the changes of basis and translations, with skips
+    intro p c _
+    funext q
+    refine Prod.ext (cob_rescaleMlp_bgr k c q.1 p.1)
+      (Biases.ext' rfl (fun ℓ => funext fun i => ?_) (fun ℓ => rfl) rfl)
+    simp only [Function.comp_apply, affActResidual, rescaleMlpAct, Biases.cob,
+      Biases.translateAll, Biases.rescaleMlp, Pi.sub_apply]
+    rw [vecMul_rescaleMlp_bgr]
+    ring
+  · -- preserves the function
+    intro c hc S q x
+    exact evalB_rescaleMlp hσ q.1 q.2 c hc S x
+  · -- keeps the rank of the writes: the write is multiplied by an invertible diagonal matrix
+    intro c hc q ℓ
+    classical
+    have hw : (rescaleMlpAct k c q).1.write ℓ
+        = Matrix.diagonal (fun i => (c ℓ i ^ k)⁻¹) * q.1.write ℓ := by
+      ext i a
+      simp only [rescaleMlpAct, Params.rescaleMlp, Matrix.of_apply, Matrix.diagonal_mul]
+    rw [hw, Matrix.rank_mul_eq_right_of_isUnit_det]
+    rw [Matrix.det_diagonal, isUnit_iff_ne_zero, Finset.prod_ne_zero_iff]
+    exact fun i _ => inv_ne_zero (pow_ne_zero k (hc ℓ i).ne')
 
 /-- **They act freely block by block at weights with no zero read column.** -/
 theorem insideBlocksFreeAt_rescaleMlp (k : ℕ)
@@ -79,7 +188,26 @@ theorem insideBlocksFreeAt_rescaleMlp (k : ℕ)
       × Biases (Arch.mlp (T := T) (d := d) σ χ hid) dOut)
     (hcol : ∀ ℓ i, ∃ a, q.1.read ℓ a i ≠ 0) :
     InsideBlocksFreeAt (rescaleMlpAct k) (posRescalings hid) q := by
-  sorry
+  refine ⟨fun _ _ => rfl, fun _ _ => rfl, ?_, ?_⟩
+  · -- equal reads: every `c ℓ i` is `1`, so the write is kept
+    intro c _ ℓ hr _
+    have h1 : ∀ i, c ℓ i = 1 := by
+      intro i
+      obtain ⟨a, ha⟩ := hcol ℓ i
+      have h := congrFun (congrFun hr a) i
+      simp only [rescaleMlpAct, Params.rescaleMlp, Matrix.of_apply] at h
+      have h' : (c ℓ i - 1) * q.1.read ℓ a i = 0 := by rw [sub_mul, h, one_mul, sub_self]
+      exact sub_eq_zero.1 ((mul_eq_zero.1 h').resolve_right ha)
+    refine ⟨?_, rfl⟩
+    ext i a
+    simp only [rescaleMlpAct, Params.rescaleMlp, Matrix.of_apply, h1, one_pow, inv_one, one_mul]
+  · -- equal images: equal rescalings, column by column
+    intro c _ c' _ h
+    funext ℓ i
+    obtain ⟨a, ha⟩ := hcol ℓ i
+    have h2 := congrFun (congrFun (congrArg (fun q' => q'.1.read ℓ) h) a) i
+    simp only [rescaleMlpAct, Params.rescaleMlp, Matrix.of_apply] at h2
+    exact mul_right_cancel₀ ha h2
 
 /-- **Lemma A.8 for MLP blocks with rescalings, with skips:** the pairs `(G, g)` that preserve
 the function and the positive rescalings form a set of dimension
@@ -89,7 +217,8 @@ theorem dimH_generated_residual_mlp [Nonempty T] [Nonempty dOut] :
         ×ˢ posRescalings hid)
       = ((Fintype.card d ^ 2 + (L + 1) * Fintype.card d + ∑ ℓ, Fintype.card (hid ℓ) : ℕ)
           : ℝ≥0∞) := by
-  sorry
+  rw [dimH_affMat_affPreservingResidual_prod _ rfl isOpen_posRescalings posRescalings_nonempty,
+    finrank_rescalings]
 
 /-- **The same without skips:** dimension `(L + 1)(d² + d) + ∑_ℓ d_hidden^ℓ`. -/
 theorem dimH_generated_skipless_mlp :
@@ -97,7 +226,8 @@ theorem dimH_generated_skipless_mlp :
         ×ˢ posRescalings hid)
       = (((L + 1) * (Fintype.card d ^ 2 + Fintype.card d) + ∑ ℓ, Fintype.card (hid ℓ) : ℕ)
           : ℝ≥0∞) := by
-  sorry
+  rw [dimH_affMat_affPreservingSkipless_prod _ rfl isOpen_posRescalings posRescalings_nonempty,
+    finrank_rescalings]
 
 /-! ### Gated blocks: the values -/
 
