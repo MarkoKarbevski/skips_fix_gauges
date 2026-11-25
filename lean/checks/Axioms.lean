@@ -1910,3 +1910,13 @@ import SkipsLean
 #print axioms Skips.ae_cob_rmsNorm_zero_heads_rescaleMlp_eq_self_of_dIn
 #print axioms Skips.ae_cob_rmsNorm_zero_heads_rescale_eq_self_of_dIn
 #print axioms Skips.ae_cob_rmsNorm_zero_heads_rescale_rescaleGate_eq_self_of_dIn
+#print axioms Skips.cobDir_add_rescaleDir_injective_of_rank_E_D
+#print axioms Skips.cobDir_add_rescaleDir_add_rescaleDirGate_injective_of_rank_E_D
+#print axioms Skips.funDim_add_le_of_eventually_gateInactive_of_rank_E_D
+#print axioms Skips.exists_isOpen_gateInactive_reglu_bound_of_le
+#print axioms Skips.not_ae_funDim_add_eq_reglu_skipless_of_le
+#print axioms Skips.jacobianRank_add_le_of_ae_of_contDiffOn
+#print axioms Skips.funDim_add_le_of_ae_of_contDiff
+#print axioms Skips.exists_isOpen_unitInactive_relu_forall
+#print axioms Skips.exists_isOpen_unitInactive_reluSq_forall
+#print axioms Skips.exists_isOpen_gateInactive_reglu_forall
