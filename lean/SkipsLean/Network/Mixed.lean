@@ -93,23 +93,40 @@ def evalMixed (A : Arch T d L) (θ : Params A.mixed dIn dOut) (x : Matrix T dIn 
 /-- The identity units of `Params.mix θ U V` have the read `U`. -/
 theorem Params.mixU_mix (θ : Params A dIn dOut) (U V : Fin L → Matrix d d ℝ) :
     (Params.mix θ U V).mixU = U := by
-  sorry
+  -- the columns `Sum.inl` of `[U_ℓ | W_read^ℓ]` are `U_ℓ`
+  funext ℓ
+  ext a b
+  rfl
 
 /-- The identity units of `Params.mix θ U V` have the write `V`. -/
 theorem Params.mixV_mix (θ : Params A dIn dOut) (U V : Fin L → Matrix d d ℝ) :
     (Params.mix θ U V).mixV = V := by
-  sorry
+  -- the rows `Sum.inl` of the write that stacks `V_ℓ` on `W_write^ℓ` are `V_ℓ`
+  funext ℓ
+  ext a b
+  rfl
 
 /-- The hidden units of `Params.mix θ U V` are those of `θ`. -/
 theorem Params.unmix_mix (θ : Params A dIn dOut) (U V : Fin L → Matrix d d ℝ) :
     (Params.mix θ U V).unmix = θ := by
-  sorry
+  -- the columns and rows `Sum.inr` are those of the hidden units of `θ`
+  rfl
 
 /-- Every parameter of a network of mixed blocks is `Params.mix` of its hidden units and its
 identity units. -/
 theorem Params.mix_unmix (θ : Params A.mixed dIn dOut) :
     Params.mix θ.unmix θ.mixU θ.mixV = θ := by
-  sorry
+  obtain ⟨E, R, W, D⟩ := θ
+  simp only [Params.mix, Params.unmix, Params.mixU, Params.mixV, Params.mk.injEq, true_and,
+    and_true]
+  -- a read or a write is determined by its columns or rows `Sum.inl` and `Sum.inr`
+  constructor
+  · funext ℓ
+    ext a s
+    cases s <;> rfl
+  · funext ℓ
+    ext s b
+    cases s <;> rfl
 
 /-- **Equation (9):** `f̃(h [U | W_read]) [V ; W_write] = h U V + f(h W_read) W_write`, for the
 read `R = [U | W_read]` and the write `W` that stacks `V` on `W_write`. -/
@@ -118,19 +135,47 @@ theorem f_mixed_mul (A : Arch T d L) (ℓ : Fin L) (h : Matrix T d ℝ)
     A.mixed.f ℓ (h * R) * W
       = h * R.submatrix id Sum.inl * W.submatrix Sum.inl id
         + A.f ℓ (h * R.submatrix id Sum.inr) * W.submatrix Sum.inr id := by
-  sorry
+  -- the hidden units read the columns `Sum.inr` of `h R`, which are `h W_read`
+  have hsub : (h * R).submatrix id Sum.inr = h * R.submatrix id Sum.inr := by
+    rw [Matrix.submatrix_mul h R id id Sum.inr Function.bijective_id, Matrix.submatrix_id_id]
+  show (Matrix.of fun t => Sum.elim (fun a => (h * R) t (Sum.inl a))
+    (A.f ℓ ((h * R).submatrix id Sum.inr) t)) * W = _
+  rw [hsub]
+  -- entry by entry, the sum over `d ⊕ A.w ℓ` splits into the identity units and the hidden units
+  ext t j
+  rw [Matrix.mul_apply, Fintype.sum_sum_type]
+  simp only [Matrix.of_apply, Sum.elim_inl, Sum.elim_inr, Matrix.add_apply, Matrix.mul_apply,
+    Matrix.submatrix_apply, id_eq]
 
 /-- **"So it has the form (1)":** without normalization, the network of mixed blocks is the
 skipless network of the architecture `A.mixed`. -/
 theorem evalMixed_eq_eval (hA : A.χ = id) (θ : Params A.mixed dIn dOut) (x : Matrix T dIn ℝ) :
     evalMixed A θ x = eval A.mixed 0 θ x := by
-  sorry
+  have hχ : A.mixed.χ = id := hA
+  -- the hidden states of the two networks agree, by induction on `ℓ`
+  have hh : ∀ ℓ : Fin (L + 1), hidden A.mixed 0 θ x ℓ
+      = hidden A (fun ℓ => θ.mixU ℓ * θ.mixV ℓ) θ.unmix x ℓ := by
+    intro ℓ
+    induction ℓ using Fin.induction with
+    | zero => rw [hidden_zero, hidden_zero]; rfl
+    | succ ℓ ih =>
+      -- equation (9): `f̃(h [U | W_read]) [V ; W_write] = h U V + f(h W_read) W_write`
+      rw [hidden_succ, hidden_succ, ← ih, hχ, id_eq, f_mixed_mul, Pi.zero_apply,
+        Matrix.mul_zero, zero_add, Matrix.mul_assoc]
+      rfl
+  -- the readout reads `χ(h_L)` in both
+  unfold evalMixed eval
+  rw [hh (Fin.last L)]
+  rfl
 
 /-- **"A network with learned skips `A_ℓ` is the network of mixed blocks with `U_ℓ = A_ℓ` and
 `V_ℓ = I`"**, for every `χ`. -/
 theorem evalMixed_mix_one [DecidableEq d] (θ : Params A dIn dOut) (S : Fin L → Matrix d d ℝ)
     (x : Matrix T dIn ℝ) :
     evalMixed A (Params.mix θ S 1) x = eval A S θ x := by
-  sorry
+  -- the skips are `U_ℓ V_ℓ = A_ℓ I = A_ℓ` and the hidden units are those of `θ`
+  unfold evalMixed
+  rw [Params.mixU_mix, Params.mixV_mix, Params.unmix_mix]
+  simp only [Pi.one_apply, Matrix.mul_one]
 
 end Skips
