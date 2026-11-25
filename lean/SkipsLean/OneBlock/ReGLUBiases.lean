@@ -272,6 +272,7 @@ private theorem noKinkGateB_apply_rgb
   have h := hx t i
   rwa [Matrix.mul_assoc] at h
 
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
 /-- At an input with no gate at its kink, the output of a network of one ReGLU block with biases
 is differentiable in the weights and biases, for every stream matrix (with the skip and without
 it). -/
@@ -384,6 +385,7 @@ theorem differentiableAt_evalB_of_mem_noKinkGateB (S : Fin 1 → Matrix d d ℝ)
     fun i => ((hr i).mul ((hxC t (Sum.inr i)).add (hβ (Sum.inr i)))).mul (hA i o)
   exact ((hxM t o).add (hγ o)).add (DifferentiableAt.fun_sum fun i _ => hu i)
 
+omit [Nonempty T] [DecidableEq d] in
 /-- Helper (the chain rule, at an input of `noKinkGateB p`): the derivative of
 `(θ, b) ↦ F(θ, b, x)` along `η` has the entries `(x ∂M_S)_{t o} + ∂γ_{S,o} + ∑_i [relu(z_i) w_i
 (∂A)_{i o} + 1[z_i > 0] ((x ∂C)_{t, g i} + ∂β_{g i}) w_i A_{i o} + relu(z_i) ((x ∂C)_{t, v i}

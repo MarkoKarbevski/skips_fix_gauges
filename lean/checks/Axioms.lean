@@ -2079,3 +2079,15 @@ import SkipsLean
 #print axioms Skips.keeps_products_and_ED_biases_iff
 #print axioms Skips.finrank_span_keeps_products_biases
 #print axioms Skips.finrank_span_keeps_products_and_ED_biases
+#print axioms Skips.differentiableAt_evalB_of_mem_noKinkGateB
+#print axioms Skips.flatOnB_noKinkGateB_le_reglu
+#print axioms Skips.funDimB_reglu_oneBlock
+#print axioms Skips.exists_jacobianRankB_reglu_oneBlock
+#print axioms Skips.flatOnB_noKinkGateB_le_reglu_residual
+#print axioms Skips.funDimB_reglu_oneBlock_residual
+#print axioms Skips.exists_jacobianRankB_reglu_oneBlock_residual
+#print axioms Skips.ae_funDimB_reglu_oneBlock
+#print axioms Skips.ae_exists_jacobianRankB_reglu_oneBlock
+#print axioms Skips.ae_funDimB_reglu_oneBlock_residual
+#print axioms Skips.ae_exists_jacobianRankB_reglu_oneBlock_residual
+#print axioms Skips.ae_funDimB_reglu_oneBlock_residual_eq_add
