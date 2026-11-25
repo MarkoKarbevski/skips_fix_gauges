@@ -14,8 +14,8 @@ spanning the rows of mean zero),
 
 where `N'` is RMSNorm of dimension `m` with the constant `ε d / m`.
 
-The statement of Proposition A.3 for whole networks needs gains and biases, which the network
-definition of this repository does not have yet; it is not stated here.
+The statement of Proposition A.3 for whole networks, with gains and biases:
+`Network/LayerNorm.lean`.
 -/
 
 namespace Skips
