@@ -23,12 +23,14 @@ Here "with equality" and "by exactly `d_model²`" **for a ReLU² block of width 
 
 The paper's proof of "for generic parameters `h_1 ≠ 0` there" uses the resultant of `d_model`
 quadratic forms, and it does not show that "two entries `h_a` and `h_b` of `h_1` have no common
-factor" holds for generic parameters. The Lean route: the parameters at which the output of the
-block vanishes at a row with an active unit lie in the image of a map of the parameter space
-into itself whose derivative is nowhere invertible (one row `a_i` is solved for, and the map is
-homogeneous of degree `0` in the row that takes its place), a set of measure zero; and the
-condition on two entries is a resultant of two polynomials in one variable, on one line, which
-is not zero for almost every parameter.
+factor" holds for generic parameters. The Lean route: a parameter at which the output of the
+block vanishes at a row `u` with an active unit `i₀` is, for the set `S` of the active units and
+`u` scaled to `u w_{i₀} = 1`, the image of a parameter whose row `i₀` of `W_write` is `u` under the
+polynomial map that puts `−∑_{i ∈ S, i ≠ i₀} (u w_i)² a_i` in that row; the parameters whose row
+`i₀` of `W_write` has `a_{i₀} w_{i₀} = 1` are a set of measure zero, and so is its image under a
+differentiable map of the parameter space into itself, for each of the finitely many pairs
+`(S, i₀)`. The condition on two entries is a resultant of two polynomials in one variable, on one
+line, which is not zero for almost every parameter.
 
 The functional dimension: the value of Lean's `funDim`, and a finite batch of the paper's inputs
 (no normalized row vanishes, no hidden unit at its kink) with this rank; the two together are the
@@ -397,7 +399,7 @@ private theorem sum_reluSq_eq_ssq {q : Type*} [Fintype q] (z : q → ℝ) (a : q
   rw [Finset.sum_filter]
   exact Finset.sum_congr rfl fun i _ => reluSq_smul_ssq (z i) (a i)
 
-/-! ### `h_1 ≠ 0` where a unit is active: the image of a map with a degenerate derivative -/
+/-! ### `h_1 ≠ 0` where a unit is active: the image of a set of measure zero -/
 
 /-- Helper: the parameter whose only nonzero weight is the row `i₀` of the write, equal to
 `v`. -/
@@ -513,6 +515,7 @@ private theorem measure_levelSet_ssq {σ : ℝ → ℝ}
       rw [zero_dotProduct]
       norm_num⟩
 
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
 /-- **"For generic parameters `h_1 ≠ 0` there", for ReLU² units:** at almost every parameter of
 one MLP block, `∑_i max(u w_i, 0)² a_i ≠ 0` at every `u` at which a unit is active. -/
 theorem ae_forall_sum_reluSq_ne_zero {σ : ℝ → ℝ}
@@ -564,6 +567,7 @@ theorem ae_forall_sum_reluSq_ne_zero {σ : ℝ → ℝ}
     show θ + rowParam_ssq i₀ (solveRow_ssq S i₀ θ - θ.write 0 i₀) = θ'
     rw [hrow, hθw₀, add_assoc, ← map_add, sub_add_sub_cancel, sub_self, map_zero, add_zero]
 
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
 /-- **"`h_1(x_0)` is not parallel to `a_i`", for ReLU² units:** at almost every parameter of one
 MLP block with at least two hidden units and `d ≥ 2`, every unit `i` has a point `u_0` of its
 hyperplane, on no other hyperplane, at which `∑_j max(u_0 w_j, 0)² a_j` is not a multiple of
@@ -630,6 +634,7 @@ theorem ae_exists_kink_point_reluSq {σ : ℝ → ℝ}
   rw [hb e, hb f]
   ring
 
+omit [Fintype T] [Nonempty T] in
 /-- **"Two entries `h_a` and `h_b` of `h_1` have no common factor", for ReLU² units, on a line:**
 at almost every parameter of one MLP block with `d ≥ 2`, for every set `S` of at least two units
 there are a line `t ↦ u + t v` and two entries `e`, `f` for which the resultant of the
@@ -652,9 +657,12 @@ theorem ae_exists_quadRes_ne_zero {σ : ℝ → ℝ}
   exact ⟨Pi.single e 1, Pi.single f 1, e, f, hθ S hS⟩
 
 omit [Fintype T] [Nonempty T] in
-/-- Helper: condition 6 at almost every parameter, for `d` nonempty. (For `d` empty and at least
-one hidden unit the statement below is false: `u ⬝ᵥ w_i = 0` for every `u`.) -/
-private theorem ae_exists_isUnit_det_reluSqDeriv_ssq [Nonempty d] {σ : ℝ → ℝ}
+/-- **"`h_1` takes all values in an open set", for ReLU² units, the derivative:** at almost every
+parameter of one MLP block of width at least `d ≥ 1`, there is a point `u` on no hyperplane at
+which the derivative `v ↦ ∑_i 2 max(u w_i, 0) (v w_i) a_i` of the map of the block is invertible.
+(`d ≥ 1` is needed: for `d = 0` and one hidden unit every `u w_i` is `0`, so no `u` is off the
+hyperplanes.) -/
+theorem ae_exists_isUnit_det_reluSqDeriv [Nonempty d] {σ : ℝ → ℝ}
     (μ : Measure (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut))
     [μ.IsAddHaarMeasure] (hcard : Fintype.card d ≤ Fintype.card (hid 0)) :
     ∀ᵐ θ ∂μ, ∃ u : d → ℝ, (∀ i, u ⬝ᵥ (θ.read 0)ᵀ i ≠ 0) ∧
@@ -663,17 +671,7 @@ private theorem ae_exists_isUnit_det_reluSqDeriv_ssq [Nonempty d] {σ : ℝ → 
   have h := ae_isUnit_det_ssq (q := hid 0) μ _ _ (exists_params_ssq (σ := σ)) hcard
   exact h
 
-/-- **"`h_1` takes all values in an open set", for ReLU² units, the derivative:** at almost every
-parameter of one MLP block of width at least `d`, there is a point `u` on no hyperplane at which
-the derivative `v ↦ ∑_i 2 max(u w_i, 0) (v w_i) a_i` of the map of the block is invertible. -/
-theorem ae_exists_isUnit_det_reluSqDeriv {σ : ℝ → ℝ}
-    (μ : Measure (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut))
-    [μ.IsAddHaarMeasure] (hcard : Fintype.card d ≤ Fintype.card (hid 0)) :
-    ∀ᵐ θ ∂μ, ∃ u : d → ℝ, (∀ i, u ⬝ᵥ (θ.read 0)ᵀ i ≠ 0) ∧
-      IsUnit (∑ i, reluSqDeriv (u ⬝ᵥ (θ.read 0)ᵀ i)
-        • Matrix.vecMulVec ((θ.read 0)ᵀ i) (θ.write 0 i)).det := by
-  sorry
-
+omit [Fintype T] [Nonempty T] in
 /-- **The conditions "for generic parameters" of the proof of Theorem B.1 (iv), "The skipless
 network: equality", for ReLU²:** for one MLP block with at least `d ≥ 2` hidden units, at almost
 every parameter the hidden units are in general position in the sense for ReLU². -/
@@ -683,6 +681,7 @@ theorem ae_unitsGeneralPositionSq {σ : ℝ → ℝ}
     (hcard : Fintype.card d ≤ Fintype.card (hid 0)) :
     ∀ᵐ θ ∂μ, UnitsGeneralPositionSq (θ.read 0) (θ.write 0) := by
   -- the first two conditions are among those for ReLU; the other four are the statements above
+  have : Nonempty d := Fintype.card_pos_iff.1 (by omega)
   filter_upwards [ae_unitsGeneralPosition μ hd hcard, ae_forall_sum_reluSq_ne_zero μ,
     ae_exists_kink_point_reluSq μ hd (hd.trans hcard), ae_exists_quadRes_ne_zero μ hd,
     ae_exists_isUnit_det_reluSqDeriv μ hcard] with θ hG h3 h4 h5 h6
@@ -724,7 +723,7 @@ theorem ae_funDim_reluSq_oneBlock_skipless_rmsNorm_zero_of_le
   obtain ⟨hR, hW, hc⟩ := rank_of_unitsGeneralPositionSq hd hG
   exact funDim_mlp_oneBlock_rescale_skipless_rmsNorm_zero_of_unitsParallelAt
     (fun z _ => hasDerivAt_reluSq z) reluSq_homogeneous θ hd hθ.1 hθ.2 hR hW hc
-    (reluSq_unitsParallelAt_of_unitsGeneralPositionSq θ.E hd hθ.1 hG)
+    (reluSq_unitsParallelAt_of_unitsGeneralPositionSq θ.E hθ.1 hG)
     (exists_open_reluSq_of_unitsGeneralPositionSq θ.E hθ.1 hG)
 
 /-- **The same in the paper's own sense:** at almost every parameter a finite batch of inputs at
@@ -747,7 +746,7 @@ theorem ae_exists_jacobianRank_reluSq_oneBlock_skipless_rmsNorm_zero_of_le
   obtain ⟨hR, hW, hc⟩ := rank_of_unitsGeneralPositionSq hd hG
   exact exists_jacobianRank_mlp_oneBlock_rescale_skipless_rmsNorm_zero_of_unitsParallelAt
     (fun z _ => hasDerivAt_reluSq z) reluSq_homogeneous θ hd hθ.1 hθ.2 hR hW hc
-    (reluSq_unitsParallelAt_of_unitsGeneralPositionSq θ.E hd hθ.1 hG)
+    (reluSq_unitsParallelAt_of_unitsGeneralPositionSq θ.E hθ.1 hG)
     (exists_open_reluSq_of_unitsGeneralPositionSq θ.E hθ.1 hG)
 
 /-- **Theorem B.1 (iv) of the skips paper, "by exactly `d_model²` for ReLU and ReLU² blocks", for

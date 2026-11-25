@@ -110,10 +110,10 @@ private theorem dot_c_ugq (E : Matrix dIn d ℝ) (Wr : Matrix d q ℝ) (x : dIn 
   (congrFun (vecMul_vecMul x E Wr) i).symm
 
 /-- **"The kinks stay" and "One scale" for a ReLU² block whose units are in general position:**
-for `E` of rank `d ≥ 2`, `UnitsParallelAt` holds at the columns `c_i` of `E W_read` and the rows
+for `E` of rank `d`, `UnitsParallelAt` holds at the columns `c_i` of `E W_read` and the rows
 `a_i` of `W_write`. -/
 theorem reluSq_unitsParallelAt_of_unitsGeneralPositionSq (E : Matrix dIn d ℝ)
-    {Wr : Matrix d q ℝ} {Ww : Matrix q d ℝ} (hd : 2 ≤ Fintype.card d)
+    {Wr : Matrix d q ℝ} {Ww : Matrix q d ℝ}
     (hE : E.rank = Fintype.card d) (hG : UnitsGeneralPositionSq Wr Ww) :
     UnitsParallelAt reluSq reluSqDeriv 2 (fun i => (E * Wr)ᵀ i) (fun i => Ww i) := by
   -- `x ↦ x E` is onto (`E` has rank `d`), and `x · c_i = (x E) · w_i`

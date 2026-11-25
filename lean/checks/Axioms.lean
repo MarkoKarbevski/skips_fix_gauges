@@ -2250,3 +2250,17 @@ import SkipsLean
 #print axioms Skips.dimH_affMat_affPreservingSkipless
 #print axioms Skips.dimH_affMat_affPreservingResidual
 #print axioms Skips.dimH_affMat_affPreservingSkipless_eq_add
+#print axioms Skips.quad_proportional_of_quadRes_ne_zero
+#print axioms Skips.quad_vec_proportional_of_quadRes_ne_zero
+#print axioms Skips.reluSq_unitsParallelAt_of_generic
+#print axioms Skips.rank_of_unitsGeneralPositionSq
+#print axioms Skips.reluSq_unitsParallelAt_of_unitsGeneralPositionSq
+#print axioms Skips.exists_open_reluSq_of_unitsGeneralPositionSq
+#print axioms Skips.ae_forall_sum_reluSq_ne_zero
+#print axioms Skips.ae_exists_kink_point_reluSq
+#print axioms Skips.ae_exists_quadRes_ne_zero
+#print axioms Skips.ae_exists_isUnit_det_reluSqDeriv
+#print axioms Skips.ae_unitsGeneralPositionSq
+#print axioms Skips.ae_funDim_reluSq_oneBlock_skipless_rmsNorm_zero_of_le
+#print axioms Skips.ae_exists_jacobianRank_reluSq_oneBlock_skipless_rmsNorm_zero_of_le
+#print axioms Skips.ae_funDim_reluSq_oneBlock_residual_rmsNorm_zero_eq_add_of_le
