@@ -72,6 +72,7 @@ private theorem mul_right_cancel_of_rank_uri {m n k : Type*} [Fintype m] [Fintyp
     simpa [Matrix.mul_apply, Matrix.vecMul, dotProduct] using this
   exact congrFun (hinj hrow) j
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] in
 /-- **Lemma A.18, second sentence, for gated blocks, in infinitesimal form.** If `D` and every
 read have rank `d` and no row of a write vanishes, the direction `cobDir θ X + rescaleDir θ α`
 determines `X` and `α`. -/
@@ -120,6 +121,7 @@ theorem cobDir_add_rescaleDir_injective_of_rank_D
     | cast ℓ ih => exact (key ℓ ih).2
   exact Prod.ext (funext hX) (funext fun ℓ => (key ℓ (hX ℓ.succ)).1)
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] in
 /-- **Lemma A.18, second sentence, for ReLU and ReLU² blocks, in infinitesimal form.** For
 `k ≠ 0`: if `D` and every read have rank `d` and no row of a write vanishes, the direction
 `cobDir θ X + rescaleDirMlp k θ α` determines `X` and `α`. -/
@@ -177,6 +179,7 @@ private theorem exists_ne_zero_col_uri {m q : Type*} [Fintype m] (R : Matrix m q
   obtain ⟨a, ha⟩ := Function.ne_iff.mp h
   exact ⟨a, ha⟩
 
+omit [Fintype T] [Fintype dIn] in
 /-- **Lemma A.18, second sentence, for ReGLU blocks, in infinitesimal form.** If `D` has rank
 `d`, no row of a write vanishes, and the gate and value columns of every read are in general
 position (any `d` of them are linearly independent, and there are more than `d`), the direction
@@ -303,6 +306,7 @@ private theorem smul_right_cancel_uri {m n : Type*} {M : Matrix m n ℝ} (hM : M
   rw [Matrix.smul_apply, Matrix.smul_apply, smul_eq_mul, smul_eq_mul] at hij
   exact mul_right_cancel₀ hj hij
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] in
 /-- **Lemma A.18, second sentence, for `ε = 0`, in infinitesimal form** (any kind of block). If
 `D` and every read have rank `d`, and `E` and every write are not zero, the direction
 `cobDir θ Y + scaleDir θ β` determines the matrices `Y_0, …, Y_L` and the numbers
