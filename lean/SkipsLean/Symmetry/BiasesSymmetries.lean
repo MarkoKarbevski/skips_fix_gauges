@@ -26,7 +26,9 @@ Here, for the networks with biases of `Network/Biases.lean`:
 * `Biases.translateAt`, `hiddenB_translateAt`, `evalB_translateAt`: "in a skipless network […]
   each hidden state has its own translation": only `h_k` is shifted.
 
-The count of the lemma (the dimensions of the groups) is not stated here.
+The count of the lemma, as bounds on the functional dimension, is in `Symmetry/BiasesFlat.lean`
+(changes of basis and translations) and `Symmetry/InsideBlocksBiases.lean` (with the symmetries
+inside blocks); the dimensions of the groups themselves are not stated.
 -/
 
 namespace Skips

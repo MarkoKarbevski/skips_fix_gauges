@@ -367,3 +367,17 @@ import SkipsLean.Dimension.FunctionalBiases
 import SkipsLean.Symmetry.BiasesFlat
 import SkipsLean.OneBlock.MlpBiases
 import SkipsLean.Symmetry.BiasesRescale
+import SkipsLean.Dimension.FunctionalBiasesKinks
+import SkipsLean.Symmetry.BiasesFlatKinks
+import SkipsLean.Symmetry.InsideBlocksBiases
+import SkipsLean.Symmetry.BiasesRescaleCount
+import SkipsLean.OneBlock.GatedBiases
+import SkipsLean.Dimension.FunctionalBiasesOn
+import SkipsLean.OneBlock.RescaleBiases
+import SkipsLean.OneBlock.ReGLUBiases
+import SkipsLean.OneBlock.MlpBiasesNamed
+import SkipsLean.OneBlock.GatedBiasesNamed
+import SkipsLean.OneBlock.KeepsProductsBiases
+import SkipsLean.Residual.SmallWritesBiases
+import SkipsLean.Residual.DepthMlpBiases
+import SkipsLean.Residual.DepthGatedBiases
