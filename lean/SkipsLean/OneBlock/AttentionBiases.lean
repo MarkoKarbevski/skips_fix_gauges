@@ -511,6 +511,80 @@ theorem evalB_attention_two_tokens [DecidableEq T] (S : Fin 1 → Matrix d d ℝ
     sub_smul, Finset.sum_sub_distrib, Finset.smul_sum]
   abel
 
+/-! ### Helpers: Step 2 -/
+
+/-- Helper (copy of `hasDerivAt_vecMul_ob2`): `τ ↦ x N(τ)` has the derivative `x N'`. -/
+private theorem hasDerivAt_vecMul_abi {m n : Type*} [Fintype m] [Fintype n] (x : m → ℝ)
+    {N : ℝ → Matrix m n ℝ} {N' : Matrix m n ℝ} (hN : HasDerivAt N N' 0) :
+    HasDerivAt (fun τ => x ᵥ* N τ) (x ᵥ* N') 0 :=
+  hasDerivAt_pi.2 fun b => HasDerivAt.fun_sum (u := Finset.univ) fun a _ =>
+    (hasDerivAt_pi.1 (hasDerivAt_pi.1 hN a) b).const_mul (x a)
+
+/-- Helper (copy of `hasDerivAt_mulVec_ob2`): `τ ↦ N(τ) y` has the derivative `N' y`. -/
+private theorem hasDerivAt_mulVec_abi {m n : Type*} [Fintype m] [Fintype n] (y : n → ℝ)
+    {N : ℝ → Matrix m n ℝ} {N' : Matrix m n ℝ} (hN : HasDerivAt N N' 0) :
+    HasDerivAt (fun τ => N τ *ᵥ y) (N' *ᵥ y) 0 :=
+  hasDerivAt_pi.2 fun a => HasDerivAt.fun_sum (u := Finset.univ) fun b _ =>
+    (hasDerivAt_pi.1 (hasDerivAt_pi.1 hN a) b).mul_const (y b)
+
+/-- Helper (`hasDerivAt_units_ob2` with moving biases): the derivative at `0` of
+`τ ↦ x M(τ) + γ(τ) + ∑_i tanh(x c_i(τ) + β_i(τ)) a_i(τ)`, in the form of `UnitsRigid`. -/
+private theorem hasDerivAt_units_abi {n k q : Type*} [Fintype n] [Fintype k] [Fintype q]
+    (x : n → ℝ) {Mf : ℝ → Matrix n k ℝ} {γf : ℝ → k → ℝ} {cf : q → ℝ → n → ℝ}
+    {βf : q → ℝ → ℝ} {af : q → ℝ → k → ℝ} {M' : Matrix n k ℝ} {γ' : k → ℝ}
+    {c' c0 : q → n → ℝ} {β' β0 : q → ℝ} {a' a0 : q → k → ℝ} (hM : HasDerivAt Mf M' 0)
+    (hγ : HasDerivAt γf γ' 0) (hc : ∀ i, HasDerivAt (cf i) (c' i) 0)
+    (hβ : ∀ i, HasDerivAt (βf i) (β' i) 0) (ha : ∀ i, HasDerivAt (af i) (a' i) 0)
+    (hc0 : ∀ i, cf i 0 = c0 i) (hβ0 : ∀ i, βf i 0 = β0 i) (ha0 : ∀ i, af i 0 = a0 i) :
+    HasDerivAt (fun τ => x ᵥ* Mf τ + γf τ + ∑ i, Real.tanh (x ⬝ᵥ cf i τ + βf i τ) • af i τ)
+      (x ᵥ* M' + γ' + ∑ i, (Real.tanh (x ⬝ᵥ c0 i + β0 i) • a' i
+        + ((1 - Real.tanh (x ⬝ᵥ c0 i + β0 i) ^ 2) * (x ⬝ᵥ c' i + β' i)) • a0 i)) 0 := by
+  -- the chain rule through `tanh` for every unit
+  have hth : ∀ i, HasDerivAt (fun τ => Real.tanh (x ⬝ᵥ cf i τ + βf i τ))
+      ((1 - Real.tanh (x ⬝ᵥ c0 i + β0 i) ^ 2) * (x ⬝ᵥ c' i + β' i)) 0 := by
+    intro i
+    have hdot : HasDerivAt (fun τ => x ⬝ᵥ cf i τ + βf i τ) (x ⬝ᵥ c' i + β' i) 0 :=
+      (HasDerivAt.fun_sum (u := Finset.univ) fun j _ =>
+        (hasDerivAt_pi.1 (hc i) j).const_mul (x j)).fun_add (hβ i)
+    exact (hasDerivAt_tanh _).comp_of_eq (0 : ℝ) hdot (by simp only [hc0, hβ0])
+  have hsum := HasDerivAt.fun_sum (u := Finset.univ) fun i _ => (hth i).smul (ha i)
+  exact (((hasDerivAt_vecMul_abi x hM).add hγ).add hsum).congr_deriv
+    (by simp only [hc0, hβ0, ha0])
+
+/-- Helper (copy of `eq_zero_of_mulVec_ob2`): a matrix `N` with `N v = 0` for all `v` near `v₀`
+is `0`. -/
+private theorem eq_zero_of_mulVec_abi {m n : Type*} [Fintype m] [Fintype n] [DecidableEq n]
+    {P : (n → ℝ) → Prop} {v₀ : n → ℝ} (hP : ∀ᶠ v in nhds v₀, P v) (N : Matrix m n ℝ)
+    (h : ∀ v, P v → N *ᵥ v = 0) : N = 0 := by
+  -- the kernel of `v ↦ N v` has nonempty interior, so it is everything
+  have hK : LinearMap.ker (Matrix.mulVecLin N) = ⊤ := by
+    refine Submodule.eq_top_of_nonempty_interior' _ ⟨v₀, ?_⟩
+    exact interior_mono (fun v hv => LinearMap.mem_ker.2 (h v hv))
+      (mem_interior_iff_mem_nhds.2 hP)
+  ext a b
+  have h1 : Pi.single b 1 ∈ LinearMap.ker (Matrix.mulVecLin N) := hK ▸ Submodule.mem_top
+  have h2 := congrFun (LinearMap.mem_ker.1 h1) a
+  rw [Matrix.mulVecLin_apply, Matrix.mulVec_single_one] at h2
+  exact h2
+
+/-- Helper (copy of `eq_zero_of_vecMul_ob2`): a matrix `N` with `v N = 0` for all `v` near `v₀`
+is `0`. -/
+private theorem eq_zero_of_vecMul_abi {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m]
+    {P : (m → ℝ) → Prop} {v₀ : m → ℝ} (hP : ∀ᶠ v in nhds v₀, P v) (N : Matrix m n ℝ)
+    (h : ∀ v, P v → v ᵥ* N = 0) : N = 0 :=
+  Matrix.transpose_eq_zero.1 (eq_zero_of_mulVec_abi hP Nᵀ fun v hv => by
+    rw [Matrix.mulVec_transpose]
+    exact h v hv)
+
+/-- Helper: a row `w` with `w vᵀ = 0` for all `v` near `v₀` is `0`. -/
+private theorem eq_zero_of_dotProduct_abi {n : Type*} [Fintype n] [DecidableEq n]
+    {P : (n → ℝ) → Prop} {v₀ : n → ℝ} (hP : ∀ᶠ v in nhds v₀, P v) (w : n → ℝ)
+    (h : ∀ v, P v → w ⬝ᵥ v = 0) : w = 0 := by
+  have hN := eq_zero_of_mulVec_abi hP (Matrix.of fun _ : Unit => w) fun v hv => by
+    funext u
+    exact h v hv
+  exact congrFun hN ()
+
 /-- **Proof of Theorem B.1 (i) for attention blocks with biases, Step 2, for any stream matrix:**
 let token `t₂` see itself and another token `t₁`, and let some `v` have the columns `B_i v^⊤`
 nonzero and pairwise non-collinear and every row `v C_i` nonzero. Then a flat direction `η` of
@@ -527,6 +601,161 @@ theorem flatB_attention_oneBlock_keeps (S : Fin 1 → Matrix d d ℝ) (t₁ t₂
     (η.1.E * S 0 * p.1.D + p.1.E * S 0 * η.1.D = 0
         ∧ ∀ i, dAttnScore p.1 η.1 i = 0 ∧ dAttnValue p.1 η.1 i = 0)
       ∧ (∀ i, dAttnScoreBias p η i = 0) ∧ dAttnConst S p η = 0 := by
-  sorry
+  classical
+  -- along a flat direction the output at every input has the derivative `0`
+  have hflat : ∀ x : Matrix T dIn ℝ, HasDerivAt (fun τ : ℝ =>
+      evalB (Arch.attention sees id H dh) S (p + τ • η).1 (p + τ • η).2 x) 0 0 := by
+    intro x
+    have hdiff := differentiable_evalB (A := Arch.attention (T := T) (d := d) sees id H dh)
+      (S := S) (dIn := dIn) (dOut := dOut)
+      (fun ℓ => differentiable_f_attention sees id H dh ℓ) differentiable_id x
+    have h0 : fderiv ℝ (fun q : ParamsB (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut
+        => evalB (Arch.attention sees id H dh) S q.1 q.2 x) p η = 0 :=
+      LinearMap.mem_ker.1 ((Submodule.mem_iInf _).1 hη x)
+    -- the line `τ ↦ p + τ η` has velocity `η` and passes through `p` at `τ = 0`
+    have hline : HasDerivAt (fun τ : ℝ => p + τ • η) η 0 := by
+      have h := ((hasDerivAt_id (0 : ℝ)).smul_const η).const_add p
+      rw [one_smul] at h
+      exact h
+    have hp0 : p = p + (0 : ℝ) • η := by rw [zero_smul, add_zero]
+    exact ((hdiff p).hasFDerivAt.comp_hasDerivAt_of_eq (0 : ℝ) hline hp0).congr_deriv h0
+  -- the derivative of `E(τ) S_0 D(τ)`
+  have hEMD : HasDerivAt (fun τ : ℝ => (p + τ • η).1.E * S 0 * (p + τ • η).1.D)
+      (η.1.E * S 0 * p.1.D + p.1.E * S 0 * η.1.D) 0 :=
+    (hasDerivAt_mul_abi (hasDerivAt_mul_abi (hasDerivAt_line_abi p.1.E η.1.E)
+      (hasDerivAt_const (0 : ℝ) (S 0))) (hasDerivAt_line_abi p.1.D η.1.D)).congr_deriv
+      (by simp only [zero_smul, add_zero, Matrix.mul_zero])
+  -- equation (16) with biases along the line `p + τ η`, differentiated at `τ = 0`, for all `u`, `v`
+  have hzero : ∀ u v : dIn → ℝ,
+      u ᵥ* (η.1.E * S 0 * p.1.D + p.1.E * S 0 * η.1.D + ∑ i, dAttnValue p.1 η.1 i)
+        + (-(1 / 2 : ℝ) • (v ᵥ* ∑ i, dAttnValue p.1 η.1 i) + dAttnConst S p η)
+        + ∑ i, (Real.tanh (u ⬝ᵥ ((1 / 2 : ℝ) • (attnScore p.1 i *ᵥ v))
+              + ((1 / 2) * (attnScoreBias p i ⬝ᵥ v) + -(1 / 2)
+                * Real.log ((Finset.univ.filter fun s => sees t₂ s ∧ s ≠ t₂).card : ℝ)))
+            • ((1 / 2 : ℝ) • (v ᵥ* dAttnValue p.1 η.1 i))
+          + ((1 - Real.tanh (u ⬝ᵥ ((1 / 2 : ℝ) • (attnScore p.1 i *ᵥ v))
+              + ((1 / 2) * (attnScoreBias p i ⬝ᵥ v) + -(1 / 2)
+                * Real.log ((Finset.univ.filter fun s => sees t₂ s ∧ s ≠ t₂).card : ℝ))) ^ 2)
+              * (u ⬝ᵥ ((1 / 2 : ℝ) • (dAttnScore p.1 η.1 i *ᵥ v))
+                + (1 / 2) * (dAttnScoreBias p η i ⬝ᵥ v)))
+            • ((1 / 2 : ℝ) • (v ᵥ* attnValue p.1 i))) = 0 := by
+    intro u v
+    have hG := hasDerivAt_units_abi u
+      (Mf := fun τ => (p + τ • η).1.E * S 0 * (p + τ • η).1.D
+        + ∑ i, attnValue (p + τ • η).1 i)
+      (γf := fun τ => -(1 / 2 : ℝ) • (v ᵥ* ∑ i, attnValue (p + τ • η).1 i)
+        + attnConst S (p + τ • η))
+      (cf := fun i τ => (1 / 2 : ℝ) • (attnScore (p + τ • η).1 i *ᵥ v))
+      (βf := fun i τ => (1 / 2) * (attnScoreBias (p + τ • η) i ⬝ᵥ v) + -(1 / 2)
+        * Real.log ((Finset.univ.filter fun s => sees t₂ s ∧ s ≠ t₂).card : ℝ))
+      (af := fun i τ => (1 / 2 : ℝ) • (v ᵥ* attnValue (p + τ • η).1 i))
+      (c0 := fun i => (1 / 2 : ℝ) • (attnScore p.1 i *ᵥ v))
+      (β0 := fun i => (1 / 2) * (attnScoreBias p i ⬝ᵥ v) + -(1 / 2)
+        * Real.log ((Finset.univ.filter fun s => sees t₂ s ∧ s ≠ t₂).card : ℝ))
+      (a0 := fun i => (1 / 2 : ℝ) • (v ᵥ* attnValue p.1 i))
+      (hEMD.add (HasDerivAt.fun_sum (u := Finset.univ) fun i _ =>
+        hasDerivAt_attnValue p.1 η.1 i))
+      (((hasDerivAt_vecMul_abi v (HasDerivAt.fun_sum (u := Finset.univ) fun i _ =>
+        hasDerivAt_attnValue p.1 η.1 i)).const_smul (-(1 / 2 : ℝ))).add
+          (hasDerivAt_attnConst S p η))
+      (fun i => (hasDerivAt_mulVec_abi v (hasDerivAt_attnScore p.1 η.1 i)).const_smul
+        (1 / 2 : ℝ))
+      (fun i => ((hasDerivAt_dotProduct_abi v (hasDerivAt_attnScoreBias p η i)).const_mul
+        (1 / 2 : ℝ)).add_const _)
+      (fun i => (hasDerivAt_vecMul_abi v (hasDerivAt_attnValue p.1 η.1 i)).const_smul
+        (1 / 2 : ℝ))
+      (fun i => by simp only [zero_smul, add_zero]) (fun i => by simp only [zero_smul, add_zero])
+      (fun i => by simp only [zero_smul, add_zero])
+    have hF := hasDerivAt_pi.1 (hflat (Matrix.of fun t => if t = t₂ then u else u - v)) t₂
+    refine hG.unique (hF.congr_of_eventuallyEq (Filter.Eventually.of_forall fun τ => ?_))
+    dsimp only
+    -- equation (16) with biases at `p + τ η`
+    rw [evalB_attention_two_tokens S t₁ t₂ h12 hs2 hs1 (p + τ • η) u v, neg_smul]
+    have hs : ∑ i, Real.tanh (u ⬝ᵥ ((1 / 2 : ℝ) • (attnScore (p + τ • η).1 i *ᵥ v))
+          + ((1 / 2) * (attnScoreBias (p + τ • η) i ⬝ᵥ v) + -(1 / 2)
+            * Real.log ((Finset.univ.filter fun s => sees t₂ s ∧ s ≠ t₂).card : ℝ)))
+          • ((1 / 2 : ℝ) • (v ᵥ* attnValue (p + τ • η).1 i))
+        = ∑ i, ((1 / 2 : ℝ) * Real.tanh ((1 / 2) * (u ⬝ᵥ (attnScore (p + τ • η).1 i *ᵥ v)
+            + attnScoreBias (p + τ • η) i ⬝ᵥ v
+            - Real.log ((Finset.univ.filter fun s => sees t₂ s ∧ s ≠ t₂).card : ℝ))))
+          • (v ᵥ* attnValue (p + τ • η).1 i) := by
+      refine Finset.sum_congr rfl fun i _ => ?_
+      have harg : u ⬝ᵥ ((1 / 2 : ℝ) • (attnScore (p + τ • η).1 i *ᵥ v))
+          + ((1 / 2) * (attnScoreBias (p + τ • η) i ⬝ᵥ v) + -(1 / 2)
+            * Real.log ((Finset.univ.filter fun s => sees t₂ s ∧ s ≠ t₂).card : ℝ))
+          = (1 / 2) * (u ⬝ᵥ (attnScore (p + τ • η).1 i *ᵥ v)
+            + attnScoreBias (p + τ • η) i ⬝ᵥ v
+            - Real.log ((Finset.univ.filter fun s => sees t₂ s ∧ s ≠ t₂).card : ℝ)) := by
+        rw [dotProduct_smul, smul_eq_mul]
+        ring
+      rw [harg, smul_smul, mul_comm]
+    rw [hs]
+    abel
+  -- Step 2, Lemma B.3 for tanh, at every `v` with the three properties
+  have hstep : ∀ v : dIn → ℝ, (∀ i, attnScore p.1 i *ᵥ v ≠ 0)
+      → (∀ i j, i ≠ j → ∀ r : ℝ, attnScore p.1 i *ᵥ v ≠ r • (attnScore p.1 j *ᵥ v))
+      → (∀ i, v ᵥ* attnValue p.1 i ≠ 0)
+      → (η.1.E * S 0 * p.1.D + p.1.E * S 0 * η.1.D + ∑ i, dAttnValue p.1 η.1 i = 0
+          ∧ -(1 / 2 : ℝ) • (v ᵥ* ∑ i, dAttnValue p.1 η.1 i) + dAttnConst S p η = 0)
+        ∧ (∀ i, dAttnScore p.1 η.1 i *ᵥ v = 0) ∧ (∀ i, dAttnScoreBias p η i ⬝ᵥ v = 0)
+        ∧ (∀ i, v ᵥ* dAttnValue p.1 η.1 i = 0) := by
+    intro v h1 h2 h3
+    have hhalf : (1 / 2 : ℝ) ≠ 0 := by norm_num
+    obtain ⟨hψM, hψγ, hψc, hψβ, hψa⟩ := tanh_unitsRigid dIn dOut (H 0)
+      (fun i => (1 / 2 : ℝ) • (attnScore p.1 i *ᵥ v))
+      (fun i => (1 / 2) * (attnScoreBias p i ⬝ᵥ v) + -(1 / 2)
+        * Real.log ((Finset.univ.filter fun s => sees t₂ s ∧ s ≠ t₂).card : ℝ))
+      (fun i => (1 / 2 : ℝ) • (v ᵥ* attnValue p.1 i))
+      (η.1.E * S 0 * p.1.D + p.1.E * S 0 * η.1.D + ∑ i, dAttnValue p.1 η.1 i)
+      (-(1 / 2 : ℝ) • (v ᵥ* ∑ i, dAttnValue p.1 η.1 i) + dAttnConst S p η)
+      (fun i => (1 / 2 : ℝ) • (dAttnScore p.1 η.1 i *ᵥ v))
+      (fun i => (1 / 2) * (dAttnScoreBias p η i ⬝ᵥ v))
+      (fun i => (1 / 2 : ℝ) • (v ᵥ* dAttnValue p.1 η.1 i))
+      (fun i => smul_ne_zero hhalf (h3 i)) (fun i => smul_ne_zero hhalf (h1 i))
+      (fun i j hij r hr => h2 i j hij r (by
+        rw [smul_comm r] at hr
+        exact smul_right_injective _ hhalf hr))
+      (fun x => hzero x v)
+    refine ⟨⟨hψM, hψγ⟩, fun i => ?_, fun i => ?_, fun i => ?_⟩
+    · have h := congrFun hψc i
+      simpa [hhalf] using h
+    · have h := congrFun hψβ i
+      simpa [hhalf] using h
+    · have h := congrFun hψa i
+      simpa [hhalf] using h
+  -- the `v` with the three properties form a neighbourhood of the given one
+  obtain ⟨v₀, hv1, hv2, hv3⟩ := hv
+  have hB : ∀ i, Continuous fun v : dIn → ℝ => attnScore p.1 i *ᵥ v :=
+    fun i => continuous_const.matrix_mulVec continuous_id
+  have hC : ∀ i, Continuous fun v : dIn → ℝ => v ᵥ* attnValue p.1 i :=
+    fun i => continuous_id.matrix_vecMul continuous_const
+  have hnhds : ∀ᶠ v in nhds v₀, (∀ i, attnScore p.1 i *ᵥ v ≠ 0)
+      ∧ (∀ i j, i ≠ j → ∀ r : ℝ, attnScore p.1 i *ᵥ v ≠ r • (attnScore p.1 j *ᵥ v))
+      ∧ (∀ i, v ᵥ* attnValue p.1 i ≠ 0) := by
+    refine (Filter.eventually_all.2 fun i => (hB i).continuousAt.eventually_ne (hv1 i)).and
+      ((Filter.eventually_all.2 fun i => Filter.eventually_all.2 fun j => ?_).and
+        (Filter.eventually_all.2 fun i => (hC i).continuousAt.eventually_ne (hv3 i)))
+    by_cases hij : i = j
+    · exact Filter.Eventually.of_forall fun _ h => absurd hij h
+    · -- non-collinearity of a pair is linear independence, an open condition
+      have hli : LinearIndependent ℝ ![attnScore p.1 i *ᵥ v₀, attnScore p.1 j *ᵥ v₀] := by
+        rw [linearIndependent_fin2]
+        exact ⟨hv1 j, fun r h => hv2 i j hij r h.symm⟩
+      have hcont : Continuous fun v : dIn → ℝ => ![attnScore p.1 i *ᵥ v, attnScore p.1 j *ᵥ v] :=
+        continuous_pi (Fin.forall_fin_two.2 ⟨hB i, hB j⟩)
+      refine ((hcont.tendsto v₀).eventually hli.eventually).mono fun v hv _ r h => ?_
+      rw [linearIndependent_fin2] at hv
+      exact hv.2 r h.symm
+  -- a matrix (a row) that kills every `v` of a neighbourhood is `0`
+  have hdB : ∀ i, dAttnScore p.1 η.1 i = 0 := fun i =>
+    eq_zero_of_mulVec_abi hnhds _ fun v hv => (hstep v hv.1 hv.2.1 hv.2.2).2.1 i
+  have hdβ : ∀ i, dAttnScoreBias p η i = 0 := fun i =>
+    eq_zero_of_dotProduct_abi hnhds _ fun v hv => (hstep v hv.1 hv.2.1 hv.2.2).2.2.1 i
+  have hdC : ∀ i, dAttnValue p.1 η.1 i = 0 := fun i =>
+    eq_zero_of_vecMul_abi hnhds _ fun v hv => (hstep v hv.1 hv.2.1 hv.2.2).2.2.2 i
+  obtain ⟨hM, hγ⟩ := (hstep v₀ hv1 hv2 hv3).1
+  simp only [hdC, Finset.sum_const_zero, add_zero] at hM
+  simp only [hdC, Finset.sum_const_zero, Matrix.vecMul_zero, smul_zero, zero_add] at hγ
+  exact ⟨⟨hM, fun i => ⟨hdB i, hdC i⟩⟩, hdβ, hγ⟩
 
 end Skips
