@@ -1815,3 +1815,15 @@ import SkipsLean
 #print axioms Skips.finrank_span_keeps_products
 #print axioms Skips.finrank_span_keeps_products_and_ED
 #print axioms Skips.cobDir_injective_of_rank_D
+#print axioms Skips.tanh_unitsNoSymmetricPart
+#print axioms Skips.gelu_unitsNoSymmetricPart
+#print axioms Skips.noSymmetricPart_mlp_rmsNorm_of_units
+#print axioms Skips.ae_funDimLearned_tanh_rmsNorm_eq_residual_add_of_nonempty
+#print axioms Skips.ae_funDimLearned_tanh_rmsNorm_of_nonempty
+#print axioms Skips.ae_funDimLearned_gelu_rmsNorm_eq_residual_add_of_nonempty
+#print axioms Skips.ae_funDimLearned_gelu_rmsNorm_of_nonempty
+#print axioms Skips.exists_cob_residual_write_eq_one
+#print axioms Skips.exists_cob_residual_E_eq_one
+#print axioms Skips.exists_cob_residual_write_lowerTriangular
+#print axioms Skips.exists_cob_residual_E_lowerTriangular
+#print axioms Skips.exists_cob_writes_lowerTriangular
