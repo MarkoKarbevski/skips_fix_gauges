@@ -4,6 +4,8 @@ STATUS: complete
 
 Date: 24 November 2026. Commit of `/home/claude/lw` (branch `lean-wip`): `1d88b3d`, working tree clean.
 
+**Updated by the coordinator at 02:42 UTC, 25 November 2026 (`checks/Axioms.lean` has 1901 names; full build `br` at 02:03 UTC (1865 names, no `sorryAx`); `main` is the snapshot `ddc4c0b` of 02:08 UTC with 1865 names, built and checked in the main checkout; two files with `sorry`: `Residual/DepthRescaleOpen.lean` and `Residual/DepthReGLUOpen.lean` (one proving agent since 02:30)):** D Lemma D.13: in work → proved (02:42: 4 theorems, each on the three standard axioms: `θ†` as a definition, good for the positive orthants with the paper's active sets and frozen blocks, and the independence over `ℚ` of (K3); with the thirtieth reader). Counts: D all numbered 30·3·1·0 → 31·3·0·0. The twenty-ninth audit is complete (02:39): nothing false, vacuous or drifted in four files; its corrections are in the index. The thirtieth runs since 02:41 (ten files). Counts (proved·in part·in work·not started): D 34: 30·3·1·0 → 31·3·0·0; S 35: 22·8·1·4; A 30: 30·0·0·0; main texts: D 7·0·0·0, S 10·0·0·0, A 13·0·0·0.
+
 **Updated by the coordinator at 02:38 UTC, 25 November 2026 (`checks/Axioms.lean` has 1897 names; full build `br` at 02:03 UTC (1865 names, no `sorryAx`); `main` is the snapshot `ddc4c0b` of 02:08 UTC with 1865 names, built and checked in the main checkout; three files with `sorry`: `Residual/DepthRescaleOpen.lean` and `Residual/DepthReGLUOpen.lean` (one proving agent since 02:30), `Depth/ThetaDagger.lean` (one since 02:37)):** D Lemma D.13: in part → in work (02:37: `θ†` written out as a definition, the positive orthant, and the lemma with them, 3 statements with one proving agent; with them every sentence of the lemma is stated). Counts: D all numbered 30·4·0·0 → 30·3·1·0. Proved since 02:33 (10 theorems, each on the three standard axioms): the fourth value of S Lemma A.27 for networks of attention blocks and MLP or gated blocks (8, at 02:35), so that this value is proved for every kind of network of the lemma; S Proposition A.1 (iii) for the maps of (ii): changes of basis at different hidden states commute (2, at 02:34). Counts (proved·in part·in work·not started): D 34: 30·4·0·0 → 30·3·1·0; S 35: 22·8·1·4; A 30: 30·0·0·0; main texts: D 7·0·0·0, S 10·0·0·0, A 13·0·0·0.
 
 **Updated by the coordinator at 02:33 UTC, 25 November 2026 (`checks/Axioms.lean` has 1887 names; full build `br` at 02:03 UTC (1865 names, no `sorryAx`); `main` is the snapshot `ddc4c0b` of 02:08 UTC with 1865 names, built and checked in the main checkout; three files with `sorry`: `Residual/BlocksAloneTransformer.lean` (one proving agent since 02:22), `Residual/DepthRescaleOpen.lean` and `Residual/DepthReGLUOpen.lean` (one since 02:30)):** S Theorem A.28: in work → proved (02:33: part (i) for the networks without an embedding and a readout, `L + 2` MLP blocks under `UnitsRigid`, named for GELU, under Sard's theorem; with (ii), (iv) of 24 November and (iii) of 02:18 every part is proved; the statements of (i) and of (iii) for narrow blocks are not yet compared by a second reader). Proved with it (17 theorems registered, each on the three standard axioms): the fourth value of S Lemma A.27 for tanh, GELU, SwiGLU and GeGLU blocks, from one general statement for any blocks. Counts: S all numbered 21·8·2·4 → 22·8·1·4. Counts (proved·in part·in work·not started): D 34: 30·4·0·0; S 35: 21·8·2·4 → 22·8·1·4; A 30: 30·0·0·0; main texts: D 7·0·0·0, S 10·0·0·0, A 13·0·0·0.
@@ -262,7 +264,7 @@ A.31, A.34, B.4, B.5; A 5.2, 5.3, A.8, A.12, A.16, C.3 to C.5, C.7).
 | LD.10 | Lemma D.10 (The rest of the network on a ray) | in part | `scaledSuffix`, `suffix_pow_smul_eq_scaledSuffix`, `analyticAt_scaledSuffix`, `scaledSuffix_neg`, `fderiv_suffix_pow_smul`, `fderiv_params_suffix_pow_smul` (`Depth/ScaledSuffix.lean`) | Proved for a real variable: `𝓑_{>k}(t^m h)` is real-analytic in `(θ, 1/t, h)` also at `1/t = 0`, and its first derivatives are written in it. Missing: the derivatives of all orders and "meromorphic at infinity" for them; the holomorphic extension with bounds uniform in `t`. |
 | LD.11 | Lemma D.11 (The network after h_k far out in its cone) | in part | `exists_far_frozen_bounds` (`Depth/FrozenFar.lean`) | Proved (since `31752fa`) for real hidden states: the bounds `e^{−κ t^p}` for the network, for its derivative in the hidden state and for its derivative in the weights. Not stated: the holomorphic extension to complex `u` (the Lean proof of Lemma D.12 does not use it: the bound on the derivative in the hidden state, which the paper gets from the extension by Cauchy's estimate, is a clause of the Lean statement). |
 | LD.12 | Lemma D.12 (The step for GELU and gated blocks on rays) | proved | `claimGated_castSucc_swiglu`, `claimGated_castSucc_swiglu_rmsNorm`, `claimGated_castSucc_geglu`, `claimGated_castSucc_geglu_rmsNorm`, `claimRMS_castSucc_gelu` (`Depth/StepGated.lean`) | All settings of the lemma (since `1e04d9e`): GELU blocks in the case (+), gated blocks (SwiGLU, GeGLU) in the cases (n) and (+). The Lean route uses a real variable only; hidden states have the rows `T`. |
-| LD.13 | Lemma D.13 (θ† is good) | in work | `exists_goodForConesGated_cols`, `exists_goodForConesGated_outer`, `exists_goodForConesMlp_outer` (`Depth/Cones.lean`) | Proved as existence: there are cones, active sets and a parameter good for them, with the independence of (K3), for SwiGLU, GeGLU and GELU blocks. Not stated: the explicit `θ†`, the positive orthant as every cone, `A_ℓ = {1, …, d}` and the formulas `g°_ℓ(n) = n`, `(n𝟙) n` (they are private in the proof). See the unsure cases. **Stated at 02:37 UTC, 25 November** (`Depth/ThetaDagger.lean`, 3 statements, one proving agent): `θ†` as a definition for gated and MLP blocks (`thetaDaggerGated`, `thetaDaggerMlp`, with embeddings for "the first `d_model` coordinates"), the positive orthant (`posOrthant`), and the lemma: there are `μ > 0` such that `θ†` is good for the positive orthants with `A_ℓ` the image of the embedding, `g°_ℓ(n) = (n𝟙) n` for gated blocks and `n` for GELU blocks, and the independence over `ℚ` of (K3). With these every sentence of the lemma is stated. |
+| LD.13 | Lemma D.13 (θ† is good) | proved | `exists_goodForConesGated_cols`, `exists_goodForConesGated_outer`, `exists_goodForConesMlp_outer` (`Depth/Cones.lean`) | Proved as existence: there are cones, active sets and a parameter good for them, with the independence of (K3), for SwiGLU, GeGLU and GELU blocks. Not stated: the explicit `θ†`, the positive orthant as every cone, `A_ℓ = {1, …, d}` and the formulas `g°_ℓ(n) = n`, `(n𝟙) n` (they are private in the proof). See the unsure cases. **Stated at 02:37 UTC, 25 November** (`Depth/ThetaDagger.lean`, 3 statements, one proving agent): `θ†` as a definition for gated and MLP blocks (`thetaDaggerGated`, `thetaDaggerMlp`, with embeddings for "the first `d_model` coordinates"), the positive orthant (`posOrthant`), and the lemma: there are `μ > 0` such that `θ†` is good for the positive orthants with `A_ℓ` the image of the embedding, `g°_ℓ(n) = (n𝟙) n` for gated blocks and `n` for GELU blocks, and the independence over `ℚ` of (K3). With these every sentence of the lemma is stated. **Proved at 02:42 UTC, 25 November** (4 theorems, `Depth/ThetaDagger.lean`; with the thirtieth reader): `exists_mu_thetaDaggerGated_cols` (SwiGLU), `exists_mu_thetaDaggerGated_outer` (GeGLU), `exists_mu_thetaDaggerMlp_outer` (GELU), `mem_posOrthant`. |
 | LD.14 | Lemma D.14 (B_{>k} on a complex cone) | proved | `suffixC`, `HolomorphicOnCone`, `exists_holomorphicOnCone` (`Depth/ComplexSuffix.lean`); `holomorphicOnCone_last`, `exists_holomorphicOnCone_castSucc`, `HolomorphicOnCone.congr`, `exists_holomorphicOnCone_of_ne_zero` (`Depth/ComplexSuffixStep.lean`) | For MLP blocks whose activation extends to a map holomorphic at the real points. With (R2) alone (the paper asks (R1) and (R2); (R1) is not used); "`κ_k` depends only on the weights of the blocks `k+1, …, L` and on `D`" is `HolomorphicOnCone.congr`. `suffixC_smul_rows` is "`𝓑_{>k}(λh) = 𝓑_{>k}(h)`". |
 | LD.15 | Lemma D.15 (Continuation) | proved | `tangentRMSC`, `zdotC`, `blockLHSC`, `pathMatrix`, `blockLHSC_ofReal`, `blockLHSC_pathMatrix_eq_zero` (`Depth/ComplexBlockIdentity.lean`) | For an MLP block whose real-analytic activation extends to a map holomorphic at the real points, regular `θ`, `𝓑_{>k+1}` holomorphic on `C_κ`; the hypothesis "(22)" is stated as (16), equivalent for regular `θ`; a pair `ξ, ξ'` per token. |
 | LD.16 | Lemma D.16 (Separation on the path) | proved | `eventually_eq_zero_of_sum_pow_mul_exp_path`, `path_separation` (`Depth/PathSeparation.lean`) | As in the paper (holomorphic maps of several variables are `AnalyticOnNhd ℂ`; the values are in any complex normed space), with its middle step for maps analytic at `0` and an identity for all large `t`. |
@@ -277,8 +279,8 @@ Counts for D:
 | | proved | in part | in work | not started | total |
 |---|---|---|---|---|---|
 | main text | 7 | 0 | 0 | 0 | 7 |
-| appendices | 23 | 3 | 1 | 0 | 27 |
-| together | 30 | 3 | 1 | 0 | 34 |
+| appendices | 24 | 3 | 0 | 0 | 27 |
+| together | 31 | 3 | 0 | 0 | 34 |
 
 ## S: the skips paper
 
@@ -376,8 +378,8 @@ Counts for A:
 | | proved | in part | in work | not started | total |
 |---|---|---|---|---|---|
 | main texts | 30 | 0 | 0 | 0 | 30 |
-| appendices | 52 | 11 | 2 | 4 | 69 |
-| together | 82 | 11 | 2 | 4 | 99 |
+| appendices | 53 | 11 | 1 | 4 | 69 |
+| together | 83 | 11 | 1 | 4 | 99 |
 
 ## Cases where I was unsure
 
@@ -462,7 +464,7 @@ D LD.9 proved
 D LD.10 in-part
 D LD.11 in-part
 D LD.12 proved
-D LD.13 in-work
+D LD.13 proved
 D LD.14 proved
 D LD.15 proved
 D LD.16 proved
