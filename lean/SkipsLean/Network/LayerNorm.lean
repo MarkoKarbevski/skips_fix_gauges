@@ -105,6 +105,77 @@ noncomputable def Biases.centerLN (ε : ℝ) (b : Biases A dOut) (θ : Params A 
   write ℓ := b.write ℓ ᵥ* centering d
   D := b.D + β (Fin.last L) ᵥ* θ.D
 
+omit [Fintype m] [DecidableEq m] in
+/-- Helper: the hidden state `h_0` of the pre-LayerNorm network. -/
+private theorem hiddenLN_zero_lno (ε : ℝ) (S : Fin L → Matrix d d ℝ) (θ : Params A dIn dOut)
+    (b : Biases A dOut) (γ β : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) :
+    hiddenLN A ε S θ b γ β x 0 = x * θ.E + Matrix.of fun _ => b.E := by
+  simp [hiddenLN]
+
+omit [Fintype m] [DecidableEq m] in
+/-- Helper: the hidden state `h_{ℓ+1}` of the pre-LayerNorm network. -/
+private theorem hiddenLN_succ_lno (ε : ℝ) (S : Fin L → Matrix d d ℝ) (θ : Params A dIn dOut)
+    (b : Biases A dOut) (γ β : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) (ℓ : Fin L) :
+    hiddenLN A ε S θ b γ β x ℓ.succ = hiddenLN A ε S θ b γ β x ℓ.castSucc * S ℓ
+      + (A.f ℓ (layerNorm ε (γ ℓ.castSucc) (β ℓ.castSucc) (hiddenLN A ε S θ b γ β x ℓ.castSucc)
+          * θ.read ℓ + Matrix.of fun _ => b.read ℓ) * θ.write ℓ
+        + Matrix.of fun _ => b.write ℓ) := by
+  simp [hiddenLN]
+
+omit [Fintype d] [DecidableEq d] [Fintype m] [DecidableEq m] [Fintype dIn] in
+/-- Helper: a matrix whose rows are all `v`, times `M`, has all rows `v M`. -/
+private theorem of_const_mul_lno {n k : Type*} [Fintype n] (v : n → ℝ) (M : Matrix n k ℝ) :
+    (Matrix.of fun (_ : T) => v) * M = Matrix.of fun _ => v ᵥ* M := by
+  ext t j
+  rfl
+
+omit [Fintype m] [DecidableEq m] [Fintype dIn] in
+/-- Helper, a read through LayerNorm: `LN(h) W + 1 c = N_ε(h Z) (diag(γ) W) + 1 (c + β W)`. -/
+private theorem layerNorm_mul_add_lno (ε : ℝ) (g β : d → ℝ) {r : Type*}
+    (h : Matrix T d ℝ) (W : Matrix d r ℝ) (c : r → ℝ) :
+    layerNorm ε g β h * W + Matrix.of (fun _ => c)
+      = rmsNorm ε (h * centering d) * (Matrix.diagonal g * W)
+        + Matrix.of fun _ => c + β ᵥ* W := by
+  unfold layerNorm
+  rw [Matrix.add_mul, Matrix.mul_assoc, of_const_mul_lno, add_assoc]
+  congr 1
+  ext t j
+  exact add_comm _ _
+
+omit [Fintype m] [DecidableEq m] [Fintype dIn] in
+/-- Helper, one block of the centred network: if its hidden state is `h Z`, the next one is
+`h' Z` for the next hidden state `h'` of the pre-LayerNorm network. -/
+private theorem step_centerLN_lno (ε : ℝ) (Sℓ : Matrix d d ℝ)
+    (hSℓ : centering d * Sℓ = Sℓ * centering d) {r w : Type*} [Fintype w]
+    (f : Matrix T r ℝ → Matrix T w ℝ) (g β : d → ℝ) (R : Matrix d r ℝ) (br : r → ℝ)
+    (W : Matrix w d ℝ) (bw : d → ℝ) (h : Matrix T d ℝ) :
+    h * centering d * Sℓ
+        + (f (rmsNorm ε (h * centering d) * (Matrix.diagonal g * R)
+            + Matrix.of fun _ => br + β ᵥ* R) * (W * centering d)
+          + Matrix.of fun _ => bw ᵥ* centering d)
+      = (h * Sℓ + (f (layerNorm ε g β h * R + Matrix.of fun _ => br) * W
+          + Matrix.of fun _ => bw)) * centering d := by
+  -- the read sees `N_ε(h Z)` on both sides; the stream: `h Z S = h S Z`
+  rw [layerNorm_mul_add_lno, Matrix.add_mul, Matrix.add_mul, Matrix.mul_assoc h, hSℓ,
+    ← Matrix.mul_assoc, Matrix.mul_assoc _ W, of_const_mul_lno]
+
+omit [Fintype m] [DecidableEq m] in
+/-- Helper: the hidden states of the centred network are `h_ℓ Z`. -/
+private theorem hiddenB_centerLN_lno (ε : ℝ) (S : Fin L → Matrix d d ℝ)
+    (hS : ∀ ℓ, centering d * S ℓ = S ℓ * centering d) (θ : Params A dIn dOut)
+    (b : Biases A dOut) (γ β : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) (k : Fin (L + 1)) :
+    hiddenB (A.withNorm (rmsNorm ε)) S (θ.centerLN ε γ) (b.centerLN ε θ β) x k
+      = hiddenLN A ε S θ b γ β x k * centering d := by
+  induction k using Fin.induction with
+  | zero =>
+    -- `(x E + 1 b_E) Z = x (E Z) + 1 (b_E Z)`
+    rw [hiddenB_zero, hiddenLN_zero_lno, Matrix.add_mul, Matrix.mul_assoc, of_const_mul_lno]
+    rfl
+  | succ ℓ ih =>
+    rw [hiddenB_succ, ih, hiddenLN_succ_lno]
+    exact step_centerLN_lno ε (S ℓ) (hS ℓ) (A.f ℓ) (γ ℓ.castSucc) (β ℓ.castSucc) (θ.read ℓ)
+      (b.read ℓ) (θ.write ℓ) (b.write ℓ) _
+
 /-- **Proposition A.3 (i) / A.15 (i), "gives a network that computes the same function":** for
 stream matrices that commute with `Z`, the pre-LayerNorm network computes the function of the
 pre-RMSNorm network with the centred weights and biases. -/
@@ -113,7 +184,9 @@ theorem evalLN_eq_evalB_centerLN (ε : ℝ) (S : Fin L → Matrix d d ℝ)
     (b : Biases A dOut) (γ β : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) :
     evalLN A ε S θ b γ β x
       = evalB (A.withNorm (rmsNorm ε)) S (θ.centerLN ε γ) (b.centerLN ε θ β) x := by
-  sorry
+  -- the readout reads `N_ε(h_L Z)` with the weights `diag(γ_L) D` and the bias `b_D + β_L D`
+  rw [evalLN, evalB, hiddenB_centerLN_lno ε S hS, layerNorm_mul_add_lno]
+  rfl
 
 /-- **Proposition A.3 (i) for a skipless pre-LayerNorm network.** -/
 theorem evalLN_eq_evalB_centerLN_skipless (ε : ℝ) (θ : Params A dIn dOut) (b : Biases A dOut)
