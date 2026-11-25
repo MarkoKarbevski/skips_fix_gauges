@@ -186,13 +186,430 @@ theorem sumAct_parts (lA : InsideBlocksLocal actA SgA) (lB : InsideBlocksLocal a
   · exact (lA.biasE_eq σ.1 h1 _).trans (lB.biasE_eq σ.2 h2 _)
   · exact (lA.biasD_eq σ.1 h1 _).trans (lB.biasD_eq σ.2 h2 _)
 
+/-! ### Helpers for the family of the pairs -/
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the first part of `q` with its first part replaced by `a` is `a`. -/
+private theorem sumFst_sumReplaceFst_bgs (a : Params A dIn dOut × Biases A dOut)
+    (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) :
+    ((sumReplaceFst a q).1.sumFst, (sumReplaceFst a q).2.sumFst) = a := rfl
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the second part of `q` with its second part replaced by `a` is `a`. -/
+private theorem sumSnd_sumReplaceSnd_bgs (a : Params B dIn dOut × Biases B dOut)
+    (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) :
+    ((sumReplaceSnd a q).1.sumSnd, (sumReplaceSnd a q).2.sumSnd) = a := rfl
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: replacing the first part by itself does nothing. -/
+private theorem sumReplaceFst_self_bgs
+    (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) :
+    sumReplaceFst (q.1.sumFst, q.2.sumFst) q = q := by
+  -- column by column, row by row: each index is in the first part or in the second
+  refine Prod.ext (Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl)
+    (Biases.ext' rfl (fun ℓ => ?_) (fun ℓ => rfl) rfl)
+  · ext c p
+    cases p <;> rfl
+  · ext p c
+    cases p <;> rfl
+  · funext p
+    cases p <;> rfl
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: replacing the second part by itself does nothing. -/
+private theorem sumReplaceSnd_self_bgs
+    (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) :
+    sumReplaceSnd (q.1.sumSnd, q.2.sumSnd) q = q := by
+  refine Prod.ext (Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl)
+    (Biases.ext' rfl (fun ℓ => ?_) (fun ℓ => rfl) rfl)
+  · ext c p
+    cases p <;> rfl
+  · ext p c
+    cases p <;> rfl
+  · funext p
+    cases p <;> rfl
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the lift of a map of the first part after the lift of another is the lift of their
+composition. -/
+private theorem liftFst_liftFst_bgs {F : Type*}
+    (act : F → Params A dIn dOut × Biases A dOut → Params A dIn dOut × Biases A dOut)
+    (σ σ' : F) (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) :
+    sumLiftFst act σ (sumLiftFst act σ' q)
+      = sumReplaceFst ((act σ ∘ act σ') (q.1.sumFst, q.2.sumFst)) q := rfl
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the same for the second part. -/
+private theorem liftSnd_liftSnd_bgs {F : Type*}
+    (act : F → Params B dIn dOut × Biases B dOut → Params B dIn dOut × Biases B dOut)
+    (σ σ' : F) (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) :
+    sumLiftSnd act σ (sumLiftSnd act σ' q)
+      = sumReplaceSnd ((act σ ∘ act σ') (q.1.sumSnd, q.2.sumSnd)) q := rfl
+
+/-- Helper: the lift of the identity of the first part is the identity. -/
+private theorem liftFst_of_eq_id_bgs {F : Type*}
+    {act : F → Params A dIn dOut × Biases A dOut → Params A dIn dOut × Biases A dOut}
+    {σ : F} (h : act σ = id) (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) :
+    sumLiftFst act σ q = q := by
+  show sumReplaceFst (act σ (q.1.sumFst, q.2.sumFst)) q = q
+  rw [h, id_eq, sumReplaceFst_self_bgs]
+
+/-- Helper: the lift of the identity of the second part is the identity. -/
+private theorem liftSnd_of_eq_id_bgs {F : Type*}
+    {act : F → Params B dIn dOut × Biases B dOut → Params B dIn dOut × Biases B dOut}
+    {σ : F} (h : act σ = id) (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) :
+    sumLiftSnd act σ q = q := by
+  show sumReplaceSnd (act σ (q.1.sumSnd, q.2.sumSnd)) q = q
+  rw [h, id_eq, sumReplaceSnd_self_bgs]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: weights and biases of the sum are equal if the reads, the writes and the read biases
+of their two parts are, and their write biases, `E`, `D`, embedding biases and readout biases. -/
+private theorem ext_parts_bgs {q q' : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut}
+    (h1 : q.1.sumFst.read = q'.1.sumFst.read) (h2 : q.1.sumFst.write = q'.1.sumFst.write)
+    (h3 : q.2.sumFst.read = q'.2.sumFst.read) (h4 : q.1.sumSnd.read = q'.1.sumSnd.read)
+    (h5 : q.1.sumSnd.write = q'.1.sumSnd.write) (h6 : q.2.sumSnd.read = q'.2.sumSnd.read)
+    (h7 : q.2.write = q'.2.write) (h8 : q.1.E = q'.1.E) (h9 : q.1.D = q'.1.D)
+    (h10 : q.2.E = q'.2.E) (h11 : q.2.D = q'.2.D) : q = q' := by
+  refine Prod.ext (Params.ext' h8 (fun ℓ => ?_) (fun ℓ => ?_) h9)
+    (Biases.ext' h10 (fun ℓ => ?_) (fun ℓ => congrFun h7 ℓ) h11)
+  · ext c p
+    cases p with
+    | inl j => exact congrFun (congrFun (congrFun h1 ℓ) c) j
+    | inr j => exact congrFun (congrFun (congrFun h4 ℓ) c) j
+  · ext p c
+    cases p with
+    | inl i => exact congrFun (congrFun (congrFun h2 ℓ) i) c
+    | inr i => exact congrFun (congrFun (congrFun h5 ℓ) i) c
+  · funext p
+    cases p with
+    | inl j => exact congrFun (congrFun h3 ℓ) j
+    | inr j => exact congrFun (congrFun h6 ℓ) j
+
+/-- Helper: the lifts of a map of the first part and of a map of the second part commute. -/
+private theorem liftFst_liftSnd_comm_bgs (lA : InsideBlocksLocal actA SgA)
+    (lB : InsideBlocksLocal actB SgB) {σ₁ : F₁} {σ₂ : F₂} (h1 : σ₁ ∈ SgA) (h2 : σ₂ ∈ SgB)
+    (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) :
+    sumLiftFst actA σ₁ (sumLiftSnd actB σ₂ q) = sumLiftSnd actB σ₂ (sumLiftFst actA σ₁ q) := by
+  -- the map of `σ₂` first: `sumAct_parts`
+  obtain ⟨e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11⟩ :=
+    sumAct_parts lA lB (σ := (σ₁, σ₂)) ⟨h1, h2⟩ q
+  -- the map of `σ₁` first: after it, the second part has the reads, the writes and the read
+  -- biases of the second part of `q`
+  obtain ⟨hr, hw, hb, hwb⟩ := lB.local_eq σ₂ h2
+    ((sumLiftFst actA σ₁ q).1.sumSnd, (sumLiftFst actA σ₁ q).2.sumSnd)
+    (q.1.sumSnd, q.2.sumSnd) rfl rfl rfl
+  have hwb' : (sumLiftSnd actB σ₂ (sumLiftFst actA σ₁ q)).2.write
+      = (actB σ₂ (q.1.sumSnd, q.2.sumSnd)).2.write - q.2.write
+        + (actA σ₁ (q.1.sumFst, q.2.sumFst)).2.write := eq_add_of_sub_eq hwb
+  refine ext_parts_bgs e1 e2 e3 (e4.trans hr.symm) (e5.trans hw.symm) (e6.trans hb.symm) ?_
+    (e8.trans ((lB.E_eq σ₂ h2 _).trans (lA.E_eq σ₁ h1 _)).symm)
+    (e9.trans ((lB.D_eq σ₂ h2 _).trans (lA.D_eq σ₁ h1 _)).symm)
+    (e10.trans ((lB.biasE_eq σ₂ h2 _).trans (lA.biasE_eq σ₁ h1 _)).symm)
+    (e11.trans ((lB.biasD_eq σ₂ h2 _).trans (lA.biasD_eq σ₁ h1 _)).symm)
+  -- the write biases: moved by both rows, in either order
+  rw [hwb']
+  exact e7.trans (by abel)
+
+/-- Helper: the map of a pair of changes of basis and translations, with or without skips, in one
+form: the changes of basis `G`, the row `e` added to the embedding bias, the rows `v ℓ` whose
+image by the read is taken from the read bias, the rows `w ℓ` added to the write biases, the row
+`u` whose image by `D` is taken from the readout bias. -/
+private def affGen_bgs {C : Arch T d L} (G : Fin (L + 1) → GL d ℝ) (e : d → ℝ)
+    (v w : Fin L → d → ℝ) (u : d → ℝ) (q : Params C dIn dOut × Biases C dOut) :
+    Params C dIn dOut × Biases C dOut :=
+  (q.1.cob G G,
+   { E := (q.2.E + e) ᵥ* (G 0 : Matrix d d ℝ)
+     read := fun ℓ => q.2.read ℓ - v ℓ ᵥ* q.1.read ℓ
+     write := fun ℓ => (q.2.write ℓ + w ℓ) ᵥ* (G ℓ.succ : Matrix d d ℝ)
+     D := q.2.D - u ᵥ* q.1.D })
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the map of a pair without skips in that form. -/
+private theorem affActSkipless_eq_bgs {C : Arch T d L}
+    (p : (Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ)) :
+    (affActSkipless p : Params C dIn dOut × Biases C dOut → Params C dIn dOut × Biases C dOut)
+      = affGen_bgs p.1 (p.2 0) (fun ℓ => p.2 ℓ.castSucc) (fun ℓ => p.2 ℓ.succ)
+        (p.2 (Fin.last L)) := rfl
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the map of a pair with skips in that form. -/
+private theorem affActResidual_eq_bgs {C : Arch T d L}
+    (p : (Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ)) :
+    (affActResidual p : Params C dIn dOut × Biases C dOut → Params C dIn dOut × Biases C dOut)
+      = affGen_bgs p.1 (p.2 0) (fun ℓ => ∑ k ∈ Finset.Iic ℓ.castSucc, p.2 k)
+        (fun ℓ => p.2 ℓ.succ) (∑ k, p.2 k) := rfl
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the first part of the image is the image of the first part. -/
+private theorem sumFst_affGen_bgs (G : Fin (L + 1) → GL d ℝ) (e : d → ℝ) (v w : Fin L → d → ℝ)
+    (u : d → ℝ) (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) :
+    ((affGen_bgs G e v w u q).1.sumFst, (affGen_bgs G e v w u q).2.sumFst)
+      = affGen_bgs G e v w u (q.1.sumFst, q.2.sumFst) := rfl
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the second part of the image is the image of the second part. -/
+private theorem sumSnd_affGen_bgs (G : Fin (L + 1) → GL d ℝ) (e : d → ℝ) (v w : Fin L → d → ℝ)
+    (u : d → ℝ) (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) :
+    ((affGen_bgs G e v w u q).1.sumSnd, (affGen_bgs G e v w u q).2.sumSnd)
+      = affGen_bgs G e v w u (q.1.sumSnd, q.2.sumSnd) := rfl
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the map acts column by column on the reads and read biases and row by row on the
+writes, so it commutes with the replacement of the first part. -/
+private theorem affGen_sumReplaceFst_bgs (G : Fin (L + 1) → GL d ℝ) (e : d → ℝ)
+    (v w : Fin L → d → ℝ) (u : d → ℝ) (a : Params A dIn dOut × Biases A dOut)
+    (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) :
+    affGen_bgs G e v w u (sumReplaceFst a q)
+      = sumReplaceFst (affGen_bgs G e v w u a) (affGen_bgs G e v w u q) := by
+  refine Prod.ext (Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl)
+    (Biases.ext' rfl (fun ℓ => ?_) (fun ℓ => rfl) rfl)
+  · ext c p
+    cases p <;> rfl
+  · ext p c
+    cases p <;> rfl
+  · funext p
+    cases p <;> rfl
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the same for the replacement of the second part. -/
+private theorem affGen_sumReplaceSnd_bgs (G : Fin (L + 1) → GL d ℝ) (e : d → ℝ)
+    (v w : Fin L → d → ℝ) (u : d → ℝ) (a : Params B dIn dOut × Biases B dOut)
+    (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) :
+    affGen_bgs G e v w u (sumReplaceSnd a q)
+      = sumReplaceSnd (affGen_bgs G e v w u a) (affGen_bgs G e v w u q) := by
+  refine Prod.ext (Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl)
+    (Biases.ext' rfl (fun ℓ => ?_) (fun ℓ => rfl) rfl)
+  · ext c p
+    cases p <;> rfl
+  · ext p c
+    cases p <;> rfl
+  · funext p
+    cases p <;> rfl
+
+/-- Helper: a map of the first part that commutes with the map of a pair has a lift that commutes
+with it. -/
+private theorem affGen_liftFst_bgs {σ : F₁} (G : Fin (L + 1) → GL d ℝ) (e : d → ℝ)
+    (v w : Fin L → d → ℝ) (u : d → ℝ)
+    (hc : affGen_bgs G e v w u ∘ actA σ = actA σ ∘ affGen_bgs G e v w u)
+    (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) :
+    affGen_bgs G e v w u (sumLiftFst actA σ q) = sumLiftFst actA σ (affGen_bgs G e v w u q) := by
+  show affGen_bgs G e v w u (sumReplaceFst (actA σ (q.1.sumFst, q.2.sumFst)) q)
+    = sumReplaceFst (actA σ ((affGen_bgs G e v w u q).1.sumFst,
+      (affGen_bgs G e v w u q).2.sumFst)) (affGen_bgs G e v w u q)
+  rw [affGen_sumReplaceFst_bgs, sumFst_affGen_bgs]
+  exact congrArg (fun a => sumReplaceFst a (affGen_bgs G e v w u q)) (congrFun hc _)
+
+/-- Helper: the same for the second part. -/
+private theorem affGen_liftSnd_bgs {σ : F₂} (G : Fin (L + 1) → GL d ℝ) (e : d → ℝ)
+    (v w : Fin L → d → ℝ) (u : d → ℝ)
+    (hc : affGen_bgs G e v w u ∘ actB σ = actB σ ∘ affGen_bgs G e v w u)
+    (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) :
+    affGen_bgs G e v w u (sumLiftSnd actB σ q) = sumLiftSnd actB σ (affGen_bgs G e v w u q) := by
+  show affGen_bgs G e v w u (sumReplaceSnd (actB σ (q.1.sumSnd, q.2.sumSnd)) q)
+    = sumReplaceSnd (actB σ ((affGen_bgs G e v w u q).1.sumSnd,
+      (affGen_bgs G e v w u q).2.sumSnd)) (affGen_bgs G e v w u q)
+  rw [affGen_sumReplaceSnd_bgs, sumSnd_affGen_bgs]
+  exact congrArg (fun a => sumReplaceSnd a (affGen_bgs G e v w u q)) (congrFun hc _)
+
+/-- Helper: the map of a pair commutes with the maps of the family of the pairs. -/
+private theorem affGen_sumAct_bgs {σ : F₁ × F₂} (G : Fin (L + 1) → GL d ℝ) (e : d → ℝ)
+    (v w : Fin L → d → ℝ) (u : d → ℝ)
+    (hcA : affGen_bgs G e v w u ∘ actA σ.1 = actA σ.1 ∘ affGen_bgs G e v w u)
+    (hcB : affGen_bgs G e v w u ∘ actB σ.2 = actB σ.2 ∘ affGen_bgs G e v w u) :
+    affGen_bgs G e v w u ∘ sumAct actA actB σ = sumAct actA actB σ ∘ affGen_bgs G e v w u := by
+  funext q
+  exact (affGen_liftFst_bgs G e v w u hcA _).trans
+    (congrArg (sumLiftFst actA σ.1) (affGen_liftSnd_bgs G e v w u hcB q))
+
+omit [Fintype T] [Fintype d] [DecidableEq d] in
+/-- Helper (the proof of `f_sum_mul` in `Network/Sum.lean`, for any argument): the block of the
+sum is the sum of the blocks. -/
+private theorem f_sum_mul_bgs (ℓ : Fin L) (M : Matrix T (A.r ℓ ⊕ B.r ℓ) ℝ)
+    (W : Matrix (A.w ℓ ⊕ B.w ℓ) d ℝ) :
+    (A.sum B).f ℓ M * W = A.f ℓ (M.submatrix id Sum.inl) * W.submatrix Sum.inl id
+      + B.f ℓ (M.submatrix id Sum.inr) * W.submatrix Sum.inr id := by
+  show (Matrix.of fun t p => Sum.elim (A.f ℓ (M.submatrix id Sum.inl) t)
+    (B.f ℓ (M.submatrix id Sum.inr) t) p) * W = _
+  -- entry `(t, a)`: the sum over the rows of `W` splits into the rows of `W_A` and of `W_B`
+  ext t a
+  simp only [Matrix.mul_apply, Fintype.sum_sum_type, Matrix.of_apply, Sum.elim_inl,
+    Sum.elim_inr, Matrix.add_apply, Matrix.submatrix_apply, id]
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the map of block `ℓ` of the sum with its biases is the map of block `ℓ` of the first
+part with its biases plus the second part of the block. -/
+private theorem block_sum_fst_bgs (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut)
+    (ℓ : Fin L) (n : Matrix T d ℝ) :
+    (A.sum B).f ℓ (n * q.1.read ℓ + Matrix.of fun _ => q.2.read ℓ) * q.1.write ℓ
+        + Matrix.of (fun _ => q.2.write ℓ)
+      = (A.f ℓ (n * q.1.sumFst.read ℓ + Matrix.of fun _ => q.2.sumFst.read ℓ)
+            * q.1.sumFst.write ℓ + Matrix.of (fun _ => q.2.sumFst.write ℓ))
+        + B.f ℓ (n * q.1.sumSnd.read ℓ + Matrix.of fun _ => q.2.sumSnd.read ℓ)
+            * q.1.sumSnd.write ℓ := by
+  rw [f_sum_mul_bgs]
+  exact add_right_comm _ _ _
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the same, with the write bias on the second part. -/
+private theorem block_sum_snd_bgs (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut)
+    (ℓ : Fin L) (n : Matrix T d ℝ) :
+    (A.sum B).f ℓ (n * q.1.read ℓ + Matrix.of fun _ => q.2.read ℓ) * q.1.write ℓ
+        + Matrix.of (fun _ => q.2.write ℓ)
+      = A.f ℓ (n * q.1.sumFst.read ℓ + Matrix.of fun _ => q.2.sumFst.read ℓ)
+            * q.1.sumFst.write ℓ
+        + (B.f ℓ (n * q.1.sumSnd.read ℓ + Matrix.of fun _ => q.2.sumSnd.read ℓ)
+            * q.1.sumSnd.write ℓ + Matrix.of (fun _ => q.2.sumSnd.write ℓ)) := by
+  rw [f_sum_mul_bgs]
+  exact add_assoc _ _ _
+
+/-- Helper: the lift of a map of the first part keeps the map of every block of the sum. -/
+private theorem block_liftFst_bgs (lA : InsideBlocksLocal actA SgA) {σ : F₁} (hσ : σ ∈ SgA)
+    (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) (ℓ : Fin L) (n : Matrix T d ℝ) :
+    (A.sum B).f ℓ (n * (sumLiftFst actA σ q).1.read ℓ
+          + Matrix.of fun _ => (sumLiftFst actA σ q).2.read ℓ) * (sumLiftFst actA σ q).1.write ℓ
+        + Matrix.of (fun _ => (sumLiftFst actA σ q).2.write ℓ)
+      = (A.sum B).f ℓ (n * q.1.read ℓ + Matrix.of fun _ => q.2.read ℓ) * q.1.write ℓ
+        + Matrix.of fun _ => q.2.write ℓ := by
+  rw [block_sum_fst_bgs, block_sum_fst_bgs]
+  exact congrArg (· + _) (lA.block_eq σ hσ (q.1.sumFst, q.2.sumFst) ℓ n)
+
+/-- Helper: the lift of a map of the second part keeps the map of every block of the sum. -/
+private theorem block_liftSnd_bgs (lB : InsideBlocksLocal actB SgB) {σ : F₂} (hσ : σ ∈ SgB)
+    (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) (ℓ : Fin L) (n : Matrix T d ℝ) :
+    (A.sum B).f ℓ (n * (sumLiftSnd actB σ q).1.read ℓ
+          + Matrix.of fun _ => (sumLiftSnd actB σ q).2.read ℓ) * (sumLiftSnd actB σ q).1.write ℓ
+        + Matrix.of (fun _ => (sumLiftSnd actB σ q).2.write ℓ)
+      = (A.sum B).f ℓ (n * q.1.read ℓ + Matrix.of fun _ => q.2.read ℓ) * q.1.write ℓ
+        + Matrix.of fun _ => q.2.write ℓ := by
+  rw [block_sum_snd_bgs, block_sum_snd_bgs]
+  exact congrArg (_ + ·) (lB.block_eq σ hσ (q.1.sumSnd, q.2.sumSnd) ℓ n)
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- Helper (the private `evalB_eq_of_blocks_bga` of
+`Symmetry/BiasesGeneratedGroupAttention.lean`): two parameters with biases with the same
+embedding, readout, embedding bias and readout bias, and the same map of every block with its
+biases, compute the same function. -/
+private theorem evalB_eq_of_blocks_bgs {C : Arch T d L}
+    (q₁ q₂ : Params C dIn dOut × Biases C dOut)
+    (hE : q₂.1.E = q₁.1.E) (hD : q₂.1.D = q₁.1.D) (hbE : q₂.2.E = q₁.2.E)
+    (hbD : q₂.2.D = q₁.2.D)
+    (hb : ∀ ℓ (n : Matrix T d ℝ),
+      C.f ℓ (n * q₂.1.read ℓ + Matrix.of fun _ => q₂.2.read ℓ) * q₂.1.write ℓ
+          + Matrix.of (fun _ => q₂.2.write ℓ)
+        = C.f ℓ (n * q₁.1.read ℓ + Matrix.of fun _ => q₁.2.read ℓ) * q₁.1.write ℓ
+          + Matrix.of fun _ => q₁.2.write ℓ)
+    (S : Fin L → Matrix d d ℝ) (x : Matrix T dIn ℝ) :
+    evalB C S q₂.1 q₂.2 x = evalB C S q₁.1 q₁.2 x := by
+  -- the hidden states agree, by induction along the network
+  have hh : ∀ ℓ : Fin (L + 1), hiddenB C S q₂.1 q₂.2 x ℓ = hiddenB C S q₁.1 q₁.2 x ℓ := by
+    intro ℓ
+    induction ℓ using Fin.induction with
+    | zero => rw [hiddenB_zero, hiddenB_zero, hE, hbE]
+    | succ ℓ ih => rw [hiddenB_succ, hiddenB_succ, ih, hb]
+  -- hence the outputs agree
+  rw [evalB, evalB, hh, hD, hbD]
+
+/-- Helper: the lift of a map of the first part preserves the function. -/
+private theorem evalB_liftFst_bgs (lA : InsideBlocksLocal actA SgA) {σ : F₁} (hσ : σ ∈ SgA)
+    (S : Fin L → Matrix d d ℝ) (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut)
+    (x : Matrix T dIn ℝ) :
+    evalB (A.sum B) S (sumLiftFst actA σ q).1 (sumLiftFst actA σ q).2 x
+      = evalB (A.sum B) S q.1 q.2 x :=
+  evalB_eq_of_blocks_bgs q (sumLiftFst actA σ q) (lA.E_eq σ hσ _) (lA.D_eq σ hσ _)
+    (lA.biasE_eq σ hσ _) (lA.biasD_eq σ hσ _) (fun ℓ n => block_liftFst_bgs lA hσ q ℓ n) S x
+
+/-- Helper: the lift of a map of the second part preserves the function. -/
+private theorem evalB_liftSnd_bgs (lB : InsideBlocksLocal actB SgB) {σ : F₂} (hσ : σ ∈ SgB)
+    (S : Fin L → Matrix d d ℝ) (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut)
+    (x : Matrix T dIn ℝ) :
+    evalB (A.sum B) S (sumLiftSnd actB σ q).1 (sumLiftSnd actB σ q).2 x
+      = evalB (A.sum B) S q.1 q.2 x :=
+  evalB_eq_of_blocks_bgs q (sumLiftSnd actB σ q) (lB.E_eq σ hσ _) (lB.D_eq σ hσ _)
+    (lB.biasE_eq σ hσ _) (lB.biasD_eq σ hσ _) (fun ℓ n => block_liftSnd_bgs lB hσ q ℓ n) S x
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the span of the rows of a matrix with two blocks of rows is the sup of the spans of
+the rows of the two blocks. -/
+private theorem span_row_sum_bgs {m₁ m₂ : Type*} (W : Matrix (m₁ ⊕ m₂) d ℝ) :
+    Submodule.span ℝ (Set.range W.row)
+      = Submodule.span ℝ (Set.range (W.submatrix Sum.inl id).row)
+        ⊔ Submodule.span ℝ (Set.range (W.submatrix Sum.inr id).row) := by
+  have h : W.row = Sum.elim (W.submatrix Sum.inl id).row (W.submatrix Sum.inr id).row := by
+    funext p
+    cases p <;> rfl
+  rw [h, Set.Sum.elim_range, Submodule.span_union]
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the lift of a map of the first part keeps the span of the rows of every write. -/
+private theorem span_liftFst_bgs (lA : InsideBlocksLocal actA SgA) {σ : F₁} (hσ : σ ∈ SgA)
+    (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) (ℓ : Fin L) :
+    Submodule.span ℝ (Set.range ((sumLiftFst actA σ q).1.write ℓ).row)
+      = Submodule.span ℝ (Set.range (q.1.write ℓ).row) := by
+  rw [span_row_sum_bgs, span_row_sum_bgs]
+  exact congrArg (· ⊔ _) (lA.span_write σ hσ (q.1.sumFst, q.2.sumFst) ℓ)
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the lift of a map of the second part keeps the span of the rows of every write. -/
+private theorem span_liftSnd_bgs (lB : InsideBlocksLocal actB SgB) {σ : F₂} (hσ : σ ∈ SgB)
+    (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) (ℓ : Fin L) :
+    Submodule.span ℝ (Set.range ((sumLiftSnd actB σ q).1.write ℓ).row)
+      = Submodule.span ℝ (Set.range (q.1.write ℓ).row) := by
+  rw [span_row_sum_bgs, span_row_sum_bgs]
+  exact congrArg (_ ⊔ ·) (lB.span_write σ hσ (q.1.sumSnd, q.2.sumSnd) ℓ)
+
 /-- **Two families of symmetries inside the blocks, of `A` and of `B`, that act block by block
 give the family of the pairs, a family of symmetries inside the blocks of `A.sum B`.** -/
 theorem insideBlocksAction_sumAct (hA : InsideBlocksAction actA SgA)
     (lA : InsideBlocksLocal actA SgA) (hB : InsideBlocksAction actB SgB)
     (lB : InsideBlocksLocal actB SgB) :
     InsideBlocksAction (sumAct actA actB) (SgA ×ˢ SgB) := by
-  sorry
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · -- `one`: the pair of the identities
+    obtain ⟨σ₁, h1, e1⟩ := hA.one
+    obtain ⟨σ₂, h2, e2⟩ := hB.one
+    refine ⟨(σ₁, σ₂), ⟨h1, h2⟩, funext fun q => ?_⟩
+    show sumLiftFst actA σ₁ (sumLiftSnd actB σ₂ q) = q
+    rw [liftSnd_of_eq_id_bgs e2, liftFst_of_eq_id_bgs e1]
+  · -- `mul`: the lifts commute, and the lift of a composition is the composition of the lifts
+    rintro σ ⟨h1, h2⟩ σ' ⟨h1', h2'⟩
+    obtain ⟨τ₁, hτ₁, e1⟩ := hA.mul σ.1 h1 σ'.1 h1'
+    obtain ⟨τ₂, hτ₂, e2⟩ := hB.mul σ.2 h2 σ'.2 h2'
+    refine ⟨(τ₁, τ₂), ⟨hτ₁, hτ₂⟩, funext fun q => ?_⟩
+    show sumLiftFst actA σ.1 (sumLiftSnd actB σ.2 (sumLiftFst actA σ'.1 (sumLiftSnd actB σ'.2 q)))
+      = sumLiftFst actA τ₁ (sumLiftSnd actB τ₂ q)
+    rw [← liftFst_liftSnd_comm_bgs lA lB h1' h2, liftFst_liftFst_bgs, e1, liftSnd_liftSnd_bgs, e2]
+    rfl
+  · -- `inv`: the pair of the inverses
+    rintro σ ⟨h1, h2⟩
+    obtain ⟨τ₁, hτ₁, e1, e1'⟩ := hA.inv σ.1 h1
+    obtain ⟨τ₂, hτ₂, e2, e2'⟩ := hB.inv σ.2 h2
+    refine ⟨(τ₁, τ₂), ⟨hτ₁, hτ₂⟩, funext fun q => ?_, funext fun q => ?_⟩
+    · show sumLiftFst actA σ.1 (sumLiftSnd actB σ.2 (sumLiftFst actA τ₁ (sumLiftSnd actB τ₂ q)))
+        = q
+      rw [← liftFst_liftSnd_comm_bgs lA lB hτ₁ h2, liftFst_liftFst_bgs, e1, id_eq,
+        sumReplaceFst_self_bgs, liftSnd_liftSnd_bgs, e2, id_eq, sumReplaceSnd_self_bgs]
+    · show sumLiftFst actA τ₁ (sumLiftSnd actB τ₂ (sumLiftFst actA σ.1 (sumLiftSnd actB σ.2 q)))
+        = q
+      rw [← liftFst_liftSnd_comm_bgs lA lB h1 hτ₂, liftFst_liftFst_bgs, e1', id_eq,
+        sumReplaceFst_self_bgs, liftSnd_liftSnd_bgs, e2', id_eq, sumReplaceSnd_self_bgs]
+  · -- `comm_skipless`: the map of a pair acts part by part
+    rintro p σ ⟨h1, h2⟩
+    rw [affActSkipless_eq_bgs]
+    exact affGen_sumAct_bgs _ _ _ _ _ (hA.comm_skipless p σ.1 h1) (hB.comm_skipless p σ.2 h2)
+  · -- `comm_residual`
+    rintro p σ ⟨h1, h2⟩
+    rw [affActResidual_eq_bgs]
+    exact affGen_sumAct_bgs _ _ _ _ _ (hA.comm_residual p σ.1 h1) (hB.comm_residual p σ.2 h2)
+  · -- `evalB_eq`: each lift keeps the map of every block
+    rintro σ ⟨h1, h2⟩ S q x
+    exact (evalB_liftFst_bgs lA h1 S _ x).trans (evalB_liftSnd_bgs lB h2 S q x)
+  · -- `rank_write`: each lift keeps the span of the rows of every write
+    rintro σ ⟨h1, h2⟩ q ℓ
+    rw [Matrix.rank_eq_finrank_span_row, Matrix.rank_eq_finrank_span_row]
+    show Module.finrank ℝ (Submodule.span ℝ
+      (Set.range ((sumLiftFst actA σ.1 (sumLiftSnd actB σ.2 q)).1.write ℓ).row)) = _
+    rw [span_liftFst_bgs lA h1, span_liftSnd_bgs lB h2]
 
 end Sum
 
