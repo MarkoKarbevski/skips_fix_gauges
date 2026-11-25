@@ -354,7 +354,11 @@ theorem evalLN_eq_evalB_reduceLN_residual (ε : ℝ) (U : Matrix d m ℝ) (hU : 
     evalLN A ε 1 θ b γ β x
       = evalB (A.withNorm (rmsNorm (ε * (Fintype.card d : ℝ) / (Fintype.card m : ℝ))))
           1 (θ.reduceLN ε U γ) (b.reduceLN ε U θ β) x := by
-  sorry
+  -- `Z 1 = 1 Z` and `U^⊤ 1 U = U^⊤ U = 1`
+  have h1 : (fun ℓ => Uᵀ * (1 : Fin L → Matrix d d ℝ) ℓ * U) = 1 := by
+    funext ℓ
+    rw [Pi.one_apply, Matrix.mul_one, hU, Pi.one_apply]
+  rw [evalLN_eq_evalB_reduceLN ε U hU hUZ hm 1 (fun ℓ => by simp) θ b γ β x, h1]
 
 omit [Fintype dIn] in
 /-- **Proposition A.3 (ii), "of dimension `d_model − 1`":** a matrix whose columns are an
