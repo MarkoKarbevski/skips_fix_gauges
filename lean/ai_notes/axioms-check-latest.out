@@ -2720,3 +2720,24 @@
 'Skips.gateFarC_gelu' depends on axioms: [propext, Classical.choice, Quot.sound]
 'Skips.gateFarC_silu' depends on axioms: [propext, Classical.choice, Quot.sound]
 'Skips.exists_far_frozen_holomorphic' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_flatOn_le_relu_oneBlock_skipless_rmsNorm_zero_of_le' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_flatOn_le_reluSq_oneBlock_skipless_rmsNorm_zero_of_le' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_flatOn_le_relu_oneBlock_residual_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_flatOn_le_reluSq_oneBlock_residual_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_flatOn_le_reglu_oneBlock_residual_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.affActSkipless_one' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.affActSkipless_affActSkipless' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.affActSkipless_bijective' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_subgroup_affActSkipless' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.eq_one_of_affActSkipless_keeps' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.affActSkipless_eq_self_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.affActResidual_one' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.affActResidual_affActResidual' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.affActResidual_bijective' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_subgroup_affActResidual' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.eq_one_of_affActResidual_keeps' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.affActResidual_eq_self_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
