@@ -118,7 +118,8 @@ theorem hiddenB_cob
     -- `h'_0 = x E G_0 + b_E G_0 = (x E + b_E) G_0`
     simp only [hiddenB_zero, Params.cob, Biases.cob, add_of_mul_bsy, Matrix.mul_assoc]
   | succ i ih =>
-    -- stream `h G_i (G_i⁻¹ M G_{i+1})`, read `χ(h) K_i K_i⁻¹ W_read + b_read`, write times `G_{i+1}`
+    -- stream `h G_i (G_i⁻¹ M G_{i+1})`, read `χ(h) K_i K_i⁻¹ W_read + b_read`,
+    -- the write and its bias times `G_{i+1}`
     rw [hiddenB_succ, hiddenB_succ, ih, hχ]
     unfold cobSkip Params.cob Biases.cob
     simp only [Matrix.mul_assoc, gl_mul_inv_mul_bsy, Matrix.add_mul, of_mul_bsy]
