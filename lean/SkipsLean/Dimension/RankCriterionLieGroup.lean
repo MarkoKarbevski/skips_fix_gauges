@@ -69,7 +69,45 @@ theorem finrank_range_fderiv_add_orbitDim_le (G : P' → Y)
     (hinv : ∀ (a : H) (η : P'), G (a • η) = G η) (η : P') (hG : DifferentiableAt ℝ G η) :
     Module.finrank ℝ (LinearMap.range (fderiv ℝ G η).toLinearMap) + orbitDim I (H := H) η
       ≤ Module.finrank ℝ P' := by
-  sorry
+  -- the orbit map `o a = a • η` is smooth, so differentiable at `1`, and `o 1 = η`
+  have hp : ContMDiff I (I.prod 𝓘(ℝ, P')) ∞ fun a : H => (a, η) :=
+    contMDiff_id.prodMk contMDiff_const
+  have hosm : ContMDiff I 𝓘(ℝ, P') ∞ fun a : H => a • η := by
+    have hc := hact.comp hp
+    exact hc
+  have hoD : MDifferentiableAt I 𝓘(ℝ, P') (fun a : H => a • η) 1 :=
+    hosm.mdifferentiableAt (by simp)
+  have ho1 : (fun a : H => a • η) 1 = η := one_smul H η
+  have hGD : MDifferentiableAt 𝓘(ℝ, P') 𝓘(ℝ, Y) G ((fun a : H => a • η) 1) := by
+    rw [ho1]
+    exact hG.mdifferentiableAt
+  -- `G ∘ o` is constant, so its derivative vanishes: by the chain rule, `DG(η) ∘ Do(1) = 0`
+  have hconst : G ∘ (fun a : H => a • η) = fun _ => G η := funext fun a => hinv a η
+  have hchain := mfderiv_comp (1 : H) hGD hoD
+  rw [hconst, mfderiv_const] at hchain
+  have hker : ∀ w, fderiv ℝ G ((fun a : H => a • η) 1)
+      (mfderiv I 𝓘(ℝ, P') (fun a : H => a • η) 1 w) = 0 := fun w => by
+    have h1 := DFunLike.congr_fun hchain w
+    rw [mfderiv_eq_fderiv] at h1
+    exact h1.symm
+  -- so the range of `Do(1)`, read in `P'`, lies in the kernel of `DG(η)`
+  set Do := mfderiv I 𝓘(ℝ, P') (fun a : H => a • η) 1 with hDo
+  set e := NormedSpace.fromTangentSpace (𝕜 := ℝ) ((fun a : H => a • η) 1) with he
+  have hDG : fderiv ℝ G ((fun a : H => a • η) 1) = fderiv ℝ G η := congrArg (fderiv ℝ G) ho1
+  have hle : LinearMap.range (e.toLinearEquiv.toLinearMap ∘ₗ Do.toLinearMap)
+      ≤ LinearMap.ker (fderiv ℝ G η).toLinearMap := by
+    rintro _ ⟨w, rfl⟩
+    rw [LinearMap.mem_ker, ← hDG]
+    exact hker w
+  have hrange : Module.finrank ℝ (LinearMap.range Do.toLinearMap)
+      = Module.finrank ℝ (LinearMap.range (e.toLinearEquiv.toLinearMap ∘ₗ Do.toLinearMap)) := by
+    rw [LinearMap.range_comp, LinearEquiv.finrank_map_eq]
+  -- rank-nullity for `DG(η)`
+  have hrn := LinearMap.finrank_range_add_finrank_ker (fderiv ℝ G η).toLinearMap
+  have hmono := Submodule.finrank_mono hle
+  show Module.finrank ℝ (LinearMap.range (fderiv ℝ G η).toLinearMap)
+      + Module.finrank ℝ (LinearMap.range Do.toLinearMap) ≤ Module.finrank ℝ P'
+  omega
 
 /-- **Proof of Lemma A.26, "the rank is lower semicontinuous, so the bound holds at every
 `η`":** a bound on the rank of the derivative of a continuously differentiable map that holds at
@@ -78,7 +116,28 @@ theorem finrank_range_fderiv_le_of_ae (G : P' → Y) (hG : ContDiff ℝ 1 G) (r�
     (ν : Measure P') [ν.IsAddHaarMeasure]
     (h : ∀ᵐ η ∂ν, Module.finrank ℝ (LinearMap.range (fderiv ℝ G η).toLinearMap) ≤ r₀) (η : P') :
     Module.finrank ℝ (LinearMap.range (fderiv ℝ G η).toLinearMap) ≤ r₀ := by
-  sorry
+  -- the set where the rank exceeds `r₀` is open: the rank of a continuous linear map is lower
+  -- semicontinuous, and `DG` is continuous
+  set U : Set P' := {η' | r₀ < Module.finrank ℝ (LinearMap.range (fderiv ℝ G η').toLinearMap)}
+    with hU
+  have hUeq : U = fderiv ℝ G ⁻¹' {f : P' →L[ℝ] Y | ↑(r₀ + 1) ≤ (f : P' →ₗ[ℝ] Y).rank} := by
+    ext η'
+    simp only [hU, Set.mem_ofPred_eq, Set.mem_preimage, LinearMap.rank,
+      ← Module.finrank_eq_rank, Nat.cast_le]
+    omega
+  have hUo : IsOpen U := by
+    rw [hUeq]
+    exact (isOpen_setOfPred_nat_le_rank (r₀ + 1)).preimage (hG.continuous_fderiv one_ne_zero)
+  -- it is null, by the hypothesis
+  have hnull : ν U = 0 := by
+    rw [ae_iff] at h
+    refine measure_mono_null (fun η' hη' => ?_) h
+    simp only [Set.mem_ofPred_eq, not_le]
+    exact hη'
+  -- a nonempty open set has positive Haar measure, so `U` is empty
+  by_contra hcon
+  have hpos := hUo.measure_pos ν ⟨η, lt_of_not_ge hcon⟩
+  exact absurd hnull hpos.ne'
 
 /-- **Proof of Lemma A.26, the bound on the rank of the Jacobian of `G_X`:** if a Lie group acts
 smoothly on the parameters, `G` is invariant, and the orbits have dimension at least `k` at
