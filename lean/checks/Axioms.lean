@@ -2272,3 +2272,15 @@ import SkipsLean
 #print axioms Skips.ae_flatOn_le_relu_oneBlock_residual_rmsNorm_zero
 #print axioms Skips.ae_flatOn_le_reluSq_oneBlock_residual_rmsNorm_zero
 #print axioms Skips.ae_flatOn_le_reglu_oneBlock_residual_rmsNorm_zero
+#print axioms Skips.affActSkipless_one
+#print axioms Skips.affActSkipless_affActSkipless
+#print axioms Skips.affActSkipless_bijective
+#print axioms Skips.exists_subgroup_affActSkipless
+#print axioms Skips.eq_one_of_affActSkipless_keeps
+#print axioms Skips.affActSkipless_eq_self_iff
+#print axioms Skips.affActResidual_one
+#print axioms Skips.affActResidual_affActResidual
+#print axioms Skips.affActResidual_bijective
+#print axioms Skips.exists_subgroup_affActResidual
+#print axioms Skips.eq_one_of_affActResidual_keeps
+#print axioms Skips.affActResidual_eq_self_iff
