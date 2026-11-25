@@ -12,7 +12,8 @@ parameters. In the paper the rank of the Jacobian of `G` is at most `r₀ = P' -
 parameter because a Lie group acts on the parameters of `G` with orbits of dimension at least `k`
 (at generic parameters, then everywhere, the rank being lower semicontinuous); here the bound
 `rank DG ≤ r₀` at every point is the hypothesis. The rank of the Jacobian of `F` exceeds `r₀` at
-one parameter `θ₀`.
+one parameter `θ₀`. The step from the Lie group to this bound, and the lemma in the paper's form:
+`Dimension/RankCriterionLieGroup.lean`.
 
 (i) For almost every `θ`, `F θ` is not an output of the family `G`.
 (ii) If the set of outputs of `G` has the property of definable sets used in the paper
