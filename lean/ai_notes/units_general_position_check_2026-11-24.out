@@ -1,0 +1,12 @@
+d=2 q=2: smallest values over 20 draws: (1) 2.23e-02, (2) 6.94e-02, (3) 9.90e-03, (4) no case
+d=2 q=3: smallest values over 20 draws: (1) 2.66e-02, (2) 1.47e-02, (3) 4.89e-03, (4) 6.44e-03
+d=2 q=4: smallest values over 20 draws: (1) 1.70e-03, (2) 2.97e-03, (3) 4.25e-04, (4) 1.70e-04
+d=2 q=5: smallest values over 20 draws: (1) 1.21e-02, (2) 1.31e-03, (3) 1.80e-04, (4) 2.36e-04
+d=3 q=3: smallest values over 20 draws: (1) 1.30e-01, (2) 4.52e-02, (3) 1.66e-02, (4) no case
+d=3 q=4: smallest values over 20 draws: (1) 1.64e-01, (2) 2.98e-04, (3) 3.14e-04, (4) 1.91e-02
+d=3 q=5: smallest values over 20 draws: (1) 5.63e-02, (2) 4.52e-03, (3) 7.02e-04, (4) 2.19e-04
+d=3 q=6: smallest values over 20 draws: (1) 1.08e-01, (2) 9.48e-05, (3) 8.25e-05, (4) 7.16e-04
+d=4 q=4: smallest values over 20 draws: (1) 1.07e-01, (2) 4.91e-02, (3) 1.80e-02, (4) no case
+d=4 q=5: smallest values over 20 draws: (1) 1.42e-01, (2) 9.95e-04, (3) 1.15e-04, (4) 2.83e-03
+d=4 q=6: smallest values over 20 draws: (1) 2.07e-01, (2) 3.67e-03, (3) 2.11e-04, (4) 1.90e-03
+d=4 q=7: smallest values over 20 draws: (1) 9.52e-02, (2) 5.11e-05, (3) 2.54e-05, (4) 4.98e-04

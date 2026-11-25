@@ -2113,3 +2113,100 @@
 'Skips.ae_funDimSkipsOn_tri_le_residual_add_attention_oneBlock_rmsNorm_zero' depends on axioms: [propext,
  Classical.choice,
  Quot.sound]
+'Skips.relu_unitsRescaleSphere' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.reluSq_unitsRescaleSphere' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_of_flatSkipsOn_learned_rmsNorm_zero_on' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.reglu_unitsRescaleSphere' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.skipProdFwd_conformal_of_residual_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.skipProdFwd_orthogonal_of_residual_rmsNorm' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.jacobianRankSkips_tri_eq_of_differentiableAt' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.jacobianRankSkips_tri_eq_learned_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.flatSkipsOn_noKink_le_mlp_rescale_learned_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.funDimLearned_mlp_oneBlock_rescale_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_jacobianRankSkips_mlp_oneBlock_rescale_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_turnsActiveRowsSkip_relu' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_turnsActiveRowsSkip_reluSq' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_exists_turned_row_skip_relu' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_exists_turned_row_skip_reluSq' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimLearned_relu_oneBlock_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_exists_jacobianRankSkips_relu_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimLearned_relu_oneBlock_rmsNorm_zero_eq_residual_add' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimLearned_reluSq_oneBlock_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_exists_jacobianRankSkips_reluSq_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimLearned_reluSq_oneBlock_rmsNorm_zero_eq_residual_add' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_turnsActiveRowsSkip_relu_of_linear' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_turnsActiveRowsSkip_reluSq_of_linear' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_turnsActiveRowsGatedSkip_reglu_of_linear' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_exists_turned_row_skip_relu_of_linear' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_exists_turned_row_skip_reluSq_of_linear' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_exists_turned_row_skip_reglu_of_linear' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.flatSkipsOn_noKinkGate_le_reglu_learned_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.funDimLearned_reglu_oneBlock_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_jacobianRankSkips_reglu_oneBlock_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_turnsActiveRowsGatedSkip_reglu' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_exists_turned_row_skip_reglu' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimLearned_reglu_oneBlock_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_exists_jacobianRankSkips_reglu_oneBlock_rmsNorm_zero' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimLearned_reglu_oneBlock_rmsNorm_zero_eq_residual_add' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.exists_jacobianRankSkips_tri_mlp_rescale_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.jacobianRankSkips_tri_add_le_mlp_rescale_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.funDimSkipsOn_tri_mlp_rescale_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimSkipsOn_tri_relu_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimSkipsOn_tri_relu_rmsNorm_zero_eq_residual_add' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimSkipsOn_tri_reluSq_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimSkipsOn_tri_reluSq_rmsNorm_zero_eq_residual_add' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.exists_jacobianRankSkips_tri_reglu_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.jacobianRankSkips_tri_add_le_reglu_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.funDimSkipsOn_tri_reglu_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimSkipsOn_tri_reglu_rmsNorm_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimSkipsOn_tri_reglu_rmsNorm_zero_eq_residual_add' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.exists_posDef_mul_orthogonal_transpose' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.posDef_mul_orthogonal_transpose_unique' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_upperTriangular_pos_mul_orthogonal_transpose' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.upperTriangular_pos_mul_orthogonal_transpose_unique' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_cob_learned_upperTriangular_pos' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_cob_learned_posDef' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.flatOn_le_mlp_rescale_skipless_rmsNorm_zero_of_unitsParallelAt' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.funDim_mlp_oneBlock_rescale_skipless_rmsNorm_zero_of_unitsParallelAt' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.exists_jacobianRank_mlp_oneBlock_rescale_skipless_rmsNorm_zero_of_unitsParallelAt' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.unitsParallelAt_of_unitsParallel' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.relu_unitsParallelAt_of_generic' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.rank_of_unitsGeneralPosition' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.relu_unitsParallelAt_of_unitsGeneralPosition' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_open_relu_of_unitsGeneralPosition' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_unitsGeneralPosition' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDim_relu_oneBlock_skipless_rmsNorm_zero_of_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_exists_jacobianRank_relu_oneBlock_skipless_rmsNorm_zero_of_le' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDim_relu_oneBlock_residual_rmsNorm_zero_eq_add_of_le' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
