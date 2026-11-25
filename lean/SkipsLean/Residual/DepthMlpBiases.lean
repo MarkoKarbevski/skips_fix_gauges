@@ -8,8 +8,9 @@ import SkipsLean.OneBlock.MlpBiases
 
 Paper (skips paper), Lemma A.27 (Small writes), its third value: "For all small `τ ≠ 0`, the
 residual network has" the functional dimension "`fd(θ_τ) = P − d_model² − (L + 1) d_model − s`"
-for "MLP blocks with biases, no normalization". Its proof: "At generic parameters the hypotheses of Lemma B.3 hold for the
-units of all blocks together, as for one block (Appendix B). So for a flat `η` the lemma gives
+for "MLP blocks with biases, no normalization". Its proof: "At generic parameters the hypotheses
+of Lemma B.3 hold for the units of all blocks together, as for one block (Appendix B). So for a
+flat `η` the lemma gives
 `ψ_M = 0`, `ψ_γ = 0` and a rescaling at every unit. As `E` and `D` have rank `d_model`,
 `ψ_M = 0` gives `η_E = EX` and `η_D = −XD` for some `X ∈ ℝ^{d_model × d_model}`. The rescalings
 determine `η_read` and `η_write` through `ψ_C` and `ψ_A`, and then `η_{b_read}` through `ψ_β`.
