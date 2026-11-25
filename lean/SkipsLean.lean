@@ -376,3 +376,4 @@ import SkipsLean.Dimension.FunctionalBiasesOn
 import SkipsLean.OneBlock.RescaleBiases
 import SkipsLean.OneBlock.ReGLUBiases
 import SkipsLean.OneBlock.MlpBiasesNamed
+import SkipsLean.OneBlock.GatedBiasesNamed

@@ -2047,3 +2047,7 @@ import SkipsLean
 #print axioms Skips.ae_funDimB_gated_oneBlock_residual_eq_add
 #print axioms Skips.ae_funDimB_swiglu_oneBlock_residual_eq_add
 #print axioms Skips.ae_funDimB_geglu_oneBlock_residual_eq_add
+#print axioms Skips.ae_funDimB_swiglu_oneBlock
+#print axioms Skips.ae_funDimB_swiglu_oneBlock_residual
+#print axioms Skips.ae_funDimB_geglu_oneBlock
+#print axioms Skips.ae_funDimB_geglu_oneBlock_residual
