@@ -1915,3 +1915,8 @@ import SkipsLean
 #print axioms Skips.funDim_add_le_of_eventually_gateInactive_of_rank_E_D
 #print axioms Skips.exists_isOpen_gateInactive_reglu_bound_of_le
 #print axioms Skips.not_ae_funDim_add_eq_reglu_skipless_of_le
+#print axioms Skips.jacobianRank_add_le_of_ae_of_contDiffOn
+#print axioms Skips.funDim_add_le_of_ae_of_contDiff
+#print axioms Skips.exists_isOpen_unitInactive_relu_forall
+#print axioms Skips.exists_isOpen_unitInactive_reluSq_forall
+#print axioms Skips.exists_isOpen_gateInactive_reglu_forall

@@ -41,6 +41,7 @@ open scoped Matrix.Norms.Elementwise
 variable {T d dIn dOut : Type*} [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn]
   [Fintype dOut]
 
+omit [DecidableEq d] in
 /-- **From almost every point to every point of an open set, on batches in the domain of
 smoothness.** Blocks without normalization, any stream matrices, `f_ℓ` continuously
 differentiable on the open set `V ℓ`. If `fd + k ≤ P` at almost every point of an open set `U`,
@@ -71,6 +72,7 @@ theorem jacobianRank_add_le_of_ae_of_contDiffOn {L : ℕ} {A : Arch T d L} (hA :
   have h2 := jacobianRank_le_funDim (A := A) (S := S) θ' X
   omega
 
+omit [DecidableEq d] in
 /-- **From almost every point to every point of an open set, for blocks that are continuously
 differentiable.** Blocks without normalization, any stream matrices, `f_ℓ` continuously
 differentiable. If `fd + k ≤ P` at almost every point of an open set `U`, then at every point
