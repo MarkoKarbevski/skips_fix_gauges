@@ -63,6 +63,7 @@ private def readsLin_erc (c : ∀ ℓ : Fin L, d → A.r ℓ) (cD : d → dOut) 
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
 
+omit [DecidableEq d] in
 /-- **Proposition A.9 (i), "this removes `d_model²` […] parameters per hidden state", reads:**
 the parameters whose chosen columns of every read and of the readout vanish (the directions of
 the family in which these `L + 1` submatrices are the identity) have dimension
@@ -96,6 +97,7 @@ private def writesLin_erc (ρE : d → dIn) (ρ : ∀ ℓ : Fin L, d → A.w ℓ
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
 
+omit [DecidableEq d] in
 /-- **Proposition A.9 (i), "this removes `d_model²` […] parameters per hidden state", writes:**
 the parameters whose chosen rows of the embedding and of every write vanish have dimension
 `P − (L + 1) d²`. -/
@@ -129,6 +131,7 @@ private def readsLowLin_erc [LinearOrder d] (c : ∀ ℓ : Fin L, d → A.r ℓ)
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
 
+omit [DecidableEq d] in
 /-- **Proposition A.9 (i), "respectively `d_model (d_model − 1)/2`, parameters per hidden
 state", reads:** the parameters whose chosen columns of every read and of the readout form upper
 triangular matrices have dimension `P − (L + 1) d(d − 1)/2`. -/
@@ -174,6 +177,7 @@ private def writesUpLin_erc [LinearOrder d] (ρE : d → dIn) (ρ : ∀ ℓ : Fi
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
 
+omit [DecidableEq d] in
 /-- **Proposition A.9 (i), "respectively `d_model (d_model − 1)/2`, parameters per hidden
 state", writes:** the parameters whose chosen rows of the embedding and of every write form lower
 triangular matrices have dimension `P − (L + 1) d(d − 1)/2`. -/

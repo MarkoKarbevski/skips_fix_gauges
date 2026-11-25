@@ -2115,3 +2115,7 @@ import SkipsLean
 #print axioms Skips.funDimB_eq_funDimOf
 #print axioms Skips.funDimSkips_eq_funDimOf
 #print axioms Skips.funDimOf_eq_of_comp_of_section
+#print axioms Skips.finrank_span_reads_eq_zero
+#print axioms Skips.finrank_span_writes_eq_zero
+#print axioms Skips.finrank_span_reads_upperTriangular
+#print axioms Skips.finrank_span_writes_lowerTriangular
