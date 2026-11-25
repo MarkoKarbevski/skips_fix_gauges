@@ -34,7 +34,9 @@ The route of the proofs, from the full skip (`OneBlock/LearnedSkipKinds.lean`):
   the largest (`ae_funDimSkips_ge`); the restricted family has at most the functional dimension of
   the full one (`funDimSkips_comp_le`, `funDimLearned_add_le_rmsNorm`).
 Attention blocks: `OneBlock/LearnedSkipTriangularSmooth.lean`; ReLU, ReLU² and ReGLU blocks:
-`OneBlock/LearnedSkipTriangularRescale.lean`. Not stated: blocks narrower than `d`; `ε = 0`.
+`OneBlock/LearnedSkipTriangularRescale.lean`. Blocks narrower than `d` are in
+`OneBlock/LearnedSkipTriangularNarrow.lean`; for `ε = 0` see the rows "S Theorem B.1 (iii) for
+`ε = 0`" of `STATEMENTS.md`.
 -/
 
 namespace Skips
