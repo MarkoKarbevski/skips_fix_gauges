@@ -326,3 +326,4 @@ import SkipsLean.OneBlock.UnitsGeneralPosition
 import SkipsLean.OneBlock.SkiplessReluWideRMSZero
 import SkipsLean.OneBlock.UnitsNoSymmetricPart
 import SkipsLean.OneBlock.KeepsProducts
+import SkipsLean.OneBlock.LearnedSkipNarrowMlp
