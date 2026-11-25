@@ -89,6 +89,13 @@ theorem finrank_span_reads_eq_zero (c : ∀ ℓ : Fin L, d → A.r ℓ) (cD : d 
     Module.finrank_self, Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]
   ring
 
+/-- The chosen rows of the embedding and of every write. -/
+private def writesLin_erc (ρE : d → dIn) (ρ : ∀ ℓ : Fin L, d → A.w ℓ) :
+    Params A dIn dOut →ₗ[ℝ] Matrix d d ℝ × (Fin L → Matrix d d ℝ) where
+  toFun η := (η.E.submatrix ρE id, fun ℓ => (η.write ℓ).submatrix (ρ ℓ) id)
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
 /-- **Proposition A.9 (i), "this removes `d_model²` […] parameters per hidden state", writes:**
 the parameters whose chosen rows of the embedding and of every write vanish have dimension
 `P − (L + 1) d²`. -/
@@ -98,7 +105,21 @@ theorem finrank_span_writes_eq_zero (ρE : d → dIn) (ρ : ∀ ℓ : Fin L, d �
         η.E.submatrix ρE id = 0 ∧ ∀ ℓ, (η.write ℓ).submatrix (ρ ℓ) id = 0})
       + (L + 1) * Fintype.card d ^ 2
       = Module.finrank ℝ (Params A dIn dOut) := by
-  sorry
+  have hφ : Function.Surjective (writesLin_erc (dOut := dOut) ρE ρ) := by
+    rintro ⟨M, N⟩
+    refine ⟨⟨Matrix.of fun r i => Function.extend ρE (fun j => M j i) 0 r, fun _ => 0,
+      fun ℓ => Matrix.of fun r i => Function.extend (ρ ℓ) (fun j => N ℓ j i) 0 r, 0⟩, ?_⟩
+    refine Prod.ext ?_ (funext fun ℓ => ?_) <;> ext j i
+    · exact hρE.extend_apply (fun j => M j i) 0 j
+    · exact (hρ ℓ).extend_apply (fun j => N ℓ j i) 0 j
+  have hS := finrank_span_ker_erc _ hφ {η : Params A dIn dOut |
+        η.E.submatrix ρE id = 0 ∧ ∀ ℓ, (η.write ℓ).submatrix (ρ ℓ) id = 0} fun η => by
+    simp only [Set.mem_ofPred_eq, Prod.ext_iff, funext_iff (f := fun ℓ => _)]
+    rfl
+  rw [← hS]
+  simp only [Module.finrank_prod, Module.finrank_pi_fintype, Module.finrank_matrix,
+    Module.finrank_self, Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]
+  ring
 
 /-- **Proposition A.9 (i), "respectively `d_model (d_model − 1)/2`, parameters per hidden
 state", reads:** the parameters whose chosen columns of every read and of the readout form upper
