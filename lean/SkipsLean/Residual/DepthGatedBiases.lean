@@ -495,7 +495,18 @@ theorem ae_funDimB_gated_residual (hσ : ∀ z, HasDerivAt σ (σ' z) z)
     ∀ᵐ p ∂μ, funDimB (Arch.gated σ id hid) 1 p
         + (Fintype.card d ^ 2 + (L + 1) * Fintype.card d + ∑ ℓ, Fintype.card (hid ℓ))
       = Module.finrank ℝ (ParamsB (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) := by
-  sorry
+  -- the conditions of Lemma A.27 on the weights hold at generic `(θ, b)`
+  have hgen := ae_paramsB_of_forall_ae
+    (fun ν _ => ae_smallWritesGenericGated (σ := σ) ν hd hdIn hdOut) μ
+  -- one `p₀` with the conditions, and one small `τ ≠ 0`: `fd(p₀_τ) = P − d² − (L + 1) d − s`
+  obtain ⟨p₀, hp₀⟩ := hgen.exists
+  obtain ⟨τ, hτ⟩ := (eventually_funDimB_smallWritesB_gated hσ hσa hU p₀ hp₀).exists
+  -- at generic `p`, `fd(p) ≥ fd(p₀_τ)` (analytic blocks), and `fd(p) ≤ P − d² − (L + 1) d − s`
+  -- (`E` of rank `d`, no value column of a read vanishes)
+  filter_upwards [ae_funDimB_ge (Arch.gated σ id hid) 1 (fun ℓ => analyticOnNhd_f_gated hσa ℓ)
+    analyticOnNhd_id μ (smallWritesB p₀ τ), hgen] with p h1 h2
+  have h3 := funDimB_add_le_residual_gated p h2.rank_E (value_col_ne_zero_dgb h2)
+  omega
 
 /-! ### The two kinds of block -/
 
