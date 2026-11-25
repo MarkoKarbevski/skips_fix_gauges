@@ -26,8 +26,8 @@ writes at once (`Symmetry/Reduction.lean`). Here:
 * (i) under pre-RMSNorm for the rows of the embedding and of all writes at once.
 
 The statements under pre-RMSNorm hold for every real `ε` (`rmsNorm ε` is a total function), and
-need no invertibility of `W_1`. Not stated: networks of mixed blocks; the count of the removed
-parameters.
+need no invertibility of `W_1`. Networks of mixed blocks: `Residual/ExactReductionMixed.lean`;
+the count of the removed parameters: `Residual/ExactReductionCount.lean`.
 -/
 
 namespace Skips
