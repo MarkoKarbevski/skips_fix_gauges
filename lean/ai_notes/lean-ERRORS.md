@@ -139,8 +139,8 @@ Rules, so that the file stays small:
 - A constant family needs its binder type: `fun _ : Fin (L + 1) => G₀`. `field_simp` on `(f / g) t`: `rw [Pi.div_apply]` first.
 - An implicit argument fixed only through a `(by linarith)`, `(by rw …)` or `rfl` argument can be assigned wrongly (`|?u|` unifies with `|0|`; `rfl : ?θ'.E = θ.E`
   sets `θ' := θ`; `congrArg Params.E h` against `a.E = a'.E` wants `h : a = a'`): pass it, `lemma (μ := 2 * u j) (by linarith)`; `have h1 := congrArg Params.E h; exact h1`.
-- `Arch.mlp`, `Arch.gated`, `Arch.sum` are `abbrev`s, so `(Arch.mlp ..).r 0` reduces to `hid 0`; if `rw`/`simp` finds no pattern across the
-  two forms, `show` the unfolded type, or `exact Matrix.mul_assoc _ _ _` for `rw`. `simp only [f_sum_mul]` does nothing (simp first unfolds
+- `Arch.mlp`, `Arch.gated`, `Arch.sum` are `abbrev`s, so `(Arch.mlp ..).r 0` reduces to `hid 0`; if `rw`/`simp` finds no pattern (or `omega` sees two atoms, e.g. after
+  `rank_le_card_width`) across the two forms, `show` the unfolded type (a typed `have`), or `exact Matrix.mul_assoc _ _ _` for `rw`. `simp only [f_sum_mul]` does nothing (simp first unfolds
   `(A.sum B).f ℓ M`): `rw [f_sum_mul]` in a `have` per block, then `rw [Finset.sum_congr rfl …]` (`Residual/DepthTransformerGated.lean`).
 - **Error** `Type mismatch` of `differentiable_pi.1 …` on `Matrix T n ℝ`, with `instTopologicalSpaceMatrix`
   in the expected type. **Cause** `[Fintype T]` removed by `omit`: `Differentiable` needs only a topology,

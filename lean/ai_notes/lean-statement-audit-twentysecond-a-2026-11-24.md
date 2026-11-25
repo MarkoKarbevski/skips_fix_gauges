@@ -11,13 +11,13 @@ Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
 - **Commit read: `c82bc4091dc15be64d67c2578b4f835408a8c931` (24 November 2026, 21:46:07 UTC),** the
   head when I started. The branch moved while I worked; I looked at it again at `24fd846`
-  (21:54:14) and at **`1417c05d2cda4560b98fe1a846be2d6aa467bda6` (22:06:24), the head when I
-  finished.** Five of the six files are byte for byte the same at the three commits (`git diff` is
-  empty), and so is every file of definitions that I read. The sixth,
+  (21:54:14), at `1417c05` (22:06:24) and at **`00c5f4fda95e027f284e184061b4a81f1759a480`
+  (22:14:34), the head when I finished.** Five of the six files are byte for byte the same at the
+  four commits (`git diff` is empty), and so is every file of definitions that I read. The sixth,
   `OneBlock/SkiplessHomogeneousRMSZeroEq.lean`, had five proofs replaced by `sorry` at `c82bc40`
-  and at `24fd846`; since commit `44ecb39` (22:03:41) it has proofs. Its header, its `variable`
-  lines and the text of its eleven statements are the same before and after (compared by a
-  script, `Eq_c82bc40.lean` against `Eq_head.lean`).
+  and at `24fd846`; since commit `44ecb39` (22:03:41) it has proofs, and it has not changed since
+  `1417c05`. Its header, its `variable` lines and the text of its eleven statements are the same
+  before and after (compared by a script, `Eq_c82bc40.lean` against `Eq_head.lean`).
 - **Statements that were `sorry` at `c82bc40`** (all in `OneBlock/SkiplessHomogeneousRMSZeroEq.lean`):
   `eval_skipless_rmsNorm_zero_of_rowHomogeneous`, `flatOn_le_mlp_rescale_skipless_rmsNorm_zero`,
   `funDim_mlp_oneBlock_rescale_skipless_rmsNorm_zero`,
@@ -25,18 +25,19 @@ Library: `/home/claude/lw/lean` (branch `lean-wip`).
   `ae_rank_E_D_read_write_of_card_eq`. The other six statements of the file were proved from these
   five. Files with `sorry` in `lean/SkipsLean` (`git grep -w sorry`): at `c82bc40` two
   (`OneBlock/LearnedSkipRMSZeroBound.lean`, not of this audit, and the file above); at `1417c05`
-  none.
+  and at `00c5f4f` none.
 - The six files have 24 public theorems (3 + 4 + 3 + 1 + 2 + 11) and two public definitions
   (`TurnsActiveRowsGated`, `UnitsParallel`). All 24 depend on `propext`, `Classical.choice`,
   `Quot.sound` only: by compiling `Sig22.lean` (13 theorems of the five files) and `ChkEq22.lean`
-  (11 theorems of the sixth, at `1417c05`) against the build of `/home/claude/lp/lean`, whose
-  `SkipsLean/` had the six files and the definitions equal to those of `/home/claude/lw` each time
-  (`diff -rq`).
+  (11 theorems of the sixth, at `1417c05` and at `00c5f4f`) against the build of
+  `/home/claude/lp/lean`, whose copies of the six files and of the definitions were equal to
+  those of `/home/claude/lw` each time (`cmp`).
 
 Paper, as text: the skips paper ("S", `<scratchpad>/skips.txt`). I compared nothing with the
-dimension paper. Line numbers of `STATEMENTS.md` are those of `1417c05`: the rows of the six files
-are lines 901 to 906 there (lines 897 to 902 at `c82bc40`; the first five have the same text, by
-checksum; the sixth differs only in its last cell, "in work" then "proved").
+dimension paper. Line numbers of `STATEMENTS.md` are those of `00c5f4f`: the rows of the six files
+are lines 903 to 908 there (lines 901 to 906 at `1417c05`, 897 to 902 at `c82bc40`; the first
+five have the same text at the commits, by checksum; the sixth differs only in its last cell,
+"in work" at `c82bc40`, then "proved").
 
 **Short answer. No Lean statement is false, none is vacuous, none has drifted.** The 24 statements
 are the paper's, with the conditions of the proofs written out. Three things differ from the
@@ -57,11 +58,12 @@ exact arithmetic; a flat direction that is not a symmetry is in the kernel exact
 inputs, and by hand at every input of the paper). The theorem, which is for generic parameters,
 stands.
 
-In 108 computed parameters inside the hypotheses of the theorem the rank was the paper's value on
-both batches (40 of the residual ReGLU network; 68 of the skipless ReLU and ReLU² networks, 24 of
-them at width `d` and 44 at widths `d + 1` to `2d + 1`). Two sentences of the index and of one
-header say "false for one unit" of a statement that, as defined, is true for one unit;
-corrections are at the end.
+In 108 computed parameters the rank was the paper's value on both batches: all 40 of the
+residual ReGLU network (12 of them narrower than `d`, where only Lean claims the value), and all
+68 of the skipless ReLU and ReLU² networks of width at least `d` (24 at width `d`, where Lean
+claims the value; 44 at widths `d + 1` to `2d + 1`, where only the paper does). One sentence of
+the index and one of a header say "false for one unit" of a statement that, as defined, is true
+for one unit; corrections are at the end.
 
 How I checked.
 
@@ -81,15 +83,17 @@ How I checked.
   from `/home/claude/lp/lean` (nothing written there): `Sig22.lean` (signatures and axioms),
   `Chk22.lean` (checks 1, 2, 3, 5), `ChkHw22.lean` (check 2), `ChkEq22.lean` (checks 1 and 6),
   `ChkDom22.lean` (check 6). All compile without error and without `sorry` (`*.out`, the last time
-  at `1417c05`); every theorem of mine that I name below has the three standard axioms. The four
+  at `00c5f4f`); every theorem of mine that I name below has the three standard axioms. The four
   general lemmas on `funDimOn` are those of the twenty-first reader, compiled again.
 - "By a computation": my own scripts. `z22core.py`: one block under pre-RMSNorm with `ε = 0`, with
   or without the skip, ReLU, ReLU² or ReGLU; the Jacobian in the weights in closed form, over
   numbers of 60 digits (python-flint `arb`, 200 bits) or over rationals. It agrees with central
-  differences of a separate plain evaluation to `2.4·10⁻⁴⁷` (`z22fd.py`, 54 inputs, every entry).
+  differences of a separate plain evaluation to `2.4·10⁻⁴⁷` (`z22fd.py`: 18 networks, up to three
+  inputs each, every entry).
   The rank at 60 digits is by elimination with complete pivoting, and again from the singular
-  values in double precision; over all runs the smallest pivot kept is `4·10⁻⁶` of the largest
-  and no entry dropped is above `3.3·10⁻⁵⁵`. In exact arithmetic the weights are random
+  values in double precision; over the runs of `z22run.py` the smallest pivot kept is `4·10⁻⁶` of
+  the largest and no entry dropped is above `3.3·10⁻⁵⁵` of it, and the two ranks agree in every
+  run. In exact arithmetic the weights are random
   rationals and the inputs are chosen with `N_0(x E)` a rational point of the sphere
   `|n|² = d` (so every square root is rational; the rows of an input are scaled by a positive
   number, which does not change the rank); the rank is modulo two primes near `2⁶¹` and `2⁶²`,
@@ -99,9 +103,9 @@ How I checked.
   with a random direction of `h_0 = x E`; one third near the kink of a random unit (distance
   `10⁻⁴` to 1, either side); one third are one input in every pattern of active units found
   among 40000 random directions; random scales from 0.2 to 5; two batches of `4P` and `7P`
-  inputs. **A rank on a batch is a lower bound of the functional dimension.** For the networks
-  below the upper bound is a Lean theorem, so "rank = value" on a batch settles the value at that
-  parameter. I ran the coordinator's script `units_parallel_check_2026-11-24.py` once (16 cases,
+  inputs. **A rank on a batch is a lower bound of the functional dimension.** For the residual
+  network, and for the skipless network of width at least `d`, the upper bound is a Lean theorem,
+  so "rank = value" on a batch settles the value at that parameter. I ran the coordinator's script `units_parallel_check_2026-11-24.py` once (16 cases,
   none differs from mine); my numbers are from my own scripts.
 
 ---------------------------------------------------------------------------------------------------
@@ -336,9 +340,10 @@ the Lean statement implies the paper's.** (By reading; by compiling.)
 - The computation, at the same weights for both networks (`z22gain.py`, output `z22gain.out`; 10
   sizes, three kinds, exact and 60 digits): in the 42 parameters with a width at least `d` the
   rank with the skip minus the rank without it is `d²` on both batches (4 for `d = 2`, 9 for
-  `d = 3`), ReGLU included. In the 18 with a width below `d` the rank computed without the skip
-  is below `P − d² − d(d−1)/2 − 1 − s`; I have no upper bound there, so I conclude nothing on the
-  gain of a narrow block (outside the theorem).
+  `d = 3`), ReGLU included. In the 18 with a width below `d` (outside the theorem) the rank
+  computed without the skip is below `P − d² − d(d−1)/2 − 1 − s`, so the computed difference is
+  above `d²`; for width 1 this is the gain (the skipless rank is at most `d_out`, see check 6);
+  for `d = 3` and width 2 the skipless rank is a lower bound only, and I conclude nothing.
 
 ### Check 4. The final normalization lemma
 
@@ -434,10 +439,11 @@ hand, by compiling, by an exact computation.)
   solutions named by the statement have dimension `q + 1` and are always in it. For random
   rational independent `c` and `a`, shapes `(n, m, q)` = (2,2,2), (3,3,3), (4,4,4), (3,2,2),
   (2,3,2), (4,3,3), (3,4,3), (5,5,5), (4,6,4), (5,3,2), (6,2,2), (6,3,3), (7,4,2), (5,5,3), ReLU
-  and ReLU², with points in every pattern of active units that has an active unit: **the
-  solutions have dimension exactly `q + 1` in all 48 systems.** (For the shape (5,3,2) six points
-  per pattern were too few, the kernel was 6; from ten points per pattern on it is 3. A kernel on
-  a batch is an upper bound.)
+  and ReLU², with six or more points in each pattern of active units found (all `2^q − 1`
+  patterns with an active unit in 45 of the 48 systems; 13 of 15, 27 and 29 of 31 in the other
+  three): **the solutions have dimension exactly `q + 1` in all 48 systems.** (For the shape
+  (5,3,2) six points per pattern were too few, the kernel was 6; from ten points per pattern on
+  it is 3. A kernel on a batch is an upper bound.)
 - For information, outside the Lean statement: with more units than coordinates (the paper's
   wider blocks; `c` or `a` dependent, random rational), shapes (2,2,3), (2,2,4), (2,2,5), (3,3,4),
   (3,3,5), (3,3,7), (2,3,3), (3,2,3): the solutions have dimension `q + 1` in all 32 systems. This
@@ -556,8 +562,11 @@ is not needed.** (By reading, by hand, by compiling, by a computation.)
     | `d = 2`, widths 2 to 5: value = rank | `d = 3`, widths 3 to 7: value = rank |
     |---|---|
     | 8, 11, 14, 17 (`P` = 16, 20, 24, 28) | 20, 25, 30, 35, 40 (`P` = 36, 42, …, 60) |
-  - Widths below `d`, outside the theorem (3 cases per kind): the rank is below the formula (2
-    against 5 at `d = 2`, width 1; 3 against 10 and 12 against 15 at `d = 3`, widths 1 and 2).
+  - Widths below `d`, outside the theorem (3 cases per kind): the computed rank is below the
+    formula (2 against 5 at `d = 2`, width 1; 3 against 10 and 12 against 15 at `d = 3`, widths 1
+    and 2). For width 1 the formula is false (by hand: where the unit is active the output is
+    `N_0(a_1) D`, the same at every input, so the rank of any batch is at most `d_out`). For
+    `d = 3` and width 2 the computed rank is a lower bound, and I have no upper bound.
   - The residual network with ReLU and ReLU², my own recomputation (`z22_res_mlp.out`, 64
     parameters): the rank is `P − d(d−1)/2 − 1 − s` in all, as in the twenty-first audit.
   - At the same weights (`z22gain.out`): with the skip minus without it is `d²` in the 28
@@ -565,26 +574,26 @@ is not needed.** (By reading, by hand, by compiling, by a computation.)
 
 ### Check 7. The index rows
 
-**Verdict: each sentence of the six rows (lines 901 to 906 at `1417c05`) is true of the
-statements, with one sentence to reword (row 905, "False for one unit"). Every public theorem of
+**Verdict: each sentence of the six rows (lines 903 to 908 at `00c5f4f`) is true of the
+statements, with one sentence to reword (row 907, "False for one unit"). Every public theorem of
 the six files is in its row and in `checks/Axioms.lean`.** (By reading; by a script.)
 
-- Rows 901 and 902 (`ResidualRMSZeroReGLU.lean`, `…ReGLUGeneric.lean`): true. "the step that the
+- Rows 903 and 904 (`ResidualRMSZeroReGLU.lean`, `…ReGLUGeneric.lean`): true. "the step that the
   paper's proof does not write, as for ReLU": true, and the step is needed for ReGLU too (check
   2 (d)).
-- Row 903 (`ResidualRMSZeroGainHomogeneous.lean`): true, with the sentence on the two notions of
+- Row 905 (`ResidualRMSZeroGainHomogeneous.lean`): true, with the sentence on the two notions of
   functional dimension (check 3).
-- Row 904 (`SkiplessRMSZeroReadout.lean`): true.
-- Row 905 (`UnitsParallel.lean`): true except "False for one unit": `UnitsParallel` as defined
+- Row 906 (`SkiplessRMSZeroReadout.lean`): true.
+- Row 907 (`UnitsParallel.lean`): true except "False for one unit": `UnitsParallel` as defined
   holds for one unit, because "at least two units" is a clause of the definition; see check 5.
-- Row 906 (`SkiplessHomogeneousRMSZeroEq.lean`): true; "in work" at `c82bc40`, "proved" at
-  `1417c05`, which is right at both commits. "at an input with no zero row of `x E`": the
+- Row 908 (`SkiplessHomogeneousRMSZeroEq.lean`): true; "in work" at `c82bc40`, "proved" at
+  `1417c05` and after, which is right at each commit. "at an input with no zero row of `x E`": the
   statement has this hypothesis; it is not needed (check 6).
 - Names: the 24 public theorems and the two definitions are named in their rows. In
-  `checks/Axioms.lean`: at `c82bc40` the 13 theorems of the five proved files; at `1417c05` all
-  24.
+  `checks/Axioms.lean`: at `c82bc40` the 13 theorems of the five proved files; at `1417c05` and at
+  `00c5f4f` all 24.
 - The paragraph of the index that lists the files "Not yet compared by such a reader" (lines 238
-  to 251 at `1417c05`) names the six files; with this report they have been compared.
+  to 254 at `00c5f4f`) names the six files; with this report they have been compared.
 
 ---------------------------------------------------------------------------------------------------
 
@@ -636,7 +645,7 @@ symmetries …") as a statement of its own.
 False, vacuous, drifted or misdescribed:
 
 1. **Nothing in the Lean statements is false, vacuous or drifted.** One description is loose: the
-   header of `OneBlock/UnitsParallel.lean` and row 905 of the index say that the statement is
+   header of `OneBlock/UnitsParallel.lean` and row 907 of the index say that the statement is
    false for one unit; as defined it holds for one unit, and the statement without the clause "at
    least two units" is the one that fails (check 5).
 
@@ -654,9 +663,9 @@ Conditions and steps that the paper's proof needs and does not write:
    states and a direction `ψ` of the weights of the block along which `B` has derivative zero on
    the sphere" is not true at every parameter with the conditions named. The theorem is for
    generic parameters and stands: Lean proves that the missing condition holds at almost every
-   parameter (`ae_turnsActiveRowsGated_reglu`). One sentence in the proof would close it (for
-   generic parameters, on every region the block is not parallel to its input on an open dense
-   set of rows).
+   parameter (`ae_turnsActiveRowsGated_reglu`). What the proof does not write: for generic
+   parameters, the rows `u` at which `u` and `B(u)` are linearly independent are dense among the
+   rows with an active gate.
 3. **The equality for the skipless network is formalized for width exactly `d_model` only.** The
    theorem says "of width at least `d_model`". For wider blocks the paper's proof uses a
    resultant ("`h_1 ≠ 0` there") and two entries of `h_1` without a common factor; none of this
@@ -674,10 +683,11 @@ Conditions and steps that the paper's proof needs and does not write:
    proof does not say where the width is used at this point.
 6. **`d_model ≥ 2` is needed for the skipless equality** (by hand: `d = 1`, `d_in = 2`, width 1:
    the rank is `d_out`, the formula gives `d_out + 1`). It is a hypothesis of the theorem.
-7. **Below the theorem's width the skipless formula fails** (computed: `d = 2` width 1, and
-   `d = 3` widths 1 and 2; the rank is below `P − d² − d(d−1)/2 − 1 − s`), while the residual
-   value holds for every width with a hidden unit (Lean; computed for ReGLU at widths below `d`).
-   So "of width at least `d_model`" is used by the skipless half of (iv) and not by the residual
+7. **Below the theorem's width the skipless formula fails**: for width 1 the functional dimension
+   is at most `d_out` (by hand; computed: 2 against 5 for `d = 2`, 3 against 10 for `d = 3`), and
+   for `d = 3` and width 2 the computed rank is 12 against 15 (a lower bound). The residual value
+   holds for every width with a hidden unit (Lean; computed for ReGLU at widths below `d`). So
+   "of width at least `d_model`" is used by the skipless half of (iv) and not by the residual
    half.
 
 For information:
@@ -693,26 +703,26 @@ For information:
 
 ---------------------------------------------------------------------------------------------------
 
-## Corrections for `STATEMENTS.md` (and two file headers)
+## Corrections for `STATEMENTS.md` (line numbers of `00c5f4f`) and for one file header
 
-1. **Row 905 (`OneBlock/UnitsParallel.lean`), "False for one unit."** Write: "As defined it holds
+1. **Row 907 (`OneBlock/UnitsParallel.lean`), "False for one unit."** Write: "As defined it holds
    for fewer than two units (the clause `2 ≤ Fintype.card q` is in the definition); without the
    clause it is false for one unit when the input has at least two coordinates, and true with
    one coordinate." The same in the header of `OneBlock/UnitsParallel.lean` ("With one unit the
    statement is false (`ψc` is then arbitrary)").
-2. **Rows 901 and 902 (ReGLU).** Add: "The condition `TurnsActiveRowsGated` is needed: at a
+2. **Rows 903 and 904 (ReGLU).** Add: "The condition `TurnsActiveRowsGated` is needed: at a
    parameter with six hidden units, `d = 2`, that has `OneBlockGenericReGLURMS` and a turned row,
    the rank on the paper's inputs is 29 against 30 (twenty-second audit, part A)."
-3. **Row 906 (`OneBlock/SkiplessHomogeneousRMSZeroEq.lean`), "at an input with no zero row of
+3. **Row 908 (`OneBlock/SkiplessHomogeneousRMSZeroEq.lean`), "at an input with no zero row of
    `x E` the network is `N_0(f(x E W_read) W_write) D`".** Add "(the hypothesis is not needed
    with Lean's `N_0(0) = 0`)", or drop the hypothesis `hx` from
    `eval_skipless_rmsNorm_zero_of_rowHomogeneous`. The row could also say that the pointwise
    statements hold at every parameter with the four ranks, and that `k ≥ 1` and `σ(1) ≠ 0` are
    what makes `h_1` fill an open set.
-4. **Row 905, the numeric check.** Add: "exact rational check by the twenty-second reader: 48
+4. **Row 907, the numeric check.** Add: "exact rational check by the twenty-second reader: 48
    systems with independent `c`, `a` and two to five units, the solutions have dimension
    `q + 1`."
-5. **The paragraph "Not yet compared by such a reader"** (lines 238 to 251 at `1417c05`): take
+5. **The paragraph "Not yet compared by such a reader"** (lines 238 to 254 at `00c5f4f`): take
    out `OneBlock/ResidualRMSZeroReGLU.lean`, `OneBlock/ResidualRMSZeroReGLUGeneric.lean`,
    `OneBlock/ResidualRMSZeroGainHomogeneous.lean`, `OneBlock/SkiplessRMSZeroReadout.lean`,
    `OneBlock/UnitsParallel.lean`, `OneBlock/SkiplessHomogeneousRMSZeroEq.lean`, and name this
@@ -729,8 +739,8 @@ For information:
   paper's inputs only.
 - The equality for the skipless network at widths above `d`: computed at 44 parameters, not
   proved, and not stated in Lean.
-- The gain for blocks narrower than `d`: the computed rank of the skipless network is a lower
-  bound and I have no upper bound there.
+- The skipless network narrower than `d` with more than one hidden unit (`d = 3`, width 2): the
+  computed rank is a lower bound and I have no upper bound there.
 - Sizes: the network ranks are for `d = 2, 3` only; widths up to `2d + 1`; `d_in`, `d_out` up to
   `d + 2`.
 - The paper's argument for wider blocks (the resultant; the common factor): not checked beyond
