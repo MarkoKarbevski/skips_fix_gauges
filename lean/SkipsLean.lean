@@ -413,3 +413,5 @@ import SkipsLean.Activations.GateFarC
 import SkipsLean.Depth.FrozenFarHolomorphic
 import SkipsLean.OneBlock.RedundancySymmetriesRMSZero
 import SkipsLean.Symmetry.BiasesAffineGroupLaw
+import SkipsLean.Symmetry.BiasesGeneratedGroup
+import SkipsLean.Symmetry.BiasesGeneratedGroupRescale
