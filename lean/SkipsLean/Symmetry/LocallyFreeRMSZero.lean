@@ -133,6 +133,7 @@ private theorem eq_one_of_mul_smul_one_lfz {m : Type*} (X : Matrix m d ℝ) (hX 
   rw [Matrix.mul_smul, Matrix.mul_one, Matrix.smul_apply, smul_eq_mul] at h1
   exact mul_right_cancel₀ hpq (h1.trans (one_mul _).symm)
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Lemma A.18, first sentence, `ε = 0`, ReLU and ReLU² blocks.** Let `G_ℓ = s_ℓ Q_ℓ` with
 `s_ℓ > 0` and `Q_ℓ` orthogonal. If `E` and every write have rank `d ≥ 1`, no column of a read
 vanishes, and these changes of basis with the rescalings `c` of the hidden units fix `θ`, then
@@ -186,6 +187,7 @@ theorem cob_rmsNorm_zero_rescaleMlp_eq_self_of_rank_E [Nonempty d] (k : ℕ)
   exact ⟨fun ℓ => (hGQ ℓ (hG1 ℓ)).1, funext fun ℓ => (hGQ ℓ (hG1 ℓ)).2,
     fun ℓ => (key ℓ (hG1 ℓ.castSucc)).1⟩
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Lemma A.18, first sentence, `ε = 0`, gated blocks with any gate.** Let `G_ℓ = s_ℓ Q_ℓ`
 with `s_ℓ > 0` and `Q_ℓ` orthogonal. If `E` and every write have rank `d ≥ 1`, no value column
 of a read vanishes, and these changes of basis with the rescalings `c` of the values fix `θ`,
@@ -240,6 +242,7 @@ theorem cob_rmsNorm_zero_rescale_eq_self_of_rank_E [Nonempty d]
   exact ⟨fun ℓ => (hGQ ℓ (hG1 ℓ)).1, funext fun ℓ => (hGQ ℓ (hG1 ℓ)).2,
     fun ℓ => (key ℓ (hG1 ℓ.castSucc)).1⟩
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Lemma A.18, first sentence, `ε = 0`, ReGLU blocks.** Let `G_ℓ = s_ℓ Q_ℓ` with `s_ℓ > 0`
 and `Q_ℓ` orthogonal. If `E` and every write have rank `d ≥ 1`, no gate column and no value
 column of a read vanishes, and these changes of basis with the rescalings `c'` of the values and
@@ -306,13 +309,15 @@ theorem cob_rmsNorm_zero_rescale_rescaleGate_eq_self_of_rank_E [Nonempty d] (k :
   exact ⟨fun ℓ => (hGQ ℓ (hG1 ℓ)).1, funext fun ℓ => (hGQ ℓ (hG1 ℓ)).2,
     fun ℓ => (key ℓ (hG1 ℓ.castSucc)).1, fun ℓ => (key ℓ (hG1 ℓ.castSucc)).2.1⟩
 
+omit [Fintype T] [Fintype dIn] in
 /-- **Lemma A.18, second sentence, `ε = 0`, ReLU and ReLU² blocks.** Let `G_ℓ = s_ℓ Q_ℓ` with
-`s_ℓ > 0` and `Q_ℓ` orthogonal. If `D` and every read have rank `d ≥ 1`, `E ≠ 0`, no column of a
-read and no row of a write vanishes, and these changes of basis with positive rescalings `c` of
-the hidden units fix `θ`, then `s = 1`, `Q = 1` and `c = 1`. -/
+`Q_ℓ` orthogonal (the proof does not use `s_ℓ > 0`, and the statement does not ask it). If `D`
+and every read have rank `d ≥ 1`, `E ≠ 0`, no column of a read and no row of a write vanishes,
+and these changes of basis with positive rescalings `c` of the hidden units fix `θ`, then
+`s = 1`, `Q = 1` and `c = 1`. -/
 theorem cob_rmsNorm_zero_rescaleMlp_eq_self_of_rank_D [Nonempty d] (k : ℕ)
     (θ : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut) (G Q : Fin (L + 1) → GL d ℝ)
-    (s : Fin (L + 1) → ℝ) (c : ∀ ℓ, hid ℓ → ℝ) (hs : ∀ ℓ, 0 < s ℓ) (hc : ∀ ℓ i, 0 < c ℓ i)
+    (s : Fin (L + 1) → ℝ) (c : ∀ ℓ, hid ℓ → ℝ) (hc : ∀ ℓ i, 0 < c ℓ i)
     (hQ : ∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ)
     (hG : ∀ ℓ, (G ℓ : Matrix d d ℝ) = s ℓ • (Q ℓ : Matrix d d ℝ))
     (hD : θ.D.rank = Fintype.card d) (hr : ∀ ℓ, (θ.read ℓ).rank = Fintype.card d)
@@ -390,6 +395,7 @@ theorem cob_rmsNorm_zero_rescaleMlp_eq_self_of_rank_D [Nonempty d] (k : ℕ)
   | zero => exact hs0
   | succ ℓ => exact (key ℓ (hQ1 ℓ.succ)).2.1
 
+omit [Fintype T] [Fintype dIn] in
 /-- **Lemma A.18, second sentence, `ε = 0`, gated blocks with any gate.** Let `G_ℓ = s_ℓ Q_ℓ`
 with `s_ℓ > 0` and `Q_ℓ` orthogonal. If `D` and every read have rank `d ≥ 1`, `E ≠ 0`, no value
 column of a read and no row of a write vanishes, and these changes of basis with the rescalings
@@ -482,6 +488,7 @@ theorem cob_rmsNorm_zero_rescale_eq_self_of_rank_D [Nonempty d]
   | zero => exact hs0
   | succ ℓ => exact (key ℓ (hQ1 ℓ.succ)).2.1
 
+omit [Fintype T] [Fintype dIn] in
 /-- **Lemma A.18, second sentence, `ε = 0`, ReGLU blocks.** Let `G_ℓ = s_ℓ Q_ℓ` with `s_ℓ > 0`
 and `Q_ℓ` orthogonal. If `D` and every read have rank `d ≥ 1`, `E ≠ 0`, no gate column and no
 value column of a read and no row of a write vanishes, and these changes of basis with the
@@ -604,6 +611,7 @@ variable {sees : T → T → Prop} [DecidableRel sees]
 variable {H dh : Fin L → Type} [∀ ℓ, Fintype (H ℓ)] [∀ ℓ, Fintype (dh ℓ)]
   [∀ ℓ, DecidableEq (dh ℓ)]
 
+omit [Fintype dIn] [Fintype dOut] in
 /-- **Lemma A.18, third sentence, `ε = 0`, attention blocks.** Let `G_ℓ = s_ℓ Q_ℓ` with
 `s_ℓ > 0` and `Q_ℓ` orthogonal. If `E` and every write have rank `d ≥ 1`, the query matrix and
 the value matrix of every head have rank `d_h`, and these changes of basis with the changes of

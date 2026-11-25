@@ -100,13 +100,13 @@ theorem ae_cob_rmsNorm_zero_rescaleMlp_eq_self_of_dOut [Nonempty d] [Nonempty dI
     (hdOut : Fintype.card d ≤ Fintype.card dOut)
     (hw : ∀ ℓ, Fintype.card d ≤ Fintype.card (hid ℓ)) :
     ∀ᵐ θ ∂μ, ∀ (G Q : Fin (L + 1) → GL d ℝ) (s : Fin (L + 1) → ℝ) (c : ∀ ℓ, hid ℓ → ℝ),
-      (∀ ℓ, 0 < s ℓ) → (∀ ℓ i, 0 < c ℓ i) →
+      (∀ ℓ i, 0 < c ℓ i) →
       (∀ ℓ, (Q ℓ : Matrix d d ℝ) ∈ Matrix.orthogonalGroup d ℝ) →
       (∀ ℓ, (G ℓ : Matrix d d ℝ) = s ℓ • (Q ℓ : Matrix d d ℝ)) →
       (θ.cob G Q).rescaleMlp k c = θ → (∀ ℓ, s ℓ = 1) ∧ Q = 1 ∧ ∀ ℓ i, c ℓ i = 1 := by
   filter_upwards [ae_rank_D_read μ hdOut hw, ae_E_ne_zero_lfy μ, ae_read_col_ne_zero μ,
-    ae_write_row_ne_zero μ] with θ hθ hE hcol ha G Q s c hs hc hQ hG h
-  exact cob_rmsNorm_zero_rescaleMlp_eq_self_of_rank_D k θ G Q s c hs hc hQ hG hθ.1 hθ.2 hE hcol
+    ae_write_row_ne_zero μ] with θ hθ hE hcol ha G Q s c hc hQ hG h
+  exact cob_rmsNorm_zero_rescaleMlp_eq_self_of_rank_D k θ G Q s c hc hQ hG hθ.1 hθ.2 hE hcol
     ha h
 
 /-- **`ε = 0`, with the readout, gated blocks with any gate, at generic parameters**
