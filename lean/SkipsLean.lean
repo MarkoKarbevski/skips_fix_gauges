@@ -357,3 +357,5 @@ import SkipsLean.Residual.BlocksAloneGated
 import SkipsLean.Residual.BlocksAloneSkipless
 import SkipsLean.Residual.BlocksAloneDifferent
 import SkipsLean.Residual.BlocksAloneTransformer
+import SkipsLean.Residual.DepthRescaleOpen
+import SkipsLean.Residual.DepthReGLUOpen
