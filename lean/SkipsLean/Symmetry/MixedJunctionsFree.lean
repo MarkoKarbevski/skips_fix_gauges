@@ -52,7 +52,8 @@ theorem cobMixed_injective (θ : Params A.mixed dIn dOut) (hE : θ.E.rank = Fint
     (h : θ.cobMixed G Q K = θ.cobMixed G' Q' K') : G = G' ∧ K = K' := by
   -- the embeddings: `E G_0 = E G'_0`
   have hE0 : θ.E * (G 0 : Matrix d d ℝ) = θ.E * (G' 0 : Matrix d d ℝ) := congrArg Params.E h
-  -- the identity units: `G_{ℓ-1}⁻¹ U_ℓ K_ℓ = G'_{ℓ-1}⁻¹ U_ℓ K'_ℓ`, `K_ℓ⁻¹ V_ℓ G_ℓ = K'_ℓ⁻¹ V_ℓ G'_ℓ`
+  -- the identity units: `G_{ℓ-1}⁻¹ U_ℓ K_ℓ = G'_{ℓ-1}⁻¹ U_ℓ K'_ℓ` and
+  -- `K_ℓ⁻¹ V_ℓ G_ℓ = K'_ℓ⁻¹ V_ℓ G'_ℓ`
   have hUe := congrArg Params.mixU h
   have hVe := congrArg Params.mixV h
   simp only [Params.cobMixed, Params.mixU_mix, Params.mixV_mix] at hUe hVe
