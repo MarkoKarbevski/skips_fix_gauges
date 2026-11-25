@@ -126,6 +126,35 @@ noncomputable def headsAct (σ : HeadsSpace H dh)
       ((q.1.headsQK fun ℓ i => glOfMatrix (σ.1 ℓ i)).headsVO fun ℓ i => glOfMatrix (σ.2.1 ℓ i))
       σ.2.2.2))
 
+/-- Helper: `glOfMatrix M` is `M` when `M` is invertible. -/
+private theorem coe_glOfMatrix_bga {n : Type*} [Fintype n] [DecidableEq n] (M : Matrix n n ℝ)
+    (h : IsUnit M.det) : ((glOfMatrix M : GL n ℝ) : Matrix n n ℝ) = M := by
+  simp [glOfMatrix, h.ne_zero]
+
+/-- Helper: `glOfMatrix 1 = 1`. -/
+private theorem glOfMatrix_one_bga {n : Type*} [Fintype n] [DecidableEq n] :
+    glOfMatrix (1 : Matrix n n ℝ) = 1 :=
+  Units.ext (coe_glOfMatrix_bga 1 (by simp))
+
+/-- Helper (the private `cancel_left_of_rank_ahb` of `Symmetry/AttentionHeadsBiases.lean`): a
+matrix `M` of rank equal to its number of columns cancels on the left, `M X = M Y → X = Y`. -/
+private theorem cancel_left_of_rank_bga {m n k : Type*} [Fintype n] (M : Matrix m n ℝ)
+    (hM : M.rank = Fintype.card n) {X Y : Matrix n k ℝ} (h : M * X = M * Y) : X = Y := by
+  -- `v ↦ M v` is injective: `rank M + dim ker M = card n`
+  have hinj : Function.Injective M.mulVecLin := by
+    rw [← LinearMap.ker_eq_bot, ← Submodule.finrank_eq_zero]
+    have := LinearMap.finrank_range_add_finrank_ker M.mulVecLin
+    rw [Module.finrank_fintype_fun_eq_card] at this
+    rw [Matrix.rank] at hM
+    omega
+  -- compare `X` and `Y` column by column
+  ext i j
+  have hcol : M.mulVecLin (fun l => X l j) = M.mulVecLin (fun l => Y l j) := by
+    funext q
+    have := congrFun (congrFun h q) j
+    simpa [Matrix.mul_apply, Matrix.mulVec, dotProduct] using this
+  exact congrFun (hinj hcol) i
+
 /-- The set of the `σ` is open. -/
 theorem isOpen_headsSet : IsOpen (headsSet H dh) := by
   -- finitely many conditions `det ≠ 0`, each open
@@ -185,7 +214,96 @@ theorem insideBlocksFreeAt_heads
       ((q.1.read ℓ).submatrix id fun k : dh ℓ => (i, Sum.inr (Sum.inr k))).rank
         = Fintype.card (dh ℓ)) :
     InsideBlocksFreeAt headsAct (headsSet H dh) q := by
-  sorry
+  obtain ⟨θ, b⟩ := q
+  refine ⟨fun σ _ => rfl, fun σ _ => rfl, ?_, ?_⟩
+  · intro σ hσ ℓ hr hb
+    -- the read is kept: `W_{V,i} K'_i = W_{V,i}`, so `K'_i = 1`
+    have hN : ∀ i, glOfMatrix (σ.2.1 ℓ i) = 1 := by
+      intro i
+      refine Units.ext (cancel_left_of_rank_bga _ (hV ℓ i) ?_)
+      ext a k
+      have hk := congrFun (congrFun hr a) (i, Sum.inr (Sum.inr k))
+      change ∑ k', θ.read ℓ a (i, Sum.inr (Sum.inr k'))
+          * (glOfMatrix (σ.2.1 ℓ i) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+        = θ.read ℓ a (i, Sum.inr (Sum.inr k)) at hk
+      rw [Units.val_one, Matrix.mul_one]
+      simpa only [Matrix.mul_apply, Matrix.submatrix_apply, id] using hk
+    -- the read bias is kept: `b_{V,i} + ν_i = b_{V,i}`, so `ν_i = 0`
+    have hν : ∀ i k, σ.2.2.2 ℓ i k = 0 := by
+      intro i k
+      have hk := congrFun hb (i, Sum.inr (Sum.inr k))
+      change (∑ k', b.read ℓ (i, Sum.inr (Sum.inr k'))
+          * (glOfMatrix (σ.2.1 ℓ i) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k) + σ.2.2.2 ℓ i k
+        = b.read ℓ (i, Sum.inr (Sum.inr k)) at hk
+      rw [hN i] at hk
+      simpa [Matrix.one_apply] using hk
+    -- so the write and the write bias are kept
+    refine ⟨?_, ?_⟩
+    · ext ⟨i, k⟩ c
+      change ∑ k', (((glOfMatrix (σ.2.1 ℓ i))⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k'
+          * θ.write ℓ (i, k') c = θ.write ℓ (i, k) c
+      simp [hN i, Matrix.one_apply]
+    · funext c
+      change b.write ℓ c - ∑ i, ∑ k, σ.2.2.2 ℓ i k * _ = b.write ℓ c
+      simp [hν]
+  · intro σ hσ τ hτ h
+    have hr : ∀ ℓ a c, (headsAct σ (θ, b)).1.read ℓ a c = (headsAct τ (θ, b)).1.read ℓ a c :=
+      fun ℓ a c => by rw [show headsAct σ (θ, b) = headsAct τ (θ, b) from h]
+    have hb : ∀ ℓ c, (headsAct σ (θ, b)).2.read ℓ c = (headsAct τ (θ, b)).2.read ℓ c :=
+      fun ℓ c => by rw [show headsAct σ (θ, b) = headsAct τ (θ, b) from h]
+    -- the query columns: `W_{Q,i} K_i = W_{Q,i} L_i`, and `W_{Q,i}` has rank `d_h`
+    have hK : σ.1 = τ.1 := by
+      funext ℓ i
+      calc σ.1 ℓ i = (glOfMatrix (σ.1 ℓ i) : Matrix (dh ℓ) (dh ℓ) ℝ) :=
+            (coe_glOfMatrix_bga _ (hσ ℓ i).1).symm
+        _ = (glOfMatrix (τ.1 ℓ i) : Matrix (dh ℓ) (dh ℓ) ℝ) := by
+            refine cancel_left_of_rank_bga _ (hQ ℓ i) ?_
+            ext a k
+            have hk := hr ℓ a (i, Sum.inl k)
+            change ∑ k', θ.read ℓ a (i, Sum.inl k')
+                * (glOfMatrix (σ.1 ℓ i) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+              = ∑ k', θ.read ℓ a (i, Sum.inl k')
+                * (glOfMatrix (τ.1 ℓ i) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k at hk
+            simpa only [Matrix.mul_apply, Matrix.submatrix_apply, id] using hk
+        _ = τ.1 ℓ i := coe_glOfMatrix_bga _ (hτ ℓ i).1
+    -- the value columns: `W_{V,i} K'_i = W_{V,i} L'_i`, and `W_{V,i}` has rank `d_h`
+    have hN : σ.2.1 = τ.2.1 := by
+      funext ℓ i
+      calc σ.2.1 ℓ i = (glOfMatrix (σ.2.1 ℓ i) : Matrix (dh ℓ) (dh ℓ) ℝ) :=
+            (coe_glOfMatrix_bga _ (hσ ℓ i).2).symm
+        _ = (glOfMatrix (τ.2.1 ℓ i) : Matrix (dh ℓ) (dh ℓ) ℝ) := by
+            refine cancel_left_of_rank_bga _ (hV ℓ i) ?_
+            ext a k
+            have hk := hr ℓ a (i, Sum.inr (Sum.inr k))
+            change ∑ k', θ.read ℓ a (i, Sum.inr (Sum.inr k'))
+                * (glOfMatrix (σ.2.1 ℓ i) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+              = ∑ k', θ.read ℓ a (i, Sum.inr (Sum.inr k'))
+                * (glOfMatrix (τ.2.1 ℓ i) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k at hk
+            simpa only [Matrix.mul_apply, Matrix.submatrix_apply, id] using hk
+        _ = τ.2.1 ℓ i := coe_glOfMatrix_bga _ (hτ ℓ i).2
+    -- the key biases: `b_{K,i} K_i^{-⊤} + κ_i = b_{K,i} K_i^{-⊤} + κ'_i`
+    have hκ : σ.2.2.1 = τ.2.2.1 := by
+      funext ℓ i k
+      have hk := hb ℓ (i, Sum.inr (Sum.inl k))
+      change (∑ k', b.read ℓ (i, Sum.inr (Sum.inl k'))
+          * (((glOfMatrix (σ.1 ℓ i))⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k')
+          + σ.2.2.1 ℓ i k
+        = (∑ k', b.read ℓ (i, Sum.inr (Sum.inl k'))
+          * (((glOfMatrix (τ.1 ℓ i))⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k')
+          + τ.2.2.1 ℓ i k at hk
+      rw [hK] at hk
+      exact add_left_cancel hk
+    -- the value biases: `b_{V,i} K'_i + ν_i = b_{V,i} K'_i + ν'_i`
+    have hν : σ.2.2.2 = τ.2.2.2 := by
+      funext ℓ i k
+      have hk := hb ℓ (i, Sum.inr (Sum.inr k))
+      change (∑ k', b.read ℓ (i, Sum.inr (Sum.inr k'))
+          * (glOfMatrix (σ.2.1 ℓ i) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k) + σ.2.2.2 ℓ i k
+        = (∑ k', b.read ℓ (i, Sum.inr (Sum.inr k'))
+          * (glOfMatrix (τ.2.1 ℓ i) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k) + τ.2.2.2 ℓ i k at hk
+      rw [hN] at hk
+      exact add_left_cancel hk
+    exact Prod.ext hK (Prod.ext hN (Prod.ext hκ hν))
 
 /-- **Lemma A.8 for attention blocks with biases, with skips:** the pairs `(G, g)` that preserve
 the function and the `σ` form a set of dimension
