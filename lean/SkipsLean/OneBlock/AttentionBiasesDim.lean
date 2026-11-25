@@ -92,6 +92,86 @@ theorem flatB_le_range_attention_residual (t₁ t₂ : T) (h12 : t₁ ≠ t₂) 
   exact exists_dirs_of_keeps_attention_biases_residual p hp η hM (fun i => (h i).1)
     (fun i => (h i).2) hβ hγ
 
+omit [Fintype T] in
+/-- Helper (copy of `cobTrAtLin_mlb` of `OneBlock/MlpBiases.lean`):
+`(X, g) ↦ cobDirB p X + (0, translateAtDir θ g)`, as a linear map. -/
+private noncomputable def cobTrAtLin_abd {L : ℕ} {A : Arch T d L} (p : ParamsB A dIn dOut) :
+    (Fin (L + 1) → Matrix d d ℝ) × (Fin (L + 1) → d → ℝ) →ₗ[ℝ] ParamsB A dIn dOut where
+  toFun Xg := cobDirB p Xg.1 + (0, translateAtDir p.1 Xg.2)
+  map_add' Xg Yg := by
+    refine Prod.ext ?_ ?_
+    · show cobDir p.1 (Xg.1 + Yg.1) + 0 = cobDir p.1 Xg.1 + 0 + (cobDir p.1 Yg.1 + 0)
+      rw [add_zero, add_zero, add_zero]
+      exact (cobDirLin p.1).map_add Xg.1 Yg.1
+    · apply Biases.ext' <;> intros <;>
+        simp only [cobDirB, translateAtDir, Prod.snd_add, Biases.add_E, Biases.add_read,
+          Biases.add_write, Biases.add_D, Prod.fst_add, Prod.snd_add, Pi.add_apply,
+          Matrix.vecMul_add, Matrix.add_vecMul, neg_add, zero_add] <;> abel
+  map_smul' c Xg := by
+    refine Prod.ext ?_ ?_
+    · show cobDir p.1 (c • Xg.1) + 0 = c • (cobDir p.1 Xg.1 + 0)
+      rw [add_zero, add_zero]
+      exact (cobDirLin p.1).map_smul c Xg.1
+    · apply Biases.ext' <;> intros <;>
+        simp only [cobDirB, translateAtDir, Prod.smul_snd, Prod.smul_fst, Biases.smul_E,
+          Biases.smul_read, Biases.smul_write, Biases.smul_D, Biases.add_E, Biases.add_read,
+          Biases.add_write, Biases.add_D, Prod.snd_add, Pi.smul_apply, Matrix.vecMul_smul,
+          Matrix.smul_vecMul, smul_neg, smul_add, smul_zero, zero_add, RingHom.id_apply]
+
+omit [Fintype T] in
+/-- Helper (copy of `cobTrLin_mlb` of `OneBlock/MlpBiases.lean`):
+`(X, g) ↦ cobDirB p (X, …, X) + (0, translateDir θ g)`, as a linear map. -/
+private noncomputable def cobTrLin_abd {L : ℕ} {A : Arch T d L} (p : ParamsB A dIn dOut) :
+    Matrix d d ℝ × (Fin (L + 1) → d → ℝ) →ₗ[ℝ] ParamsB A dIn dOut where
+  toFun Xg := cobDirB p (fun _ => Xg.1) + (0, translateDir p.1 Xg.2)
+  map_add' Xg Yg := by
+    refine Prod.ext ?_ ?_
+    · show cobDir p.1 (fun _ => Xg.1 + Yg.1) + 0
+        = cobDir p.1 (fun _ => Xg.1) + 0 + (cobDir p.1 (fun _ => Yg.1) + 0)
+      rw [add_zero, add_zero, add_zero]
+      exact (cobDirLin p.1).map_add (fun _ => Xg.1) (fun _ => Yg.1)
+    · apply Biases.ext' <;> intros <;>
+        simp only [cobDirB, translateDir, Prod.snd_add, Biases.add_E, Biases.add_read,
+          Biases.add_write, Biases.add_D, Prod.fst_add, Prod.snd_add, Pi.add_apply,
+          Finset.sum_add_distrib, Matrix.vecMul_add, Matrix.add_vecMul, neg_add,
+          zero_add] <;> abel
+  map_smul' c Xg := by
+    refine Prod.ext ?_ ?_
+    · show cobDir p.1 (fun _ => c • Xg.1) + 0 = c • (cobDir p.1 (fun _ => Xg.1) + 0)
+      rw [add_zero, add_zero]
+      exact (cobDirLin p.1).map_smul c (fun _ => Xg.1)
+    · apply Biases.ext' <;> intros <;>
+        simp only [cobDirB, translateDir, Prod.smul_snd, Prod.smul_fst, Biases.smul_E,
+          Biases.smul_read, Biases.smul_write, Biases.smul_D, Biases.add_E, Biases.add_read,
+          Biases.add_write, Biases.add_D, Prod.snd_add, Pi.smul_apply, ← Finset.smul_sum,
+          Matrix.vecMul_smul, Matrix.smul_vecMul, smul_neg, smul_add, smul_zero, zero_add,
+          RingHom.id_apply]
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the `L + 1` translations form a space of dimension `(L + 1) d`. -/
+private theorem finrank_trDomain_abd (L : ℕ) :
+    Module.finrank ℝ (Fin (L + 1) → d → ℝ) = (L + 1) * Fintype.card d := by
+  rw [Module.finrank_pi_fintype]
+  simp only [Module.finrank_fintype_fun_eq_card, Finset.sum_const, Finset.card_univ,
+    Fintype.card_fin, smul_eq_mul]
+
+/-- Helper (copy of `finrank_headFun_obd` of `OneBlock/AttentionDim.lean`): the families `Γ` of
+`d_h × d_h` matrices, one for each head of the one block, form a space of dimension `H d_h²`. -/
+private theorem finrank_headFun_abd :
+    Module.finrank ℝ (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ)
+      = Fintype.card (H 0) * Fintype.card (dh 0) ^ 2 := by
+  rw [Module.finrank_pi_fintype]
+  simp only [Module.finrank_pi_fintype, Module.finrank_matrix, Module.finrank_self, mul_one,
+    Finset.sum_const, Finset.card_univ, smul_eq_mul, sq, Fin.sum_univ_one]
+
+/-- Helper: the families `κ` of rows of length `d_h`, one for each head of the one block, form a
+space of dimension `H d_h`. -/
+private theorem finrank_headVec_abd :
+    Module.finrank ℝ (∀ ℓ, H ℓ → dh ℓ → ℝ) = Fintype.card (H 0) * Fintype.card (dh 0) := by
+  rw [Module.finrank_pi_fintype]
+  simp only [Module.finrank_pi_fintype, Module.finrank_self, mul_one, Finset.sum_const,
+    Finset.card_univ, smul_eq_mul, Fin.sum_univ_one]
+
 /-- **Theorem B.1 (i) of the skips paper with biases, the skipless network, at one parameter, for
 an attention block:** under the conditions `OneBlockGenericAttention` on the weights, for a mask
 in which every token sees at least one token and a token that sees itself and another token, the
@@ -107,7 +187,27 @@ theorem funDimB_attention_oneBlock (hsee : ∀ t, ∃ s, sees t s) (t₁ t₂ : 
             + 2 * (Fintype.card (H 0) * Fintype.card (dh 0))))
       = Module.finrank ℝ
           (ParamsB (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut) := by
-  sorry
+  classical
+  -- `fd = P − dim K(θ, b)` (Appendix B)
+  have hP := funDimB_add_finrank_flatB' (A := Arch.attention sees id H dh) (S := 0) p
+  -- the lower bound `dim K ≥ 2 d² + 2 d + 2 H d_h² + 2 H d_h` (Lemma A.8 with biases)
+  have hlow := funDimB_add_le_skipless_attention hsee p hp.rank_E
+    (fun ℓ => by obtain rfl : ℓ = 0 := Subsingleton.elim _ _; exact hp.rank_write)
+    (fun ℓ => by obtain rfl : ℓ = 0 := Subsingleton.elim _ _; exact hp.rank_Q)
+    (fun ℓ => by obtain rfl : ℓ = 0 := Subsingleton.elim _ _; exact hp.rank_V)
+  rw [Fin.sum_univ_one, Fin.sum_univ_one] at hlow
+  -- the upper bound: every flat direction is `Φ ((X, g), q)` (Steps 1 and 2), for the linear map
+  -- `Φ ((X, g), q) = cobDirB p X + (0, translateAtDir θ g) + headDirB p q`
+  let Φ := (cobTrAtLin_abd p).coprod ((isLinearMap_headDirB p).mk' _)
+  have hle : flatB (Arch.attention sees id H dh) 0 p ≤ LinearMap.range Φ := by
+    intro η hη
+    obtain ⟨X, g, Γ, Γ', κ, ν, rfl⟩ :=
+      flatB_le_range_attention_skipless t₁ t₂ h12 hs2 hs1 p hp η hη
+    exact ⟨((X, g), (Γ, Γ', κ, ν)), rfl⟩
+  have hup := (Submodule.finrank_mono hle).trans (LinearMap.finrank_range_le Φ)
+  simp only [Module.finrank_prod, finrank_cobDomain, finrank_trDomain_abd, finrank_headFun_abd,
+    finrank_headVec_abd] at hup
+  omega
 
 /-- **Theorem B.1 (i) of the skips paper with biases, the residual network, at one parameter,
 for an attention block:** under the same conditions, the residual network with biases has
@@ -122,7 +222,27 @@ theorem funDimB_attention_oneBlock_residual (hsee : ∀ t, ∃ s, sees t s) (t�
             + 2 * (Fintype.card (H 0) * Fintype.card (dh 0))))
       = Module.finrank ℝ
           (ParamsB (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut) := by
-  sorry
+  classical
+  -- `fd = P − dim K(θ, b)` (Appendix B)
+  have hP := funDimB_add_finrank_flatB' (A := Arch.attention sees id H dh) (S := 1) p
+  -- the lower bound `dim K ≥ d² + 2 d + 2 H d_h² + 2 H d_h` (Lemma A.8 with biases)
+  have hlow := funDimB_add_le_residual_attention hsee p hp.rank_E
+    (fun ℓ => by obtain rfl : ℓ = 0 := Subsingleton.elim _ _; exact hp.rank_Q)
+    (fun ℓ => by obtain rfl : ℓ = 0 := Subsingleton.elim _ _; exact hp.rank_V)
+  rw [Fin.sum_univ_one, Fin.sum_univ_one] at hlow
+  -- the upper bound: every flat direction is `Ψ ((X, g), q)` (Steps 1 and 2), for the linear map
+  -- `Ψ ((X, g), q) = cobDirB p (X, X) + (0, translateDir θ g) + headDirB p q`
+  let Ψ := (cobTrLin_abd p).coprod ((isLinearMap_headDirB p).mk' _)
+  have hle : flatB (Arch.attention sees id H dh) 1 p ≤ LinearMap.range Ψ := by
+    intro η hη
+    obtain ⟨X, g, Γ, Γ', κ, ν, rfl⟩ :=
+      flatB_le_range_attention_residual t₁ t₂ h12 hs2 hs1 p hp η hη
+    exact ⟨((X, g), (Γ, Γ', κ, ν)), rfl⟩
+  have hup := (Submodule.finrank_mono hle).trans (LinearMap.finrank_range_le Ψ)
+  simp only [Module.finrank_prod, Module.finrank_matrix, Module.finrank_self, mul_one,
+    finrank_trDomain_abd, finrank_headFun_abd, finrank_headVec_abd] at hup
+  have hsq : Fintype.card d * Fintype.card d = Fintype.card d ^ 2 := (sq _).symm
+  omega
 
 /-- **Theorem B.1 (i) of the skips paper with biases, the skipless network, for an attention
 block:** for `d_in, d_out ≥ d ≥ 2`, `H` heads of width `d_h ≤ d` with `H d_h ≥ d`, a mask in
