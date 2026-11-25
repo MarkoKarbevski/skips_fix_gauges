@@ -361,3 +361,5 @@ import SkipsLean.Residual.DepthRescaleOpen
 import SkipsLean.Residual.DepthReGLUOpen
 import SkipsLean.Symmetry.JunctionsCommute
 import SkipsLean.Depth.ThetaDagger
+import SkipsLean.Network.Biases
+import SkipsLean.Symmetry.BiasesSymmetries

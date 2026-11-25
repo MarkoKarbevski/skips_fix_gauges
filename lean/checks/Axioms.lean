@@ -1965,3 +1965,5 @@ import SkipsLean
 #print axioms Skips.exists_eventually_jacobianRank_smallWrites_reglu_of_isOpen
 #print axioms Skips.exists_eventually_eventually_jacobianRank_smallWrites_reglu_of_isOpen
 #print axioms Skips.exists_isOpen_jacobianRank_smallWrites_reglu_of_isOpen
+#print axioms Skips.hiddenB_zero_biases
+#print axioms Skips.evalB_zero_biases
