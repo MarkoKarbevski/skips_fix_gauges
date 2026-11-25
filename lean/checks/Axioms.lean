@@ -1944,3 +1944,11 @@ import SkipsLean
 #print axioms Skips.ae_forall_evalBlocks_residual_ne_skipless_gelu
 #print axioms Skips.cob_comm_of_commute
 #print axioms Skips.cob_mulSingle_comm
+#print axioms Skips.eventually_funDimBlocks_smallWrites_attentionMlp
+#print axioms Skips.ae_funDimBlocks_attentionMlp_residual
+#print axioms Skips.eventually_funDimBlocks_smallWrites_attentionGated
+#print axioms Skips.ae_funDimBlocks_attentionGated_residual
+#print axioms Skips.ae_funDimBlocks_attention_tanh_residual
+#print axioms Skips.ae_funDimBlocks_attention_gelu_residual
+#print axioms Skips.ae_funDimBlocks_attention_swiglu_residual
+#print axioms Skips.ae_funDimBlocks_attention_geglu_residual
