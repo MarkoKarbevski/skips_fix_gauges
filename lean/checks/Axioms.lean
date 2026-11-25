@@ -1982,3 +1982,6 @@ import SkipsLean
 #print axioms Skips.funDimB_add_finrank_le_of_le_flatB
 #print axioms Skips.mem_flatB_of_hasDerivAt
 #print axioms Skips.ae_funDimB_ge
+#print axioms Skips.evalB_rescaleMlp
+#print axioms Skips.evalB_rescale
+#print axioms Skips.evalB_rescaleGate

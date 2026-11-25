@@ -140,6 +140,7 @@ private theorem value_rescaleGate_brs {k : ℕ}
   simp only [Matrix.add_apply, Matrix.of_apply, Matrix.mul_apply, Params.rescaleGate,
     Biases.rescaleGate, Sum.elim_inr]
 
+omit [Fintype T] [DecidableEq d] in
 /-- **The rescalings of the hidden units preserve the function of a network with biases,** for an
 activation that is positively homogeneous of degree `k` and positive `c`: the read column and the
 read bias of a unit are multiplied by `c`, its write row by `c^{-k}`. -/
@@ -178,6 +179,7 @@ theorem evalB_rescaleMlp {k : ℕ}
   rw [evalB, evalB, hh]
   rfl
 
+omit [Fintype T] [DecidableEq d] in
 /-- **The rescalings of the values of gated units preserve the function of a network with
 biases,** for nonzero `c`: the value column and the value bias of a unit are multiplied by
 `c⁻¹`, its write row by `c`. -/
@@ -219,6 +221,7 @@ theorem evalB_rescale (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn 
   rw [evalB, evalB, hh]
   rfl
 
+omit [Fintype T] [DecidableEq d] in
 /-- **The rescalings of the gates preserve the function of a network with biases,** for a gate
 that is positively homogeneous of degree `k` and positive `c`: the gate column and the gate bias
 of a unit are multiplied by `c`, its write row by `c^{-k}`. -/
