@@ -201,7 +201,8 @@ theorem evalLN_eq_evalB_centerLN_residual (ε : ℝ) (θ : Params A dIn dOut) (b
     (γ β : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) :
     evalLN A ε 1 θ b γ β x
       = evalB (A.withNorm (rmsNorm ε)) 1 (θ.centerLN ε γ) (b.centerLN ε θ β) x := by
-  sorry
+  -- `Z 1 = 1 Z`
+  exact evalLN_eq_evalB_centerLN ε 1 (fun ℓ => by simp) θ b γ β x
 
 /-- **Proposition A.3 (i), "whose hidden states lie in `V`":** for stream matrices that commute
 with `Z` (skipless and residual networks among them), every row of every hidden state of the
