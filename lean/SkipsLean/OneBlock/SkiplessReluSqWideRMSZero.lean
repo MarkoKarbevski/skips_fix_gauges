@@ -258,6 +258,122 @@ private theorem sum_reluSq_eq_ssq {q : Type*} [Fintype q] (z : q → ℝ) (a : q
   rw [Finset.sum_filter]
   exact Finset.sum_congr rfl fun i _ => reluSq_smul_ssq (z i) (a i)
 
+/-! ### `h_1 ≠ 0` where a unit is active: the image of a map with a degenerate derivative -/
+
+/-- Helper: the parameter whose only nonzero weight is the row `i₀` of the write, equal to
+`v`. -/
+private def rowParam_ssq {σ : ℝ → ℝ} [DecidableEq (hid 0)] (i₀ : hid 0) :
+    (d → ℝ) →ₗ[ℝ] Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut where
+  toFun v := ⟨0, 0, Pi.single (M := fun ℓ => Matrix (hid ℓ) d ℝ) 0
+    (Matrix.of fun l => if l = i₀ then v else 0), 0⟩
+  map_add' v v' := by
+    refine Params.ext' (add_zero 0).symm (fun _ => (add_zero 0).symm) (fun ℓ => ?_)
+      (add_zero 0).symm
+    obtain rfl := Subsingleton.elim ℓ 0
+    show Pi.single (M := fun ℓ => Matrix (hid ℓ) d ℝ) 0
+        (Matrix.of fun l => if l = i₀ then v + v' else 0) 0
+      = Pi.single (M := fun ℓ => Matrix (hid ℓ) d ℝ) 0
+          (Matrix.of fun l => if l = i₀ then v else 0) 0
+        + Pi.single (M := fun ℓ => Matrix (hid ℓ) d ℝ) 0
+          (Matrix.of fun l => if l = i₀ then v' else 0) 0
+    simp only [Pi.single_eq_same (M := fun ℓ => Matrix (hid ℓ) d ℝ)]
+    ext l b
+    by_cases h : l = i₀ <;>
+      simp only [Fin.isValue, h, of_apply, ↓reduceIte, Pi.add_apply, Matrix.add_apply,
+        Pi.zero_apply, add_zero]
+  map_smul' c v := by
+    refine Params.ext' (smul_zero c).symm (fun _ => (smul_zero c).symm) (fun ℓ => ?_)
+      (smul_zero c).symm
+    obtain rfl := Subsingleton.elim ℓ 0
+    show Pi.single (M := fun ℓ => Matrix (hid ℓ) d ℝ) 0
+        (Matrix.of fun l => if l = i₀ then c • v else 0) 0
+      = c • Pi.single (M := fun ℓ => Matrix (hid ℓ) d ℝ) 0
+        (Matrix.of fun l => if l = i₀ then v else 0) 0
+    simp only [Pi.single_eq_same (M := fun ℓ => Matrix (hid ℓ) d ℝ)]
+    ext l b
+    by_cases h : l = i₀ <;>
+      simp only [Fin.isValue, h, of_apply, ↓reduceIte, Pi.smul_apply, smul_eq_mul,
+        Matrix.smul_apply, Pi.zero_apply, mul_zero]
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: adding `rowParam_ssq i₀ v` does not change the read. -/
+private theorem read_add_rowParam_ssq {σ : ℝ → ℝ} [DecidableEq (hid 0)] (i₀ : hid 0)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut) (v : d → ℝ) :
+    (θ + rowParam_ssq i₀ v).read 0 = θ.read 0 :=
+  add_zero _
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: adding `rowParam_ssq i₀ v` adds `v` to the row `i₀` of the write. -/
+private theorem write_add_rowParam_ssq {σ : ℝ → ℝ} [DecidableEq (hid 0)] (i₀ : hid 0)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut) (v : d → ℝ)
+    (l : hid 0) :
+    (θ + rowParam_ssq i₀ v).write 0 l = θ.write 0 l + if l = i₀ then v else 0 := by
+  show θ.write 0 l + Pi.single (M := fun ℓ => Matrix (hid ℓ) d ℝ) 0
+    (Matrix.of fun l => if l = i₀ then v else 0) 0 l = _
+  rw [Pi.single_eq_same (M := fun ℓ => Matrix (hid ℓ) d ℝ)]
+  rfl
+
+/-- Helper: `−∑_{i∈S, i≠i₀} (u w_i)² a_i`, with `u` the row `i₀` of the write. -/
+private def solveRow_ssq {σ : ℝ → ℝ} [DecidableEq (hid 0)] (S : Finset (hid 0)) (i₀ : hid 0)
+    (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut) : d → ℝ :=
+  -∑ i ∈ S.erase i₀, (θ.write 0 i₀ ⬝ᵥ (θ.read 0)ᵀ i) ^ 2 • θ.write 0 i
+
+/-- Helper: the map `Ψ_{S,i₀}` of the parameters that puts `solveRow_ssq` in the row `i₀` of the
+write. -/
+private noncomputable def solveMap_ssq {σ : ℝ → ℝ} [DecidableEq (hid 0)] (S : Finset (hid 0))
+    (i₀ : hid 0) (θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut) :
+    Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut :=
+  θ + rowParam_ssq i₀ (solveRow_ssq S i₀ θ - θ.write 0 i₀)
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper: `u w_i`, with `u` the row `i₀` of the write, is analytic in the parameters. -/
+private theorem analyticOnNhd_rowDot_ssq {σ : ℝ → ℝ} (i₀ i : hid 0) :
+    AnalyticOnNhd ℝ (fun θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut =>
+      θ.write 0 i₀ ⬝ᵥ (θ.read 0)ᵀ i) Set.univ := by
+  simp only [dotProduct, transpose_apply]
+  exact Finset.analyticOnNhd_fun_sum _ fun a _ =>
+    (analyticOnNhd_entry_ssq (Params.linWrite (A := Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid)
+      (dIn := dIn) (dOut := dOut) 0) i₀ a).mul
+      (analyticOnNhd_entry_ssq (Params.linRead (A := Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid)
+        (dIn := dIn) (dOut := dOut) 0) a i)
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper: `Ψ_{S,i₀}` is differentiable (a polynomial map). -/
+private theorem differentiable_solveMap_ssq {σ : ℝ → ℝ} [DecidableEq (hid 0)]
+    (S : Finset (hid 0)) (i₀ : hid 0) :
+    Differentiable ℝ
+      (solveMap_ssq (T := T) (d := d) (σ := σ) (dIn := dIn) (dOut := dOut) S i₀) := by
+  -- the rows of the write
+  have hrow : ∀ l, Differentiable ℝ
+      (fun θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut => θ.write 0 l) :=
+    fun l => differentiable_pi.2 fun b => differentiableOn_univ.1
+      (analyticOnNhd_entry_ssq (Params.linWrite (A := Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid)
+        (dIn := dIn) (dOut := dOut) 0) l b).differentiableOn
+  have hdot : ∀ i, Differentiable ℝ
+      (fun θ : Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut =>
+        θ.write 0 i₀ ⬝ᵥ (θ.read 0)ᵀ i) :=
+    fun i => differentiableOn_univ.1 (analyticOnNhd_rowDot_ssq i₀ i).differentiableOn
+  have hsolve : Differentiable ℝ
+      (solveRow_ssq (T := T) (d := d) (σ := σ) (dIn := dIn) (dOut := dOut) S i₀) :=
+    (Differentiable.fun_sum fun i _ => ((hdot i).fun_pow 2).fun_smul (hrow i)).fun_neg
+  have hι := (LinearMap.toContinuousLinearMap
+    (rowParam_ssq (T := T) (d := d) (σ := σ) (dIn := dIn) (dOut := dOut) i₀)).differentiable
+  have hc := hι.comp (hsolve.sub (hrow i₀))
+  exact differentiable_id.add hc
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper: the parameters with `u w_{i₀} = 1`, for `u` the row `i₀` of the write, are a null
+set (the zero set of a polynomial that is `−1` at `0`). -/
+private theorem measure_levelSet_ssq {σ : ℝ → ℝ}
+    (μ : Measure (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut))
+    [μ.IsAddHaarMeasure] (i₀ : hid 0) :
+    μ {θ | θ.write 0 i₀ ⬝ᵥ (θ.read 0)ᵀ i₀ - 1 = 0} = 0 :=
+  measure_zeroSet_of_analytic μ ((analyticOnNhd_rowDot_ssq i₀ i₀).sub analyticOnNhd_const)
+    ⟨0, by
+      show (0 : d → ℝ) ⬝ᵥ 0 - 1 ≠ 0
+      rw [zero_dotProduct]
+      norm_num⟩
+
 /-- **"For generic parameters `h_1 ≠ 0` there", for ReLU² units:** at almost every parameter of
 one MLP block, `∑_i max(u w_i, 0)² a_i ≠ 0` at every `u` at which a unit is active. -/
 theorem ae_forall_sum_reluSq_ne_zero {σ : ℝ → ℝ}
@@ -265,7 +381,49 @@ theorem ae_forall_sum_reluSq_ne_zero {σ : ℝ → ℝ}
     [μ.IsAddHaarMeasure] :
     ∀ᵐ θ ∂μ, ∀ u : d → ℝ, (∃ i, 0 < u ⬝ᵥ (θ.read 0)ᵀ i) →
       ∑ i, reluSq (u ⬝ᵥ (θ.read 0)ᵀ i) • θ.write 0 i ≠ 0 := by
-  sorry
+  classical
+  rw [ae_iff]
+  -- the bad parameters lie in the union of the images of the null sets `u w_{i₀} = 1` under the
+  -- differentiable maps `Ψ_{S,i₀}`
+  refine measure_mono_null (fun θ' hθ' => ?_) (measure_iUnion_null fun p : Finset (hid 0) × hid 0 =>
+    addHaar_image_eq_zero_of_differentiableOn_of_addHaar_eq_zero μ
+      (differentiable_solveMap_ssq p.1 p.2).differentiableOn (measure_levelSet_ssq μ p.2))
+  simp only [Set.mem_ofPred_eq, not_forall, not_not] at hθ'
+  obtain ⟨u, ⟨i₀, hi₀⟩, hsum⟩ := hθ'
+  set w := (θ'.read 0)ᵀ with hw
+  set S := Finset.univ.filter fun i => 0 < u ⬝ᵥ w i
+  set c := u ⬝ᵥ w i₀
+  -- the point `u' = u / (u w_{i₀})`, with `u' w_{i₀} = 1` and the same active units
+  set u' := c⁻¹ • u
+  have hu' : ∀ i, u' ⬝ᵥ w i = c⁻¹ * (u ⬝ᵥ w i) := fun i => by rw [smul_dotProduct, smul_eq_mul]
+  have hu'₀ : u' ⬝ᵥ w i₀ = 1 := by rw [hu']; exact inv_mul_cancel₀ hi₀.ne'
+  -- `∑_{i∈S} (u' w_i)² a_i = 0`, so `a_{i₀} = −∑_{i∈S, i≠i₀} (u' w_i)² a_i`
+  have hS : ∑ i ∈ S, (u ⬝ᵥ w i) ^ 2 • θ'.write 0 i = 0 :=
+    (sum_reluSq_eq_ssq (q := hid 0) (fun i => u ⬝ᵥ w i) (fun i => θ'.write 0 i)).symm.trans hsum
+  have hS' : ∑ i ∈ S, (u' ⬝ᵥ w i) ^ 2 • θ'.write 0 i = 0 := by
+    simp only [hu', mul_pow, mul_smul]
+    rw [← Finset.smul_sum, hS, smul_zero]
+  have hi₀S : i₀ ∈ S := Finset.mem_filter.2 ⟨Finset.mem_univ _, hi₀⟩
+  have ha : -∑ i ∈ S.erase i₀, (u' ⬝ᵥ w i) ^ 2 • θ'.write 0 i = θ'.write 0 i₀ := by
+    rw [← Finset.add_sum_erase S _ hi₀S, hu'₀, one_pow, one_smul] at hS'
+    exact (eq_neg_of_add_eq_zero_left hS').symm
+  -- `θ'` is `Ψ_{S,i₀}(θ)` for `θ = θ'` with the row `i₀` of the write replaced by `u'`
+  set θ := θ' + rowParam_ssq i₀ (u' - θ'.write 0 i₀)
+  have hθr : θ.read 0 = θ'.read 0 := read_add_rowParam_ssq i₀ θ' _
+  have hθw₀ : θ.write 0 i₀ = u' := by
+    rw [write_add_rowParam_ssq, ite_eq_left rfl]
+    abel
+  have hθw : ∀ i, i ≠ i₀ → θ.write 0 i = θ'.write 0 i := fun i hi => by
+    rw [write_add_rowParam_ssq, ite_eq_right hi, add_zero]
+  refine Set.mem_iUnion.2 ⟨(S, i₀), θ, ?_, ?_⟩
+  · show θ.write 0 i₀ ⬝ᵥ (θ.read 0)ᵀ i₀ - 1 = 0
+    rw [hθw₀, hθr, hu'₀, sub_self]
+  · have hrow : solveRow_ssq S i₀ θ = θ'.write 0 i₀ := by
+      rw [← ha, solveRow_ssq, hθw₀, hθr]
+      refine congrArg Neg.neg (Finset.sum_congr rfl fun i hi => ?_)
+      rw [hθw i (Finset.ne_of_mem_erase hi)]
+    show θ + rowParam_ssq i₀ (solveRow_ssq S i₀ θ - θ.write 0 i₀) = θ'
+    rw [hrow, hθw₀, add_assoc, ← map_add, sub_add_sub_cancel, sub_self, map_zero, add_zero]
 
 /-- **"`h_1(x_0)` is not parallel to `a_i`", for ReLU² units:** at almost every parameter of one
 MLP block with at least two hidden units and `d ≥ 2`, every unit `i` has a point `u_0` of its
