@@ -168,7 +168,23 @@ theorem sumAct_parts (lA : InsideBlocksLocal actA SgA) (lB : InsideBlocksLocal a
         + (actB σ.2 (q.1.sumSnd, q.2.sumSnd)).2.write - q.2.write ∧
     (sumAct actA actB σ q).1.E = q.1.E ∧ (sumAct actA actB σ q).1.D = q.1.D ∧
     (sumAct actA actB σ q).2.E = q.2.E ∧ (sumAct actA actB σ q).2.D = q.2.D := by
-  sorry
+  obtain ⟨h1, h2⟩ := hσ
+  -- after the map of `σ₂`, the first part has the reads, the writes and the read biases of the
+  -- first part of `q`, so the map of `σ₁` moves them as it moves those of `q`
+  obtain ⟨hr, hw, hb, hwb⟩ := lA.local_eq σ.1 h1
+    ((sumLiftSnd actB σ.2 q).1.sumFst, (sumLiftSnd actB σ.2 q).2.sumFst)
+    (q.1.sumFst, q.2.sumFst) rfl rfl rfl
+  -- its write biases are those of `actB σ₂`, moved by the row of `actA σ₁`
+  have hwb' : (sumAct actA actB σ q).2.write
+      = (actA σ.1 (q.1.sumFst, q.2.sumFst)).2.write - q.2.write
+        + (actB σ.2 (q.1.sumSnd, q.2.sumSnd)).2.write := eq_add_of_sub_eq hwb
+  refine ⟨hr, hw, hb, rfl, rfl, rfl, ?_, ?_, ?_, ?_, ?_⟩
+  · rw [hwb', sub_add_eq_add_sub]
+  -- `E`, `D` and their biases: kept by `actB σ₂`, then by `actA σ₁`
+  · exact (lA.E_eq σ.1 h1 _).trans (lB.E_eq σ.2 h2 _)
+  · exact (lA.D_eq σ.1 h1 _).trans (lB.D_eq σ.2 h2 _)
+  · exact (lA.biasE_eq σ.1 h1 _).trans (lB.biasE_eq σ.2 h2 _)
+  · exact (lA.biasD_eq σ.1 h1 _).trans (lB.biasD_eq σ.2 h2 _)
 
 /-- **Two families of symmetries inside the blocks, of `A` and of `B`, that act block by block
 give the family of the pairs, a family of symmetries inside the blocks of `A.sum B`.** -/
