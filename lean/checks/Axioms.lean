@@ -1942,3 +1942,5 @@ import SkipsLean
 #print axioms Skips.ae_funDimBlocks_geglu_residual
 #print axioms Skips.ae_forall_evalBlocks_residual_ne_skipless_mlp
 #print axioms Skips.ae_forall_evalBlocks_residual_ne_skipless_gelu
+#print axioms Skips.cob_comm_of_commute
+#print axioms Skips.cob_mulSingle_comm

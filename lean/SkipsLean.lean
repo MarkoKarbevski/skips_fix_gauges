@@ -359,3 +359,4 @@ import SkipsLean.Residual.BlocksAloneDifferent
 import SkipsLean.Residual.BlocksAloneTransformer
 import SkipsLean.Residual.DepthRescaleOpen
 import SkipsLean.Residual.DepthReGLUOpen
+import SkipsLean.Symmetry.JunctionsCommute
