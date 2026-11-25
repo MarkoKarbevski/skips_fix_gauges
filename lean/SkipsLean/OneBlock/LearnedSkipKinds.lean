@@ -25,9 +25,13 @@ the residual network at generic weights by `d (d + 1)/2`. The definitions and th
 bound from the two orthogonal changes of basis; the lower bound at the skip `A = 0` from the value
 `P − d (d − 1) − s` of the skipless network, `Depth/TanhRMS.lean`, `Depth/GeluGatedTheorem.lean`;
 the generic value is the largest) are in `OneBlock/LearnedSkip.lean`. Not stated here: the upper
-triangular skip; ReLU, ReLU², ReGLU and attention blocks (for them the skipless value under
-pre-RMSNorm is not proved, and the route of the paper's Part (iii) is needed); blocks narrower
-than `d` (`OneBlock/LearnedSkipNarrowMlp.lean`, `OneBlock/LearnedSkipNarrowGated.lean`); `ε = 0`.
+triangular skip (`OneBlock/LearnedSkipTriangular.lean`; any width:
+`OneBlock/LearnedSkipTriangularNarrow.lean`); ReLU, ReLU², ReGLU and attention blocks (for them the
+skipless value under pre-RMSNorm is not proved, and the route of the paper's Part (iii) is taken:
+`OneBlock/LearnedSkipRescale.lean`, `OneBlock/LearnedSkipReGLU.lean`,
+`OneBlock/LearnedSkipAttention.lean`); blocks narrower than `d`
+(`OneBlock/LearnedSkipNarrowMlp.lean`, `OneBlock/LearnedSkipNarrowGated.lean`); `ε = 0`
+(`OneBlock/LearnedSkipRMSZeroBound.lean`, `OneBlock/LearnedSkipRMSZeroBoundKinds.lean`).
 -/
 
 namespace Skips

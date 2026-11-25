@@ -33,7 +33,9 @@ changes of basis inside the heads (`Params.headsQK`, `Params.headsVO`,
 The twins for MLP blocks are `Dimension/LocalIdentifiability.lean`,
 `Dimension/LocalIdentifiabilityGated.lean`, `Residual/LocalIdentifiability.lean` and
 `Residual/LocalIdentifiabilityGated.lean`; all use `exists_mem_orbit_of_eval_eq`
-(`Dimension/OrbitNetwork.lean`). Not stated here: the converse direction; pre-RMSNorm.
+(`Dimension/OrbitNetwork.lean`). Not stated here: the converse direction (the equivalences:
+`Dimension/IdentifiableIff.lean`, `Residual/IdentifiableIff.lean`); pre-RMSNorm
+(`Residual/LocalIdentifiabilityAttentionRMS.lean`).
 -/
 
 namespace Skips

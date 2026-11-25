@@ -34,7 +34,7 @@ form `UnitsRescale`:
   `d(d−1)/2`.
 
 Steps 1 to 3 at the inputs of `noKinkRMS θ` are `exists_antisymm_of_flatOn_residual_rmsNorm`
-(`OneBlock/ResidualRMSStepsOn.lean`). ReGLU blocks are not stated here.
+(`OneBlock/ResidualRMSStepsOn.lean`). ReGLU blocks: `OneBlock/ResidualRMSReGLU.lean`.
 -/
 
 namespace Skips

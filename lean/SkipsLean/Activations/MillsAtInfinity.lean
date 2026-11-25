@@ -17,10 +17,10 @@ Paper (dimension): Appendix D.5, after Lemma D.8, and Lemma D.9.
 
 Stated here for a real variable: `Θ₀` is real-analytic at `0`, the values lie in a real normed
 space, and in Lemma D.9 `ω > 0` is real and `ω' = 0`, so `z(t) = ω t`. This is the form that the
-proof of Lemma D.12 uses in the cases (n) and (+). The case of complex `ω`, `ω'` is not stated
-here. A negative exponent `l` is not needed: `t^{-l} Θ₀(1/t)` is `Θ̃₀(1/t)` with
-`Θ̃₀(s) = s^l Θ₀(s)`. "`Θ = 0`" is stated as "`Θ(t) = 0` for all large `t`", which is what the
-definition, an equation for large `t`, can give.
+proof of Lemma D.12 uses in the cases (n) and (+). The case of complex `ω`, `ω'`:
+`Activations/MillsAtInfinityC.lean`. A negative exponent `l` is not needed: `t^{-l} Θ₀(1/t)` is
+`Θ̃₀(1/t)` with `Θ̃₀(s) = s^l Θ₀(s)`. "`Θ = 0`" is stated as "`Θ(t) = 0` for all large `t`", which
+is what the definition, an equation for large `t`, can give.
 -/
 
 namespace Skips
@@ -263,7 +263,8 @@ private lemma abs_pow_mul_millsRatio_sub_le {ω s : ℝ} (hω : 0 < ω) (hs : 0 
   ring
 
 /-- `l! ≤ (2l−1)!!`. -/
-private lemma factorial_le_doubleFactorial : ∀ l : ℕ, Nat.factorial l ≤ Nat.doubleFactorial (2 * l - 1)
+private lemma factorial_le_doubleFactorial :
+    ∀ l : ℕ, Nat.factorial l ≤ Nat.doubleFactorial (2 * l - 1)
   | 0 => le_rfl
   | 1 => le_rfl
   | l + 2 => by
@@ -361,7 +362,8 @@ private lemma not_fasterThanPowers_millsRatio_sub {ω : ℝ} (hω : 0 < ω) (e :
   have h1 := hC (e + 2 * l + 1)
   rw [FormalMultilinearSeries.norm_apply_eq_norm_coef, hcoef l, Real.norm_eq_abs] at h1
   have h2 : |millsCoeff ω l| * (r : ℝ) ^ (e + 2 * l + 1)
-      = (Nat.doubleFactorial (2 * l - 1) : ℝ) * ((r : ℝ) / ω) ^ (2 * l) * ((r : ℝ) ^ (e + 1) / ω) := by
+      = (Nat.doubleFactorial (2 * l - 1) : ℝ) * ((r : ℝ) / ω) ^ (2 * l)
+          * ((r : ℝ) ^ (e + 1) / ω) := by
     rw [millsCoeff, abs_div, abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul, Nat.abs_cast,
       abs_pow, abs_of_pos hω, div_pow]
     ring

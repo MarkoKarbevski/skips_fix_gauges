@@ -22,7 +22,9 @@ Here, for attention blocks under pre-RMSNorm with `ε > 0`:
 
 The twin without normalization is `Dimension/LocalIdentifiabilityAttention.lean`; the twins for
 gated blocks are `Dimension/LocalIdentifiabilityGated.lean` and
-`Residual/LocalIdentifiabilityGated.lean`. Not stated here: the converse direction; `ε = 0`.
+`Residual/LocalIdentifiabilityGated.lean`. Not stated here: the converse direction (the
+equivalences: `Dimension/IdentifiableIff.lean`, `Residual/IdentifiableIff.lean`). Not stated: `ε =
+0`.
 -/
 
 namespace Skips

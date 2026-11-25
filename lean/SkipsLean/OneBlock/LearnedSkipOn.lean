@@ -549,8 +549,8 @@ if `E` and `D` have rank `d` and `U` is a space spanned by directions of symmetr
 block, then `fd + d (d − 1) + dim U ≤ P + d²`, where `P` counts the weights without the skip. This
 is `funDimLearned_add_le_rmsNorm` without the hypothesis that the block is differentiable. It is
 stated for every real `ε`; for `ε = 0` the map `rmsNorm 0` is Lean's total function, the changes of
-basis used are the orthogonal ones, and the paper's bound for `ε = 0` (with the scalings) is not
-stated here. -/
+basis used are the orthogonal ones, and the paper's bound for `ε = 0` (with the scalings) is
+`funDimLearned_add_le_rmsNorm_zero'` (`OneBlock/LearnedSkipRMSZeroRescaleBound.lean`). -/
 theorem funDimLearned_add_le_rmsNorm' {A : Arch T d 1} (ε : ℝ) (hA : A.χ = rmsNorm ε)
     (p : Params A dIn dOut × (Fin 1 → Matrix d d ℝ))
     (hE : p.1.E.rank = Fintype.card d) (hD : p.1.D.rank = Fintype.card d)

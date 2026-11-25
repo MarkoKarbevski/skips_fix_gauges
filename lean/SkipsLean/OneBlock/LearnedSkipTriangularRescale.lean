@@ -41,7 +41,8 @@ rotation direction is flat (as in `funDimLearnedTri_eq_funDimLearned`); so the t
 the same range, and the values for the full skip (`OneBlock/LearnedSkipRescale.lean`,
 `OneBlock/LearnedSkipReGLU.lean`) carry over. The value of Lean's `funDimLearnedTri`, which also
 uses the inputs on the kinks at which the output happens to be differentiable, is not stated.
-Numeric check: `learned_skip_relu_attention_check_2026-11-24.py`. Not stated: `ε = 0`.
+Numeric check: `learned_skip_relu_attention_check_2026-11-24.py`. `ε = 0`:
+`OneBlock/LearnedSkipTriangularRMSZeroRescale.lean`.
 -/
 
 namespace Skips

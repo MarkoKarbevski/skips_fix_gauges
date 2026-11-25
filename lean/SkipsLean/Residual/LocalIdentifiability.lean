@@ -34,8 +34,10 @@ blocks):
 
 The twin for networks without skip connections is `Dimension/LocalIdentifiability.lean`; both use
 `exists_mem_orbit_of_eval_eq` (`Dimension/OrbitNetwork.lean`). Not stated here: the converse
-direction of Proposition 4.5, the blocks with symmetries inside (SwiGLU and GeGLU:
-`Residual/LocalIdentifiabilityGated.lean`; attention), and the case `ε = 0`.
+direction of Proposition 4.5 (the equivalence: `Residual/IdentifiableIff.lean`), the blocks with
+symmetries inside (SwiGLU and GeGLU: `Residual/LocalIdentifiabilityGated.lean`; attention:
+`Dimension/LocalIdentifiabilityAttention.lean`, `Residual/LocalIdentifiabilityAttentionRMS.lean`;
+with MLP blocks: `Residual/LocalIdentifiabilityTransformer.lean`). Not stated: the case `ε = 0`.
 `θ.cob (fun _ => G) (fun _ => G)` is the change of basis with the same `G` at all hidden states
 (`Symmetry/ChangeOfBasis.lean`).
 -/

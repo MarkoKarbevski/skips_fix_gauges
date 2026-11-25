@@ -37,7 +37,7 @@ Here "the same holds for learned skips, without the `K_ℓ`", as the twin of
   residual network at `Φ(θ, A)`.
 
 The model dimension is `d : Type` here, as in `Residual/GaugeFixMixed.lean`, whose `skipProdMat`
-this file uses. Not stated: the same for networks with biases.
+this file uses. Networks with biases: `Residual/GaugeFixBiases.lean`.
 -/
 
 namespace Skips
