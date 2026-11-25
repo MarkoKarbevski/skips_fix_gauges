@@ -19,8 +19,8 @@ Here `C = E W_read`, `A = W_write D` and, in the residual network, `M = E D`, wi
 `D_θ M η = η_E D + E η_D`. The first "if and only if" is `keeps_products_iff_mem_range_cobDir`
 (`OneBlock/Factorization.lean`, Lemma C.2 of the dimension paper), with
 `η = cobDir θ ![X, Y]`. In this file: the second "if and only if", and the two dimensions (the
-dimension of the span of the set of these directions, which is a subspace). Not stated: the
-clauses with biases.
+dimension of the span of the set of these directions, which is a subspace). The clauses with
+biases: `OneBlock/KeepsProductsBiases.lean`.
 -/
 
 namespace Skips

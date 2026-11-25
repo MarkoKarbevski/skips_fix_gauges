@@ -38,8 +38,9 @@ involve the biases):
   `d_model²`"; named for tanh and GELU.
 
 Numeric check (tanh, `d = 2`, one block of 3 units: 21 and 17 of 29):
-`biases_count_check_2026-11-25.py`. Not stated here: ReLU, ReLU², ReGLU, SwiGLU, GeGLU blocks and
-attention blocks with biases.
+`biases_count_check_2026-11-25.py`. SwiGLU and GeGLU blocks with biases:
+`OneBlock/GatedBiases.lean`; ReLU and ReLU² blocks: `OneBlock/RescaleBiases.lean`; the ReGLU
+block: `OneBlock/ReGLUBiases.lean`. Not stated: attention blocks with biases.
 -/
 
 namespace Skips

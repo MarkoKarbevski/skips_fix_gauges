@@ -129,7 +129,7 @@ Rules, so that the file stays small:
 ## Tactics
 
 - **Error** `convert h using 1` leaves `myFun = fun x => …`, or a Pi form `(fun x => x) * gaussCdf`, `-f`, `f - g`, `f ^ n` from `HasDerivAt.mul/.neg/.sub/.pow`.
-  **Cause** `convert` does not unfold a `def`; those lemmas state the Pi form. **Fix** `unfold myFun` or `show HasDerivAt (fun y => …) _ z` first; use `.fun_mul/.fun_neg/.fun_sub/.fun_pow`.
+  **Cause** `convert` does not unfold a `def`; those lemmas state the Pi form. **Fix** `unfold myFun` or `show HasDerivAt (fun y => …) _ z` first; use `.fun_mul/.fun_neg/.fun_sub/.fun_pow`. Same for `.add` (`f + g`): `comp_of_eq`'s goal `y = (f + g) 0` gets `simp made no progress` from `simp only [zero_mul, add_zero]`; add `Pi.add_apply` (`OneBlock/RescaleBiases.lean`).
   Also: `simpa` on a `Tendsto` from `tendsto_pow_atTop two_ne_zero` (type implicit) timed out: `(α := ℝ)`, `rw [mul_zero] at h`. **Where:** `Activations/Gaussian.lean`, `MillsC.lean`.
 - A row `M t` of a matrix is not reached by entry lemmas (`of_apply`, `smul_apply`): state a `rfl`
   helper for the row, and use `Matrix.mul_apply_eq_vecMul` for `(A * B) i = A i ᵥ* B`. `rw [Finset.smul_sum]`, `rw [← Matrix.sum_vecMul]` on `∑ s, h s` (`h : Matrix`) fail (`function expected h s`): `exact (Finset.smul_sum (f := fun s => h s)).symm`.
