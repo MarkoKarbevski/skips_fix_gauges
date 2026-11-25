@@ -1,0 +1,23 @@
+gated k = 0 d, d_in, d_out, widths = 2 1 2 [2, 3] : rank 17 of 17 smallest/largest singular value 7.4e-02 INJECTIVE
+gated k = 0 d, d_in, d_out, widths = 3 1 3 [3, 4] : rank 34 of 34 smallest/largest singular value 1.2e-01 INJECTIVE
+gated k = 0 d, d_in, d_out, widths = 3 2 4 [3, 3, 5] : rank 47 of 47 smallest/largest singular value 1.2e-01 INJECTIVE
+gated k = 0 d, d_in, d_out, widths = 4 1 4 [4] : rank 36 of 36 smallest/largest singular value 7.0e-02 INJECTIVE
+mlp k = 1 d, d_in, d_out, widths = 2 1 2 [2, 3] : rank 17 of 17 smallest/largest singular value 3.1e-02 INJECTIVE
+mlp k = 1 d, d_in, d_out, widths = 3 1 3 [3, 4] : rank 34 of 34 smallest/largest singular value 4.0e-02 INJECTIVE
+mlp k = 1 d, d_in, d_out, widths = 3 2 4 [3, 3, 5] : rank 47 of 47 smallest/largest singular value 1.7e-02 INJECTIVE
+mlp k = 1 d, d_in, d_out, widths = 4 1 4 [4] : rank 36 of 36 smallest/largest singular value 7.4e-02 INJECTIVE
+mlp k = 2 d, d_in, d_out, widths = 2 1 2 [2, 3] : rank 17 of 17 smallest/largest singular value 1.5e-02 INJECTIVE
+mlp k = 2 d, d_in, d_out, widths = 3 1 3 [3, 4] : rank 34 of 34 smallest/largest singular value 1.4e-02 INJECTIVE
+mlp k = 2 d, d_in, d_out, widths = 3 2 4 [3, 3, 5] : rank 47 of 47 smallest/largest singular value 1.0e-02 INJECTIVE
+mlp k = 2 d, d_in, d_out, widths = 4 1 4 [4] : rank 36 of 36 smallest/largest singular value 5.5e-02 INJECTIVE
+reglu k = 1 d, d_in, d_out, widths = 2 1 2 [2, 3] : rank 22 of 22 smallest/largest singular value 6.9e-02 INJECTIVE
+reglu k = 1 d, d_in, d_out, widths = 3 1 3 [3, 4] : rank 41 of 41 smallest/largest singular value 8.9e-02 INJECTIVE
+reglu k = 1 d, d_in, d_out, widths = 3 2 4 [3, 3, 5] : rank 58 of 58 smallest/largest singular value 1.1e-01 INJECTIVE
+reglu k = 1 d, d_in, d_out, widths = 4 1 4 [4] : rank 40 of 40 smallest/largest singular value 1.4e-01 INJECTIVE
+reglu, read columns (e1, e2 | e2, e1): rank 11 of 12 NOT INJECTIVE
+reglu, k = 1 , read columns (e1, e1 | e2, e2): rank 11 of 12 NOT INJECTIVE
+reglu, k = 1 , read columns (e1, e2 | e2, e1): rank 11 of 12 NOT INJECTIVE
+reglu, k = 2 , read columns (e1, e1 | e2, e2): rank 11 of 12 NOT INJECTIVE
+reglu, k = 2 , read columns (e1, e2 | e2, e1): rank 12 of 12 INJECTIVE
+reglu, k = 3 , read columns (e1, e1 | e2, e2): rank 11 of 12 NOT INJECTIVE
+reglu, k = 3 , read columns (e1, e2 | e2, e1): rank 12 of 12 INJECTIVE

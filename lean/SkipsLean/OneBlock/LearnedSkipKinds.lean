@@ -27,7 +27,7 @@ bound from the two orthogonal changes of basis; the lower bound at the skip `A =
 the generic value is the largest) are in `OneBlock/LearnedSkip.lean`. Not stated here: the upper
 triangular skip; ReLU, ReLU², ReGLU and attention blocks (for them the skipless value under
 pre-RMSNorm is not proved, and the route of the paper's Part (iii) is needed); blocks narrower
-than `d`; `ε = 0`.
+than `d` (`OneBlock/LearnedSkipNarrowMlp.lean`, `OneBlock/LearnedSkipNarrowGated.lean`); `ε = 0`.
 -/
 
 namespace Skips
