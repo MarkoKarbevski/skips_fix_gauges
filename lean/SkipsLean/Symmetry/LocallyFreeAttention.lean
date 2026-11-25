@@ -49,6 +49,7 @@ private theorem mul_left_cancel_of_rank_lfa {m n k : Type*} [Fintype n] (M : Mat
     simpa [Matrix.mul_apply, Matrix.mulVec, dotProduct] using this
   exact congrFun (hinj hcol) i
 
+omit [Fintype dIn] [Fintype dOut] in
 /-- **Lemma A.18, third sentence, for the group.** If `E` and every write have rank `d`, the
 query matrix and the value matrix of every head have rank `d_h`, and the changes of basis `G` of
 the hidden states with the changes of basis `K`, `K'` inside the heads fix `θ`, then `G = 1`,

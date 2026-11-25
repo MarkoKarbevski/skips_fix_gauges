@@ -94,6 +94,7 @@ theorem cob_eq_self_of_rank_D {A : Arch T d L} (θ : Params A dIn dOut)
       exact mul_right_cancel_of_rank_lfr (θ.read ℓ) (hr ℓ) h1
   exact inv_eq_one.mp key
 
+omit [Fintype T] [Fintype dIn] in
 /-- **Lemma A.18, second sentence, for ReLU and ReLU² blocks.** For `k ≠ 0`: if `D` and every
 read have rank `d`, no row of a write vanishes, and the changes of basis `G` with positive
 rescalings `c` of the hidden units fix `θ`, then `G = 1` and `c = 1`. -/
@@ -140,6 +141,7 @@ theorem cob_rescaleMlp_eq_self_of_rank_D (k : ℕ) (hk : k ≠ 0)
     | cast ℓ ih => exact (key ℓ ih).2
   exact ⟨funext hG, fun ℓ => (key ℓ (hG ℓ.succ)).1⟩
 
+omit [Fintype T] [Fintype dIn] in
 /-- **Lemma A.18, second sentence, for gated blocks with any gate.** If `D` and every read have
 rank `d`, no row of a write vanishes, and the changes of basis `G` with the rescalings `c` of
 the values fix `θ`, then `G = 1` and `c = 1`. -/
@@ -196,6 +198,7 @@ private theorem eq_of_smul_one_mulVec_lfr {M : Matrix d d ℝ} {μ r : ℝ} {v :
   simp only [Pi.smul_apply, smul_eq_mul] at h1
   exact mul_right_cancel₀ ha h1
 
+omit [Fintype T] [Fintype dIn] in
 /-- **Lemma A.18, second sentence, for ReGLU blocks.** If `D` has rank `d`, no row of a write
 vanishes, the gate and value columns of every read are in general position (any `d` of them are
 linearly independent, and there are more than `d`), and the changes of basis `G` with the
@@ -309,6 +312,7 @@ private theorem eq_one_of_mul_smul_one_lfr {m : Type*} (X : Matrix m d ℝ) (hX 
   rw [Matrix.mul_smul, Matrix.mul_one, Matrix.smul_apply, smul_eq_mul] at h1
   exact mul_right_cancel₀ hpq (h1.trans (one_mul _).symm)
 
+omit [Fintype T] [Fintype dIn] in
 /-- **Lemma A.18, second sentence, under pre-RMSNorm with `ε = 0`.** The change of basis
 `G_ℓ = c_ℓ Q_ℓ` multiplies the writes by `G_ℓ` and the reads by `Q_ℓ⁻¹`. If `D` and every read
 have rank `d`, `E` and every write are not zero, and these changes of basis fix `θ`, then

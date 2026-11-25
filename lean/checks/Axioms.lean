@@ -1844,3 +1844,15 @@ import SkipsLean
 #print axioms Skips.ae_funDimLearnedTri_geglu_rmsNorm_eq_residual_add_of_nonempty
 #print axioms Skips.eval_rescaleMlp_params
 #print axioms Skips.eval_rescaleGate_params
+#print axioms Skips.cob_eq_self_of_rank_E
+#print axioms Skips.cob_rescaleMlp_eq_self_of_rank_E
+#print axioms Skips.cob_rescale_eq_self_of_rank_E
+#print axioms Skips.cob_rescale_rescaleGate_eq_self_of_rank_E
+#print axioms Skips.cob_rmsNorm_zero_eq_self_of_rank_E
+#print axioms Skips.cob_headsQK_headsVO_eq_self_of_rank_E
+#print axioms Skips.ae_cob_eq_self_of_dIn
+#print axioms Skips.ae_cob_rescaleMlp_eq_self_of_dIn
+#print axioms Skips.ae_cob_rescale_eq_self_of_dIn
+#print axioms Skips.ae_cob_rescale_rescaleGate_eq_self_of_dIn
+#print axioms Skips.ae_cob_rmsNorm_zero_eq_self_of_dIn
+#print axioms Skips.ae_cob_headsQK_headsVO_eq_self_of_dIn

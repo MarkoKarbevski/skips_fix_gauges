@@ -98,6 +98,7 @@ theorem cob_eq_self_of_rank_E {A : Arch T d L} (θ : Params A dIn dOut)
       exact congrArg (fun η => η.write ℓ) h
     exact mul_left_cancel_of_rank_lfe (θ.write ℓ) (hw ℓ) h1
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Lemma A.18, first sentence, for ReLU and ReLU² blocks.** If `E` and every write have rank
 `d`, no column of a read vanishes, and the changes of basis `G` with the rescalings `c` of the
 hidden units fix `θ`, then `G = 1` and `c = 1`. -/
@@ -142,6 +143,7 @@ theorem cob_rescaleMlp_eq_self_of_rank_E (k : ℕ)
     | succ ℓ ih => exact (key ℓ ih).2
   exact ⟨funext hG, fun ℓ => (key ℓ (hG ℓ.castSucc)).1⟩
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Lemma A.18, first sentence, for gated blocks with any gate.** If `E` and every write have
 rank `d`, no value column of a read vanishes, and the changes of basis `G` with the rescalings
 `c` of the values fix `θ`, then `G = 1` and `c = 1`. -/
@@ -187,6 +189,7 @@ theorem cob_rescale_eq_self_of_rank_E
     | succ ℓ ih => exact (key ℓ ih).2
   exact ⟨funext hG, fun ℓ => (key ℓ (hG ℓ.castSucc)).1⟩
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Lemma A.18, first sentence, for ReGLU blocks.** If `E` and every write have rank `d`, no
 gate column and no value column of a read vanishes, and the changes of basis `G` with the
 rescalings `c'` of the values and `c` of the gates fix `θ`, then `G = 1`, `c = 1` and
@@ -247,6 +250,7 @@ theorem cob_rescale_rescaleGate_eq_self_of_rank_E (k : ℕ)
   exact ⟨funext hG, fun ℓ => (key ℓ (hG ℓ.castSucc)).1,
     fun ℓ => (key ℓ (hG ℓ.castSucc)).2.1⟩
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Lemma A.18, first sentence, under pre-RMSNorm with `ε = 0`** ("With RMSNorm the changes of
 basis lie in `CO(d_model)` or `O(d_model)`, and the argument is unchanged"). The change of basis
 `G_ℓ = c_ℓ Q_ℓ`, `c_ℓ > 0`, `Q_ℓ` orthogonal, multiplies the writes by `G_ℓ` and the reads by
