@@ -38,6 +38,31 @@ open Matrix
 variable {T d dIn dOut : Type*} {L : ℕ} [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut]
 variable {A : Arch T d L}
 
+/-- The span of the kernel of an onto linear map, by rank–nullity. -/
+private theorem finrank_span_ker_erc {V W : Type*} [AddCommGroup V] [Module ℝ V]
+    [FiniteDimensional ℝ V] [AddCommGroup W] [Module ℝ W] (φ : V →ₗ[ℝ] W)
+    (hφ : Function.Surjective φ) (S : Set V) (hS : ∀ v, v ∈ S ↔ φ v = 0) :
+    Module.finrank ℝ (Submodule.span ℝ S) + Module.finrank ℝ W = Module.finrank ℝ V := by
+  have h : S = (LinearMap.ker φ : Set V) := Set.ext fun v => (hS v).trans LinearMap.mem_ker.symm
+  rw [h, Submodule.span_eq, ← LinearMap.finrank_range_add_finrank_ker φ,
+    LinearMap.range_eq_top.2 hφ, finrank_top, add_comm]
+
+omit [DecidableEq d] in
+/-- The number of pairs `j < i` in a finite linear order. -/
+private theorem card_lower_erc [LinearOrder d] :
+    Fintype.card {p : d × d // p.2 < p.1} = Fintype.card d * (Fintype.card d - 1) / 2 := by
+  let e : d ≃o Fin (Fintype.card d) := (Fintype.orderIsoFinOfCardEq d rfl).symm
+  rw [← card_below_diagonal (Fintype.card d), ← Fintype.card_subtype]
+  exact Fintype.card_congr (Equiv.subtypeEquiv (e.toEquiv.prodCongr e.toEquiv)
+    fun p => by simp [e.lt_iff_lt])
+
+/-- The chosen columns of every read and of the readout. -/
+private def readsLin_erc (c : ∀ ℓ : Fin L, d → A.r ℓ) (cD : d → dOut) :
+    Params A dIn dOut →ₗ[ℝ] (Fin L → Matrix d d ℝ) × Matrix d d ℝ where
+  toFun η := (fun ℓ => (η.read ℓ).submatrix id (c ℓ), η.D.submatrix id cD)
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
 /-- **Proposition A.9 (i), "this removes `d_model²` […] parameters per hidden state", reads:**
 the parameters whose chosen columns of every read and of the readout vanish (the directions of
 the family in which these `L + 1` submatrices are the identity) have dimension
@@ -48,7 +73,21 @@ theorem finrank_span_reads_eq_zero (c : ∀ ℓ : Fin L, d → A.r ℓ) (cD : d 
         (∀ ℓ, (η.read ℓ).submatrix id (c ℓ) = 0) ∧ η.D.submatrix id cD = 0})
       + (L + 1) * Fintype.card d ^ 2
       = Module.finrank ℝ (Params A dIn dOut) := by
-  sorry
+  have hφ : Function.Surjective (readsLin_erc (dIn := dIn) c cD) := by
+    rintro ⟨M, N⟩
+    refine ⟨⟨0, fun ℓ => Matrix.of fun a => Function.extend (c ℓ) (M ℓ a) 0, fun _ => 0,
+      Matrix.of fun a => Function.extend cD (N a) 0⟩, ?_⟩
+    refine Prod.ext (funext fun ℓ => ?_) ?_ <;> ext a j
+    · exact (hc ℓ).extend_apply (M ℓ a) 0 j
+    · exact hcD.extend_apply (N a) 0 j
+  have hS := finrank_span_ker_erc _ hφ {η : Params A dIn dOut |
+        (∀ ℓ, (η.read ℓ).submatrix id (c ℓ) = 0) ∧ η.D.submatrix id cD = 0} fun η => by
+    simp only [Set.mem_ofPred_eq, Prod.ext_iff, funext_iff (f := fun ℓ => _)]
+    rfl
+  rw [← hS]
+  simp only [Module.finrank_prod, Module.finrank_pi_fintype, Module.finrank_matrix,
+    Module.finrank_self, Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]
+  ring
 
 /-- **Proposition A.9 (i), "this removes `d_model²` […] parameters per hidden state", writes:**
 the parameters whose chosen rows of the embedding and of every write vanish have dimension
