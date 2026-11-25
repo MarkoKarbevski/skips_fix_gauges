@@ -10,7 +10,7 @@ every block has width at least `d_model`." Remark A.19: "The width condition is 
 hidden state of a skipless network that is written and read at rank `m < d_model`, the changes
 of basis that fix the parameters form a family of dimension `(d_model − m)²`".
 
-The proofs of Proposition A.33 (ii) and of Proposition A.35 use the lemma for the network without
+The proof of Proposition A.35 uses the lemma for the network without
 a dead unit ("The other columns are those of the network without this unit, whose symmetries are
 the changes of basis of its `L + 1` hidden states and `s − 1` rescalings"). When the block of the
 dead unit has exactly `d_model` hidden units, that network has one block of width `d_model − 1`,
@@ -19,7 +19,9 @@ together still give the conclusion, when both the embedding and the readout have
 changes of basis at the hidden states up to the one that the narrow block reads are fixed from
 the embedding, and those from the one that it writes on are fixed from the readout. Nothing is
 asked of the write of the narrow block. (Two adjacent blocks narrower than `d` are not covered,
-as Remark A.19 says: `ai_notes/locally_free_one_narrow_block_check_2026-11-25.py`.)
+as Remark A.19 says: `ai_notes/locally_free_one_narrow_block_check_2026-11-25.py`.) The proof of
+Proposition A.33 (ii), for a residual network, does not need this form: there one change of basis
+acts on all hidden states, and the embedding of rank `d` fixes it (`Residual/DeadUnits.lean`).
 
 Here this form, in infinitesimal form, for a block `m`: `E` and the writes of the blocks before
 `m` have rank `d`, `D` and the reads of the blocks after `m` have rank `d`. For ReLU and ReLU²
