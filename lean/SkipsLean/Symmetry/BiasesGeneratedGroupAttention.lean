@@ -433,13 +433,541 @@ private theorem actGL_comp_bga (K₁ N₁ K₂ N₂ : ∀ ℓ, H ℓ → GL (dh 
       Finset.sum_add_distrib, sum_mul_GL_bga]
     ring
 
+/-! ### Helpers: the maps commute with the changes of basis and the translations -/
+
+/-- Helper: the changes of basis inside the heads commute with the changes of basis `G`: the
+heads act on the columns of the reads and the rows of the writes, `G` on the other side. -/
+private theorem cob_heads_bga (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (K N : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (G : Fin (L + 1) → GL d ℝ) :
+    ((θ.headsQK K).headsVO N).cob G G = ((θ.cob G G).headsQK K).headsVO N := by
+  refine Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl
+  · ext a ⟨i, k | k | k⟩ <;>
+      simp only [Params.cob, Matrix.mul_apply, pVOq_bga, pVOk_bga, pVOv_bga, pQKq_bga, pQKk_bga,
+        pQKv_bga, Finset.mul_sum, Finset.sum_mul, mul_assoc] <;>
+      exact Finset.sum_comm
+  · ext ⟨i, k⟩ c
+    simp only [Params.cob, Matrix.mul_apply, pVOw_bga, pQKw_bga, Finset.mul_sum, Finset.sum_mul,
+      mul_assoc]
+    exact Finset.sum_comm
+
+/-- Helper: the maps commute with the translations of a skipless network and the changes of
+basis, on the biases: `(b − g W) K = b K − g (W K)` column by column, and the value shift
+`ν (K'^{-1} W_O)` of the write bias commutes with `G`. -/
+private theorem translateAllAt_heads_bga (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (b : Biases (Arch.attention sees χ H dh) dOut) (K N : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ)
+    (κ ν : ∀ ℓ, H ℓ → dh ℓ → ℝ) (G : Fin (L + 1) → GL d ℝ) (g : Fin (L + 1) → d → ℝ) :
+    ((((((b.headsQK K).headsVO N).keyShift κ).valueShift ((θ.headsQK K).headsVO N) ν).translateAllAt
+        ((θ.headsQK K).headsVO N) g).cob G)
+      = (((((b.translateAllAt θ g).cob G).headsQK K).headsVO N).keyShift κ).valueShift
+        (((θ.cob G G).headsQK K).headsVO N) ν := by
+  rw [← cob_heads_bga]
+  refine Biases.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl
+  · funext q
+    obtain ⟨i, k | k | k⟩ := q <;>
+      simp only [Biases.cob, Biases.translateAllAt, Pi.sub_apply, Matrix.vecMul, dotProduct,
+        vSq_bga, vSk_bga, vSv_bga, kSq_bga, kSk_bga, kSv_bga, bVOq_bga, bVOk_bga, bVOv_bga,
+        bQKq_bga, bQKk_bga, bQKv_bga, pVOq_bga, pVOk_bga, pVOv_bga, pQKq_bga, pQKk_bga, pQKv_bga,
+        sum_vecMul_bga, sub_mul, Finset.sum_sub_distrib] <;> ring
+  · funext c
+    simp only [Biases.cob, Biases.translateAllAt, Params.cob, Matrix.vecMul, dotProduct,
+      Pi.add_apply, vSw_bga, kSw_bga, bVOw_bga, bQKw_bga, Matrix.mul_apply, add_mul, sub_mul,
+      Finset.sum_add_distrib, Finset.sum_sub_distrib, sum_sum_mul_bga]
+    ring
+
+/-- Helper: the same for the translations of a residual network. -/
+private theorem translateAll_heads_bga (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (b : Biases (Arch.attention sees χ H dh) dOut) (K N : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ)
+    (κ ν : ∀ ℓ, H ℓ → dh ℓ → ℝ) (G : Fin (L + 1) → GL d ℝ) (g : Fin (L + 1) → d → ℝ) :
+    ((((((b.headsQK K).headsVO N).keyShift κ).valueShift ((θ.headsQK K).headsVO N) ν).translateAll
+        ((θ.headsQK K).headsVO N) g).cob G)
+      = (((((b.translateAll θ g).cob G).headsQK K).headsVO N).keyShift κ).valueShift
+        (((θ.cob G G).headsQK K).headsVO N) ν := by
+  rw [← cob_heads_bga]
+  refine Biases.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl
+  · funext q
+    obtain ⟨i, k | k | k⟩ := q <;>
+      simp only [Biases.cob, Biases.translateAll, Pi.sub_apply, Matrix.vecMul, dotProduct,
+        vSq_bga, vSk_bga, vSv_bga, kSq_bga, kSk_bga, kSv_bga, bVOq_bga, bVOk_bga, bVOv_bga,
+        bQKq_bga, bQKk_bga, bQKv_bga, pVOq_bga, pVOk_bga, pVOv_bga, pQKq_bga, pQKk_bga, pQKv_bga,
+        sum_vecMul_bga, sub_mul, Finset.sum_sub_distrib] <;> ring
+  · funext c
+    simp only [Biases.cob, Biases.translateAll, Params.cob, Matrix.vecMul, dotProduct,
+      Pi.add_apply, vSw_bga, kSw_bga, bVOw_bga, bQKw_bga, Matrix.mul_apply, add_mul, sub_mul,
+      Finset.sum_add_distrib, Finset.sum_sub_distrib, sum_sum_mul_bga]
+    ring
+
+/-! ### Helpers: the rank of the writes -/
+
+/-- Helper: multiplying the rows `(i, ·)` of `W` by a matrix `P_i` does not raise the rank: it is
+a block-diagonal matrix times `W`. -/
+private theorem rank_heads_le_bga {I n m : Type*} [Fintype I] [DecidableEq I] [Fintype n]
+    [DecidableEq n] [Fintype m] (P : I → Matrix n n ℝ) (W : Matrix (I × n) m ℝ) :
+    (Matrix.of fun (p : I × n) c => ∑ k', P p.1 p.2 k' * W (p.1, k') c).rank ≤ W.rank := by
+  have h : (Matrix.of fun (p : I × n) c => ∑ k', P p.1 p.2 k' * W (p.1, k') c)
+      = (Matrix.of fun (p q : I × n) => if p.1 = q.1 then P p.1 p.2 q.2 else 0) * W := by
+    ext ⟨i, k⟩ c
+    rw [Matrix.mul_apply, Fintype.sum_prod_type, Finset.sum_eq_single i]
+    · simp
+    · intro j _ hj
+      simp [Ne.symm hj]
+    · simp
+  rw [h]
+  exact Matrix.rank_mul_le_right _ _
+
+/-- Helper: the write after the changes of basis `K'` between values and outputs has the rank of
+the write: each is a block-diagonal matrix times the other. -/
+private theorem rank_write_bga (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (K N : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ : Fin L) :
+    (((θ.headsQK K).headsVO N).write ℓ).rank = (θ.write ℓ).rank := by
+  classical
+  refine le_antisymm (rank_heads_le_bga
+    (fun i => (((N ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ)) (θ.write ℓ)) ?_
+  have h : θ.write ℓ = Matrix.of fun (p : H ℓ × dh ℓ) c =>
+      ∑ k', (N ℓ p.1 : Matrix (dh ℓ) (dh ℓ) ℝ) p.2 k'
+        * ((θ.headsQK K).headsVO N).write ℓ (p.1, k') c := by
+    ext ⟨i, k⟩ c
+    have e : ((N ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ)
+        *ᵥ ((((N ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ)
+        *ᵥ fun k' => θ.write ℓ (i, k') c)) k = θ.write ℓ (i, k) c := by
+      rw [Matrix.mulVec_mulVec, Units.mul_inv, Matrix.one_mulVec]
+    exact e.symm
+  calc (θ.write ℓ).rank
+      = (Matrix.of fun (p : H ℓ × dh ℓ) c => ∑ k', (N ℓ p.1 : Matrix (dh ℓ) (dh ℓ) ℝ) p.2 k'
+          * ((θ.headsQK K).headsVO N).write ℓ (p.1, k') c).rank := by rw [← h]
+    _ ≤ _ := rank_heads_le_bga (fun i => (N ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ)) _
+
+/-! ### Helpers: every map keeps the map of every block
+
+Copies of the private helpers of `Symmetry/AttentionHeadsBiases.lean`. -/
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the map `f ℓ` of an attention block is the same on `M'` and `M` if the query columns
+of head `i` of `M'` are those of `M` times `G_i`, its key columns those of `M` times `G_i^{-⊤}`,
+and its value columns those of `M`: the scores `∑_k (q G)_k (k G^{-⊤})_k = q · k` are kept. -/
+private theorem f_QK_bga (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ : Fin L)
+    (M M' : Matrix T (H ℓ × (dh ℓ ⊕ (dh ℓ ⊕ dh ℓ))) ℝ)
+    (hq : ∀ t i k, M' t (i, Sum.inl k)
+      = ∑ a, M t (i, Sum.inl a) * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) a k)
+    (hk : ∀ t i k, M' t (i, Sum.inr (Sum.inl k))
+      = ∑ a, M t (i, Sum.inr (Sum.inl a))
+        * (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k a)
+    (hv : ∀ t i k, M' t (i, Sum.inr (Sum.inr k)) = M t (i, Sum.inr (Sum.inr k))) :
+    (Arch.attention sees χ H dh).f ℓ M' = (Arch.attention sees χ H dh).f ℓ M := by
+  -- the scores of every head are kept
+  have hsc : ∀ i : H ℓ, (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M' t' (i, Sum.inl k) * M' s' (i, Sum.inr (Sum.inl k)) : Matrix T T ℝ)
+      = Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M t' (i, Sum.inl k) * M s' (i, Sum.inr (Sum.inl k)) := by
+    intro i
+    ext t' s'
+    simp only [Matrix.of_apply, hq, hk]
+    congr 1
+    rw [← sum_mul_GL_bga (K ℓ i) (fun a => M t' (i, Sum.inl a))
+      (fun a => M s' (i, Sum.inr (Sum.inl a)))]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    congr 1
+    exact Finset.sum_congr rfl fun _ _ => mul_comm _ _
+  ext t p
+  show ∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M' t' (p.1, Sum.inl k) * M' s' (p.1, Sum.inr (Sum.inl k))) t s
+      * M' s (p.1, Sum.inr (Sum.inr p.2))
+    = ∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M t' (p.1, Sum.inl k) * M s' (p.1, Sum.inr (Sum.inl k))) t s
+      * M s (p.1, Sum.inr (Sum.inr p.2))
+  rw [hsc p.1]
+  simp only [hv]
+
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the changes of basis between queries and keys, with the biases of the queries and
+keys moved along, keep the map `n ↦ f(n W_read + b_read) W_write + b_write` of every block. -/
+private theorem block_headsQKB_bga
+    (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (b : Biases (Arch.attention sees χ H dh) dOut) (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ : Fin L)
+    (n : Matrix T d ℝ) :
+    (Arch.attention sees χ H dh).f ℓ (n * (θ.headsQK K).read ℓ
+          + Matrix.of fun _ => (b.headsQK K).read ℓ) * (θ.headsQK K).write ℓ
+        + Matrix.of (fun _ => (b.headsQK K).write ℓ)
+      = (Arch.attention sees χ H dh).f ℓ (n * θ.read ℓ + Matrix.of fun _ => b.read ℓ)
+          * θ.write ℓ + Matrix.of fun _ => b.write ℓ := by
+  rw [f_QK_bga K ℓ (n * θ.read ℓ + Matrix.of fun _ => b.read ℓ) _ ?_ ?_ ?_]
+  · rfl
+  · -- the query columns: `(n W_Q + b_Q) K = n (W_Q K) + b_Q K`
+    intro t i k
+    show ∑ a, n t a * (∑ k', θ.read ℓ a (i, Sum.inl k') * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k)
+        + ∑ k', b.read ℓ (i, Sum.inl k') * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+      = ∑ a', (∑ a, n t a * θ.read ℓ a (i, Sum.inl a') + b.read ℓ (i, Sum.inl a'))
+          * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) a' k
+    simp only [add_mul, Finset.sum_add_distrib, Finset.mul_sum, Finset.sum_mul]
+    rw [Finset.sum_comm]
+    congr 1
+    refine Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => ?_
+    ring
+  · -- the key columns: `(n W_K + b_K) K^{-⊤} = n (W_K K^{-⊤}) + b_K K^{-⊤}`
+    intro t i k
+    show ∑ a, n t a * (∑ k', θ.read ℓ a (i, Sum.inr (Sum.inl k'))
+          * (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k')
+        + ∑ k', b.read ℓ (i, Sum.inr (Sum.inl k'))
+          * (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k'
+      = ∑ a', (∑ a, n t a * θ.read ℓ a (i, Sum.inr (Sum.inl a'))
+          + b.read ℓ (i, Sum.inr (Sum.inl a')))
+          * (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k a'
+    simp only [add_mul, Finset.sum_add_distrib, Finset.mul_sum, Finset.sum_mul]
+    rw [Finset.sum_comm]
+    congr 1
+    refine Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => ?_
+    ring
+  · -- the value columns do not move
+    intro t i k
+    rfl
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `f ℓ (M') W' = f ℓ (M) W` if the query and key columns of `M'` are those of `M`, the
+value columns of head `i` of `M'` are those of `M` times `G_i`, and the rows `(i, ·)` of `W'` are
+`G_i^{-1}` times those of `W`: the weights are kept, and `(a v G)(G^{-1} W_O) = a v W_O`. -/
+private theorem f_VO_bga (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ : Fin L)
+    (M M' : Matrix T (H ℓ × (dh ℓ ⊕ (dh ℓ ⊕ dh ℓ))) ℝ) (W W' : Matrix (H ℓ × dh ℓ) d ℝ)
+    (hq : ∀ t i k, M' t (i, Sum.inl k) = M t (i, Sum.inl k))
+    (hk : ∀ t i k, M' t (i, Sum.inr (Sum.inl k)) = M t (i, Sum.inr (Sum.inl k)))
+    (hv : ∀ t i k, M' t (i, Sum.inr (Sum.inr k))
+      = ∑ a, M t (i, Sum.inr (Sum.inr a)) * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) a k)
+    (hW : ∀ i k c, W' (i, k) c
+      = ∑ k', (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k' * W (i, k') c) :
+    (Arch.attention sees χ H dh).f ℓ M' * W' = (Arch.attention sees χ H dh).f ℓ M * W := by
+  -- the scores of every head are kept
+  have hsc : ∀ i : H ℓ, (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M' t' (i, Sum.inl k) * M' s' (i, Sum.inr (Sum.inl k)) : Matrix T T ℝ)
+      = Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M t' (i, Sum.inl k) * M s' (i, Sum.inr (Sum.inl k)) := by
+    intro i
+    ext t' s'
+    simp only [Matrix.of_apply, hq, hk]
+  -- head by head
+  ext t c
+  rw [Matrix.mul_apply, Matrix.mul_apply, Fintype.sum_prod_type, Fintype.sum_prod_type]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  show ∑ k, (∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+          * ∑ k, M' t' (i, Sum.inl k) * M' s' (i, Sum.inr (Sum.inl k))) t s
+        * M' s (i, Sum.inr (Sum.inr k))) * W' (i, k) c
+    = ∑ k, (∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+          * ∑ k, M t' (i, Sum.inl k) * M s' (i, Sum.inr (Sum.inl k))) t s
+        * M s (i, Sum.inr (Sum.inr k))) * W (i, k) c
+  rw [hsc i]
+  generalize attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+    * ∑ k, M t' (i, Sum.inl k) * M s' (i, Sum.inr (Sum.inl k))) = P
+  simp only [hv, hW]
+  -- the weighted values of head `i` are multiplied by `G_i`
+  have e : ∀ k, ∑ s, P t s
+        * ∑ a, M s (i, Sum.inr (Sum.inr a)) * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) a k
+      = ∑ a, (∑ s, P t s * M s (i, Sum.inr (Sum.inr a)))
+        * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) a k := by
+    intro k
+    simp only [Finset.mul_sum, Finset.sum_mul]
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => ?_
+    ring
+  simp only [e]
+  exact sum_mul_GL_bga (K ℓ i) _ _
+
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the changes of basis between values and outputs, with the biases of the values moved
+along, keep the map `n ↦ f(n W_read + b_read) W_write + b_write` of every block. -/
+private theorem block_headsVOB_bga
+    (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (b : Biases (Arch.attention sees χ H dh) dOut) (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ : Fin L)
+    (n : Matrix T d ℝ) :
+    (Arch.attention sees χ H dh).f ℓ (n * (θ.headsVO K).read ℓ
+          + Matrix.of fun _ => (b.headsVO K).read ℓ) * (θ.headsVO K).write ℓ
+        + Matrix.of (fun _ => (b.headsVO K).write ℓ)
+      = (Arch.attention sees χ H dh).f ℓ (n * θ.read ℓ + Matrix.of fun _ => b.read ℓ)
+          * θ.write ℓ + Matrix.of fun _ => b.write ℓ := by
+  rw [f_VO_bga K ℓ (n * θ.read ℓ + Matrix.of fun _ => b.read ℓ)
+    (n * (θ.headsVO K).read ℓ + Matrix.of fun _ => (b.headsVO K).read ℓ) (θ.write ℓ)
+    ((θ.headsVO K).write ℓ) ?_ ?_ ?_ ?_]
+  · rfl
+  · intro t i k
+    rfl
+  · intro t i k
+    rfl
+  · -- the value columns: `(n W_V + b_V) K = n (W_V K) + b_V K`
+    intro t i k
+    show ∑ a, n t a * (∑ k', θ.read ℓ a (i, Sum.inr (Sum.inr k'))
+          * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k)
+        + ∑ k', b.read ℓ (i, Sum.inr (Sum.inr k')) * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+      = ∑ a', (∑ a, n t a * θ.read ℓ a (i, Sum.inr (Sum.inr a'))
+          + b.read ℓ (i, Sum.inr (Sum.inr a'))) * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) a' k
+    simp only [add_mul, Finset.sum_add_distrib, Finset.mul_sum, Finset.sum_mul]
+    rw [Finset.sum_comm]
+    congr 1
+    refine Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => ?_
+    ring
+  · intro i k c
+    rfl
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the attention weights do not change when a function `r t` of the row alone is added
+to the scores: numerator and denominator of row `t` are multiplied by `e^{r t}`. -/
+private theorem attnWeights_add_row_bga (Z Z' : Matrix T T ℝ) (r : T → ℝ)
+    (hZ : ∀ t s, Z' t s = Z t s + r t) :
+    attnWeights sees Z' = attnWeights sees Z := by
+  ext t s
+  simp only [attnWeights, Matrix.of_apply, hZ, Real.exp_add]
+  split_ifs with h
+  · -- the denominator is multiplied by `e^{r t}` too
+    have e : (∑ s', if sees t s' then Real.exp (Z t s') * Real.exp (r t) else 0)
+        = (∑ s', if sees t s' then Real.exp (Z t s') else 0) * Real.exp (r t) := by
+      rw [Finset.sum_mul]
+      refine Finset.sum_congr rfl fun s' _ => ?_
+      split_ifs
+      · rfl
+      · rw [zero_mul]
+    rw [e, mul_div_mul_right _ _ (Real.exp_pos _).ne']
+  · rfl
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (the private `attnWeights_den_pos_ba` of `Absorb/BiasesAttention.lean`): the
+denominator of row `t` of the weights is positive when token `t` sees some token. -/
+private theorem attnWeights_den_pos_bga (Z : Matrix T T ℝ) (t : T) (ht : ∃ s, sees t s) :
+    0 < ∑ s', if sees t s' then Real.exp (Z t s') else 0 := by
+  obtain ⟨s, hs⟩ := ht
+  refine Finset.sum_pos' (fun s' _ => ?_) ⟨s, Finset.mem_univ _, ?_⟩
+  · split_ifs
+    · exact (Real.exp_pos _).le
+    · exact le_rfl
+  · simp only [hs, ite_true]
+    exact Real.exp_pos _
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (the private `attnWeights_sum_ba` of `Absorb/BiasesAttention.lean`): row `t` of the
+weights sums to `1` when token `t` sees some token. -/
+private theorem attnWeights_sum_bga (Z : Matrix T T ℝ) (t : T) (ht : ∃ s, sees t s) :
+    ∑ s, attnWeights sees Z t s = 1 := by
+  have hS := attnWeights_den_pos_bga Z t ht
+  have h1 : ∀ s, attnWeights sees Z t s = (if sees t s then Real.exp (Z t s) else 0)
+      / ∑ s', if sees t s' then Real.exp (Z t s') else 0 := by
+    intro s
+    simp only [attnWeights, Matrix.of_apply]
+    split_ifs
+    · rfl
+    · rw [zero_div]
+  simp only [h1, ← Finset.sum_div]
+  exact div_self hS.ne'
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the map `f ℓ` is the same on `M'` and `M` if the keys of head `i` of `M'` are those
+of `M` shifted by `κ_i` and the queries and values are those of `M`: the score of `(t, s)` moves
+by `q_t · κ_i / √d_h`, the same for every `s`. -/
+private theorem f_keyShift_bga (ℓ : Fin L) (M M' : Matrix T (H ℓ × (dh ℓ ⊕ (dh ℓ ⊕ dh ℓ))) ℝ)
+    (κ : H ℓ → dh ℓ → ℝ)
+    (hq : ∀ t i k, M' t (i, Sum.inl k) = M t (i, Sum.inl k))
+    (hk : ∀ t i k, M' t (i, Sum.inr (Sum.inl k)) = M t (i, Sum.inr (Sum.inl k)) + κ i k)
+    (hv : ∀ t i k, M' t (i, Sum.inr (Sum.inr k)) = M t (i, Sum.inr (Sum.inr k))) :
+    (Arch.attention sees χ H dh).f ℓ M' = (Arch.attention sees χ H dh).f ℓ M := by
+  -- the weights of every head are kept
+  have hsc : ∀ i : H ℓ, attnWeights sees (Matrix.of fun t' s' =>
+        (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M' t' (i, Sum.inl k) * M' s' (i, Sum.inr (Sum.inl k)) : Matrix T T ℝ)
+      = attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M t' (i, Sum.inl k) * M s' (i, Sum.inr (Sum.inl k))) := by
+    intro i
+    refine attnWeights_add_row_bga _ _
+      (fun t' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹ * ∑ k, M t' (i, Sum.inl k) * κ i k)
+      fun t' s' => ?_
+    simp only [Matrix.of_apply, hq, hk, mul_add, Finset.sum_add_distrib]
+  ext t p
+  show ∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M' t' (p.1, Sum.inl k) * M' s' (p.1, Sum.inr (Sum.inl k))) t s
+      * M' s (p.1, Sum.inr (Sum.inr p.2))
+    = ∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M t' (p.1, Sum.inl k) * M s' (p.1, Sum.inr (Sum.inl k))) t s
+      * M s (p.1, Sum.inr (Sum.inr p.2))
+  rw [hsc p.1]
+  simp only [hv]
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: if every token sees some token, `f ℓ M' = f ℓ M + 1 ν` when the values of head `i`
+of `M'` are those of `M` shifted by `ν_i` and the queries and keys are those of `M`: the weights
+are kept, and they sum to `1` on every row. -/
+private theorem f_valueShift_bga (hsee : ∀ t, ∃ s, sees t s) (ℓ : Fin L)
+    (M M' : Matrix T (H ℓ × (dh ℓ ⊕ (dh ℓ ⊕ dh ℓ))) ℝ) (ν : H ℓ → dh ℓ → ℝ)
+    (hq : ∀ t i k, M' t (i, Sum.inl k) = M t (i, Sum.inl k))
+    (hk : ∀ t i k, M' t (i, Sum.inr (Sum.inl k)) = M t (i, Sum.inr (Sum.inl k)))
+    (hv : ∀ t i k, M' t (i, Sum.inr (Sum.inr k)) = M t (i, Sum.inr (Sum.inr k)) + ν i k) :
+    (Arch.attention sees χ H dh).f ℓ M'
+      = (Arch.attention sees χ H dh).f ℓ M + Matrix.of fun _ (q : H ℓ × dh ℓ) => ν q.1 q.2 := by
+  -- the scores of every head are kept
+  have hsc : ∀ i : H ℓ, (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M' t' (i, Sum.inl k) * M' s' (i, Sum.inr (Sum.inl k)) : Matrix T T ℝ)
+      = Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M t' (i, Sum.inl k) * M s' (i, Sum.inr (Sum.inl k)) := by
+    intro i
+    ext t' s'
+    simp only [Matrix.of_apply, hq, hk]
+  ext t p
+  show ∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M' t' (p.1, Sum.inl k) * M' s' (p.1, Sum.inr (Sum.inl k))) t s
+      * M' s (p.1, Sum.inr (Sum.inr p.2))
+    = ∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M t' (p.1, Sum.inl k) * M s' (p.1, Sum.inr (Sum.inl k))) t s
+      * M s (p.1, Sum.inr (Sum.inr p.2)) + ν p.1 p.2
+  rw [hsc p.1]
+  -- the weights of row `t` sum to `1`
+  simp only [hv, mul_add, Finset.sum_add_distrib, ← Finset.sum_mul,
+    attnWeights_sum_bga _ t (hsee t), one_mul]
+
+/-- Helper: the shifts `κ` of the key biases keep the map of every block. -/
+private theorem block_keyShift_bga (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (b : Biases (Arch.attention sees χ H dh) dOut) (κ : ∀ ℓ, H ℓ → dh ℓ → ℝ) (ℓ : Fin L)
+    (n : Matrix T d ℝ) :
+    (Arch.attention sees χ H dh).f ℓ (n * θ.read ℓ
+          + Matrix.of fun _ => (b.keyShift κ).read ℓ) * θ.write ℓ
+        + Matrix.of (fun _ => (b.keyShift κ).write ℓ)
+      = (Arch.attention sees χ H dh).f ℓ (n * θ.read ℓ + Matrix.of fun _ => b.read ℓ)
+          * θ.write ℓ + Matrix.of fun _ => b.write ℓ := by
+  -- the keys of head `i` move by `κ_i`, the queries and values do not move
+  rw [f_keyShift_bga ℓ (n * θ.read ℓ + Matrix.of fun _ => b.read ℓ) _ (κ ℓ) ?_ ?_ ?_]
+  · rfl
+  · intro t i k
+    rfl
+  · intro t i k
+    show (n * θ.read ℓ) t (i, Sum.inr (Sum.inl k)) + (b.read ℓ (i, Sum.inr (Sum.inl k)) + κ ℓ i k)
+      = (n * θ.read ℓ) t (i, Sum.inr (Sum.inl k)) + b.read ℓ (i, Sum.inr (Sum.inl k)) + κ ℓ i k
+    rw [add_assoc]
+  · intro t i k
+    rfl
+
+/-- Helper: the value biases moved by `ν` into the output bias keep the map of every block, if
+every token sees a token. -/
+private theorem block_valueShift_bga (hsee : ∀ t, ∃ s, sees t s)
+    (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (b : Biases (Arch.attention sees χ H dh) dOut) (ν : ∀ ℓ, H ℓ → dh ℓ → ℝ) (ℓ : Fin L)
+    (n : Matrix T d ℝ) :
+    (Arch.attention sees χ H dh).f ℓ (n * θ.read ℓ
+          + Matrix.of fun _ => (b.valueShift θ ν).read ℓ) * θ.write ℓ
+        + Matrix.of (fun _ => (b.valueShift θ ν).write ℓ)
+      = (Arch.attention sees χ H dh).f ℓ (n * θ.read ℓ + Matrix.of fun _ => b.read ℓ)
+          * θ.write ℓ + Matrix.of fun _ => b.write ℓ := by
+  -- the values of head `i` move by `ν_i`, the queries and keys do not move
+  rw [f_valueShift_bga hsee ℓ (n * θ.read ℓ + Matrix.of fun _ => b.read ℓ) _ (ν ℓ) ?_ ?_ ?_]
+  · -- the output moves by `∑_i ν_i W_{O,i}`, the write bias by the opposite
+    rw [Matrix.add_mul, add_assoc]
+    congr 1
+    ext t c
+    show (∑ q : H ℓ × dh ℓ, ν ℓ q.1 q.2 * θ.write ℓ q c)
+        + (b.write ℓ c - ∑ i, ∑ k, ν ℓ i k * θ.write ℓ (i, k) c) = b.write ℓ c
+    rw [Fintype.sum_prod_type]
+    ring
+  · intro t i k
+    rfl
+  · intro t i k
+    rfl
+  · intro t i k
+    show (n * θ.read ℓ) t (i, Sum.inr (Sum.inr k)) + (b.read ℓ (i, Sum.inr (Sum.inr k)) + ν ℓ i k)
+      = (n * θ.read ℓ) t (i, Sum.inr (Sum.inr k)) + b.read ℓ (i, Sum.inr (Sum.inr k)) + ν ℓ i k
+    rw [add_assoc]
+
+/-- Helper: every map `actGL_bga K N κ ν` keeps the map of every block, if every token sees a
+token: the four steps each keep it. -/
+private theorem block_act_bga (hsee : ∀ t, ∃ s, sees t s) (K N : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ)
+    (κ ν : ∀ ℓ, H ℓ → dh ℓ → ℝ)
+    (q : Params (Arch.attention sees χ H dh) dIn dOut
+      × Biases (Arch.attention sees χ H dh) dOut) (ℓ : Fin L) (n : Matrix T d ℝ) :
+    (Arch.attention sees χ H dh).f ℓ (n * (actGL_bga K N κ ν q).1.read ℓ
+          + Matrix.of fun _ => (actGL_bga K N κ ν q).2.read ℓ) * (actGL_bga K N κ ν q).1.write ℓ
+        + Matrix.of (fun _ => (actGL_bga K N κ ν q).2.write ℓ)
+      = (Arch.attention sees χ H dh).f ℓ (n * q.1.read ℓ + Matrix.of fun _ => q.2.read ℓ)
+          * q.1.write ℓ + Matrix.of fun _ => q.2.write ℓ :=
+  (block_valueShift_bga hsee _ _ ν ℓ n).trans ((block_keyShift_bga _ _ κ ℓ n).trans
+    ((block_headsVOB_bga _ _ N ℓ n).trans (block_headsQKB_bga q.1 q.2 K ℓ n)))
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- Helper (the private `evalB_eq_of_blocks_ibb` of `Symmetry/InsideBlocksBiases.lean`): two
+parameters with biases with the same embedding, readout, embedding bias and readout bias, and the
+same map of every block with its biases, compute the same function. -/
+private theorem evalB_eq_of_blocks_bga {A : Arch T d L} (q₁ q₂ : Params A dIn dOut × Biases A dOut)
+    (hE : q₂.1.E = q₁.1.E) (hD : q₂.1.D = q₁.1.D) (hbE : q₂.2.E = q₁.2.E)
+    (hbD : q₂.2.D = q₁.2.D)
+    (hb : ∀ ℓ (n : Matrix T d ℝ),
+      A.f ℓ (n * q₂.1.read ℓ + Matrix.of fun _ => q₂.2.read ℓ) * q₂.1.write ℓ
+          + Matrix.of (fun _ => q₂.2.write ℓ)
+        = A.f ℓ (n * q₁.1.read ℓ + Matrix.of fun _ => q₁.2.read ℓ) * q₁.1.write ℓ
+          + Matrix.of fun _ => q₁.2.write ℓ)
+    (S : Fin L → Matrix d d ℝ) (x : Matrix T dIn ℝ) :
+    evalB A S q₂.1 q₂.2 x = evalB A S q₁.1 q₁.2 x := by
+  -- the hidden states agree, by induction along the network
+  have hh : ∀ ℓ : Fin (L + 1), hiddenB A S q₂.1 q₂.2 x ℓ = hiddenB A S q₁.1 q₁.2 x ℓ := by
+    intro ℓ
+    induction ℓ using Fin.induction with
+    | zero => rw [hiddenB_zero, hiddenB_zero, hE, hbE]
+    | succ ℓ ih => rw [hiddenB_succ, hiddenB_succ, ih, hb]
+  -- hence the outputs agree
+  rw [evalB, evalB, hh, hD, hbD]
+
 /-- **The changes of basis inside the heads, the shifts of the key biases and the value biases
 moved into the output bias are a family of symmetries inside the blocks,** when every token sees
 a token. -/
 theorem insideBlocksAction_heads (hsee : ∀ t, ∃ s, sees t s) :
     InsideBlocksAction (A := Arch.attention sees χ H dh) (dIn := dIn) (dOut := dOut)
       headsAct (headsSet H dh) := by
-  sorry
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · -- `one`: `σ = (1, 1, 0, 0)`
+    refine ⟨(fun _ _ => 1, fun _ _ => 1, fun _ _ => 0, fun _ _ => 0),
+      fun _ _ => ⟨by simp, by simp⟩, funext fun q => ?_⟩
+    rw [headsAct_apply_bga]
+    simp only [glOfMatrix_one_bga]
+    exact actGL_one_bga q
+  · -- `mul`: `τ = (K' K, N' N, κ' K^{-⊤} + κ, ν' N + ν)`
+    intro σ _ σ' _
+    refine ⟨(fun ℓ i => ((glOfMatrix (σ'.1 ℓ i) * glOfMatrix (σ.1 ℓ i) : GL (dh ℓ) ℝ)
+        : Matrix (dh ℓ) (dh ℓ) ℝ),
+      fun ℓ i => ((glOfMatrix (σ'.2.1 ℓ i) * glOfMatrix (σ.2.1 ℓ i) : GL (dh ℓ) ℝ)
+        : Matrix (dh ℓ) (dh ℓ) ℝ),
+      fun ℓ i k => ∑ k', σ'.2.2.1 ℓ i k'
+        * (((glOfMatrix (σ.1 ℓ i))⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k'
+        + σ.2.2.1 ℓ i k,
+      fun ℓ i k => ∑ k', σ'.2.2.2 ℓ i k'
+        * (glOfMatrix (σ.2.1 ℓ i) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k + σ.2.2.2 ℓ i k),
+      fun ℓ i => ⟨(Matrix.isUnit_iff_isUnit_det _).1
+          (Units.isUnit (glOfMatrix (σ'.1 ℓ i) * glOfMatrix (σ.1 ℓ i))),
+        (Matrix.isUnit_iff_isUnit_det _).1
+          (Units.isUnit (glOfMatrix (σ'.2.1 ℓ i) * glOfMatrix (σ.2.1 ℓ i)))⟩,
+      funext fun q => ?_⟩
+    rw [Function.comp_apply, headsAct_apply_bga, headsAct_apply_bga, headsAct_apply_bga,
+      actGL_comp_bga]
+    simp only [glOfMatrix_coe_bga]
+  · -- `inv`: `τ = (K⁻¹, N⁻¹, −κ Kᵀ, −ν N⁻¹)`
+    intro σ _
+    refine ⟨(fun ℓ i => (((glOfMatrix (σ.1 ℓ i))⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ),
+      fun ℓ i => (((glOfMatrix (σ.2.1 ℓ i))⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ),
+      fun ℓ i k => -∑ k', σ.2.2.1 ℓ i k' * (glOfMatrix (σ.1 ℓ i) : Matrix (dh ℓ) (dh ℓ) ℝ) k k',
+      fun ℓ i k => -∑ k', σ.2.2.2 ℓ i k'
+        * (((glOfMatrix (σ.2.1 ℓ i))⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k),
+      fun ℓ i => ⟨(Matrix.isUnit_iff_isUnit_det _).1 (Units.isUnit (glOfMatrix (σ.1 ℓ i))⁻¹),
+        (Matrix.isUnit_iff_isUnit_det _).1 (Units.isUnit (glOfMatrix (σ.2.1 ℓ i))⁻¹)⟩,
+      funext fun q => ?_, funext fun q => ?_⟩
+    · rw [Function.comp_apply, headsAct_apply_bga, headsAct_apply_bga, actGL_comp_bga, id]
+      simp only [glOfMatrix_coe_bga, inv_mul_cancel, neg_mul, Finset.sum_neg_distrib,
+        sum_inv1_bga, sum_inv2_bga, neg_add_cancel]
+      exact actGL_one_bga q
+    · rw [Function.comp_apply, headsAct_apply_bga, headsAct_apply_bga, actGL_comp_bga, id]
+      simp only [glOfMatrix_coe_bga, mul_inv_cancel, inv_inv, add_neg_cancel]
+      exact actGL_one_bga q
+  · -- `comm_skipless`
+    intro p σ _
+    funext q
+    exact Prod.ext (cob_heads_bga q.1 _ _ p.1) (translateAllAt_heads_bga q.1 q.2 _ _ _ _ p.1 p.2)
+  · -- `comm_residual`
+    intro p σ _
+    funext q
+    exact Prod.ext (cob_heads_bga q.1 _ _ p.1) (translateAll_heads_bga q.1 q.2 _ _ _ _ p.1 p.2)
+  · -- `evalB_eq`: every block keeps its map
+    intro σ _ S q x
+    exact evalB_eq_of_blocks_bga q (headsAct σ q) rfl rfl rfl rfl
+      (fun ℓ n => block_act_bga hsee _ _ _ _ q ℓ n) S x
+  · -- `rank_write`
+    intro σ _ q ℓ
+    rw [headsAct_apply_bga]
+    exact rank_write_bga q.1 (fun ℓ i => glOfMatrix (σ.1 ℓ i))
+      (fun ℓ i => glOfMatrix (σ.2.1 ℓ i)) ℓ
 
 /-- **They act freely block by block at weights whose query matrix and value matrix have rank
 `d_h` in every head.** -/
