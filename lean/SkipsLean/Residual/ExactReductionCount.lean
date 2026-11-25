@@ -121,6 +121,14 @@ theorem finrank_span_writes_eq_zero (ρE : d → dIn) (ρ : ∀ ℓ : Fin L, d �
     Module.finrank_self, Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]
   ring
 
+/-- The strictly lower entries of the chosen columns of every read and of the readout. -/
+private def readsLowLin_erc [LinearOrder d] (c : ∀ ℓ : Fin L, d → A.r ℓ) (cD : d → dOut) :
+    Params A dIn dOut →ₗ[ℝ]
+      (Fin L → {p : d × d // p.2 < p.1} → ℝ) × ({p : d × d // p.2 < p.1} → ℝ) where
+  toFun θ := (fun ℓ p => θ.read ℓ p.1.1 (c ℓ p.1.2), fun p => θ.D p.1.1 (cD p.1.2))
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
 /-- **Proposition A.9 (i), "respectively `d_model (d_model − 1)/2`, parameters per hidden
 state", reads:** the parameters whose chosen columns of every read and of the readout form upper
 triangular matrices have dimension `P − (L + 1) d(d − 1)/2`. -/
@@ -131,7 +139,32 @@ theorem finrank_span_reads_upperTriangular [LinearOrder d] (c : ∀ ℓ : Fin L,
           ∧ (θ.D.submatrix id cD).BlockTriangular id})
       + (L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2)
       = Module.finrank ℝ (Params A dIn dOut) := by
-  sorry
+  -- any values on the strictly lower entries of the chosen columns, `0` elsewhere
+  have hφ : Function.Surjective (readsLowLin_erc (dIn := dIn) c cD) := by
+    rintro ⟨f, g⟩
+    refine ⟨⟨0, fun ℓ => Matrix.of fun a =>
+        Function.extend (c ℓ) (fun j => if h : j < a then f ℓ ⟨(a, j), h⟩ else 0) (0 : A.r ℓ → ℝ),
+      fun _ => 0,
+      Matrix.of fun a => Function.extend cD (fun j => if h : j < a then g ⟨(a, j), h⟩ else 0)
+        (0 : dOut → ℝ)⟩,
+      ?_⟩
+    refine Prod.ext (funext fun ℓ => funext fun p => ?_) (funext fun p => ?_)
+    · show Function.extend (c ℓ) (fun j => if h : j < p.1.1 then f ℓ ⟨(p.1.1, j), h⟩ else 0)
+        (0 : A.r ℓ → ℝ) (c ℓ p.1.2) = _
+      rw [(hc ℓ).extend_apply, dite_eq_left p.2]
+    · show Function.extend cD (fun j => if h : j < p.1.1 then g ⟨(p.1.1, j), h⟩ else 0)
+        (0 : dOut → ℝ) (cD p.1.2) = _
+      rw [hcD.extend_apply, dite_eq_left p.2]
+  -- the set is the kernel: `BlockTriangular id` is the vanishing of the strictly lower entries
+  have hS := finrank_span_ker_erc _ hφ {θ : Params A dIn dOut |
+        (∀ ℓ, ((θ.read ℓ).submatrix id (c ℓ)).BlockTriangular id)
+          ∧ (θ.D.submatrix id cD).BlockTriangular id} fun θ => by
+    simp only [Set.mem_ofPred_eq, Prod.ext_iff, funext_iff, Subtype.forall, Prod.forall]
+    rfl
+  rw [← hS, card_lower_erc.symm]
+  simp only [Module.finrank_prod, Module.finrank_pi_fintype, Module.finrank_self,
+    mul_one, Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]
+  ring
 
 /-- **Proposition A.9 (i), "respectively `d_model (d_model − 1)/2`, parameters per hidden
 state", writes:** the parameters whose chosen rows of the embedding and of every write form lower
