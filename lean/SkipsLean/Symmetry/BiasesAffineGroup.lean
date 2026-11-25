@@ -62,19 +62,121 @@ def Biases.translateAll (b : Biases A dOut) (θ : Params A dIn dOut)
   write ℓ := b.write ℓ + g ℓ.succ
   D := b.D - (∑ k, g k) ᵥ* θ.D
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (copy of `Symmetry/BiasesSymmetries.lean`): a matrix whose rows are all `g`, times
+`W`, has all rows `g ᵥ* W`. -/
+private theorem of_mul_bag {m n : Type*} [Fintype m] (g : m → ℝ) (W : Matrix m n ℝ) :
+    (Matrix.of fun (_ : T) => g) * W = Matrix.of fun _ => g ᵥ* W := by
+  ext t j
+  simp only [Matrix.mul_apply, Matrix.of_apply, Matrix.vecMul, dotProduct]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (copy of `Symmetry/BiasesSymmetries.lean`): the row `g` added to `H` and `g W`
+subtracted from the bias give the same pre-activation `H W + b`. -/
+private theorem shift_read_bag {m n : Type*} [Fintype m] (H : Matrix T m ℝ) (g : m → ℝ)
+    (W : Matrix m n ℝ) (c : n → ℝ) :
+    (H + Matrix.of fun _ => g) * W + (Matrix.of fun _ => c - g ᵥ* W)
+      = H * W + Matrix.of fun _ => c := by
+  rw [Matrix.add_mul, of_mul_bag]
+  ext t j
+  simp only [Matrix.add_apply, Matrix.of_apply, Pi.sub_apply]
+  ring
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (copy of `Symmetry/BiasesSymmetries.lean`): the rows `c + g` at every token are the
+sum of the rows `c` and `g`. -/
+private theorem of_add_bag {n : Type*} (c g : n → ℝ) :
+    (Matrix.of fun (_ : T) => c + g) = (Matrix.of fun _ => c) + Matrix.of fun _ => g := rfl
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (copy of `Symmetry/InsideBlocksBiases.lean`): `∑_{k ≤ 0} g_k = g_0`. -/
+private theorem sum_Iic_zero_bag {W : Type*} [AddCommMonoid W] (g : Fin (L + 1) → W) :
+    ∑ k ∈ Finset.Iic (0 : Fin (L + 1)), g k = g 0 := by
+  have hs : Finset.Iic (0 : Fin (L + 1)) = {0} := by
+    ext k
+    simp only [Finset.mem_Iic, Finset.mem_singleton, Fin.le_iff_val_le_val, Fin.ext_iff,
+      Fin.val_zero]
+    omega
+  rw [hs, Finset.sum_singleton]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (copy of `Symmetry/InsideBlocksBiases.lean`):
+`∑_{k ≤ ℓ+1} g_k = ∑_{k ≤ ℓ} g_k + g_{ℓ+1}`. -/
+private theorem sum_Iic_succ_bag {W : Type*} [AddCommMonoid W] (g : Fin (L + 1) → W)
+    (ℓ : Fin L) :
+    ∑ k ∈ Finset.Iic ℓ.succ, g k = ∑ k ∈ Finset.Iic ℓ.castSucc, g k + g ℓ.succ := by
+  have hs : Finset.Iic ℓ.succ = insert ℓ.succ (Finset.Iic ℓ.castSucc) := by
+    ext k
+    simp only [Finset.mem_Iic, Finset.mem_insert, Fin.le_iff_val_le_val, Fin.ext_iff,
+      Fin.val_succ, Fin.val_castSucc]
+    omega
+  have hn : ℓ.succ ∉ Finset.Iic ℓ.castSucc := by
+    simp only [Finset.mem_Iic, not_le]
+    exact Fin.castSucc_lt_succ
+  rw [hs, Finset.sum_insert hn, add_comm]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `∑_{k ≤ L} g_k` is the sum over all `k`. -/
+private theorem Iic_last_bag : Finset.Iic (Fin.last L) = Finset.univ := by
+  ext k
+  simp only [Finset.mem_Iic, Finset.mem_univ, Fin.le_last]
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: without normalization, after the translation of every hidden state `h_k` of a
+skipless network by `g_k`, the hidden state `h_m` is shifted by `g_m`. -/
+private theorem hiddenB_translateAllAt_bag (hA : A.χ = id) (θ : Params A dIn dOut)
+    (b : Biases A dOut) (g : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) (m : Fin (L + 1)) :
+    hiddenB A 0 θ (b.translateAllAt θ g) x m
+      = hiddenB A 0 θ b x m + Matrix.of (fun _ => g m) := by
+  induction m using Fin.induction with
+  | zero =>
+    -- `h'_0 = x E + b_E + g_0`
+    rw [hiddenB_zero, hiddenB_zero]
+    simp only [Biases.translateAllAt, of_add_bag, add_assoc]
+  | succ ℓ ih =>
+    -- no skip: the read bias removes `g_ℓ W_read`, the write bias adds `g_{ℓ+1}`
+    rw [hiddenB_succ, hiddenB_succ, ih, hA]
+    simp only [id_eq, Pi.zero_apply, Matrix.mul_zero, zero_add, Biases.translateAllAt,
+      shift_read_bag, of_add_bag, add_assoc]
+
 /-- Without normalization, the translations of all hidden states of a skipless network preserve
 the function. -/
 theorem evalB_translateAllAt (hA : A.χ = id) (θ : Params A dIn dOut) (b : Biases A dOut)
     (g : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) :
     evalB A 0 θ (b.translateAllAt θ g) x = evalB A 0 θ b x := by
-  sorry
+  -- `(h_L + g_L) D + b_D − g_L D = h_L D + b_D`
+  unfold evalB
+  rw [hiddenB_translateAllAt_bag hA θ b g x (Fin.last L), hA]
+  simp only [id_eq, Biases.translateAllAt, shift_read_bag]
+
+omit [Fintype T] [Fintype dOut] in
+/-- Helper: without normalization, after the `L + 1` translations of a residual network, the
+hidden state `h_m` is shifted by `g_0 + … + g_m`. -/
+private theorem hiddenB_translateAll_bag (hA : A.χ = id) (θ : Params A dIn dOut)
+    (b : Biases A dOut) (g : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) (m : Fin (L + 1)) :
+    hiddenB A 1 θ (b.translateAll θ g) x m
+      = hiddenB A 1 θ b x m + Matrix.of (fun _ => ∑ k ∈ Finset.Iic m, g k) := by
+  induction m using Fin.induction with
+  | zero =>
+    -- `h'_0 = x E + b_E + g_0`
+    rw [hiddenB_zero, hiddenB_zero, sum_Iic_zero_bag]
+    simp only [Biases.translateAll, of_add_bag, add_assoc]
+  | succ ℓ ih =>
+    -- the skip carries the shift, the read removes it, the write bias adds `g_{ℓ+1}`
+    rw [hiddenB_succ, hiddenB_succ, ih, hA, sum_Iic_succ_bag]
+    simp only [Pi.one_apply, Matrix.mul_one, id_eq, Biases.translateAll, shift_read_bag,
+      of_add_bag]
+    abel
 
 /-- **Lemma A.8, first sentence, the `L + 1` translations together:** without normalization they
 preserve the function of a residual network. -/
 theorem evalB_translateAll (hA : A.χ = id) (θ : Params A dIn dOut) (b : Biases A dOut)
     (g : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) :
     evalB A 1 θ (b.translateAll θ g) x = evalB A 1 θ b x := by
-  sorry
+  -- `(h_L + ∑ g) D + b_D − (∑ g) D = h_L D + b_D`
+  unfold evalB
+  rw [hiddenB_translateAll_bag hA θ b g x (Fin.last L), hA, Iic_last_bag]
+  simp only [id_eq, Biases.translateAll, shift_read_bag]
 
 /-- **The changes of basis and translations that preserve the function of a skipless network
 with biases at all weights and biases.** -/
@@ -101,7 +203,18 @@ normalization every change of basis and translation of every hidden state preser
 of a skipless network with biases. -/
 theorem affPreservingSkipless_eq_univ (A : Arch T d L) (hA : A.χ = id) :
     affPreservingSkipless A dIn dOut = Set.univ := by
-  sorry
+  refine Set.eq_univ_of_forall fun p θ b x => ?_
+  -- the change of basis (`evalB_cob`, stream `G⁻¹ 0 G = 0`), then the translations
+  have hχ : ∀ ℓ (h : Matrix T d ℝ),
+      A.χ (h * (p.1 ℓ : Matrix d d ℝ)) = A.χ h * (p.1 ℓ : Matrix d d ℝ) := by
+    intro ℓ h
+    simp only [hA, id_eq]
+  have hskip : cobSkip (0 : Fin L → Matrix d d ℝ) p.1 = 0 := by
+    funext ℓ
+    simp only [cobSkip, Pi.zero_apply, Matrix.mul_zero, Matrix.zero_mul]
+  have h := evalB_cob 0 θ (b.translateAllAt θ p.2) p.1 p.1 x hχ
+  rw [hskip] at h
+  rw [h, evalB_translateAllAt hA]
 
 /-- **Lemma A.8, "A skip ties only the linear part of `Aff(d_model)`":** without normalization,
 the changes of basis `G_0, …, G_L` with the translations `g_0, …, g_L` preserve the function of
