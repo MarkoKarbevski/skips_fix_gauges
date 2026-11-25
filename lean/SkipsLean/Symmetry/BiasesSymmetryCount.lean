@@ -41,6 +41,262 @@ variable {T d dIn dOut : Type*} {L : ℕ} [Fintype T] [Fintype d] [DecidableEq d
   [Fintype dOut]
 variable {A : Arch T d L}
 
+omit [Fintype T] [DecidableEq d] in
+/-- Helper: the directions spanned by directions of symmetries inside the blocks have the
+components `E`, `D`, the embedding bias and the readout bias `0` (linear conditions). -/
+private theorem comps_eq_zero_of_mem_span_bsc (p : ParamsB A dIn dOut) {v : ParamsB A dIn dOut}
+    (hv : v ∈ Submodule.span ℝ {η | InsideBlocksB A p η}) :
+    v.1.E = 0 ∧ v.1.D = 0 ∧ v.2.E = 0 ∧ v.2.D = 0 := by
+  induction hv using Submodule.span_induction with
+  | mem x hx => exact ⟨hx.E_eq_zero, hx.D_eq_zero, hx.biasE_eq_zero, hx.biasD_eq_zero⟩
+  | zero => exact ⟨rfl, rfl, rfl, rfl⟩
+  | add x y _ _ hx hy =>
+    obtain ⟨h1, h2, h3, h4⟩ := hx
+    obtain ⟨h5, h6, h7, h8⟩ := hy
+    exact ⟨by rw [Prod.fst_add, Params.add_E, h1, h5, add_zero],
+      by rw [Prod.fst_add, Params.add_D, h2, h6, add_zero],
+      by rw [Prod.snd_add, Biases.add_E, h3, h7, add_zero],
+      by rw [Prod.snd_add, Biases.add_D, h4, h8, add_zero]⟩
+  | smul a x _ hx =>
+    obtain ⟨h1, h2, h3, h4⟩ := hx
+    exact ⟨by rw [Prod.smul_fst, Params.smul_E, h1, smul_zero],
+      by rw [Prod.smul_fst, Params.smul_D, h2, smul_zero],
+      by rw [Prod.smul_snd, Biases.smul_E, h3, smul_zero],
+      by rw [Prod.smul_snd, Biases.smul_D, h4, smul_zero]⟩
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: a direction is `0` if its eight components are. -/
+private theorem eq_zero_of_comps_bsc {v : ParamsB A dIn dOut} (hE : v.1.E = 0) (hD : v.1.D = 0)
+    (hbE : v.2.E = 0) (hbD : v.2.D = 0) (hr : ∀ ℓ, v.1.read ℓ = 0) (hbr : ∀ ℓ, v.2.read ℓ = 0)
+    (hw : ∀ ℓ, v.1.write ℓ = 0) (hbw : ∀ ℓ, v.2.write ℓ = 0) : v = 0 :=
+  Prod.ext (Params.ext' hE hr hw hD) (Biases.ext' hbE hbr hbw hbD)
+
+/-- Helper (the private `mul_left_cancel_of_rank_bfl` of `Symmetry/BiasesFlat.lean`): a matrix
+`M` of rank equal to its number of columns cancels on the left. -/
+private theorem cancel_left_of_rank_bsc {m n k : Type*} [Fintype n] (M : Matrix m n ℝ)
+    (hM : M.rank = Fintype.card n) {X Y : Matrix n k ℝ} (h : M * X = M * Y) : X = Y := by
+  -- `v ↦ M v` is injective: `rank M + dim ker M = card n`
+  have hinj : Function.Injective M.mulVecLin := by
+    rw [← LinearMap.ker_eq_bot, ← Submodule.finrank_eq_zero]
+    have := LinearMap.finrank_range_add_finrank_ker M.mulVecLin
+    rw [Module.finrank_fintype_fun_eq_card] at this
+    rw [Matrix.rank] at hM
+    omega
+  -- compare `X` and `Y` column by column
+  ext i j
+  have hcol : M.mulVecLin (fun l => X l j) = M.mulVecLin (fun l => Y l j) := by
+    funext q
+    have := congrFun (congrFun h q) j
+    simpa [Matrix.mul_apply, Matrix.mulVec, dotProduct] using this
+  exact congrFun (hinj hcol) i
+
+/-- Helper (copy of `Symmetry/InsideBlocksBiases.lean`): `∑_{k ≤ 0} g_k = g_0`. -/
+private theorem sum_Iic_zero_bsc {W : Type*} [AddCommMonoid W] (g : Fin (L + 1) → W) :
+    ∑ k ∈ Finset.Iic (0 : Fin (L + 1)), g k = g 0 := by
+  have hs : Finset.Iic (0 : Fin (L + 1)) = {0} := by
+    ext k
+    simp only [Finset.mem_Iic, Finset.mem_singleton, Fin.le_iff_val_le_val, Fin.ext_iff,
+      Fin.val_zero]
+    omega
+  rw [hs, Finset.sum_singleton]
+
+/-- Helper (copy of `Symmetry/InsideBlocksBiases.lean`):
+`∑_{k ≤ ℓ+1} g_k = ∑_{k ≤ ℓ} g_k + g_{ℓ+1}`. -/
+private theorem sum_Iic_succ_bsc {W : Type*} [AddCommMonoid W] (g : Fin (L + 1) → W)
+    (ℓ : Fin L) :
+    ∑ k ∈ Finset.Iic ℓ.succ, g k = ∑ k ∈ Finset.Iic ℓ.castSucc, g k + g ℓ.succ := by
+  have hs : Finset.Iic ℓ.succ = insert ℓ.succ (Finset.Iic ℓ.castSucc) := by
+    ext k
+    simp only [Finset.mem_Iic, Finset.mem_insert, Fin.le_iff_val_le_val, Fin.ext_iff,
+      Fin.val_succ, Fin.val_castSucc]
+    omega
+  have hn : ℓ.succ ∉ Finset.Iic ℓ.castSucc := by
+    simp only [Finset.mem_Iic, not_le]
+    exact Fin.castSucc_lt_succ
+  rw [hs, Finset.sum_insert hn, add_comm]
+
+/-- Helper (copy of `Symmetry/InsideBlocksBiases.lean`): `(X, g) ↦ cobDirB p (fun _ => X) +
+(0, translateDir θ g)` is linear. -/
+private noncomputable def cobTransLin_bsc (p : ParamsB A dIn dOut) :
+    (Matrix d d ℝ × (Fin (L + 1) → d → ℝ)) →ₗ[ℝ] ParamsB A dIn dOut where
+  toFun Xg := cobDirB p (fun _ => Xg.1) + ((0, translateDir p.1 Xg.2) : ParamsB A dIn dOut)
+  map_add' Xg Yg := by
+    refine Prod.ext (Params.ext' ?_ ?_ ?_ ?_) (Biases.ext' ?_ ?_ ?_ ?_) <;> (try intro ℓ) <;>
+      simp only [cobDirB, cobDir, translateDir, Prod.fst_add, Prod.snd_add, Params.add_E,
+        Params.add_read, Params.add_write, Params.add_D, Biases.add_E, Biases.add_read,
+        Biases.add_write, Biases.add_D, Pi.add_apply, Matrix.mul_add, Matrix.add_mul,
+        Matrix.vecMul_add, Matrix.add_vecMul, Finset.sum_add_distrib, neg_add, add_zero,
+        zero_add] <;> abel
+  map_smul' c Xg := by
+    refine Prod.ext (Params.ext' ?_ ?_ ?_ ?_) (Biases.ext' ?_ ?_ ?_ ?_) <;> (try intro ℓ) <;>
+      simp only [cobDirB, cobDir, translateDir, Prod.fst_add, Prod.snd_add, Prod.smul_fst,
+        Prod.smul_snd, Params.smul_E, Params.smul_read, Params.smul_write, Params.smul_D,
+        Biases.add_E, Biases.add_read, Biases.add_write, Biases.add_D, Biases.smul_E,
+        Biases.smul_read, Biases.smul_write, Biases.smul_D, Pi.smul_apply, Matrix.mul_smul,
+        Matrix.smul_mul, Matrix.vecMul_smul, Matrix.smul_vecMul, ← Finset.smul_sum, smul_neg,
+        smul_add, smul_zero, add_zero, zero_add, RingHom.id_apply]
+
+/-- Helper (copy of `Symmetry/InsideBlocksBiases.lean`):
+`(X, g) ↦ cobDirB p X + (0, translateAtDir θ g)` is linear. -/
+private noncomputable def cobTransAtLin_bsc (p : ParamsB A dIn dOut) :
+    ((Fin (L + 1) → Matrix d d ℝ) × (Fin (L + 1) → d → ℝ)) →ₗ[ℝ] ParamsB A dIn dOut where
+  toFun Xg := cobDirB p Xg.1 + ((0, translateAtDir p.1 Xg.2) : ParamsB A dIn dOut)
+  map_add' Xg Yg := by
+    refine Prod.ext (Params.ext' ?_ ?_ ?_ ?_) (Biases.ext' ?_ ?_ ?_ ?_) <;> (try intro ℓ) <;>
+      simp only [cobDirB, cobDir, translateAtDir, Prod.fst_add, Prod.snd_add, Params.add_E,
+        Params.add_read, Params.add_write, Params.add_D, Biases.add_E, Biases.add_read,
+        Biases.add_write, Biases.add_D, Pi.add_apply, Matrix.mul_add, Matrix.add_mul,
+        Matrix.vecMul_add, Matrix.add_vecMul, neg_add, add_zero, zero_add] <;> abel
+  map_smul' c Xg := by
+    refine Prod.ext (Params.ext' ?_ ?_ ?_ ?_) (Biases.ext' ?_ ?_ ?_ ?_) <;> (try intro ℓ) <;>
+      simp only [cobDirB, cobDir, translateAtDir, Prod.fst_add, Prod.snd_add, Prod.smul_fst,
+        Prod.smul_snd, Params.smul_E, Params.smul_read, Params.smul_write, Params.smul_D,
+        Biases.add_E, Biases.add_read, Biases.add_write, Biases.add_D, Biases.smul_E,
+        Biases.smul_read, Biases.smul_write, Biases.smul_D, Pi.smul_apply, Matrix.mul_smul,
+        Matrix.smul_mul, Matrix.vecMul_smul, Matrix.smul_vecMul, smul_neg, smul_add, smul_zero,
+        add_zero, zero_add, RingHom.id_apply]
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper (the injectivity in `funDimB_add_le_residual_of_insideBlocksB` of
+`Symmetry/InsideBlocksBiases.lean`): `((X, g), v) ↦ cobDirB p (fun _ => X) + (0, translateDir θ g)
++ v` is injective. -/
+private theorem injective_residual_bsc (p : ParamsB A dIn dOut)
+    (V : Submodule ℝ (ParamsB A dIn dOut))
+    (hV : V ≤ Submodule.span ℝ {η | InsideBlocksB A p η})
+    (hrw : ∀ η ∈ V, ∀ ℓ, η.1.read ℓ = 0 → η.2.read ℓ = 0 → η.1.write ℓ = 0 ∧ η.2.write ℓ = 0)
+    (hE : p.1.E.rank = Fintype.card d) :
+    Function.Injective ((cobTransLin_bsc p).coprod V.subtype) := by
+  let Φ := (cobTransLin_bsc p).coprod V.subtype
+  have hΦ : ∀ (X : Matrix d d ℝ) (g : Fin (L + 1) → d → ℝ) (v : V), Φ ((X, g), v)
+      = cobDirB p (fun _ => X) + ((0, translateDir p.1 g) : ParamsB A dIn dOut) + v :=
+    fun _ _ _ => rfl
+  show Function.Injective Φ
+  rw [← LinearMap.ker_eq_bot, LinearMap.ker_eq_bot']
+  rintro ⟨⟨X, g⟩, v⟩ h
+  rw [hΦ] at h
+  obtain ⟨hvE, hvD, hvbE, hvbD⟩ := comps_eq_zero_of_mem_span_bsc p (hV v.2)
+  -- the components of the direction
+  have h1 : p.1.E * X + 0 + (v : ParamsB A dIn dOut).1.E = 0 :=
+    congrArg (fun q : ParamsB A dIn dOut => q.1.E) h
+  have h2 : p.2.E ᵥ* X + g 0 + (v : ParamsB A dIn dOut).2.E = 0 :=
+    congrArg (fun q : ParamsB A dIn dOut => q.2.E) h
+  have h3 : ∀ ℓ, -(X * p.1.read ℓ) + 0 + (v : ParamsB A dIn dOut).1.read ℓ = 0 :=
+    fun ℓ => congrArg (fun q : ParamsB A dIn dOut => q.1.read ℓ) h
+  have h4 : ∀ ℓ, 0 + -((∑ k ∈ Finset.Iic ℓ.castSucc, g k) ᵥ* p.1.read ℓ)
+      + (v : ParamsB A dIn dOut).2.read ℓ = 0 :=
+    fun ℓ => congrArg (fun q : ParamsB A dIn dOut => q.2.read ℓ) h
+  have h6 : ∀ ℓ, p.2.write ℓ ᵥ* X + g ℓ.succ + (v : ParamsB A dIn dOut).2.write ℓ = 0 :=
+    fun ℓ => congrArg (fun q : ParamsB A dIn dOut => q.2.write ℓ) h
+  -- the embedding gives `E X = 0`, so `X = 0` (`E` has rank `d`)
+  rw [add_zero, hvE, add_zero] at h1
+  obtain rfl : X = 0 := cancel_left_of_rank_bsc p.1.E hE (h1.trans (Matrix.mul_zero _).symm)
+  -- the embedding bias gives `g_0 = 0`
+  rw [Matrix.vecMul_zero, zero_add, hvbE, add_zero] at h2
+  -- the reads of `v` are `0`
+  have hr : ∀ ℓ, (v : ParamsB A dIn dOut).1.read ℓ = 0 := fun ℓ => by
+    have h3' := h3 ℓ
+    rwa [Matrix.zero_mul, neg_zero, add_zero, zero_add] at h3'
+  -- if `g_0 + ⋯ + g_ℓ = 0`, block `ℓ` of `v` reads `0`, so it writes `0`, and `g_{ℓ+1} = 0`
+  have hstep : ∀ ℓ : Fin L, ∑ k ∈ Finset.Iic ℓ.castSucc, g k = 0 →
+      (v : ParamsB A dIn dOut).2.read ℓ = 0 ∧ (v : ParamsB A dIn dOut).1.write ℓ = 0 ∧
+        (v : ParamsB A dIn dOut).2.write ℓ = 0 ∧ g ℓ.succ = 0 := by
+    intro ℓ hs
+    have hbr : (v : ParamsB A dIn dOut).2.read ℓ = 0 := by
+      have h4' := h4 ℓ
+      rwa [hs, Matrix.zero_vecMul, neg_zero, add_zero, zero_add] at h4'
+    obtain ⟨hw1, hw2⟩ := hrw _ v.2 ℓ (hr ℓ) hbr
+    refine ⟨hbr, hw1, hw2, ?_⟩
+    have h6' := h6 ℓ
+    rwa [Matrix.vecMul_zero, zero_add, hw2, add_zero] at h6'
+  -- so `g_0 + ⋯ + g_m = 0` for every `m`, by induction
+  have hsum : ∀ m : Fin (L + 1), ∑ k ∈ Finset.Iic m, g k = 0 := by
+    intro m
+    induction m using Fin.induction with
+    | zero => rw [sum_Iic_zero_bsc, h2]
+    | succ ℓ ih => rw [sum_Iic_succ_bsc, ih, (hstep ℓ ih).2.2.2, add_zero]
+  have hg : g = 0 := by
+    funext k
+    induction k using Fin.cases with
+    | zero => exact h2
+    | succ ℓ => exact (hstep ℓ (hsum ℓ.castSucc)).2.2.2
+  -- and `v = 0`
+  have hv : (v : ParamsB A dIn dOut) = 0 :=
+    eq_zero_of_comps_bsc hvE hvD hvbE hvbD hr (fun ℓ => (hstep ℓ (hsum _)).1)
+      (fun ℓ => (hstep ℓ (hsum _)).2.1) (fun ℓ => (hstep ℓ (hsum _)).2.2.1)
+  exact Prod.ext (Prod.ext rfl hg) (Subtype.ext hv)
+
+omit [Fintype T] [DecidableEq d] in
+/-- Helper (the injectivity in `funDimB_add_le_skipless_of_insideBlocksB` of
+`Symmetry/InsideBlocksBiases.lean`): `((X, g), v) ↦ cobDirB p X + (0, translateAtDir θ g) + v`
+is injective. -/
+private theorem injective_skipless_bsc (p : ParamsB A dIn dOut)
+    (V : Submodule ℝ (ParamsB A dIn dOut))
+    (hV : V ≤ Submodule.span ℝ {η | InsideBlocksB A p η})
+    (hrw : ∀ η ∈ V, ∀ ℓ, η.1.read ℓ = 0 → η.2.read ℓ = 0 → η.1.write ℓ = 0 ∧ η.2.write ℓ = 0)
+    (hE : p.1.E.rank = Fintype.card d) (hw : ∀ ℓ, (p.1.write ℓ).rank = Fintype.card d) :
+    Function.Injective ((cobTransAtLin_bsc p).coprod V.subtype) := by
+  let Φ := (cobTransAtLin_bsc p).coprod V.subtype
+  have hΦ : ∀ (X : Fin (L + 1) → Matrix d d ℝ) (g : Fin (L + 1) → d → ℝ) (v : V), Φ ((X, g), v)
+      = cobDirB p X + ((0, translateAtDir p.1 g) : ParamsB A dIn dOut) + v :=
+    fun _ _ _ => rfl
+  show Function.Injective Φ
+  rw [← LinearMap.ker_eq_bot, LinearMap.ker_eq_bot']
+  rintro ⟨⟨X, g⟩, v⟩ h
+  rw [hΦ] at h
+  obtain ⟨hvE, hvD, hvbE, hvbD⟩ := comps_eq_zero_of_mem_span_bsc p (hV v.2)
+  -- the components of the direction
+  have h1 : p.1.E * X 0 + 0 + (v : ParamsB A dIn dOut).1.E = 0 :=
+    congrArg (fun q : ParamsB A dIn dOut => q.1.E) h
+  have h2 : p.2.E ᵥ* X 0 + g 0 + (v : ParamsB A dIn dOut).2.E = 0 :=
+    congrArg (fun q : ParamsB A dIn dOut => q.2.E) h
+  have h3 : ∀ ℓ, -(X ℓ.castSucc * p.1.read ℓ) + 0 + (v : ParamsB A dIn dOut).1.read ℓ = 0 :=
+    fun ℓ => congrArg (fun q : ParamsB A dIn dOut => q.1.read ℓ) h
+  have h4 : ∀ ℓ, 0 + -(g ℓ.castSucc ᵥ* p.1.read ℓ) + (v : ParamsB A dIn dOut).2.read ℓ = 0 :=
+    fun ℓ => congrArg (fun q : ParamsB A dIn dOut => q.2.read ℓ) h
+  have h5 : ∀ ℓ, p.1.write ℓ * X ℓ.succ + 0 + (v : ParamsB A dIn dOut).1.write ℓ = 0 :=
+    fun ℓ => congrArg (fun q : ParamsB A dIn dOut => q.1.write ℓ) h
+  have h6 : ∀ ℓ, p.2.write ℓ ᵥ* X ℓ.succ + g ℓ.succ + (v : ParamsB A dIn dOut).2.write ℓ = 0 :=
+    fun ℓ => congrArg (fun q : ParamsB A dIn dOut => q.2.write ℓ) h
+  -- the embedding gives `E X_0 = 0`, so `X_0 = 0` (`E` has rank `d`)
+  rw [add_zero, hvE, add_zero] at h1
+  have hX0 : X 0 = 0 := cancel_left_of_rank_bsc p.1.E hE (h1.trans (Matrix.mul_zero _).symm)
+  -- the embedding bias gives `g_0 = 0`
+  rw [hX0, Matrix.vecMul_zero, zero_add, hvbE, add_zero] at h2
+  -- if `X_ℓ = 0` and `g_ℓ = 0`, block `ℓ` of `v` reads `0`, so it writes `0`, and then
+  -- `W_write X_{ℓ+1} = 0` gives `X_{ℓ+1} = 0` and the write bias gives `g_{ℓ+1} = 0`
+  have hstep : ∀ ℓ : Fin L, X ℓ.castSucc = 0 → g ℓ.castSucc = 0 →
+      ((v : ParamsB A dIn dOut).1.read ℓ = 0 ∧ (v : ParamsB A dIn dOut).2.read ℓ = 0 ∧
+        (v : ParamsB A dIn dOut).1.write ℓ = 0 ∧ (v : ParamsB A dIn dOut).2.write ℓ = 0) ∧
+        X ℓ.succ = 0 ∧ g ℓ.succ = 0 := by
+    intro ℓ hXl hgl
+    have hr : (v : ParamsB A dIn dOut).1.read ℓ = 0 := by
+      have h3' := h3 ℓ
+      rwa [hXl, Matrix.zero_mul, neg_zero, add_zero, zero_add] at h3'
+    have hbr : (v : ParamsB A dIn dOut).2.read ℓ = 0 := by
+      have h4' := h4 ℓ
+      rwa [hgl, Matrix.zero_vecMul, neg_zero, add_zero, zero_add] at h4'
+    obtain ⟨hw1, hw2⟩ := hrw _ v.2 ℓ hr hbr
+    have h5' := h5 ℓ
+    rw [hw1, add_zero, add_zero] at h5'
+    have hXs : X ℓ.succ = 0 :=
+      cancel_left_of_rank_bsc (p.1.write ℓ) (hw ℓ) (h5'.trans (Matrix.mul_zero _).symm)
+    refine ⟨⟨hr, hbr, hw1, hw2⟩, hXs, ?_⟩
+    have h6' := h6 ℓ
+    rwa [hXs, Matrix.vecMul_zero, zero_add, hw2, add_zero] at h6'
+  -- so `X_m = 0` and `g_m = 0` for every `m`, by induction
+  have hall : ∀ m : Fin (L + 1), X m = 0 ∧ g m = 0 := by
+    intro m
+    induction m using Fin.induction with
+    | zero => exact ⟨hX0, h2⟩
+    | succ ℓ ih => exact (hstep ℓ ih.1 ih.2).2
+  have hblk : ∀ ℓ : Fin L, _ := fun ℓ => (hstep ℓ (hall _).1 (hall _).2).1
+  -- and `v = 0`
+  have hv : (v : ParamsB A dIn dOut) = 0 :=
+    eq_zero_of_comps_bsc hvE hvD hvbE hvbD (fun ℓ => (hblk ℓ).1) (fun ℓ => (hblk ℓ).2.1)
+      (fun ℓ => (hblk ℓ).2.2.1) (fun ℓ => (hblk ℓ).2.2.2)
+  exact Prod.ext (Prod.ext (funext fun m => (hall m).1) (funext fun m => (hall m).2))
+    (Subtype.ext hv)
+
 /-- **Lemma A.8, the count with identity skips:** at `p = (θ, b)` with `E` of rank `d`, the
 directions of one change of basis of all hidden states, of the `L + 1` translations and of a
 space `V` of directions of symmetries inside the blocks span a space of dimension
@@ -54,7 +310,26 @@ theorem finrank_span_symmetryDirs_residual (p : ParamsB A dIn dOut)
         ∃ (X : Matrix d d ℝ) (g : Fin (L + 1) → d → ℝ) (v : ParamsB A dIn dOut), v ∈ V ∧
           η = cobDirB p (fun _ => X) + (0, translateDir p.1 g) + v})
       = Fintype.card d ^ 2 + (L + 1) * Fintype.card d + Module.finrank ℝ V := by
-  sorry
+  -- the set is the range of the linear map `((X, g), v) ↦ cobDirB p (fun _ => X)
+  -- + (0, translateDir θ g) + v`, a subspace
+  let Φ := (cobTransLin_bsc p).coprod V.subtype
+  have hset : {η : ParamsB A dIn dOut | ∃ (X : Matrix d d ℝ) (g : Fin (L + 1) → d → ℝ)
+      (v : ParamsB A dIn dOut), v ∈ V ∧ η = cobDirB p (fun _ => X) + (0, translateDir p.1 g) + v}
+      = ↑(LinearMap.range Φ) := by
+    ext η
+    constructor
+    · rintro ⟨X, g, v, hv, rfl⟩
+      exact ⟨((X, g), ⟨v, hv⟩), rfl⟩
+    · rintro ⟨⟨⟨X, g⟩, v⟩, rfl⟩
+      exact ⟨X, g, v, v.2, rfl⟩
+  -- the map is injective, and its domain has dimension `d² + (L + 1) d + dim V`
+  have hdim : Module.finrank ℝ ((Matrix d d ℝ × (Fin (L + 1) → d → ℝ)) × V)
+      = Fintype.card d ^ 2 + (L + 1) * Fintype.card d + Module.finrank ℝ V := by
+    simp only [Module.finrank_prod, Module.finrank_matrix, Module.finrank_self,
+      Module.finrank_pi_fintype, Finset.sum_const,
+      Finset.card_univ, Fintype.card_fin, smul_eq_mul, mul_one, sq]
+  rw [hset, Submodule.span_eq, LinearMap.finrank_range_of_inj
+    (injective_residual_bsc p V hV hrw hE), hdim]
 
 /-- **Lemma A.8, the count without skips:** at `p = (θ, b)` with `E` and the writes of rank `d`,
 the directions of a change of basis and a translation of every hidden state and of a space `V`
@@ -69,7 +344,28 @@ theorem finrank_span_symmetryDirs_skipless (p : ParamsB A dIn dOut)
         ∃ (X : Fin (L + 1) → Matrix d d ℝ) (g : Fin (L + 1) → d → ℝ) (v : ParamsB A dIn dOut),
           v ∈ V ∧ η = cobDirB p X + (0, translateAtDir p.1 g) + v})
       = (L + 1) * (Fintype.card d ^ 2 + Fintype.card d) + Module.finrank ℝ V := by
-  sorry
+  -- the set is the range of the linear map `((X, g), v) ↦ cobDirB p X
+  -- + (0, translateAtDir θ g) + v`, a subspace
+  let Φ := (cobTransAtLin_bsc p).coprod V.subtype
+  have hset : {η : ParamsB A dIn dOut | ∃ (X : Fin (L + 1) → Matrix d d ℝ)
+      (g : Fin (L + 1) → d → ℝ) (v : ParamsB A dIn dOut),
+        v ∈ V ∧ η = cobDirB p X + (0, translateAtDir p.1 g) + v}
+      = ↑(LinearMap.range Φ) := by
+    ext η
+    constructor
+    · rintro ⟨X, g, v, hv, rfl⟩
+      exact ⟨((X, g), ⟨v, hv⟩), rfl⟩
+    · rintro ⟨⟨⟨X, g⟩, v⟩, rfl⟩
+      exact ⟨X, g, v, v.2, rfl⟩
+  -- the map is injective, and its domain has dimension `(L + 1)(d² + d) + dim V`
+  have hdim : Module.finrank ℝ (((Fin (L + 1) → Matrix d d ℝ) × (Fin (L + 1) → d → ℝ)) × V)
+      = (L + 1) * (Fintype.card d ^ 2 + Fintype.card d) + Module.finrank ℝ V := by
+    simp only [Module.finrank_prod, Module.finrank_matrix, Module.finrank_self,
+      Module.finrank_pi_fintype, Finset.sum_const,
+      Finset.card_univ, Fintype.card_fin, smul_eq_mul, mul_one, sq]
+    ring
+  rw [hset, Submodule.span_eq, LinearMap.finrank_range_of_inj
+    (injective_skipless_bsc p V hV hrw hE hw), hdim]
 
 /-- **Lemma A.8, "the skips remove `L d_model²` dimensions, as without biases":** under the
 hypotheses of both counts, the space of the directions of the symmetries of the skipless network
