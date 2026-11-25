@@ -2180,3 +2180,15 @@ import SkipsLean
 #print axioms Skips.exists_cob_mixed_writes_eq_one
 #print axioms Skips.exists_cob_mixed_reads_upperTriangular
 #print axioms Skips.exists_cob_mixed_writes_lowerTriangular
+#print axioms Skips.evalLN_eq_evalB_centerLN
+#print axioms Skips.evalLN_eq_evalB_centerLN_skipless
+#print axioms Skips.evalLN_eq_evalB_centerLN_residual
+#print axioms Skips.sum_hiddenB_centerLN
+#print axioms Skips.evalLN_eq_evalB_reduceLN
+#print axioms Skips.evalLN_eq_evalB_reduceLN_skipless
+#print axioms Skips.evalLN_eq_evalB_reduceLN_residual
+#print axioms Skips.card_add_one_eq_of_orthonormal_centering
+#print axioms Skips.exists_orthonormal_centering
+#print axioms Skips.finrank_span_symmetryDirs_residual
+#print axioms Skips.finrank_span_symmetryDirs_skipless
+#print axioms Skips.finrank_span_symmetryDirs_skipless_eq_add

@@ -297,6 +297,7 @@ private theorem injective_skipless_bsc (p : ParamsB A dIn dOut)
   exact Prod.ext (Prod.ext (funext fun m => (hall m).1) (funext fun m => (hall m).2))
     (Subtype.ext hv)
 
+omit [Fintype T] [DecidableEq d] in
 /-- **Lemma A.8, the count with identity skips:** at `p = (θ, b)` with `E` of rank `d`, the
 directions of one change of basis of all hidden states, of the `L + 1` translations and of a
 space `V` of directions of symmetries inside the blocks span a space of dimension
@@ -331,6 +332,7 @@ theorem finrank_span_symmetryDirs_residual (p : ParamsB A dIn dOut)
   rw [hset, Submodule.span_eq, LinearMap.finrank_range_of_inj
     (injective_residual_bsc p V hV hrw hE), hdim]
 
+omit [Fintype T] [DecidableEq d] in
 /-- **Lemma A.8, the count without skips:** at `p = (θ, b)` with `E` and the writes of rank `d`,
 the directions of a change of basis and a translation of every hidden state and of a space `V`
 of directions of symmetries inside the blocks span a space of dimension
@@ -367,6 +369,7 @@ theorem finrank_span_symmetryDirs_skipless (p : ParamsB A dIn dOut)
   rw [hset, Submodule.span_eq, LinearMap.finrank_range_of_inj
     (injective_skipless_bsc p V hV hrw hE hw), hdim]
 
+omit [Fintype T] [DecidableEq d] in
 /-- **Lemma A.8, "the skips remove `L d_model²` dimensions, as without biases":** under the
 hypotheses of both counts, the space of the directions of the symmetries of the skipless network
 has `L d²` more dimensions than that of the residual network. -/
