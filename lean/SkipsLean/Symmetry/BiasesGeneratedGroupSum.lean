@@ -246,6 +246,7 @@ private theorem liftSnd_liftSnd_bgs {F : Type*}
     sumLiftSnd act σ (sumLiftSnd act σ' q)
       = sumReplaceSnd ((act σ ∘ act σ') (q.1.sumSnd, q.2.sumSnd)) q := rfl
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: the lift of the identity of the first part is the identity. -/
 private theorem liftFst_of_eq_id_bgs {F : Type*}
     {act : F → Params A dIn dOut × Biases A dOut → Params A dIn dOut × Biases A dOut}
@@ -254,6 +255,7 @@ private theorem liftFst_of_eq_id_bgs {F : Type*}
   show sumReplaceFst (act σ (q.1.sumFst, q.2.sumFst)) q = q
   rw [h, id_eq, sumReplaceFst_self_bgs]
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: the lift of the identity of the second part is the identity. -/
 private theorem liftSnd_of_eq_id_bgs {F : Type*}
     {act : F → Params B dIn dOut × Biases B dOut → Params B dIn dOut × Biases B dOut}
@@ -387,6 +389,7 @@ private theorem affGen_sumReplaceSnd_bgs (G : Fin (L + 1) → GL d ℝ) (e : d �
   · funext p
     cases p <;> rfl
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- Helper: a map of the first part that commutes with the map of a pair has a lift that commutes
 with it. -/
 private theorem affGen_liftFst_bgs {σ : F₁} (G : Fin (L + 1) → GL d ℝ) (e : d → ℝ)
@@ -400,6 +403,7 @@ private theorem affGen_liftFst_bgs {σ : F₁} (G : Fin (L + 1) → GL d ℝ) (e
   rw [affGen_sumReplaceFst_bgs, sumFst_affGen_bgs]
   exact congrArg (fun a => sumReplaceFst a (affGen_bgs G e v w u q)) (congrFun hc _)
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- Helper: the same for the second part. -/
 private theorem affGen_liftSnd_bgs {σ : F₂} (G : Fin (L + 1) → GL d ℝ) (e : d → ℝ)
     (v w : Fin L → d → ℝ) (u : d → ℝ)
@@ -412,6 +416,7 @@ private theorem affGen_liftSnd_bgs {σ : F₂} (G : Fin (L + 1) → GL d ℝ) (e
   rw [affGen_sumReplaceSnd_bgs, sumSnd_affGen_bgs]
   exact congrArg (fun a => sumReplaceSnd a (affGen_bgs G e v w u q)) (congrFun hc _)
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- Helper: the map of a pair commutes with the maps of the family of the pairs. -/
 private theorem affGen_sumAct_bgs {σ : F₁ × F₂} (G : Fin (L + 1) → GL d ℝ) (e : d → ℝ)
     (v w : Fin L → d → ℝ) (u : d → ℝ)
@@ -436,7 +441,7 @@ private theorem f_sum_mul_bgs (ℓ : Fin L) (M : Matrix T (A.r ℓ ⊕ B.r ℓ) 
   simp only [Matrix.mul_apply, Fintype.sum_sum_type, Matrix.of_apply, Sum.elim_inl,
     Sum.elim_inr, Matrix.add_apply, Matrix.submatrix_apply, id]
 
-omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: the map of block `ℓ` of the sum with its biases is the map of block `ℓ` of the first
 part with its biases plus the second part of the block. -/
 private theorem block_sum_fst_bgs (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut)
@@ -450,7 +455,7 @@ private theorem block_sum_fst_bgs (q : Params (A.sum B) dIn dOut × Biases (A.su
   rw [f_sum_mul_bgs]
   exact add_right_comm _ _ _
 
-omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: the same, with the write bias on the second part. -/
 private theorem block_sum_snd_bgs (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut)
     (ℓ : Fin L) (n : Matrix T d ℝ) :
@@ -463,6 +468,7 @@ private theorem block_sum_snd_bgs (q : Params (A.sum B) dIn dOut × Biases (A.su
   rw [f_sum_mul_bgs]
   exact add_assoc _ _ _
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: the lift of a map of the first part keeps the map of every block of the sum. -/
 private theorem block_liftFst_bgs (lA : InsideBlocksLocal actA SgA) {σ : F₁} (hσ : σ ∈ SgA)
     (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) (ℓ : Fin L) (n : Matrix T d ℝ) :
@@ -474,6 +480,7 @@ private theorem block_liftFst_bgs (lA : InsideBlocksLocal actA SgA) {σ : F₁} 
   rw [block_sum_fst_bgs, block_sum_fst_bgs]
   exact congrArg (· + _) (lA.block_eq σ hσ (q.1.sumFst, q.2.sumFst) ℓ n)
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: the lift of a map of the second part keeps the map of every block of the sum. -/
 private theorem block_liftSnd_bgs (lB : InsideBlocksLocal actB SgB) {σ : F₂} (hσ : σ ∈ SgB)
     (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut) (ℓ : Fin L) (n : Matrix T d ℝ) :
@@ -510,6 +517,7 @@ private theorem evalB_eq_of_blocks_bgs {C : Arch T d L}
   -- hence the outputs agree
   rw [evalB, evalB, hh, hD, hbD]
 
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
 /-- Helper: the lift of a map of the first part preserves the function. -/
 private theorem evalB_liftFst_bgs (lA : InsideBlocksLocal actA SgA) {σ : F₁} (hσ : σ ∈ SgA)
     (S : Fin L → Matrix d d ℝ) (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut)
@@ -519,6 +527,7 @@ private theorem evalB_liftFst_bgs (lA : InsideBlocksLocal actA SgA) {σ : F₁} 
   evalB_eq_of_blocks_bgs q (sumLiftFst actA σ q) (lA.E_eq σ hσ _) (lA.D_eq σ hσ _)
     (lA.biasE_eq σ hσ _) (lA.biasD_eq σ hσ _) (fun ℓ n => block_liftFst_bgs lA hσ q ℓ n) S x
 
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
 /-- Helper: the lift of a map of the second part preserves the function. -/
 private theorem evalB_liftSnd_bgs (lB : InsideBlocksLocal actB SgB) {σ : F₂} (hσ : σ ∈ SgB)
     (S : Fin L → Matrix d d ℝ) (q : Params (A.sum B) dIn dOut × Biases (A.sum B) dOut)
