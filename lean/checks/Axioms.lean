@@ -1814,3 +1814,4 @@ import SkipsLean
 #print axioms Skips.keeps_products_and_ED_iff_mem_range_cobDir
 #print axioms Skips.finrank_span_keeps_products
 #print axioms Skips.finrank_span_keeps_products_and_ED
+#print axioms Skips.cobDir_injective_of_rank_D
