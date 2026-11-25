@@ -322,12 +322,55 @@ theorem mem_affPreservingResidual_iff [Nonempty T] [Nonempty dOut] (A : Arch T d
     rw [hskip] at h
     rw [h, evalB_translateAll hA]
 
+omit [Fintype T] in
+/-- Helper (copy of `Symmetry/CobGroup.lean`): a matrix with invertible determinant is the value
+of an element of `GL d ℝ`. -/
+private theorem exists_gl_of_isUnit_det_bag {g : Matrix d d ℝ} (hg : IsUnit g.det) :
+    ∃ G : GL d ℝ, (G : Matrix d d ℝ) = g :=
+  ⟨((Matrix.isUnit_iff_isUnit_det _).mpr hg).unit, IsUnit.unit_spec _⟩
+
+omit [Fintype T] in
+/-- Helper (copy of `Symmetry/CobGroup.lean`): an element of `GL d ℝ` has an invertible
+determinant. -/
+private theorem isUnit_det_gl_bag (G : GL d ℝ) : IsUnit (G : Matrix d d ℝ).det :=
+  (Matrix.isUnit_iff_isUnit_det _).mp G.isUnit
+
+omit [Fintype T] in
+/-- Helper: all pairs, as pairs of matrices and rows, are the pairs whose matrices are all
+invertible. -/
+private theorem affMat_univ_bag :
+    affMat (Set.univ : Set ((Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ)))
+      = {q | ∀ ℓ, IsUnit (q.1 ℓ).det} := by
+  ext q
+  constructor
+  · rintro ⟨p, -, rfl⟩ ℓ
+    exact isUnit_det_gl_bag (p.1 ℓ)
+  · intro hq
+    choose G hG using fun ℓ => exists_gl_of_isUnit_det_bag (hq ℓ)
+    exact ⟨(G, q.2), Set.mem_univ _, Prod.ext (funext hG) rfl⟩
+
 /-- **Lemma A.8, the dimension without skips:** the changes of basis and translations of a
 skipless network with biases form a set of dimension `(L + 1)(d² + d)`. -/
 theorem dimH_affMat_affPreservingSkipless (A : Arch T d L) (hA : A.χ = id) :
     dimH (affMat (affPreservingSkipless A dIn dOut))
       = (((L + 1) * (Fintype.card d ^ 2 + Fintype.card d) : ℕ) : ℝ≥0∞) := by
-  sorry
+  -- every pair passes: the set is open (the determinant is continuous) and contains `(1, 0)`
+  rw [affPreservingSkipless_eq_univ A hA, affMat_univ_bag]
+  have hopen : IsOpen {q : (Fin (L + 1) → Matrix d d ℝ) × (Fin (L + 1) → d → ℝ) |
+      ∀ ℓ, IsUnit (q.1 ℓ).det} := by
+    simp only [isUnit_iff_ne_zero, Set.ofPred_forall]
+    exact isOpen_iInter_of_finite fun ℓ =>
+      isOpen_ne_fun ((continuous_apply ℓ).comp continuous_fst).matrix_det continuous_const
+  have h1 : ((fun _ => 1, 0) : (Fin (L + 1) → Matrix d d ℝ) × (Fin (L + 1) → d → ℝ)) ∈
+      {q : (Fin (L + 1) → Matrix d d ℝ) × (Fin (L + 1) → d → ℝ) |
+        ∀ ℓ, IsUnit (q.1 ℓ).det} := fun ℓ => by simp
+  have hfin : Module.finrank ℝ ((Fin (L + 1) → Matrix d d ℝ) × (Fin (L + 1) → d → ℝ))
+      = (L + 1) * (Fintype.card d ^ 2 + Fintype.card d) := by
+    rw [Module.finrank_prod, Module.finrank_pi_fintype, Module.finrank_pi_fintype]
+    simp [Module.finrank_matrix, sq]
+    ring
+  rw [Real.dimH_of_mem_nhds (hopen.mem_nhds h1)]
+  exact congrArg Nat.cast hfin
 
 /-- **Lemma A.8, the dimension with identity skips:** the changes of basis and translations of
 a residual network with biases form a set of dimension `d² + (L + 1) d`. -/
@@ -335,7 +378,42 @@ theorem dimH_affMat_affPreservingResidual [Nonempty T] [Nonempty dOut] (A : Arch
     (hA : A.χ = id) :
     dimH (affMat (affPreservingResidual A dIn dOut))
       = ((Fintype.card d ^ 2 + (L + 1) * Fintype.card d : ℕ) : ℝ≥0∞) := by
-  sorry
+  -- the set is the image of the pairs `(G₀, g)` with `G₀` invertible under
+  -- `(G₀, g) ↦ ((G₀, …, G₀), g)` (`mem_affPreservingResidual_iff`)
+  set φ := fun q : Matrix d d ℝ × (Fin (L + 1) → d → ℝ) => ((fun _ : Fin (L + 1) => q.1), q.2)
+    with hφ
+  have hset : affMat (affPreservingResidual A dIn dOut) = φ '' {q | IsUnit q.1.det} := by
+    ext q
+    constructor
+    · rintro ⟨p, hp, rfl⟩
+      have hc := (mem_affPreservingResidual_iff A hA p).mp hp
+      refine ⟨((p.1 0 : Matrix d d ℝ), p.2), isUnit_det_gl_bag (p.1 0), ?_⟩
+      refine Prod.ext (funext fun ℓ => ?_) rfl
+      show (p.1 0 : Matrix d d ℝ) = p.1 ℓ
+      rw [hc ℓ]
+    · rintro ⟨r, hr, rfl⟩
+      obtain ⟨G₀, hG₀⟩ := exists_gl_of_isUnit_det_bag hr
+      refine ⟨(fun _ => G₀, r.2), (mem_affPreservingResidual_iff A hA _).mpr fun ℓ => rfl, ?_⟩
+      exact Prod.ext (funext fun _ => hG₀) rfl
+  -- `φ` is an isometry (the sup distance of the constant family is the distance)
+  have hiso : Isometry φ := by
+    intro a b
+    simp only [hφ, Prod.edist_eq]
+    congr 1
+    exact le_antisymm (edist_pi_le_iff.2 fun _ => le_rfl)
+      (edist_le_pi_edist (fun _ : Fin (L + 1) => a.1) (fun _ => b.1) 0)
+  -- the pairs with `G₀` invertible are open and contain `(1, 0)`
+  have hopen : IsOpen {q : Matrix d d ℝ × (Fin (L + 1) → d → ℝ) | IsUnit q.1.det} := by
+    simp only [isUnit_iff_ne_zero]
+    exact isOpen_ne_fun continuous_fst.matrix_det continuous_const
+  have h1 : ((1, 0) : Matrix d d ℝ × (Fin (L + 1) → d → ℝ)) ∈
+      {q : Matrix d d ℝ × (Fin (L + 1) → d → ℝ) | IsUnit q.1.det} := by simp
+  have hfin : Module.finrank ℝ (Matrix d d ℝ × (Fin (L + 1) → d → ℝ))
+      = Fintype.card d ^ 2 + (L + 1) * Fintype.card d := by
+    rw [Module.finrank_prod, Module.finrank_pi_fintype]
+    simp [Module.finrank_matrix, sq]
+  rw [hset, hiso.dimH_image, Real.dimH_of_mem_nhds (hopen.mem_nhds h1)]
+  exact congrArg Nat.cast hfin
 
 /-- **Lemma A.8, "the skips remove `L d_model²` dimensions, as without biases":** the set for
 the skipless network has `L d²` more dimensions than the set for the residual network. -/
