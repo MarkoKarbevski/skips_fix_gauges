@@ -90,6 +90,7 @@ def evalMixed (A : Arch T d L) (θ : Params A.mixed dIn dOut) (x : Matrix T dIn 
     Matrix T dOut ℝ :=
   eval A (fun ℓ => θ.mixU ℓ * θ.mixV ℓ) θ.unmix x
 
+omit [Fintype dIn] in
 /-- The identity units of `Params.mix θ U V` have the read `U`. -/
 theorem Params.mixU_mix (θ : Params A dIn dOut) (U V : Fin L → Matrix d d ℝ) :
     (Params.mix θ U V).mixU = U := by
@@ -98,6 +99,7 @@ theorem Params.mixU_mix (θ : Params A dIn dOut) (U V : Fin L → Matrix d d ℝ
   ext a b
   rfl
 
+omit [Fintype dIn] in
 /-- The identity units of `Params.mix θ U V` have the write `V`. -/
 theorem Params.mixV_mix (θ : Params A dIn dOut) (U V : Fin L → Matrix d d ℝ) :
     (Params.mix θ U V).mixV = V := by
@@ -106,12 +108,14 @@ theorem Params.mixV_mix (θ : Params A dIn dOut) (U V : Fin L → Matrix d d ℝ
   ext a b
   rfl
 
+omit [Fintype dIn] in
 /-- The hidden units of `Params.mix θ U V` are those of `θ`. -/
 theorem Params.unmix_mix (θ : Params A dIn dOut) (U V : Fin L → Matrix d d ℝ) :
     (Params.mix θ U V).unmix = θ := by
   -- the columns and rows `Sum.inr` are those of the hidden units of `θ`
   rfl
 
+omit [Fintype dIn] in
 /-- Every parameter of a network of mixed blocks is `Params.mix` of its hidden units and its
 identity units. -/
 theorem Params.mix_unmix (θ : Params A.mixed dIn dOut) :

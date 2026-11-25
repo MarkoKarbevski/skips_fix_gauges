@@ -155,12 +155,14 @@ theorem evalMixed_cobMixed_rmsNorm_zero (hA : A.χ = rmsNorm 0) (G Q : Fin (L + 
   rw [hA, hG ℓ]
   exact rmsNorm_zero_mul_smul_orthogonal (hc ℓ) (hQ ℓ) h
 
+omit [Fintype dIn] in
 /-- The map of Proposition A.1 (i) is `T_{1,K}`. -/
 theorem cobMixed_one_one (K : Fin L → GL d ℝ) : θ.cobMixed 1 1 K = θ.mixK K := by
   -- `G = 1` multiplies nothing, and `θ.unmix.cob 1 1 = θ.unmix`
   unfold Params.cobMixed Params.mixK
   simp only [Pi.one_apply, inv_one, Units.val_one, Matrix.one_mul, Matrix.mul_one, cob_one_mxj]
 
+omit [Fintype dIn] in
 /-- **Proposition A.1 (iii), "One group per junction":** the maps `T_{G,K}` compose as the
 product group does, with one factor per hidden state and one per block. -/
 theorem cobMixed_cobMixed (G Q G' Q' : Fin (L + 1) → GL d ℝ) (K K' : Fin L → GL d ℝ) :
@@ -176,6 +178,7 @@ theorem cobMixed_cobMixed (G Q G' Q' : Fin (L + 1) → GL d ℝ) (K K' : Fin L �
   · funext ℓ
     simp only [Pi.mul_apply, _root_.mul_inv_rev, Units.val_mul, Matrix.mul_assoc]
 
+omit [Fintype dIn] in
 /-- **Proposition A.1 (iii), "The maps of (i) and (ii) commute when they act at different
 junctions":** two maps `T_{G,K}` commute when their matrices commute at every hidden state and at
 the identity units of every block, in particular when at every junction one of the two is the
@@ -194,6 +197,7 @@ theorem cobMixed_comm (G Q G' Q' : Fin (L + 1) → GL d ℝ) (K K' : Fin L → G
   · funext ℓ
     exact (hK ℓ).eq
 
+omit [Fintype dIn] in
 /-- **Proposition A.1 (iii) for a hidden state and the identity units of a block:** the change
 of basis of (ii) and the map of (i) commute. -/
 theorem cobMixed_mixK_comm (G Q : Fin (L + 1) → GL d ℝ) (K : Fin L → GL d ℝ) :
@@ -202,6 +206,7 @@ theorem cobMixed_mixK_comm (G Q : Fin (L + 1) → GL d ℝ) (K : Fin L → GL d 
   rw [← cobMixed_one_one, ← cobMixed_one_one, cobMixed_cobMixed, cobMixed_cobMixed, mul_one,
     mul_one, one_mul, one_mul, one_mul, mul_one]
 
+omit [Fintype dIn] in
 /-- **Theorem A.5 (i), the gauge fix:** for a network of mixed blocks with invertible `U_ℓ` and
 `V_ℓ`, the map `T_{G,K}` with `G_ℓ = Λ_ℓ` and `K_ℓ = U_ℓ^{-1} Λ_{ℓ−1}`, where
 `Λ_ℓ = A_{ℓ+1} ⋯ A_L` and `A_ℓ = U_ℓ V_ℓ`, "sets every `U_ℓ` and `V_ℓ` to `I` and the other

@@ -152,6 +152,7 @@ private theorem hasDerivAt_dotProduct_abi {n : Type*} [Fintype n] (v : n → ℝ
     {f' : n → ℝ} (hf : HasDerivAt f f' 0) : HasDerivAt (fun τ => f τ ⬝ᵥ v) (f' ⬝ᵥ v) 0 :=
   HasDerivAt.fun_sum (u := Finset.univ) fun j _ => (hasDerivAt_pi.1 hf j).mul_const (v j)
 
+omit [DecidableEq d] [Fintype dOut] in
 /-- `dAttnScoreBias p η i` is the derivative of `β_i` along the line `p + τ η`. -/
 theorem hasDerivAt_attnScoreBias (p η : ParamsB (Arch.attention sees χ H dh) dIn dOut)
     (i : H 0) :
@@ -166,6 +167,7 @@ theorem hasDerivAt_attnScoreBias (p η : ParamsB (Arch.attention sees χ H dh) d
   have h := (hasDerivAt_vecMul2_abi hq hk).fun_const_smul (Real.sqrt (Fintype.card (dh 0)))⁻¹
   exact h.congr_deriv (by simp only [zero_smul, add_zero, dAttnScoreBias])
 
+omit [DecidableEq d] [Fintype dIn] in
 /-- `dAttnConst S p η` is the derivative of the constant `γ` along the line `p + τ η`. -/
 theorem hasDerivAt_attnConst (S : Fin 1 → Matrix d d ℝ)
     (p η : ParamsB (Arch.attention sees χ H dh) dIn dOut) :
@@ -323,6 +325,7 @@ private theorem row_sum_abi {ι m n : Type*} [Fintype ι] (F : ι → Matrix m n
     (∑ i, F i) t = ∑ i, F i t :=
   Finset.sum_apply t _ _
 
+omit [DecidableEq d] [Fintype dOut] in
 /-- **The reduction with biases:** without normalization, at a token `t` that sees at least one
 token, the network of one attention block with biases and the stream matrix `S 0` gives the row
 `x_t E S_0 D + ∑_i ∑_s a_ts^{(i)} x_s C_i + γ`, where the weights `a_ts^{(i)}` are those of the
@@ -474,6 +477,7 @@ private theorem row_two_tokens_abi [DecidableEq T] (t₁ t₂ : T) (h12 : t₁ �
   rw [Matrix.mul_apply_eq_vecMul, vecMul_two_rows_abi t₂ _ h1 X u v hX2 hXs, h2,
     one_sub_weight_abi _ _ _ hk]
 
+omit [DecidableEq d] [Fintype dOut] in
 /-- **Equation (16) with biases:** let token `t₂` see itself and another token `t₁`, and let `k`
 be the number of tokens other than `t₂` that `t₂` sees. At the input with the row `u` at `t₂`
 and the row `u − v` at every other token, the output at `t₂` is
@@ -585,6 +589,7 @@ private theorem eq_zero_of_dotProduct_abi {n : Type*} [Fintype n] [DecidableEq n
     exact h v hv
   exact congrFun hN ()
 
+omit [DecidableEq d] in
 /-- **Proof of Theorem B.1 (i) for attention blocks with biases, Step 2, for any stream matrix:**
 let token `t₂` see itself and another token `t₁`, and let some `v` have the columns `B_i v^⊤`
 nonzero and pairwise non-collinear and every row `v C_i` nonzero. Then a flat direction `η` of

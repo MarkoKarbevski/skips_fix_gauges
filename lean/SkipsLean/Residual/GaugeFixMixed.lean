@@ -99,7 +99,7 @@ private theorem cob_cob_gfm (φ : Params A dIn dOut) (G K G' K' : Fin (L + 1) �
   · simp [Params.cob, Matrix.mul_assoc]
   · simp [Params.cob, Matrix.mul_assoc, _root_.mul_inv_rev]
 
-omit [Fintype T] [Fintype dOut] in
+omit [Fintype T] [Fintype dOut] [Fintype dIn] in
 /-- `mixedToResidual_mix` without the instances that its statement does not use. -/
 private theorem mixedToResidual_mix_gfm (θ : Params A dIn dOut) (U V : Fin L → GL d ℝ) :
     mixedToResidual
@@ -123,6 +123,7 @@ private theorem mixedToResidual_mix_gfm (θ : Params A dIn dOut) (U V : Fin L �
       Matrix.one_mul]
     rfl
 
+omit [Fintype T] [Fintype dOut] [Fintype dIn] in
 /-- **Equation (12):** for invertible `U_ℓ` and `V_ℓ`, `Φ` of the network of mixed blocks with
 the hidden units of `θ` is `θ.cob Λ Λ`. -/
 theorem mixedToResidual_mix (θ : Params A dIn dOut) (U V : Fin L → GL d ℝ) :
@@ -132,6 +133,7 @@ theorem mixedToResidual_mix (θ : Params A dIn dOut) (U V : Fin L → GL d ℝ) 
   -- the same statement without the instances that it does not use
   exact mixedToResidual_mix_gfm θ U V
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Theorem A.5 (ii), "Every parameter of the residual network is `Φ(θ)` for some `θ`":** the
 `θ` with the same entries and `U_ℓ = V_ℓ = I`. -/
 theorem mixedToResidual_mix_one (θ : Params A dIn dOut) :
@@ -159,7 +161,7 @@ private theorem isUnit_of_isUnit_mul_gfm {M N : Matrix d d ℝ} (h : IsUnit (M *
   exact ⟨(Matrix.isUnit_iff_isUnit_det _).2 (isUnit_of_mul_isUnit_left h),
     (Matrix.isUnit_iff_isUnit_det _).2 (isUnit_of_mul_isUnit_right h)⟩
 
-omit [Fintype T] [Fintype dOut] in
+omit [Fintype T] [Fintype dOut] [Fintype dIn] in
 /-- A parameter with invertible skips `U_ℓ V_ℓ` is `Params.mix` of its hidden units and of
 invertible `U_ℓ`, `V_ℓ`. -/
 private theorem exists_mix_gfm (θ : Params A.mixed dIn dOut)
@@ -185,7 +187,7 @@ private theorem skipProd_cob_gfm (U V : Fin L → GL d ℝ) (G : Fin (L + 1) →
     rw [skipProd_castSucc, skipProd_castSucc, ih]
     group
 
-omit [Fintype T] [Fintype dOut] in
+omit [Fintype T] [Fintype dOut] [Fintype dIn] in
 /-- **The "if" direction of Theorem A.5 (ii):** `Φ(T_{G,K}(θ)) = Φ(θ)` when `G_L = I`. -/
 private theorem mixedToResidual_cobMixed_gfm (φ : Params A dIn dOut) (U V : Fin L → GL d ℝ)
     (G : Fin (L + 1) → GL d ℝ) (hG : G (Fin.last L) = 1) (K : Fin L → GL d ℝ) :
@@ -210,6 +212,7 @@ private theorem mixedToResidual_cobMixed_gfm (φ : Params A dIn dOut) (U V : Fin
     rw [skipProd_cob_gfm U V G hG K ℓ, mul_inv_cancel_left]
   rw [h2]
 
+omit [Fintype T] [Fintype dOut] [Fintype dIn] in
 /-- **Theorem A.5 (ii), "`Φ(θ̃) = Φ(θ)` exactly when `θ̃ = T_{G,K}(θ)` for some `G` and `K` with
 `G_L = I`"**, for parameters of the network of mixed blocks whose skips `A_ℓ = U_ℓ V_ℓ` are
 invertible. -/
@@ -491,6 +494,7 @@ private theorem exists_rightInverse_gfm (θ : Params A.mixed dIn dOut)
     rw [Params.mixU_mix, Params.mixV_mix, ← Units.val_mul]
     exact Units.isUnit _
 
+omit [Fintype T] in
 /-- **Theorem A.5 (ii), "The derivative of `Φ` is onto at every `θ`"** (with invertible
 skips). -/
 theorem exists_hasFDerivAt_mixedToResidual_surjective (θ : Params A.mixed dIn dOut)
@@ -563,6 +567,7 @@ private theorem eventually_isUnit_gfm (θ : Params A.mixed dIn dOut)
   filter_upwards [hc.continuousAt.eventually_ne hne] with θ' h
   exact (Matrix.isUnit_iff_isUnit_det _).2 (Ne.isUnit h)
 
+omit [Fintype T] in
 /-- **Theorem A.5 (ii), "with the same functional dimension at `θ` and at `Φ(θ)`":** without
 normalization, for any blocks, at a parameter `θ` of the network of mixed blocks with invertible
 skips, the functional dimension of the network of mixed blocks (the skipless network of

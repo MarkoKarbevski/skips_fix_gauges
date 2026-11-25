@@ -390,6 +390,7 @@ private theorem block_headsQKB_ahb [∀ ℓ, DecidableEq (dh ℓ)]
     intro t i k
     rfl
 
+omit [DecidableEq d] in
 /-- **The changes of basis between the queries and the keys of every head are symmetries inside
 the blocks of a network with biases,** for every mask and every `χ`: along
 `W_{Q,i} e^{τΓ_i}`, `W_{K,i} e^{−τΓ_i^⊤}`, `b_{Q,i} e^{τΓ_i}`, `b_{K,i} e^{−τΓ_i^⊤}` the queries
@@ -622,6 +623,7 @@ private theorem block_headsVOB_ahb [∀ ℓ, DecidableEq (dh ℓ)]
   · intro i k c
     rfl
 
+omit [DecidableEq d] in
 /-- **The changes of basis between the values and the outputs of every head are symmetries
 inside the blocks of a network with biases,** for every mask and every `χ`: along
 `W_{V,i} e^{τΓ'_i}`, `b_{V,i} e^{τΓ'_i}`, `e^{−τΓ'_i} W_{O,i}` the output
@@ -788,6 +790,7 @@ private theorem line_comps_ahb (p v : ParamsB (Arch.attention sees χ H dh) dIn 
   · show p.2.D + τ • v.2.D = p.2.D
     rw [hbD, smul_zero, add_zero]
 
+omit [DecidableEq d] in
 /-- **The shifts of the key biases are symmetries inside the blocks,** for every mask and every
 `χ`: "The key biases drop out, since they shift all scores of a token equally". -/
 theorem insideBlocksB_keyShiftDir (p : ParamsB (Arch.attention sees χ H dh) dIn dOut)
@@ -836,6 +839,7 @@ theorem insideBlocksB_keyShiftDir (p : ParamsB (Arch.attention sees χ H dh) dIn
         (line_comps_ahb p _ rfl rfl rfl rfl τ).2.2.1, (line_comps_ahb p _ rfl rfl rfl rfl τ).2.2.2,
         hb τ⟩⟩
 
+omit [DecidableEq d] in
 /-- **The value biases moved into the output bias are symmetries inside the blocks,** for every
 `χ` and every mask in which every token sees at least one token: "the weights of a token sum to
 one", so adding `τ ν_i` to the values of head `i` adds `τ ν_i W_{O,i}` to the output of the block
@@ -893,6 +897,7 @@ theorem insideBlocksB_valueShiftDir (hsee : ∀ t, ∃ s, sees t s)
         (line_comps_ahb p _ rfl rfl rfl rfl τ).2.2.1, (line_comps_ahb p _ rfl rfl rfl rfl τ).2.2.2,
         hb τ⟩⟩
 
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- The direction `headDirB p (Γ, Γ', κ, ν)` is linear in `(Γ, Γ', κ, ν)`. -/
 theorem isLinearMap_headDirB (p : ParamsB (Arch.attention sees χ H dh) dIn dOut) :
     IsLinearMap ℝ (headDirB p) := by
@@ -963,6 +968,7 @@ private theorem cancel_left_of_rank_ahb {m n k : Type*} [Fintype n] (M : Matrix 
     simpa [Matrix.mul_apply, Matrix.mulVec, dotProduct] using this
   exact congrFun (hinj hcol) i
 
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **The symmetries inside the attention blocks with biases act freely, in infinitesimal form:**
 if the query matrix and the value matrix of every head have rank `d_h`, the direction
 `headDirB p (Γ, Γ', κ, ν)` determines `Γ`, `Γ'`, `κ` and `ν`. -/
@@ -1020,6 +1026,7 @@ theorem headDirB_injective (p : ParamsB (Arch.attention sees χ H dh) dIn dOut)
 
 /-! ### Helpers: the space of the directions `headDirB p (Γ, Γ', κ, ν)` -/
 
+omit [DecidableEq d] in
 /-- Helper: the directions `headDirB p (Γ, Γ', κ, ν)` are spanned by directions of symmetries
 inside the blocks, if every token sees some token: each is a sum of four such directions. -/
 private theorem range_le_span_ahb (hsee : ∀ t, ∃ s, sees t s)
@@ -1033,6 +1040,7 @@ private theorem range_le_span_ahb (hsee : ∀ t, ∃ s, sees t s)
     (Submodule.subset_span (insideBlocksB_keyShiftDir p κ)))
     (Submodule.subset_span (insideBlocksB_valueShiftDir hsee p ν))
 
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: if the read and the read bias of block `ℓ` of `headDirB p (Γ, Γ', κ, ν)` are `0`
 and the value matrices have rank `d_h`, then `Γ'_ℓ = 0` (value columns) and `ν_ℓ = 0` (value
 biases), so the write `−Γ' W_O` and the write bias `−∑_i ν_i W_{O,i}` of block `ℓ` are `0`. -/
