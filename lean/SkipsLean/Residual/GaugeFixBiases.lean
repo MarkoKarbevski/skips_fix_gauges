@@ -683,9 +683,9 @@ theorem funDimOf_evalMixedB_eq_funDimB_residual (hA : A.χ = id)
     (p : Params A.mixed dIn dOut × Biases A dOut) (hp : ∀ ℓ, IsUnit (p.1.mixU ℓ * p.1.mixV ℓ)) :
     funDimOf (evalMixedB A) p = funDimB A 1 (mixedToResidualB p) := by
   rw [funDimB_eq_funDimOf]
-  obtain ⟨Φ', hΦ', hsurj⟩ := exists_hasFDerivAt_mixedToResidualB_surjective p hp
+  obtain ⟨Φ', hΦ', -⟩ := exists_hasFDerivAt_mixedToResidualB_surjective p hp
   obtain ⟨s, hs, hsp, hΦs, hsu⟩ := exists_section_mixed_gfb p hp
-  refine funDimOf_eq_of_comp_of_section hΦ' hsurj (hs _) hsp ?_ ?_
+  refine funDimOf_eq_of_comp_of_section hΦ'.differentiableAt (hs _) hsp ?_ ?_
   · -- near `p` the skips are invertible, and `F_q = F^res_{Φ(q)}`
     filter_upwards [eventually_isUnit_mixed_gfb p hp] with q hq
     funext x
@@ -887,9 +887,9 @@ theorem funDimOf_evalB_learned_eq_funDimB_residual (hA : A.χ = id)
     funDimOf (fun q : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ) => evalB A q.2 q.1.1 q.1.2) p
       = funDimB A 1 (learnedToResidualB p) := by
   rw [funDimB_eq_funDimOf]
-  obtain ⟨Φ', hΦ', hsurj⟩ := exists_hasFDerivAt_learnedToResidualB_surjective p hp
+  obtain ⟨Φ', hΦ', -⟩ := exists_hasFDerivAt_learnedToResidualB_surjective p hp
   obtain ⟨s, hs, hsp, hΦs, hsu⟩ := exists_section_learned_gfb p hp
-  refine funDimOf_eq_of_comp_of_section hΦ' hsurj (hs _) hsp ?_ ?_
+  refine funDimOf_eq_of_comp_of_section hΦ'.differentiableAt (hs _) hsp ?_ ?_
   · -- near `p` the skips are invertible, and `F_q = F^res_{Φ(q)}`
     filter_upwards [eventually_isUnit_learned_gfb p hp] with q hq
     funext x

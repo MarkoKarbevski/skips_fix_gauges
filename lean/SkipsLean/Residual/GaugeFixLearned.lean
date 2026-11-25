@@ -476,9 +476,9 @@ theorem funDimLearned_eq_funDim_residual (hA : A.χ = id)
       = funDimOf (evalSkips A (ContinuousLinearMap.id ℝ (Fin L → Matrix d d ℝ))) p :=
     funDimSkips_eq_funDimOf A _ p
   rw [e1, funDim_eq_funDimOf]
-  obtain ⟨Φ', hΦ', hsurj⟩ := exists_hasFDerivAt_learnedToResidual_surjective p hp
+  obtain ⟨Φ', hΦ', -⟩ := exists_hasFDerivAt_learnedToResidual_surjective p hp
   obtain ⟨s, hs, hsp, hΦs, hsu⟩ := exists_section_gfl p hp
-  refine funDimOf_eq_of_comp_of_section hΦ' hsurj (hs _) hsp ?_ ?_
+  refine funDimOf_eq_of_comp_of_section hΦ'.differentiableAt (hs _) hsp ?_ ?_
   · -- near `p` the skips are invertible, and `F_{θ,A} = F^res_{Φ(θ,A)}`
     filter_upwards [eventually_isUnit_gfl p hp] with q hq
     funext x

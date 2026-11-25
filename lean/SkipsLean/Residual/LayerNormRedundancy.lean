@@ -493,9 +493,9 @@ theorem funDimOf_evalLNParams_eq_funDimB_reduceLN (ε : ℝ) (U : Matrix d m ℝ
       = funDimB (A.withNorm (rmsNorm (ε * (Fintype.card d : ℝ) / (Fintype.card m : ℝ))))
           (fun ℓ => Uᵀ * S ℓ * U) (reduceLNParams ε U q) := by
   rw [funDimB_eq_funDimOf]
-  obtain ⟨Φ', hΦ', hsurj⟩ := exists_hasFDerivAt_reduceLNParams_surjective ε U hU q hγ
+  obtain ⟨Φ', hΦ', -⟩ := exists_hasFDerivAt_reduceLNParams_surjective ε U hU q hγ
   obtain ⟨s, hs, hsp, hΦs⟩ := exists_section_lnr ε U hU q hγ
-  refine funDimOf_eq_of_comp_of_section hΦ' hsurj (hs _) hsp ?_ ?_
+  refine funDimOf_eq_of_comp_of_section hΦ'.differentiableAt (hs _) hsp ?_ ?_
   · -- everywhere the LayerNorm network computes the reduced network at `Φ`
     refine Filter.Eventually.of_forall fun q' => funext fun x => ?_
     exact evalLN_eq_evalB_reduceLN ε U hU hUZ hm S hS q'.1.1 q'.1.2 q'.2.1 q'.2.2 x

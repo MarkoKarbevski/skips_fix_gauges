@@ -18,11 +18,11 @@ Here, once for all these families:
   on a normed space of parameters; the functional dimensions of the library are cases of it
   (`funDim_eq_funDimOf`, `funDimB_eq_funDimOf`, `funDimSkips_eq_funDimOf`).
 * `funDimOf_eq_of_comp_of_section`: the last step of the proof of Theorem A.5 (ii) for any two
-  families: if `F₁ = F₂ ∘ Φ` near `p`, the derivative of `Φ` at `p` is onto, and
-  `F₂ = F₁ ∘ s` near `Φ(p)` for a map `s` differentiable at `Φ(p)` with `s(Φ(p)) = p`, then
-  `F₁` at `p` and `F₂` at `Φ(p)` have the same functional dimension
-  (`Dimension/RankSubmersion.lean` on every batch). No differentiability of the families is
-  asked.
+  families: if `F₁ = F₂ ∘ Φ` near `p` with `Φ` differentiable at `p`, and `F₂ = F₁ ∘ s` near
+  `Φ(p)` for a map `s` differentiable at `Φ(p)` with `s(Φ(p)) = p`, then `F₁` at `p` and `F₂`
+  at `Φ(p)` have the same functional dimension (`Dimension/RankSubmersion.lean` on every
+  batch). No differentiability of the families is asked, and with the section the paper's
+  hypothesis that the derivative of `Φ` is onto is not needed.
 -/
 
 namespace Skips
@@ -64,14 +64,13 @@ theorem funDimSkips_eq_funDimOf [DecidableEq d] {V : Type*} [NormedAddCommGroup 
 
 omit [Fintype dIn] in
 /-- **Proof of Theorem A.5 (ii), "the two networks the same functional dimension", for any two
-families:** if `F₁ q = F₂ (Φ q)` for `q` near `p`, `Φ` has a derivative at `p` that is onto, and
+families:** if `F₁ q = F₂ (Φ q)` for `q` near `p`, `Φ` is differentiable at `p`, and
 `F₂ y = F₁ (s y)` for `y` near `Φ p` with `s` differentiable at `Φ p` and `s (Φ p) = p`, then
 `F₁` at `p` and `F₂` at `Φ p` have the same functional dimension. -/
 theorem funDimOf_eq_of_comp_of_section {P₁ P₂ : Type*} [NormedAddCommGroup P₁]
     [NormedSpace ℝ P₁] [NormedAddCommGroup P₂] [NormedSpace ℝ P₂]
     {F₁ : P₁ → Matrix T dIn ℝ → Matrix T dOut ℝ} {F₂ : P₂ → Matrix T dIn ℝ → Matrix T dOut ℝ}
-    {Φ : P₁ → P₂} {s : P₂ → P₁} {p : P₁} {Φ' : P₁ →L[ℝ] P₂}
-    (hΦ : HasFDerivAt Φ Φ' p) (hsurj : Function.Surjective Φ')
+    {Φ : P₁ → P₂} {s : P₂ → P₁} {p : P₁} (hΦ : DifferentiableAt ℝ Φ p)
     (hs : DifferentiableAt ℝ s (Φ p)) (hsp : s (Φ p) = p)
     (hF₁ : ∀ᶠ q in 𝓝 p, F₁ q = F₂ (Φ q)) (hF₂ : ∀ᶠ y in 𝓝 (Φ p), F₂ y = F₁ (s y)) :
     funDimOf F₁ p = funDimOf F₂ (Φ p) := by
@@ -80,7 +79,7 @@ theorem funDimOf_eq_of_comp_of_section {P₁ P₂ : Type*} [NormedAddCommGroup P
       LinearMap.range (fderiv ℝ (fun q : P₁ => fun i : Fin n => F₁ q (X i)) p).toLinearMap
         = LinearMap.range
           (fderiv ℝ (fun y : P₂ => fun i : Fin n => F₂ y (X i)) (Φ p)).toLinearMap :=
-    fun n X => range_fderiv_eq_of_comp_of_section hΦ hsurj hs hsp
+    fun n X => range_fderiv_eq_of_comp_of_section hΦ hs hsp
       (hF₁.mono fun q hq => by simp only [hq]) (hF₂.mono fun y hy => by simp only [hy])
   unfold funDimOf
   congr 1
