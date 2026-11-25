@@ -321,7 +321,7 @@ bound 6); "On it" is the paper's statement for ReLU and ReGLU; Theorem A.28 (iii
 is the paper's within its Scope, and needs `d_in, d_out ≥ d`. Report:
 `lean-statement-audit-twentyninth-2026-11-25.md`.
 The reports of the readers are in `ai_notes/`. Not yet compared by such a reader (they go to the
-thirtieth audit):
+thirtieth audit, begun at 02:41 UTC, 25 November):
 `Residual/BlocksAloneGeneral.lean`, `Residual/BlocksAloneMlp.lean`, `Residual/BlocksAloneGated.lean`,
 `Residual/BlocksAloneSkipless.lean` and `Residual/BlocksAloneDifferent.lean` (written at 02:17 UTC,
 25 November, after the twenty-ninth audit began).
