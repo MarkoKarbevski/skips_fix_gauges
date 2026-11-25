@@ -72,6 +72,237 @@ structure InsideBlocksFreeAt {F : Type*}
     (act σ q).1.write ℓ = q.1.write ℓ ∧ (act σ q).2.write ℓ = q.2.write ℓ
   injOn : Set.InjOn (fun σ => act σ q) Sg
 
+/-! ### Helpers -/
+
+/-- Helper: in a group of permutations, a set of maps of the form `aff p ∘ act σ` that contains
+the maps `aff p` of a subgroup and the maps `act σ` of a family closed under products and inverses
+and commuting with every `aff p` is the subgroup they generate. -/
+private theorem mem_closure_union_iff_bgg {X ι F : Type*} (aff : ι → X → X) (P : Set ι)
+    (hbij : ∀ p, Function.Bijective (aff p))
+    (hK : ∃ K : Subgroup (Equiv.Perm X), ∀ φ : Equiv.Perm X, φ ∈ K ↔ ∃ p ∈ P, ⇑φ = aff p)
+    (act : F → X → X) (Sg : Set F)
+    (aone : ∃ σ ∈ Sg, act σ = id)
+    (amul : ∀ σ ∈ Sg, ∀ σ' ∈ Sg, ∃ τ ∈ Sg, act σ ∘ act σ' = act τ)
+    (ainv : ∀ σ ∈ Sg, ∃ τ ∈ Sg, act σ ∘ act τ = id ∧ act τ ∘ act σ = id)
+    (comm : ∀ p, ∀ σ ∈ Sg, aff p ∘ act σ = act σ ∘ aff p)
+    (φ : Equiv.Perm X) :
+    φ ∈ Subgroup.closure
+        ({φ : Equiv.Perm X | ∃ p ∈ P, ⇑φ = aff p} ∪ {φ | ∃ σ ∈ Sg, ⇑φ = act σ})
+      ↔ ∃ p ∈ P, ∃ σ ∈ Sg, ⇑φ = aff p ∘ act σ := by
+  obtain ⟨K, hK⟩ := hK
+  -- the maps of the family are bijections
+  have abij : ∀ σ ∈ Sg, Function.Bijective (act σ) := fun σ hσ => by
+    obtain ⟨τ, -, h1, h2⟩ := ainv σ hσ
+    exact Function.bijective_iff_has_inverse.2 ⟨act τ, congrFun h2, congrFun h1⟩
+  -- the maps of the pairs of `P` contain the identity, products and inverses
+  have hone : ∃ e ∈ P, aff e = id := by
+    obtain ⟨e, he, h⟩ := (hK 1).1 K.one_mem
+    exact ⟨e, he, h.symm⟩
+  have hmul : ∀ p ∈ P, ∀ p' ∈ P, ∃ r ∈ P, aff p ∘ aff p' = aff r := by
+    intro p hp p' hp'
+    obtain ⟨r, hr, h⟩ := (hK _).1 (K.mul_mem ((hK (Equiv.ofBijective _ (hbij p))).2 ⟨p, hp, rfl⟩)
+      ((hK (Equiv.ofBijective _ (hbij p'))).2 ⟨p', hp', rfl⟩))
+    exact ⟨r, hr, h⟩
+  have hinv : ∀ p ∈ P, ∃ r ∈ P, aff p ∘ aff r = id ∧ aff r ∘ aff p = id := by
+    intro p hp
+    obtain ⟨r, hr, h⟩ := (hK _).1
+      (K.inv_mem ((hK (Equiv.ofBijective _ (hbij p))).2 ⟨p, hp, rfl⟩))
+    refine ⟨r, hr, funext fun x => ?_, funext fun x => ?_⟩
+    · rw [Function.comp_apply, ← h]
+      exact (Equiv.ofBijective _ (hbij p)).apply_symm_apply x
+    · rw [Function.comp_apply, ← h]
+      exact (Equiv.ofBijective _ (hbij p)).symm_apply_apply x
+  obtain ⟨e, he, he1⟩ := hone
+  obtain ⟨σ₀, hσ₀, h0⟩ := aone
+  constructor
+  · -- the products `aff p ∘ act σ` form a subgroup that contains both sets of generators
+    intro hφ
+    obtain ⟨H, hH⟩ : ∃ H : Subgroup (Equiv.Perm X),
+        ∀ ψ, ψ ∈ H ↔ ∃ p ∈ P, ∃ σ ∈ Sg, ⇑ψ = aff p ∘ act σ := by
+      refine ⟨{ carrier := {ψ | ∃ p ∈ P, ∃ σ ∈ Sg, ⇑ψ = aff p ∘ act σ}
+                mul_mem' := ?_, one_mem' := ?_, inv_mem' := ?_ }, fun ψ => Iff.rfl⟩
+      · -- `aff p ∘ act σ ∘ aff p' ∘ act σ' = (aff p ∘ aff p') ∘ (act σ ∘ act σ')`
+        rintro ψ ψ' ⟨p, hp, σ, hσ, h⟩ ⟨p', hp', σ', hσ', h'⟩
+        obtain ⟨r, hr, hr'⟩ := hmul p hp p' hp'
+        obtain ⟨τ, hτ, hτ'⟩ := amul σ hσ σ' hσ'
+        refine ⟨r, hr, τ, hτ, funext fun x => ?_⟩
+        have c : act σ (aff p' (act σ' x)) = aff p' (act σ (act σ' x)) :=
+          (congrFun (comm p' σ hσ) _).symm
+        rw [Equiv.Perm.coe_mul, h, h', ← hr', ← hτ']
+        show aff p (act σ (aff p' (act σ' x))) = aff p (aff p' (act σ (act σ' x)))
+        rw [c]
+      · -- the identity is `aff e ∘ act σ₀`
+        refine ⟨e, he, σ₀, hσ₀, ?_⟩
+        rw [Equiv.Perm.coe_one, he1, h0]
+        rfl
+      · -- the inverse of `aff p ∘ act σ` is `aff r ∘ act τ`
+        rintro ψ ⟨p, hp, σ, hσ, h⟩
+        obtain ⟨r, hr, hr1, -⟩ := hinv p hp
+        obtain ⟨τ, hτ, hτ1, -⟩ := ainv σ hσ
+        refine ⟨r, hr, τ, hτ, funext fun x => ?_⟩
+        have e1 : act σ (act τ x) = x := congrFun hτ1 x
+        have e2 : aff p (aff r x) = x := congrFun hr1 x
+        have e3 : act σ (aff r (act τ x)) = aff r (act σ (act τ x)) :=
+          (congrFun (comm r σ hσ) _).symm
+        rw [Function.comp_apply, Equiv.Perm.inv_eq_iff_eq, h]
+        show x = aff p (act σ (aff r (act τ x)))
+        rw [e3, e1, e2]
+    refine (hH φ).1 ((Subgroup.closure_le H).2 (fun ψ hψ => ?_) hφ)
+    rcases hψ with ⟨p, hp, h⟩ | ⟨σ, hσ, h⟩
+    · exact (hH ψ).2 ⟨p, hp, σ₀, hσ₀, by rw [h, h0, Function.comp_id]⟩
+    · exact (hH ψ).2 ⟨e, he, σ, hσ, by rw [h, he1, Function.id_comp]⟩
+  · -- `aff p ∘ act σ` is the product of two generators
+    rintro ⟨p, hp, σ, hσ, h⟩
+    have hφ : φ = Equiv.ofBijective _ (hbij p) * Equiv.ofBijective _ (abij σ hσ) :=
+      Equiv.ext fun x => by rw [h]; rfl
+    rw [hφ]
+    exact Subgroup.mul_mem _ (Subgroup.subset_closure (Or.inl ⟨p, hp, rfl⟩))
+      (Subgroup.subset_closure (Or.inr ⟨σ, hσ, rfl⟩))
+
+/-- Helper: a quantity that every generator keeps is kept by every element of the subgroup they
+generate. -/
+private theorem invariant_of_mem_closure_bgg {X Y : Type*} (f : X → Y)
+    {s : Set (Equiv.Perm X)} (hs : ∀ φ ∈ s, ∀ q, f (φ q) = f q) {φ : Equiv.Perm X}
+    (hφ : φ ∈ Subgroup.closure s) : ∀ q, f (φ q) = f q := by
+  induction hφ using Subgroup.closure_induction with
+  | mem ψ hψ => exact hs ψ hψ
+  | one => exact fun q => rfl
+  | mul ψ ψ' _ _ h h' => exact fun q => (h (ψ' q)).trans (h' q)
+  | inv ψ _ h =>
+    exact fun q => (h (ψ⁻¹ q)).symm.trans (congrArg f (ψ.apply_symm_apply q))
+
+/-- Helper: the map `(p, σ) ↦ aff p (act σ q)` is injective on `P × Sg` as soon as
+`aff p (act τ q) = aff p' q` forces `p = p'` and `act τ q = q`. -/
+private theorem injOn_core_bgg {X ι F : Type*} (aff : ι → X → X) (P : Set ι) (act : F → X → X)
+    (Sg : Set F) (q : X)
+    (amul : ∀ σ ∈ Sg, ∀ σ' ∈ Sg, ∃ τ ∈ Sg, act σ ∘ act σ' = act τ)
+    (ainv : ∀ σ ∈ Sg, ∃ τ ∈ Sg, act σ ∘ act τ = id ∧ act τ ∘ act σ = id)
+    (comm : ∀ p ∈ P, ∀ σ ∈ Sg, aff p ∘ act σ = act σ ∘ aff p)
+    (hinj : Set.InjOn (fun σ => act σ q) Sg)
+    (key : ∀ p ∈ P, ∀ p' ∈ P, ∀ τ ∈ Sg, aff p (act τ q) = aff p' q → p = p' ∧ act τ q = q) :
+    Set.InjOn (fun x : ι × F => aff x.1 (act x.2 q)) (P ×ˢ Sg) := by
+  rintro ⟨p, σ⟩ ⟨hp, hσ⟩ ⟨p', σ'⟩ ⟨hp', hσ'⟩ h
+  -- `act τ'` undoes `act σ'`, and `act τ' ∘ act σ = act τ`
+  obtain ⟨τ', hτ', h1, h2⟩ := ainv σ' hσ'
+  obtain ⟨τ, hτ, hτe⟩ := amul τ' hτ' σ hσ
+  have c3 : act τ' (act σ q) = act τ q := congrFun hτe q
+  -- apply `act τ'` to both sides and commute it with the maps of the pairs
+  have e3 : aff p (act τ q) = aff p' q := by
+    have e : act τ' (aff p (act σ q)) = act τ' (aff p' (act σ' q)) := congrArg (act τ') h
+    have c1 : act τ' (aff p (act σ q)) = aff p (act τ' (act σ q)) :=
+      (congrFun (comm p hp τ' hτ') _).symm
+    have c2 : act τ' (aff p' (act σ' q)) = aff p' (act τ' (act σ' q)) :=
+      (congrFun (comm p' hp' τ' hτ') _).symm
+    have c4 : act τ' (act σ' q) = q := congrFun h2 q
+    rw [c1, c2, c3, c4] at e
+    exact e
+  obtain ⟨hpp, hτq⟩ := key p hp p' hp' τ hτ e3
+  -- so `act σ q = act σ' (act τ q) = act σ' q`, and `σ = σ'`
+  have hσσ : σ = σ' := hinj hσ hσ' (by
+    show act σ q = act σ' q
+    calc act σ q = act σ' (act τ' (act σ q)) := (congrFun h1 _).symm
+      _ = act σ' q := by rw [c3, hτq])
+  rw [hpp, hσσ]
+
+/-- Helper (copy of `Symmetry/BiasesAffineGroupLaw.lean`): `v G G⁻¹ = v`. -/
+private theorem vecMul_vecMul_inv_bgg (G : GL d ℝ) (v : d → ℝ) :
+    v ᵥ* (G : Matrix d d ℝ) ᵥ* (↑G⁻¹ : Matrix d d ℝ) = v := by
+  rw [Matrix.vecMul_vecMul, Units.mul_inv, Matrix.vecMul_one]
+
+/-- Helper (copy of `Symmetry/BiasesAffineGroupLaw.lean`): the inverse pair `(G⁻¹, −g G)`. -/
+private def affInv_bgg (p : (Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ)) :
+    (Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ) :=
+  (p.1⁻¹, fun ℓ => -(p.2 ℓ ᵥ* (p.1 ℓ : Matrix d d ℝ)))
+
+/-- Helper (copy of `Symmetry/BiasesAffineGroupLaw.lean`): `(G, g)(G⁻¹, −g G) = (1, 0)`. -/
+private theorem affMul_affInv_bgg (p : (Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ)) :
+    affMul p (affInv_bgg p) = (1, 0) := by
+  refine Prod.ext (funext fun ℓ => ?_) (funext fun ℓ => ?_)
+  · exact mul_inv_cancel (p.1 ℓ)
+  · simp only [affMul, affInv_bgg, Matrix.neg_vecMul, vecMul_vecMul_inv_bgg, add_neg_cancel,
+      Pi.zero_apply]
+
+/-- Helper: `(G, g)(G', g')⁻¹ = (1, 0)` gives `(G, g) = (G', g')`. -/
+private theorem eq_of_affMul_affInv_bgg (p p' : (Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ))
+    (h : affMul p (affInv_bgg p') = (1, 0)) : p = p' := by
+  -- `G_ℓ G'_ℓ⁻¹ = 1`
+  have hG : ∀ ℓ, p.1 ℓ = p'.1 ℓ := fun ℓ => by
+    have h1 : p.1 ℓ * (p'.1 ℓ)⁻¹ = 1 := congrFun (congrArg Prod.fst h) ℓ
+    exact mul_inv_eq_one.mp h1
+  -- `g_ℓ − g'_ℓ G'_ℓ G_ℓ⁻¹ = 0`
+  refine Prod.ext (funext hG) (funext fun ℓ => ?_)
+  have h2 : p.2 ℓ + (-(p'.2 ℓ ᵥ* (p'.1 ℓ : Matrix d d ℝ))) ᵥ* (↑(p.1 ℓ)⁻¹ : Matrix d d ℝ) = 0 :=
+    congrFun (congrArg Prod.snd h) ℓ
+  rw [hG ℓ, Matrix.neg_vecMul, vecMul_vecMul_inv_bgg] at h2
+  exact add_neg_eq_zero.mp h2
+
+omit [Fintype T] [Fintype dOut] in
+/-- Helper, without skips: if the map of `(G, g)` takes `act τ q` to the image of `q` under the
+map of `(G', g')`, then `(G, g) = (G', g')` and `act τ q = q`. -/
+private theorem eq_and_eq_skipless_bgg {F : Type*}
+    {act : F → Params A dIn dOut × Biases A dOut → Params A dIn dOut × Biases A dOut}
+    {Sg : Set F} {q : Params A dIn dOut × Biases A dOut}
+    (hE : q.1.E.rank = Fintype.card d) (hw : ∀ ℓ, (q.1.write ℓ).rank = Fintype.card d)
+    (hact : InsideBlocksAction act Sg) (hfree : InsideBlocksFreeAt act Sg q)
+    (p p' : (Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ)) {τ : F} (hτ : τ ∈ Sg)
+    (h : affActSkipless p (act τ q) = affActSkipless p' q) : p = p' ∧ act τ q = q := by
+  -- the map of `r = (G, g)(G', g')⁻¹` takes `act τ q` to `q`
+  have e4 : affActSkipless (affMul p (affInv_bgg p')) (act τ q) = q := by
+    rw [← affActSkipless_affActSkipless, h, affActSkipless_affActSkipless, affMul_affInv_bgg,
+      affActSkipless_one]
+  -- it keeps `E`, the embedding bias, and the writes where it keeps the reads: `r = (1, 0)`
+  have hr : affMul p (affInv_bgg p') = (1, 0) := by
+    refine eq_one_of_affActSkipless_keeps (act τ q) _ ?_ (fun ℓ => ?_) ?_ ?_
+      (fun ℓ hr1 hr2 => ?_)
+    · rw [hfree.E_eq τ hτ]
+      exact hE
+    · rw [hact.rank_write τ hτ q ℓ]
+      exact hw ℓ
+    · rw [e4]
+      exact (hfree.E_eq τ hτ).symm
+    · rw [e4]
+      exact (hfree.biasE_eq τ hτ).symm
+    · rw [e4] at hr1 hr2 ⊢
+      obtain ⟨w1, w2⟩ := hfree.write_eq_of_read_eq τ hτ ℓ hr1.symm hr2.symm
+      exact ⟨w1.symm, w2.symm⟩
+  refine ⟨eq_of_affMul_affInv_bgg p p' hr, ?_⟩
+  rw [hr, affActSkipless_one] at e4
+  exact e4
+
+omit [Fintype T] [Fintype dOut] in
+/-- Helper, with skips: if the map of `(G, g)` (all `G_ℓ` equal) takes `act τ q` to the image of
+`q` under the map of `(G', g')` (all `G'_ℓ` equal), then `(G, g) = (G', g')` and `act τ q = q`. -/
+private theorem eq_and_eq_residual_bgg {F : Type*}
+    {act : F → Params A dIn dOut × Biases A dOut → Params A dIn dOut × Biases A dOut}
+    {Sg : Set F} {q : Params A dIn dOut × Biases A dOut}
+    (hE : q.1.E.rank = Fintype.card d) (hfree : InsideBlocksFreeAt act Sg q)
+    (p p' : (Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ)) (hp : ∀ ℓ, p.1 ℓ = p.1 0)
+    (hp' : ∀ ℓ, p'.1 ℓ = p'.1 0) {τ : F} (hτ : τ ∈ Sg)
+    (h : affActResidual p (act τ q) = affActResidual p' q) : p = p' ∧ act τ q = q := by
+  -- the map of `r = (G, g)(G', g')⁻¹` takes `act τ q` to `q`
+  have e4 : affActResidual (affMul p (affInv_bgg p')) (act τ q) = q := by
+    rw [← affActResidual_affActResidual _ _ hp, h, affActResidual_affActResidual _ _ hp',
+      affMul_affInv_bgg, affActResidual_one]
+  -- all `G_ℓ G'_ℓ⁻¹` are equal
+  have hr0 : ∀ ℓ, (affMul p (affInv_bgg p')).1 ℓ = (affMul p (affInv_bgg p')).1 0 := fun ℓ => by
+    show p.1 ℓ * (p'.1 ℓ)⁻¹ = p.1 0 * (p'.1 0)⁻¹
+    rw [hp ℓ, hp' ℓ]
+  -- it keeps `E`, the embedding bias, and the writes where it keeps the reads: `r = (1, 0)`
+  have hr : affMul p (affInv_bgg p') = (1, 0) := by
+    refine eq_one_of_affActResidual_keeps (act τ q) _ hr0 ?_ ?_ ?_ (fun ℓ hr1 hr2 => ?_)
+    · rw [hfree.E_eq τ hτ]
+      exact hE
+    · rw [e4]
+      exact (hfree.E_eq τ hτ).symm
+    · rw [e4]
+      exact (hfree.biasE_eq τ hτ).symm
+    · rw [e4] at hr1 hr2 ⊢
+      obtain ⟨w1, w2⟩ := hfree.write_eq_of_read_eq τ hτ ℓ hr1.symm hr2.symm
+      exact ⟨w1.symm, w2.symm⟩
+  refine ⟨eq_of_affMul_affInv_bgg p p' hr, ?_⟩
+  rw [hr, affActResidual_one] at e4
+  exact e4
+
 section Generated
 
 variable {F : Type*}
@@ -90,7 +321,10 @@ theorem mem_closure_affActSkipless_union_iff
             ∃ p ∈ affPreservingSkipless A dIn dOut, ⇑φ = affActSkipless p}
           ∪ {φ | ∃ σ ∈ Sg, ⇑φ = act σ})
       ↔ ∃ p ∈ affPreservingSkipless A dIn dOut, ∃ σ ∈ Sg, ⇑φ = affActSkipless p ∘ act σ := by
-  sorry
+  -- the maps of the pairs that preserve the function form a group (`exists_subgroup_*`)
+  exact mem_closure_union_iff_bgg affActSkipless (affPreservingSkipless A dIn dOut)
+    affActSkipless_bijective (exists_subgroup_affActSkipless A) act Sg hact.one hact.mul hact.inv
+    hact.comm_skipless φ
 
 /-- **The same with skips:** without normalization, for any blocks, the subgroup generated by the
 maps of the pairs that preserve the function of the residual network (the pairs with all `G_ℓ`
@@ -104,7 +338,10 @@ theorem mem_closure_affActResidual_union_iff [Nonempty T] [Nonempty dOut]
             ∃ p ∈ affPreservingResidual A dIn dOut, ⇑φ = affActResidual p}
           ∪ {φ | ∃ σ ∈ Sg, ⇑φ = act σ})
       ↔ ∃ p ∈ affPreservingResidual A dIn dOut, ∃ σ ∈ Sg, ⇑φ = affActResidual p ∘ act σ := by
-  sorry
+  -- the maps of the pairs that preserve the function form a group (`exists_subgroup_*`)
+  exact mem_closure_union_iff_bgg affActResidual (affPreservingResidual A dIn dOut)
+    affActResidual_bijective (exists_subgroup_affActResidual A hA) act Sg hact.one hact.mul
+    hact.inv hact.comm_residual φ
 
 /-- **Every map of the generated group preserves the function, without skips.** -/
 theorem evalB_eq_of_mem_closure_skipless
@@ -116,7 +353,16 @@ theorem evalB_eq_of_mem_closure_skipless
           ∪ {φ | ∃ σ ∈ Sg, ⇑φ = act σ}))
     (q : Params A dIn dOut × Biases A dOut) (x : Matrix T dIn ℝ) :
     evalB A 0 (φ q).1 (φ q).2 x = evalB A 0 q.1 q.2 x := by
-  sorry
+  -- every generator preserves the function
+  refine congrFun (invariant_of_mem_closure_bgg
+    (fun q : Params A dIn dOut × Biases A dOut => fun x => evalB A 0 q.1 q.2 x) ?_ hφ q) x
+  rintro ψ (⟨p, hp, h⟩ | ⟨σ, hσ, h⟩) q
+  · funext x
+    rw [h]
+    exact hp q.1 q.2 x
+  · funext x
+    rw [h]
+    exact hact.evalB_eq σ hσ 0 q x
 
 /-- **Every map of the generated group preserves the function, with skips.** -/
 theorem evalB_eq_of_mem_closure_residual
@@ -128,7 +374,16 @@ theorem evalB_eq_of_mem_closure_residual
           ∪ {φ | ∃ σ ∈ Sg, ⇑φ = act σ}))
     (q : Params A dIn dOut × Biases A dOut) (x : Matrix T dIn ℝ) :
     evalB A 1 (φ q).1 (φ q).2 x = evalB A 1 q.1 q.2 x := by
-  sorry
+  -- every generator preserves the function
+  refine congrFun (invariant_of_mem_closure_bgg
+    (fun q : Params A dIn dOut × Biases A dOut => fun x => evalB A 1 q.1 q.2 x) ?_ hφ q) x
+  rintro ψ (⟨p, hp, h⟩ | ⟨σ, hσ, h⟩) q
+  · funext x
+    rw [h]
+    exact hp q.1 q.2 x
+  · funext x
+    rw [h]
+    exact hact.evalB_eq σ hσ 1 q x
 
 /-- **The generated group is the product, without skips:** at weights and biases `q` whose `E`
 and writes have rank `d`, at which the family acts freely block by block, the map
@@ -138,7 +393,9 @@ theorem injOn_affActSkipless_act {q : Params A dIn dOut × Biases A dOut}
     (hact : InsideBlocksAction act Sg) (hfree : InsideBlocksFreeAt act Sg q) :
     Set.InjOn (fun x : ((Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ)) × F =>
         affActSkipless x.1 (act x.2 q)) (Set.univ ×ˢ Sg) := by
-  sorry
+  exact injOn_core_bgg affActSkipless Set.univ act Sg q hact.mul hact.inv
+    (fun p _ σ hσ => hact.comm_skipless p σ hσ) hfree.injOn
+    (fun p _ p' _ τ hτ h => eq_and_eq_skipless_bgg hE hw hact hfree p p' hτ h)
 
 /-- **The generated group is the product, with skips:** at weights and biases `q` whose `E` has
 rank `d`, at which the family acts freely block by block, the map
@@ -149,9 +406,38 @@ theorem injOn_affActResidual_act {q : Params A dIn dOut × Biases A dOut}
     (hact : InsideBlocksAction act Sg) (hfree : InsideBlocksFreeAt act Sg q) :
     Set.InjOn (fun x : ((Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ)) × F =>
         affActResidual x.1 (act x.2 q)) ({p | ∀ ℓ, p.1 ℓ = p.1 0} ×ˢ Sg) := by
-  sorry
+  exact injOn_core_bgg affActResidual {p | ∀ ℓ, p.1 ℓ = p.1 0} act Sg q hact.mul hact.inv
+    (fun p _ σ hσ => hact.comm_residual p σ hσ) hfree.injOn
+    (fun p hp p' hp' τ hτ h => eq_and_eq_residual_bgg hE hfree p p' hp hp' hτ h)
 
 end Generated
+
+omit [Fintype T] in
+/-- Helper (copy of `Symmetry/BiasesAffineGroup.lean`): a matrix with invertible determinant is
+the value of an element of `GL d ℝ`. -/
+private theorem exists_gl_of_isUnit_det_bgg {g : Matrix d d ℝ} (hg : IsUnit g.det) :
+    ∃ G : GL d ℝ, (G : Matrix d d ℝ) = g :=
+  ⟨((Matrix.isUnit_iff_isUnit_det _).mpr hg).unit, IsUnit.unit_spec _⟩
+
+omit [Fintype T] in
+/-- Helper (copy of `Symmetry/BiasesAffineGroup.lean`): an element of `GL d ℝ` has an invertible
+determinant. -/
+private theorem isUnit_det_gl_bgg (G : GL d ℝ) : IsUnit (G : Matrix d d ℝ).det :=
+  (Matrix.isUnit_iff_isUnit_det _).mp G.isUnit
+
+omit [Fintype T] in
+/-- Helper (copy of `Symmetry/BiasesAffineGroup.lean`): all pairs, as pairs of matrices and rows,
+are the pairs whose matrices are all invertible. -/
+private theorem affMat_univ_bgg :
+    affMat (Set.univ : Set ((Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ)))
+      = {q | ∀ ℓ, IsUnit (q.1 ℓ).det} := by
+  ext q
+  constructor
+  · rintro ⟨p, -, rfl⟩ ℓ
+    exact isUnit_det_gl_bgg (p.1 ℓ)
+  · intro hq
+    choose G hG using fun ℓ => exists_gl_of_isUnit_det_bgg (hq ℓ)
+    exact ⟨(G, q.2), Set.mem_univ _, Prod.ext (funext hG) rfl⟩
 
 /-- **Lemma A.8, "has dimension […] `(L + 1)(d_model² + d_model) + s` without skips":** without
 normalization, the pairs `(G, g)` that preserve the function of a skipless network, together with
@@ -162,7 +448,25 @@ theorem dimH_affMat_affPreservingSkipless_prod (A : Arch T d L) (hA : A.χ = id)
     (hS : IsOpen Sg) (hne : Sg.Nonempty) :
     dimH (affMat (affPreservingSkipless A dIn dOut) ×ˢ Sg)
       = (((L + 1) * (Fintype.card d ^ 2 + Fintype.card d) + Module.finrank ℝ F : ℕ) : ℝ≥0∞) := by
-  sorry
+  -- every pair passes: the set is open (the determinant is continuous) and not empty
+  obtain ⟨σ₀, hσ₀⟩ := hne
+  rw [affPreservingSkipless_eq_univ A hA, affMat_univ_bgg]
+  have hopen : IsOpen {q : (Fin (L + 1) → Matrix d d ℝ) × (Fin (L + 1) → d → ℝ) |
+      ∀ ℓ, IsUnit (q.1 ℓ).det} := by
+    simp only [isUnit_iff_ne_zero, Set.ofPred_forall]
+    exact isOpen_iInter_of_finite fun ℓ =>
+      isOpen_ne_fun ((continuous_apply ℓ).comp continuous_fst).matrix_det continuous_const
+  have h1 : ((fun _ => 1, 0) : (Fin (L + 1) → Matrix d d ℝ) × (Fin (L + 1) → d → ℝ)) ∈
+      {q : (Fin (L + 1) → Matrix d d ℝ) × (Fin (L + 1) → d → ℝ) |
+        ∀ ℓ, IsUnit (q.1 ℓ).det} := fun ℓ => by simp
+  have hfin : Module.finrank ℝ (((Fin (L + 1) → Matrix d d ℝ) × (Fin (L + 1) → d → ℝ)) × F)
+      = (L + 1) * (Fintype.card d ^ 2 + Fintype.card d) + Module.finrank ℝ F := by
+    rw [Module.finrank_prod, Module.finrank_prod, Module.finrank_pi_fintype,
+      Module.finrank_pi_fintype]
+    simp [Module.finrank_matrix, sq]
+    ring
+  rw [Real.dimH_of_mem_nhds ((hopen.prod hS).mem_nhds (Set.mk_mem_prod h1 hσ₀))]
+  exact congrArg Nat.cast hfin
 
 /-- **Lemma A.8, "has dimension `d_model² + (L + 1) d_model + s`", with skips:** without
 normalization, the pairs `(G, g)` that preserve the function of a residual network, together with
@@ -174,6 +478,43 @@ theorem dimH_affMat_affPreservingResidual_prod [Nonempty T] [Nonempty dOut] (A :
     (hS : IsOpen Sg) (hne : Sg.Nonempty) :
     dimH (affMat (affPreservingResidual A dIn dOut) ×ˢ Sg)
       = ((Fintype.card d ^ 2 + (L + 1) * Fintype.card d + Module.finrank ℝ F : ℕ) : ℝ≥0∞) := by
-  sorry
+  -- the set is the image of the open set of the triples `(G₀, g, σ)` with `G₀` invertible
+  -- under the isometry `(G₀, g, σ) ↦ ((G₀, …, G₀), g, σ)` (`mem_affPreservingResidual_iff`)
+  obtain ⟨σ₀, hσ₀⟩ := hne
+  set φ := fun q : Matrix d d ℝ × (Fin (L + 1) → d → ℝ) => ((fun _ : Fin (L + 1) => q.1), q.2)
+    with hφ
+  have hset : affMat (affPreservingResidual A dIn dOut) = φ '' {q | IsUnit q.1.det} := by
+    ext q
+    constructor
+    · rintro ⟨p, hp, rfl⟩
+      have hc := (mem_affPreservingResidual_iff A hA p).mp hp
+      refine ⟨((p.1 0 : Matrix d d ℝ), p.2), isUnit_det_gl_bgg (p.1 0), ?_⟩
+      refine Prod.ext (funext fun ℓ => ?_) rfl
+      show (p.1 0 : Matrix d d ℝ) = p.1 ℓ
+      rw [hc ℓ]
+    · rintro ⟨r, hr, rfl⟩
+      obtain ⟨G₀, hG₀⟩ := exists_gl_of_isUnit_det_bgg hr
+      refine ⟨(fun _ => G₀, r.2), (mem_affPreservingResidual_iff A hA _).mpr fun ℓ => rfl, ?_⟩
+      exact Prod.ext (funext fun _ => hG₀) rfl
+  -- `φ` is an isometry (the sup distance of the constant family is the distance)
+  have hiso : Isometry φ := by
+    intro a b
+    simp only [hφ, Prod.edist_eq]
+    congr 1
+    exact le_antisymm (edist_pi_le_iff.2 fun _ => le_rfl)
+      (edist_le_pi_edist (fun _ : Fin (L + 1) => a.1) (fun _ => b.1) 0)
+  -- the pairs with `G₀` invertible are open and contain `(1, 0)`
+  have hopen : IsOpen {q : Matrix d d ℝ × (Fin (L + 1) → d → ℝ) | IsUnit q.1.det} := by
+    simp only [isUnit_iff_ne_zero]
+    exact isOpen_ne_fun continuous_fst.matrix_det continuous_const
+  have h1 : ((1, 0) : Matrix d d ℝ × (Fin (L + 1) → d → ℝ)) ∈
+      {q : Matrix d d ℝ × (Fin (L + 1) → d → ℝ) | IsUnit q.1.det} := by simp
+  have hfin : Module.finrank ℝ ((Matrix d d ℝ × (Fin (L + 1) → d → ℝ)) × F)
+      = Fintype.card d ^ 2 + (L + 1) * Fintype.card d + Module.finrank ℝ F := by
+    rw [Module.finrank_prod, Module.finrank_prod, Module.finrank_pi_fintype]
+    simp [Module.finrank_matrix, sq]
+  rw [hset, ← Set.image_id Sg, ← Set.prodMap_image_prod, (hiso.prodMap isometry_id).dimH_image,
+    Real.dimH_of_mem_nhds ((hopen.prod hS).mem_nhds (Set.mk_mem_prod h1 hσ₀))]
+  exact congrArg Nat.cast hfin
 
 end Skips
