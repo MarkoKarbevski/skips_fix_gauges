@@ -151,6 +151,7 @@ variable {F₁ F₂ : Type*}
   {actB : F₂ → Params B dIn dOut × Biases B dOut → Params B dIn dOut × Biases B dOut}
   {SgA : Set F₁} {SgB : Set F₂}
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **What the map of a pair does to each part:** the reads, the writes and the read biases of
 the first part are moved by `actA σ₁` and those of the second by `actB σ₂`; the write biases are
 moved by both rows; `E`, `D`, the embedding bias and the readout bias are kept. -/
@@ -288,6 +289,7 @@ private theorem ext_parts_bgs {q q' : Params (A.sum B) dIn dOut × Biases (A.sum
     | inl j => exact congrFun (congrFun h3 ℓ) j
     | inr j => exact congrFun (congrFun h6 ℓ) j
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: the lifts of a map of the first part and of a map of the second part commute. -/
 private theorem liftFst_liftSnd_comm_bgs (lA : InsideBlocksLocal actA SgA)
     (lB : InsideBlocksLocal actB SgB) {σ₁ : F₁} {σ₂ : F₂} (h1 : σ₁ ∈ SgA) (h2 : σ₂ ∈ SgB)
@@ -567,6 +569,7 @@ private theorem span_liftSnd_bgs (lB : InsideBlocksLocal actB SgB) {σ : F₂} (
   rw [span_row_sum_bgs, span_row_sum_bgs]
   exact congrArg (_ ⊔ ·) (lB.span_write σ hσ (q.1.sumSnd, q.2.sumSnd) ℓ)
 
+omit [Fintype T] [Fintype dOut] in
 /-- **Two families of symmetries inside the blocks, of `A` and of `B`, that act block by block
 give the family of the pairs, a family of symmetries inside the blocks of `A.sum B`.** -/
 theorem insideBlocksAction_sumAct (hA : InsideBlocksAction actA SgA)
@@ -624,6 +627,7 @@ end Sum
 
 /-! ### Blocks without a symmetry inside: the family of the identity -/
 
+omit [Fintype T] [Fintype dOut] in
 /-- **The identity alone is a family of symmetries inside the blocks,** indexed by the space
 `Fin 0 → ℝ` of dimension `0`. -/
 theorem insideBlocksAction_id :
@@ -634,6 +638,7 @@ theorem insideBlocksAction_id :
     fun σ _ => ⟨σ, Set.mem_univ _, rfl, rfl⟩, fun _ _ _ => rfl, fun _ _ _ => rfl,
     fun _ _ _ _ _ => rfl, fun _ _ _ _ => rfl⟩
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **It acts block by block.** -/
 theorem insideBlocksLocal_id :
     InsideBlocksLocal (A := A) (dIn := dIn) (dOut := dOut)
@@ -643,6 +648,7 @@ theorem insideBlocksLocal_id :
     fun _ _ _ _ _ => rfl, fun _ _ q q' hr hw hb => ⟨hr, hw, hb, ?_⟩, fun _ _ _ _ => rfl⟩
   rw [sub_self, sub_self]
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **It acts freely block by block at every `q`.** -/
 theorem insideBlocksFreeAt_id (q : Params A dIn dOut × Biases A dOut) :
     InsideBlocksFreeAt (fun (_ : Fin 0 → ℝ) q => q) Set.univ q := by

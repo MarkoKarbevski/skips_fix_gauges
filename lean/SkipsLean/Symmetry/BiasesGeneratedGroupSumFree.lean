@@ -55,6 +55,7 @@ private theorem eq_of_parts_bsf {F : Type*}
   · exact Biases.ext' ((l.biasE_eq σ hσ p).trans (l.biasE_eq σ' hσ' p).symm) (congrFun hb)
       (congrFun hwb) ((l.biasD_eq σ hσ p).trans (l.biasD_eq σ' hσ' p).symm)
 
+omit [Fintype T] [Fintype dOut] in
 /-- **The family of the pairs acts freely block by block at `q`,** if the family of `A` does at
 the first part of `q` and the family of `B` at the second. -/
 theorem insideBlocksFreeAt_sumAct (hA : InsideBlocksAction actA SgA)

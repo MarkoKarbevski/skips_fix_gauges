@@ -123,6 +123,7 @@ theorem generatedGroupSkipless_of_free (hA : A.χ = id)
 
 omit [NormedAddCommGroup F₁] [NormedSpace ℝ F₁] [FiniteDimensional ℝ F₁] [NormedAddCommGroup F₂]
   [NormedSpace ℝ F₂] [FiniteDimensional ℝ F₂] in
+omit [Fintype T] in
 /-- **The family of the pairs acts freely block by block at almost every weight of `A.sum B`,**
 if the two families do at almost every weight of `A` and of `B`. -/
 theorem ae_insideBlocksFreeAt_sumAct (hA : InsideBlocksAction actA SgA)
