@@ -2102,3 +2102,11 @@ import SkipsLean
 #print axioms Skips.ae_funDimB_tanh_residual
 #print axioms Skips.ae_eventually_funDimB_smallWritesB_gelu
 #print axioms Skips.ae_funDimB_gelu_residual
+#print axioms Skips.smallWritesLimitB_eq_zero_gated
+#print axioms Skips.eventually_funDimB_smallWritesB_gated
+#print axioms Skips.ae_eventually_funDimB_smallWritesB_gated
+#print axioms Skips.ae_funDimB_gated_residual
+#print axioms Skips.ae_eventually_funDimB_smallWritesB_swiglu
+#print axioms Skips.ae_funDimB_swiglu_residual
+#print axioms Skips.ae_eventually_funDimB_smallWritesB_geglu
+#print axioms Skips.ae_funDimB_geglu_residual
