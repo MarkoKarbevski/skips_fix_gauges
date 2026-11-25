@@ -80,6 +80,7 @@ private theorem evalB_eq_of_blocks_ibb (q₁ q₂ : ParamsB A dIn dOut)
   -- hence the outputs agree
   rw [evalB, evalB, hh, hD, hbD]
 
+omit [DecidableEq d] in
 /-- **A symmetry inside the blocks of a network with biases preserves the function with skips
 and without them:** its direction is flat for every stream and every `χ`. -/
 theorem InsideBlocksB.mem_flatB (h : InsideBlocksB A p η) (S : Fin L → Matrix d d ℝ) :
@@ -91,6 +92,7 @@ theorem InsideBlocksB.mem_flatB (h : InsideBlocksB A p η) (S : Fin L → Matrix
   filter_upwards [hev] with τ hτ x
   exact evalB_eq_of_blocks_ibb p (γ τ) hτ.1 hτ.2.1 hτ.2.2.1 hτ.2.2.2.1 hτ.2.2.2.2 S x
 
+omit [Fintype T] [DecidableEq d] in
 /-- A direction of a symmetry inside the blocks does not move the embedding. -/
 theorem InsideBlocksB.E_eq_zero (h : InsideBlocksB A p η) : η.1.E = 0 := by
   obtain ⟨γ, -, hd, hev⟩ := h
@@ -104,6 +106,7 @@ theorem InsideBlocksB.E_eq_zero (h : InsideBlocksB A p η) : η.1.E = 0 := by
     (hasDerivAt_const (0 : ℝ) p.1.E).congr_of_eventuallyEq (hev.mono fun _ hτ => hτ.1)
   exact h1.unique h2
 
+omit [Fintype T] [DecidableEq d] in
 /-- A direction of a symmetry inside the blocks does not move the readout. -/
 theorem InsideBlocksB.D_eq_zero (h : InsideBlocksB A p η) : η.1.D = 0 := by
   obtain ⟨γ, -, hd, hev⟩ := h
@@ -117,6 +120,7 @@ theorem InsideBlocksB.D_eq_zero (h : InsideBlocksB A p η) : η.1.D = 0 := by
     (hasDerivAt_const (0 : ℝ) p.1.D).congr_of_eventuallyEq (hev.mono fun _ hτ => hτ.2.1)
   exact h1.unique h2
 
+omit [Fintype T] [DecidableEq d] in
 /-- A direction of a symmetry inside the blocks does not move the embedding bias. -/
 theorem InsideBlocksB.biasE_eq_zero (h : InsideBlocksB A p η) : η.2.E = 0 := by
   obtain ⟨γ, -, hd, hev⟩ := h
@@ -130,6 +134,7 @@ theorem InsideBlocksB.biasE_eq_zero (h : InsideBlocksB A p η) : η.2.E = 0 := b
     (hasDerivAt_const (0 : ℝ) p.2.E).congr_of_eventuallyEq (hev.mono fun _ hτ => hτ.2.2.1)
   exact h1.unique h2
 
+omit [Fintype T] [DecidableEq d] in
 /-- A direction of a symmetry inside the blocks does not move the readout bias. -/
 theorem InsideBlocksB.biasD_eq_zero (h : InsideBlocksB A p η) : η.2.D = 0 := by
   obtain ⟨γ, -, hd, hev⟩ := h
@@ -145,12 +150,14 @@ theorem InsideBlocksB.biasD_eq_zero (h : InsideBlocksB A p η) : η.2.D = 0 := b
 
 variable (p)
 
+omit [DecidableEq d] in
 /-- Helper: the directions spanned by directions of symmetries inside the blocks are flat, for
 every stream (the flat directions form a subspace). -/
 private theorem span_le_flatB_ibb (S : Fin L → Matrix d d ℝ) :
     Submodule.span ℝ {η | InsideBlocksB A p η} ≤ flatB A S p :=
   Submodule.span_le.2 fun _ hη => InsideBlocksB.mem_flatB hη S
 
+omit [Fintype T] [DecidableEq d] in
 /-- Helper: the directions spanned by directions of symmetries inside the blocks have the
 components `E`, `D`, the embedding bias and the readout bias `0` (linear conditions). -/
 private theorem comps_eq_zero_of_mem_span_ibb {v : ParamsB A dIn dOut}

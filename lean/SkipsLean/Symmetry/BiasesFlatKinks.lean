@@ -367,6 +367,7 @@ private theorem smul_translateAtDir_bfk (θ : Params A dIn dOut) (g : Fin (L + 1
   · intro ℓ; rfl
   · simp only [Biases.smul_D, translateAtDir, Pi.smul_apply, Matrix.smul_vecMul, smul_neg]
 
+omit [DecidableEq d] in
 /-- **The directions of the translations of the hidden states of a skipless network with biases
 are flat,** for any blocks. -/
 theorem translateAtDir_mem_flatB' (hA : A.χ = id) (g : Fin (L + 1) → d → ℝ) :

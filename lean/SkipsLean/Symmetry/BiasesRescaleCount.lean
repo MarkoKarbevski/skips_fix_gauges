@@ -440,6 +440,7 @@ private theorem block_rescaleGate_brc {k : ℕ}
   simp only [Params.rescaleGate, Matrix.of_apply]
   field_simp
 
+omit [Fintype T] [DecidableEq d] in
 /-- **The rescalings of the hidden units of MLP blocks with biases are symmetries inside the
 blocks,** for an activation that is positively homogeneous of degree `k`. -/
 theorem insideBlocksB_rescaleDirMlpB {k : ℕ}
@@ -462,6 +463,7 @@ theorem insideBlocksB_rescaleDirMlpB {k : ℕ}
   · funext i
     simp [Biases.rescaleMlp]
 
+omit [Fintype T] [DecidableEq d] in
 /-- **The rescalings of the values of gated units with biases are symmetries inside the
 blocks,** for every gate activation. -/
 theorem insideBlocksB_rescaleDirB
@@ -483,6 +485,7 @@ theorem insideBlocksB_rescaleDirB
   · funext j
     cases j <;> simp [Biases.rescale]
 
+omit [Fintype T] [DecidableEq d] in
 /-- **The rescalings of the gates of gated units with biases are symmetries inside the blocks,**
 for a gate activation that is positively homogeneous of degree `k`. -/
 theorem insideBlocksB_rescaleDirGateB {k : ℕ}
@@ -727,6 +730,7 @@ private theorem alphaBeta_eq_zero_brc (k : ℕ)
 /-! ### Helpers: the spaces `V` of the rescalings satisfy the conditions of
 `Symmetry/InsideBlocksBiases.lean` -/
 
+omit [Fintype T] [DecidableEq d] in
 /-- Helper: the directions of the rescalings of the hidden units of MLP blocks are spanned by
 directions of symmetries inside the blocks. -/
 private theorem range_le_span_mlp_brc {k : ℕ}
@@ -765,6 +769,7 @@ private theorem injective_mlp_brc (k : ℕ)
   exact alpha_eq_zero_mlp_brc k p.1 hc α ℓ
     (congrArg (fun q : ParamsB (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut => q.1.read ℓ) h)
 
+omit [Fintype T] [DecidableEq d] in
 /-- Helper: the directions of the rescalings of the values of gated blocks are spanned by
 directions of symmetries inside the blocks. -/
 private theorem range_le_span_gated_brc
@@ -802,6 +807,7 @@ private theorem injective_gated_brc
   exact alpha_eq_zero_gated_brc p.1 hv α ℓ
     (congrArg (fun q : ParamsB (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut => q.1.read ℓ) h)
 
+omit [Fintype T] [DecidableEq d] in
 /-- Helper: the directions of the rescalings of the values and of the gates are spanned by
 directions of symmetries inside the blocks. -/
 private theorem range_le_span_gatedGate_brc {k : ℕ}
