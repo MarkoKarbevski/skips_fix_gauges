@@ -193,7 +193,8 @@ theorem evalLN_eq_evalB_centerLN_skipless (ε : ℝ) (θ : Params A dIn dOut) (b
     (γ β : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) :
     evalLN A ε 0 θ b γ β x
       = evalB (A.withNorm (rmsNorm ε)) 0 (θ.centerLN ε γ) (b.centerLN ε θ β) x := by
-  sorry
+  -- `Z 0 = 0 Z`
+  exact evalLN_eq_evalB_centerLN ε 0 (fun ℓ => by simp) θ b γ β x
 
 /-- **Proposition A.15 (i) for a residual pre-LayerNorm network.** -/
 theorem evalLN_eq_evalB_centerLN_residual (ε : ℝ) (θ : Params A dIn dOut) (b : Biases A dOut)
