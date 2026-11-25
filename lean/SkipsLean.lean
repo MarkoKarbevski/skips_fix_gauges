@@ -380,3 +380,4 @@ import SkipsLean.OneBlock.GatedBiasesNamed
 import SkipsLean.OneBlock.KeepsProductsBiases
 import SkipsLean.Residual.SmallWritesBiases
 import SkipsLean.Residual.DepthMlpBiases
+import SkipsLean.Residual.DepthGatedBiases
