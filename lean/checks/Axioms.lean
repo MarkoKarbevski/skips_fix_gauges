@@ -2320,3 +2320,7 @@ import SkipsLean
 #print axioms Skips.ae_insideBlocksFreeAt_rescale
 #print axioms Skips.ae_insideBlocksFreeAt_rescaleBoth
 #print axioms Skips.ae_insideBlocksFreeAt_heads
+#print axioms Skips.insideBlocksLocal_rescaleMlp
+#print axioms Skips.insideBlocksLocal_rescale
+#print axioms Skips.insideBlocksLocal_rescaleBoth
+#print axioms Skips.insideBlocksLocal_heads

@@ -119,6 +119,7 @@ private theorem value_rescaleGate_blr {k : ℕ}
   simp only [Matrix.add_apply, Matrix.of_apply, Matrix.mul_apply, Params.rescaleGate,
     Biases.rescaleGate, Sum.elim_inr]
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **The rescalings of the hidden units of MLP blocks act block by block,** for an activation
 that is positively homogeneous of degree `k`. -/
 theorem insideBlocksLocal_rescaleMlp {k : ℕ}
@@ -160,6 +161,7 @@ theorem insideBlocksLocal_rescaleMlp {k : ℕ}
     exact span_row_smul_blr (q.1.write ℓ) (fun i => (c ℓ i ^ k)⁻¹)
       fun i => inv_ne_zero (pow_ne_zero k (hc ℓ i).ne')
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **The rescalings of the values of gated units act block by block,** for any gate. -/
 theorem insideBlocksLocal_rescale :
     InsideBlocksLocal (A := Arch.gated (T := T) (d := d) σ χ hid) (dIn := dIn) (dOut := dOut)
@@ -204,6 +206,7 @@ theorem insideBlocksLocal_rescale :
     intro c hc q ℓ
     exact span_row_smul_blr (q.1.write ℓ) (fun i => c ℓ i) fun i => (hc ℓ i).ne'
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **The rescalings of the values and of the gates act block by block,** for a gate that is
 positively homogeneous of degree `k`. -/
 theorem insideBlocksLocal_rescaleBoth {k : ℕ}

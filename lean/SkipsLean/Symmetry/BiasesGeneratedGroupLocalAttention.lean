@@ -462,6 +462,7 @@ private theorem span_heads_bla {I n m : Type*} [Fintype n] [DecidableEq n] (G : 
         by rw [← h]
     _ ≤ _ := span_heads_le_bla (fun i => (((G i)⁻¹ : GL n ℝ) : Matrix n n ℝ)) _
 
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **The symmetries inside attention heads with biases act block by block,** when every token
 sees a token. -/
 theorem insideBlocksLocal_heads (hsee : ∀ t, ∃ s, sees t s) :
