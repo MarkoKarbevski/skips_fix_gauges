@@ -350,3 +350,14 @@ import SkipsLean.Symmetry.LocallyFreeTransformerGeneric
 import SkipsLean.Dimension.UpperBoundTwoSidedGated
 import SkipsLean.Depth.InactiveGateTwoSided
 import SkipsLean.Depth.InactiveUnitEveryPoint
+import SkipsLean.Residual.FewerHiddenUnitsNarrow
+import SkipsLean.Residual.BlocksAloneGeneral
+import SkipsLean.Residual.BlocksAloneMlp
+import SkipsLean.Residual.BlocksAloneGated
+import SkipsLean.Residual.BlocksAloneSkipless
+import SkipsLean.Residual.BlocksAloneDifferent
+import SkipsLean.Residual.BlocksAloneTransformer
+import SkipsLean.Residual.DepthRescaleOpen
+import SkipsLean.Residual.DepthReGLUOpen
+import SkipsLean.Symmetry.JunctionsCommute
+import SkipsLean.Depth.ThetaDagger
