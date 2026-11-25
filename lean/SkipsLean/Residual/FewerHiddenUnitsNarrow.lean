@@ -283,6 +283,33 @@ theorem le_inputRank_residual_mlp_zero (hσ0 : σ 0 = 0) (hσ : DifferentiableAt
     _ = Module.finrank ℝ (LinearMap.range g) := (LinearMap.finrank_range_of_inj hg).symm
     _ ≤ _ := Submodule.finrank_mono hle
 
+/-- Helper: a matrix with `d` columns has rank `d` if some `d` of its rows form an invertible
+matrix (as `rank_eq_of_isUnit_det_submatrix` in `Generic/Params.lean`, private there). -/
+private theorem rank_eq_of_isUnit_det_submatrix_fhn {m : Type*} (M : Matrix m d ℝ) (ρ : d ↪ m)
+    (h : IsUnit (M.submatrix ρ id).det) : M.rank = Fintype.card d :=
+  le_antisymm (Matrix.rank_le_card_width M)
+    ((Matrix.rank_of_isUnit _ ((Matrix.isUnit_iff_isUnit_det _).2 h)).symm.le.trans
+      (Matrix.rank_submatrix_le M ρ id))
+
+/-- Helper: at generic parameters `E` has rank `d`, when `d_in ≥ d` (as `ae_rank_E` in
+`Generic/Params.lean`, private there). -/
+private theorem ae_rank_E_fhn {A : Arch T d L} (μ : Measure (Params A dIn dOut))
+    [μ.IsAddHaarMeasure] (hdIn : Fintype.card d ≤ Fintype.card dIn) :
+    ∀ᵐ θ ∂μ, θ.E.rank = Fintype.card d := by
+  -- `d` rows of `E`, invertible at generic parameters
+  obtain ⟨ρ⟩ := Function.Embedding.nonempty_of_card_le hdIn
+  filter_upwards [ae_isUnit_det_submatrix μ] with θ hθ
+  exact rank_eq_of_isUnit_det_submatrix_fhn θ.E ρ (hθ.2.2.1 ρ)
+
+/-- Helper: at generic parameters `D` has rank `d`, when `d_out ≥ d`. -/
+private theorem ae_rank_D_fhn {A : Arch T d L} (μ : Measure (Params A dIn dOut))
+    [μ.IsAddHaarMeasure] (hdOut : Fintype.card d ≤ Fintype.card dOut) :
+    ∀ᵐ θ ∂μ, θ.D.rank = Fintype.card d := by
+  -- `d` columns of `D`, invertible at generic parameters
+  obtain ⟨c⟩ := Function.Embedding.nonempty_of_card_le hdOut
+  filter_upwards [ae_isUnit_det_submatrix μ] with θ hθ
+  exact rank_eq_card_of_isUnit_det θ.D c (hθ.2.1 c)
+
 /-- **Theorem A.28 (iii) of the skips paper, "it has rank `d_model` at some input for almost every
 choice of weights", for MLP blocks whose activation has `σ(0) = 0` and is differentiable at `0`:**
 with `d_in, d_out ≥ d`, at generic parameters of the residual network the Jacobian of the output
@@ -292,7 +319,37 @@ theorem ae_le_inputRank_residual_mlp_zero (hσ0 : σ 0 = 0) (hσ : Differentiabl
     [μ.IsAddHaarMeasure] (hdIn : Fintype.card d ≤ Fintype.card dIn)
     (hdOut : Fintype.card d ≤ Fintype.card dOut) :
     ∀ᵐ θ ∂μ, Fintype.card T * Fintype.card d ≤ inputRank (Arch.mlp σ id hid) 1 θ 0 := by
-  sorry
+  -- `E` and `D` have rank `d` at generic parameters
+  have hE := ae_rank_E_fhn μ hdIn
+  have hD := ae_rank_D_fhn μ hdOut
+  -- the determinant of `I + σ'(0) W_read^ℓ W_write^ℓ` is a polynomial in the weights, equal to
+  -- `1` at `θ = 0`, so it is nonzero at generic parameters
+  have hU : ∀ᵐ θ ∂μ, ∀ ℓ, IsUnit (1 + deriv σ 0 • (θ.read ℓ * θ.write ℓ)).det := by
+    refine ae_all_iff.2 fun ℓ => ?_
+    have hentry : ∀ i j : d, AnalyticOnNhd ℝ
+        (fun θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut =>
+          (1 + deriv σ 0 • (θ.read ℓ * θ.write ℓ) : Matrix d d ℝ) i j) Set.univ := fun i j => by
+      have h := analyticOnNhd_mul_apply
+        (Params.linRead (A := Arch.mlp (T := T) (d := d) σ id hid) (dIn := dIn) (dOut := dOut) ℓ)
+        (Params.linWrite (A := Arch.mlp (T := T) (d := d) σ id hid) (dIn := dIn) (dOut := dOut)
+          ℓ) i j
+      exact analyticOnNhd_const.fun_add (analyticOnNhd_const.mul h)
+    have hg : AnalyticOnNhd ℝ
+        (fun θ : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut =>
+          (1 + deriv σ 0 • (θ.read ℓ * θ.write ℓ)).det) Set.univ := by
+      simp only [Matrix.det_apply']
+      exact Finset.analyticOnNhd_fun_sum _ fun τ _ => analyticOnNhd_const.mul
+        (Finset.analyticOnNhd_fun_prod _ fun i _ => hentry (τ i) i)
+    have h0 : (1 + deriv σ 0 •
+        ((0 : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut).read ℓ *
+          (0 : Params (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut).write ℓ)).det ≠ 0 := by
+      rw [Params.zero_read, Matrix.zero_mul, smul_zero, add_zero, Matrix.det_one]
+      exact one_ne_zero
+    filter_upwards [ae_ne_zero_of_analytic μ hg ⟨0, h0⟩] with θ hθ
+    exact isUnit_iff_ne_zero.2 hθ
+  -- the bound at one parameter
+  filter_upwards [hE, hD, hU] with θ h1 h2 h3
+  exact le_inputRank_residual_mlp_zero hσ0 hσ θ h1 h2 h3
 
 /-- **Theorem A.28 (iii) of the skips paper, "If some `d'_hidden,ℓ < d_model` […] the two networks
 differ", for MLP blocks whose activation has `σ(0) = 0` and is differentiable at `0`:** with
@@ -308,7 +365,18 @@ theorem ae_forall_eval_residual_ne_skipless_of_card_lt [Nonempty T] (hσ0 : σ 0
     ∀ᵐ θ ∂μ, ∀ (L' : ℕ) (A' : Arch T d L'), (∀ ℓ, Differentiable ℝ (A'.f ℓ)) →
       Differentiable ℝ A'.χ → (∃ ℓ, Fintype.card (A'.w ℓ) < Fintype.card d) →
       ∀ η : Params A' dIn dOut, eval (Arch.mlp σ id hid) 1 θ ≠ eval A' 0 η := by
-  sorry
+  filter_upwards [ae_le_inputRank_residual_mlp_zero hσ0 hσ μ hdIn hdOut] with θ hθ
+  intro L' A' hf hχ hw η heq
+  obtain ⟨ℓ, hℓ⟩ := hw
+  -- equal functions have equal Jacobians at `0`
+  have hrank : inputRank (Arch.mlp σ id hid) 1 θ 0 = inputRank A' 0 η 0 := by
+    unfold inputRank
+    rw [heq]
+  -- `|T| d ≤ rank ≤ |T| |w_ℓ| < |T| d`
+  have h1 := inputRank_skipless_le hf hχ η 0 ℓ
+  have h2 : Fintype.card T * Fintype.card (A'.w ℓ) < Fintype.card T * Fintype.card d :=
+    Nat.mul_lt_mul_of_pos_left hℓ Fintype.card_pos
+  exact lt_irrefl _ ((hθ.trans (hrank.le.trans h1)).trans_lt h2)
 
 /-- **Theorem A.28 (iii) of the skips paper, given Sard's theorem:** for GELU blocks without
 normalization and `d_in, d_out ≥ d ≥ 2`, with at least one token, at generic parameters of the
