@@ -52,7 +52,41 @@ theorem exists_holomorphic_suffix_pow_bounded (hε : 0 < ε) (hχ : A.χ = rmsNo
               = (fderiv ℝ (fun θ' : Params A dIn dOut => suffix A 0 θ' k (t ^ m • (H + u)))
                   θ η).map fun a : ℝ => (a : ℂ))
         ∧ ∀ u : Matrix T d ℂ, (∀ τ j, ‖u τ j‖ ≤ ϱ) → ‖G' u‖ ≤ C := by
-  sorry
+  -- the two maps of `(s, h)`, real-analytic at `(0, H)`
+  have h1 : AnalyticAt ℝ (fun z : ℝ × Matrix T d ℝ => scaledSuffix A ε m θ k z) (0, H) := by
+    have ha := analyticAt_scaledSuffix A hε hχ hf m θ k 0 H hH
+    have hi : AnalyticAt ℝ (fun z : ℝ × Matrix T d ℝ =>
+        ((θ, z) : Params A dIn dOut × ℝ × Matrix T d ℝ)) (0, H) :=
+      analyticAt_const.prod analyticAt_id
+    have hc := ha.comp_of_eq hi rfl
+    exact hc
+  have h2 := analyticAt_fderiv_params_scaledSuffix A hε hχ hf m θ η k 0 H hH
+  -- their holomorphic extensions, for `|s| ≤ s₁` and `|s| ≤ s₂`
+  obtain ⟨ϱ₁, hϱ₁, s₁, hs₁, C₁, hG₁⟩ := exists_holomorphic_extension_real_param h1
+  obtain ⟨ϱ₂, hϱ₂, s₂, hs₂, C₂, hG₂⟩ := exists_holomorphic_extension_real_param h2
+  have ht₀ : 0 < max (1 / s₁) (1 / s₂) := lt_max_of_lt_left (by positivity)
+  refine ⟨min ϱ₁ ϱ₂, lt_min hϱ₁ hϱ₂, max (1 / s₁) (1 / s₂), ht₀, max C₁ C₂, fun t ht => ?_⟩
+  have ht0 : 0 < t := ht₀.trans_le ht
+  -- `s = 1/t` has `|s| ≤ s₁` and `|s| ≤ s₂`
+  have hs : ∀ s₀ : ℝ, 0 < s₀ → 1 / s₀ ≤ t → |1 / t| ≤ s₀ := fun s₀ hs₀ h => by
+    rw [abs_of_pos (by positivity)]
+    exact (one_div_le hs₀ ht0).1 h
+  obtain ⟨G, hGa, hGr, hGb⟩ := hG₁ (1 / t) (hs s₁ hs₁ (le_of_max_le_left ht))
+  obtain ⟨G', hGa', hGr', hGb'⟩ := hG₂ (1 / t) (hs s₂ hs₂ (le_of_max_le_right ht))
+  have hu₁ : ∀ u : Matrix T d ℂ, (∀ τ j, ‖u τ j‖ ≤ min ϱ₁ ϱ₂) → ∀ τ j, ‖u τ j‖ ≤ ϱ₁ :=
+    fun u hu τ j => (hu τ j).trans (min_le_left _ _)
+  have hu₂ : ∀ u : Matrix T d ℂ, (∀ τ j, ‖u τ j‖ ≤ min ϱ₁ ϱ₂) → ∀ τ j, ‖u τ j‖ ≤ ϱ₂ :=
+    fun u hu τ j => (hu τ j).trans (min_le_right _ _)
+  refine ⟨⟨G, hGa.mono fun u hu => hu₁ u hu, fun u hu => ?_,
+    fun u hu => (hGb u (hu₁ u hu)).trans (le_max_left _ _)⟩,
+    G', hGa'.mono fun u hu => hu₂ u hu, fun u hu => ?_,
+    fun u hu => (hGb' u (hu₂ u hu)).trans (le_max_right _ _)⟩
+  · -- at real `u`: `𝓑_{>k}(t^m (H + u)) = 𝓑^♯(N_{ε t^{-2m}}(H + u))`
+    rw [hGr u fun τ j => (hu τ j).trans (min_le_left _ _),
+      suffix_pow_smul_eq_scaledSuffix A hχ θ k ht0 m]
+  · -- the same for the derivative in the weights
+    rw [hGr' u fun τ j => (hu τ j).trans (min_le_right _ _),
+      fderiv_params_suffix_pow_smul A hχ θ η k ht0 m]
 
 /-- **Lemma D.10, second sentence:** the maps `u ↦ 𝓑_{>k}(t (H + u))` and
 `u ↦ 𝐃_θ 𝓑_{>k}(t (H + u)) η` extend to holomorphic maps on the complex `u` with
