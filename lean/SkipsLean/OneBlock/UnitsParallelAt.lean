@@ -35,9 +35,10 @@ for linearly independent columns `c_i` and rows `a_i` (a block of width exactly 
     is mapped to a vector that is not a multiple of `h_1(x)`;
   and the `c_i` are pairwise non-collinear (also not opposite), the `a_i` nonzero.
 
-Not stated: ReLU² units in general position (the paper's proof uses that two quadratic entries
-of `h_1` have no common factor). Exact check of the dimension `q + 1` of the solutions for more
-units than coordinates: `units_parallel_wide_check_2026-11-24.py` (24 cases).
+ReLU² units in general position (the paper's proof uses that two quadratic entries of `h_1`
+have no common factor): `OneBlock/UnitsParallelAtSq.lean`. Exact check of the dimension `q + 1`
+of the solutions for more units than coordinates: `units_parallel_wide_check_2026-11-24.py`
+(24 cases).
 -/
 
 namespace Skips

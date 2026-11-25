@@ -24,8 +24,8 @@ without zero rows, and for every direction `η` of the weights:
   real-analytic function of `s`, also at `s = 0`;
 * `meromorphicAtInfinity_iteratedFDeriv_suffix_pow`, and in the paper's form (`m = 1`)
   `meromorphicAtInfinity_iteratedFDeriv_suffix`: the first map of the lemma is meromorphic at
-  infinity (`MeromorphicAtInfinity`, `Activations/MillsAtInfinity.lean`), with the exponent
-  `l = 0`: it is a real-analytic function of `1/t` near `1/t = 0`;
+  infinity (`MeromorphicAtInfinity`, `Activations/MillsAtInfinity.lean`; the proof takes the
+  exponent `l = 0`): it is a real-analytic function of `1/t` near `1/t = 0`;
 * the same four statements for `𝐃_θ 𝓑_{>k}(·) η`, and `analyticAt_fderiv_params_scaledSuffix`:
   "The weights enter analytically as well", the derivative in the weights is real-analytic in
   `(s, h)`.

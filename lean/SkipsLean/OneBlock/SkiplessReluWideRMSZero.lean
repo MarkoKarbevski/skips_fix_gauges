@@ -21,7 +21,7 @@ ReLU²):
 
 The functional dimension: the value of Lean's `funDim`, and a finite batch of the paper's inputs
 (no normalized row vanishes, no hidden unit at its kink) with this rank; the two together are the
-paper's statement. Not stated: ReLU² blocks wider than `d_model`.
+paper's statement. ReLU² blocks wider than `d_model`: `OneBlock/SkiplessReluSqWideRMSZero.lean`.
 -/
 
 namespace Skips

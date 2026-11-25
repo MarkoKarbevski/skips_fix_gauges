@@ -15,7 +15,8 @@ rows `u ∈ ℂ^{1×d_model}` with `|u_j| ≤ ϱ` for all `j`, and for these `u`
 The paper uses the complex rows `u` in one place: in the proof of Lemma D.12, fact (b), Cauchy's
 estimate turns the first bound into the same bound for the derivative `𝐃𝓑_{>k} − 𝐃𝓑°_{>k}` in the
 hidden state. The statement here is for real `u` and has this bound for the derivative as a third
-clause in its place; the holomorphic extension is not stated. A hidden state has the rows `T`, and
+clause in its place; the holomorphic extension with the two bounds on the complex polydisc:
+`Depth/FrozenFarHolomorphic.lean`. A hidden state has the rows `T`, and
 `h°` is a matrix `H` all of whose rows lie in `C_k`. The gate is any `σ` with `GateFar σ σ' p`
 (SiLU with `p = 1`, GELU with `p = 2`).
 -/
@@ -904,7 +905,8 @@ private theorem frozen_lip (A : ∀ ℓ, Finset (hid ℓ))
   have hc0 : 0 ≤ t ^ 2 := by positivity
   have hc : t ^ 2 ≠ 0 := by positivity
   have hnum : ∀ j : ℕ, j ≤ 2 ^ (L - (k : ℕ)) → ∀ C' Y Y' : ℝ, 0 ≤ C' → C' ≤ C₁ + C₂ + C₃ →
-      0 ≤ Y → Y ≤ Y' → (t ^ 2) ^ j * (C' * Y) ≤ (C₁ + C₂ + C₃) * t ^ (2 * 2 ^ (L - (k : ℕ))) * Y' := by
+      0 ≤ Y → Y ≤ Y' →
+        (t ^ 2) ^ j * (C' * Y) ≤ (C₁ + C₂ + C₃) * t ^ (2 * 2 ^ (L - (k : ℕ))) * Y' := by
     intro j hj C' Y Y' hC' hC'C hY hYY'
     have h1 : (t ^ 2) ^ j ≤ t ^ (2 * 2 ^ (L - (k : ℕ))) := by
       rw [pow_mul]
@@ -918,10 +920,12 @@ private theorem frozen_lip (A : ∀ ℓ, Finset (hid ℓ))
     rw [hsub]
     exact le_mul_of_one_le_left (norm_nonneg _) (by nlinarith)
   refine ⟨?_, fun v => ?_, fun v => ?_, ?_⟩
-  · rw [suffix_frozen_smul, suffix_frozen_smul, ← smul_sub, norm_smul, Real.norm_eq_abs, abs_of_nonneg (pow_nonneg hc0 _)]
+  · rw [suffix_frozen_smul, suffix_frozen_smul, ← smul_sub, norm_smul, Real.norm_eq_abs,
+      abs_of_nonneg (pow_nonneg hc0 _)]
     exact hnum _ le_rfl C₁ _ _ hC₁0 (by linarith) (norm_nonneg _) hle |>.trans' (by
       gcongr; exact hC₁ z₁ hz₁ z₂ hz₂)
-  · rw [fderiv_suffix_frozen_smul A θ₀ k hc, fderiv_suffix_frozen_smul A θ₀ k hc, ← smul_sub, norm_smul, Real.norm_eq_abs, abs_of_nonneg (pow_nonneg hc0 _)]
+  · rw [fderiv_suffix_frozen_smul A θ₀ k hc, fderiv_suffix_frozen_smul A θ₀ k hc, ← smul_sub,
+      norm_smul, Real.norm_eq_abs, abs_of_nonneg (pow_nonneg hc0 _)]
     refine (mul_le_mul_of_nonneg_left (hC₂ z₁ hz₁ z₂ hz₂ v) (pow_nonneg hc0 _)).trans ?_
     rw [mul_assoc C₂, mul_assoc _ _ ‖v‖]
     exact hnum _ (Nat.sub_le _ _) C₂ _ _ hC₂0 (by linarith) (by positivity)
@@ -930,7 +934,8 @@ private theorem frozen_lip (A : ∀ ℓ, Finset (hid ℓ))
       abs_of_nonneg (pow_nonneg hc0 _)]
     exact (mul_le_mul_of_nonneg_left (hC₂b z₂ hz₂ v) (pow_nonneg hc0 _)).trans
       (hnum _ (Nat.sub_le _ _) C₂ _ _ hC₂0 (by linarith) (norm_nonneg v) le_rfl)
-  · rw [fderiv_params_suffix_frozen_smul, fderiv_params_suffix_frozen_smul, ← smul_sub, norm_smul, Real.norm_eq_abs, abs_of_nonneg (pow_nonneg hc0 _)]
+  · rw [fderiv_params_suffix_frozen_smul, fderiv_params_suffix_frozen_smul, ← smul_sub,
+      norm_smul, Real.norm_eq_abs, abs_of_nonneg (pow_nonneg hc0 _)]
     exact (mul_le_mul_of_nonneg_left (hC₃ z₁ hz₁ z₂ hz₂) (pow_nonneg hc0 _)).trans
       (hnum _ le_rfl C₃ _ _ hC₃0 (by linarith) (norm_nonneg _) hle)
 

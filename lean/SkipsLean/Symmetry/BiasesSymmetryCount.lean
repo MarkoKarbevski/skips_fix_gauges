@@ -28,8 +28,9 @@ conditions stated there):
 * `finrank_span_symmetryDirs_skipless_eq_add`: "the skips remove `L d_model²` dimensions".
 
 The dimension of a group as a manifold is the dimension of the space of its directions at the
-identity; the group itself is not stated as an object (for the changes of basis alone, without
-biases, `Symmetry/CobGroup.lean` has the Hausdorff dimension of the set of matrices).
+identity, where it acts locally freely. The group of the changes of basis and translations as a
+set, with its Hausdorff dimension: `Symmetry/BiasesAffineGroup.lean` (as `Symmetry/CobGroup.lean`
+without biases); the symmetries inside the blocks enter the count here only.
 -/
 
 namespace Skips

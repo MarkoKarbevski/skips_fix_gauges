@@ -26,9 +26,10 @@ least two units. Then every pattern of active units occurs, and the argument is 
   the independent linear forms `x c_i` gives both conclusions.
 
 The clause "at least two units" is part of the definition: without it the statement is false for
-one unit when the input has at least two coordinates (`ψc` is then arbitrary). The paper's
-argument for blocks wider than `d_model` (a resultant, and entries of `h_1` without a common
-factor) is not stated here. Numeric check of the dimension `q + 1` of the solutions:
+one unit when the input has at least two coordinates (`ψc` is then arbitrary). Blocks wider
+than `d_model` (the paper: a resultant, and entries of `h_1` without a common factor):
+`OneBlock/UnitsParallelAt.lean` (ReLU) and `OneBlock/UnitsParallelAtSq.lean` (ReLU²). Numeric
+check of the dimension `q + 1` of the solutions:
 `units_parallel_check_2026-11-24.py`.
 -/
 
