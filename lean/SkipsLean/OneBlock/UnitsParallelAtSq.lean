@@ -585,6 +585,122 @@ private lemma psi_upq {n m q : Type*} [Fintype n] [Fintype q] {c ψc : q → n �
   rw [add_dotProduct, smul_dotProduct, hk0, zero_add, smul_eq_mul] at h
   exact (mul_eq_zero.1 h).resolve_left ht0
 
+/-- **One scale on a region.** Let `x` be on no hyperplane with an active unit, `Q_f` the
+quadratic map `z ↦ ∑_{j active at x} (z c_j)² f_j`, and let `Q_b(w)` be a multiple of `Q_a(w)` on
+the region of `x`. Then `Q_b = κ Q_a` for one number `κ`. With one active unit directly. With two
+or more: every minor of `(Q_b, Q_a)` is a quartic form that vanishes on the region, so
+everywhere; on the line `u + t v'` of `hres` (and for `v'` near `v`) the vector statement gives
+`Q_b = c' Q_a` with `c'` fixed by `t = 0`; so `Q_b − c₀ Q_a` vanishes near `v`, so everywhere. -/
+private lemma good_upq {n m q : Type*} [Fintype n] [Fintype q] {c : q → n → ℝ}
+    {a b : q → m → ℝ} {x : n → ℝ} (hx : ∀ j, x ⬝ᵥ c j ≠ 0) {j₀ : q} (hj₀ : 0 < x ⬝ᵥ c j₀)
+    (hreg : ∀ w : n → ℝ, (∀ j, 0 < (x ⬝ᵥ c j) * (w ⬝ᵥ c j)) →
+      ∃ μ : ℝ, pf_upq c c (fun j => reluDeriv (x ⬝ᵥ c j)) b w
+        = μ • pf_upq c c (fun j => reluDeriv (x ⬝ᵥ c j)) a w)
+    (hres : ∀ S : Finset q, 2 ≤ S.card → ∃ (u v : n → ℝ) (e f : m),
+      quadRes (∑ i ∈ S, (u ⬝ᵥ c i) ^ 2 * a i e)
+        (2 * ∑ i ∈ S, (u ⬝ᵥ c i) * (v ⬝ᵥ c i) * a i e) (∑ i ∈ S, (v ⬝ᵥ c i) ^ 2 * a i e)
+        (∑ i ∈ S, (u ⬝ᵥ c i) ^ 2 * a i f)
+        (2 * ∑ i ∈ S, (u ⬝ᵥ c i) * (v ⬝ᵥ c i) * a i f) (∑ i ∈ S, (v ⬝ᵥ c i) ^ 2 * a i f) ≠ 0) :
+    ∃ κ : ℝ, ∀ z, pf_upq c c (fun j => reluDeriv (x ⬝ᵥ c j)) b z
+      = κ • pf_upq c c (fun j => reluDeriv (x ⬝ᵥ c j)) a z := by
+  by_cases h2 : ∃ i j, i ≠ j ∧ 0 < x ⬝ᵥ c i ∧ 0 < x ⬝ᵥ c j
+  · obtain ⟨i₁, i₂, h12, hi₁, hi₂⟩ := h2
+    have hS : 2 ≤ (Finset.univ.filter fun l => 0 < x ⬝ᵥ c l).card :=
+      Finset.one_lt_card.2 ⟨i₁, Finset.mem_filter.2 ⟨Finset.mem_univ _, hi₁⟩, i₂,
+        Finset.mem_filter.2 ⟨Finset.mem_univ _, hi₂⟩, h12⟩
+    obtain ⟨u, v, e, f, hr⟩ := hres _ hS
+    obtain ⟨d, hd⟩ : ∃ d : q → ℝ, d = fun j => reluDeriv (x ⬝ᵥ c j) := ⟨_, rfl⟩
+    rw [← hd] at hreg ⊢
+    -- every minor of `(Q_b(z), Q_a(z))` vanishes: the coefficient of `t⁴` on the line `x + t z`
+    have hmin : ∀ z o o', pf_upq c c d b z o * pf_upq c c d a z o'
+        = pf_upq c c d b z o' * pf_upq c c d a z o := by
+      intro z o o'
+      obtain ⟨ε, hε, hs⟩ := signs_upq c x z
+      refine lead_upq (j₀ := pf_upq c c d b x o) (j₁ := pf1_upq c c d b x z o)
+        (r₀ := pf_upq c c d a x o') (r₁ := pf1_upq c c d a x z o')
+        (k₀ := pf_upq c c d b x o') (k₁ := pf1_upq c c d b x z o')
+        (p₀ := pf_upq c c d a x o) (p₁ := pf1_upq c c d a x z o) hε fun t ht => ?_
+      obtain ⟨μ, hμ⟩ := hreg (x + t • z) fun j => hs t ht j (hx j)
+      rw [pf_add_upq, pf_add_upq] at hμ
+      have e1 := congrFun hμ o
+      have e2 := congrFun hμ o'
+      simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul] at e1 e2
+      linear_combination
+        (pf_upq c c d a x o' + t * pf1_upq c c d a x z o' + t ^ 2 * pf_upq c c d a z o') * e1
+        - (pf_upq c c d a x o + t * pf1_upq c c d a x z o + t ^ 2 * pf_upq c c d a z o) * e2
+    -- the resultant of `hres` as a function of the direction `v'` of the line
+    obtain ⟨R, hR⟩ : ∃ R : (n → ℝ) → ℝ, ∀ v', R v' = quadRes (pf_upq c c d a u e)
+        (pf1_upq c c d a u v' e) (pf_upq c c d a v' e) (pf_upq c c d a u f)
+        (pf1_upq c c d a u v' f) (pf_upq c c d a v' f) := ⟨_, fun _ => rfl⟩
+    have hRv : R v ≠ 0 := by
+      rw [hR, hd]
+      simp only [pf_coord_upq, pf1_coord_upq]
+      exact hr
+    -- on a line `u + t v'` with `R v' ≠ 0`: `Q_b = c' Q_a`
+    have line : ∀ v', R v' ≠ 0 → ∃ c' : ℝ, pf_upq c c d b u = c' • pf_upq c c d a u ∧
+        pf_upq c c d b v' = c' • pf_upq c c d a v' := by
+      intro v' hv'
+      rw [hR] at hv'
+      obtain ⟨c', h0, -, h2⟩ := vec_of_minors_upq (P₀ := pf_upq c c d a u)
+        (P₁ := pf1_upq c c d a u v') (P₂ := pf_upq c c d a v') (J₀ := pf_upq c c d b u)
+        (J₁ := pf1_upq c c d b u v') (J₂ := pf_upq c c d b v') hv' one_pos fun t _ g g' => by
+          have hm := hmin (u + t • v') g g'
+          rw [pf_add_upq, pf_add_upq] at hm
+          simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul] at hm
+          linear_combination hm
+      exact ⟨c', h0, h2⟩
+    obtain ⟨c₀, hc₀, -⟩ := line v hRv
+    have hQu : pf_upq c c d a u ≠ 0 := by
+      intro h0
+      apply hRv
+      rw [hR, h0]
+      simp only [Pi.zero_apply, quadRes]
+      ring
+    refine ⟨c₀, fun z => ?_⟩
+    -- `R (v + s z) ≠ 0` for small `s`
+    have hcont : Continuous fun s : ℝ => R (v + s • z) := by
+      simp only [hR, pf1_add_upq, pf_add_upq, Pi.add_apply, Pi.smul_apply, smul_eq_mul, quadRes]
+      fun_prop
+    obtain ⟨δ, hδ, hRs⟩ := Metric.eventually_nhds_iff.1
+      ((hcont.tendsto 0).eventually_ne (by simpa only [zero_smul, add_zero] using hRv))
+    have key : ∀ s : ℝ, |s| < δ →
+        pf_upq c c d b (v + s • z) = c₀ • pf_upq c c d a (v + s • z) := by
+      intro s hs
+      obtain ⟨c', h1, h2⟩ := line (v + s • z) (hRs (by rwa [Real.dist_eq, sub_zero]))
+      have hc : c' = c₀ := by
+        have h3 : (c' - c₀) • pf_upq c c d a u = 0 := by rw [sub_smul, ← h1, ← hc₀, sub_self]
+        exact sub_eq_zero.1 ((smul_eq_zero.1 h3).resolve_right hQu)
+      rw [h2, hc]
+    -- the coefficient of `s²` of `Q_b(v + s z) - c₀ Q_a(v + s z)`
+    have k1 := key (δ / 4) (abs_lt.2 ⟨by linarith, by linarith⟩)
+    have k2 := key (2 * (δ / 4)) (abs_lt.2 ⟨by linarith, by linarith⟩)
+    have k3 := key (3 * (δ / 4)) (abs_lt.2 ⟨by linarith, by linarith⟩)
+    rw [pf_add_upq, pf_add_upq] at k1 k2 k3
+    have h4 : (2 * (δ / 4) ^ 2) • (pf_upq c c d b z - c₀ • pf_upq c c d a z) = 0 := by
+      linear_combination (norm := module) k1 - (2 : ℝ) • k2 + k3
+    exact sub_eq_zero.1 ((smul_eq_zero.1 h4).resolve_left (by positivity))
+  · -- one active unit `j₀`: `Q_f(z) = (z c_j₀)² f_j₀`
+    push Not at h2
+    obtain ⟨μ₀, hμ₀⟩ := hreg x fun j => mul_self_pos.2 (hx j)
+    have hz : ∀ l, l ≠ j₀ → reluDeriv (x ⬝ᵥ c l) = 0 := fun l hl => by
+      simp only [reluDeriv, not_lt.2 (h2 j₀ l (Ne.symm hl) hj₀), ↓reduceIte]
+    have hd0 : reluDeriv (x ⬝ᵥ c j₀) = 1 := by simp only [reluDeriv, hj₀, ↓reduceIte]
+    have hone : ∀ (f : q → m → ℝ) (z : n → ℝ), pf_upq c c (fun j => reluDeriv (x ⬝ᵥ c j)) f z
+        = ((z ⬝ᵥ c j₀) * (z ⬝ᵥ c j₀)) • f j₀ := by
+      intro f z
+      unfold pf_upq
+      dsimp only
+      rw [Finset.sum_eq_single j₀ (fun l _ hl => by rw [hz l hl, zero_mul, zero_smul])
+        (fun h => absurd (Finset.mem_univ j₀) h), hd0, one_mul]
+    rw [hone, hone] at hμ₀
+    have hb : b j₀ = μ₀ • a j₀ := by
+      have h' : ((x ⬝ᵥ c j₀) * (x ⬝ᵥ c j₀)) • (b j₀ - μ₀ • a j₀) = 0 := by
+        linear_combination (norm := module) hμ₀
+      exact sub_eq_zero.1 ((smul_eq_zero.1 h').resolve_left (mul_self_ne_zero.2 (hx j₀)))
+    refine ⟨μ₀, fun z => ?_⟩
+    rw [hone, hone, hb]
+    module
+
 /-- **"The kinks stay" and "One scale" for ReLU² units in general position** (proof of Theorem
 B.1 (iv) of the skips paper, "The skipless network: equality", `k = 2`; any number of units, also
 more units than coordinates): let the columns `c_i` be pairwise non-collinear and the rows `a_i`
@@ -607,6 +723,165 @@ theorem reluSq_unitsParallelAt_of_generic {n m q : Type*} [Fintype n] [Fintype m
         (∑ i ∈ S, (u ⬝ᵥ c i) ^ 2 * a i f)
         (2 * ∑ i ∈ S, (u ⬝ᵥ c i) * (v ⬝ᵥ c i) * a i f) (∑ i ∈ S, (v ⬝ᵥ c i) ^ 2 * a i f) ≠ 0) :
     UnitsParallelAt reluSq reluSqDeriv 2 c a := by
-  sorry
+  classical
+  intro ψc β hpar
+  rcases isEmpty_or_nonempty q with hq | ⟨⟨i₀⟩⟩
+  · exact ⟨0, fun _ => 0, fun i => isEmptyElim i⟩
+  -- where the output is not a multiple of `a_i`, some unit is active
+  have hact : ∀ (i : q) (x₀ : n → ℝ), (∀ r : ℝ, ∑ j, reluSq (x₀ ⬝ᵥ c j) • a j ≠ r • a i) →
+      ∃ j, 0 < x₀ ⬝ᵥ c j := by
+    intro i x₀ hB
+    by_contra h
+    refine hB 0 ?_
+    rw [zero_smul]
+    exact Finset.sum_eq_zero fun j _ => by
+      rw [reluSq, max_eq_right (not_lt.1 fun hj => h ⟨j, hj⟩)]
+      simp
+  -- every `c_i` is nonzero: at `x₀` of `hkink` another unit is active
+  have hci : ∀ i, c i ≠ 0 := by
+    intro i hc0
+    obtain ⟨x₀, h0, -, hB⟩ := hkink i
+    obtain ⟨j, hj⟩ := hact i x₀ hB
+    have hji : j ≠ i := fun h => by rw [h, h0] at hj; exact lt_irrefl 0 hj
+    exact hcc i j hji.symm 0 (by rw [hc0, zero_smul])
+  -- Step 1, the kinks stay: `ψc_i = λ_i c_i`
+  obtain ⟨lam, hlam⟩ : ∃ lam : q → ℝ, ∀ i, ψc i = lam i • c i := by
+    refine ⟨fun i => (c i ⬝ᵥ ψc i) / (c i ⬝ᵥ c i), fun i => ?_⟩
+    obtain ⟨x₀, h0, hx₀, hB⟩ := hkink i
+    exact smul_of_ker_upq (mt dotProduct_self_eq_zero.1 (hci i))
+      fun w hw => psi_upq ha hne hpar (hci i) h0 hx₀ hB hw
+  -- then `J(x) = ∑_i reluSq(x c_i) b_i` with `b_i = β_i + 2 λ_i a_i`
+  obtain ⟨b, hb⟩ : ∃ b : q → m → ℝ, b = fun j => β j + (2 * lam j) • a j := ⟨_, rfl⟩
+  -- Step 2, one constant on each region
+  have hgood : ∀ x : n → ℝ, (∀ j, x ⬝ᵥ c j ≠ 0) → ∀ j₀, 0 < x ⬝ᵥ c j₀ → ∃ κ : ℝ, ∀ z,
+      pf_upq c c (fun j => reluDeriv (x ⬝ᵥ c j)) b z
+        = κ • pf_upq c c (fun j => reluDeriv (x ⬝ᵥ c j)) a z := by
+    intro x hx j₀ hj₀
+    refine good_upq hx hj₀ (fun w hw => ?_) hres
+    have hpat : ∀ j, reluSq (w ⬝ᵥ c j) = reluDeriv (x ⬝ᵥ c j) * ((w ⬝ᵥ c j) * (w ⬝ᵥ c j)) ∧
+        reluSqDeriv (w ⬝ᵥ c j) = 2 * (reluDeriv (x ⬝ᵥ c j) * (w ⬝ᵥ c j)) :=
+      fun j => cone_upq (Or.inl (hw j))
+    have hw0 : ∀ j, w ⬝ᵥ c j ≠ 0 := fun j => right_ne_zero_of_mul (hw j).ne'
+    obtain ⟨μ, hμ⟩ := hpar w hw0 (hne w ⟨j₀, pos_of_mul_upq (hw j₀) hj₀⟩)
+    rw [J_eq_b_upq hlam hpat, sum_reluSq_upq a fun j => (hpat j).1, ← hb] at hμ
+    exact ⟨μ, hμ⟩
+  -- Step 3, one constant: `μ(x) = ⟨E(x), B(x)⟩ / ‖B(x)‖²` on `Ω`
+  obtain ⟨B, hB⟩ : ∃ B : (n → ℝ) → m → ℝ, B = fun x => ∑ j, reluSq (x ⬝ᵥ c j) • a j :=
+    ⟨_, rfl⟩
+  obtain ⟨E, hE⟩ : ∃ E : (n → ℝ) → m → ℝ, E = fun x => ∑ j, reluSq (x ⬝ᵥ c j) • b j :=
+    ⟨_, rfl⟩
+  obtain ⟨μf, hμf⟩ : ∃ μf : (n → ℝ) → ℝ, μf = fun x => (E x ⬝ᵥ B x) / (B x ⬝ᵥ B x) :=
+    ⟨_, rfl⟩
+  have hBne : ∀ w, (∃ j, 0 < w ⬝ᵥ c j) → B w ≠ 0 := fun w h => by rw [hB]; exact hne w h
+  -- a good point gives `E = κ B` on the closed cone of its region
+  have hcl : ∀ x : n → ℝ, (∀ j, x ⬝ᵥ c j ≠ 0) → ∀ κ : ℝ,
+      (∀ z, pf_upq c c (fun j => reluDeriv (x ⬝ᵥ c j)) b z
+        = κ • pf_upq c c (fun j => reluDeriv (x ⬝ᵥ c j)) a z) →
+      ∀ w, (∀ j, 0 ≤ (x ⬝ᵥ c j) * (w ⬝ᵥ c j)) → E w = κ • B w := by
+    intro x hx κ hκ w hw
+    rw [hE, hB]
+    dsimp only
+    rw [sum_reluSq_upq b fun j => (cone'_upq (hx j) (hw j)).1,
+      sum_reluSq_upq a fun j => (cone'_upq (hx j) (hw j)).1]
+    exact hκ w
+  have hμκ : ∀ w κ, E w = κ • B w → B w ≠ 0 → μf w = κ := by
+    intro w κ h hB0
+    rw [hμf]
+    dsimp only
+    rw [h, smul_dotProduct, smul_eq_mul, mul_div_assoc,
+      div_self (mt dotProduct_self_eq_zero.1 hB0), mul_one]
+  -- the good pairs `(x, κ)`, and their finitely many values `κ`
+  obtain ⟨G, hG⟩ : ∃ G : (n → ℝ) → ℝ → Prop, G = fun x κ => (∀ j, x ⬝ᵥ c j ≠ 0) ∧
+      (∃ j, 0 < x ⬝ᵥ c j) ∧ ∀ z, pf_upq c c (fun j => reluDeriv (x ⬝ᵥ c j)) b z
+        = κ • pf_upq c c (fun j => reluDeriv (x ⬝ᵥ c j)) a z := ⟨_, rfl⟩
+  have hVfin : {κ | ∃ x, G x κ}.Finite := by
+    refine Set.Finite.subset (Set.finite_iUnion fun S : q → Prop =>
+      Set.Subsingleton.finite (s := {κ | ∃ x, G x κ ∧ (fun j => 0 < x ⬝ᵥ c j) = S}) ?_) ?_
+    · rintro κ₁ ⟨x₁, hG₁, hS₁⟩ κ₂ ⟨x₂, hG₂, hS₂⟩
+      rw [hG] at hG₁ hG₂
+      obtain ⟨hx₁, -, hκ₁⟩ := hG₁
+      obtain ⟨hx₂, ⟨j, hj⟩, hκ₂⟩ := hG₂
+      have hpat : ∀ l, (0 < x₁ ⬝ᵥ c l ↔ 0 < x₂ ⬝ᵥ c l) := fun l =>
+        Iff.of_eq (congrFun (hS₁.trans hS₂.symm) l)
+      have hcone : ∀ l, 0 ≤ (x₁ ⬝ᵥ c l) * (x₂ ⬝ᵥ c l) := fun l => by
+        rcases (hx₁ l).lt_or_gt with h | h
+        · have h' : x₂ ⬝ᵥ c l ≤ 0 := not_lt.1 fun h' => absurd ((hpat l).2 h') (not_lt.2 h.le)
+          nlinarith
+        · exact (mul_pos h ((hpat l).1 h)).le
+      have hB2 := hBne x₂ ⟨j, hj⟩
+      exact (hμκ x₂ κ₁ (hcl x₁ hx₁ κ₁ hκ₁ x₂ hcone) hB2).symm.trans
+        (hμκ x₂ κ₂ (hcl x₂ hx₂ κ₂ hκ₂ x₂ fun l => mul_self_nonneg _) hB2)
+    · rintro κ ⟨x, hGx⟩
+      exact Set.mem_iUnion.2 ⟨fun j => 0 < x ⬝ᵥ c j, x, hGx, rfl⟩
+  -- every point of `Ω` is in the closed cone of a good point: `μ(w)` is a good value
+  obtain ⟨v, hv⟩ := exists_off_upq hci
+  have hval : ∀ w, (∃ j, 0 < w ⬝ᵥ c j) → ∃ x, G x (μf w) := by
+    rintro w ⟨j₀, hj₀⟩
+    obtain ⟨ε, hε, hs⟩ := signs_upq c w v
+    have hε2 : 0 < ε / 2 := half_pos hε
+    have ht : |ε / 2| < ε := by rw [abs_of_pos hε2]; exact half_lt_self hε
+    have hxp : ∀ j, (w + (ε / 2) • v) ⬝ᵥ c j ≠ 0 := fun j => by
+      by_cases hj : w ⬝ᵥ c j = 0
+      · rw [add_dotProduct, smul_dotProduct, hj, zero_add, smul_eq_mul]
+        exact mul_ne_zero hε2.ne' (hv j)
+      · exact right_ne_zero_of_mul (hs _ ht j hj).ne'
+    have hcone : ∀ j, 0 ≤ ((w + (ε / 2) • v) ⬝ᵥ c j) * (w ⬝ᵥ c j) := fun j => by
+      by_cases hj : w ⬝ᵥ c j = 0
+      · rw [hj, mul_zero]
+      · rw [mul_comm]; exact (hs _ ht j hj).le
+    have hact' : 0 < (w + (ε / 2) • v) ⬝ᵥ c j₀ := pos_of_mul_upq (hs _ ht j₀ hj₀.ne') hj₀
+    obtain ⟨κ, hκ⟩ := hgood _ hxp j₀ hact'
+    refine ⟨w + (ε / 2) • v, ?_⟩
+    rw [hμκ w κ (hcl _ hxp κ hκ w hcone) (hBne w ⟨j₀, hj₀⟩), hG]
+    exact ⟨hxp, ⟨j₀, hact'⟩, hκ⟩
+  -- `μ` is continuous on `Ω`, `Ω` is preconnected, `μ` takes finitely many values: constant
+  have hcont : ContinuousOn μf (⋃ i, {x : n → ℝ | 0 < x ⬝ᵥ c i}) := by
+    have hrelu : Continuous reluSq := (continuous_id.max continuous_const).pow 2
+    have hsum : ∀ f : q → m → ℝ, Continuous fun x : n → ℝ => ∑ j, reluSq (x ⬝ᵥ c j) • f j :=
+      fun f => continuous_finsetSum _ fun j _ =>
+        (hrelu.comp (continuous_id.dotProduct continuous_const)).smul continuous_const
+    have hBc : Continuous B := by rw [hB]; exact hsum a
+    have hEc : Continuous E := by rw [hE]; exact hsum b
+    rw [hμf]
+    refine ContinuousOn.div (f := fun x => E x ⬝ᵥ B x) (g := fun x => B x ⬝ᵥ B x)
+      (hEc.dotProduct hBc).continuousOn (hBc.dotProduct hBc).continuousOn fun w hw => ?_
+    exact mt dotProduct_self_eq_zero.1 (hBne w (Set.mem_iUnion.1 hw))
+  have hconn := preconnected_upq hci hcc
+  have hconst : ∀ x y, (∃ j, 0 < x ⬝ᵥ c j) → (∃ j, 0 < y ⬝ᵥ c j) → μf x = μf y := by
+    intro x y hx hy
+    have hxΩ : x ∈ ⋃ i, {x : n → ℝ | 0 < x ⬝ᵥ c i} := Set.mem_iUnion.2 hx
+    have hyΩ : y ∈ ⋃ i, {x : n → ℝ | 0 < x ⬝ᵥ c i} := Set.mem_iUnion.2 hy
+    have himg : μf '' (⋃ i, {x : n → ℝ | 0 < x ⬝ᵥ c i}) ⊆ {κ | ∃ x, G x κ} := by
+      rintro _ ⟨w, hw, rfl⟩
+      exact hval w (Set.mem_iUnion.1 hw)
+    by_contra hxy
+    rcases lt_or_gt_of_ne hxy with h | h
+    · exact Set.Icc_infinite h
+        (hVfin.subset ((hconn.intermediate_value hxΩ hyΩ hcont).trans himg))
+    · exact Set.Icc_infinite h
+        (hVfin.subset ((hconn.intermediate_value hyΩ hxΩ hcont).trans himg))
+  -- every good value is `c₀ = μ(c_{i₀})`
+  have hc₀ : ∀ x, (∀ j, x ⬝ᵥ c j ≠ 0) → (∃ j, 0 < x ⬝ᵥ c j) → ∀ κ : ℝ,
+      (∀ z, pf_upq c c (fun j => reluDeriv (x ⬝ᵥ c j)) b z
+        = κ • pf_upq c c (fun j => reluDeriv (x ⬝ᵥ c j)) a z) → κ = μf (c i₀) := by
+    intro x hx0 hx κ hκ
+    rw [← hμκ x κ (hcl x hx0 κ hκ x fun j => mul_self_nonneg _) (hBne x hx)]
+    exact hconst x (c i₀) hx ⟨i₀, dot_self_pos_upq (hci i₀)⟩
+  -- Step 4: across the kink of unit `i`, `b_i = c₀ a_i`
+  refine ⟨μf (c i₀), lam, fun i => ⟨hlam i, ?_⟩⟩
+  obtain ⟨x₀, h0, hx₀, hB₀⟩ := hkink i
+  obtain ⟨j, hj⟩ := hact i x₀ hB₀
+  obtain ⟨xp, xm, u, hu, hxp, hxm, hpi, hmj, hdj, hdp, hdm⟩ := facet_upq (hci i) h0 hx₀
+  obtain ⟨κp, hκp⟩ := hgood xp hxp i hpi
+  obtain ⟨κm, hκm⟩ := hgood xm hxm j (hmj j hj)
+  have h1 := hκp u
+  have h2 := hκm u
+  rw [hc₀ xp hxp ⟨i, hpi⟩ κp hκp, pf_facet_upq c c b hdj hdp hdm,
+    pf_facet_upq c c a hdj hdp hdm, hu] at h1
+  rw [hc₀ xm hxm ⟨j, hmj j hj⟩ κm hκm] at h2
+  have h3 : b i = μf (c i₀) • a i := by linear_combination (norm := module) h1 - h2
+  rw [hb] at h3
+  push_cast
+  linear_combination (norm := module) h3
 
 end Skips
