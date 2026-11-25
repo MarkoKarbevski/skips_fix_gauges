@@ -896,7 +896,72 @@ theorem insideBlocksB_valueShiftDir (hsee : ∀ t, ∃ s, sees t s)
 /-- The direction `headDirB p (Γ, Γ', κ, ν)` is linear in `(Γ, Γ', κ, ν)`. -/
 theorem isLinearMap_headDirB (p : ParamsB (Arch.attention sees χ H dh) dIn dOut) :
     IsLinearMap ℝ (headDirB p) := by
-  sorry
+  -- component by component, entry by entry
+  constructor
+  · rintro ⟨Γ, Γ', κ, ν⟩ ⟨Δ, Δ', κ', ν'⟩
+    refine Prod.ext (Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_)
+      (Biases.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_)
+    · simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir, headDirQK, headDirVO]
+    · ext a ⟨i, k | k | k⟩ <;>
+        simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir, headDirQK,
+          headDirVO, add_mul, mul_add, Finset.sum_add_distrib]
+      ring
+    · ext ⟨i, k⟩ c
+      simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir, headDirQK,
+          headDirVO, add_mul, mul_add, Finset.sum_add_distrib]
+      ring
+    · simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir, headDirQK, headDirVO]
+    · simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir]
+    · funext q
+      obtain ⟨i, k | k | k⟩ := q <;>
+        simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir, add_mul, mul_add,
+          Finset.sum_add_distrib] <;> ring
+    · funext c
+      simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir, add_mul, mul_add,
+          Finset.sum_add_distrib]
+      ring
+    · simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir]
+  · rintro r ⟨Γ, Γ', κ, ν⟩
+    refine Prod.ext (Params.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_)
+      (Biases.ext' ?_ (fun ℓ => ?_) (fun ℓ => ?_) ?_)
+    · simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir, headDirQK, headDirVO]
+    · ext a ⟨i, k | k | k⟩ <;>
+        simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir, headDirQK,
+          headDirVO, Finset.mul_sum] <;>
+        exact Finset.sum_congr rfl fun _ _ => by ring
+    · ext ⟨i, k⟩ c
+      simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir, headDirQK,
+          headDirVO, Finset.mul_sum]
+      ring_nf
+    · simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir, headDirQK, headDirVO]
+    · simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir]
+    · funext q
+      obtain ⟨i, k | k | k⟩ := q <;>
+        simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir, Finset.mul_sum] <;>
+        exact Finset.sum_congr rfl fun _ _ => by ring
+    · funext c
+      simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir, Finset.mul_sum]
+      ring_nf
+    · simp [headDirB, headDirQKB, headDirVOB, keyShiftDir, valueShiftDir]
+
+/-- Helper (the private `cancel_left_of_rank_ath` of `Symmetry/AttentionHeads.lean`): a matrix
+`M` of rank equal to its number of columns cancels on the left, `M X = M Y → X = Y`. -/
+private theorem cancel_left_of_rank_ahb {m n k : Type*} [Fintype n] (M : Matrix m n ℝ)
+    (hM : M.rank = Fintype.card n) {X Y : Matrix n k ℝ} (h : M * X = M * Y) : X = Y := by
+  -- `v ↦ M v` is injective: `rank M + dim ker M = card n`
+  have hinj : Function.Injective M.mulVecLin := by
+    rw [← LinearMap.ker_eq_bot, ← Submodule.finrank_eq_zero]
+    have := LinearMap.finrank_range_add_finrank_ker M.mulVecLin
+    rw [Module.finrank_fintype_fun_eq_card] at this
+    rw [Matrix.rank] at hM
+    omega
+  -- compare `X` and `Y` column by column
+  ext i j
+  have hcol : M.mulVecLin (fun l => X l j) = M.mulVecLin (fun l => Y l j) := by
+    funext q
+    have := congrFun (congrFun h q) j
+    simpa [Matrix.mul_apply, Matrix.mulVec, dotProduct] using this
+  exact congrFun (hinj hcol) i
 
 /-- **The symmetries inside the attention blocks with biases act freely, in infinitesimal form:**
 if the query matrix and the value matrix of every head have rank `d_h`, the direction
@@ -908,7 +973,120 @@ theorem headDirB_injective (p : ParamsB (Arch.attention sees χ H dh) dIn dOut)
       ((p.1.read ℓ).submatrix id fun k : dh ℓ => (i, Sum.inr (Sum.inr k))).rank
         = Fintype.card (dh ℓ)) :
     Function.Injective (headDirB p) := by
-  sorry
+  rintro ⟨Γ, Γ', κ, ν⟩ ⟨Δ, Δ', κ', ν'⟩ h
+  have hr : ∀ ℓ a q, (headDirB p (Γ, Γ', κ, ν)).1.read ℓ a q
+      = (headDirB p (Δ, Δ', κ', ν')).1.read ℓ a q := fun ℓ a q =>
+    congrFun (congrFun (congrArg (fun x : ParamsB _ dIn dOut => x.1.read ℓ) h) a) q
+  have hb : ∀ ℓ q, (headDirB p (Γ, Γ', κ, ν)).2.read ℓ q
+      = (headDirB p (Δ, Δ', κ', ν')).2.read ℓ q := fun ℓ q =>
+    congrFun (congrArg (fun x : ParamsB _ dIn dOut => x.2.read ℓ) h) q
+  -- the query columns: `W_{Q,i} Γ_i = W_{Q,i} Δ_i`, and `W_{Q,i}` has rank `d_h`
+  have hΓ : Γ = Δ := by
+    funext ℓ i
+    refine cancel_left_of_rank_ahb _ (hQ ℓ i) ?_
+    ext a k
+    have hk := hr ℓ a (i, Sum.inl k)
+    change (∑ k', p.1.read ℓ a (i, Sum.inl k') * Γ ℓ i k' k) + 0 + 0 + 0
+      = (∑ k', p.1.read ℓ a (i, Sum.inl k') * Δ ℓ i k' k) + 0 + 0 + 0 at hk
+    simp only [add_zero] at hk
+    exact hk
+  -- the value columns: `W_{V,i} Γ'_i = W_{V,i} Δ'_i`, and `W_{V,i}` has rank `d_h`
+  have hΓ' : Γ' = Δ' := by
+    funext ℓ i
+    refine cancel_left_of_rank_ahb _ (hV ℓ i) ?_
+    ext a k
+    have hk := hr ℓ a (i, Sum.inr (Sum.inr k))
+    change 0 + (∑ k', p.1.read ℓ a (i, Sum.inr (Sum.inr k')) * Γ' ℓ i k' k) + 0 + 0
+      = 0 + (∑ k', p.1.read ℓ a (i, Sum.inr (Sum.inr k')) * Δ' ℓ i k' k) + 0 + 0 at hk
+    simp only [add_zero, zero_add] at hk
+    exact hk
+  -- the key biases: `−b_{K,i} Γ_i^⊤ + κ_i = −b_{K,i} Δ_i^⊤ + κ'_i`
+  have hκ : κ = κ' := by
+    funext ℓ i k
+    have hk := hb ℓ (i, Sum.inr (Sum.inl k))
+    change -(∑ k', p.2.read ℓ (i, Sum.inr (Sum.inl k')) * Γ ℓ i k k') + 0 + κ ℓ i k + 0
+      = -(∑ k', p.2.read ℓ (i, Sum.inr (Sum.inl k')) * Δ ℓ i k k') + 0 + κ' ℓ i k + 0 at hk
+    rw [hΓ] at hk
+    simpa only [add_zero, add_right_inj] using hk
+  -- the value biases: `b_{V,i} Γ'_i + ν_i = b_{V,i} Δ'_i + ν'_i`
+  have hν : ν = ν' := by
+    funext ℓ i k
+    have hk := hb ℓ (i, Sum.inr (Sum.inr k))
+    change 0 + (∑ k', p.2.read ℓ (i, Sum.inr (Sum.inr k')) * Γ' ℓ i k' k) + 0 + ν ℓ i k
+      = 0 + (∑ k', p.2.read ℓ (i, Sum.inr (Sum.inr k')) * Δ' ℓ i k' k) + 0 + ν' ℓ i k at hk
+    rw [hΓ'] at hk
+    simpa only [add_zero, zero_add, add_right_inj] using hk
+  exact Prod.ext hΓ (Prod.ext hΓ' (Prod.ext hκ hν))
+
+/-! ### Helpers: the space of the directions `headDirB p (Γ, Γ', κ, ν)` -/
+
+/-- Helper: the directions `headDirB p (Γ, Γ', κ, ν)` are spanned by directions of symmetries
+inside the blocks, if every token sees some token: each is a sum of four such directions. -/
+private theorem range_le_span_ahb (hsee : ∀ t, ∃ s, sees t s)
+    (p : ParamsB (Arch.attention sees χ H dh) dIn dOut) :
+    LinearMap.range (IsLinearMap.mk' (headDirB p) (isLinearMap_headDirB p))
+      ≤ Submodule.span ℝ {η | InsideBlocksB (Arch.attention sees χ H dh) p η} := by
+  rintro _ ⟨⟨Γ, Γ', κ, ν⟩, rfl⟩
+  show headDirB p (Γ, Γ', κ, ν) ∈ _
+  exact add_mem (add_mem (add_mem (Submodule.subset_span (insideBlocksB_headDirQKB p Γ))
+    (Submodule.subset_span (insideBlocksB_headDirVOB p Γ')))
+    (Submodule.subset_span (insideBlocksB_keyShiftDir p κ)))
+    (Submodule.subset_span (insideBlocksB_valueShiftDir hsee p ν))
+
+/-- Helper: if the read and the read bias of block `ℓ` of `headDirB p (Γ, Γ', κ, ν)` are `0`
+and the value matrices have rank `d_h`, then `Γ'_ℓ = 0` (value columns) and `ν_ℓ = 0` (value
+biases), so the write `−Γ' W_O` and the write bias `−∑_i ν_i W_{O,i}` of block `ℓ` are `0`. -/
+private theorem hrw_ahb (p : ParamsB (Arch.attention sees χ H dh) dIn dOut)
+    (hV : ∀ ℓ (i : H ℓ),
+      ((p.1.read ℓ).submatrix id fun k : dh ℓ => (i, Sum.inr (Sum.inr k))).rank
+        = Fintype.card (dh ℓ)) :
+    ∀ η ∈ LinearMap.range (IsLinearMap.mk' (headDirB p) (isLinearMap_headDirB p)), ∀ ℓ,
+      η.1.read ℓ = 0 → η.2.read ℓ = 0 → η.1.write ℓ = 0 ∧ η.2.write ℓ = 0 := by
+  rintro _ ⟨⟨Γ, Γ', κ, ν⟩, rfl⟩ ℓ hr hb
+  -- the value columns: `W_{V,i} Γ'_i = 0`, and `W_{V,i}` has rank `d_h`
+  have hΓ' : ∀ i, Γ' ℓ i = 0 := by
+    intro i
+    refine cancel_left_of_rank_ahb _ (hV ℓ i) ?_
+    ext a k
+    have hk := congrFun (congrFun hr a) (i, Sum.inr (Sum.inr k))
+    change 0 + (∑ k', p.1.read ℓ a (i, Sum.inr (Sum.inr k')) * Γ' ℓ i k' k) + 0 + 0 = 0 at hk
+    rw [Matrix.mul_zero]
+    simp only [add_zero, zero_add] at hk
+    exact hk
+  -- the value biases: `b_{V,i} Γ'_i + ν_i = 0`, so `ν_i = 0`
+  have hν : ∀ i k, ν ℓ i k = 0 := by
+    intro i k
+    have hk := congrFun hb (i, Sum.inr (Sum.inr k))
+    change 0 + (∑ k', p.2.read ℓ (i, Sum.inr (Sum.inr k')) * Γ' ℓ i k' k) + 0 + ν ℓ i k = 0
+      at hk
+    simpa only [hΓ', Matrix.zero_apply, mul_zero, Finset.sum_const_zero, zero_add,
+      add_zero] using hk
+  refine ⟨?_, ?_⟩
+  · ext ⟨i, k⟩ c
+    show 0 + (-∑ k', Γ' ℓ i k k' * p.1.write ℓ (i, k') c) + 0 + 0 = 0
+    simp only [hΓ', Matrix.zero_apply, zero_mul, Finset.sum_const_zero, neg_zero, add_zero]
+  · funext c
+    show 0 + 0 + 0 + -∑ i, ∑ k, ν ℓ i k * p.1.write ℓ (i, k) c = 0
+    simp only [hν, zero_mul, Finset.sum_const_zero, neg_zero, add_zero]
+
+/-- Helper: the domain `(Γ, Γ', κ, ν)` has dimension `2 ∑_ℓ H_ℓ d_{h,ℓ}² + 2 ∑_ℓ H_ℓ d_{h,ℓ}`. -/
+private theorem finrank_headDom_ahb :
+    Module.finrank ℝ ((∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) × (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ)
+      × (∀ ℓ, H ℓ → dh ℓ → ℝ) × (∀ ℓ, H ℓ → dh ℓ → ℝ))
+      = 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2
+        + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) := by
+  have h1 : Module.finrank ℝ (∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ)
+      = ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) ^ 2 := by
+    rw [Module.finrank_pi_fintype]
+    simp only [Module.finrank_pi_fintype, Module.finrank_matrix, Module.finrank_self, mul_one,
+      Finset.sum_const, Finset.card_univ, smul_eq_mul, sq]
+  have h2 : Module.finrank ℝ (∀ ℓ, H ℓ → dh ℓ → ℝ)
+      = ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ) := by
+    rw [Module.finrank_pi_fintype]
+    simp only [Module.finrank_pi_fintype, Module.finrank_self, mul_one, Finset.sum_const,
+      Finset.card_univ, smul_eq_mul]
+  rw [Module.finrank_prod, Module.finrank_prod, Module.finrank_prod, h1, h2]
+  ring
 
 /-- **Lemma A.8 of the skips paper, the count with identity skips, as a bound, for attention
 blocks with biases:** without normalization, for a mask in which every token sees at least one
@@ -929,7 +1107,13 @@ theorem funDimB_add_le_residual_attention (hsee : ∀ t, ∃ s, sees t s)
             + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ)))
       ≤ Module.finrank ℝ
           (ParamsB (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut) := by
-  sorry
+  -- `V`: the directions `headDirB p (Γ, Γ', κ, ν)`, of dimension `2 ∑ H d_h² + 2 ∑ H d_h`
+  have h := funDimB_add_le_residual_of_insideBlocksB p rfl
+    (LinearMap.range (IsLinearMap.mk' (headDirB p) (isLinearMap_headDirB p)))
+    (range_le_span_ahb hsee p) (hrw_ahb p hV) hE
+  rwa [LinearMap.finrank_range_of_inj
+    (f := IsLinearMap.mk' (headDirB p) (isLinearMap_headDirB p)) (headDirB_injective p hQ hV),
+    finrank_headDom_ahb] at h
 
 /-- **Lemma A.8 of the skips paper, the count without skips, as a bound, for attention blocks
 with biases:** without normalization, for a mask in which every token sees at least one token,
@@ -950,6 +1134,12 @@ theorem funDimB_add_le_skipless_attention (hsee : ∀ t, ∃ s, sees t s)
             + 2 * ∑ ℓ, Fintype.card (H ℓ) * Fintype.card (dh ℓ)))
       ≤ Module.finrank ℝ
           (ParamsB (Arch.attention (T := T) (d := d) sees id H dh) dIn dOut) := by
-  sorry
+  -- `V`: the directions `headDirB p (Γ, Γ', κ, ν)`, of dimension `2 ∑ H d_h² + 2 ∑ H d_h`
+  have h := funDimB_add_le_skipless_of_insideBlocksB p rfl
+    (LinearMap.range (IsLinearMap.mk' (headDirB p) (isLinearMap_headDirB p)))
+    (range_le_span_ahb hsee p) (hrw_ahb p hV) hE hw
+  rwa [LinearMap.finrank_range_of_inj
+    (f := IsLinearMap.mk' (headDirB p) (isLinearMap_headDirB p)) (headDirB_injective p hQ hV),
+    finrank_headDom_ahb] at h
 
 end Skips
