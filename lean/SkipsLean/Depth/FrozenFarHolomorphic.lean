@@ -824,6 +824,30 @@ private theorem farBoundC_all (hp : 1 ≤ p) {σc : ℂ → ℂ} {R κg : ℝ} (
   | last => exact farBoundC_last σc C A θ η
   | cast ℓ ih => exact farBoundC_castSucc hp hκg hfar hθ η ℓ ih
 
+/-! ### The four maps -/
+
+/-- The derivative of `θ' ↦ 𝓑_{>k}(h)` along `η'` is the derivative of `r ↦ 𝓑_{>k}(h)` at the
+weights `θ' + r η'`. -/
+private theorem hasDerivAt_params_suffix_ffh (A' : Arch T d L) (hχ : A'.χ = id)
+    (hf : ∀ ℓ, Differentiable ℝ (A'.f ℓ)) (θ' η' : Params A' dIn dOut) (k : Fin (L + 1))
+    (h : Matrix T d ℝ) :
+    HasDerivAt (fun r : ℝ => suffix A' 0 (θ' + r • η') k h)
+      (fderiv ℝ (fun θ'' : Params A' dIn dOut => suffix A' 0 θ'' k h) θ' η') 0 := by
+  have hP := differentiable_params_suffix A' (dIn := dIn) (dOut := dOut) hχ hf k h
+  have hl : HasDerivAt (fun r : ℝ => θ' + r • η') η' 0 := by
+    have h1 := ((hasDerivAt_id (0 : ℝ)).smul_const η').const_add θ'
+    rw [one_smul] at h1
+    exact h1
+  have hc := (hP θ').hasFDerivAt.comp_hasDerivAt_of_eq 0 hl (by simp)
+  exact hc
+
+/-- Helper: the cast of `t (H + U)`. -/
+private theorem map_smul_add_ofReal_ffh {m n : Type*} (t : ℝ) (H U : Matrix m n ℝ) :
+    (t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + U.map (fun x : ℝ => (x : ℂ)))
+      = (t • (H + U)).map (fun x : ℝ => (x : ℂ)) := by
+  ext i j
+  simp [mul_add]
+
 /-- **Lemma D.11, with the holomorphic extension.** Let `θ` be good for the cones, and let all
 rows of `H` lie in `C_k`. There are `ϱ, κ > 0` and `t₀` such that for `t ≥ t₀` the maps
 `u ↦ 𝓑_{>k}(t (H + u))` and `u ↦ 𝐃_θ 𝓑_{>k}(t (H + u)) η`, and the same maps of the frozen network,
@@ -857,6 +881,107 @@ theorem exists_far_frozen_holomorphic (hg : GateFar σ σ' p) (hgC : GateFarC σ
                   (η.toFrozen A)).map (fun a : ℝ => (a : ℂ))) ∧
         ∀ u : Matrix T d ℂ, (∀ τ j, ‖u τ j‖ ≤ ϱ) →
           ‖G u - G₀ u‖ ≤ Real.exp (-(κ * t ^ p)) ∧ ‖G' u - G₀' u‖ ≤ Real.exp (-(κ * t ^ p)) := by
-  sorry
+  -- the complex gate of (31), and the claim of the induction at `k` for `H`
+  obtain ⟨σc, hσc, R, κg, hκg, hfar⟩ := hgC
+  have hp := hg.one_le
+  obtain ⟨ϱ, hϱ, s₀, hs₀, κ, hκ, t₀, hB⟩ := farBoundC_all hp hκg hfar hθ η k H hH
+  -- Cauchy's estimate costs the factor `1/s₀`, absorbed into `κ/2`
+  obtain ⟨t₂, ht₂⟩ := absorb_ffh hp hκ (1 / s₀) 0
+  refine ⟨ϱ, hϱ, κ / 2, half_pos hκ, max t₀ (max t₂ 0), fun t ht => ?_⟩
+  have htt₀ : t₀ ≤ t := (le_max_left _ _).trans ht
+  have htt₂ : t₂ ≤ t := (le_max_left _ _).trans ((le_max_right _ _).trans ht)
+  have ht0 : 0 ≤ t := (le_max_right _ _).trans ((le_max_right _ _).trans ht)
+  have hexp : Real.exp (-(κ * t ^ p)) ≤ Real.exp (-(κ / 2 * t ^ p)) :=
+    Real.exp_le_exp.2 (neg_le_neg (mul_le_mul_of_nonneg_right (half_le_self hκ.le)
+      (pow_nonneg ht0 p)))
+  -- the polydisc is the closed ball of radius `ϱ`
+  have hPD : ∀ u : Matrix T d ℂ, (∀ τ j, ‖u τ j‖ ≤ ϱ) → ‖u‖ ≤ ϱ := fun u hu =>
+    (Matrix.norm_le_iff hϱ.le).2 hu
+  have hs0 : ‖(0 : ℂ)‖ ≤ s₀ := by rw [norm_zero]; exact hs₀.le
+  -- `u ↦ t (H + u)` is holomorphic
+  have hι : ∀ u₀ : Matrix T d ℂ, AnalyticAt ℂ
+      (fun u : Matrix T d ℂ => (t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + u)) u₀ := fun u₀ =>
+    analyticAt_const.fun_smul (analyticAt_const.fun_add analyticAt_id)
+  have hι0 : ∀ u₀ : Matrix T d ℂ, AnalyticAt ℂ
+      (fun u : Matrix T d ℂ => ((0 : ℂ), (t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + u))) u₀ :=
+    fun u₀ => analyticAt_const.prod (hι u₀)
+  -- the four maps: the two complex networks at `s = 0`, and their derivatives in `s` at `0`
+  refine ⟨fun u => netC (fun _ _ => σc) θ η 0 k ((t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + u)),
+    fun u => netC (fun ℓ => aFC (A ℓ)) θ η 0 k ((t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + u)),
+    fun u => fderiv ℂ (fun q : ℂ × Matrix T d ℂ => netC (fun _ _ => σc) θ η q.1 k q.2)
+      (0, (t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + u)) (1, 0),
+    fun u => fderiv ℂ (fun q : ℂ × Matrix T d ℂ => netC (fun ℓ => aFC (A ℓ)) θ η q.1 k q.2)
+      (0, (t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + u)) (1, 0), ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · -- `G` is holomorphic on the polydisc
+    intro u hu
+    exact AnalyticAt.comp (f := fun u : Matrix T d ℂ =>
+      ((0 : ℂ), (t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + u)))
+      (hB t htt₀ 0 hs0 u (hPD u hu)).1 (hι0 u)
+  · -- `G₀` is holomorphic (everywhere)
+    intro u _
+    exact AnalyticAt.comp (f := fun u : Matrix T d ℂ =>
+      ((0 : ℂ), (t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + u)))
+      (analyticAt_netC_frozen A θ η k _) (hι0 u)
+  · -- `G'` is holomorphic on the polydisc
+    intro u hu
+    exact analyticAt_partialDeriv_ffh
+      (ι := fun u : Matrix T d ℂ => (t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + u))
+      (hB t htt₀ 0 hs0 u (hPD u hu)).1 (hι u)
+  · -- `G₀'` is holomorphic (everywhere)
+    intro u _
+    exact analyticAt_partialDeriv_ffh
+      (ι := fun u : Matrix T d ℂ => (t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + u))
+      (analyticAt_netC_frozen A θ η k _) (hι u)
+  · -- at real `U`: the real networks and their derivatives in the weights
+    intro U hU
+    have hUc : ‖U.map (fun x : ℝ => (x : ℂ))‖ ≤ ϱ := (Matrix.norm_le_iff hϱ.le).2 fun τ j => by
+      rw [Matrix.map_apply, Complex.norm_real, Real.norm_eq_abs]
+      exact hU τ j
+    have hd := (hB t htt₀ 0 hs0 _ hUc).1.differentiableAt
+    have hd₀ := (analyticAt_netC_frozen A θ η k
+      ((0 : ℂ), (t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + U.map (fun x : ℝ => (x : ℂ)))))
+      |>.differentiableAt
+    dsimp only
+    rw [map_smul_add_ofReal_ffh] at hd hd₀ ⊢
+    refine ⟨?_, ?_, ?_, ?_⟩
+    · have e := netC_gated_ofReal hσc θ η 0 k (t • (H + U))
+      rw [Complex.ofReal_zero, zero_smul, add_zero] at e
+      exact e
+    · have e := netC_frozen_ofReal A θ η 0 k (t • (H + U))
+      rw [Complex.ofReal_zero, zero_smul, add_zero] at e
+      exact e
+    · exact fderiv_ofReal_line_ffh hd (hasDerivAt_params_suffix_ffh _ rfl
+        (fun ℓ => differentiable_f_gated (fun z => (hg.hasDerivAt z).differentiableAt) ℓ) θ η k
+        (t • (H + U))) fun r => netC_gated_ofReal hσc θ η r k (t • (H + U))
+    · exact fderiv_ofReal_line_ffh hd₀ (hasDerivAt_params_suffix_ffh _ rfl
+        (fun ℓ => differentiableOn_univ.1 (analyticOnNhd_f_frozen A ℓ).differentiableOn)
+        (θ.toFrozen A) (η.toFrozen A) k (t • (H + U)))
+        fun r => netC_frozen_ofReal A θ η r k (t • (H + U))
+  · -- the two bounds on the polydisc
+    intro u hu
+    have hu' := hPD u hu
+    refine ⟨((hB t htt₀ 0 hs0 u hu').2).trans hexp, ?_⟩
+    -- Cauchy's estimate in `s` on the disc `|s| ≤ s₀`
+    have hdiff : ∀ s : ℂ, ‖s‖ ≤ s₀ →
+        DifferentiableAt ℂ (fun q : ℂ × Matrix T d ℂ => netC (fun _ _ => σc) θ η q.1 k q.2)
+          (s, (t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + u)) ∧
+        DifferentiableAt ℂ
+          (fun q : ℂ × Matrix T d ℂ => netC (fun ℓ => aFC (A ℓ)) θ η q.1 k q.2)
+          (s, (t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + u)) := fun s hs =>
+      ⟨(hB t htt₀ s hs u hu').1.differentiableAt,
+        (analyticAt_netC_frozen A θ η k _).differentiableAt⟩
+    have hC := norm_deriv_le_ffh (D := fun s : ℂ =>
+        netC (fun _ _ => σc) θ η s k ((t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + u))
+          - netC (fun ℓ => aFC (A ℓ)) θ η s k ((t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + u)))
+      hs₀ (fun s hs => ((hasDerivAt_partial_ffh (hdiff s hs).1).fun_sub
+        (hasDerivAt_partial_ffh (hdiff s hs).2)).differentiableAt)
+      (fun s hs => (hB t htt₀ s hs u hu').2)
+    rw [((hasDerivAt_partial_ffh (hdiff 0 hs0).1).fun_sub
+      (hasDerivAt_partial_ffh (hdiff 0 hs0).2)).deriv] at hC
+    refine hC.trans ?_
+    have h2 := ht₂ t htt₂
+    rw [pow_zero, mul_one] at h2
+    calc Real.exp (-(κ * t ^ p)) / s₀ = 1 / s₀ * Real.exp (-(κ * t ^ p)) := by ring
+      _ ≤ _ := h2
 
 end Skips
