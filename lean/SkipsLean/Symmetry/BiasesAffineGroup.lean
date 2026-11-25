@@ -216,6 +216,87 @@ theorem affPreservingSkipless_eq_univ (A : Arch T d L) (hA : A.χ = id) :
   rw [hskip] at h
   rw [h, evalB_translateAllAt hA]
 
+omit [Fintype T] [Fintype dOut] in
+/-- Helper: in a residual network whose writes are all zero, the hidden state `h_m` is `x E`
+plus `w_0 + … + w_m` at every token, where `w_0 = b_E` and `w_{ℓ+1} = b_write^ℓ` (whatever the
+blocks: the block term is `f(…) 0 = 0`). -/
+private theorem hiddenB_write_zero_bag (θ : Params A dIn dOut) (hw : ∀ ℓ, θ.write ℓ = 0)
+    (b : Biases A dOut) (w : Fin (L + 1) → d → ℝ) (h0 : b.E = w 0)
+    (hs : ∀ ℓ, b.write ℓ = w ℓ.succ) (x : Matrix T dIn ℝ) (m : Fin (L + 1)) :
+    hiddenB A 1 θ b x m = x * θ.E + Matrix.of (fun _ => ∑ k ∈ Finset.Iic m, w k) := by
+  induction m using Fin.induction with
+  | zero => rw [hiddenB_zero, sum_Iic_zero_bag, h0]
+  | succ ℓ ih =>
+    rw [hiddenB_succ, ih, hw, hs, sum_Iic_succ_bag, of_add_bag]
+    simp only [Pi.one_apply, Matrix.mul_one, Matrix.mul_zero, zero_add, add_assoc]
+
+omit [Fintype T] in
+/-- Helper: if the changes of basis `G` with the translations `g` preserve the function of every
+residual network, then `v G_k G_L⁻¹ D = v D` for every row `v`, every `k` and every readout `D`
+(the network with zero embedding, reads and writes, and the biases with `w_k + g_k = v` and
+`w_j + g_j = 0` for `j ≠ k`, at the input `0`). -/
+private theorem row_eq_of_mem_bag [Nonempty T] (hA : A.χ = id)
+    {p : (Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ)}
+    (hp : p ∈ affPreservingResidual A dIn dOut) (k : Fin (L + 1)) (v : d → ℝ)
+    (D : Matrix d dOut ℝ) :
+    (v ᵥ* (p.1 k : Matrix d d ℝ)) ᵥ* ((↑(p.1 (Fin.last L))⁻¹ : Matrix d d ℝ) * D)
+      = v ᵥ* D := by
+  classical
+  have hp' : ∀ (θ : Params A dIn dOut) (b : Biases A dOut) (x : Matrix T dIn ℝ),
+      evalB A 1 (θ.cob p.1 p.1) ((b.translateAll θ p.2).cob p.1) x = evalB A 1 θ b x := hp
+  -- the rows `w` with `w + g = (v at k)`
+  obtain ⟨w, hw⟩ : ∃ w : Fin (L + 1) → d → ℝ,
+      w = fun j => (if j = k then v else 0) - p.2 j := ⟨_, rfl⟩
+  let θ : Params A dIn dOut := ⟨0, fun _ => 0, fun _ => 0, D⟩
+  let b : Biases A dOut := ⟨w 0, fun _ => 0, fun ℓ => w ℓ.succ, 0⟩
+  have h := hp' θ b 0
+  unfold evalB at h
+  rw [hiddenB_write_zero_bag θ (fun _ => rfl) b w rfl (fun _ => rfl),
+    hiddenB_write_zero_bag (θ.cob p.1 p.1) (fun _ => Matrix.zero_mul _) _
+      (fun j => (w j + p.2 j) ᵥ* (p.1 j : Matrix d d ℝ)) rfl (fun _ => rfl), hA,
+    Iic_last_bag] at h
+  simp only [id_eq, Matrix.zero_mul, zero_add, of_mul_bag] at h
+  rw [← of_add_bag, ← of_add_bag] at h
+  have h2 := congrFun (Matrix.of.injective h) (Classical.arbitrary T)
+  simp only [Params.cob, Biases.cob, Biases.translateAll, θ, b] at h2
+  -- `∑_j (w_j + g_j) G_j = v G_k` and `∑_j w_j = v − ∑_j g_j`
+  have hs1 : ∑ j, (w j + p.2 j) ᵥ* (p.1 j : Matrix d d ℝ) = v ᵥ* (p.1 k : Matrix d d ℝ) := by
+    rw [Finset.sum_eq_single k]
+    · rw [hw]
+      simp only [sub_add_cancel, ↓reduceIte]
+    · intro j _ hj
+      rw [hw]
+      simp only [sub_add_cancel, hj, ite_false, Matrix.zero_vecMul]
+    · intro hk
+      exact absurd (Finset.mem_univ k) hk
+  have hs2 : ∑ j, w j = v - ∑ j, p.2 j := by
+    rw [hw, Finset.sum_sub_distrib, Finset.sum_ite_eq', ite_eq_left (Finset.mem_univ k)]
+  rw [hs1, hs2, zero_sub, add_zero, Matrix.sub_vecMul, sub_eq_add_neg] at h2
+  exact add_right_cancel h2
+
+omit [Fintype T] in
+/-- Helper: if the changes of basis `G` with the translations `g` preserve the function of every
+residual network, then `G_k = G_L` for every `k`. -/
+private theorem gl_eq_last_bag [Nonempty T] [Nonempty dOut] (hA : A.χ = id)
+    {p : (Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ)}
+    (hp : p ∈ affPreservingResidual A dIn dOut) (k : Fin (L + 1)) :
+    p.1 k = p.1 (Fin.last L) := by
+  classical
+  obtain ⟨c⟩ := (inferInstance : Nonempty dOut)
+  -- `G_k G_L⁻¹ = 1`, column `j` from the readout whose rows are `δ_{r j}`, row `i` from `v = e_i`
+  have hN : (p.1 k : Matrix d d ℝ) * (↑(p.1 (Fin.last L))⁻¹ : Matrix d d ℝ) = 1 := by
+    ext i j
+    have h := row_eq_of_mem_bag hA hp k (Pi.single i 1)
+      (Matrix.of fun r (_ : dOut) => if r = j then (1 : ℝ) else 0)
+    rw [Matrix.vecMul_vecMul, Matrix.single_one_vecMul, Matrix.single_one_vecMul,
+      ← Matrix.mul_assoc] at h
+    have h2 := congrFun h c
+    simp only [Matrix.row, Matrix.mul_apply, Matrix.of_apply, mul_ite, mul_one, mul_zero,
+      Finset.sum_ite_eq', Finset.mem_univ, ite_true] at h2
+    rw [Matrix.one_apply]
+    exact h2
+  exact mul_inv_eq_one.mp (Units.ext (by rw [Units.val_mul, Units.val_one]; exact hN))
+
 /-- **Lemma A.8, "A skip ties only the linear part of `Aff(d_model)`":** without normalization,
 the changes of basis `G_0, …, G_L` with the translations `g_0, …, g_L` preserve the function of
 every residual network with biases if and only if all `G_ℓ` are equal; the translations are
@@ -223,7 +304,23 @@ free. -/
 theorem mem_affPreservingResidual_iff [Nonempty T] [Nonempty dOut] (A : Arch T d L)
     (hA : A.χ = id) (p : (Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ)) :
     p ∈ affPreservingResidual A dIn dOut ↔ ∀ ℓ, p.1 ℓ = p.1 0 := by
-  sorry
+  constructor
+  · -- networks with zero writes give `G_ℓ = G_L` for every `ℓ`
+    intro hp ℓ
+    rw [gl_eq_last_bag hA hp ℓ, gl_eq_last_bag hA hp 0]
+  · -- one change of basis: the stream `G⁻¹ 1 G = 1` (`evalB_cob`), then the translations
+    intro hc θ b x
+    have hχ : ∀ ℓ (h : Matrix T d ℝ),
+        A.χ (h * (p.1 ℓ : Matrix d d ℝ)) = A.χ h * (p.1 ℓ : Matrix d d ℝ) := by
+      intro ℓ h
+      simp only [hA, id_eq]
+    have hskip : cobSkip (1 : Fin L → Matrix d d ℝ) p.1 = 1 := by
+      funext ℓ
+      simp only [cobSkip, Pi.one_apply, Matrix.mul_one]
+      rw [hc ℓ.castSucc, hc ℓ.succ, Units.inv_mul]
+    have h := evalB_cob 1 θ (b.translateAll θ p.2) p.1 p.1 x hχ
+    rw [hskip] at h
+    rw [h, evalB_translateAll hA]
 
 /-- **Lemma A.8, the dimension without skips:** the changes of basis and translations of a
 skipless network with biases form a set of dimension `(L + 1)(d² + d)`. -/
