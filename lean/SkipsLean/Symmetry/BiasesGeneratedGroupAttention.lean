@@ -195,6 +195,244 @@ theorem finrank_headsSpace :
   rw [Module.finrank_prod, Module.finrank_prod, Module.finrank_prod, h1, h2]
   ring
 
+/-! ### Helpers: the maps with the changes of basis given in `GL` -/
+
+/-- Helper: the map of `(K, K', κ, ν)` with `K`, `K'` given in `GL`. -/
+private noncomputable def actGL_bga (K N : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (κ ν : ∀ ℓ, H ℓ → dh ℓ → ℝ)
+    (q : Params (Arch.attention sees χ H dh) dIn dOut
+      × Biases (Arch.attention sees χ H dh) dOut) :
+    Params (Arch.attention sees χ H dh) dIn dOut × Biases (Arch.attention sees χ H dh) dOut :=
+  ((q.1.headsQK K).headsVO N,
+    (((q.2.headsQK K).headsVO N).keyShift κ).valueShift ((q.1.headsQK K).headsVO N) ν)
+
+/-- Helper: `headsAct σ` is the map of `σ` with `glOfMatrix` of its matrices. -/
+private theorem headsAct_apply_bga (σ : HeadsSpace H dh)
+    (q : Params (Arch.attention sees χ H dh) dIn dOut
+      × Biases (Arch.attention sees χ H dh) dOut) :
+    headsAct σ q = actGL_bga (fun ℓ i => glOfMatrix (σ.1 ℓ i))
+      (fun ℓ i => glOfMatrix (σ.2.1 ℓ i)) σ.2.2.1 σ.2.2.2 q := rfl
+
+/-- Helper: `glOfMatrix` of an element of `GL` is that element. -/
+private theorem glOfMatrix_coe_bga {n : Type*} [Fintype n] [DecidableEq n] (g : GL n ℝ) :
+    glOfMatrix (g : Matrix n n ℝ) = g :=
+  Units.ext (coe_glOfMatrix_bga _ ((Matrix.isUnit_iff_isUnit_det _).1 g.isUnit))
+
+section Entries
+
+variable (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+  (b : Biases (Arch.attention sees χ H dh) dOut) (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ)
+  (κ : ∀ ℓ, H ℓ → dh ℓ → ℝ) (ℓ : Fin L) (a : d) (i : H ℓ) (k : dh ℓ)
+
+/-- Helper: an entry of `θ.headsQK K` (query column). -/
+private theorem pQKq_bga : (θ.headsQK K).read ℓ a (i, Sum.inl k)
+    = ∑ k', θ.read ℓ a (i, Sum.inl k') * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k := rfl
+/-- Helper: an entry of `θ.headsQK K` (key column). -/
+private theorem pQKk_bga : (θ.headsQK K).read ℓ a (i, Sum.inr (Sum.inl k))
+    = ∑ k', θ.read ℓ a (i, Sum.inr (Sum.inl k'))
+      * (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k' := rfl
+/-- Helper: an entry of `θ.headsQK K` (value column). -/
+private theorem pQKv_bga : (θ.headsQK K).read ℓ a (i, Sum.inr (Sum.inr k))
+    = θ.read ℓ a (i, Sum.inr (Sum.inr k)) := rfl
+/-- Helper: the write of `θ.headsQK K`. -/
+private theorem pQKw_bga : (θ.headsQK K).write ℓ = θ.write ℓ := rfl
+/-- Helper: an entry of `θ.headsVO K` (query column). -/
+private theorem pVOq_bga : (θ.headsVO K).read ℓ a (i, Sum.inl k) = θ.read ℓ a (i, Sum.inl k) :=
+  rfl
+/-- Helper: an entry of `θ.headsVO K` (key column). -/
+private theorem pVOk_bga : (θ.headsVO K).read ℓ a (i, Sum.inr (Sum.inl k))
+    = θ.read ℓ a (i, Sum.inr (Sum.inl k)) := rfl
+/-- Helper: an entry of `θ.headsVO K` (value column). -/
+private theorem pVOv_bga : (θ.headsVO K).read ℓ a (i, Sum.inr (Sum.inr k))
+    = ∑ k', θ.read ℓ a (i, Sum.inr (Sum.inr k')) * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k := rfl
+/-- Helper: an entry of the write of `θ.headsVO K`. -/
+private theorem pVOw_bga (c : d) : (θ.headsVO K).write ℓ (i, k) c
+    = ∑ k', (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k' * θ.write ℓ (i, k') c :=
+  rfl
+/-- Helper: an entry of `b.headsQK K` (query). -/
+private theorem bQKq_bga : (b.headsQK K).read ℓ (i, Sum.inl k)
+    = ∑ k', b.read ℓ (i, Sum.inl k') * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k := rfl
+/-- Helper: an entry of `b.headsQK K` (key). -/
+private theorem bQKk_bga : (b.headsQK K).read ℓ (i, Sum.inr (Sum.inl k))
+    = ∑ k', b.read ℓ (i, Sum.inr (Sum.inl k'))
+      * (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k' := rfl
+/-- Helper: an entry of `b.headsQK K` (value). -/
+private theorem bQKv_bga : (b.headsQK K).read ℓ (i, Sum.inr (Sum.inr k))
+    = b.read ℓ (i, Sum.inr (Sum.inr k)) := rfl
+/-- Helper: the write bias of `b.headsQK K`. -/
+private theorem bQKw_bga : (b.headsQK K).write ℓ = b.write ℓ := rfl
+/-- Helper: an entry of `b.headsVO K` (query). -/
+private theorem bVOq_bga : (b.headsVO K).read ℓ (i, Sum.inl k) = b.read ℓ (i, Sum.inl k) := rfl
+/-- Helper: an entry of `b.headsVO K` (key). -/
+private theorem bVOk_bga : (b.headsVO K).read ℓ (i, Sum.inr (Sum.inl k))
+    = b.read ℓ (i, Sum.inr (Sum.inl k)) := rfl
+/-- Helper: an entry of `b.headsVO K` (value). -/
+private theorem bVOv_bga : (b.headsVO K).read ℓ (i, Sum.inr (Sum.inr k))
+    = ∑ k', b.read ℓ (i, Sum.inr (Sum.inr k')) * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k := rfl
+/-- Helper: the write bias of `b.headsVO K`. -/
+private theorem bVOw_bga : (b.headsVO K).write ℓ = b.write ℓ := rfl
+/-- Helper: an entry of `b.keyShift κ` (query). -/
+private theorem kSq_bga : (b.keyShift κ).read ℓ (i, Sum.inl k) = b.read ℓ (i, Sum.inl k) := rfl
+/-- Helper: an entry of `b.keyShift κ` (key). -/
+private theorem kSk_bga : (b.keyShift κ).read ℓ (i, Sum.inr (Sum.inl k))
+    = b.read ℓ (i, Sum.inr (Sum.inl k)) + κ ℓ i k := rfl
+/-- Helper: an entry of `b.keyShift κ` (value). -/
+private theorem kSv_bga : (b.keyShift κ).read ℓ (i, Sum.inr (Sum.inr k))
+    = b.read ℓ (i, Sum.inr (Sum.inr k)) := rfl
+/-- Helper: the write bias of `b.keyShift κ`. -/
+private theorem kSw_bga : (b.keyShift κ).write ℓ = b.write ℓ := rfl
+/-- Helper: an entry of `b.valueShift θ κ` (query). -/
+private theorem vSq_bga : (b.valueShift θ κ).read ℓ (i, Sum.inl k) = b.read ℓ (i, Sum.inl k) :=
+  rfl
+/-- Helper: an entry of `b.valueShift θ κ` (key). -/
+private theorem vSk_bga : (b.valueShift θ κ).read ℓ (i, Sum.inr (Sum.inl k))
+    = b.read ℓ (i, Sum.inr (Sum.inl k)) := rfl
+/-- Helper: an entry of `b.valueShift θ κ` (value). -/
+private theorem vSv_bga : (b.valueShift θ κ).read ℓ (i, Sum.inr (Sum.inr k))
+    = b.read ℓ (i, Sum.inr (Sum.inr k)) + κ ℓ i k := rfl
+/-- Helper: an entry of the write bias of `b.valueShift θ κ`. -/
+private theorem vSw_bga (c : d) : (b.valueShift θ κ).write ℓ c
+    = b.write ℓ c - ∑ i, ∑ k, κ ℓ i k * θ.write ℓ (i, k) c := rfl
+
+end Entries
+
+/-! ### Helpers: sums -/
+
+/-- Helper: `(x A) B = x (A B)`, entry `k`. -/
+private theorem sumA_bga {n : Type*} [Fintype n] [DecidableEq n] (x : n → ℝ) (A B : GL n ℝ)
+    (k : n) :
+    ∑ k', (∑ k'', x k'' * (A : Matrix n n ℝ) k'' k') * (B : Matrix n n ℝ) k' k
+      = ∑ k', x k' * ∑ j, (A : Matrix n n ℝ) k' j * (B : Matrix n n ℝ) j k := by
+  simp only [Finset.sum_mul, Finset.mul_sum, mul_assoc]
+  exact Finset.sum_comm
+
+/-- Helper: `(x Aᵀ) Bᵀ = x (B A)ᵀ`, entry `k`. -/
+private theorem sumB_bga {n : Type*} [Fintype n] [DecidableEq n] (x : n → ℝ) (A B : GL n ℝ)
+    (k : n) :
+    ∑ k', (∑ k'', x k'' * (A : Matrix n n ℝ) k' k'') * (B : Matrix n n ℝ) k k'
+      = ∑ k', x k' * ∑ j, (B : Matrix n n ℝ) k j * (A : Matrix n n ℝ) j k' := by
+  simp only [Finset.sum_mul, Finset.mul_sum]
+  rw [Finset.sum_comm]
+  exact Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => by ring
+
+/-- Helper: `B (A w) = (B A) w`, entry `k`. -/
+private theorem sumC_bga {n : Type*} [Fintype n] [DecidableEq n] (w : n → ℝ) (A B : GL n ℝ)
+    (k : n) :
+    ∑ k', (B : Matrix n n ℝ) k k' * ∑ k'', (A : Matrix n n ℝ) k' k'' * w k''
+      = ∑ k', (∑ j, (B : Matrix n n ℝ) k j * (A : Matrix n n ℝ) j k') * w k' := by
+  simp only [Finset.sum_mul, Finset.mul_sum, mul_assoc]
+  exact Finset.sum_comm
+
+/-- Helper (the private `sum_mul_GL_ahb` of `Symmetry/AttentionHeadsBiases.lean`):
+`∑_k (x G)_k (G⁻¹ y)_k = x · y` for `G ∈ GL n`. -/
+private theorem sum_mul_GL_bga {n : Type*} [Fintype n] [DecidableEq n] (G : GL n ℝ)
+    (x y : n → ℝ) :
+    ∑ k, (∑ a, x a * (G : Matrix n n ℝ) a k) * (∑ b, ((G⁻¹ : GL n ℝ) : Matrix n n ℝ) k b * y b)
+      = ∑ a, x a * y a := by
+  have h : (x ᵥ* (G : Matrix n n ℝ)) ⬝ᵥ (((G⁻¹ : GL n ℝ) : Matrix n n ℝ) *ᵥ y) = x ⬝ᵥ y := by
+    rw [← Matrix.dotProduct_mulVec, Matrix.mulVec_mulVec, Units.mul_inv, Matrix.one_mulVec]
+  exact h
+
+/-- Helper: `(x G)ᵀ`-row against `G⁻¹`: `∑_{k'} (∑_{k''} x_{k''} G_{k' k''}) (G⁻¹)_{k k'} = x_k`. -/
+private theorem sum_inv1_bga {n : Type*} [Fintype n] [DecidableEq n] (G : GL n ℝ) (x : n → ℝ)
+    (k : n) :
+    ∑ k', (∑ k'', x k'' * (G : Matrix n n ℝ) k' k'') * ((G⁻¹ : GL n ℝ) : Matrix n n ℝ) k k'
+      = x k := by
+  have h : (((G⁻¹ : GL n ℝ) : Matrix n n ℝ) *ᵥ ((G : Matrix n n ℝ) *ᵥ x)) k = x k := by
+    rw [Matrix.mulVec_mulVec, Units.inv_mul, Matrix.one_mulVec]
+  rw [← h]
+  simp only [Matrix.mulVec, dotProduct]
+  refine Finset.sum_congr rfl fun k' _ => ?_
+  rw [mul_comm]
+  congr 1
+  exact Finset.sum_congr rfl fun _ _ => mul_comm _ _
+
+/-- Helper: `x G⁻¹ G = x`, entry `k`. -/
+private theorem sum_inv2_bga {n : Type*} [Fintype n] [DecidableEq n] (G : GL n ℝ) (x : n → ℝ)
+    (k : n) :
+    ∑ k', (∑ k'', x k'' * ((G⁻¹ : GL n ℝ) : Matrix n n ℝ) k'' k') * (G : Matrix n n ℝ) k' k
+      = x k := by
+  have h : ((x ᵥ* ((G⁻¹ : GL n ℝ) : Matrix n n ℝ)) ᵥ* (G : Matrix n n ℝ)) k = x k := by
+    rw [Matrix.vecMul_vecMul, Units.inv_mul, Matrix.vecMul_one]
+  exact h
+
+/-- Helper: `∑_a g_a ∑_{k'} W_{a k'} c_{k'} = ∑_{k'} (g W)_{k'} c_{k'}`. -/
+private theorem sum_vecMul_bga {m n : Type*} [Fintype m] [Fintype n] (g : m → ℝ)
+    (W : m → n → ℝ) (c : n → ℝ) :
+    ∑ a, g a * ∑ k', W a k' * c k' = ∑ k', (∑ a, g a * W a k') * c k' := by
+  simp only [Finset.sum_mul, Finset.mul_sum, mul_assoc]
+  exact Finset.sum_comm
+
+/-- Helper: `∑_c (∑_i ∑_k ν_{ik} W_{ikc}) G_c = ∑_i ∑_k ν_{ik} ∑_c W_{ikc} G_c`. -/
+private theorem sum_sum_mul_bga {ι κ' δ : Type*} [Fintype ι] [Fintype κ'] [Fintype δ]
+    (ν : ι → κ' → ℝ) (W : ι → κ' → δ → ℝ) (G : δ → ℝ) :
+    ∑ c, (∑ i, ∑ k, ν i k * W i k c) * G c = ∑ i, ∑ k, ν i k * ∑ c, W i k c * G c := by
+  simp only [Finset.sum_mul, Finset.mul_sum, mul_assoc]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  exact Finset.sum_comm
+
+/-! ### Helpers: the group law of the maps -/
+
+/-- Helper: with `K = K' = 1` and `κ = ν = 0` the map is the identity. -/
+private theorem actGL_one_bga
+    (q : Params (Arch.attention sees χ H dh) dIn dOut
+      × Biases (Arch.attention sees χ H dh) dOut) :
+    actGL_bga (fun _ _ => 1) (fun _ _ => 1) (fun _ _ => 0) (fun _ _ => 0) q = q := by
+  obtain ⟨θ, b⟩ := q
+  refine Prod.ext (Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl)
+    (Biases.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl)
+  · ext a ⟨i, k | k | k⟩ <;>
+      simp [actGL_bga, pVOq_bga, pVOk_bga, pVOv_bga, pQKq_bga, pQKk_bga, pQKv_bga,
+        Matrix.one_apply]
+  · ext ⟨i, k⟩ c
+    simp [actGL_bga, pVOw_bga, pQKw_bga, Matrix.one_apply]
+  · funext q
+    obtain ⟨i, k | k | k⟩ := q <;>
+      simp [actGL_bga, vSq_bga, vSk_bga, vSv_bga, kSq_bga, kSk_bga, kSv_bga, bVOq_bga, bVOk_bga,
+        bVOv_bga, bQKq_bga, bQKk_bga, bQKv_bga, Matrix.one_apply]
+  · funext c
+    simp [actGL_bga, vSw_bga, kSw_bga, bVOw_bga, bQKw_bga]
+
+/-- Helper: two changes of basis inside the heads in a row, on the weights. -/
+private theorem actP_comp_bga (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (K₁ N₁ K₂ N₂ : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) :
+    (((θ.headsQK K₂).headsVO N₂).headsQK K₁).headsVO N₁
+      = (θ.headsQK fun ℓ i => K₂ ℓ i * K₁ ℓ i).headsVO fun ℓ i => N₂ ℓ i * N₁ ℓ i := by
+  refine Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl
+  · ext a ⟨i, k | k | k⟩ <;>
+      simp only [pVOq_bga, pVOk_bga, pVOv_bga, pQKq_bga, pQKk_bga, pQKv_bga, Units.val_mul,
+        _root_.mul_inv_rev, Matrix.mul_apply, sumA_bga, sumB_bga]
+  · ext ⟨i, k⟩ c
+    simp only [pVOw_bga, pQKw_bga, Units.val_mul, _root_.mul_inv_rev, Matrix.mul_apply, sumC_bga]
+
+/-- Helper: the map of `σ` after the map of `σ'` is the map of
+`(K' K, N' N, κ' K^{-⊤} + κ, ν' N + ν)`. -/
+private theorem actGL_comp_bga (K₁ N₁ K₂ N₂ : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ)
+    (κ₁ ν₁ κ₂ ν₂ : ∀ ℓ, H ℓ → dh ℓ → ℝ)
+    (q : Params (Arch.attention sees χ H dh) dIn dOut
+      × Biases (Arch.attention sees χ H dh) dOut) :
+    actGL_bga K₁ N₁ κ₁ ν₁ (actGL_bga K₂ N₂ κ₂ ν₂ q)
+      = actGL_bga (fun ℓ i => K₂ ℓ i * K₁ ℓ i) (fun ℓ i => N₂ ℓ i * N₁ ℓ i)
+        (fun ℓ i k => ∑ k', κ₂ ℓ i k'
+          * (((K₁ ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k' + κ₁ ℓ i k)
+        (fun ℓ i k => ∑ k', ν₂ ℓ i k' * (N₁ ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k + ν₁ ℓ i k)
+        q := by
+  obtain ⟨θ, b⟩ := q
+  have hP := actP_comp_bga θ K₁ N₁ K₂ N₂
+  refine Prod.ext hP ?_
+  simp only [actGL_bga]
+  rw [← hP]
+  refine Biases.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl
+  · funext q
+    obtain ⟨i, k | k | k⟩ := q <;>
+      simp only [vSq_bga, vSk_bga, vSv_bga, kSq_bga, kSk_bga, kSv_bga, bVOq_bga, bVOk_bga,
+        bVOv_bga, bQKq_bga, bQKk_bga, bQKv_bga, Units.val_mul, _root_.mul_inv_rev,
+        Matrix.mul_apply, add_mul, Finset.sum_add_distrib, sumA_bga, sumB_bga] <;> ring
+  · funext c
+    simp only [vSw_bga, kSw_bga, bVOw_bga, bQKw_bga, pVOw_bga, pQKw_bga, add_mul,
+      Finset.sum_add_distrib, sum_mul_GL_bga]
+    ring
+
 /-- **The changes of basis inside the heads, the shifts of the key biases and the value biases
 moved into the output bias are a family of symmetries inside the blocks,** when every token sees
 a token. -/
