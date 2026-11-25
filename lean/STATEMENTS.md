@@ -344,7 +344,7 @@ rows of Table 6 included; the seven statements together are Lemma D.13 for every
 Report: `lean-statement-audit-thirtyfirst-2026-11-25.md`.
 The reports of the readers are in `ai_notes/`. Not yet compared by such a reader (written after
 the thirty-first audit began at 03:15 UTC, 25 November; they go to the thirty-second audit, in
-two parts, begun at 04:12 UTC): `Dimension/FunctionalBiasesKinks.lean`,
+two parts, begun at 09:06 UTC; a first start at 04:12 UTC saved no check): `Dimension/FunctionalBiasesKinks.lean`,
 `Symmetry/BiasesFlatKinks.lean`, `Symmetry/InsideBlocksBiases.lean` and `Symmetry/BiasesRescaleCount.lean`
 (written at 03:23 UTC, 25 November).
 `OneBlock/GatedBiases.lean` (written at 03:29 UTC, 25 November).
@@ -354,7 +354,7 @@ two parts, begun at 04:12 UTC): `Dimension/FunctionalBiasesKinks.lean`,
 `OneBlock/GatedBiasesNamed.lean` (written at 03:52 UTC, 25 November, with its proofs by the coordinator).
 `OneBlock/KeepsProductsBiases.lean` (written at 03:53 UTC, 25 November).
 `Residual/SmallWritesBiases.lean` and `Residual/DepthMlpBiases.lean` (written at 04:00 UTC, 25 November).
-Written after the thirty-second audit began: `Residual/DepthGatedBiases.lean` (written at 04:15 UTC, 25 November).
+`Residual/DepthGatedBiases.lean` (written at 04:15 UTC, 25 November).
 A ninth reader (part A, 24 November) compared the six files on
 GELU at complex arguments (`Activations/MillsC.lean`, `Activations/MillsCExpansion.lean`,
 `Activations/MillsAtInfinityC.lean`, `Activations/GeluOnPath.lean`,
