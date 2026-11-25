@@ -2188,3 +2188,25 @@
 'Skips.upperTriangular_pos_mul_orthogonal_transpose_unique' depends on axioms: [propext, Classical.choice, Quot.sound]
 'Skips.exists_cob_learned_upperTriangular_pos' depends on axioms: [propext, Classical.choice, Quot.sound]
 'Skips.exists_cob_learned_posDef' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.flatOn_le_mlp_rescale_skipless_rmsNorm_zero_of_unitsParallelAt' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.funDim_mlp_oneBlock_rescale_skipless_rmsNorm_zero_of_unitsParallelAt' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.exists_jacobianRank_mlp_oneBlock_rescale_skipless_rmsNorm_zero_of_unitsParallelAt' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.unitsParallelAt_of_unitsParallel' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.relu_unitsParallelAt_of_generic' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.rank_of_unitsGeneralPosition' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.relu_unitsParallelAt_of_unitsGeneralPosition' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_open_relu_of_unitsGeneralPosition' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_unitsGeneralPosition' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDim_relu_oneBlock_skipless_rmsNorm_zero_of_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_exists_jacobianRank_relu_oneBlock_skipless_rmsNorm_zero_of_le' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDim_relu_oneBlock_residual_rmsNorm_zero_eq_add_of_le' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]

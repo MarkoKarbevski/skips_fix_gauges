@@ -1,4 +1,4 @@
-"""Exact check of the statement `GatedUnitsRescaleSphere` for ReGLU units (the step "Since
+"""Exact check of the statement `reglu_unitsRescaleSphere` for ReGLU units (the step "Since
 ||n||^2 has no real linear factor, it divides q(n), so X_0 is a multiple of I" of the proof of
 Theorem B.1 (iii), case eps = 0, of the skips paper, with Lemma B.3 for gated units), 24 November
 2026.
