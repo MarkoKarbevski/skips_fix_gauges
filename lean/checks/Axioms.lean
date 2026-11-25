@@ -2243,3 +2243,10 @@ import SkipsLean
 #print axioms Skips.exists_cob_mixed_triangular_of_choice
 #print axioms Skips.cobMixed_injective
 #print axioms Skips.cobMixed_eq_self_iff
+#print axioms Skips.evalB_translateAllAt
+#print axioms Skips.evalB_translateAll
+#print axioms Skips.affPreservingSkipless_eq_univ
+#print axioms Skips.mem_affPreservingResidual_iff
+#print axioms Skips.dimH_affMat_affPreservingSkipless
+#print axioms Skips.dimH_affMat_affPreservingResidual
+#print axioms Skips.dimH_affMat_affPreservingSkipless_eq_add

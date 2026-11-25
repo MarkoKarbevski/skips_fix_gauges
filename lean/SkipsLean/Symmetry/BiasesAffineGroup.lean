@@ -139,6 +139,7 @@ private theorem hiddenB_translateAllAt_bag (hA : A.χ = id) (θ : Params A dIn d
     simp only [id_eq, Pi.zero_apply, Matrix.mul_zero, zero_add, Biases.translateAllAt,
       shift_read_bag, of_add_bag, add_assoc]
 
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
 /-- Without normalization, the translations of all hidden states of a skipless network preserve
 the function. -/
 theorem evalB_translateAllAt (hA : A.χ = id) (θ : Params A dIn dOut) (b : Biases A dOut)
@@ -168,6 +169,7 @@ private theorem hiddenB_translateAll_bag (hA : A.χ = id) (θ : Params A dIn dOu
       of_add_bag]
     abel
 
+omit [Fintype T] [Fintype dOut] in
 /-- **Lemma A.8, first sentence, the `L + 1` translations together:** without normalization they
 preserve the function of a residual network. -/
 theorem evalB_translateAll (hA : A.χ = id) (θ : Params A dIn dOut) (b : Biases A dOut)
@@ -198,6 +200,7 @@ def affMat (s : Set ((Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ)))
   (fun p : (Fin (L + 1) → GL d ℝ) × (Fin (L + 1) → d → ℝ) =>
     ((fun ℓ => (p.1 ℓ : Matrix d d ℝ)), p.2)) '' s
 
+omit [Fintype T] in
 /-- **Lemma A.8, without skips, "each hidden state has its own translation":** without
 normalization every change of basis and translation of every hidden state preserves the function
 of a skipless network with biases. -/
@@ -297,6 +300,7 @@ private theorem gl_eq_last_bag [Nonempty T] [Nonempty dOut] (hA : A.χ = id)
     exact h2
   exact mul_inv_eq_one.mp (Units.ext (by rw [Units.val_mul, Units.val_one]; exact hN))
 
+omit [Fintype T] in
 /-- **Lemma A.8, "A skip ties only the linear part of `Aff(d_model)`":** without normalization,
 the changes of basis `G_0, …, G_L` with the translations `g_0, …, g_L` preserve the function of
 every residual network with biases if and only if all `G_ℓ` are equal; the translations are
@@ -349,6 +353,7 @@ private theorem affMat_univ_bag :
     choose G hG using fun ℓ => exists_gl_of_isUnit_det_bag (hq ℓ)
     exact ⟨(G, q.2), Set.mem_univ _, Prod.ext (funext hG) rfl⟩
 
+omit [Fintype T] in
 /-- **Lemma A.8, the dimension without skips:** the changes of basis and translations of a
 skipless network with biases form a set of dimension `(L + 1)(d² + d)`. -/
 theorem dimH_affMat_affPreservingSkipless (A : Arch T d L) (hA : A.χ = id) :
@@ -372,6 +377,7 @@ theorem dimH_affMat_affPreservingSkipless (A : Arch T d L) (hA : A.χ = id) :
   rw [Real.dimH_of_mem_nhds (hopen.mem_nhds h1)]
   exact congrArg Nat.cast hfin
 
+omit [Fintype T] in
 /-- **Lemma A.8, the dimension with identity skips:** the changes of basis and translations of
 a residual network with biases form a set of dimension `d² + (L + 1) d`. -/
 theorem dimH_affMat_affPreservingResidual [Nonempty T] [Nonempty dOut] (A : Arch T d L)
@@ -415,6 +421,7 @@ theorem dimH_affMat_affPreservingResidual [Nonempty T] [Nonempty dOut] (A : Arch
   rw [hset, hiso.dimH_image, Real.dimH_of_mem_nhds (hopen.mem_nhds h1)]
   exact congrArg Nat.cast hfin
 
+omit [Fintype T] in
 /-- **Lemma A.8, "the skips remove `L d_model²` dimensions, as without biases":** the set for
 the skipless network has `L d²` more dimensions than the set for the residual network. -/
 theorem dimH_affMat_affPreservingSkipless_eq_add [Nonempty T] [Nonempty dOut] (A : Arch T d L)
