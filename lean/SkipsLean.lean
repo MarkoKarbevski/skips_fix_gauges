@@ -356,3 +356,4 @@ import SkipsLean.Residual.BlocksAloneMlp
 import SkipsLean.Residual.BlocksAloneGated
 import SkipsLean.Residual.BlocksAloneSkipless
 import SkipsLean.Residual.BlocksAloneDifferent
+import SkipsLean.Residual.BlocksAloneTransformer
