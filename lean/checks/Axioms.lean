@@ -2038,3 +2038,12 @@ import SkipsLean
 #print axioms Skips.funDimB_add_le_skipless_gated
 #print axioms Skips.funDimB_add_le_residual_gated_gate
 #print axioms Skips.funDimB_add_le_skipless_gated_gate
+#print axioms Skips.flatB_le_range_gated_skipless
+#print axioms Skips.funDimB_gated_oneBlock
+#print axioms Skips.flatB_le_range_gated_residual
+#print axioms Skips.funDimB_gated_oneBlock_residual
+#print axioms Skips.ae_funDimB_gated_oneBlock
+#print axioms Skips.ae_funDimB_gated_oneBlock_residual
+#print axioms Skips.ae_funDimB_gated_oneBlock_residual_eq_add
+#print axioms Skips.ae_funDimB_swiglu_oneBlock_residual_eq_add
+#print axioms Skips.ae_funDimB_geglu_oneBlock_residual_eq_add
