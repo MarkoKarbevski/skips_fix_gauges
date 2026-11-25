@@ -419,6 +419,209 @@ theorem insideBlocksB_headDirQKB (p : ParamsB (Arch.attention sees χ H dh) dIn 
     fun τ ℓ n => block_headsQKB_ahb p.1 p.2 _ ℓ n
   exact ⟨_, h0, hd, Filter.Eventually.of_forall fun τ => ⟨rfl, rfl, rfl, rfl, hb τ⟩⟩
 
+/-! ### Helpers: the changes of basis between values and outputs, with biases -/
+
+/-- Helper: the biases moved by the changes of basis `K` between values and outputs:
+`b_{V,i} K_i`; the other biases do not move. -/
+private noncomputable def biasesVO_ahb [∀ ℓ, DecidableEq (dh ℓ)]
+    (b : Biases (Arch.attention sees χ H dh) dOut) (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) :
+    Biases (Arch.attention sees χ H dh) dOut where
+  E := b.E
+  read ℓ (q : H ℓ × (dh ℓ ⊕ (dh ℓ ⊕ dh ℓ))) :=
+    match q.2 with
+    | Sum.inl k => b.read ℓ (q.1, Sum.inl k)
+    | Sum.inr (Sum.inl k) => b.read ℓ (q.1, Sum.inr (Sum.inl k))
+    | Sum.inr (Sum.inr k) =>
+      ∑ k', b.read ℓ (q.1, Sum.inr (Sum.inr k')) * (K ℓ q.1 : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+  write := b.write
+  D := b.D
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (copy of `Symmetry/AttentionHeads.lean`): the curve `τ ↦ θ.headsVO (exp (τ Γ))`
+passes through `θ` at `τ = 0`. -/
+private theorem headsVO_expGL_zero_ahb [∀ ℓ, DecidableEq (dh ℓ)]
+    (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
+    θ.headsVO (fun ℓ i => expGL_ahb (Γ ℓ i) 0) = θ := by
+  simp only [expGL_zero_ahb]
+  apply Params.ext'
+  · rfl
+  · intro ℓ
+    ext a ⟨i, k | k | k⟩
+    · rfl
+    · rfl
+    · show ∑ k', θ.read ℓ a (i, Sum.inr (Sum.inr k'))
+          * ((1 : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+        = θ.read ℓ a (i, Sum.inr (Sum.inr k))
+      simp [Matrix.one_apply]
+  · intro ℓ
+    ext ⟨i, k⟩ b
+    show ∑ k', (((1 : GL (dh ℓ) ℝ)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k'
+        * θ.write ℓ (i, k') b = θ.write ℓ (i, k) b
+    simp [Matrix.one_apply]
+  · rfl
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the curve `τ ↦ biasesVO b (exp (τ Γ))` passes through `b` at `τ = 0`. -/
+private theorem biasesVO_expGL_zero_ahb [∀ ℓ, DecidableEq (dh ℓ)]
+    (b : Biases (Arch.attention sees χ H dh) dOut) (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
+    biasesVO_ahb b (fun ℓ i => expGL_ahb (Γ ℓ i) 0) = b := by
+  simp only [expGL_zero_ahb]
+  apply Biases.ext'
+  · rfl
+  · intro ℓ
+    funext q
+    obtain ⟨i, k | k | k⟩ := q
+    · rfl
+    · rfl
+    · show ∑ k', b.read ℓ (i, Sum.inr (Sum.inr k'))
+          * ((1 : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+        = b.read ℓ (i, Sum.inr (Sum.inr k))
+      simp [Matrix.one_apply]
+  · intro ℓ
+    rfl
+  · rfl
+
+omit [DecidableEq d] in
+/-- Helper (copy of `Symmetry/AttentionHeads.lean`): the curve `τ ↦ θ.headsVO (exp (τ Γ))` has
+velocity `headDirVO θ Γ` at `τ = 0`. -/
+private theorem hasDerivAt_headsVO_ahb [∀ ℓ, DecidableEq (dh ℓ)]
+    (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
+    HasDerivAt (fun τ : ℝ => θ.headsVO fun ℓ i => expGL_ahb (Γ ℓ i) τ) (headDirVO θ Γ) 0 := by
+  have hprod : HasDerivAt
+      (fun τ : ℝ => Params.linearEquivProd (θ.headsVO fun ℓ i => expGL_ahb (Γ ℓ i) τ))
+      (Params.linearEquivProd (headDirVO θ Γ)) 0 := by
+    refine HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ ?_))
+    · -- the embedding does not move
+      exact hasDerivAt_const (0 : ℝ) θ.E
+    · -- the queries and keys do not move, the values are `W_V exp(τ Γ)`
+      refine hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun a => hasDerivAt_pi.2 fun p => ?_
+      obtain ⟨i, k | k | k⟩ := p
+      · exact hasDerivAt_const (0 : ℝ) (θ.read ℓ a (i, Sum.inl k))
+      · exact hasDerivAt_const (0 : ℝ) (θ.read ℓ a (i, Sum.inr (Sum.inl k)))
+      · exact hasDerivAt_sum_mul_expGL_ahb (Γ ℓ i)
+          (fun k' => θ.read ℓ a (i, Sum.inr (Sum.inr k'))) k
+    · -- the outputs are `exp(-τ Γ) W_O`
+      refine hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun p => hasDerivAt_pi.2 fun b => ?_
+      obtain ⟨i, k⟩ := p
+      exact hasDerivAt_sum_expGL_inv_mul_ahb (Γ ℓ i) (fun k' => θ.write ℓ (i, k') b) k
+    · -- the readout does not move
+      exact hasDerivAt_const (0 : ℝ) θ.D
+  -- back from the tuples of components to the parameters
+  exact (LinearMap.toContinuousLinearMap
+    (Params.linearEquivProd (A := Arch.attention sees χ H dh) (dIn := dIn)
+      (dOut := dOut)).symm.toLinearMap).hasFDerivAt.comp_hasDerivAt 0 hprod
+
+omit [DecidableEq d] [Fintype dIn] in
+/-- Helper: the curve `τ ↦ biasesVO b (exp (τ Γ))` has velocity the biases of `headDirVOB p Γ`
+at `τ = 0`. -/
+private theorem hasDerivAt_biasesVO_ahb [∀ ℓ, DecidableEq (dh ℓ)]
+    (p : ParamsB (Arch.attention sees χ H dh) dIn dOut)
+    (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
+    HasDerivAt (fun τ : ℝ => biasesVO_ahb p.2 fun ℓ i => expGL_ahb (Γ ℓ i) τ)
+      (headDirVOB p Γ).2 0 := by
+  have hprod : HasDerivAt
+      (fun τ : ℝ => Biases.linearEquivProd (biasesVO_ahb p.2 fun ℓ i => expGL_ahb (Γ ℓ i) τ))
+      (Biases.linearEquivProd (headDirVOB p Γ).2) 0 := by
+    refine HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ ?_))
+    · exact hasDerivAt_const (0 : ℝ) p.2.E
+    · -- the value biases are `b_V exp(τ Γ)`, the others do not move
+      refine hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun q => ?_
+      obtain ⟨i, k | k | k⟩ := q
+      · exact hasDerivAt_const (0 : ℝ) (p.2.read ℓ (i, Sum.inl k))
+      · exact hasDerivAt_const (0 : ℝ) (p.2.read ℓ (i, Sum.inr (Sum.inl k)))
+      · exact hasDerivAt_sum_mul_expGL_ahb (Γ ℓ i)
+          (fun k' => p.2.read ℓ (i, Sum.inr (Sum.inr k'))) k
+    · exact hasDerivAt_const (0 : ℝ) p.2.write
+    · exact hasDerivAt_const (0 : ℝ) p.2.D
+  exact (LinearMap.toContinuousLinearMap
+    (Biases.linearEquivProd (A := Arch.attention sees χ H dh)
+      (dOut := dOut)).symm.toLinearMap).hasFDerivAt.comp_hasDerivAt 0 hprod
+
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `f ℓ (M') W' = f ℓ (M) W` if the query and key columns of `M'` are those of `M`, the
+value columns of head `i` of `M'` are those of `M` times `G_i`, and the rows `(i, ·)` of `W'` are
+`G_i^{-1}` times those of `W`: the weights are kept, and `(a v G)(G^{-1} W_O) = a v W_O`. -/
+private theorem f_VO_ahb [∀ ℓ, DecidableEq (dh ℓ)] (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ : Fin L)
+    (M M' : Matrix T (H ℓ × (dh ℓ ⊕ (dh ℓ ⊕ dh ℓ))) ℝ) (W W' : Matrix (H ℓ × dh ℓ) d ℝ)
+    (hq : ∀ t i k, M' t (i, Sum.inl k) = M t (i, Sum.inl k))
+    (hk : ∀ t i k, M' t (i, Sum.inr (Sum.inl k)) = M t (i, Sum.inr (Sum.inl k)))
+    (hv : ∀ t i k, M' t (i, Sum.inr (Sum.inr k))
+      = ∑ a, M t (i, Sum.inr (Sum.inr a)) * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) a k)
+    (hW : ∀ i k c, W' (i, k) c
+      = ∑ k', (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k' * W (i, k') c) :
+    (Arch.attention sees χ H dh).f ℓ M' * W' = (Arch.attention sees χ H dh).f ℓ M * W := by
+  -- the scores of every head are kept
+  have hsc : ∀ i : H ℓ, (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M' t' (i, Sum.inl k) * M' s' (i, Sum.inr (Sum.inl k)) : Matrix T T ℝ)
+      = Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M t' (i, Sum.inl k) * M s' (i, Sum.inr (Sum.inl k)) := by
+    intro i
+    ext t' s'
+    simp only [Matrix.of_apply, hq, hk]
+  -- head by head
+  ext t c
+  rw [Matrix.mul_apply, Matrix.mul_apply, Fintype.sum_prod_type, Fintype.sum_prod_type]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  show ∑ k, (∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+          * ∑ k, M' t' (i, Sum.inl k) * M' s' (i, Sum.inr (Sum.inl k))) t s
+        * M' s (i, Sum.inr (Sum.inr k))) * W' (i, k) c
+    = ∑ k, (∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+          * ∑ k, M t' (i, Sum.inl k) * M s' (i, Sum.inr (Sum.inl k))) t s
+        * M s (i, Sum.inr (Sum.inr k))) * W (i, k) c
+  rw [hsc i]
+  generalize attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+    * ∑ k, M t' (i, Sum.inl k) * M s' (i, Sum.inr (Sum.inl k))) = P
+  simp only [hv, hW]
+  -- the weighted values of head `i` are multiplied by `G_i`
+  have e : ∀ k, ∑ s, P t s
+        * ∑ a, M s (i, Sum.inr (Sum.inr a)) * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) a k
+      = ∑ a, (∑ s, P t s * M s (i, Sum.inr (Sum.inr a)))
+        * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) a k := by
+    intro k
+    simp only [Finset.mul_sum, Finset.sum_mul]
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => ?_
+    ring
+  simp only [e]
+  exact sum_mul_GL_ahb (K ℓ i) _ _
+
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the changes of basis between values and outputs, with the biases of the values moved
+along, keep the map `n ↦ f(n W_read + b_read) W_write + b_write` of every block. -/
+private theorem block_headsVOB_ahb [∀ ℓ, DecidableEq (dh ℓ)]
+    (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (b : Biases (Arch.attention sees χ H dh) dOut) (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ : Fin L)
+    (n : Matrix T d ℝ) :
+    (Arch.attention sees χ H dh).f ℓ (n * (θ.headsVO K).read ℓ
+          + Matrix.of fun _ => (biasesVO_ahb b K).read ℓ) * (θ.headsVO K).write ℓ
+        + Matrix.of (fun _ => (biasesVO_ahb b K).write ℓ)
+      = (Arch.attention sees χ H dh).f ℓ (n * θ.read ℓ + Matrix.of fun _ => b.read ℓ)
+          * θ.write ℓ + Matrix.of fun _ => b.write ℓ := by
+  rw [f_VO_ahb K ℓ (n * θ.read ℓ + Matrix.of fun _ => b.read ℓ)
+    (n * (θ.headsVO K).read ℓ + Matrix.of fun _ => (biasesVO_ahb b K).read ℓ) (θ.write ℓ)
+    ((θ.headsVO K).write ℓ) ?_ ?_ ?_ ?_]
+  · rfl
+  · intro t i k
+    rfl
+  · intro t i k
+    rfl
+  · -- the value columns: `(n W_V + b_V) K = n (W_V K) + b_V K`
+    intro t i k
+    show ∑ a, n t a * (∑ k', θ.read ℓ a (i, Sum.inr (Sum.inr k'))
+          * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k)
+        + ∑ k', b.read ℓ (i, Sum.inr (Sum.inr k')) * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+      = ∑ a', (∑ a, n t a * θ.read ℓ a (i, Sum.inr (Sum.inr a'))
+          + b.read ℓ (i, Sum.inr (Sum.inr a'))) * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) a' k
+    simp only [add_mul, Finset.sum_add_distrib, Finset.mul_sum, Finset.sum_mul]
+    rw [Finset.sum_comm]
+    congr 1
+    refine Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => ?_
+    ring
+  · intro i k c
+    rfl
+
 /-- **The changes of basis between the values and the outputs of every head are symmetries
 inside the blocks of a network with biases,** for every mask and every `χ`: along
 `W_{V,i} e^{τΓ'_i}`, `b_{V,i} e^{τΓ'_i}`, `e^{−τΓ'_i} W_{O,i}` the output
@@ -426,7 +629,26 @@ inside the blocks of a network with biases,** for every mask and every `χ`: alo
 theorem insideBlocksB_headDirVOB (p : ParamsB (Arch.attention sees χ H dh) dIn dOut)
     (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
     InsideBlocksB (Arch.attention sees χ H dh) p (headDirVOB p Γ) := by
-  sorry
+  classical
+  -- the curve `τ ↦ (θ.headsVO (exp (τ Γ)), biasesVO b (exp (τ Γ)))` passes through `p`
+  have h0 : ((p.1.headsVO fun ℓ i => expGL_ahb (Γ ℓ i) 0,
+      biasesVO_ahb p.2 fun ℓ i => expGL_ahb (Γ ℓ i) 0) : ParamsB _ dIn dOut) = p :=
+    Prod.ext (headsVO_expGL_zero_ahb p.1 Γ) (biasesVO_expGL_zero_ahb p.2 Γ)
+  -- with velocity `headDirVOB p Γ`
+  have hd : HasDerivAt (fun τ : ℝ => ((p.1.headsVO fun ℓ i => expGL_ahb (Γ ℓ i) τ,
+      biasesVO_ahb p.2 fun ℓ i => expGL_ahb (Γ ℓ i) τ) : ParamsB _ dIn dOut))
+      (headDirVOB p Γ) 0 :=
+    (hasDerivAt_headsVO_ahb p.1 Γ).prodMk (hasDerivAt_biasesVO_ahb p Γ)
+  -- and it keeps the map of every block
+  have hb : ∀ τ : ℝ, ∀ ℓ (n : Matrix T d ℝ),
+      (Arch.attention sees χ H dh).f ℓ (n * (p.1.headsVO fun ℓ i => expGL_ahb (Γ ℓ i) τ).read ℓ
+          + Matrix.of fun _ => (biasesVO_ahb p.2 fun ℓ i => expGL_ahb (Γ ℓ i) τ).read ℓ)
+          * (p.1.headsVO fun ℓ i => expGL_ahb (Γ ℓ i) τ).write ℓ
+        + Matrix.of (fun _ => (biasesVO_ahb p.2 fun ℓ i => expGL_ahb (Γ ℓ i) τ).write ℓ)
+      = (Arch.attention sees χ H dh).f ℓ (n * p.1.read ℓ + Matrix.of fun _ => p.2.read ℓ)
+          * p.1.write ℓ + Matrix.of fun _ => p.2.write ℓ :=
+    fun τ ℓ n => block_headsVOB_ahb p.1 p.2 _ ℓ n
+  exact ⟨_, h0, hd, Filter.Eventually.of_forall fun τ => ⟨rfl, rfl, rfl, rfl, hb τ⟩⟩
 
 /-- **The shifts of the key biases are symmetries inside the blocks,** for every mask and every
 `χ`: "The key biases drop out, since they shift all scores of a token equally". -/
