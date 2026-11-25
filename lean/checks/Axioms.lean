@@ -1994,3 +1994,10 @@ import SkipsLean
 #print axioms Skips.funDimB_add_le_residual
 #print axioms Skips.funDimB_add_le_skipless
 #print axioms Skips.finrank_paramsB
+#print axioms Skips.goodForConesGated_thetaDaggerGated
+#print axioms Skips.frozenGated_thetaDaggerGated
+#print axioms Skips.linearIndependent_gate_thetaDaggerGated
+#print axioms Skips.linearIndependent_outer_gate_thetaDaggerGated
+#print axioms Skips.goodForConesMlp_thetaDaggerMlp
+#print axioms Skips.frozenMlp_thetaDaggerMlp
+#print axioms Skips.linearIndependent_outer_read_thetaDaggerMlp
