@@ -342,3 +342,4 @@ import SkipsLean.Symmetry.LocallyFreeGeneric
 import SkipsLean.Symmetry.LocallyFreeReadoutGeneric
 import SkipsLean.Symmetry.LocallyFreeRMSZero
 import SkipsLean.Symmetry.LocallyFreeRMSZeroGeneric
+import SkipsLean.Basic.RMSNormDeviation

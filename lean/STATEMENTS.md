@@ -303,6 +303,7 @@ proofs by the coordinator), `Dimension/UpperBoundReadoutInside.lean`, `Symmetry/
 `Symmetry/LocallyFreeReadoutGeneric.lean` (written at 00:47 UTC, 25 November).
 Written after the twenty-seventh audit began: `Symmetry/LocallyFreeRMSZero.lean` and
 `Symmetry/LocallyFreeRMSZeroGeneric.lean` (written at 00:56 UTC, 25 November).
+`Basic/RMSNormDeviation.lean` (written at 01:00 UTC, 25 November).
 A ninth reader (part A, 24 November) compared the six files on
 GELU at complex arguments (`Activations/MillsC.lean`, `Activations/MillsCExpansion.lean`,
 `Activations/MillsAtInfinityC.lean`, `Activations/GeluOnPath.lean`,
@@ -416,6 +417,7 @@ the paper's object is checked by reading it.
 | D Appendix A.3: `25·767·766/2 = 7,344,025` | `vitB_count` | `Symmetry/Reduction.lean` | proved |
 | D Lemma A.1, "⇒", `ε > 0`: `N_ε(vG) = N_ε(v)M` for all `v ≠ 0` gives `G` orthogonal and `M = G` | `orthogonal_of_rmsRow_vecMul` | `Basic/RMSNormConverse.lean` | proved |
 | D Lemma A.1, "⇒", `ε = 0`: then `M` is orthogonal and `G = cM`, `c > 0` | `conformal_of_rmsRow_zero_vecMul` | `Basic/RMSNormConverse.lean` | proved |
+| **S Lemma A.2 (ii)** ("If `ε > 0` and `G = cQ`, then `‖N(hG) − N_ε(h)Q‖/‖N(h)‖ = (ε/(2r²)) |1 − c⁻²| + O(ε²)`, where `r² = ‖h‖²/d_model`"; proof: "The expansion of the deviation is the Taylor expansion of `c√(r²+ε)/√(c²r²+ε) − 1` in `ε`"), for a row `v`, `r² = (v ⬝ᵥ v)/d`, an orthogonal `Q`: the exact relation `N_ε(v (cQ)) = (c√(r²+ε)/√(c²r²+ε)) · N_ε(v) Q` for `ε > 0` and every real `c`; the deviation in the Euclidean norm, `‖N_ε(v (cQ)) − N_ε(v)Q‖ = |c√(r²+ε)/√(c²r²+ε) − 1| · ‖N_ε(v)‖` (norms as square roots of dot products); the expansion `|c√(r²+ε)/√(c²r²+ε) − 1| − (ε/(2r²)) |1 − c⁻²| = O(ε²)` as `ε → 0` from above, for `r² > 0`, `c > 0` (from below the two sides differ at first order). The two `N` without a subscript in the paper's (ii) are read as `N_ε`. Numeric check: `rmsnorm_deviation_check_2026-11-25.py` | `rmsRow_vecMul_smul_orthogonal`, `sqrt_dotProduct_rmsRow_vecMul_smul_orthogonal_sub`, `abs_rmsNorm_deviation_sub_isBigO` | `Basic/RMSNormDeviation.lean` | in work |
 | D Proposition A.3 (i), its two facts: `Z² = Z`, rows `vZ` have mean zero | `centering_mul_centering`, `sum_vecMul_centering`, `vecMul_centering_of_sum_eq_zero` | `Basic/LayerNorm.lean` | proved |
 | D Proposition A.3 (ii), the identity `N_ε(yŪᵀ) = sqrt(d/(d−1)) N'(y)Ūᵀ` (stated for any number `m` of orthonormal columns) | `rmsRow_vecMul_transpose_of_orthonormal` | `Basic/LayerNorm.lean` | proved |
 | D parameters `θ ∈ ℝ^P` as a vector space; `P` is its dimension | `Params` with `AddCommGroup`, `Module ℝ`, a norm; `Module.finrank ℝ (Params A dIn dOut)` | `Dimension/Space.lean` | defined |
