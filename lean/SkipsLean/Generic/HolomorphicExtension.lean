@@ -175,6 +175,97 @@ theorem exists_holomorphic_extension_real_param {T d T' d' : Type*} [Fintype T] 
         ∧ (∀ u : Matrix T d ℝ, (∀ τ j, |u τ j| ≤ ϱ) →
             G (u.map fun a : ℝ => (a : ℂ)) = (F (s, H + u)).map fun a : ℝ => (a : ℂ))
         ∧ ∀ u : Matrix T d ℂ, (∀ τ j, ‖u τ j‖ ≤ ϱ) → ‖G u‖ ≤ C := by
-  sorry
+  classical
+  -- coordinates: `(s, h) ↔ w` with `w none = s`, `w (some (τ, j)) = h τ j`
+  let φ : (Option (T × d) → ℝ) → ℝ × Matrix T d ℝ :=
+    fun w => (w none, Matrix.of fun τ j => w (some (τ, j)))
+  let x : Option (T × d) → ℝ := fun o => Option.elim o 0 fun q => H q.1 q.2
+  have hφx : φ x = (0, H) := rfl
+  have hφ : AnalyticAt ℝ φ x := by
+    refine AnalyticAt.prod ?_ ?_
+    · exact (ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : Option (T × d) => ℝ)
+        none).analyticAt _
+    · show AnalyticAt ℝ (fun w : Option (T × d) → ℝ => fun τ => fun j => w (some (τ, j))) x
+      exact AnalyticAt.pi fun τ => AnalyticAt.pi fun j =>
+        (ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : Option (T × d) => ℝ)
+          (some (τ, j))).analyticAt _
+  have hψ : AnalyticAt ℝ (fun M : Matrix T' d' ℝ => fun q : T' × d' => M q.1 q.2) (F (φ x)) :=
+    AnalyticAt.pi fun q =>
+      ((ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : d' => ℝ) q.2).comp
+        (ContinuousLinearMap.proj (R := ℝ) (φ := fun _ : T' => d' → ℝ) q.1)).analyticAt _
+  have hFφ : AnalyticAt ℝ F (φ x) := by rw [hφx]; exact hF
+  have hf : AnalyticAt ℝ (fun w : Option (T × d) → ℝ => fun q : T' × d' => F (φ w) q.1 q.2)
+      x := by
+    have h1 : AnalyticAt ℝ (F ∘ φ) x := hFφ.comp hφ
+    have hc := AnalyticAt.comp (f := F ∘ φ) (x := x) hψ h1
+    exact hc
+  obtain ⟨r, hr, g, hg, hgf⟩ := exists_analyticOnNhd_complex_extension hf
+  -- a bound of `g` on the closed ball of radius `r / 2` (compact)
+  set xc : Option (T × d) → ℂ := fun i => (x i : ℂ) with hxc
+  obtain ⟨C, hC⟩ := (isCompact_closedBall xc (r / 2)).exists_bound_of_continuousOn
+    (hg.continuousOn.mono (Metric.closedBall_subset_ball (by linarith)))
+  refine ⟨r / 2, by positivity, r / 2, by positivity, C, fun s hs => ?_⟩
+  -- the complex coordinates of `(s, H + u)`
+  let w : Matrix T d ℂ → (Option (T × d) → ℂ) :=
+    fun u o => Option.elim o (s : ℂ) fun q => (H q.1 q.2 : ℂ) + u q.1 q.2
+  have hw : ∀ u : Matrix T d ℂ, (∀ τ j, ‖u τ j‖ ≤ r / 2) →
+      w u ∈ Metric.closedBall xc (r / 2) := by
+    intro u hu
+    rw [Metric.mem_closedBall, dist_eq_norm]
+    refine (pi_norm_le_iff_of_nonneg (by positivity)).2 fun o => ?_
+    cases o with
+    | none =>
+      show ‖(s : ℂ) - ((0 : ℝ) : ℂ)‖ ≤ r / 2
+      rw [Complex.ofReal_zero, sub_zero, Complex.norm_real]; exact hs
+    | some q =>
+      show ‖(H q.1 q.2 : ℂ) + u q.1 q.2 - (H q.1 q.2 : ℂ)‖ ≤ r / 2
+      rw [add_sub_cancel_left]; exact hu q.1 q.2
+  refine ⟨fun u => Matrix.of fun τ' j' => g (w u) (τ', j'), ?_, ?_, ?_⟩
+  · intro u hu
+    have hga := hg (w u) (Metric.closedBall_subset_ball (by linarith) (hw u hu))
+    have hwa : AnalyticAt ℂ w u := by
+      refine AnalyticAt.pi fun o => ?_
+      cases o with
+      | none => exact analyticAt_const
+      | some q =>
+        exact analyticAt_const.add
+          (((ContinuousLinearMap.proj (R := ℂ) (φ := fun _ : d => ℂ) q.2).comp
+            (ContinuousLinearMap.proj (R := ℂ) (φ := fun _ : T => d → ℂ) q.1)).analyticAt _)
+    have hgw : AnalyticAt ℂ (g ∘ w) u := AnalyticAt.comp (f := w) (x := u) hga hwa
+    show AnalyticAt ℂ (fun u => fun τ' => fun j' => g (w u) (τ', j')) u
+    exact AnalyticAt.pi fun τ' => AnalyticAt.pi fun j' =>
+      AnalyticAt.comp (f := g ∘ w) (x := u)
+        ((ContinuousLinearMap.proj (R := ℂ) (φ := fun _ : T' × d' => ℂ) (τ', j')).analyticAt _)
+        hgw
+  · intro u hu
+    -- the real coordinates of `(s, H + u)`
+    let y : Option (T × d) → ℝ := fun o => Option.elim o s fun q => H q.1 q.2 + u q.1 q.2
+    have hy : y ∈ Metric.ball x r := by
+      rw [Metric.mem_ball, dist_eq_norm]
+      refine lt_of_le_of_lt ((pi_norm_le_iff_of_nonneg (by positivity)).2 fun o => ?_)
+        (by linarith : r / 2 < r)
+      cases o with
+      | none =>
+        show ‖s - 0‖ ≤ r / 2
+        rw [sub_zero, Real.norm_eq_abs]; exact hs
+      | some q =>
+        show ‖H q.1 q.2 + u q.1 q.2 - H q.1 q.2‖ ≤ r / 2
+        rw [add_sub_cancel_left, Real.norm_eq_abs]; exact hu q.1 q.2
+    have h1 := hgf y hy
+    have hwy : w (u.map fun a : ℝ => (a : ℂ)) = fun i => (y i : ℂ) := by
+      funext o
+      cases o with
+      | none => rfl
+      | some q =>
+        show (H q.1 q.2 : ℂ) + (u q.1 q.2 : ℂ) = ((H q.1 q.2 + u q.1 q.2 : ℝ) : ℂ)
+        push_cast; rfl
+    ext τ' j'
+    show g (w (u.map fun a : ℝ => (a : ℂ))) (τ', j') = (F (s, H + u) τ' j' : ℂ)
+    rw [hwy, h1]
+    rfl
+  · intro u hu
+    have hC0 : 0 ≤ C := (norm_nonneg _).trans (hC _ (hw u hu))
+    refine (Matrix.norm_le_iff hC0).2 fun τ' j' => ?_
+    exact (norm_le_pi_norm (g (w u)) (τ', j')).trans (hC _ (hw u hu))
 
 end Skips
