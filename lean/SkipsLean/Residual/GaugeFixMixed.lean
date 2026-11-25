@@ -36,7 +36,8 @@ Here, for the networks of mixed blocks of `Network/Mixed.lean`, any blocks:
   `s(θ') = T_{G,K}^{-1}(θ', I, I)` through `θ`, so the two batches of outputs are differentiable
   at `θ` and at `Φ(θ)` together.
 
-Not stated here: the same for learned skips "without the `K_ℓ`", and for networks with biases.
+The same for learned skips "without the `K_ℓ`": `Residual/GaugeFixLearned.lean`; for networks
+with biases: `Residual/GaugeFixBiases.lean`.
 Numeric check: `mixed_blocks_check_2026-11-25.py`, parts (3) and (4).
 -/
 

@@ -396,3 +396,5 @@ import SkipsLean.Dimension.RankSubmersion
 import SkipsLean.Dimension.FunDimFamily
 import SkipsLean.Residual.GaugeFixBiases
 import SkipsLean.Network.LayerNorm
+import SkipsLean.Residual.LayerNormRedundancy
+import SkipsLean.Symmetry.BiasesSymmetryCount
