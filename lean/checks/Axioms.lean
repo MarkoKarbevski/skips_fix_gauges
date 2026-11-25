@@ -1967,3 +1967,9 @@ import SkipsLean
 #print axioms Skips.exists_isOpen_jacobianRank_smallWrites_reglu_of_isOpen
 #print axioms Skips.hiddenB_zero_biases
 #print axioms Skips.evalB_zero_biases
+#print axioms Skips.hiddenB_cob
+#print axioms Skips.evalB_cob
+#print axioms Skips.hiddenB_translate
+#print axioms Skips.evalB_translate
+#print axioms Skips.hiddenB_translateAt
+#print axioms Skips.evalB_translateAt

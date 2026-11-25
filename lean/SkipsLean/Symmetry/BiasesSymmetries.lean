@@ -179,6 +179,7 @@ theorem evalB_translate (hA : A.χ = id) (k : Fin (L + 1)) (g : d → ℝ) :
   rw [hiddenB_translate θ b x hA k g (Fin.last L), hA]
   simp only [Fin.le_last, ite_true, id_eq, Biases.translate, shift_read_bsy]
 
+omit [DecidableEq d] in
 /-- **The translation of one hidden state of a skipless network, the hidden states:** without
 normalization, after the translation of `h_k` by `g`, the hidden state `h_k` is shifted by the row
 `g` at every token and all others are unchanged. -/
@@ -212,6 +213,7 @@ theorem hiddenB_translateAt (hA : A.χ = id) (k : Fin (L + 1)) (g : d → ℝ) (
     · simp only [Biases.translateAt, h3, ite_true, of_add_bsy, add_assoc]
     · simp only [Biases.translateAt, h3, ite_false, add_zero]
 
+omit [DecidableEq d] in
 /-- **Proof of Lemma A.8, "in a skipless network […] each hidden state has its own
 translation":** in a skipless network with biases and without normalization, the translation of
 one hidden state `h_k` by a row `g`, with the biases adjusted, preserves the function. -/
