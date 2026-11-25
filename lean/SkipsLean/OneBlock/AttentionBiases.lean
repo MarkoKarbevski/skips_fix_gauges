@@ -99,17 +99,88 @@ noncomputable def dAttnConst (S : Fin 1 → Matrix d d ℝ)
           ᵥ* (attnO η.1 i * p.1.D + attnO p.1 i * η.1.D))
     + (η.2.write 0 ᵥ* p.1.D + p.2.write 0 ᵥ* η.1.D) + η.2.D
 
+
+/-! ### Helpers: derivatives of matrix and vector curves at `0` -/
+
+/-- Helper: a line `τ ↦ M + τ N` of matrices has the derivative `N`. -/
+private theorem hasDerivAt_line_abi {m n : Type*} [Fintype m] [Fintype n] (M N : Matrix m n ℝ) :
+    HasDerivAt (fun τ : ℝ => M + τ • N) N 0 := by
+  have h := ((hasDerivAt_id (0 : ℝ)).smul_const N).const_add M
+  rw [one_smul] at h
+  exact h
+
+/-- Helper: a line `τ ↦ u + τ w` of vectors has the derivative `w`. -/
+private theorem hasDerivAt_vline_abi {n : Type*} [Fintype n] (u w : n → ℝ) :
+    HasDerivAt (fun τ : ℝ => u + τ • w) w 0 := by
+  have h := ((hasDerivAt_id (0 : ℝ)).smul_const w).const_add u
+  rw [one_smul] at h
+  exact h
+
+/-- Helper: the product rule for two matrix curves, entry by entry. -/
+private theorem hasDerivAt_mul_abi {m n p : Type*} [Fintype m] [Fintype n] [Fintype p]
+    {A : ℝ → Matrix m n ℝ} {B : ℝ → Matrix n p ℝ} {A' : Matrix m n ℝ} {B' : Matrix n p ℝ}
+    (hA : HasDerivAt A A' 0) (hB : HasDerivAt B B' 0) :
+    HasDerivAt (fun τ => A τ * B τ) (A' * B 0 + A 0 * B') 0 := by
+  refine hasDerivAt_pi.2 fun a => hasDerivAt_pi.2 fun c => ?_
+  have h := HasDerivAt.fun_sum (u := Finset.univ) fun b _ =>
+    (hasDerivAt_pi.1 (hasDerivAt_pi.1 hA a) b).fun_mul (hasDerivAt_pi.1 (hasDerivAt_pi.1 hB b) c)
+  simp only [Matrix.add_apply, Matrix.mul_apply, ← Finset.sum_add_distrib]
+  exact h
+
+/-- Helper: the transpose of a matrix curve has the transposed derivative. -/
+private theorem hasDerivAt_transpose_abi {m n : Type*} [Fintype m] [Fintype n]
+    {A : ℝ → Matrix m n ℝ} {A' : Matrix m n ℝ} (hA : HasDerivAt A A' 0) :
+    HasDerivAt (fun τ => (A τ)ᵀ) A'ᵀ 0 :=
+  hasDerivAt_pi.2 fun b => hasDerivAt_pi.2 fun a => hasDerivAt_pi.1 (hasDerivAt_pi.1 hA a) b
+
+/-- Helper: the product rule for a vector curve times a matrix curve. -/
+private theorem hasDerivAt_vecMul2_abi {m n : Type*} [Fintype m] [Fintype n]
+    {a : ℝ → m → ℝ} {N : ℝ → Matrix m n ℝ} {a' : m → ℝ} {N' : Matrix m n ℝ}
+    (ha : HasDerivAt a a' 0) (hN : HasDerivAt N N' 0) :
+    HasDerivAt (fun τ => a τ ᵥ* N τ) (a' ᵥ* N 0 + a 0 ᵥ* N') 0 := by
+  refine hasDerivAt_pi.2 fun b => ?_
+  have h := HasDerivAt.fun_sum (u := Finset.univ) fun j _ =>
+    (hasDerivAt_pi.1 ha j).fun_mul (hasDerivAt_pi.1 (hasDerivAt_pi.1 hN j) b)
+  have e : (a' ᵥ* N 0 + a 0 ᵥ* N') b = ∑ j, (a' j * N 0 j b + a 0 j * N' j b) := by
+    rw [Finset.sum_add_distrib]
+    rfl
+  rw [e]
+  exact h
+
+/-- Helper: `τ ↦ f(τ) ⬝ v` has the derivative `f' ⬝ v`. -/
+private theorem hasDerivAt_dotProduct_abi {n : Type*} [Fintype n] (v : n → ℝ) {f : ℝ → n → ℝ}
+    {f' : n → ℝ} (hf : HasDerivAt f f' 0) : HasDerivAt (fun τ => f τ ⬝ᵥ v) (f' ⬝ᵥ v) 0 :=
+  HasDerivAt.fun_sum (u := Finset.univ) fun j _ => (hasDerivAt_pi.1 hf j).mul_const (v j)
+
 /-- `dAttnScoreBias p η i` is the derivative of `β_i` along the line `p + τ η`. -/
 theorem hasDerivAt_attnScoreBias (p η : ParamsB (Arch.attention sees χ H dh) dIn dOut)
     (i : H 0) :
     HasDerivAt (fun τ : ℝ => attnScoreBias (p + τ • η) i) (dAttnScoreBias p η i) 0 := by
-  sorry
+  -- `β_i(τ) = (b_E(τ) W_{Q,i}(τ) + b_{Q,i}(τ)) W_{K,i}(τ)ᵀ E(τ)ᵀ / √d_h`: affine curves
+  have hq := (hasDerivAt_vecMul2_abi (hasDerivAt_vline_abi p.2.E η.2.E)
+    (hasDerivAt_line_abi (attnQ p.1 i) (attnQ η.1 i))).fun_add
+    (hasDerivAt_vline_abi (attnBQ p.2 i) (attnBQ η.2 i))
+  have hk := hasDerivAt_mul_abi
+    (hasDerivAt_transpose_abi (hasDerivAt_line_abi (attnK p.1 i) (attnK η.1 i)))
+    (hasDerivAt_transpose_abi (hasDerivAt_line_abi p.1.E η.1.E))
+  have h := (hasDerivAt_vecMul2_abi hq hk).fun_const_smul (Real.sqrt (Fintype.card (dh 0)))⁻¹
+  exact h.congr_deriv (by simp only [zero_smul, add_zero, dAttnScoreBias])
 
 /-- `dAttnConst S p η` is the derivative of the constant `γ` along the line `p + τ η`. -/
 theorem hasDerivAt_attnConst (S : Fin 1 → Matrix d d ℝ)
     (p η : ParamsB (Arch.attention sees χ H dh) dIn dOut) :
     HasDerivAt (fun τ : ℝ => attnConst S (p + τ • η)) (dAttnConst S p η) 0 := by
-  sorry
+  -- `γ(τ)` is a sum of products of affine curves
+  have hE := hasDerivAt_vline_abi p.2.E η.2.E
+  have hD := hasDerivAt_line_abi p.1.D η.1.D
+  have h1 := hasDerivAt_vecMul2_abi hE (hasDerivAt_mul_abi (hasDerivAt_const (0 : ℝ) (S 0)) hD)
+  have h2 := HasDerivAt.fun_sum (u := Finset.univ) fun i _ => hasDerivAt_vecMul2_abi
+    ((hasDerivAt_vecMul2_abi hE (hasDerivAt_line_abi (attnV p.1 i) (attnV η.1 i))).fun_add
+      (hasDerivAt_vline_abi (attnBV p.2 i) (attnBV η.2 i)))
+    (hasDerivAt_mul_abi (hasDerivAt_line_abi (attnO p.1 i) (attnO η.1 i)) hD)
+  have h3 := hasDerivAt_vecMul2_abi (hasDerivAt_vline_abi (p.2.write 0) (η.2.write 0)) hD
+  have h := ((h1.fun_add h2).fun_add h3).fun_add (hasDerivAt_vline_abi p.2.D η.2.D)
+  exact h.congr_deriv (by simp only [zero_smul, add_zero, Matrix.zero_mul, zero_add, dAttnConst])
 
 /-- **The reduction with biases:** without normalization, at a token `t` that sees at least one
 token, the network of one attention block with biases and the stream matrix `S 0` gives the row
