@@ -365,3 +365,4 @@ import SkipsLean.Network.Biases
 import SkipsLean.Symmetry.BiasesSymmetries
 import SkipsLean.Dimension.FunctionalBiases
 import SkipsLean.Symmetry.BiasesFlat
+import SkipsLean.OneBlock.MlpBiases
