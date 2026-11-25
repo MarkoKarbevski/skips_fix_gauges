@@ -212,6 +212,7 @@ theorem insideBlocksFreeAt_rescaleMlp (k : ℕ)
     simp only [rescaleMlpAct, Params.rescaleMlp, Matrix.of_apply] at h2
     exact mul_right_cancel₀ ha h2
 
+omit [Fintype T] in
 /-- **Lemma A.8 for MLP blocks with rescalings, with skips:** the pairs `(G, g)` that preserve
 the function and the positive rescalings form a set of dimension
 `d² + (L + 1) d + ∑_ℓ d_hidden^ℓ`. -/
@@ -223,6 +224,7 @@ theorem dimH_generated_residual_mlp [Nonempty T] [Nonempty dOut] :
   rw [dimH_affMat_affPreservingResidual_prod _ rfl isOpen_posRescalings posRescalings_nonempty,
     finrank_rescalings]
 
+omit [Fintype T] in
 /-- **The same without skips:** dimension `(L + 1)(d² + d) + ∑_ℓ d_hidden^ℓ`. -/
 theorem dimH_generated_skipless_mlp :
     dimH (affMat (affPreservingSkipless (Arch.mlp (T := T) (d := d) σ id hid) dIn dOut)
@@ -401,6 +403,7 @@ theorem insideBlocksFreeAt_rescale
     simp only [rescaleAct, Params.rescale, Matrix.of_apply, Sum.elim_inr] at h2
     exact inv_inj.1 (mul_right_cancel₀ ha h2)
 
+omit [Fintype T] in
 /-- **Lemma A.8 for gated blocks, with skips:** dimension `d² + (L + 1) d + ∑_ℓ d_hidden^ℓ`. -/
 theorem dimH_generated_residual_gated [Nonempty T] [Nonempty dOut] :
     dimH (affMat (affPreservingResidual (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
@@ -410,6 +413,7 @@ theorem dimH_generated_residual_gated [Nonempty T] [Nonempty dOut] :
   rw [dimH_affMat_affPreservingResidual_prod _ rfl isOpen_posRescalings posRescalings_nonempty,
     finrank_rescalings]
 
+omit [Fintype T] in
 /-- **The same without skips:** dimension `(L + 1)(d² + d) + ∑_ℓ d_hidden^ℓ`. -/
 theorem dimH_generated_skipless_gated :
     dimH (affMat (affPreservingSkipless (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
@@ -628,6 +632,7 @@ theorem insideBlocksFreeAt_rescaleBoth (k : ℕ)
         Sum.elim_inl] at h2
       exact mul_right_cancel₀ ha h2
 
+omit [Fintype T] in
 /-- **Lemma A.8 for ReGLU blocks, with skips:** dimension
 `d² + (L + 1) d + 2 ∑_ℓ d_hidden^ℓ`. -/
 theorem dimH_generated_residual_gated_both [Nonempty T] [Nonempty dOut] :
@@ -640,6 +645,7 @@ theorem dimH_generated_residual_gated_both [Nonempty T] [Nonempty dOut] :
       (posRescalings_nonempty.prod posRescalings_nonempty),
     Module.finrank_prod, finrank_rescalings, two_mul]
 
+omit [Fintype T] in
 /-- **The same without skips:** dimension `(L + 1)(d² + d) + 2 ∑_ℓ d_hidden^ℓ`. -/
 theorem dimH_generated_skipless_gated_both :
     dimH (affMat (affPreservingSkipless (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
