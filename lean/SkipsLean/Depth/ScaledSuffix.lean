@@ -18,13 +18,13 @@ the right side is a real-analytic function of `(1/t, u)` near `(0, 0)`, also at 
 
 Stated here, for a real variable: the network after the normalization of `h_k` (`suffixPost`, the
 paper's `𝓑^♯`), and the map `(s, h) ↦ 𝓑^♯(N_{ε s^{2m}}(h))` (`scaledSuffix`), which is
-`𝓑_{>k}(t^m h)` at `s = 1/t` for every `t > 0` (the proof of Lemma D.12 uses the lemma "with `t^m` in
-the place of `t`", `m = 2` for gated blocks and `m = 1` for GELU blocks). This map is real-analytic
-in `(θ, s, h)` at every `s`, also at `s = 0`, at hidden states `h` without zero rows; it is even in
-`s`; and the derivatives of `𝓑_{>k}` in the hidden state and in the weights at `t^m h` are those of
-the map at `(1/t, h)`, the first with the factor `t^{−m}`. The derivatives of all orders of the
-paper, their being meromorphic at infinity, and the bounds uniform in `t` (which the paper gets from
-a holomorphic extension) follow from this real-analyticity near `s = 0`; they are not stated here.
+`𝓑_{>k}(t^m h)` at `s = 1/t` for every `t > 0` (the proof of Lemma D.12 uses the lemma "with `t^m`
+in the place of `t`", `m = 2` for gated blocks and `m = 1` for GELU blocks). This map is
+real-analytic in `(θ, s, h)` at every `s`, also at `s = 0`, at hidden states `h` without zero
+rows; it is even in `s`; and the derivatives of `𝓑_{>k}` in the hidden state and in the weights at
+`t^m h` are those of the map at `(1/t, h)`, the first with the factor `t^{−m}`. The derivatives of
+all orders of the paper and their being meromorphic at infinity: `Depth/ScaledSuffixOrders.lean`;
+the holomorphic extension with bounds uniform in `t`: `Depth/ScaledSuffixHolomorphic.lean`.
 -/
 
 namespace Skips
@@ -227,7 +227,8 @@ theorem fderiv_suffix_pow_smul (hε : 0 < ε) (hχ : A.χ = rmsNorm ε)
       = fun h' => suffix A 0 θ k (t ^ m • h') :=
     funext fun h' => (suffix_pow_smul_eq_scaledSuffix A hχ θ k ht m h').symm
   rw [hfun]
-  -- the chain rule with the linear map `h' ↦ t^m h'`: `𝐃(𝓑_{>k}(t^m ·))(h) u = t^m 𝐃𝓑_{>k}(t^m h) u`
+  -- the chain rule with the linear map `h' ↦ t^m h'`:
+  -- `𝐃(𝓑_{>k}(t^m ·))(h) u = t^m 𝐃𝓑_{>k}(t^m h) u`
   have hF := (analyticOnNhd_suffix_of_analytic A θ hχa hf k (t ^ m • h)
     (Set.mem_univ _)).differentiableAt.hasFDerivAt
   have hl : HasFDerivAt (fun h' : Matrix T d ℝ => t ^ m • h')
