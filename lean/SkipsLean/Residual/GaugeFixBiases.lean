@@ -694,6 +694,90 @@ noncomputable def learnedToResidualB (p : ParamsB A dIn dOut × (Fin L → Matri
     ParamsB A dIn dOut :=
   (learnedToResidual (p.1.1, p.2), p.1.2.mulSkipProd (skipProdMat p.2))
 
+/-- **`Φ` with biases for invertible learned skips:** `(θ.cob Λ Λ, b.cob Λ)`. -/
+private theorem learnedToResidualB_coe_gfb (θ : Params A dIn dOut) (b : Biases A dOut)
+    (S : Fin L → GL d ℝ) :
+    learnedToResidualB ((θ, b), fun ℓ => (S ℓ : Matrix d d ℝ))
+      = (θ.cob (skipProd S) (skipProd S), b.cob (skipProd S)) := by
+  show (learnedToResidual (θ, fun ℓ => (S ℓ : Matrix d d ℝ)),
+    b.mulSkipProd (skipProdMat fun ℓ => (S ℓ : Matrix d d ℝ))) = _
+  rw [learnedToResidual_coe, skipProdMat_coe_gfb, mulSkipProd_coe_gfb]
+
+omit [Fintype T] [DecidableEq d] in
+/-- The skip `A_ℓ` of `((θ, b), A)` is a differentiable (linear) function of it. -/
+private theorem differentiable_skip_gfb (ℓ : Fin L) :
+    Differentiable ℝ (fun p : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ) => p.2 ℓ) :=
+  differentiable_linear_gfb
+    { toFun := fun p : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ) => p.2 ℓ,
+      map_add' := fun _ _ => rfl, map_smul' := fun _ _ => rfl }
+
+omit [Fintype T] in
+/-- Near weights, biases and invertible skips, the skips stay invertible. -/
+private theorem eventually_isUnit_learned_gfb (p : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ))
+    (hp : ∀ ℓ, IsUnit (p.2 ℓ)) : ∀ᶠ q in nhds p, ∀ ℓ, IsUnit (q.2 ℓ) := by
+  rw [Filter.eventually_all]
+  intro ℓ
+  -- the determinant of `A_ℓ` is continuous and nonzero at `p`
+  have hc : Continuous fun q : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ) => (q.2 ℓ).det :=
+    (differentiable_skip_gfb ℓ).continuous.matrix_det
+  have hne : (p.2 ℓ).det ≠ 0 := ((Matrix.isUnit_iff_isUnit_det _).1 (hp ℓ)).ne_zero
+  filter_upwards [hc.continuousAt.eventually_ne hne] with q h
+  exact (Matrix.isUnit_iff_isUnit_det _).2 (Ne.isUnit h)
+
+/-- `Φ` with biases for learned skips is differentiable at invertible skips. -/
+private theorem differentiableAt_learnedToResidualB_gfb
+    (p : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ)) (hp : ∀ ℓ, IsUnit (p.2 ℓ)) :
+    DifferentiableAt ℝ (learnedToResidualB (A := A) (dIn := dIn) (dOut := dOut)) p := by
+  -- the weights: `Φ` of `Residual/GaugeFixLearned.lean` at `(θ, A)`
+  obtain ⟨Φ', hΦ', -⟩ := exists_hasFDerivAt_learnedToResidual_surjective (p.1.1, p.2) hp
+  have hm : DifferentiableAt ℝ
+      (fun q : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ) => (q.1.1, q.2)) p :=
+    differentiableAt_fst.fst.prodMk differentiableAt_snd
+  have h1 : DifferentiableAt ℝ
+      (fun q : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ) =>
+        learnedToResidual (q.1.1, q.2)) p := by
+    have hc := hΦ'.differentiableAt.comp p hm
+    exact hc
+  -- the biases: `b_E Λ_0`, `b_read`, `b_write Λ_ℓ`, `b_D`
+  have h2 : DifferentiableAt ℝ (fun q : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ) =>
+      q.1.2.mulSkipProd (skipProdMat q.2)) p :=
+    differentiableAt_mulSkipProd_gfb differentiableAt_fst.snd
+      (fun ℓ => differentiableAt_skipProdMat_gfb (fun k => differentiable_skip_gfb k p) ℓ)
+  exact h1.prodMk h2
+
+/-- **A differentiable right inverse of `Φ` with biases through `p = ((θ, b), A)`:**
+`s(θ', b') = ((θ'.cob Λ⁻¹ Λ⁻¹, b'.cob Λ⁻¹), A)` with the skips `A` of `p`. -/
+private theorem exists_section_learned_gfb (p : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ))
+    (hp : ∀ ℓ, IsUnit (p.2 ℓ)) :
+    ∃ s : ParamsB A dIn dOut → ParamsB A dIn dOut × (Fin L → Matrix d d ℝ),
+      Differentiable ℝ s ∧ s (learnedToResidualB p) = p ∧ (∀ y, learnedToResidualB (s y) = y) ∧
+      ∀ y ℓ, IsUnit ((s y).2 ℓ) := by
+  obtain ⟨⟨θ, b⟩, M⟩ := p
+  obtain ⟨S, rfl⟩ := exists_coe_gfb hp
+  refine ⟨fun y => ((y.1.cob (fun ℓ => (skipProd S ℓ)⁻¹) (fun ℓ => (skipProd S ℓ)⁻¹),
+      y.2.cob (fun ℓ => (skipProd S ℓ)⁻¹)), fun ℓ => (S ℓ : Matrix d d ℝ)), ?_, ?_, ?_,
+      fun y ℓ => Units.isUnit (S ℓ)⟩
+  · -- an affine map
+    intro y
+    have h1 := (differentiable_cob_gfb (A := A) (dIn := dIn) (dOut := dOut)
+      (fun ℓ => (skipProd S ℓ)⁻¹) (fun ℓ => (skipProd S ℓ)⁻¹) y.1).comp y differentiableAt_fst
+    have h2 : DifferentiableAt ℝ (fun y : ParamsB A dIn dOut =>
+        y.2.mulSkipProd (fun ℓ => (((skipProd S ℓ)⁻¹ : GL d ℝ) : Matrix d d ℝ))) y :=
+      differentiableAt_mulSkipProd_gfb differentiableAt_snd (fun ℓ => differentiableAt_const _)
+    exact (h1.prodMk h2).prodMk (differentiableAt_const _)
+  · -- `s(Φ p) = (((θ.cob Λ Λ).cob Λ⁻¹ Λ⁻¹, (b.cob Λ).cob Λ⁻¹), A) = p`
+    rw [learnedToResidualB_coe_gfb]
+    dsimp only
+    rw [cob_cob, cob_cob_biases_gfb]
+    simp only [mul_inv_cancel]
+    rw [cob_one_gfb, cob_one_biases_gfb]
+  · -- `Φ(s y) = ((y.1.cob Λ⁻¹ Λ⁻¹).cob Λ Λ, (y.2.cob Λ⁻¹).cob Λ) = y`
+    rintro ⟨φ, c⟩
+    dsimp only
+    rw [learnedToResidualB_coe_gfb, cob_cob, cob_cob_biases_gfb]
+    simp only [inv_mul_cancel]
+    rw [cob_one_gfb, cob_one_biases_gfb]
+
 /-- **Theorem A.5 (i) with biases for learned skips, `F_θ = F^res_{Φ(θ)}`:** without
 normalization, a network with biases and invertible learned skips computes the function of the
 residual network with biases at `Φ(p)`. -/
@@ -702,13 +786,21 @@ theorem evalB_eq_evalB_learnedToResidualB (hA : A.χ = id)
     (x : Matrix T dIn ℝ) :
     evalB A p.2 p.1.1 p.1.2 x
       = evalB A 1 (learnedToResidualB p).1 (learnedToResidualB p).2 x := by
-  sorry
+  -- write the skips as elements of `GL d ℝ`; then this is Theorem 3.2 (i) with biases
+  obtain ⟨⟨θ, b⟩, M⟩ := p
+  obtain ⟨S, rfl⟩ := exists_coe_gfb hp
+  rw [learnedToResidualB_coe_gfb]
+  exact evalB_learned_gfb hA θ b S x
 
 /-- **Theorem A.5 (ii) with biases for learned skips:** every parameter of the residual network
 with biases is `Φ` of the same weights and biases with the skips `A_ℓ = I`. -/
 theorem learnedToResidualB_one (q : ParamsB A dIn dOut) :
     learnedToResidualB (q, (1 : Fin L → Matrix d d ℝ)) = q := by
-  sorry
+  obtain ⟨θ, b⟩ := q
+  refine Prod.ext (learnedToResidual_one θ) ?_
+  -- every `Λ_ℓ` is `I`
+  show b.mulSkipProd (skipProdMat (1 : Fin L → Matrix d d ℝ)) = b
+  rw [skipProdMat_one_gfb, mulSkipProd_one_gfb]
 
 /-- **Theorem A.5 (ii) with biases for learned skips, "`Φ(θ̃) = Φ(θ)` exactly when
 `θ̃ = T_G(θ)` for some `G` with `G_L = I`"**, for invertible skips. -/
@@ -717,7 +809,30 @@ theorem learnedToResidualB_eq_iff (p p' : ParamsB A dIn dOut × (Fin L → Matri
     learnedToResidualB p' = learnedToResidualB p
       ↔ ∃ G : Fin (L + 1) → GL d ℝ,
           G (Fin.last L) = 1 ∧ p' = ((p.1.1.cob G G, p.1.2.cob G), cobSkip p.2 G) := by
-  sorry
+  obtain ⟨⟨θ, b⟩, M⟩ := p
+  obtain ⟨⟨θ', b'⟩, M'⟩ := p'
+  constructor
+  · intro h
+    have h1 : learnedToResidual (θ', M') = learnedToResidual (θ, M) := congrArg Prod.fst h
+    have h2 : b'.mulSkipProd (skipProdMat M') = b.mulSkipProd (skipProdMat M) :=
+      congrArg Prod.snd h
+    -- the weights and the skips: Theorem A.5 (ii) for learned skips without biases
+    obtain ⟨G, hG, h3⟩ := (learnedToResidual_eq_iff (θ, M) (θ', M') hp hp').1 h1
+    simp only [Prod.mk.injEq] at h3
+    obtain ⟨rfl, rfl⟩ := h3
+    refine ⟨G, hG, ?_⟩
+    -- the biases: `b' (G⁻¹ Λ) = b Λ = (b G) (G⁻¹ Λ)`, and `G⁻¹ Λ` is invertible
+    rw [skipProdMat_cobSkip_gfb M G hG, ← mulSkipProd_cob_gfb b G] at h2
+    have hu : ∀ ℓ, IsUnit ((↑(G ℓ)⁻¹ : Matrix d d ℝ) * skipProdMat M ℓ) :=
+      fun ℓ => (Units.isUnit _).mul (isUnit_skipProdMat_gfb hp ℓ)
+    rw [mulSkipProd_injective_gfb hu h2]
+  · rintro ⟨G, hG, h⟩
+    simp only [Prod.mk.injEq] at h
+    obtain ⟨⟨rfl, rfl⟩, rfl⟩ := h
+    refine Prod.ext ((learnedToResidual_eq_iff (θ, M) (θ.cob G G, cobSkip M G) hp hp').2
+      ⟨G, hG, rfl⟩) ?_
+    show (b.cob G).mulSkipProd (skipProdMat (cobSkip M G)) = b.mulSkipProd (skipProdMat M)
+    rw [skipProdMat_cobSkip_gfb M G hG, mulSkipProd_cob_gfb]
 
 /-- **Theorem A.5 (ii) with biases for learned skips, the derivative of `Φ` is onto** (with
 invertible skips). -/
@@ -726,7 +841,10 @@ theorem exists_hasFDerivAt_learnedToResidualB_surjective
     ∃ Φ' : (ParamsB A dIn dOut × (Fin L → Matrix d d ℝ)) →L[ℝ] ParamsB A dIn dOut,
       HasFDerivAt (learnedToResidualB (A := A) (dIn := dIn) (dOut := dOut)) Φ' p
         ∧ Function.Surjective Φ' := by
-  sorry
+  -- the chain rule for `Φ ∘ s = id` with the right inverse `s` through `p`
+  obtain ⟨s, hs, hsp, hΦs, -⟩ := exists_section_learned_gfb p hp
+  exact exists_surjective_of_section_gfb (differentiableAt_learnedToResidualB_gfb p hp) (hs _)
+    hsp hΦs
 
 /-- **Theorem A.5 (ii) with biases for learned skips, the same set of functions**, without
 normalization. -/
@@ -734,7 +852,15 @@ theorem image_evalB_learned_eq_range_residual (hA : A.χ = id) :
     (fun p : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ) => evalB A p.2 p.1.1 p.1.2)
         '' {p | ∀ ℓ, IsUnit (p.2 ℓ)}
       = Set.range fun q : ParamsB A dIn dOut => evalB A 1 q.1 q.2 := by
-  sorry
+  ext F
+  constructor
+  · -- `F_p = F^res_{Φ(p)}`
+    rintro ⟨p, hp, rfl⟩
+    exact ⟨learnedToResidualB p,
+      funext fun x => (evalB_eq_evalB_learnedToResidualB hA p hp x).symm⟩
+  · -- `F^res_q` is the network with the skips `A_ℓ = I`
+    rintro ⟨q, rfl⟩
+    exact ⟨(q, 1), fun ℓ => isUnit_one, rfl⟩
 
 /-- **Theorem A.5 (ii) with biases for learned skips, the same functional dimension:** without
 normalization, for any blocks, at weights, biases and invertible skips `p`, the functional
@@ -744,6 +870,17 @@ theorem funDimOf_evalB_learned_eq_funDimB_residual (hA : A.χ = id)
     (p : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ)) (hp : ∀ ℓ, IsUnit (p.2 ℓ)) :
     funDimOf (fun q : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ) => evalB A q.2 q.1.1 q.1.2) p
       = funDimB A 1 (learnedToResidualB p) := by
-  sorry
+  rw [funDimB_eq_funDimOf]
+  obtain ⟨Φ', hΦ', hsurj⟩ := exists_hasFDerivAt_learnedToResidualB_surjective p hp
+  obtain ⟨s, hs, hsp, hΦs, hsu⟩ := exists_section_learned_gfb p hp
+  refine funDimOf_eq_of_comp_of_section hΦ' hsurj (hs _) hsp ?_ ?_
+  · -- near `p` the skips are invertible, and `F_q = F^res_{Φ(q)}`
+    filter_upwards [eventually_isUnit_learned_gfb p hp] with q hq
+    funext x
+    exact evalB_eq_evalB_learnedToResidualB hA q hq x
+  · -- everywhere `F^res_y = F_{s(y)}`
+    refine Filter.Eventually.of_forall fun y => funext fun x => ?_
+    show evalB A 1 y.1 y.2 x = evalB A (s y).2 (s y).1.1 (s y).1.2 x
+    rw [evalB_eq_evalB_learnedToResidualB hA (s y) (hsu y) x, hΦs y]
 
 end Skips
