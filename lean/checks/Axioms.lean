@@ -1985,3 +1985,12 @@ import SkipsLean
 #print axioms Skips.evalB_rescaleMlp
 #print axioms Skips.evalB_rescale
 #print axioms Skips.evalB_rescaleGate
+#print axioms Skips.cobDirB_mem_flatB_skipless
+#print axioms Skips.cobDirB_const_mem_flatB_residual
+#print axioms Skips.translateDir_mem_flatB
+#print axioms Skips.translateAtDir_mem_flatB
+#print axioms Skips.cobDirB_const_add_translateDir_injective
+#print axioms Skips.cobDirB_add_translateAtDir_injective
+#print axioms Skips.funDimB_add_le_residual
+#print axioms Skips.funDimB_add_le_skipless
+#print axioms Skips.finrank_paramsB

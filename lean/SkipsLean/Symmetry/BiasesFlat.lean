@@ -425,6 +425,7 @@ private theorem smul_translateAtDir_bfl (θ : Params A dIn dOut) (g : Fin (L + 1
   · intro ℓ; rfl
   · simp only [Biases.smul_D, translateAtDir, Pi.smul_apply, Matrix.smul_vecMul, smul_neg]
 
+omit [DecidableEq d] in
 /-- In a skipless network with biases and without normalization, the direction of the
 translations of the hidden states is flat. -/
 theorem translateAtDir_mem_flatB (hA : A.χ = id) (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ))
@@ -465,6 +466,7 @@ private theorem mul_left_cancel_of_rank_bfl {m n k : Type*} [Fintype n] (M : Mat
     simpa [Matrix.mul_apply, Matrix.mulVec, dotProduct] using this
   exact congrFun (hinj hcol) i
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **Proof of Lemma A.8, "These `L + 1` translations move the biases in independent
 directions", with the change of basis, for a residual network:** if `E` has rank `d`, the
 direction of one change of basis `X` of all hidden states together with the translations
@@ -613,6 +615,7 @@ theorem funDimB_add_le_skipless (hA : A.χ = id) (hf : ∀ ℓ, Differentiable �
     ring
   rwa [LinearMap.finrank_range_of_inj hinj, hdim] at h
 
+omit [Fintype T] [DecidableEq d] in
 /-- **The number of parameters of a network with biases:** the number of weights plus
 `d + ∑_ℓ r_ℓ + L d + d_out` biases. -/
 theorem finrank_paramsB (A : Arch T d L) :
