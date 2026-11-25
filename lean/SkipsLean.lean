@@ -343,3 +343,7 @@ import SkipsLean.Symmetry.LocallyFreeReadoutGeneric
 import SkipsLean.Symmetry.LocallyFreeRMSZero
 import SkipsLean.Symmetry.LocallyFreeRMSZeroGeneric
 import SkipsLean.Basic.RMSNormDeviation
+import SkipsLean.Dimension.UpperBoundTwoSided
+import SkipsLean.Depth.InactiveUnitTwoSided
+import SkipsLean.Symmetry.LocallyFreeTransformer
+import SkipsLean.Symmetry.LocallyFreeTransformerGeneric
