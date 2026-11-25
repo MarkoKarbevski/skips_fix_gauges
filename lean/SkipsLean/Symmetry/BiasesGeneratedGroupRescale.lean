@@ -52,6 +52,7 @@ theorem isOpen_posRescalings : IsOpen (posRescalings hid) := by
   exact isOpen_iInter_of_finite fun ℓ => isOpen_iInter_of_finite fun i =>
     isOpen_lt continuous_const ((continuous_apply i).comp (continuous_apply ℓ))
 
+omit [(ℓ : Fin L) → Fintype (hid ℓ)] in
 /-- The positive rescalings are not empty. -/
 theorem posRescalings_nonempty : (posRescalings hid).Nonempty :=
   ⟨fun _ _ => 1, fun _ _ => one_pos⟩
@@ -127,6 +128,7 @@ private theorem vecMul_rescaleMlp_bgr (k : ℕ) (c : ∀ ℓ, hid ℓ → ℝ)
   simp only [Matrix.vecMul, dotProduct, Params.rescaleMlp, Matrix.of_apply, Finset.mul_sum]
   exact Finset.sum_congr rfl fun _ _ => by ring
 
+omit [Fintype T] [Fintype dOut] in
 /-- **The rescalings of the hidden units are a family of symmetries inside the blocks,** for an
 activation that is positively homogeneous of degree `k`. -/
 theorem insideBlocksAction_rescaleMlp {k : ℕ}
@@ -182,6 +184,7 @@ theorem insideBlocksAction_rescaleMlp {k : ℕ}
     rw [Matrix.det_diagonal, isUnit_iff_ne_zero, Finset.prod_ne_zero_iff]
     exact fun i _ => inv_ne_zero (pow_ne_zero k (hc ℓ i).ne')
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **They act freely block by block at weights with no zero read column.** -/
 theorem insideBlocksFreeAt_rescaleMlp (k : ℕ)
     (q : Params (Arch.mlp (T := T) (d := d) σ χ hid) dIn dOut
@@ -310,6 +313,7 @@ private theorem vecMul_rescale_inr_bgr (c : ∀ ℓ, hid ℓ → ℝ)
     Finset.mul_sum]
   exact Finset.sum_congr rfl fun _ _ => by ring
 
+omit [Fintype T] [Fintype dOut] in
 /-- **The rescalings of the values are a family of symmetries inside the blocks,** for any
 gate. -/
 theorem insideBlocksAction_rescale :
@@ -368,6 +372,7 @@ theorem insideBlocksAction_rescale :
     rw [Matrix.det_diagonal, isUnit_iff_ne_zero, Finset.prod_ne_zero_iff]
     exact fun i _ => (hc ℓ i).ne'
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **They act freely block by block at weights with no zero value column.** -/
 theorem insideBlocksFreeAt_rescale
     (q : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut
@@ -501,6 +506,7 @@ private theorem vecMul_rescaleGate_inr_bgr (k : ℕ) (c : ∀ ℓ, hid ℓ → �
     (g ᵥ* (θ.rescaleGate k c).read ℓ) (Sum.inr i) = (g ᵥ* θ.read ℓ) (Sum.inr i) := by
   simp only [Matrix.vecMul, dotProduct, Params.rescaleGate, Matrix.of_apply, Sum.elim_inr]
 
+omit [Fintype T] [Fintype dOut] in
 /-- **The rescalings of the values and of the gates are a family of symmetries inside the
 blocks,** for a gate that is positively homogeneous of degree `k`. -/
 theorem insideBlocksAction_rescaleBoth {k : ℕ}
@@ -574,6 +580,7 @@ theorem insideBlocksAction_rescaleBoth {k : ℕ}
     rw [Matrix.det_diagonal, isUnit_iff_ne_zero, Finset.prod_ne_zero_iff]
     exact fun i _ => mul_ne_zero (inv_ne_zero (pow_ne_zero k (hc.2 ℓ i).ne')) (hc.1 ℓ i).ne'
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **They act freely block by block at weights with no zero gate column and no zero value
 column.** -/
 theorem insideBlocksFreeAt_rescaleBoth (k : ℕ)
