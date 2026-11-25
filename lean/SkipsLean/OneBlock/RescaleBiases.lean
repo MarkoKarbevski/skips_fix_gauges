@@ -280,6 +280,7 @@ private theorem evalB_mlp_S_eq_rlb (S : Fin 1 → Matrix d d ℝ)
   rw [evalB, h1, hiddenB_succ, Fin.castSucc_zero, hiddenB_zero]
   rfl
 
+omit [Nonempty T] [DecidableEq d] in
 /-- At an input with no hidden unit at its kink, the output of a network of one block with biases
 is differentiable in the weights and biases, when `σ` is differentiable away from `0`; for every
 stream matrix (with the skip and without it). -/
@@ -364,6 +365,7 @@ private theorem noKinkB_apply_rlb {p : ParamsB (Arch.mlp (T := T) (d := d) σ id
   have h := hx t i
   rwa [Matrix.mul_assoc] at h
 
+omit [Nonempty T] [DecidableEq d] in
 /-- Helper (the chain rule, at an input of `noKinkB p`): the derivative of
 `(θ, b) ↦ F(θ, b, x)` along `η` has the entries
 `∂γ_{0,o} + ∑_i [σ(z_i) (∂A)_{i o} + σ'(z_i) ((x ∂C)_{t i} + ∂β_i) A_{i o}]`,
@@ -531,6 +533,7 @@ private theorem evalB_res_line_apply_rlb
   simp only [Matrix.mul_add, Matrix.mul_smul]
   rfl
 
+omit [Nonempty T] in
 /-- Helper (the chain rule, at an input of `noKinkB p`): the derivative of
 `(θ, b) ↦ F(θ, b, x)` of the residual network along `η` has the entries
 `(x ∂M)_{t o} + ∂γ_o + ∑_i [σ(z_i) (∂A)_{i o} + σ'(z_i) ((x ∂C)_{t i} + ∂β_i) A_{i o}]`,
