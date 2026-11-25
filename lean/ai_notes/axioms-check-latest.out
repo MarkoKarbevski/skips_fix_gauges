@@ -2210,3 +2210,132 @@
 'Skips.ae_funDim_relu_oneBlock_residual_rmsNorm_zero_eq_add_of_le' depends on axioms: [propext,
  Classical.choice,
  Quot.sound]
+'Skips.keeps_products_and_ED_iff_mem_range_cobDir' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.finrank_span_keeps_products' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.finrank_span_keeps_products_and_ED' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cobDir_injective_of_rank_D' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.tanh_unitsNoSymmetricPart' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.gelu_unitsNoSymmetricPart' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.noSymmetricPart_mlp_rmsNorm_of_units' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimLearned_tanh_rmsNorm_eq_residual_add_of_nonempty' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimLearned_tanh_rmsNorm_of_nonempty' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimLearned_gelu_rmsNorm_eq_residual_add_of_nonempty' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimLearned_gelu_rmsNorm_of_nonempty' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_cob_residual_write_eq_one' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_cob_residual_E_eq_one' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_cob_residual_write_lowerTriangular' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_cob_residual_E_lowerTriangular' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_cob_writes_lowerTriangular' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.silu_gatedUnitsNoSymmetricPart' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.gelu_gatedUnitsNoSymmetricPart' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.noSymmetricPart_gated_rmsNorm_of_units' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimLearned_swiglu_rmsNorm_eq_residual_add_of_nonempty' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimLearned_swiglu_rmsNorm_of_nonempty' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimLearned_geglu_rmsNorm_eq_residual_add_of_nonempty' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimLearned_geglu_rmsNorm_of_nonempty' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimLearnedTri_tanh_rmsNorm_of_nonempty' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimLearnedTri_tanh_rmsNorm_eq_residual_add_of_nonempty' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimLearnedTri_gelu_rmsNorm_of_nonempty' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimLearnedTri_gelu_rmsNorm_eq_residual_add_of_nonempty' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimLearnedTri_swiglu_rmsNorm_of_nonempty' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimLearnedTri_swiglu_rmsNorm_eq_residual_add_of_nonempty' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_funDimLearnedTri_geglu_rmsNorm_of_nonempty' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimLearnedTri_geglu_rmsNorm_eq_residual_add_of_nonempty' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.eval_rescaleMlp_params' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.eval_rescaleGate_params' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_eq_self_of_rank_E' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rescaleMlp_eq_self_of_rank_E' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rescale_eq_self_of_rank_E' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rescale_rescaleGate_eq_self_of_rank_E' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rmsNorm_zero_eq_self_of_rank_E' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_headsQK_headsVO_eq_self_of_rank_E' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_eq_self_of_dIn' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rescaleMlp_eq_self_of_dIn' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rescale_eq_self_of_dIn' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rescale_rescaleGate_eq_self_of_dIn' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rmsNorm_zero_eq_self_of_dIn' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_headsQK_headsVO_eq_self_of_dIn' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.eq_smul_one_of_eigenvectors_generalPosition' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cobDir_add_rescaleDir_injective_of_rank_D' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cobDir_add_rescaleDirMlp_injective_of_rank_D' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cobDir_add_rescaleDir_add_rescaleDirGate_injective_of_rank_D' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.cobDir_add_scaleDir_injective_of_rank_D' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_eq_self_of_rank_D' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rescaleMlp_eq_self_of_rank_D' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rescale_eq_self_of_rank_D' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rescale_rescaleGate_eq_self_of_rank_D' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rmsNorm_zero_eq_self_of_rank_D' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_rank_D_read' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_write_row_ne_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_read_cols_generalPosition' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_eq_self_of_dOut' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rescaleMlp_eq_self_of_dOut' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rescale_eq_self_of_dOut' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rescale_rescaleGate_eq_self_of_dOut' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rmsNorm_zero_eq_self_of_dOut' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rmsNorm_zero_rescaleMlp_eq_self_of_rank_E' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rmsNorm_zero_rescale_eq_self_of_rank_E' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rmsNorm_zero_rescale_rescaleGate_eq_self_of_rank_E' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.cob_rmsNorm_zero_rescaleMlp_eq_self_of_rank_D' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rmsNorm_zero_rescale_eq_self_of_rank_D' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rmsNorm_zero_rescale_rescaleGate_eq_self_of_rank_D' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.cob_rmsNorm_zero_headsQK_headsVO_eq_self_of_rank_E' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rmsNorm_zero_rescaleMlp_eq_self_of_dIn' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rmsNorm_zero_rescale_eq_self_of_dIn' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rmsNorm_zero_rescale_rescaleGate_eq_self_of_dIn' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_cob_rmsNorm_zero_rescaleMlp_eq_self_of_dOut' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rmsNorm_zero_rescale_eq_self_of_dOut' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rmsNorm_zero_rescale_rescaleGate_eq_self_of_dOut' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_cob_rmsNorm_zero_headsQK_headsVO_eq_self_of_dIn' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.rmsRow_vecMul_smul_orthogonal' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.sqrt_dotProduct_rmsRow_vecMul_smul_orthogonal_sub' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.abs_rmsNorm_deviation_sub_isBigO' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cobDir_injective_of_rank_E_D' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cobDir_add_rescaleDirMlp_injective_of_rank_E_D' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.funDim_add_le_of_eventually_unitInactive_of_rank_E_D' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_isOpen_unitInactive_relu_of_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_isOpen_unitInactive_reluSq_of_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.not_ae_funDim_add_eq_relu_skipless_of_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.not_ae_funDim_add_eq_reluSq_skipless_of_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_heads_rescaleMlp_eq_self_of_rank_E' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_heads_rescale_eq_self_of_rank_E' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_heads_rescale_rescaleGate_eq_self_of_rank_E' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rmsNorm_zero_heads_rescaleMlp_eq_self_of_rank_E' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rmsNorm_zero_heads_rescale_eq_self_of_rank_E' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_rmsNorm_zero_heads_rescale_rescaleGate_eq_self_of_rank_E' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.ae_cob_heads_rescaleMlp_eq_self_of_dIn' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_heads_rescale_eq_self_of_dIn' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_heads_rescale_rescaleGate_eq_self_of_dIn' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rmsNorm_zero_heads_rescaleMlp_eq_self_of_dIn' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rmsNorm_zero_heads_rescale_eq_self_of_dIn' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_cob_rmsNorm_zero_heads_rescale_rescaleGate_eq_self_of_dIn' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
