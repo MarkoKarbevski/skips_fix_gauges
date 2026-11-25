@@ -425,13 +425,154 @@ noncomputable def rescaleBothAct (k : ℕ) (c : (∀ ℓ, hid ℓ → ℝ) × (�
       × Biases (Arch.gated (T := T) (d := d) σ χ hid) dOut :=
   ((q.1.rescale c.1).rescaleGate k c.2, (q.2.rescale c.1).rescaleGate c.2)
 
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the rescaling of the values and the gates by `(1, 1)` moves nothing. -/
+private theorem rescaleBothAct_one_bgr (k : ℕ)
+    (q : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut
+      × Biases (Arch.gated (T := T) (d := d) σ χ hid) dOut) :
+    rescaleBothAct k (fun _ _ => 1, fun _ _ => 1) q = q := by
+  refine Prod.ext (Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl)
+    (Biases.ext' rfl (fun ℓ => ?_) (fun ℓ => rfl) rfl)
+  · ext a j
+    rcases j with i | i <;>
+      simp only [rescaleBothAct, Params.rescale, Params.rescaleGate, Matrix.of_apply,
+        Sum.elim_inl, Sum.elim_inr, inv_one, one_mul]
+  · ext i a
+    simp only [rescaleBothAct, Params.rescale, Params.rescaleGate, Matrix.of_apply, one_pow,
+      inv_one, one_mul]
+  · funext j
+    rcases j with i | i <;>
+      simp only [rescaleBothAct, Biases.rescale, Biases.rescaleGate, Sum.elim_inl,
+        Sum.elim_inr, inv_one, one_mul]
+
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the rescaling by `c'` then by `c` is the rescaling by `c c'`, entry by entry. -/
+private theorem rescaleBothAct_mul_bgr (k : ℕ) (c c' : (∀ ℓ, hid ℓ → ℝ) × (∀ ℓ, hid ℓ → ℝ))
+    (q : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut
+      × Biases (Arch.gated (T := T) (d := d) σ χ hid) dOut) :
+    rescaleBothAct k c (rescaleBothAct k c' q)
+      = rescaleBothAct k (fun ℓ i => c.1 ℓ i * c'.1 ℓ i, fun ℓ i => c.2 ℓ i * c'.2 ℓ i) q := by
+  refine Prod.ext (Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl)
+    (Biases.ext' rfl (fun ℓ => ?_) (fun ℓ => rfl) rfl)
+  · ext a j
+    rcases j with i | i <;>
+      simp only [rescaleBothAct, Params.rescale, Params.rescaleGate, Matrix.of_apply,
+        Sum.elim_inl, Sum.elim_inr, mul_inv, mul_assoc]
+  · ext i a
+    simp only [rescaleBothAct, Params.rescale, Params.rescaleGate, Matrix.of_apply, mul_pow,
+      mul_inv]
+    ring
+  · funext j
+    rcases j with i | i <;>
+      simp only [rescaleBothAct, Biases.rescale, Biases.rescaleGate, Sum.elim_inl,
+        Sum.elim_inr, mul_inv, mul_assoc]
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the rescaling of the gates commutes with the changes of basis, on the weights. -/
+private theorem cob_rescaleGate_bgr (k : ℕ) (c : ∀ ℓ, hid ℓ → ℝ)
+    (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut) (G : Fin (L + 1) → GL d ℝ) :
+    (θ.rescaleGate k c).cob G G = (θ.cob G G).rescaleGate k c := by
+  refine Params.ext' rfl (fun ℓ => ?_) (fun ℓ => ?_) rfl
+  · ext a j
+    rcases j with i | i <;>
+      simp only [Params.cob, Params.rescaleGate, Matrix.of_apply, Matrix.mul_apply, Sum.elim_inl,
+        Sum.elim_inr, Finset.mul_sum]
+    exact Finset.sum_congr rfl fun _ _ => by ring
+  · ext i a
+    simp only [Params.cob, Params.rescaleGate, Matrix.of_apply, Matrix.mul_apply, Finset.mul_sum]
+    exact Finset.sum_congr rfl fun _ _ => by ring
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `g` times the read with rescaled gates, at a gate. -/
+private theorem vecMul_rescaleGate_inl_bgr (k : ℕ) (c : ∀ ℓ, hid ℓ → ℝ)
+    (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut) (ℓ : Fin L) (g : d → ℝ)
+    (i : hid ℓ) :
+    (g ᵥ* (θ.rescaleGate k c).read ℓ) (Sum.inl i) = c ℓ i * (g ᵥ* θ.read ℓ) (Sum.inl i) := by
+  simp only [Matrix.vecMul, dotProduct, Params.rescaleGate, Matrix.of_apply, Sum.elim_inl,
+    Finset.mul_sum]
+  exact Finset.sum_congr rfl fun _ _ => by ring
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `g` times the read with rescaled gates, at a value. -/
+private theorem vecMul_rescaleGate_inr_bgr (k : ℕ) (c : ∀ ℓ, hid ℓ → ℝ)
+    (θ : Params (Arch.gated (T := T) (d := d) σ χ hid) dIn dOut) (ℓ : Fin L) (g : d → ℝ)
+    (i : hid ℓ) :
+    (g ᵥ* (θ.rescaleGate k c).read ℓ) (Sum.inr i) = (g ᵥ* θ.read ℓ) (Sum.inr i) := by
+  simp only [Matrix.vecMul, dotProduct, Params.rescaleGate, Matrix.of_apply, Sum.elim_inr]
+
 /-- **The rescalings of the values and of the gates are a family of symmetries inside the
 blocks,** for a gate that is positively homogeneous of degree `k`. -/
 theorem insideBlocksAction_rescaleBoth {k : ℕ}
     (hσ : ∀ lam z : ℝ, 0 < lam → σ (lam * z) = lam ^ k * σ z) :
     InsideBlocksAction (A := Arch.gated (T := T) (d := d) σ χ hid) (dIn := dIn) (dOut := dOut)
       (rescaleBothAct k) (posRescalings hid ×ˢ posRescalings hid) := by
-  sorry
+  refine ⟨⟨(fun _ _ => 1, fun _ _ => 1), ⟨fun _ _ => one_pos, fun _ _ => one_pos⟩,
+    funext (rescaleBothAct_one_bgr k)⟩, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · -- the product of two pairs of positive rescalings
+    intro c hc c' hc'
+    exact ⟨(fun ℓ i => c.1 ℓ i * c'.1 ℓ i, fun ℓ i => c.2 ℓ i * c'.2 ℓ i),
+      ⟨fun ℓ i => mul_pos (hc.1 ℓ i) (hc'.1 ℓ i), fun ℓ i => mul_pos (hc.2 ℓ i) (hc'.2 ℓ i)⟩,
+      funext (rescaleBothAct_mul_bgr k c c')⟩
+  · -- the inverse pair
+    intro c hc
+    have h1 : ((fun ℓ i => c.1 ℓ i * (c.1 ℓ i)⁻¹, fun ℓ i => c.2 ℓ i * (c.2 ℓ i)⁻¹)
+        : (∀ ℓ, hid ℓ → ℝ) × (∀ ℓ, hid ℓ → ℝ)) = (fun _ _ => 1, fun _ _ => 1) :=
+      Prod.ext (funext fun ℓ => funext fun i => mul_inv_cancel₀ (hc.1 ℓ i).ne')
+        (funext fun ℓ => funext fun i => mul_inv_cancel₀ (hc.2 ℓ i).ne')
+    have h2 : ((fun ℓ i => (c.1 ℓ i)⁻¹ * c.1 ℓ i, fun ℓ i => (c.2 ℓ i)⁻¹ * c.2 ℓ i)
+        : (∀ ℓ, hid ℓ → ℝ) × (∀ ℓ, hid ℓ → ℝ)) = (fun _ _ => 1, fun _ _ => 1) :=
+      Prod.ext (funext fun ℓ => funext fun i => inv_mul_cancel₀ (hc.1 ℓ i).ne')
+        (funext fun ℓ => funext fun i => inv_mul_cancel₀ (hc.2 ℓ i).ne')
+    refine ⟨(fun ℓ i => (c.1 ℓ i)⁻¹, fun ℓ i => (c.2 ℓ i)⁻¹),
+      ⟨fun ℓ i => inv_pos.2 (hc.1 ℓ i), fun ℓ i => inv_pos.2 (hc.2 ℓ i)⟩, ?_, ?_⟩
+    · funext q
+      rw [Function.comp_apply, rescaleBothAct_mul_bgr]
+      exact (congrArg (fun c'' => rescaleBothAct k c'' q) h1).trans (rescaleBothAct_one_bgr k q)
+    · funext q
+      rw [Function.comp_apply, rescaleBothAct_mul_bgr]
+      exact (congrArg (fun c'' => rescaleBothAct k c'' q) h2).trans (rescaleBothAct_one_bgr k q)
+  · -- commutes with the changes of basis and translations, without skips
+    intro p c _
+    funext q
+    refine Prod.ext ((cob_rescaleGate_bgr k c.2 _ p.1).trans
+        (congrArg (fun θ => Params.rescaleGate k θ c.2) (cob_rescale_bgr c.1 q.1 p.1)))
+      (Biases.ext' rfl (fun ℓ => funext fun j => ?_) (fun ℓ => rfl) rfl)
+    rcases j with i | i
+    · simp only [Function.comp_apply, affActSkipless, rescaleBothAct, Biases.cob,
+        Biases.translateAllAt, Biases.rescale, Biases.rescaleGate, Pi.sub_apply, Sum.elim_inl]
+      rw [vecMul_rescaleGate_inl_bgr, vecMul_rescale_inl_bgr, mul_sub]
+    · simp only [Function.comp_apply, affActSkipless, rescaleBothAct, Biases.cob,
+        Biases.translateAllAt, Biases.rescale, Biases.rescaleGate, Pi.sub_apply, Sum.elim_inr]
+      rw [vecMul_rescaleGate_inr_bgr, vecMul_rescale_inr_bgr, mul_sub]
+  · -- commutes with the changes of basis and translations, with skips
+    intro p c _
+    funext q
+    refine Prod.ext ((cob_rescaleGate_bgr k c.2 _ p.1).trans
+        (congrArg (fun θ => Params.rescaleGate k θ c.2) (cob_rescale_bgr c.1 q.1 p.1)))
+      (Biases.ext' rfl (fun ℓ => funext fun j => ?_) (fun ℓ => rfl) rfl)
+    rcases j with i | i
+    · simp only [Function.comp_apply, affActResidual, rescaleBothAct, Biases.cob,
+        Biases.translateAll, Biases.rescale, Biases.rescaleGate, Pi.sub_apply, Sum.elim_inl]
+      rw [vecMul_rescaleGate_inl_bgr, vecMul_rescale_inl_bgr, mul_sub]
+    · simp only [Function.comp_apply, affActResidual, rescaleBothAct, Biases.cob,
+        Biases.translateAll, Biases.rescale, Biases.rescaleGate, Pi.sub_apply, Sum.elim_inr]
+      rw [vecMul_rescaleGate_inr_bgr, vecMul_rescale_inr_bgr, mul_sub]
+  · -- preserves the function: the gates, then the values
+    intro c hc S q x
+    rw [rescaleBothAct, evalB_rescaleGate hσ _ _ c.2 hc.2 S x]
+    exact evalB_rescale q.1 q.2 c.1 (fun ℓ i => (hc.1 ℓ i).ne') S x
+  · -- keeps the rank of the writes: the write is multiplied by an invertible diagonal matrix
+    intro c hc q ℓ
+    classical
+    have hw : (rescaleBothAct k c q).1.write ℓ
+        = Matrix.diagonal (fun i => (c.2 ℓ i ^ k)⁻¹ * c.1 ℓ i) * q.1.write ℓ := by
+      ext i a
+      simp only [rescaleBothAct, Params.rescale, Params.rescaleGate, Matrix.of_apply,
+        Matrix.diagonal_mul, mul_assoc]
+    rw [hw, Matrix.rank_mul_eq_right_of_isUnit_det]
+    rw [Matrix.det_diagonal, isUnit_iff_ne_zero, Finset.prod_ne_zero_iff]
+    exact fun i _ => mul_ne_zero (inv_ne_zero (pow_ne_zero k (hc.2 ℓ i).ne')) (hc.1 ℓ i).ne'
 
 /-- **They act freely block by block at weights with no zero gate column and no zero value
 column.** -/
@@ -441,7 +582,44 @@ theorem insideBlocksFreeAt_rescaleBoth (k : ℕ)
     (hgate : ∀ ℓ i, ∃ a, q.1.read ℓ a (Sum.inl i) ≠ 0)
     (hval : ∀ ℓ i, ∃ a, q.1.read ℓ a (Sum.inr i) ≠ 0) :
     InsideBlocksFreeAt (rescaleBothAct k) (posRescalings hid ×ˢ posRescalings hid) q := by
-  sorry
+  refine ⟨fun _ _ => rfl, fun _ _ => rfl, ?_, ?_⟩
+  · -- equal reads: every `c.1 ℓ i` and `c.2 ℓ i` is `1`, so the write is kept
+    intro c _ ℓ hr _
+    have h1 : ∀ i, c.1 ℓ i = 1 := by
+      intro i
+      obtain ⟨a, ha⟩ := hval ℓ i
+      have h := congrFun (congrFun hr a) (Sum.inr i)
+      simp only [rescaleBothAct, Params.rescale, Params.rescaleGate, Matrix.of_apply,
+        Sum.elim_inr] at h
+      have h' : ((c.1 ℓ i)⁻¹ - 1) * q.1.read ℓ a (Sum.inr i) = 0 := by
+        rw [sub_mul, h, one_mul, sub_self]
+      exact inv_eq_one.1 (sub_eq_zero.1 ((mul_eq_zero.1 h').resolve_right ha))
+    have h2 : ∀ i, c.2 ℓ i = 1 := by
+      intro i
+      obtain ⟨a, ha⟩ := hgate ℓ i
+      have h := congrFun (congrFun hr a) (Sum.inl i)
+      simp only [rescaleBothAct, Params.rescale, Params.rescaleGate, Matrix.of_apply,
+        Sum.elim_inl] at h
+      have h' : (c.2 ℓ i - 1) * q.1.read ℓ a (Sum.inl i) = 0 := by
+        rw [sub_mul, h, one_mul, sub_self]
+      exact sub_eq_zero.1 ((mul_eq_zero.1 h').resolve_right ha)
+    refine ⟨?_, rfl⟩
+    ext i a
+    simp only [rescaleBothAct, Params.rescale, Params.rescaleGate, Matrix.of_apply, h1, h2,
+      one_pow, inv_one, one_mul]
+  · -- equal images: equal rescalings, gate and value column by column
+    intro c _ c' _ h
+    refine Prod.ext (funext fun ℓ => funext fun i => ?_) (funext fun ℓ => funext fun i => ?_)
+    · obtain ⟨a, ha⟩ := hval ℓ i
+      have h2 := congrFun (congrFun (congrArg (fun q' => q'.1.read ℓ) h) a) (Sum.inr i)
+      simp only [rescaleBothAct, Params.rescale, Params.rescaleGate, Matrix.of_apply,
+        Sum.elim_inr] at h2
+      exact inv_inj.1 (mul_right_cancel₀ ha h2)
+    · obtain ⟨a, ha⟩ := hgate ℓ i
+      have h2 := congrFun (congrFun (congrArg (fun q' => q'.1.read ℓ) h) a) (Sum.inl i)
+      simp only [rescaleBothAct, Params.rescale, Params.rescaleGate, Matrix.of_apply,
+        Sum.elim_inl] at h2
+      exact mul_right_cancel₀ ha h2
 
 /-- **Lemma A.8 for ReGLU blocks, with skips:** dimension
 `d² + (L + 1) d + 2 ∑_ℓ d_hidden^ℓ`. -/
@@ -450,7 +628,10 @@ theorem dimH_generated_residual_gated_both [Nonempty T] [Nonempty dOut] :
         ×ˢ (posRescalings hid ×ˢ posRescalings hid))
       = ((Fintype.card d ^ 2 + (L + 1) * Fintype.card d + 2 * ∑ ℓ, Fintype.card (hid ℓ) : ℕ)
           : ℝ≥0∞) := by
-  sorry
+  rw [dimH_affMat_affPreservingResidual_prod _ rfl
+      (isOpen_posRescalings.prod isOpen_posRescalings)
+      (posRescalings_nonempty.prod posRescalings_nonempty),
+    Module.finrank_prod, finrank_rescalings, two_mul]
 
 /-- **The same without skips:** dimension `(L + 1)(d² + d) + 2 ∑_ℓ d_hidden^ℓ`. -/
 theorem dimH_generated_skipless_gated_both :
@@ -458,6 +639,9 @@ theorem dimH_generated_skipless_gated_both :
         ×ˢ (posRescalings hid ×ˢ posRescalings hid))
       = (((L + 1) * (Fintype.card d ^ 2 + Fintype.card d)
           + 2 * ∑ ℓ, Fintype.card (hid ℓ) : ℕ) : ℝ≥0∞) := by
-  sorry
+  rw [dimH_affMat_affPreservingSkipless_prod _ rfl
+      (isOpen_posRescalings.prod isOpen_posRescalings)
+      (posRescalings_nonempty.prod posRescalings_nonempty),
+    Module.finrank_prod, finrank_rescalings, two_mul]
 
 end Skips
