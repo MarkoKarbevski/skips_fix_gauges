@@ -24,7 +24,9 @@ Here the two sentences that give this bound, and the lemma in the paper's form:
 
 * `H` is a Lie group in the sense of Mathlib (`LieGroup I ∞ H`, on any model), acting on the
   parameters `P'` of the second family (`MulAction H P'`), and "acts smoothly" is the smoothness of
-  `(a, η) ↦ a · η`.
+  `(a, η) ↦ a · η`. The proofs use only this smoothness, not that the multiplication and the
+  inverse of `H` are smooth, so the statements hold for every group `H` on a manifold and the
+  instance `LieGroup I ∞ H` is omitted in them.
 * `orbitDim I η`: the dimension of the orbit `H · η`, as the rank of the derivative of
   `a ↦ a · η` at the identity. (For a smooth action of a Lie group the orbit is an immersed
   submanifold, the image of `H / H_η` under an injective immersion, and its dimension is this
@@ -60,6 +62,7 @@ identity of `H`. -/
 noncomputable def orbitDim (η : P') : ℕ :=
   Module.finrank ℝ (LinearMap.range (mfderiv I 𝓘(ℝ, P') (fun a : H => a • η) 1).toLinearMap)
 
+omit [MeasurableSpace P'] [BorelSpace P'] [FiniteDimensional ℝ Y] [LieGroup I ∞ H] in
 /-- **Proof of Lemma A.26, "the map `G_X` is constant along the orbit `H · η` […] So the Jacobian
 of `G_X` has rank at most `P' − k`":** if `G` is invariant under a smooth action of a Lie group
 and differentiable at `η`, the rank of its derivative at `η` plus the dimension of the orbit of
@@ -109,6 +112,7 @@ theorem finrank_range_fderiv_add_orbitDim_le (G : P' → Y)
       + Module.finrank ℝ (LinearMap.range Do.toLinearMap) ≤ Module.finrank ℝ P'
   omega
 
+omit [BorelSpace P'] [FiniteDimensional ℝ Y] in
 /-- **Proof of Lemma A.26, "the rank is lower semicontinuous, so the bound holds at every
 `η`":** a bound on the rank of the derivative of a continuously differentiable map that holds at
 almost every point, for a Haar measure, holds at every point. -/
@@ -139,6 +143,7 @@ theorem finrank_range_fderiv_le_of_ae (G : P' → Y) (hG : ContDiff ℝ 1 G) (r�
   have hpos := hUo.measure_pos ν ⟨η, lt_of_not_ge hcon⟩
   exact absurd hnull hpos.ne'
 
+omit [BorelSpace P'] [FiniteDimensional ℝ Y] [LieGroup I ∞ H] in
 /-- **Proof of Lemma A.26, the bound on the rank of the Jacobian of `G_X`:** if a Lie group acts
 smoothly on the parameters, `G` is invariant, and the orbits have dimension at least `k` at
 almost every parameter, then the rank of the derivative of `G` is at most `P' − k` at every
@@ -167,6 +172,7 @@ section Families
 
 variable {In Out : Type*} [NormedAddCommGroup Out] [NormedSpace ℝ Out] [FiniteDimensional ℝ Out]
 
+omit [BorelSpace P'] [LieGroup I ∞ H] in
 /-- **Lemma A.26 (i):** let `F_θ(x)` and `G_η(x)` be real-analytic in the parameters for every
 input `x`, let a Lie group act smoothly on the parameters `η` with `G_{a·η} = G_η`, and let the
 orbits have dimension at least `k` at almost every `η`. If at some `θ_0` the Jacobian of
@@ -198,6 +204,7 @@ theorem ae_forall_ne_of_lieGroup_action (hSard : ∀ r : ℕ, SardCriticalValues
   filter_upwards [h] with θ hθ η heq
   exact hθ ⟨η, funext fun i => by rw [heq]⟩
 
+omit [BorelSpace P'] [LieGroup I ∞ H] in
 /-- **Lemma A.26 (ii):** under the hypotheses of (i), if the set of the outputs of the family
 `G` on the batch `X` has the property of definable sets that the paper uses
 (`ClosureNullOfNull`), then for almost every `θ` there is a `δ > 0` such that every `η` has

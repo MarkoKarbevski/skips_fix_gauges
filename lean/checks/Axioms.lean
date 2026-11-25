@@ -2192,3 +2192,17 @@ import SkipsLean
 #print axioms Skips.finrank_span_symmetryDirs_residual
 #print axioms Skips.finrank_span_symmetryDirs_skipless
 #print axioms Skips.finrank_span_symmetryDirs_skipless_eq_add
+#print axioms Skips.iteratedFDeriv_suffix_pow_smul
+#print axioms Skips.analyticAt_iteratedFDeriv_scaledSuffix
+#print axioms Skips.meromorphicAtInfinity_iteratedFDeriv_suffix_pow
+#print axioms Skips.meromorphicAtInfinity_iteratedFDeriv_suffix
+#print axioms Skips.iteratedFDeriv_fderiv_params_suffix_pow_smul
+#print axioms Skips.analyticAt_fderiv_params_scaledSuffix
+#print axioms Skips.analyticAt_iteratedFDeriv_fderiv_params_scaledSuffix
+#print axioms Skips.meromorphicAtInfinity_iteratedFDeriv_fderiv_params_suffix_pow
+#print axioms Skips.meromorphicAtInfinity_iteratedFDeriv_fderiv_params_suffix
+#print axioms Skips.finrank_range_fderiv_add_orbitDim_le
+#print axioms Skips.finrank_range_fderiv_le_of_ae
+#print axioms Skips.finrank_range_fderiv_add_le_of_ae_orbitDim
+#print axioms Skips.ae_forall_ne_of_lieGroup_action
+#print axioms Skips.ae_exists_pos_le_norm_sub_of_lieGroup_action
