@@ -466,6 +466,7 @@ private theorem exists_surjective_of_section_lnr {P₁ P₂ : Type*} [NormedAddC
   have h2 := h1.unique (hasFDerivAt_id (Φ p))
   exact DFunLike.congr_fun h2 η
 
+omit [Fintype T] in
 /-- **Proof of Proposition A.15 (iii), "the derivative of the map from the parameters of the
 LayerNorm network to those of the reduced network is onto"**, at gains with nonzero entries, for
 `U` with orthonormal columns. -/

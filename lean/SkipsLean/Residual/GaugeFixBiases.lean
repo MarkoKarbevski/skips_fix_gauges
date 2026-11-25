@@ -446,6 +446,7 @@ private theorem cob_one_biases_gfb (b : Biases A dOut) : b.cob (fun _ => 1) = b 
   simp only [Units.val_one]
   exact mulSkipProd_one_gfb b
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **`Φ` with biases of a network of mixed blocks with invertible skips:**
 `(θ.unmix.cob Λ Λ, b.cob Λ)`. -/
 private theorem mixedToResidualB_coe_gfb (θ : Params A.mixed dIn dOut) (b : Biases A dOut)
@@ -504,6 +505,7 @@ private theorem differentiableAt_mixedToResidualB_gfb
       (fun ℓ => differentiableAt_skipProdMat_gfb (fun k => differentiable_mixSkip_gfb k p) ℓ)
   exact h1.prodMk h2
 
+omit [Fintype T] in
 /-- **A differentiable right inverse of `Φ` with biases through `p = (θ, b)`:**
 `s(θ', b') = (Params.mix (θ'.cob Λ⁻¹ Λ⁻¹) U V, b'.cob Λ⁻¹)` with the identity units `U`, `V` of
 `θ`. -/
@@ -546,6 +548,7 @@ private theorem exists_section_mixed_gfb (p : Params A.mixed dIn dOut × Biases 
     rw [Params.mixU_mix, Params.mixV_mix]
     exact hp ℓ
 
+omit [Fintype T] [Fintype dOut] in
 /-- **Theorem A.5 (i) with biases, "The maps `T_{G,K}` preserve the function":** without
 normalization, with the embedding bias and the write biases multiplied as the embedding and the
 writes are. -/
@@ -561,6 +564,7 @@ theorem evalMixedB_cobMixed (hA : A.χ = id) (p : Params A.mixed dIn dOut × Bia
   exact evalB_cob (M := fun ℓ => θ.mixU ℓ * θ.mixV ℓ) (θ := θ.unmix) (b := b) (G := G) (K := G)
     (x := x) (fun ℓ h => by simp only [hA, id_eq])
 
+omit [Fintype T] [Fintype dOut] in
 /-- **Theorem A.5 (i) with biases, `F_θ = F^res_{Φ(θ)}`:** without normalization, a network of
 mixed blocks with biases and invertible skips computes the function of the residual network with
 biases at `Φ(p)`. -/
@@ -576,6 +580,7 @@ theorem evalMixedB_eq_evalB_mixedToResidualB (hA : A.χ = id)
   rw [hS]
   exact evalB_learned_gfb hA θ.unmix b S x
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Theorem A.5 (ii) with biases, "Every parameter of the residual network is `Φ(θ)` for some
 `θ`".** -/
 theorem mixedToResidualB_mix_one (q : ParamsB A dIn dOut) :
@@ -590,6 +595,7 @@ theorem mixedToResidualB_mix_one (q : ParamsB A dIn dOut) :
     funext fun ℓ => by simp
   rw [h1, skipProdMat_one_gfb, mulSkipProd_one_gfb]
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Theorem A.5 (ii) with biases, "`Φ(θ̃) = Φ(θ)` exactly when `θ̃ = T_{G,K}(θ)` for some `G`
 and `K` with `G_L = I`"**, for invertible skips. -/
 theorem mixedToResidualB_eq_iff (p p' : Params A.mixed dIn dOut × Biases A dOut)
@@ -629,6 +635,7 @@ theorem mixedToResidualB_eq_iff (p p' : Params A.mixed dIn dOut × Biases A dOut
       = b.mulSkipProd (skipProdMat fun ℓ => θ.mixU ℓ * θ.mixV ℓ)
     rw [key G hG K, mulSkipProd_cob_gfb]
 
+omit [Fintype T] in
 /-- **Theorem A.5 (ii) with biases, "The derivative of `Φ` is onto at every `θ`"** (with
 invertible skips). -/
 theorem exists_hasFDerivAt_mixedToResidualB_surjective
@@ -641,6 +648,7 @@ theorem exists_hasFDerivAt_mixedToResidualB_surjective
   exact exists_surjective_of_section_gfb (differentiableAt_mixedToResidualB_gfb p hp) (hs _)
     hsp hΦs
 
+omit [Fintype T] [Fintype dOut] in
 /-- **Theorem A.5 (ii) with biases, the same set of functions:** without normalization, the
 networks of mixed blocks with biases and invertible skips and the residual networks with biases
 compute the same set of functions. -/
@@ -694,6 +702,7 @@ noncomputable def learnedToResidualB (p : ParamsB A dIn dOut × (Fin L → Matri
     ParamsB A dIn dOut :=
   (learnedToResidual (p.1.1, p.2), p.1.2.mulSkipProd (skipProdMat p.2))
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **`Φ` with biases for invertible learned skips:** `(θ.cob Λ Λ, b.cob Λ)`. -/
 private theorem learnedToResidualB_coe_gfb (θ : Params A dIn dOut) (b : Biases A dOut)
     (S : Fin L → GL d ℝ) :
@@ -724,6 +733,7 @@ private theorem eventually_isUnit_learned_gfb (p : ParamsB A dIn dOut × (Fin L 
   filter_upwards [hc.continuousAt.eventually_ne hne] with q h
   exact (Matrix.isUnit_iff_isUnit_det _).2 (Ne.isUnit h)
 
+omit [Fintype T] in
 /-- `Φ` with biases for learned skips is differentiable at invertible skips. -/
 private theorem differentiableAt_learnedToResidualB_gfb
     (p : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ)) (hp : ∀ ℓ, IsUnit (p.2 ℓ)) :
@@ -745,6 +755,7 @@ private theorem differentiableAt_learnedToResidualB_gfb
       (fun ℓ => differentiableAt_skipProdMat_gfb (fun k => differentiable_skip_gfb k p) ℓ)
   exact h1.prodMk h2
 
+omit [Fintype T] in
 /-- **A differentiable right inverse of `Φ` with biases through `p = ((θ, b), A)`:**
 `s(θ', b') = ((θ'.cob Λ⁻¹ Λ⁻¹, b'.cob Λ⁻¹), A)` with the skips `A` of `p`. -/
 private theorem exists_section_learned_gfb (p : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ))
@@ -778,6 +789,7 @@ private theorem exists_section_learned_gfb (p : ParamsB A dIn dOut × (Fin L →
     simp only [inv_mul_cancel]
     rw [cob_one_gfb, cob_one_biases_gfb]
 
+omit [Fintype T] [Fintype dOut] in
 /-- **Theorem A.5 (i) with biases for learned skips, `F_θ = F^res_{Φ(θ)}`:** without
 normalization, a network with biases and invertible learned skips computes the function of the
 residual network with biases at `Φ(p)`. -/
@@ -792,6 +804,7 @@ theorem evalB_eq_evalB_learnedToResidualB (hA : A.χ = id)
   rw [learnedToResidualB_coe_gfb]
   exact evalB_learned_gfb hA θ b S x
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Theorem A.5 (ii) with biases for learned skips:** every parameter of the residual network
 with biases is `Φ` of the same weights and biases with the skips `A_ℓ = I`. -/
 theorem learnedToResidualB_one (q : ParamsB A dIn dOut) :
@@ -802,6 +815,7 @@ theorem learnedToResidualB_one (q : ParamsB A dIn dOut) :
   show b.mulSkipProd (skipProdMat (1 : Fin L → Matrix d d ℝ)) = b
   rw [skipProdMat_one_gfb, mulSkipProd_one_gfb]
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Theorem A.5 (ii) with biases for learned skips, "`Φ(θ̃) = Φ(θ)` exactly when
 `θ̃ = T_G(θ)` for some `G` with `G_L = I`"**, for invertible skips. -/
 theorem learnedToResidualB_eq_iff (p p' : ParamsB A dIn dOut × (Fin L → Matrix d d ℝ))
@@ -834,6 +848,7 @@ theorem learnedToResidualB_eq_iff (p p' : ParamsB A dIn dOut × (Fin L → Matri
     show (b.cob G).mulSkipProd (skipProdMat (cobSkip M G)) = b.mulSkipProd (skipProdMat M)
     rw [skipProdMat_cobSkip_gfb M G hG, mulSkipProd_cob_gfb]
 
+omit [Fintype T] in
 /-- **Theorem A.5 (ii) with biases for learned skips, the derivative of `Φ` is onto** (with
 invertible skips). -/
 theorem exists_hasFDerivAt_learnedToResidualB_surjective
@@ -846,6 +861,7 @@ theorem exists_hasFDerivAt_learnedToResidualB_surjective
   exact exists_surjective_of_section_gfb (differentiableAt_learnedToResidualB_gfb p hp) (hs _)
     hsp hΦs
 
+omit [Fintype T] [Fintype dOut] in
 /-- **Theorem A.5 (ii) with biases for learned skips, the same set of functions**, without
 normalization. -/
 theorem image_evalB_learned_eq_range_residual (hA : A.χ = id) :

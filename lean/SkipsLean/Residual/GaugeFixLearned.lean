@@ -71,6 +71,7 @@ private theorem skipProdMat_castSucc_gfl (S : Fin L → Matrix d d ℝ) (ℓ : F
     skipProdMat S ℓ.castSucc = S ℓ * skipProdMat S ℓ.succ := by
   simp [skipProdMat]
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Equation (12) for invertible learned skips:** `Φ(θ, A) = θ.cob Λ Λ`. -/
 theorem learnedToResidual_coe (θ : Params A dIn dOut) (S : Fin L → GL d ℝ) :
     learnedToResidual (θ, fun ℓ => (S ℓ : Matrix d d ℝ)) = θ.cob (skipProd S) (skipProd S) := by
@@ -82,6 +83,7 @@ theorem learnedToResidual_coe (θ : Params A dIn dOut) (S : Fin L → GL d ℝ) 
   · simp only [learnedToResidual, Params.cob, skipProd_last, inv_one, Units.val_one,
       Matrix.one_mul]
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Theorem A.5 (ii) for learned skips, "Every parameter of the residual network is `Φ(θ)` for
 some `θ`":** the same weights with the skips `A_ℓ = I`. -/
 theorem learnedToResidual_one (θ : Params A dIn dOut) :
@@ -146,6 +148,7 @@ private theorem learnedToResidual_cobSkip_gfl (θ : Params A dIn dOut) (S : Fin 
       Units.mul_inv_cancel_left]
   · simp only [learnedToResidual, Params.cob, hG, inv_one, Units.val_one, Matrix.one_mul]
 
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
 /-- **Theorem A.5 (ii) for learned skips, "`Φ(θ̃) = Φ(θ)` exactly when `θ̃ = T_G(θ)` for some `G`
 with `G_L = I`"** ("without the `K_ℓ`"), for invertible skips: `T_G` multiplies the weights as
 the changes of basis `G_ℓ` do and sends `A_ℓ` to `G_{ℓ−1}^{-1} A_ℓ G_ℓ`. -/
@@ -358,6 +361,7 @@ private theorem differentiable_cob_gfl (G K : Fin (L + 1) → GL d ℝ) :
   · exact differentiableAt_matMul_gfl (differentiable_write_gfl ℓ φ) (differentiableAt_const _)
   · exact differentiableAt_matMul_gfl (differentiableAt_const _) (differentiable_D_gfl φ)
 
+omit [Fintype T] in
 /-- **A differentiable right inverse of `Φ` through `p = (θ, A)`:** `s(θ') = (θ'.cob Λ⁻¹ Λ⁻¹, A)`
 with the skips `A` of `p`; `Φ ∘ s = id`, `s(Φ p) = p`, and its skips are invertible. -/
 private theorem exists_section_gfl (p : Params A dIn dOut × (Fin L → Matrix d d ℝ))
@@ -403,6 +407,7 @@ private theorem exists_surjective_of_section_gfl {P₁ P₂ : Type*} [NormedAddC
   have h2 := h1.unique (hasFDerivAt_id (Φ p))
   exact DFunLike.congr_fun h2 η
 
+omit [Fintype T] in
 /-- **Theorem A.5 (ii) for learned skips, "The derivative of `Φ` is onto at every `θ`"** (with
 invertible skips). -/
 theorem exists_hasFDerivAt_learnedToResidual_surjective
@@ -415,6 +420,7 @@ theorem exists_hasFDerivAt_learnedToResidual_surjective
   exact exists_surjective_of_section_gfl (differentiableAt_learnedToResidual_gfl p hp) (hs _)
     hsp hΦs
 
+omit [Fintype T] [Fintype dOut] in
 /-- **Theorem A.5 (i) and (ii) for learned skips, `F_θ = F^res_{Φ(θ)}`:** without normalization,
 a network with invertible learned skips computes the function of the residual network at
 `Φ(θ, A)`. -/
@@ -428,6 +434,7 @@ theorem eval_eq_eval_learnedToResidual (hA : A.χ = id)
   rw [learnedToResidual_coe]
   exact eval_learned_eq_residual (θ := θ) (x := x) hA S
 
+omit [Fintype T] [Fintype dOut] in
 /-- **Theorem A.5 (ii) for learned skips, the same set of functions:** without normalization,
 the networks with invertible learned skips and the residual networks compute the same set of
 functions. -/
