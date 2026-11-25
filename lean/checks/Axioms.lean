@@ -2111,3 +2111,7 @@ import SkipsLean
 #print axioms Skips.ae_eventually_funDimB_smallWritesB_geglu
 #print axioms Skips.ae_funDimB_geglu_residual
 #print axioms Skips.range_fderiv_eq_of_comp_of_section
+#print axioms Skips.funDim_eq_funDimOf
+#print axioms Skips.funDimB_eq_funDimOf
+#print axioms Skips.funDimSkips_eq_funDimOf
+#print axioms Skips.funDimOf_eq_of_comp_of_section
