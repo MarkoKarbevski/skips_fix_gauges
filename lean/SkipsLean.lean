@@ -394,3 +394,4 @@ import SkipsLean.Residual.ExactReductionMixed
 import SkipsLean.Residual.ExactReductionCount
 import SkipsLean.Dimension.RankSubmersion
 import SkipsLean.Dimension.FunDimFamily
+import SkipsLean.Residual.GaugeFixBiases
