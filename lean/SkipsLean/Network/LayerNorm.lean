@@ -341,7 +341,11 @@ theorem evalLN_eq_evalB_reduceLN_skipless (ε : ℝ) (U : Matrix d m ℝ) (hU : 
     evalLN A ε 0 θ b γ β x
       = evalB (A.withNorm (rmsNorm (ε * (Fintype.card d : ℝ) / (Fintype.card m : ℝ))))
           0 (θ.reduceLN ε U γ) (b.reduceLN ε U θ β) x := by
-  sorry
+  -- `Z 0 = 0 Z` and `U^⊤ 0 U = 0`
+  have h0 : (fun ℓ => Uᵀ * (0 : Fin L → Matrix d d ℝ) ℓ * U) = 0 := by
+    funext ℓ
+    simp
+  rw [evalLN_eq_evalB_reduceLN ε U hU hUZ hm 0 (fun ℓ => by simp) θ b γ β x, h0]
 
 /-- **Proposition A.15 (ii) for a residual pre-LayerNorm network.** -/
 theorem evalLN_eq_evalB_reduceLN_residual (ε : ℝ) (U : Matrix d m ℝ) (hU : Uᵀ * U = 1)
