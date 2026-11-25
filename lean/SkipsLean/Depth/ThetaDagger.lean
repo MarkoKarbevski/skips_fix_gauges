@@ -28,6 +28,12 @@ definition and the lemma is stated with it:
   `exists_mu_thetaDaggerMlp_outer` (GELU): there are numbers `μ > 0` for which `θ†` is good for
   the orthants with the active sets `A_ℓ` = the image of `c ℓ`, the frozen blocks are the paper's
   (`g°_ℓ(n) = (n𝟙) n`, respectively `n`), and the independence over `ℚ` of (K3) holds.
+* The lemma for every admissible choice of `μ`, as the paper states it (last section):
+  `goodForConesGated_thetaDaggerGated`, `frozenGated_thetaDaggerGated`,
+  `goodForConesMlp_thetaDaggerMlp`, `frozenMlp_thetaDaggerMlp` for every `μ > 0`, and (K3) under
+  the paper's condition on `μ`: `linearIndependent_gate_thetaDaggerGated` (SwiGLU: `1` and the
+  `μ_j` independent over `ℚ`), `linearIndependent_outer_gate_thetaDaggerGated` (GeGLU) and
+  `linearIndependent_outer_read_thetaDaggerMlp` (GELU): the `μ_j²` independent over `ℚ`, `d ≥ 2`.
 -/
 
 namespace Skips
@@ -243,18 +249,20 @@ private theorem gateCol_pos_tdg {n : Type*} (c : d ↪ n) (μ : n → ℝ) {j : 
 omit [DecidableEq d] in
 /-- On the orthant the gate `-μ_j ∑ n` of any other unit is negative. -/
 private theorem gateCol_neg_tdg [Nonempty d] {n : Type*} (c : d ↪ n) {μ : n → ℝ}
-    (hμ : ∀ j, 0 < μ j)
+    (hμ : ∀ j ∉ Set.range c, 0 < μ j)
     {j : n} (hj : j ∉ Finset.univ.map c) {x : d → ℝ} (hx : x ∈ posOrthant d) :
     x ⬝ᵥ gateCol_tdg c μ j < 0 := by
   have hj' : j ∉ Set.range c := fun ⟨i, hi⟩ => hj (Finset.mem_map.2 ⟨i, Finset.mem_univ i, hi⟩)
   rw [gateCol_of_notMem_tdg c μ hj', dotProduct_smul, dotProduct_one, smul_eq_mul]
-  exact mul_neg_of_neg_of_pos (neg_neg_of_pos (hμ j)) (sum_pos_of_mem_posOrthant_tdg hx)
+  exact mul_neg_of_neg_of_pos (neg_neg_of_pos (hμ j hj')) (sum_pos_of_mem_posOrthant_tdg hx)
 
 /-- Helper: the gate columns of `θ†` are linearly independent over `ℚ` when `1` and the `μ_j`
-are. Coordinate `k` of a relation `∑ g_j c_j = 0` reads `g_{c k} - ∑_{j ∉ range c} g_j μ_j = 0`. -/
+of the units outside the image of `c` are (the coefficients `κ` vanish on the image of `c`).
+Coordinate `k` of a relation `∑ g_j c_j = 0` reads `g_{c k} - ∑_{j ∉ range c} g_j μ_j = 0`. -/
 private theorem linearIndependent_gateCol_tdg [Nonempty d] {n : Type*} [Fintype n] (c : d ↪ n)
     (μ : n → ℝ)
-    (hμ : ∀ (a : ℚ) (κ : n → ℚ), (a : ℝ) + ∑ j, (κ j : ℝ) * μ j = 0 → a = 0 ∧ ∀ j, κ j = 0) :
+    (hμ : ∀ (a : ℚ) (κ : n → ℚ), (∀ i, κ (c i) = 0) → (a : ℝ) + ∑ j, (κ j : ℝ) * μ j = 0 →
+      a = 0 ∧ ∀ j, κ j = 0) :
     LinearIndependent ℚ (gateCol_tdg c μ) := by
   classical
   rw [Fintype.linearIndependent_iff]
@@ -280,8 +288,8 @@ private theorem linearIndependent_gateCol_tdg [Nonempty d] {n : Type*} [Fintype 
   intro j
   by_cases hj : j ∈ Set.range c
   · obtain ⟨k, rfl⟩ := hj
-    exact (hμ _ _ (hk k)).1
-  · simpa [hj] using (hμ _ _ (hk k₀)).2 j
+    exact (hμ _ _ (fun i => by simp) (hk k)).1
+  · simpa [hj] using (hμ _ _ (fun i => by simp) (hk k₀)).2 j
 
 /-- Helper: the matrices `c_j c_jᵀ` of the gate columns of `θ†` are linearly independent over `ℚ`
 when `1` and the `μ_j²` are. The diagonal entry `(k, k)` of a relation reads
@@ -323,6 +331,57 @@ private theorem linearIndependent_outer_gateCol_tdg [Nonempty d] {n : Type*} [Fi
   · obtain ⟨k, rfl⟩ := hj
     exact (hμ _ _ (hk k)).1
   · simpa [hj] using (hμ _ _ (hk k₀)).2 j
+
+/-- Helper: for `d ≥ 2` (two indices `k₁ ≠ k₂`) the matrices `c_j c_jᵀ` of the gate columns of
+`θ†` are linearly independent over `ℚ` when the `μ_j²` of the units outside the image of `c` are.
+Entry `(k, k')` of a relation reads `[k = k'] g_{c k} + ∑_{j ∉ range c} g_j μ_j² = 0`: the entries
+off the diagonal give `g_j = 0` outside the image, and then the diagonal gives the others. -/
+private theorem linearIndependent_outer_gateCol_of_ne_tdg {n : Type*} [Fintype n]
+    (c : d ↪ n) (μ : n → ℝ) {k₁ k₂ : d} (hk : k₁ ≠ k₂)
+    (hμ : ∀ κ : n → ℚ, (∀ i, κ (c i) = 0) → ∑ j, (κ j : ℝ) * μ j ^ 2 = 0 → ∀ j, κ j = 0) :
+    LinearIndependent ℚ (fun j => vecMulVec (gateCol_tdg c μ j) (gateCol_tdg c μ j)) := by
+  classical
+  rw [Fintype.linearIndependent_iff]
+  intro g hg
+  have hent : ∀ k k', (if k = k' then ((g (c k) : ℚ) : ℝ) else 0) +
+      ∑ j, ((if j ∈ Set.range c then 0 else g j : ℚ) : ℝ) * μ j ^ 2 = 0 := by
+    intro k k'
+    have h := congrFun (congrFun hg k) k'
+    rw [Matrix.sum_apply, Matrix.zero_apply] at h
+    refine Eq.trans ?_ h
+    -- termwise: `g_j (c_j)_k (c_j)_k' = g_j [j = c k] [k = k'] + (… g_j) μ_j²`
+    have hterm : ∀ j, (g j • vecMulVec (gateCol_tdg c μ j) (gateCol_tdg c μ j)) k k' =
+        (if c k = j then (if k = k' then (g j : ℝ) else 0) else 0) +
+          ((if j ∈ Set.range c then 0 else g j : ℚ) : ℝ) * μ j ^ 2 := by
+      intro j
+      by_cases hj : j ∈ Set.range c
+      · obtain ⟨i, rfl⟩ := hj
+        by_cases hik : k = i
+        · subst hik
+          by_cases hkk : k = k'
+          · subst hkk
+            simp [gateCol_emb_tdg, Rat.smul_def, vecMulVec_apply]
+          · simp [gateCol_emb_tdg, vecMulVec_apply, hkk, Ne.symm hkk]
+        · simp [gateCol_emb_tdg, vecMulVec_apply, c.injective.eq_iff, hik]
+      · have hne : c k ≠ j := fun h => hj ⟨k, h⟩
+        rw [gateCol_of_notMem_tdg c μ hj]
+        simp only [Matrix.smul_apply, vecMulVec_apply, Pi.smul_apply, Pi.one_apply, smul_eq_mul,
+          Rat.smul_def, hj, hne, ↓reduceIte, zero_add]
+        ring
+    rw [Finset.sum_congr rfl fun j _ => hterm j, Finset.sum_add_distrib, Finset.sum_ite_eq]
+    simp
+  -- off the diagonal: the coefficients outside the image vanish
+  have hout : ∀ j, (if j ∈ Set.range c then 0 else g j : ℚ) = 0 := by
+    have h := hent k₁ k₂
+    simp only [hk, ↓reduceIte, zero_add] at h
+    exact hμ _ (fun i => by simp) h
+  intro j
+  by_cases hj : j ∈ Set.range c
+  · obtain ⟨k, rfl⟩ := hj
+    have h := hent k k
+    rw [Finset.sum_eq_zero (fun j _ => by rw [hout j]; simp), add_zero] at h
+    simpa using h
+  · simpa [hj] using hout j
 
 omit [DecidableEq d] in
 /-- Helper: `n ↦ (∑_k n_k) n` has an injective derivative at `𝟙`: it is
@@ -416,7 +475,7 @@ private theorem frozenGated_thetaGated_tdg (ιE : d ↪ dIn) (ιD : d ↪ dOut) 
 omit [Fintype T] in
 /-- `θ†` (gated) is good for the orthants, with the active sets `range c_ℓ`. -/
 private theorem goodForConesGated_thetaGated_tdg [Nonempty d] (ιE : d ↪ dIn) (ιD : d ↪ dOut)
-    (c : ∀ ℓ, d ↪ hid ℓ) {μ : ∀ ℓ, hid ℓ → ℝ} (hμ : ∀ ℓ j, 0 < μ ℓ j) :
+    (c : ∀ ℓ, d ↪ hid ℓ) {μ : ∀ ℓ, hid ℓ → ℝ} (hμ : ∀ ℓ, ∀ j ∉ Set.range (c ℓ), 0 < μ ℓ j) :
     GoodForConesGated (fun _ => posOrthant d) (fun ℓ => Finset.univ.map (c ℓ))
       (thetaGated_tdg (T := T) (σ := σ) (χ := χ) ιE ιD c μ) := by
   refine ⟨fun _ => isOpenConvexCone_orthant_tdg,
@@ -470,7 +529,7 @@ private theorem frozenMlp_thetaMlp_tdg (ιE : d ↪ dIn) (ιD : d ↪ dOut) (c :
 omit [Fintype T] in
 /-- `θ†` (MLP) is good for the orthants, with the active sets `range c_ℓ`. -/
 private theorem goodForConesMlp_thetaMlp_tdg [Nonempty d] (ιE : d ↪ dIn) (ιD : d ↪ dOut)
-    (c : ∀ ℓ, d ↪ hid ℓ) {μ : ∀ ℓ, hid ℓ → ℝ} (hμ : ∀ ℓ j, 0 < μ ℓ j) :
+    (c : ∀ ℓ, d ↪ hid ℓ) {μ : ∀ ℓ, hid ℓ → ℝ} (hμ : ∀ ℓ, ∀ j ∉ Set.range (c ℓ), 0 < μ ℓ j) :
     GoodForConesMlp (fun _ => posOrthant d) (fun ℓ => Finset.univ.map (c ℓ))
       (thetaMlp_tdg (T := T) (σ := σ) (χ := χ) ιE ιD c μ) := by
   refine ⟨fun _ => isOpenConvexCone_orthant_tdg,
@@ -503,9 +562,9 @@ theorem exists_mu_thetaDaggerGated_cols [Nonempty d] (ιE : d ↪ dIn) (ιD : d 
   choose μ hμpos hμ1 _ using fun ℓ => exists_pos_indep_tdg (hid ℓ)
   -- `θ†` is the parameter of `Depth/Cones.lean`, with the gate columns `e_i` and `-μ_j 𝟙`
   refine ⟨μ, hμpos, ?_, fun ℓ n => ?_, fun ℓ => ?_⟩ <;> rw [thetaDaggerGated_eq_tdg]
-  · exact goodForConesGated_thetaGated_tdg ιE ιD c hμpos
+  · exact goodForConesGated_thetaGated_tdg ιE ιD c fun ℓ j _ => hμpos ℓ j
   · exact congrFun (frozenGated_thetaGated_tdg ιE ιD c μ ℓ) n
-  · exact linearIndependent_gateCol_tdg (c ℓ) (μ ℓ) (hμ1 ℓ)
+  · exact linearIndependent_gateCol_tdg (c ℓ) (μ ℓ) fun a κ _ h => hμ1 ℓ a κ h
 
 omit [Fintype T] in
 /-- **Lemma D.13 of the dimension paper for GeGLU blocks, with `θ†` written out:** for `d ≥ 2`
@@ -527,7 +586,7 @@ theorem exists_mu_thetaDaggerGated_outer (hd : 2 ≤ Fintype.card d) (ιE : d �
   choose μ hμpos _ hμ2 using fun ℓ => exists_pos_indep_tdg (hid ℓ)
   -- `θ†` is the parameter of `Depth/Cones.lean`; `c_j c_jᵀ` is a matrix unit or `μ_j²` times ones
   refine ⟨μ, hμpos, ?_, fun ℓ n => ?_, fun ℓ => ?_⟩ <;> rw [thetaDaggerGated_eq_tdg]
-  · exact goodForConesGated_thetaGated_tdg ιE ιD c hμpos
+  · exact goodForConesGated_thetaGated_tdg ιE ιD c fun ℓ j _ => hμpos ℓ j
   · exact congrFun (frozenGated_thetaGated_tdg ιE ιD c μ ℓ) n
   · exact linearIndependent_outer_gateCol_tdg (c ℓ) (μ ℓ) (hμ2 ℓ)
 
@@ -551,8 +610,102 @@ theorem exists_mu_thetaDaggerMlp_outer (hd : 2 ≤ Fintype.card d) (ιE : d ↪ 
   choose μ hμpos _ hμ2 using fun ℓ => exists_pos_indep_tdg (hid ℓ)
   -- `θ†` is the parameter of `Depth/Cones.lean`; `c_j c_jᵀ` is a matrix unit or `μ_j²` times ones
   refine ⟨μ, hμpos, ?_, fun ℓ n => ?_, fun ℓ => ?_⟩ <;> rw [thetaDaggerMlp_eq_tdg]
-  · exact goodForConesMlp_thetaMlp_tdg ιE ιD c hμpos
+  · exact goodForConesMlp_thetaMlp_tdg ιE ιD c fun ℓ j _ => hμpos ℓ j
   · exact congrFun (frozenMlp_thetaMlp_tdg ιE ιD c μ ℓ) n
   · exact linearIndependent_outer_gateCol_tdg (c ℓ) (μ ℓ) (hμ2 ℓ)
+
+/-! ## The lemma for every admissible choice of the numbers `μ`
+
+The paper chooses any numbers `μ_1, μ_2, … > 0` with the independence over `ℚ`, one number for each
+hidden unit after the first `d_model`. Here `μ ℓ j` is a number for every unit `j` of block `ℓ`,
+and `θ†` uses it only for the units outside the image of `c ℓ`; so positivity and independence are
+asked of those numbers only. "The `μ ℓ j` of the units outside the image of `c ℓ` are linearly
+independent over `ℚ`" is written out: a combination `∑_j κ_j μ_j` with rational coefficients that
+vanish on the image of `c ℓ` is zero only if all `κ_j` are zero. -/
+
+omit [Fintype T] in
+/-- **Lemma D.13 of the dimension paper for gated blocks, for every choice of the numbers
+`μ > 0`:** `θ†` is good for the cones `C_0 = ⋯ = C_L = ℝ^{1×d}_{>0}` with the active sets `A_ℓ` =
+the image of `c ℓ` (the paper's `{1, …, d_model}`). The independence over `ℚ` of (K3) is
+`linearIndependent_gate_thetaDaggerGated` (SwiGLU) and
+`linearIndependent_outer_gate_thetaDaggerGated` (GeGLU). -/
+theorem goodForConesGated_thetaDaggerGated [Nonempty d] (ιE : d ↪ dIn) (ιD : d ↪ dOut)
+    (c : ∀ ℓ, d ↪ hid ℓ) {μ : ∀ ℓ, hid ℓ → ℝ} (hμ : ∀ ℓ, ∀ j ∉ Set.range (c ℓ), 0 < μ ℓ j) :
+    GoodForConesGated (fun _ => posOrthant d) (fun ℓ => Finset.univ.map (c ℓ))
+      (thetaDaggerGated (T := T) (σ := σ) (χ := χ) ιE ιD c μ) := by
+  rw [thetaDaggerGated_eq_tdg]
+  exact goodForConesGated_thetaGated_tdg ιE ιD c hμ
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- **Lemma D.13, the frozen block of `θ†` for gated blocks:** `g°_ℓ(n) = (n𝟙) n`, for every `μ`. -/
+theorem frozenGated_thetaDaggerGated (ιE : d ↪ dIn) (ιD : d ↪ dOut) (c : ∀ ℓ, d ↪ hid ℓ)
+    (μ : ∀ ℓ, hid ℓ → ℝ) (ℓ : Fin L) (n : d → ℝ) :
+    frozenGated (thetaDaggerGated (T := T) (σ := σ) (χ := χ) ιE ιD c μ) ℓ
+      (Finset.univ.map (c ℓ)) n = (∑ k, n k) • n := by
+  rw [thetaDaggerGated_eq_tdg]
+  exact congrFun (frozenGated_thetaGated_tdg ιE ιD c μ ℓ) n
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- **Lemma D.13, (K3) for SwiGLU blocks, for every admissible `μ`:** if `1` and the numbers
+`μ ℓ j` of the units outside the image of `c ℓ` are linearly independent over `ℚ`, the gate columns
+of block `ℓ` of `θ†` are linearly independent over `ℚ`. -/
+theorem linearIndependent_gate_thetaDaggerGated [Nonempty d] (ιE : d ↪ dIn) (ιD : d ↪ dOut)
+    (c : ∀ ℓ, d ↪ hid ℓ) (μ : ∀ ℓ, hid ℓ → ℝ) (ℓ : Fin L)
+    (hμ : ∀ (a : ℚ) (κ : hid ℓ → ℚ), (∀ i, κ (c ℓ i) = 0) →
+      (a : ℝ) + ∑ j, (κ j : ℝ) * μ ℓ j = 0 → a = 0 ∧ ∀ j, κ j = 0) :
+    LinearIndependent ℚ (fun j : hid ℓ =>
+      ((thetaDaggerGated (T := T) (σ := σ) (χ := χ) ιE ιD c μ).read ℓ)ᵀ (Sum.inl j)) := by
+  rw [thetaDaggerGated_eq_tdg]
+  exact linearIndependent_gateCol_tdg (c ℓ) (μ ℓ) hμ
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- **Lemma D.13, (K3) for GeGLU blocks, for every admissible `μ`:** for `d ≥ 2`, if the numbers
+`(μ ℓ j)²` of the units outside the image of `c ℓ` are linearly independent over `ℚ`, the matrices
+`c_j c_j^⊤` of the gate columns of block `ℓ` of `θ†` are linearly independent over `ℚ`. -/
+theorem linearIndependent_outer_gate_thetaDaggerGated (hd : 2 ≤ Fintype.card d) (ιE : d ↪ dIn)
+    (ιD : d ↪ dOut) (c : ∀ ℓ, d ↪ hid ℓ) (μ : ∀ ℓ, hid ℓ → ℝ) (ℓ : Fin L)
+    (hμ : ∀ κ : hid ℓ → ℚ, (∀ i, κ (c ℓ i) = 0) → ∑ j, (κ j : ℝ) * μ ℓ j ^ 2 = 0 →
+      ∀ j, κ j = 0) :
+    LinearIndependent ℚ (fun j : hid ℓ => Matrix.vecMulVec
+      (((thetaDaggerGated (T := T) (σ := σ) (χ := χ) ιE ιD c μ).read ℓ)ᵀ (Sum.inl j))
+      (((thetaDaggerGated (T := T) (σ := σ) (χ := χ) ιE ιD c μ).read ℓ)ᵀ (Sum.inl j))) := by
+  obtain ⟨k₁, k₂, hk⟩ := Fintype.one_lt_card_iff.1 (show 1 < Fintype.card d by omega)
+  rw [thetaDaggerGated_eq_tdg]
+  exact linearIndependent_outer_gateCol_of_ne_tdg (c ℓ) (μ ℓ) hk hμ
+
+omit [Fintype T] in
+/-- **Lemma D.13 of the dimension paper for GELU blocks, for every choice of the numbers
+`μ > 0`:** `θ†` is good for the positive orthants with the active sets `A_ℓ` = the image of `c ℓ`.
+The independence over `ℚ` of (K3) is `linearIndependent_outer_read_thetaDaggerMlp`. -/
+theorem goodForConesMlp_thetaDaggerMlp [Nonempty d] (ιE : d ↪ dIn) (ιD : d ↪ dOut)
+    (c : ∀ ℓ, d ↪ hid ℓ) {μ : ∀ ℓ, hid ℓ → ℝ} (hμ : ∀ ℓ, ∀ j ∉ Set.range (c ℓ), 0 < μ ℓ j) :
+    GoodForConesMlp (fun _ => posOrthant d) (fun ℓ => Finset.univ.map (c ℓ))
+      (thetaDaggerMlp (T := T) (σ := σ) (χ := χ) ιE ιD c μ) := by
+  rw [thetaDaggerMlp_eq_tdg]
+  exact goodForConesMlp_thetaMlp_tdg ιE ιD c hμ
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- **Lemma D.13, the frozen block of `θ†` for GELU blocks:** `g°_ℓ(n) = n`, for every `μ`. -/
+theorem frozenMlp_thetaDaggerMlp (ιE : d ↪ dIn) (ιD : d ↪ dOut) (c : ∀ ℓ, d ↪ hid ℓ)
+    (μ : ∀ ℓ, hid ℓ → ℝ) (ℓ : Fin L) (n : d → ℝ) :
+    frozenMlp (thetaDaggerMlp (T := T) (σ := σ) (χ := χ) ιE ιD c μ) ℓ
+      (Finset.univ.map (c ℓ)) n = n := by
+  rw [thetaDaggerMlp_eq_tdg]
+  exact congrFun (frozenMlp_thetaMlp_tdg ιE ιD c μ ℓ) n
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- **Lemma D.13, (K3) for GELU blocks, for every admissible `μ`:** for `d ≥ 2`, if the numbers
+`(μ ℓ j)²` of the units outside the image of `c ℓ` are linearly independent over `ℚ`, the matrices
+`c_j c_j^⊤` of the read columns of block `ℓ` of `θ†` are linearly independent over `ℚ`. -/
+theorem linearIndependent_outer_read_thetaDaggerMlp (hd : 2 ≤ Fintype.card d) (ιE : d ↪ dIn)
+    (ιD : d ↪ dOut) (c : ∀ ℓ, d ↪ hid ℓ) (μ : ∀ ℓ, hid ℓ → ℝ) (ℓ : Fin L)
+    (hμ : ∀ κ : hid ℓ → ℚ, (∀ i, κ (c ℓ i) = 0) → ∑ j, (κ j : ℝ) * μ ℓ j ^ 2 = 0 →
+      ∀ j, κ j = 0) :
+    LinearIndependent ℚ (fun j : hid ℓ => Matrix.vecMulVec
+      (((thetaDaggerMlp (T := T) (σ := σ) (χ := χ) ιE ιD c μ).read ℓ)ᵀ j)
+      (((thetaDaggerMlp (T := T) (σ := σ) (χ := χ) ιE ιD c μ).read ℓ)ᵀ j)) := by
+  obtain ⟨k₁, k₂, hk⟩ := Fintype.one_lt_card_iff.1 (show 1 < Fintype.card d by omega)
+  rw [thetaDaggerMlp_eq_tdg]
+  exact linearIndependent_outer_gateCol_of_ne_tdg (c ℓ) (μ ℓ) hk hμ
 
 end Skips
