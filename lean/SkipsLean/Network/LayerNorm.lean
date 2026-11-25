@@ -244,6 +244,79 @@ noncomputable def Biases.reduceLN (ε : ℝ) (U : Matrix d m ℝ) (b : Biases A 
   write ℓ := b.write ℓ ᵥ* U
   D := b.D + β (Fin.last L) ᵥ* θ.D
 
+/-- Helper: `Z U = U`, since `Z U = U (U^⊤ U) = U`. -/
+private theorem centering_mul_lno (U : Matrix d m ℝ) (hU : Uᵀ * U = 1)
+    (hUZ : U * Uᵀ = centering d) : centering d * U = U := by
+  rw [← hUZ, Matrix.mul_assoc, hU, Matrix.mul_one]
+
+/-- Helper: `N_ε(h U^⊤) = √(d/m) N'(h) U^⊤`, row by row, with `N'` the RMSNorm of dimension `m`
+and the constant `ε d/m`. -/
+private theorem rmsNorm_mul_transpose_lno (U : Matrix d m ℝ) (hU : Uᵀ * U = 1)
+    (hm : 0 < Fintype.card m) (ε : ℝ) (h : Matrix T m ℝ) :
+    rmsNorm ε (h * Uᵀ) = Real.sqrt ((Fintype.card d : ℝ) / (Fintype.card m : ℝ))
+      • (rmsNorm (ε * (Fintype.card d : ℝ) / (Fintype.card m : ℝ)) h * Uᵀ) := by
+  ext t j
+  have key : rmsNorm ε (h * Uᵀ) t = (Real.sqrt ((Fintype.card d : ℝ) / (Fintype.card m : ℝ))
+      • (rmsNorm (ε * (Fintype.card d : ℝ) / (Fintype.card m : ℝ)) h * Uᵀ)) t := by
+    show rmsRow ε (h t ᵥ* Uᵀ) = Real.sqrt ((Fintype.card d : ℝ) / (Fintype.card m : ℝ))
+      • (rmsRow (ε * (Fintype.card d : ℝ) / (Fintype.card m : ℝ)) (h t) ᵥ* Uᵀ)
+    exact rmsRow_vecMul_transpose_of_orthonormal U hU hm ε (h t)
+  exact congrFun key j
+
+/-- Helper, a read in the basis `U`: `N_ε(h Z) (diag(γ) R) = N'(h U) (√(d/m) U^⊤ diag(γ) R)`,
+since `h Z = (h U) U^⊤`. -/
+private theorem rmsNorm_centering_mul_lno (U : Matrix d m ℝ) (hU : Uᵀ * U = 1)
+    (hUZ : U * Uᵀ = centering d) (hm : 0 < Fintype.card m) (ε : ℝ) {r : Type*}
+    (g : d → ℝ) (R : Matrix d r ℝ) (h : Matrix T d ℝ) :
+    rmsNorm ε (h * centering d) * (Matrix.diagonal g * R)
+      = rmsNorm (ε * (Fintype.card d : ℝ) / (Fintype.card m : ℝ)) (h * U)
+        * (Real.sqrt ((Fintype.card d : ℝ) / (Fintype.card m : ℝ))
+          • (Uᵀ * Matrix.diagonal g * R)) := by
+  rw [← hUZ, ← Matrix.mul_assoc h, rmsNorm_mul_transpose_lno U hU hm, Matrix.smul_mul,
+    Matrix.mul_smul]
+  simp only [Matrix.mul_assoc]
+
+/-- Helper, one block of the reduced network: if its hidden state is `h U`, the next one is
+`h' U` for the next hidden state `h'` of the pre-LayerNorm network. -/
+private theorem step_reduceLN_lno (ε : ℝ) (U : Matrix d m ℝ) (hU : Uᵀ * U = 1)
+    (hUZ : U * Uᵀ = centering d) (hm : 0 < Fintype.card m) (Sℓ : Matrix d d ℝ)
+    (hSℓ : centering d * Sℓ = Sℓ * centering d) {r w : Type*} [Fintype w]
+    (f : Matrix T r ℝ → Matrix T w ℝ) (g β : d → ℝ) (R : Matrix d r ℝ) (br : r → ℝ)
+    (W : Matrix w d ℝ) (bw : d → ℝ) (h : Matrix T d ℝ) :
+    h * U * (Uᵀ * Sℓ * U)
+        + (f (rmsNorm (ε * (Fintype.card d : ℝ) / (Fintype.card m : ℝ)) (h * U)
+              * (Real.sqrt ((Fintype.card d : ℝ) / (Fintype.card m : ℝ))
+                • (Uᵀ * Matrix.diagonal g * R))
+            + Matrix.of fun _ => br + β ᵥ* R) * (W * U)
+          + Matrix.of fun _ => bw ᵥ* U)
+      = (h * Sℓ + (f (layerNorm ε g β h * R + Matrix.of fun _ => br) * W
+          + Matrix.of fun _ => bw)) * U := by
+  -- the stream: `h U U^⊤ S U = h Z S U = h S Z U = h S U`
+  have hstream : h * U * (Uᵀ * Sℓ * U) = h * Sℓ * U := by
+    rw [Matrix.mul_assoc, ← Matrix.mul_assoc U, ← Matrix.mul_assoc U, hUZ, hSℓ,
+      Matrix.mul_assoc Sℓ, centering_mul_lno U hU hUZ, ← Matrix.mul_assoc]
+  -- the read, and the write and its bias multiplied by `U`
+  rw [layerNorm_mul_add_lno, rmsNorm_centering_mul_lno U hU hUZ hm, hstream, Matrix.add_mul,
+    Matrix.add_mul, Matrix.mul_assoc _ W, of_const_mul_lno]
+
+/-- Helper: the hidden states of the reduced network are `h_ℓ U`. -/
+private theorem hiddenB_reduceLN_lno (ε : ℝ) (U : Matrix d m ℝ) (hU : Uᵀ * U = 1)
+    (hUZ : U * Uᵀ = centering d) (hm : 0 < Fintype.card m) (S : Fin L → Matrix d d ℝ)
+    (hS : ∀ ℓ, centering d * S ℓ = S ℓ * centering d) (θ : Params A dIn dOut)
+    (b : Biases A dOut) (γ β : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) (k : Fin (L + 1)) :
+    hiddenB (A.withNorm (rmsNorm (ε * (Fintype.card d : ℝ) / (Fintype.card m : ℝ))))
+        (fun ℓ => Uᵀ * S ℓ * U) (θ.reduceLN ε U γ) (b.reduceLN ε U θ β) x k
+      = hiddenLN A ε S θ b γ β x k * U := by
+  induction k using Fin.induction with
+  | zero =>
+    -- `(x E + 1 b_E) U = x (E U) + 1 (b_E U)`
+    rw [hiddenB_zero, hiddenLN_zero_lno, Matrix.add_mul, Matrix.mul_assoc, of_const_mul_lno]
+    rfl
+  | succ ℓ ih =>
+    rw [hiddenB_succ, ih, hiddenLN_succ_lno]
+    exact step_reduceLN_lno ε U hU hUZ hm (S ℓ) (hS ℓ) (A.f ℓ) (γ ℓ.castSucc) (β ℓ.castSucc)
+      (θ.read ℓ) (b.read ℓ) (θ.write ℓ) (b.write ℓ) _
+
 /-- **Proposition A.3 (ii) / A.15 (ii):** let the columns of `U` be an orthonormal basis of `V`
 (`U^⊤ U = I` and `U U^⊤ = Z`), with at least one column. For stream matrices that commute with
 `Z`, the pre-LayerNorm network computes the function of the pre-RMSNorm network of dimension `m`
@@ -256,7 +329,10 @@ theorem evalLN_eq_evalB_reduceLN (ε : ℝ) (U : Matrix d m ℝ) (hU : Uᵀ * U 
     evalLN A ε S θ b γ β x
       = evalB (A.withNorm (rmsNorm (ε * (Fintype.card d : ℝ) / (Fintype.card m : ℝ))))
           (fun ℓ => Uᵀ * S ℓ * U) (θ.reduceLN ε U γ) (b.reduceLN ε U θ β) x := by
-  sorry
+  -- the readout reads `N'(h_L U)` with the weights `√(d/m) U^⊤ diag(γ_L) D`
+  rw [evalLN, evalB, hiddenB_reduceLN_lno ε U hU hUZ hm S hS, layerNorm_mul_add_lno,
+    rmsNorm_centering_mul_lno U hU hUZ hm]
+  rfl
 
 /-- **Proposition A.3 (ii) for a skipless pre-LayerNorm network.** -/
 theorem evalLN_eq_evalB_reduceLN_skipless (ε : ℝ) (U : Matrix d m ℝ) (hU : Uᵀ * U = 1)
