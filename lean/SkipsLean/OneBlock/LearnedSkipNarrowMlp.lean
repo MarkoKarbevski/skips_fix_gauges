@@ -23,8 +23,8 @@ kinds of block in `OneBlock/LearnedSkipGain.lean`
 network at the same weights. The value `P + d² − d (d − 1)` follows from the value
 `P − d (d − 1)/2` of the residual network (`OneBlock/ResidualRMSMlp.lean`, any width).
 
-Not stated here: SwiGLU and GeGLU blocks narrower than `d_model`; the upper triangular skip for
-narrow blocks.
+SwiGLU and GeGLU blocks of any width are in `OneBlock/LearnedSkipNarrowGated.lean`, the upper
+triangular skip for blocks of any width in `OneBlock/LearnedSkipTriangularNarrow.lean`.
 -/
 
 namespace Skips

@@ -20,7 +20,8 @@ and 5 are `funDimLearned_eq_funDim_residual_add_of_noSymmetricPart`
 value `P − d (d − 1)/2 − d_hidden` of the residual network (`OneBlock/ResidualRMSGated.lean`, any
 width; `s = d_hidden`, the rescalings of the values).
 
-Not stated here: the upper triangular skip for narrow blocks.
+The upper triangular skip for blocks of any width is in
+`OneBlock/LearnedSkipTriangularNarrow.lean`.
 -/
 
 namespace Skips

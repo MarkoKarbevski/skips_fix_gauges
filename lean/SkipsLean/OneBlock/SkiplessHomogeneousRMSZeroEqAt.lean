@@ -2,7 +2,7 @@ import SkipsLean.OneBlock.SkiplessHomogeneousRMSZeroEq
 import SkipsLean.OneBlock.UnitsParallelAt
 
 /-!
-# One skipless block of any width with a homogeneous activation, `ε = 0`: the equality
+# One skipless block with a homogeneous activation, `ε = 0`: the equality at one parameter
 
 Paper (skips paper), Theorem B.1 (iv): "Let the network be pre-RMSNorm with `ε = 0`, without
 biases, with a ReLU, ReLU² or ReGLU block of width at least `d_model`. For generic parameters the
@@ -12,8 +12,9 @@ blocks."
 
 `OneBlock/SkiplessHomogeneousRMSZeroEq.lean` has "with equality" for a block of width exactly
 `d_model`, where the columns `c_i` of `E W_read` and the rows `a_i` of `W_write` are linearly
-independent. Here the same three statements at one parameter **with no condition on the width**:
-the two places where the width was used are hypotheses on the parameter,
+independent. Here the same three statements at one parameter **with no hypothesis on the width**
+(the rank `d` of `W_read`, which they ask, gives width at least `d`; the width is not otherwise
+used): the two places where the width was used are hypotheses on the parameter,
 
 * "The kinks stay" and "One scale" at the units of this parameter: `UnitsParallelAt σ σ' k c a`
   (`OneBlock/UnitsParallelAt.lean`) for the columns `c_i` of `E W_read` and the rows `a_i` of
@@ -450,7 +451,7 @@ private theorem nonempty_diff_zero_sha [Nonempty d] {O : Set (d → ℝ)} (hOo :
 end HelpersSha
 
 /-- **Proof of Theorem B.1 (iv) of the skips paper, "The skipless network: equality", for an MLP
-block of any width with a positively homogeneous activation, at one parameter:** let `ε = 0`,
+block with a positively homogeneous activation, at one parameter:** let `ε = 0`,
 `d ≥ 2`, let `σ` be differentiable off `0` and positively homogeneous of degree `k`; let `E`, `D`,
 `W_read`, `W_write` have rank `d`; let the steps "The kinks stay" and "One scale" hold at the
 columns `c_i` of `E W_read` and the rows `a_i` of `W_write` (`UnitsParallelAt`), and let the
@@ -673,7 +674,7 @@ private theorem flatOn_le_range_sha {k : ℕ} (hσ : ∀ z, z ≠ 0 → HasDeriv
   exact ⟨(((X, ⟨Y, hY⟩), c), α), rfl⟩
 
 /-- **Theorem B.1 (iv) of the skips paper, the skipless network, "with equality", for an MLP
-block of any width with a positively homogeneous activation, at one parameter:** under the
+block with a positively homogeneous activation, at one parameter:** under the
 conditions of `flatOn_le_mlp_rescale_skipless_rmsNorm_zero_of_unitsParallelAt` and for nonzero
 columns of `W_read`, `funDim = P − d² − (d(d−1)/2 + 1) − s`, with `s` the number of hidden
 units. -/
