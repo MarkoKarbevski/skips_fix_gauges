@@ -107,7 +107,40 @@ theorem cob_rescaleMlp_eq_self_of_rank_E (k : ℕ)
     (hw : ∀ ℓ, (θ.write ℓ).rank = Fintype.card d)
     (hcol : ∀ ℓ i, (fun a => θ.read ℓ a i) ≠ 0)
     (h : (θ.cob G G).rescaleMlp k c = θ) : G = 1 ∧ ∀ ℓ i, c ℓ i = 1 := by
-  sorry
+  -- the embedding: `E G_0 = E`, and `E` has rank `d`
+  have h0 : G 0 = 1 := by
+    have hE0 : θ.E * (G 0 : Matrix d d ℝ) = θ.E * (1 : Matrix d d ℝ) := by
+      rw [Matrix.mul_one]
+      have h1 := congrArg Params.E h
+      exact h1
+    exact Units.ext (mul_left_cancel_of_rank_lfe θ.E hE hE0)
+  -- block `ℓ`: if `G_{ℓ-1} = 1`, then `c_ℓ = 1` and `G_ℓ = 1`
+  have key : ∀ ℓ : Fin L, G ℓ.castSucc = 1 → (∀ i, c ℓ i = 1) ∧ G ℓ.succ = 1 := by
+    intro ℓ hℓ
+    -- the read column `i` becomes `c_i w_i`, and `w_i ≠ 0`
+    have hc : ∀ i, c ℓ i = 1 := by
+      intro i
+      obtain ⟨a, ha⟩ := Function.ne_iff.mp (hcol ℓ i)
+      have hr := congrFun (congrFun (congrArg (fun η => η.read ℓ) h) a) i
+      change c ℓ i * ((↑(G ℓ.castSucc)⁻¹ : Matrix d d ℝ) * θ.read ℓ) a i = θ.read ℓ a i at hr
+      rw [hℓ, inv_one, Units.val_one, Matrix.one_mul] at hr
+      exact mul_right_cancel₀ ha (hr.trans (one_mul _).symm)
+    refine ⟨hc, Units.ext ?_⟩
+    -- the write becomes `(1 ^ k)⁻¹ W G_ℓ = W G_ℓ`, and `W` has rank `d`
+    refine mul_left_cancel_of_rank_lfe (θ.write ℓ) (hw ℓ) ?_
+    rw [Units.val_one, Matrix.mul_one]
+    ext i a
+    have hr := congrFun (congrFun (congrArg (fun η => η.write ℓ) h) i) a
+    change (c ℓ i ^ k)⁻¹ * (θ.write ℓ * (G ℓ.succ : Matrix d d ℝ)) i a = θ.write ℓ i a at hr
+    rw [hc i, one_pow, inv_one, one_mul] at hr
+    exact hr
+  -- by induction along the network
+  have hG : ∀ ℓ : Fin (L + 1), G ℓ = 1 := by
+    intro ℓ
+    induction ℓ using Fin.induction with
+    | zero => exact h0
+    | succ ℓ ih => exact (key ℓ ih).2
+  exact ⟨funext hG, fun ℓ => (key ℓ (hG ℓ.castSucc)).1⟩
 
 /-- **Lemma A.18, first sentence, for gated blocks with any gate.** If `E` and every write have
 rank `d`, no value column of a read vanishes, and the changes of basis `G` with the rescalings
@@ -118,7 +151,41 @@ theorem cob_rescale_eq_self_of_rank_E
     (hw : ∀ ℓ, (θ.write ℓ).rank = Fintype.card d)
     (hv : ∀ ℓ i, (fun a => θ.read ℓ a (Sum.inr i)) ≠ 0)
     (h : (θ.cob G G).rescale c = θ) : G = 1 ∧ ∀ ℓ i, c ℓ i = 1 := by
-  sorry
+  -- the embedding: `E G_0 = E`, and `E` has rank `d`
+  have h0 : G 0 = 1 := by
+    have hE0 : θ.E * (G 0 : Matrix d d ℝ) = θ.E * (1 : Matrix d d ℝ) := by
+      rw [Matrix.mul_one]
+      have h1 := congrArg Params.E h
+      exact h1
+    exact Units.ext (mul_left_cancel_of_rank_lfe θ.E hE hE0)
+  -- block `ℓ`: if `G_{ℓ-1} = 1`, then `c_ℓ = 1` and `G_ℓ = 1`
+  have key : ∀ ℓ : Fin L, G ℓ.castSucc = 1 → (∀ i, c ℓ i = 1) ∧ G ℓ.succ = 1 := by
+    intro ℓ hℓ
+    -- the value column `i` becomes `c_i⁻¹ e_i`, and `e_i ≠ 0`
+    have hc : ∀ i, c ℓ i = 1 := by
+      intro i
+      obtain ⟨a, ha⟩ := Function.ne_iff.mp (hv ℓ i)
+      have hr := congrFun (congrFun (congrArg (fun η => η.read ℓ) h) a) (Sum.inr i)
+      change (c ℓ i)⁻¹ * ((↑(G ℓ.castSucc)⁻¹ : Matrix d d ℝ) * θ.read ℓ) a (Sum.inr i)
+        = θ.read ℓ a (Sum.inr i) at hr
+      rw [hℓ, inv_one, Units.val_one, Matrix.one_mul] at hr
+      exact inv_eq_one.mp (mul_right_cancel₀ ha (hr.trans (one_mul _).symm))
+    refine ⟨hc, Units.ext ?_⟩
+    -- the write becomes `1 · W G_ℓ = W G_ℓ`, and `W` has rank `d`
+    refine mul_left_cancel_of_rank_lfe (θ.write ℓ) (hw ℓ) ?_
+    rw [Units.val_one, Matrix.mul_one]
+    ext i a
+    have hr := congrFun (congrFun (congrArg (fun η => η.write ℓ) h) i) a
+    change c ℓ i * (θ.write ℓ * (G ℓ.succ : Matrix d d ℝ)) i a = θ.write ℓ i a at hr
+    rw [hc i, one_mul] at hr
+    exact hr
+  -- by induction along the network
+  have hG : ∀ ℓ : Fin (L + 1), G ℓ = 1 := by
+    intro ℓ
+    induction ℓ using Fin.induction with
+    | zero => exact h0
+    | succ ℓ ih => exact (key ℓ ih).2
+  exact ⟨funext hG, fun ℓ => (key ℓ (hG ℓ.castSucc)).1⟩
 
 /-- **Lemma A.18, first sentence, for ReGLU blocks.** If `E` and every write have rank `d`, no
 gate column and no value column of a read vanishes, and the changes of basis `G` with the
@@ -132,7 +199,53 @@ theorem cob_rescale_rescaleGate_eq_self_of_rank_E (k : ℕ)
     (hg : ∀ ℓ i, (fun a => θ.read ℓ a (Sum.inl i)) ≠ 0)
     (h : ((θ.cob G G).rescale c').rescaleGate k c = θ) :
     G = 1 ∧ (∀ ℓ i, c ℓ i = 1) ∧ ∀ ℓ i, c' ℓ i = 1 := by
-  sorry
+  -- the embedding: `E G_0 = E`, and `E` has rank `d`
+  have h0 : G 0 = 1 := by
+    have hE0 : θ.E * (G 0 : Matrix d d ℝ) = θ.E * (1 : Matrix d d ℝ) := by
+      rw [Matrix.mul_one]
+      have h1 := congrArg Params.E h
+      exact h1
+    exact Units.ext (mul_left_cancel_of_rank_lfe θ.E hE hE0)
+  -- block `ℓ`: if `G_{ℓ-1} = 1`, then `c_ℓ = 1`, `c'_ℓ = 1` and `G_ℓ = 1`
+  have key : ∀ ℓ : Fin L, G ℓ.castSucc = 1 →
+      (∀ i, c ℓ i = 1) ∧ (∀ i, c' ℓ i = 1) ∧ G ℓ.succ = 1 := by
+    intro ℓ hℓ
+    -- the gate column `i` becomes `c_i g_i`, and `g_i ≠ 0`
+    have hc : ∀ i, c ℓ i = 1 := by
+      intro i
+      obtain ⟨a, ha⟩ := Function.ne_iff.mp (hg ℓ i)
+      have hr := congrFun (congrFun (congrArg (fun η => η.read ℓ) h) a) (Sum.inl i)
+      change c ℓ i * ((↑(G ℓ.castSucc)⁻¹ : Matrix d d ℝ) * θ.read ℓ) a (Sum.inl i)
+        = θ.read ℓ a (Sum.inl i) at hr
+      rw [hℓ, inv_one, Units.val_one, Matrix.one_mul] at hr
+      exact mul_right_cancel₀ ha (hr.trans (one_mul _).symm)
+    -- the value column `i` becomes `c'_i⁻¹ e_i`, and `e_i ≠ 0`
+    have hc' : ∀ i, c' ℓ i = 1 := by
+      intro i
+      obtain ⟨a, ha⟩ := Function.ne_iff.mp (hv ℓ i)
+      have hr := congrFun (congrFun (congrArg (fun η => η.read ℓ) h) a) (Sum.inr i)
+      change (c' ℓ i)⁻¹ * ((↑(G ℓ.castSucc)⁻¹ : Matrix d d ℝ) * θ.read ℓ) a (Sum.inr i)
+        = θ.read ℓ a (Sum.inr i) at hr
+      rw [hℓ, inv_one, Units.val_one, Matrix.one_mul] at hr
+      exact inv_eq_one.mp (mul_right_cancel₀ ha (hr.trans (one_mul _).symm))
+    refine ⟨hc, hc', Units.ext ?_⟩
+    -- the write becomes `(1 ^ k)⁻¹ (1 · W G_ℓ) = W G_ℓ`, and `W` has rank `d`
+    refine mul_left_cancel_of_rank_lfe (θ.write ℓ) (hw ℓ) ?_
+    rw [Units.val_one, Matrix.mul_one]
+    ext i a
+    have hr := congrFun (congrFun (congrArg (fun η => η.write ℓ) h) i) a
+    change (c ℓ i ^ k)⁻¹ * (c' ℓ i * (θ.write ℓ * (G ℓ.succ : Matrix d d ℝ)) i a)
+      = θ.write ℓ i a at hr
+    rw [hc i, hc' i, one_pow, inv_one, one_mul, one_mul] at hr
+    exact hr
+  -- by induction along the network
+  have hG : ∀ ℓ : Fin (L + 1), G ℓ = 1 := by
+    intro ℓ
+    induction ℓ using Fin.induction with
+    | zero => exact h0
+    | succ ℓ ih => exact (key ℓ ih).2.2
+  exact ⟨funext hG, fun ℓ => (key ℓ (hG ℓ.castSucc)).1,
+    fun ℓ => (key ℓ (hG ℓ.castSucc)).2.1⟩
 
 /-- **Lemma A.18, first sentence, under pre-RMSNorm with `ε = 0`** ("With RMSNorm the changes of
 basis lie in `CO(d_model)` or `O(d_model)`, and the argument is unchanged"). The change of basis
@@ -145,6 +258,27 @@ theorem cob_rmsNorm_zero_eq_self_of_rank_E [Nonempty d] {A : Arch T d L} (θ : P
     (hG : ∀ ℓ, (G ℓ : Matrix d d ℝ) = c ℓ • (Q ℓ : Matrix d d ℝ))
     (hE : θ.E.rank = Fintype.card d) (hw : ∀ ℓ, (θ.write ℓ).rank = Fintype.card d)
     (h : θ.cob G Q = θ) : (∀ ℓ, c ℓ = 1) ∧ Q = 1 := by
-  sorry
+  -- the changes of basis are the identity: `G = 1`
+  have hG1 := cob_eq_self_of_rank_E θ G Q hE hw h
+  -- so `c_ℓ Q_ℓ = 1`, and `Q_ℓ` is orthogonal: `c_ℓ² = 1`, `c_ℓ = 1`
+  have key : ∀ ℓ, c ℓ = 1 ∧ (Q ℓ : Matrix d d ℝ) = 1 := by
+    intro ℓ
+    have h1 : c ℓ • (Q ℓ : Matrix d d ℝ) = 1 := by
+      rw [← hG ℓ, hG1]
+      rfl
+    have hQQ := (Matrix.mem_orthogonalGroup_iff d ℝ).mp (hQ ℓ)
+    have h2 : (c ℓ • (Q ℓ : Matrix d d ℝ)) * (c ℓ • (Q ℓ : Matrix d d ℝ))ᵀ
+        = (c ℓ * c ℓ) • (1 : Matrix d d ℝ) := by
+      rw [Matrix.transpose_smul, Matrix.smul_mul, Matrix.mul_smul, smul_smul]
+      congr 1
+    rw [h1, Matrix.transpose_one, Matrix.one_mul] at h2
+    obtain ⟨x⟩ := (inferInstance : Nonempty d)
+    have h3 := congrFun (congrFun h2 x) x
+    rw [Matrix.smul_apply, Matrix.one_apply_eq, smul_eq_mul, mul_one] at h3
+    have hc1 : c ℓ = 1 := by nlinarith [hc ℓ]
+    refine ⟨hc1, ?_⟩
+    rw [hc1, one_smul] at h1
+    exact h1
+  exact ⟨fun ℓ => (key ℓ).1, funext fun ℓ => Units.ext (key ℓ).2⟩
 
 end Skips
