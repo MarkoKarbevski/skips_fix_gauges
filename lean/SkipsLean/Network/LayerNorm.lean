@@ -212,7 +212,9 @@ theorem sum_hiddenB_centerLN (ε : ℝ) (S : Fin L → Matrix d d ℝ)
     (b : Biases A dOut) (γ β : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) (ℓ : Fin (L + 1))
     (t : T) :
     ∑ i, hiddenB (A.withNorm (rmsNorm ε)) S (θ.centerLN ε γ) (b.centerLN ε θ β) x ℓ t i = 0 := by
-  sorry
+  -- the row `t` of `h_ℓ Z` is `(h_ℓ)_t Z`, of mean zero
+  rw [hiddenB_centerLN_lno ε S hS]
+  exact sum_vecMul_centering (hiddenLN A ε S θ b γ β x ℓ t)
 
 /-! ### Part (ii): the pre-RMSNorm network of dimension `d − 1` -/
 
