@@ -39,7 +39,8 @@ involve the biases):
 
 Numeric check (tanh, `d = 2`, one block of 3 units: 21 and 17 of 29):
 `biases_count_check_2026-11-25.py`. SwiGLU and GeGLU blocks with biases:
-`OneBlock/GatedBiases.lean`. Not stated: ReLU, ReLU², ReGLU and attention blocks with biases.
+`OneBlock/GatedBiases.lean`; ReLU and ReLU² blocks: `OneBlock/RescaleBiases.lean`. Not stated:
+ReGLU and attention blocks with biases.
 -/
 
 namespace Skips

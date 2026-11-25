@@ -372,3 +372,5 @@ import SkipsLean.Symmetry.BiasesFlatKinks
 import SkipsLean.Symmetry.InsideBlocksBiases
 import SkipsLean.Symmetry.BiasesRescaleCount
 import SkipsLean.OneBlock.GatedBiases
+import SkipsLean.Dimension.FunctionalBiasesOn
+import SkipsLean.OneBlock.RescaleBiases
