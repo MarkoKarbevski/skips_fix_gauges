@@ -539,7 +539,7 @@ private theorem hasDerivAt_biasesVO_ahb [∀ ℓ, DecidableEq (dh ℓ)]
     (Biases.linearEquivProd (A := Arch.attention sees χ H dh)
       (dOut := dOut)).symm.toLinearMap).hasFDerivAt.comp_hasDerivAt 0 hprod
 
-omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: `f ℓ (M') W' = f ℓ (M) W` if the query and key columns of `M'` are those of `M`, the
 value columns of head `i` of `M'` are those of `M` times `G_i`, and the rows `(i, ·)` of `W'` are
 `G_i^{-1}` times those of `W`: the weights are kept, and `(a v G)(G^{-1} W_O) = a v W_O`. -/
@@ -650,12 +650,191 @@ theorem insideBlocksB_headDirVOB (p : ParamsB (Arch.attention sees χ H dh) dIn 
     fun τ ℓ n => block_headsVOB_ahb p.1 p.2 _ ℓ n
   exact ⟨_, h0, hd, Filter.Eventually.of_forall fun τ => ⟨rfl, rfl, rfl, rfl, hb τ⟩⟩
 
+/-! ### Helpers: the shifts of the key biases and of the value biases -/
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the attention weights do not change when a function `r t` of the row alone is added
+to the scores: numerator and denominator of row `t` are multiplied by `e^{r t}`. -/
+private theorem attnWeights_add_row_ahb (Z Z' : Matrix T T ℝ) (r : T → ℝ)
+    (hZ : ∀ t s, Z' t s = Z t s + r t) :
+    attnWeights sees Z' = attnWeights sees Z := by
+  ext t s
+  simp only [attnWeights, Matrix.of_apply, hZ, Real.exp_add]
+  split_ifs with h
+  · -- the denominator is multiplied by `e^{r t}` too
+    have e : (∑ s', if sees t s' then Real.exp (Z t s') * Real.exp (r t) else 0)
+        = (∑ s', if sees t s' then Real.exp (Z t s') else 0) * Real.exp (r t) := by
+      rw [Finset.sum_mul]
+      refine Finset.sum_congr rfl fun s' _ => ?_
+      split_ifs
+      · rfl
+      · rw [zero_mul]
+    rw [e, mul_div_mul_right _ _ (Real.exp_pos _).ne']
+  · rfl
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (the private `attnWeights_den_pos_ba` of `Absorb/BiasesAttention.lean`): the
+denominator of row `t` of the weights is positive when token `t` sees some token. -/
+private theorem attnWeights_den_pos_ahb (Z : Matrix T T ℝ) (t : T) (ht : ∃ s, sees t s) :
+    0 < ∑ s', if sees t s' then Real.exp (Z t s') else 0 := by
+  obtain ⟨s, hs⟩ := ht
+  refine Finset.sum_pos' (fun s' _ => ?_) ⟨s, Finset.mem_univ _, ?_⟩
+  · split_ifs
+    · exact (Real.exp_pos _).le
+    · exact le_rfl
+  · simp only [hs, ite_true]
+    exact Real.exp_pos _
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper (the private `attnWeights_sum_ba` of `Absorb/BiasesAttention.lean`): row `t` of the
+weights sums to `1` when token `t` sees some token. -/
+private theorem attnWeights_sum_ahb (Z : Matrix T T ℝ) (t : T) (ht : ∃ s, sees t s) :
+    ∑ s, attnWeights sees Z t s = 1 := by
+  have hS := attnWeights_den_pos_ahb Z t ht
+  have h1 : ∀ s, attnWeights sees Z t s = (if sees t s then Real.exp (Z t s) else 0)
+      / ∑ s', if sees t s' then Real.exp (Z t s') else 0 := by
+    intro s
+    simp only [attnWeights, Matrix.of_apply]
+    split_ifs
+    · rfl
+    · rw [zero_div]
+  simp only [h1, ← Finset.sum_div]
+  exact div_self hS.ne'
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the map `f ℓ` is the same on `M'` and `M` if the keys of head `i` of `M'` are those
+of `M` shifted by `κ_i` and the queries and values are those of `M`: the score of `(t, s)` moves
+by `q_t · κ_i / √d_h`, the same for every `s`. -/
+private theorem f_keyShift_ahb (ℓ : Fin L) (M M' : Matrix T (H ℓ × (dh ℓ ⊕ (dh ℓ ⊕ dh ℓ))) ℝ)
+    (κ : H ℓ → dh ℓ → ℝ)
+    (hq : ∀ t i k, M' t (i, Sum.inl k) = M t (i, Sum.inl k))
+    (hk : ∀ t i k, M' t (i, Sum.inr (Sum.inl k)) = M t (i, Sum.inr (Sum.inl k)) + κ i k)
+    (hv : ∀ t i k, M' t (i, Sum.inr (Sum.inr k)) = M t (i, Sum.inr (Sum.inr k))) :
+    (Arch.attention sees χ H dh).f ℓ M' = (Arch.attention sees χ H dh).f ℓ M := by
+  -- the weights of every head are kept
+  have hsc : ∀ i : H ℓ, attnWeights sees (Matrix.of fun t' s' =>
+        (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M' t' (i, Sum.inl k) * M' s' (i, Sum.inr (Sum.inl k)) : Matrix T T ℝ)
+      = attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M t' (i, Sum.inl k) * M s' (i, Sum.inr (Sum.inl k))) := by
+    intro i
+    refine attnWeights_add_row_ahb _ _
+      (fun t' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹ * ∑ k, M t' (i, Sum.inl k) * κ i k)
+      fun t' s' => ?_
+    simp only [Matrix.of_apply, hq, hk, mul_add, Finset.sum_add_distrib]
+  ext t p
+  show ∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M' t' (p.1, Sum.inl k) * M' s' (p.1, Sum.inr (Sum.inl k))) t s
+      * M' s (p.1, Sum.inr (Sum.inr p.2))
+    = ∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M t' (p.1, Sum.inl k) * M s' (p.1, Sum.inr (Sum.inl k))) t s
+      * M s (p.1, Sum.inr (Sum.inr p.2))
+  rw [hsc p.1]
+  simp only [hv]
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: if every token sees some token, `f ℓ M' = f ℓ M + 1 ν` when the values of head `i`
+of `M'` are those of `M` shifted by `ν_i` and the queries and keys are those of `M`: the weights
+are kept, and they sum to `1` on every row. -/
+private theorem f_valueShift_ahb (hsee : ∀ t, ∃ s, sees t s) (ℓ : Fin L)
+    (M M' : Matrix T (H ℓ × (dh ℓ ⊕ (dh ℓ ⊕ dh ℓ))) ℝ) (ν : H ℓ → dh ℓ → ℝ)
+    (hq : ∀ t i k, M' t (i, Sum.inl k) = M t (i, Sum.inl k))
+    (hk : ∀ t i k, M' t (i, Sum.inr (Sum.inl k)) = M t (i, Sum.inr (Sum.inl k)))
+    (hv : ∀ t i k, M' t (i, Sum.inr (Sum.inr k)) = M t (i, Sum.inr (Sum.inr k)) + ν i k) :
+    (Arch.attention sees χ H dh).f ℓ M'
+      = (Arch.attention sees χ H dh).f ℓ M + Matrix.of fun _ (q : H ℓ × dh ℓ) => ν q.1 q.2 := by
+  -- the scores of every head are kept
+  have hsc : ∀ i : H ℓ, (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M' t' (i, Sum.inl k) * M' s' (i, Sum.inr (Sum.inl k)) : Matrix T T ℝ)
+      = Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M t' (i, Sum.inl k) * M s' (i, Sum.inr (Sum.inl k)) := by
+    intro i
+    ext t' s'
+    simp only [Matrix.of_apply, hq, hk]
+  ext t p
+  show ∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M' t' (p.1, Sum.inl k) * M' s' (p.1, Sum.inr (Sum.inl k))) t s
+      * M' s (p.1, Sum.inr (Sum.inr p.2))
+    = ∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M t' (p.1, Sum.inl k) * M s' (p.1, Sum.inr (Sum.inl k))) t s
+      * M s (p.1, Sum.inr (Sum.inr p.2)) + ν p.1 p.2
+  rw [hsc p.1]
+  -- the weights of row `t` sum to `1`
+  simp only [hv, mul_add, Finset.sum_add_distrib, ← Finset.sum_mul,
+    attnWeights_sum_ahb _ t (hsee t), one_mul]
+
+omit [DecidableEq d] in
+/-- Helper: the line `τ ↦ p + τ v` has velocity `v` at `τ = 0`. -/
+private theorem hasDerivAt_line_ahb (p v : ParamsB (Arch.attention sees χ H dh) dIn dOut) :
+    HasDerivAt (fun τ : ℝ => p + τ • v) v 0 := by
+  have h := ((hasDerivAt_id (0 : ℝ)).smul_const v).const_add p
+  rw [one_smul] at h
+  exact h
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: along the line `τ ↦ p + τ v`, a direction `v` with the components `E`, `D`, `b_E`
+and `b_D` equal to `0` keeps these components. -/
+private theorem line_comps_ahb (p v : ParamsB (Arch.attention sees χ H dh) dIn dOut)
+    (hE : v.1.E = 0) (hD : v.1.D = 0) (hbE : v.2.E = 0) (hbD : v.2.D = 0) (τ : ℝ) :
+    (p + τ • v).1.E = p.1.E ∧ (p + τ • v).1.D = p.1.D ∧ (p + τ • v).2.E = p.2.E ∧
+      (p + τ • v).2.D = p.2.D := by
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · show p.1.E + τ • v.1.E = p.1.E
+    rw [hE, smul_zero, add_zero]
+  · show p.1.D + τ • v.1.D = p.1.D
+    rw [hD, smul_zero, add_zero]
+  · show p.2.E + τ • v.2.E = p.2.E
+    rw [hbE, smul_zero, add_zero]
+  · show p.2.D + τ • v.2.D = p.2.D
+    rw [hbD, smul_zero, add_zero]
+
 /-- **The shifts of the key biases are symmetries inside the blocks,** for every mask and every
 `χ`: "The key biases drop out, since they shift all scores of a token equally". -/
 theorem insideBlocksB_keyShiftDir (p : ParamsB (Arch.attention sees χ H dh) dIn dOut)
     (κ : ∀ ℓ, H ℓ → dh ℓ → ℝ) :
     InsideBlocksB (Arch.attention sees χ H dh) p (keyShiftDir κ) := by
-  sorry
+  -- the line `τ ↦ p + τ • keyShiftDir κ`: it keeps every block
+  have hb : ∀ τ : ℝ, ∀ ℓ (n : Matrix T d ℝ),
+      (Arch.attention sees χ H dh).f ℓ (n * (p + τ • keyShiftDir κ).1.read ℓ
+          + Matrix.of fun _ => (p + τ • keyShiftDir κ).2.read ℓ)
+          * (p + τ • keyShiftDir κ).1.write ℓ
+        + Matrix.of (fun _ => (p + τ • keyShiftDir κ).2.write ℓ)
+      = (Arch.attention sees χ H dh).f ℓ (n * p.1.read ℓ + Matrix.of fun _ => p.2.read ℓ)
+          * p.1.write ℓ + Matrix.of fun _ => p.2.write ℓ := by
+    intro τ ℓ n
+    -- the weights and the write bias do not move
+    have hR : (p + τ • keyShiftDir κ).1.read ℓ = p.1.read ℓ := by
+      show p.1.read ℓ + τ • (0 : Matrix d (H ℓ × (dh ℓ ⊕ (dh ℓ ⊕ dh ℓ))) ℝ) = p.1.read ℓ
+      rw [smul_zero, add_zero]
+    have hW : (p + τ • keyShiftDir κ).1.write ℓ = p.1.write ℓ := by
+      show p.1.write ℓ + τ • (0 : Matrix (H ℓ × dh ℓ) d ℝ) = p.1.write ℓ
+      rw [smul_zero, add_zero]
+    have hbW : (p + τ • keyShiftDir κ).2.write ℓ = p.2.write ℓ := by
+      show p.2.write ℓ + τ • (0 : d → ℝ) = p.2.write ℓ
+      rw [smul_zero, add_zero]
+    -- the keys of head `i` move by `τ κ_i`, the queries and values do not move
+    rw [hR, hW, hbW, f_keyShift_ahb ℓ (n * p.1.read ℓ + Matrix.of fun _ => p.2.read ℓ) _
+      (fun i k => τ * κ ℓ i k) ?_ ?_ ?_]
+    · intro t i k
+      show (n * p.1.read ℓ) t (i, Sum.inl k) + (p.2.read ℓ (i, Sum.inl k) + τ * 0)
+        = (n * p.1.read ℓ) t (i, Sum.inl k) + p.2.read ℓ (i, Sum.inl k)
+      rw [mul_zero, add_zero]
+    · intro t i k
+      show (n * p.1.read ℓ) t (i, Sum.inr (Sum.inl k))
+          + (p.2.read ℓ (i, Sum.inr (Sum.inl k)) + τ * κ ℓ i k)
+        = (n * p.1.read ℓ) t (i, Sum.inr (Sum.inl k)) + p.2.read ℓ (i, Sum.inr (Sum.inl k))
+          + τ * κ ℓ i k
+      rw [add_assoc]
+    · intro t i k
+      show (n * p.1.read ℓ) t (i, Sum.inr (Sum.inr k))
+          + (p.2.read ℓ (i, Sum.inr (Sum.inr k)) + τ * 0)
+        = (n * p.1.read ℓ) t (i, Sum.inr (Sum.inr k)) + p.2.read ℓ (i, Sum.inr (Sum.inr k))
+      rw [mul_zero, add_zero]
+  exact ⟨_, by rw [zero_smul, add_zero], hasDerivAt_line_ahb p _,
+    Filter.Eventually.of_forall fun τ =>
+      ⟨(line_comps_ahb p _ rfl rfl rfl rfl τ).1, (line_comps_ahb p _ rfl rfl rfl rfl τ).2.1,
+        (line_comps_ahb p _ rfl rfl rfl rfl τ).2.2.1, (line_comps_ahb p _ rfl rfl rfl rfl τ).2.2.2,
+        hb τ⟩⟩
 
 /-- **The value biases moved into the output bias are symmetries inside the blocks,** for every
 `χ` and every mask in which every token sees at least one token: "the weights of a token sum to
@@ -664,7 +843,55 @@ at every token. -/
 theorem insideBlocksB_valueShiftDir (hsee : ∀ t, ∃ s, sees t s)
     (p : ParamsB (Arch.attention sees χ H dh) dIn dOut) (ν : ∀ ℓ, H ℓ → dh ℓ → ℝ) :
     InsideBlocksB (Arch.attention sees χ H dh) p (valueShiftDir p ν) := by
-  sorry
+  -- the line `τ ↦ p + τ • valueShiftDir p ν`: it keeps every block
+  have hb : ∀ τ : ℝ, ∀ ℓ (n : Matrix T d ℝ),
+      (Arch.attention sees χ H dh).f ℓ (n * (p + τ • valueShiftDir p ν).1.read ℓ
+          + Matrix.of fun _ => (p + τ • valueShiftDir p ν).2.read ℓ)
+          * (p + τ • valueShiftDir p ν).1.write ℓ
+        + Matrix.of (fun _ => (p + τ • valueShiftDir p ν).2.write ℓ)
+      = (Arch.attention sees χ H dh).f ℓ (n * p.1.read ℓ + Matrix.of fun _ => p.2.read ℓ)
+          * p.1.write ℓ + Matrix.of fun _ => p.2.write ℓ := by
+    intro τ ℓ n
+    -- the weights do not move
+    have hR : (p + τ • valueShiftDir p ν).1.read ℓ = p.1.read ℓ := by
+      show p.1.read ℓ + τ • (0 : Matrix d (H ℓ × (dh ℓ ⊕ (dh ℓ ⊕ dh ℓ))) ℝ) = p.1.read ℓ
+      rw [smul_zero, add_zero]
+    have hW : (p + τ • valueShiftDir p ν).1.write ℓ = p.1.write ℓ := by
+      show p.1.write ℓ + τ • (0 : Matrix (H ℓ × dh ℓ) d ℝ) = p.1.write ℓ
+      rw [smul_zero, add_zero]
+    -- the values of head `i` move by `τ ν_i`, the queries and keys do not move
+    rw [hR, hW, f_valueShift_ahb hsee ℓ (n * p.1.read ℓ + Matrix.of fun _ => p.2.read ℓ) _
+      (fun i k => τ * ν ℓ i k) ?_ ?_ ?_]
+    · -- the output moves by `τ ∑_i ν_i W_{O,i}`, the write bias by the opposite
+      rw [Matrix.add_mul, add_assoc]
+      congr 1
+      ext t c
+      show (∑ q : H ℓ × dh ℓ, τ * ν ℓ q.1 q.2 * p.1.write ℓ q c)
+          + (p.2.write ℓ c + τ * -∑ i, ∑ k, ν ℓ i k * p.1.write ℓ (i, k) c)
+        = p.2.write ℓ c
+      rw [Fintype.sum_prod_type, mul_neg, Finset.mul_sum]
+      simp only [Finset.mul_sum, mul_assoc]
+      ring
+    · intro t i k
+      show (n * p.1.read ℓ) t (i, Sum.inl k) + (p.2.read ℓ (i, Sum.inl k) + τ * 0)
+        = (n * p.1.read ℓ) t (i, Sum.inl k) + p.2.read ℓ (i, Sum.inl k)
+      rw [mul_zero, add_zero]
+    · intro t i k
+      show (n * p.1.read ℓ) t (i, Sum.inr (Sum.inl k))
+          + (p.2.read ℓ (i, Sum.inr (Sum.inl k)) + τ * 0)
+        = (n * p.1.read ℓ) t (i, Sum.inr (Sum.inl k)) + p.2.read ℓ (i, Sum.inr (Sum.inl k))
+      rw [mul_zero, add_zero]
+    · intro t i k
+      show (n * p.1.read ℓ) t (i, Sum.inr (Sum.inr k))
+          + (p.2.read ℓ (i, Sum.inr (Sum.inr k)) + τ * ν ℓ i k)
+        = (n * p.1.read ℓ) t (i, Sum.inr (Sum.inr k)) + p.2.read ℓ (i, Sum.inr (Sum.inr k))
+          + τ * ν ℓ i k
+      rw [add_assoc]
+  exact ⟨_, by rw [zero_smul, add_zero], hasDerivAt_line_ahb p _,
+    Filter.Eventually.of_forall fun τ =>
+      ⟨(line_comps_ahb p _ rfl rfl rfl rfl τ).1, (line_comps_ahb p _ rfl rfl rfl rfl τ).2.1,
+        (line_comps_ahb p _ rfl rfl rfl rfl τ).2.2.1, (line_comps_ahb p _ rfl rfl rfl rfl τ).2.2.2,
+        hb τ⟩⟩
 
 /-- The direction `headDirB p (Γ, Γ', κ, ν)` is linear in `(Γ, Γ', κ, ν)`. -/
 theorem isLinearMap_headDirB (p : ParamsB (Arch.attention sees χ H dh) dIn dOut) :
