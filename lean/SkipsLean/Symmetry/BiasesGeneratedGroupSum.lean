@@ -187,17 +187,25 @@ end Sum
 theorem insideBlocksAction_id :
     InsideBlocksAction (A := A) (dIn := dIn) (dOut := dOut)
       (fun (_ : Fin 0 → ℝ) q => q) Set.univ := by
-  sorry
+  -- every map of the family is the identity
+  refine ⟨⟨0, Set.mem_univ _, rfl⟩, fun σ _ _ _ => ⟨σ, Set.mem_univ _, rfl⟩,
+    fun σ _ => ⟨σ, Set.mem_univ _, rfl, rfl⟩, fun _ _ _ => rfl, fun _ _ _ => rfl,
+    fun _ _ _ _ _ => rfl, fun _ _ _ _ => rfl⟩
 
 /-- **It acts block by block.** -/
 theorem insideBlocksLocal_id :
     InsideBlocksLocal (A := A) (dIn := dIn) (dOut := dOut)
       (fun (_ : Fin 0 → ℝ) q => q) Set.univ := by
-  sorry
+  -- every map of the family is the identity, so it moves the write biases by `0`
+  refine ⟨fun _ _ _ => rfl, fun _ _ _ => rfl, fun _ _ _ => rfl, fun _ _ _ => rfl,
+    fun _ _ _ _ _ => rfl, fun _ _ q q' hr hw hb => ⟨hr, hw, hb, ?_⟩, fun _ _ _ _ => rfl⟩
+  rw [sub_self, sub_self]
 
 /-- **It acts freely block by block at every `q`.** -/
 theorem insideBlocksFreeAt_id (q : Params A dIn dOut × Biases A dOut) :
     InsideBlocksFreeAt (fun (_ : Fin 0 → ℝ) q => q) Set.univ q := by
-  sorry
+  -- the identity keeps everything, and `Fin 0 → ℝ` has one point
+  exact ⟨fun _ _ => rfl, fun _ _ => rfl, fun _ _ _ _ _ => ⟨rfl, rfl⟩,
+    fun σ _ τ _ _ => Subsingleton.elim σ τ⟩
 
 end Skips
