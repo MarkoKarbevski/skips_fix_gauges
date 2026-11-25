@@ -73,6 +73,7 @@ private theorem mul_right_cancel_of_rank_ubtg {m n k : Type*} [Fintype m] [Finty
     simpa [Matrix.mul_apply, Matrix.vecMul, dotProduct] using this
   exact congrFun (hinj hrow) j
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] in
 /-- **Lemma A.18 from both ends, gated blocks with the rescalings of the values, in
 infinitesimal form.** If `E` and `D` have rank `d`, every write of a block before block `m` and
 every read of a block after block `m` has rank `d`, no value column of a read of a block up to
@@ -184,6 +185,7 @@ private theorem exists_ne_zero_col_ubtg {m q : Type*} [Fintype m] (R : Matrix m 
   obtain ⟨a, ha⟩ := Function.ne_iff.mp h
   exact ⟨a, ha⟩
 
+omit [Fintype T] [Fintype dIn] in
 /-- **Lemma A.18 from both ends, ReGLU blocks, in infinitesimal form.** If `E` and `D` have rank
 `d`, every write of a block before block `m` has rank `d`, no gate column and no value column of
 a read of a block up to `m` vanishes, and for every block after `m` no write row vanishes and the
