@@ -386,3 +386,6 @@ import SkipsLean.Dimension.UpperBoundAttentionBiases
 import SkipsLean.OneBlock.AttentionBiases
 import SkipsLean.OneBlock.AttentionBiasesStepOne
 import SkipsLean.OneBlock.AttentionBiasesDim
+import SkipsLean.Network.Mixed
+import SkipsLean.Symmetry.MixedJunctions
+import SkipsLean.Residual.GaugeFixMixed

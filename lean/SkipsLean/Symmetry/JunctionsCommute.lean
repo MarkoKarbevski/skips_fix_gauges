@@ -15,8 +15,7 @@ multiplied by `G_ℓ`, its reads by `K_ℓ⁻¹`; `K = G` without normalization 
 * `cob_mulSingle_comm`: in particular when they act at different hidden states.
 
 The dimension of the group that a skipless network carries ("one copy of `G` per hidden state")
-is `Symmetry/CobGroup.lean`. The maps of (i) are for mixed blocks, which the library does not
-have.
+is `Symmetry/CobGroup.lean`. The maps of (i), for mixed blocks: `Symmetry/MixedJunctions.lean`.
 -/
 
 namespace Skips
