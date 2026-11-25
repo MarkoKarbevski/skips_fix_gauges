@@ -409,3 +409,5 @@ import SkipsLean.OneBlock.UnitsParallelAtSq
 import SkipsLean.OneBlock.UnitsGeneralPositionSq
 import SkipsLean.OneBlock.SkiplessReluSqWideRMSZero
 import SkipsLean.Symmetry.BiasesAffineGroup
+import SkipsLean.Activations.GateFarC
+import SkipsLean.Depth.FrozenFarHolomorphic
