@@ -1973,3 +1973,12 @@ import SkipsLean
 #print axioms Skips.evalB_translate
 #print axioms Skips.hiddenB_translateAt
 #print axioms Skips.evalB_translateAt
+#print axioms Skips.differentiable_evalB
+#print axioms Skips.analyticOnNhd_evalB_params
+#print axioms Skips.jacobianRankB_le_finrank
+#print axioms Skips.exists_jacobianRankB_eq_funDimB
+#print axioms Skips.jacobianRankB_le_funDimB
+#print axioms Skips.funDimB_add_finrank_flatB
+#print axioms Skips.funDimB_add_finrank_le_of_le_flatB
+#print axioms Skips.mem_flatB_of_hasDerivAt
+#print axioms Skips.ae_funDimB_ge

@@ -244,6 +244,7 @@ theorem analyticOnNhd_evalB_params (A : Arch T d L) (S : Fin L → Matrix d d �
 
 variable (p : ParamsB A dIn dOut)
 
+omit [Fintype T] in
 /-- The rank of the Jacobian on any batch is at most the number `P` of parameters, biases
 included. -/
 theorem jacobianRankB_le_finrank {n : ℕ} (X : Fin n → Matrix T dIn ℝ) :
@@ -258,6 +259,7 @@ private theorem funDimB_set_nonempty_fnb :
     {r : ℕ | ∃ (n : ℕ) (X : Fin n → Matrix T dIn ℝ), r = jacobianRankB A S X p}.Nonempty :=
   ⟨_, 0, fun i => i.elim0, rfl⟩
 
+omit [Fintype T] in
 /-- Helper: the ranks in the definition of `funDimB` are at most `P`. -/
 private theorem funDimB_set_bddAbove_fnb :
     BddAbove {r : ℕ | ∃ (n : ℕ) (X : Fin n → Matrix T dIn ℝ), r = jacobianRankB A S X p} := by
@@ -265,6 +267,7 @@ private theorem funDimB_set_bddAbove_fnb :
   rintro _ ⟨n, X, rfl⟩
   exact jacobianRankB_le_finrank p X
 
+omit [Fintype T] in
 /-- The functional dimension of a network with biases is attained on some finite batch. -/
 theorem exists_jacobianRankB_eq_funDimB :
     ∃ (n : ℕ) (X : Fin n → Matrix T dIn ℝ), jacobianRankB A S X p = funDimB A S p := by
@@ -273,6 +276,7 @@ theorem exists_jacobianRankB_eq_funDimB :
     Nat.sSup_mem (funDimB_set_nonempty_fnb (S := S) p) (funDimB_set_bddAbove_fnb (S := S) p)
   exact ⟨n, X, h.symm⟩
 
+omit [Fintype T] in
 /-- The rank of the Jacobian on any batch is at most the functional dimension. -/
 theorem jacobianRankB_le_funDimB {n : ℕ} (X : Fin n → Matrix T dIn ℝ) :
     jacobianRankB A S X p ≤ funDimB A S p := by
