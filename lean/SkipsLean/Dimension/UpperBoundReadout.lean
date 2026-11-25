@@ -16,8 +16,9 @@ determines `X`. Here the second sentence in the same form: if `D` and every read
 determines `X`: `X_L` from the entry `−X_L D` at the readout, and `X_ℓ`, `ℓ < L`, from the entry
 `−X_ℓ W_read^{ℓ+1}` at the read of the next block.
 
-Not stated: the form with the readout for the symmetries inside blocks; the statement on the
-group ("act locally freely").
+The form with the readout for the symmetries inside blocks is in
+`Dimension/UpperBoundReadoutInside.lean`; the statements on the group ("only the identity fixes
+`θ`") are in `Symmetry/LocallyFreeEmbedding.lean` and `Symmetry/LocallyFreeReadout.lean`.
 -/
 
 namespace Skips

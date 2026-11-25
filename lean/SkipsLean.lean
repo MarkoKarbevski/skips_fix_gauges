@@ -332,3 +332,9 @@ import SkipsLean.Residual.ExactReductionWrites
 import SkipsLean.OneBlock.GatedUnitsNoSymmetricPart
 import SkipsLean.OneBlock.LearnedSkipNarrowGated
 import SkipsLean.OneBlock.LearnedSkipTriangularNarrow
+import SkipsLean.Basic.EigenvectorsGeneralPosition
+import SkipsLean.Dimension.RescaleActionHomogeneous
+import SkipsLean.Dimension.UpperBoundReadoutInside
+import SkipsLean.Symmetry.LocallyFreeEmbedding
+import SkipsLean.Symmetry.LocallyFreeReadout
+import SkipsLean.Symmetry.LocallyFreeAttention
