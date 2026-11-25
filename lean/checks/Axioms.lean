@@ -1920,3 +1920,8 @@ import SkipsLean
 #print axioms Skips.exists_isOpen_unitInactive_relu_forall
 #print axioms Skips.exists_isOpen_unitInactive_reluSq_forall
 #print axioms Skips.exists_isOpen_gateInactive_reglu_forall
+#print axioms Skips.inputRank_skipless_le
+#print axioms Skips.le_inputRank_residual_mlp_zero
+#print axioms Skips.ae_le_inputRank_residual_mlp_zero
+#print axioms Skips.ae_forall_eval_residual_ne_skipless_of_card_lt
+#print axioms Skips.ae_forall_all_widths_eval_residual_ne_skipless_gelu
