@@ -28,8 +28,9 @@ equality ("The skipless network: equality") in the steps of the paper:
 * "Counting": Lemma B.2 (`keeps_products_iff_mem_range_cobDir`) gives the change of basis at
   `h_0`.
 
-Not stated: blocks wider than `d_model`, for which the paper's proof uses a resultant and two
-entries of `h_1` without a common factor at generic parameters.
+Blocks wider than `d_model`, for which the paper's proof uses a resultant and two entries of
+`h_1` without a common factor at generic parameters: `OneBlock/SkiplessReluWideRMSZero.lean`
+(ReLU) and `OneBlock/SkiplessReluSqWideRMSZero.lean` (ReLU²).
 
 The functional dimension: the value of Lean's `funDim`, and a finite batch of the paper's inputs
 (no normalized row vanishes, no hidden unit at its kink) with this rank; the two together are the
