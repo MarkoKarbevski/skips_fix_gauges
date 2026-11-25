@@ -366,6 +366,114 @@ theorem evalB_attention_oneBlock_row (S : Fin 1 → Matrix d d ℝ)
     Finset.sum_add_distrib, Matrix.mul_assoc]
   abel
 
+/-! ### Helpers: the row of the second token -/
+
+/-- Helper (copy of `one_sub_weight_ob2`): `1 - e^z / (e^z + k e^{z - w})
+= ½ - ½ tanh(½ (w - log k))` for `k > 0`. -/
+private theorem one_sub_weight_abi (z w k : ℝ) (hk : 0 < k) :
+    1 - Real.exp z / (Real.exp z + k * Real.exp (z - w))
+      = 1 / 2 - 1 / 2 * Real.tanh (1 / 2 * (w - Real.log k)) := by
+  obtain ⟨y, hy⟩ : ∃ y, y = 1 / 2 * (w - Real.log k) := ⟨_, rfl⟩
+  rw [← hy]
+  have hw : w = y + y + Real.log k := by rw [hy]; ring
+  have he : Real.exp w = Real.exp y * Real.exp y * k := by
+    rw [hw, Real.exp_add, Real.exp_add, Real.exp_log hk]
+  rw [Real.tanh_eq_sinh_div_cosh, Real.sinh_eq, Real.cosh_eq, Real.exp_sub, he, Real.exp_neg]
+  have h1 := Real.exp_pos z
+  have h2 := Real.exp_pos y
+  field_simp
+  ring
+
+/-- Helper (copy of `vecMul_rows_ob2`): a probability vector `p` against the rows `u` at `t₂`
+and `u - v` elsewhere gives `u - (1 - p_{t₂}) v`. -/
+private theorem vecMul_two_rows_abi {m n : Type*} [Fintype m] [DecidableEq m] (t₂ : m)
+    (p : m → ℝ) (hp : ∑ s, p s = 1) (X : Matrix m n ℝ) (u v : n → ℝ) (hX2 : X t₂ = u)
+    (hXs : ∀ s, s ≠ t₂ → X s = u - v) :
+    p ᵥ* X = u - (1 - p t₂) • v := by
+  have h1 : ∑ s ∈ Finset.univ.erase t₂, p s = 1 - p t₂ := by
+    rw [← hp, ← Finset.add_sum_erase _ _ (Finset.mem_univ t₂)]
+    ring
+  have h2 : ∑ s ∈ Finset.univ.erase t₂, p s • X s = ∑ s ∈ Finset.univ.erase t₂, p s • (u - v) :=
+    Finset.sum_congr rfl fun s hs => by rw [hXs s (Finset.ne_of_mem_erase hs)]
+  rw [Matrix.vecMul_eq_sum, ← Finset.add_sum_erase _ _ (Finset.mem_univ t₂), hX2, h2,
+    ← Finset.sum_smul, h1]
+  module
+
+/-- Helper (copy of `attnWeights_row_ob2`): the weights of row `t₂` when `t₂` sees itself with
+the score `z` and every other token with the score `z - w`: they sum to `1`, and the weight at
+`t₂` is `e^z / (e^z + k e^{z-w})`, `k` the number of tokens other than `t₂` that `t₂` sees. -/
+private theorem attnWeights_row_abi [DecidableEq T] (t₂ : T) (hs2 : sees t₂ t₂)
+    (Z : Matrix T T ℝ) (z w : ℝ) (hz : Z t₂ t₂ = z) (hzw : ∀ s, s ≠ t₂ → Z t₂ s = z - w) :
+    (∑ s, attnWeights sees Z t₂ s = 1) ∧ attnWeights sees Z t₂ t₂
+      = Real.exp z / (Real.exp z
+        + ((Finset.univ.filter fun s => sees t₂ s ∧ s ≠ t₂).card : ℝ) * Real.exp (z - w)) := by
+  obtain ⟨den, hden⟩ : ∃ den, den = ∑ s', if sees t₂ s' then Real.exp (Z t₂ s') else 0 :=
+    ⟨_, rfl⟩
+  have hpos : 0 < den := by
+    rw [hden]
+    refine Finset.sum_pos' (fun s _ => ?_) ⟨t₂, Finset.mem_univ _, ?_⟩
+    · split_ifs <;> positivity
+    · rw [ite_eq_left hs2]
+      exact Real.exp_pos _
+  -- the denominator is `e^z + k e^{z - w}`
+  have hden' : den = Real.exp z
+      + ((Finset.univ.filter fun s => sees t₂ s ∧ s ≠ t₂).card : ℝ) * Real.exp (z - w) := by
+    have hs : ∀ s, (if sees t₂ s then Real.exp (Z t₂ s) else 0)
+        = (if s = t₂ then Real.exp z else 0)
+          + (if sees t₂ s ∧ s ≠ t₂ then Real.exp (z - w) else 0) := by
+      intro s
+      by_cases h : s = t₂
+      · subst h
+        simp [hs2, hz]
+      · by_cases hst : sees t₂ s <;> simp [h, hst, hzw s h]
+    rw [hden, Finset.sum_congr rfl fun s _ => hs s, Finset.sum_add_distrib, Finset.sum_ite_eq',
+      ← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul, ite_eq_left (Finset.mem_univ t₂)]
+  have hP : ∀ s, attnWeights sees Z t₂ s
+      = (if sees t₂ s then Real.exp (Z t₂ s) else 0) / den := by
+    intro s
+    simp only [attnWeights, Matrix.of_apply, ← hden]
+    split_ifs <;> simp
+  refine ⟨?_, ?_⟩
+  · rw [Finset.sum_congr rfl fun s _ => hP s, ← Finset.sum_div, ← hden, div_self hpos.ne']
+  · rw [hP, ite_eq_left hs2, hz, hden']
+
+/-- Helper: row `t₂` of `P_i(x) x`, with the scores `x B xᵀ + 1 (x βᵀ)ᵀ`, at the input with the
+row `u` at `t₂` and `u - v` elsewhere is
+`u - (½ - ½ tanh(½ (u B v^⊤ + β v^⊤ - log k))) v`. -/
+private theorem row_two_tokens_abi [DecidableEq T] (t₁ t₂ : T) (h12 : t₁ ≠ t₂)
+    (hs2 : sees t₂ t₂) (hs1 : sees t₂ t₁) (B : Matrix dIn dIn ℝ) (β u v : dIn → ℝ) :
+    (attnWeights sees ((Matrix.of fun t => if t = t₂ then u else u - v : Matrix T dIn ℝ) * B
+        * (Matrix.of fun t => if t = t₂ then u else u - v : Matrix T dIn ℝ)ᵀ
+        + Matrix.of fun _ s =>
+          ((Matrix.of fun t => if t = t₂ then u else u - v : Matrix T dIn ℝ) *ᵥ β) s)
+      * (Matrix.of fun t => if t = t₂ then u else u - v : Matrix T dIn ℝ)) t₂
+      = u - ((1 / 2 : ℝ) - (1 / 2 : ℝ) * Real.tanh ((1 / 2) * (u ⬝ᵥ (B *ᵥ v) + β ⬝ᵥ v
+          - Real.log ((Finset.univ.filter fun s => sees t₂ s ∧ s ≠ t₂).card : ℝ)))) • v := by
+  obtain ⟨X, hX⟩ : ∃ X : Matrix T dIn ℝ, X = Matrix.of fun t => if t = t₂ then u else u - v :=
+    ⟨_, rfl⟩
+  rw [← hX]
+  have hX2 : X t₂ = u := by
+    rw [hX]
+    exact ite_eq_left rfl
+  have hXs : ∀ s, s ≠ t₂ → X s = u - v := fun s hs => by
+    rw [hX]
+    exact ite_eq_right hs
+  -- the scores of row `t₂`: `u B X_sᵀ + X_s βᵀ`
+  have hZ : ∀ s, (X * B * Xᵀ + Matrix.of fun _ s => (X *ᵥ β) s : Matrix T T ℝ) t₂ s
+      = u ⬝ᵥ (B *ᵥ X s) + X s ⬝ᵥ β := by
+    intro s
+    rw [Matrix.add_apply, Matrix.of_apply, Matrix.mul_mul_apply, Matrix.transpose_transpose, hX2]
+    rfl
+  have hk : 0 < ((Finset.univ.filter fun s => sees t₂ s ∧ s ≠ t₂).card : ℝ) :=
+    Nat.cast_pos.2 (Finset.card_pos.2 ⟨t₁, Finset.mem_filter.2 ⟨Finset.mem_univ _, hs1, h12⟩⟩)
+  obtain ⟨h1, h2⟩ := attnWeights_row_abi t₂ hs2 (X * B * Xᵀ + Matrix.of fun _ s => (X *ᵥ β) s)
+    (u ⬝ᵥ (B *ᵥ u) + u ⬝ᵥ β) (u ⬝ᵥ (B *ᵥ v) + β ⬝ᵥ v) (by rw [hZ, hX2])
+    (fun s hs => by
+      rw [hZ, hXs s hs, Matrix.mulVec_sub, dotProduct_sub, sub_dotProduct, dotProduct_comm v β]
+      ring)
+  rw [Matrix.mul_apply_eq_vecMul, vecMul_two_rows_abi t₂ _ h1 X u v hX2 hXs, h2,
+    one_sub_weight_abi _ _ _ hk]
+
 /-- **Equation (16) with biases:** let token `t₂` see itself and another token `t₁`, and let `k`
 be the number of tokens other than `t₂` that `t₂` sees. At the input with the row `u` at `t₂`
 and the row `u − v` at every other token, the output at `t₂` is
@@ -382,7 +490,26 @@ theorem evalB_attention_two_tokens [DecidableEq T] (S : Fin 1 → Matrix d d ℝ
             - Real.log ((Finset.univ.filter fun s => sees t₂ s ∧ s ≠ t₂).card : ℝ))))
           • (v ᵥ* attnValue p.1 i)
         + attnConst S p := by
-  sorry
+  -- the reduction, at row `t₂`: head `i` gives `(u - (½ - ½ tanh(…)) v) C_i`
+  have hi : ∀ i, (attnWeights sees ((Matrix.of fun t => if t = t₂ then u else u - v
+        : Matrix T dIn ℝ) * attnScore p.1 i
+        * (Matrix.of fun t => if t = t₂ then u else u - v : Matrix T dIn ℝ)ᵀ
+        + Matrix.of fun _ s => ((Matrix.of fun t => if t = t₂ then u else u - v
+          : Matrix T dIn ℝ) *ᵥ attnScoreBias p i) s)
+      * (Matrix.of fun t => if t = t₂ then u else u - v : Matrix T dIn ℝ) * attnValue p.1 i) t₂
+      = (u - ((1 / 2 : ℝ) - (1 / 2 : ℝ) * Real.tanh ((1 / 2) * (u ⬝ᵥ (attnScore p.1 i *ᵥ v)
+          + attnScoreBias p i ⬝ᵥ v
+          - Real.log ((Finset.univ.filter fun s => sees t₂ s ∧ s ≠ t₂).card : ℝ)))) • v)
+        ᵥ* attnValue p.1 i := fun i => by
+    rw [Matrix.mul_apply_eq_vecMul, row_two_tokens_abi t₁ t₂ h12 hs2 hs1]
+  have hu : (Matrix.of fun t => if t = t₂ then u else u - v : Matrix T dIn ℝ) t₂ = u :=
+    ite_eq_left rfl
+  rw [evalB_attention_oneBlock_row S p _ t₂ ⟨t₂, hs2⟩, row_add_abi, Matrix.mul_apply_eq_vecMul,
+    hu, row_sum_abi, Finset.sum_congr rfl fun i _ => hi i]
+  -- collect the terms
+  simp only [Matrix.vecMul_add, Matrix.vecMul_sum, Matrix.sub_vecMul, Matrix.smul_vecMul,
+    sub_smul, Finset.sum_sub_distrib, Finset.smul_sum]
+  abel
 
 /-- **Proof of Theorem B.1 (i) for attention blocks with biases, Step 2, for any stream matrix:**
 let token `t₂` see itself and another token `t₁`, and let some `v` have the columns `B_i v^⊤`
