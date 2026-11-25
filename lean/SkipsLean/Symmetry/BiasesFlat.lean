@@ -74,6 +74,141 @@ def translateAtDir (θ : Params A dIn dOut) (g : Fin (L + 1) → d → ℝ) : Bi
   write ℓ := g ℓ.succ
   D := -(g (Fin.last L) ᵥ* θ.D)
 
+/-! ### Helpers: the curves of the changes of basis (copies of `Dimension/UpperBound.lean`) -/
+
+/-- Helper: the change of basis `exp (τ X)`, an element of `GL d ℝ` with inverse `exp (-τ X)`. -/
+private noncomputable def expGL_bfl (X : Matrix d d ℝ) (τ : ℝ) : GL d ℝ where
+  val := NormedSpace.exp (τ • X)
+  inv := NormedSpace.exp (τ • (-X))
+  val_inv := by
+    rw [← Matrix.exp_add_of_commute _ _ (((Commute.refl X).neg_right.smul_left τ).smul_right τ),
+      smul_neg, add_neg_cancel, NormedSpace.exp_zero]
+  inv_val := by
+    rw [← Matrix.exp_add_of_commute _ _ (((Commute.refl X).neg_left.smul_left τ).smul_right τ),
+      smul_neg, neg_add_cancel, NormedSpace.exp_zero]
+
+/-- Helper: at `τ = 0` the change of basis `exp (τ X)` is the identity. -/
+private theorem expGL_zero_bfl (X : Matrix d d ℝ) : expGL_bfl X 0 = 1 :=
+  Units.ext (by simp [expGL_bfl])
+
+/-- Helper: `τ ↦ exp (τ X)` has derivative `X` at `0` (computed with the operator norm). -/
+private theorem hasDerivAt_exp_smul_bfl (X : Matrix d d ℝ) :
+    HasDerivAt (fun τ : ℝ => NormedSpace.exp (τ • X)) X 0 := by
+  have h := open scoped Matrix.Norms.Operator in hasDerivAt_exp_smul_const (𝕂 := ℝ) X (0 : ℝ)
+  rw [zero_smul, NormedSpace.exp_zero, one_mul] at h
+  exact h
+
+/-- Helper: multiplying on the left by a fixed matrix keeps a derivative. -/
+private theorem hasDerivAt_mul_left_bfl {m n k : Type*} [Fintype m] [Fintype n] [Fintype k]
+    (M : Matrix m n ℝ) {f : ℝ → Matrix n k ℝ} {f' : Matrix n k ℝ} {t : ℝ}
+    (hf : HasDerivAt f f' t) : HasDerivAt (fun τ => M * f τ) (M * f') t := by
+  let φ : Matrix n k ℝ →ₗ[ℝ] Matrix m k ℝ :=
+    { toFun := (M * ·), map_add' := Matrix.mul_add M,
+      map_smul' := fun c N => Matrix.mul_smul M c N }
+  exact (LinearMap.toContinuousLinearMap φ).hasFDerivAt.comp_hasDerivAt t hf
+
+/-- Helper: multiplying on the right by a fixed matrix keeps a derivative. -/
+private theorem hasDerivAt_mul_right_bfl {m n k : Type*} [Fintype m] [Fintype n] [Fintype k]
+    (M : Matrix n k ℝ) {f : ℝ → Matrix m n ℝ} {f' : Matrix m n ℝ} {t : ℝ}
+    (hf : HasDerivAt f f' t) : HasDerivAt (fun τ => f τ * M) (f' * M) t := by
+  let φ : Matrix m n ℝ →ₗ[ℝ] Matrix m k ℝ :=
+    { toFun := (· * M), map_add' := fun P Q => Matrix.add_mul P Q M,
+      map_smul' := fun c N => Matrix.smul_mul c N M }
+  exact (LinearMap.toContinuousLinearMap φ).hasFDerivAt.comp_hasDerivAt t hf
+
+/-- Helper: a fixed row times a curve of matrices keeps a derivative. -/
+private theorem hasDerivAt_vecMul_bfl {m n : Type*} [Fintype m] [Fintype n] (v : m → ℝ)
+    {f : ℝ → Matrix m n ℝ} {f' : Matrix m n ℝ} {t : ℝ}
+    (hf : HasDerivAt f f' t) : HasDerivAt (fun τ => v ᵥ* f τ) (v ᵥ* f') t := by
+  let φ : Matrix m n ℝ →ₗ[ℝ] (n → ℝ) :=
+    { toFun := (v ᵥ* ·), map_add' := fun P Q => Matrix.vecMul_add P Q v,
+      map_smul' := fun c N => Matrix.vecMul_smul v c N }
+  exact (LinearMap.toContinuousLinearMap φ).hasFDerivAt.comp_hasDerivAt t hf
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the curve `τ ↦ θ.cob (exp (τ X))` passes through `θ` at `τ = 0`. -/
+private theorem cob_expGL_zero_bfl (θ : Params A dIn dOut) (X : Fin (L + 1) → Matrix d d ℝ) :
+    θ.cob (fun ℓ => expGL_bfl (X ℓ) 0) (fun ℓ => expGL_bfl (X ℓ) 0) = θ := by
+  simp only [expGL_zero_bfl]
+  apply Params.ext' <;> intros <;> simp [Params.cob]
+
+omit [Fintype T] in
+/-- Helper: the curve `τ ↦ θ.cob (exp (τ X))` has velocity `cobDir θ X` at `τ = 0`, computed
+componentwise through `Params.linearEquivProd`. -/
+private theorem hasDerivAt_cob_expGL_bfl (θ : Params A dIn dOut)
+    (X : Fin (L + 1) → Matrix d d ℝ) :
+    HasDerivAt (fun τ : ℝ => θ.cob (fun ℓ => expGL_bfl (X ℓ) τ) (fun ℓ => expGL_bfl (X ℓ) τ))
+      (cobDir θ X) 0 := by
+  -- `E exp(τ X_0)`, `exp(-τ X_{ℓ-1}) W_read`, `W_write exp(τ X_ℓ)`, `exp(-τ X_L) D`
+  have hprod : HasDerivAt
+      (fun τ : ℝ => Params.linearEquivProd
+        (θ.cob (fun ℓ => expGL_bfl (X ℓ) τ) (fun ℓ => expGL_bfl (X ℓ) τ)))
+      (Params.linearEquivProd (cobDir θ X)) 0 := by
+    refine HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ ?_))
+    · exact hasDerivAt_mul_left_bfl θ.E (hasDerivAt_exp_smul_bfl (X 0))
+    · refine hasDerivAt_pi.2 fun ℓ => ?_
+      have h := hasDerivAt_mul_right_bfl (θ.read ℓ) (hasDerivAt_exp_smul_bfl (-X ℓ.castSucc))
+      rw [Matrix.neg_mul] at h
+      exact h
+    · refine hasDerivAt_pi.2 fun ℓ => ?_
+      exact hasDerivAt_mul_left_bfl (θ.write ℓ) (hasDerivAt_exp_smul_bfl (X ℓ.succ))
+    · have h := hasDerivAt_mul_right_bfl θ.D (hasDerivAt_exp_smul_bfl (-X (Fin.last L)))
+      rw [Matrix.neg_mul] at h
+      exact h
+  exact (LinearMap.toContinuousLinearMap
+    (Params.linearEquivProd (A := A) (dIn := dIn) (dOut := dOut)).symm.toLinearMap
+      ).hasFDerivAt.comp_hasDerivAt 0 hprod
+
+omit [Fintype T] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the biases after the changes of basis `exp (0 X)` are the biases. -/
+private theorem biasesCob_expGL_zero_bfl (b : Biases A dOut) (X : Fin (L + 1) → Matrix d d ℝ) :
+    b.cob (fun ℓ => expGL_bfl (X ℓ) 0) = b := by
+  simp only [expGL_zero_bfl]
+  apply Biases.ext'
+  · simp only [Biases.cob, Units.val_one, Matrix.vecMul_one]
+  · intro ℓ; rfl
+  · intro ℓ; simp only [Biases.cob, Units.val_one, Matrix.vecMul_one]
+  · rfl
+
+omit [Fintype T] [Fintype dIn] in
+/-- Helper: the curve `τ ↦ b.cob (exp (τ X))` of the biases has velocity `(b_E X_0, 0,
+b_write^ℓ X_ℓ, 0)` at `τ = 0`, computed componentwise through `Biases.linearEquivProd`. -/
+private theorem hasDerivAt_biasesCob_bfl (b : Biases A dOut) (X : Fin (L + 1) → Matrix d d ℝ) :
+    HasDerivAt (fun τ : ℝ => b.cob (fun ℓ => expGL_bfl (X ℓ) τ))
+      ({ E := b.E ᵥ* X 0
+         read := fun _ => 0
+         write := fun ℓ => b.write ℓ ᵥ* X ℓ.succ
+         D := 0 } : Biases A dOut) 0 := by
+  -- `b_E exp(τ X_0)`, `b_read`, `b_write exp(τ X_ℓ)`, `b_D`
+  have hprod : HasDerivAt
+      (fun τ : ℝ => Biases.linearEquivProd (b.cob (fun ℓ => expGL_bfl (X ℓ) τ)))
+      (Biases.linearEquivProd (A := A) (dOut := dOut)
+        { E := b.E ᵥ* X 0
+          read := fun _ => 0
+          write := fun ℓ => b.write ℓ ᵥ* X ℓ.succ
+          D := 0 }) 0 := by
+    refine HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ ?_))
+    · exact hasDerivAt_vecMul_bfl b.E (hasDerivAt_exp_smul_bfl (X 0))
+    · exact hasDerivAt_const (0 : ℝ) b.read
+    · refine hasDerivAt_pi.2 fun ℓ => ?_
+      exact hasDerivAt_vecMul_bfl (b.write ℓ) (hasDerivAt_exp_smul_bfl (X ℓ.succ))
+    · exact hasDerivAt_const (0 : ℝ) b.D
+  exact (LinearMap.toContinuousLinearMap
+    (Biases.linearEquivProd (A := A) (dOut := dOut)).symm.toLinearMap
+      ).hasFDerivAt.comp_hasDerivAt 0 hprod
+
+/-- Helper: without skips the stream matrices stay `0` under the changes of basis. -/
+private theorem cobSkip_zero_bfl (G : Fin (L + 1) → GL d ℝ) :
+    cobSkip (0 : Fin L → Matrix d d ℝ) G = 0 := by
+  funext ℓ
+  simp only [cobSkip, Pi.zero_apply, Matrix.mul_zero, Matrix.zero_mul]
+
+/-- Helper: with identity skips and one `G` at all hidden states the stream matrices stay `1`. -/
+private theorem cobSkip_one_bfl (G : GL d ℝ) :
+    cobSkip (1 : Fin L → Matrix d d ℝ) (fun _ => G) = 1 := by
+  funext ℓ
+  simp only [cobSkip, Pi.one_apply, Matrix.mul_one, Units.inv_mul]
+
 variable (p : ParamsB A dIn dOut)
 
 /-- The direction of the changes of basis of the hidden states of a skipless network with biases,
@@ -81,28 +216,254 @@ without normalization, is flat. -/
 theorem cobDirB_mem_flatB_skipless (hA : A.χ = id) (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ))
     (X : Fin (L + 1) → Matrix d d ℝ) :
     cobDirB p X ∈ flatB A 0 p := by
-  sorry
+  -- `(θ, b) ↦ F_{θ,b}(x)` is differentiable
+  have hdiff : ∀ x, DifferentiableAt ℝ (fun q : ParamsB A dIn dOut => evalB A 0 q.1 q.2 x) p :=
+    fun x => (differentiable_evalB hf (by rw [hA]; exact differentiable_id) x).differentiableAt
+  -- the curve `τ ↦ (θ.cob (exp (τ X)), b.cob (exp (τ X)))` has velocity `cobDirB p X` at `0`
+  have hγ : HasDerivAt (fun τ : ℝ => ((p.1.cob (fun ℓ => expGL_bfl (X ℓ) τ)
+      (fun ℓ => expGL_bfl (X ℓ) τ), p.2.cob (fun ℓ => expGL_bfl (X ℓ) τ)) : ParamsB A dIn dOut))
+      (cobDirB p X) 0 :=
+    (hasDerivAt_cob_expGL_bfl p.1 X).prodMk (hasDerivAt_biasesCob_bfl p.2 X)
+  refine mem_flatB_of_hasDerivAt p hdiff _ _ hγ
+    (Prod.ext (cob_expGL_zero_bfl p.1 X) (biasesCob_expGL_zero_bfl p.2 X))
+    (Filter.Eventually.of_forall fun τ x => ?_)
+  -- the changes of basis with biases preserve the function (`evalB_cob`, `K = G`, `0` skips)
+  have h := evalB_cob 0 p.1 p.2 (fun ℓ => expGL_bfl (X ℓ) τ) (fun ℓ => expGL_bfl (X ℓ) τ) x
+    (fun _ _ => by simp only [hA, id_eq])
+  rw [cobSkip_zero_bfl] at h
+  exact h
 
 /-- The direction of one change of basis of all hidden states of a residual network with biases,
 without normalization, is flat. -/
 theorem cobDirB_const_mem_flatB_residual (hA : A.χ = id) (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ))
     (X : Matrix d d ℝ) :
     cobDirB p (fun _ => X) ∈ flatB A 1 p := by
-  sorry
+  have hdiff : ∀ x, DifferentiableAt ℝ (fun q : ParamsB A dIn dOut => evalB A 1 q.1 q.2 x) p :=
+    fun x => (differentiable_evalB hf (by rw [hA]; exact differentiable_id) x).differentiableAt
+  -- the same curve with the same `exp (τ X)` at every hidden state
+  have hγ : HasDerivAt (fun τ : ℝ => ((p.1.cob (fun _ => expGL_bfl X τ)
+      (fun _ => expGL_bfl X τ), p.2.cob (fun _ => expGL_bfl X τ)) : ParamsB A dIn dOut))
+      (cobDirB p (fun _ => X)) 0 :=
+    (hasDerivAt_cob_expGL_bfl p.1 (fun _ => X)).prodMk (hasDerivAt_biasesCob_bfl p.2 (fun _ => X))
+  refine mem_flatB_of_hasDerivAt p hdiff _ _ hγ
+    (Prod.ext (cob_expGL_zero_bfl p.1 (fun _ => X)) (biasesCob_expGL_zero_bfl p.2 (fun _ => X)))
+    (Filter.Eventually.of_forall fun τ x => ?_)
+  -- with identity skips the stream matrices `G⁻¹ 1 G` are again `1`
+  have h := evalB_cob 1 p.1 p.2 (fun _ => expGL_bfl X τ) (fun _ => expGL_bfl X τ) x
+    (fun _ _ => by simp only [hA, id_eq])
+  rw [cobSkip_one_bfl] at h
+  exact h
+
+/-! ### Helpers: the translations along a line -/
+
+omit [Fintype T] in
+/-- Helper: the rows `c + g` at every token are the sum of the rows `c` and `g`. -/
+private theorem of_add_bfl {n : Type*} (c g : n → ℝ) :
+    (Matrix.of fun (_ : T) => c + g) = (Matrix.of fun _ => c) + Matrix.of fun _ => g := rfl
+
+omit [Fintype T] in
+/-- Helper: the row `g` added to `H` and `g W` subtracted from the bias give the same
+pre-activation `H W + c`. -/
+private theorem shift_read_bfl {m n : Type*} [Fintype m] (H : Matrix T m ℝ) (g : m → ℝ)
+    (W : Matrix m n ℝ) (c : n → ℝ) :
+    (H + Matrix.of fun _ => g) * W + (Matrix.of fun _ => c + -(g ᵥ* W))
+      = H * W + Matrix.of fun _ => c := by
+  ext t j
+  simp only [Matrix.add_apply, Matrix.add_mul, Matrix.of_apply, Pi.add_apply, Pi.neg_apply,
+    Matrix.mul_apply, Matrix.vecMul, dotProduct]
+  ring
+
+/-- Helper: `∑_{k ≤ 0} g_k = g_0`. -/
+private theorem sum_Iic_zero_bfl {V : Type*} [AddCommMonoid V] (g : Fin (L + 1) → V) :
+    ∑ k ∈ Finset.Iic (0 : Fin (L + 1)), g k = g 0 := by
+  have hs : Finset.Iic (0 : Fin (L + 1)) = {0} := by
+    ext k
+    simp only [Finset.mem_Iic, Finset.mem_singleton, Fin.le_iff_val_le_val, Fin.ext_iff,
+      Fin.val_zero]
+    omega
+  rw [hs, Finset.sum_singleton]
+
+/-- Helper: `∑_{k ≤ ℓ+1} g_k = ∑_{k ≤ ℓ} g_k + g_{ℓ+1}`. -/
+private theorem sum_Iic_succ_bfl {V : Type*} [AddCommMonoid V] (g : Fin (L + 1) → V)
+    (ℓ : Fin L) :
+    ∑ k ∈ Finset.Iic ℓ.succ, g k = ∑ k ∈ Finset.Iic ℓ.castSucc, g k + g ℓ.succ := by
+  have hs : Finset.Iic ℓ.succ = insert ℓ.succ (Finset.Iic ℓ.castSucc) := by
+    ext k
+    simp only [Finset.mem_Iic, Finset.mem_insert, Fin.le_iff_val_le_val, Fin.ext_iff,
+      Fin.val_succ, Fin.val_castSucc]
+    omega
+  have hn : ℓ.succ ∉ Finset.Iic ℓ.castSucc := by
+    simp only [Finset.mem_Iic, not_le]
+    exact Fin.castSucc_lt_succ
+  rw [hs, Finset.sum_insert hn, add_comm]
+
+/-- Helper: `∑_{k ≤ L} g_k = ∑_k g_k`. -/
+private theorem sum_Iic_last_bfl {V : Type*} [AddCommMonoid V] (g : Fin (L + 1) → V) :
+    ∑ k ∈ Finset.Iic (Fin.last L), g k = ∑ k, g k := by
+  have hs : Finset.Iic (Fin.last L) = Finset.univ := by
+    ext k
+    simp only [Finset.mem_Iic, Finset.mem_univ, iff_true]
+    exact Fin.le_last k
+  rw [hs]
+
+omit [Fintype T] [Fintype dOut] in
+/-- Helper: in a residual network without normalization, the biases moved by `translateDir θ g`
+shift the hidden state `h_m` by `g_0 + ⋯ + g_m`. -/
+private theorem hiddenB_add_translateDir_bfl (hA : A.χ = id) (θ : Params A dIn dOut)
+    (b : Biases A dOut) (g : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) (m : Fin (L + 1)) :
+    hiddenB A 1 θ (b + translateDir θ g) x m
+      = hiddenB A 1 θ b x m + Matrix.of fun _ => ∑ k ∈ Finset.Iic m, g k := by
+  induction m using Fin.induction with
+  | zero =>
+    -- `h'_0 = x E + b_E + g_0`
+    rw [hiddenB_zero, hiddenB_zero, sum_Iic_zero_bfl]
+    show x * θ.E + (Matrix.of fun _ => b.E + g 0) = _
+    rw [of_add_bfl, add_assoc]
+  | succ ℓ ih =>
+    -- the read removes the shift, the skip carries it, the write bias adds `g_{ℓ+1}`
+    rw [hiddenB_succ, hiddenB_succ, ih, hA, sum_Iic_succ_bfl g ℓ]
+    have hread : (hiddenB A 1 θ b x ℓ.castSucc
+          + Matrix.of fun _ => ∑ k ∈ Finset.Iic ℓ.castSucc, g k) * θ.read ℓ
+        + (Matrix.of fun _ => (b + translateDir θ g).read ℓ)
+        = hiddenB A 1 θ b x ℓ.castSucc * θ.read ℓ + Matrix.of fun _ => b.read ℓ :=
+      shift_read_bfl _ _ _ _
+    simp only [id_eq, hread, Pi.one_apply, Matrix.mul_one]
+    show _ + (_ + Matrix.of fun _ => b.write ℓ + g ℓ.succ) = _
+    rw [of_add_bfl, of_add_bfl]
+    abel
+
+omit [Fintype T] [Fintype dOut] in
+/-- Helper: in a residual network without normalization, the biases moved by `translateDir θ g`
+give the same function. -/
+private theorem evalB_add_translateDir_bfl (hA : A.χ = id) (θ : Params A dIn dOut)
+    (b : Biases A dOut) (g : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) :
+    evalB A 1 θ (b + translateDir θ g) x = evalB A 1 θ b x := by
+  -- `(h_L + ∑ g) D + b_D − (∑ g) D = h_L D + b_D`
+  unfold evalB
+  rw [hiddenB_add_translateDir_bfl hA θ b g x (Fin.last L), hA, sum_Iic_last_bfl]
+  show id (_ + _) * θ.D + (Matrix.of fun _ => b.D + -((∑ k, g k) ᵥ* θ.D)) = _
+  simp only [id_eq, shift_read_bfl]
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `translateDir θ` is homogeneous. -/
+private theorem smul_translateDir_bfl (θ : Params A dIn dOut) (g : Fin (L + 1) → d → ℝ) (c : ℝ) :
+    c • translateDir θ g = translateDir θ (c • g) := by
+  apply Biases.ext'
+  · rfl
+  · intro ℓ
+    simp only [Biases.smul_read, translateDir, Pi.smul_apply, ← Finset.smul_sum,
+      Matrix.smul_vecMul, smul_neg]
+  · intro ℓ; rfl
+  · simp only [Biases.smul_D, translateDir, Pi.smul_apply, ← Finset.smul_sum,
+      Matrix.smul_vecMul, smul_neg]
 
 /-- **Lemma A.8 of the skips paper, in infinitesimal form:** in a residual network with biases
 and without normalization, the direction of the translations is flat. -/
 theorem translateDir_mem_flatB (hA : A.χ = id) (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ))
     (g : Fin (L + 1) → d → ℝ) :
     ((0, translateDir p.1 g) : ParamsB A dIn dOut) ∈ flatB A 1 p := by
-  sorry
+  have hdiff : ∀ x, DifferentiableAt ℝ (fun q : ParamsB A dIn dOut => evalB A 1 q.1 q.2 x) p :=
+    fun x => (differentiable_evalB hf (by rw [hA]; exact differentiable_id) x).differentiableAt
+  -- the line `τ ↦ (θ, b + τ translateDir θ g)`
+  have hb := (hasDerivAt_id' (x := (0 : ℝ))).smul_const (translateDir p.1 g) |>.const_add p.2
+  rw [one_smul] at hb
+  have hγ : HasDerivAt (fun τ : ℝ => ((p.1, p.2 + τ • translateDir p.1 g) : ParamsB A dIn dOut))
+      ((0, translateDir p.1 g) : ParamsB A dIn dOut) 0 :=
+    (hasDerivAt_const (0 : ℝ) p.1).prodMk hb
+  refine mem_flatB_of_hasDerivAt p hdiff _ _ hγ ?_ (Filter.Eventually.of_forall fun τ x => ?_)
+  · show ((p.1, p.2 + (0 : ℝ) • translateDir p.1 g) : ParamsB A dIn dOut) = p
+    rw [zero_smul, add_zero]
+  · -- along the line, the biases are moved by `translateDir θ (τ g)`
+    show evalB A 1 p.1 (p.2 + τ • translateDir p.1 g) x = _
+    rw [smul_translateDir_bfl]
+    exact evalB_add_translateDir_bfl hA p.1 p.2 (τ • g) x
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: in a skipless network without normalization, the biases moved by
+`translateAtDir θ g` shift the hidden state `h_m` by `g_m`. -/
+private theorem hiddenB_add_translateAtDir_bfl (hA : A.χ = id) (θ : Params A dIn dOut)
+    (b : Biases A dOut) (g : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) (m : Fin (L + 1)) :
+    hiddenB A 0 θ (b + translateAtDir θ g) x m
+      = hiddenB A 0 θ b x m + Matrix.of fun _ => g m := by
+  induction m using Fin.induction with
+  | zero =>
+    -- `h'_0 = x E + b_E + g_0`
+    rw [hiddenB_zero, hiddenB_zero]
+    show x * θ.E + (Matrix.of fun _ => b.E + g 0) = _
+    rw [of_add_bfl, add_assoc]
+  | succ ℓ ih =>
+    -- no skip: the read removes the shift of `h_ℓ`, the write bias adds `g_{ℓ+1}`
+    rw [hiddenB_succ, hiddenB_succ, ih, hA]
+    have hread : (hiddenB A 0 θ b x ℓ.castSucc + Matrix.of fun _ => g ℓ.castSucc) * θ.read ℓ
+        + (Matrix.of fun _ => (b + translateAtDir θ g).read ℓ)
+        = hiddenB A 0 θ b x ℓ.castSucc * θ.read ℓ + Matrix.of fun _ => b.read ℓ :=
+      shift_read_bfl _ _ _ _
+    simp only [id_eq, hread, Pi.zero_apply, Matrix.mul_zero, zero_add]
+    show _ + (Matrix.of fun _ => b.write ℓ + g ℓ.succ) = _
+    rw [of_add_bfl, add_assoc]
+
+omit [Fintype T] [DecidableEq d] [Fintype dOut] in
+/-- Helper: in a skipless network without normalization, the biases moved by
+`translateAtDir θ g` give the same function. -/
+private theorem evalB_add_translateAtDir_bfl (hA : A.χ = id) (θ : Params A dIn dOut)
+    (b : Biases A dOut) (g : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) :
+    evalB A 0 θ (b + translateAtDir θ g) x = evalB A 0 θ b x := by
+  -- `(h_L + g_L) D + b_D − g_L D = h_L D + b_D`
+  unfold evalB
+  rw [hiddenB_add_translateAtDir_bfl hA θ b g x (Fin.last L), hA]
+  show id (_ + _) * θ.D + (Matrix.of fun _ => b.D + -(g (Fin.last L) ᵥ* θ.D)) = _
+  simp only [id_eq, shift_read_bfl]
+
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: `translateAtDir θ` is homogeneous. -/
+private theorem smul_translateAtDir_bfl (θ : Params A dIn dOut) (g : Fin (L + 1) → d → ℝ)
+    (c : ℝ) : c • translateAtDir θ g = translateAtDir θ (c • g) := by
+  apply Biases.ext'
+  · rfl
+  · intro ℓ
+    simp only [Biases.smul_read, translateAtDir, Pi.smul_apply, Matrix.smul_vecMul, smul_neg]
+  · intro ℓ; rfl
+  · simp only [Biases.smul_D, translateAtDir, Pi.smul_apply, Matrix.smul_vecMul, smul_neg]
 
 /-- In a skipless network with biases and without normalization, the direction of the
 translations of the hidden states is flat. -/
 theorem translateAtDir_mem_flatB (hA : A.χ = id) (hf : ∀ ℓ, Differentiable ℝ (A.f ℓ))
     (g : Fin (L + 1) → d → ℝ) :
     ((0, translateAtDir p.1 g) : ParamsB A dIn dOut) ∈ flatB A 0 p := by
-  sorry
+  have hdiff : ∀ x, DifferentiableAt ℝ (fun q : ParamsB A dIn dOut => evalB A 0 q.1 q.2 x) p :=
+    fun x => (differentiable_evalB hf (by rw [hA]; exact differentiable_id) x).differentiableAt
+  -- the line `τ ↦ (θ, b + τ translateAtDir θ g)`
+  have hb := (hasDerivAt_id' (x := (0 : ℝ))).smul_const (translateAtDir p.1 g) |>.const_add p.2
+  rw [one_smul] at hb
+  have hγ : HasDerivAt
+      (fun τ : ℝ => ((p.1, p.2 + τ • translateAtDir p.1 g) : ParamsB A dIn dOut))
+      ((0, translateAtDir p.1 g) : ParamsB A dIn dOut) 0 :=
+    (hasDerivAt_const (0 : ℝ) p.1).prodMk hb
+  refine mem_flatB_of_hasDerivAt p hdiff _ _ hγ ?_ (Filter.Eventually.of_forall fun τ x => ?_)
+  · show ((p.1, p.2 + (0 : ℝ) • translateAtDir p.1 g) : ParamsB A dIn dOut) = p
+    rw [zero_smul, add_zero]
+  · show evalB A 0 p.1 (p.2 + τ • translateAtDir p.1 g) x = _
+    rw [smul_translateAtDir_bfl]
+    exact evalB_add_translateAtDir_bfl hA p.1 p.2 (τ • g) x
+
+/-- Helper: a matrix `M` of rank equal to its number of columns cancels on the left
+(a copy of the private `mul_left_cancel_of_rank` of `Dimension/UpperBound.lean`). -/
+private theorem mul_left_cancel_of_rank_bfl {m n k : Type*} [Fintype n] (M : Matrix m n ℝ)
+    (hM : M.rank = Fintype.card n) {X Y : Matrix n k ℝ} (h : M * X = M * Y) : X = Y := by
+  -- `v ↦ M v` is injective: `rank M + dim ker M = card n`
+  have hinj : Function.Injective M.mulVecLin := by
+    rw [← LinearMap.ker_eq_bot, ← Submodule.finrank_eq_zero]
+    have := LinearMap.finrank_range_add_finrank_ker M.mulVecLin
+    rw [Module.finrank_fintype_fun_eq_card] at this
+    rw [Matrix.rank] at hM
+    omega
+  -- compare `X` and `Y` column by column
+  ext i j
+  have hcol : M.mulVecLin (fun l => X l j) = M.mulVecLin (fun l => Y l j) := by
+    funext q
+    have := congrFun (congrFun h q) j
+    simpa [Matrix.mul_apply, Matrix.mulVec, dotProduct] using this
+  exact congrFun (hinj hcol) i
 
 /-- **Proof of Lemma A.8, "These `L + 1` translations move the biases in independent
 directions", with the change of basis, for a residual network:** if `E` has rank `d`, the
@@ -111,7 +472,26 @@ direction of one change of basis `X` of all hidden states together with the tran
 theorem cobDirB_const_add_translateDir_injective (hE : p.1.E.rank = Fintype.card d) :
     Function.Injective (fun Xg : Matrix d d ℝ × (Fin (L + 1) → d → ℝ) =>
       cobDirB p (fun _ => Xg.1) + ((0, translateDir p.1 Xg.2) : ParamsB A dIn dOut)) := by
-  sorry
+  rintro ⟨X, g⟩ ⟨X', g'⟩ h
+  -- the embedding: `E X = E X'`, and `E` has rank `d`
+  have h1 : p.1.E * X + 0 = p.1.E * X' + 0 := by
+    have h0 := congrArg (fun q : ParamsB A dIn dOut => q.1.E) h
+    exact h0
+  rw [add_zero, add_zero] at h1
+  obtain rfl : X = X' := mul_left_cancel_of_rank_bfl p.1.E hE h1
+  -- the embedding bias gives `g_0`, the write bias of block `ℓ` gives `g_{ℓ+1}`
+  have h2 : p.2.E ᵥ* X + g 0 = p.2.E ᵥ* X + g' 0 := by
+    have h0 := congrArg (fun q : ParamsB A dIn dOut => q.2.E) h
+    exact h0
+  have h3 : ∀ ℓ, p.2.write ℓ ᵥ* X + g ℓ.succ = p.2.write ℓ ᵥ* X + g' ℓ.succ := fun ℓ => by
+    have h0 := congrArg (fun q : ParamsB A dIn dOut => q.2.write ℓ) h
+    exact h0
+  have hg : g = g' := by
+    funext k
+    induction k using Fin.cases with
+    | zero => exact add_left_cancel h2
+    | succ ℓ => exact add_left_cancel (h3 ℓ)
+  rw [hg]
 
 /-- **The same for a skipless network:** if `E` and every write have rank `d`, the direction of
 the changes of basis `X_0, …, X_L` together with the translations `g_0, …, g_L` of the hidden
@@ -121,7 +501,66 @@ theorem cobDirB_add_translateAtDir_injective (hE : p.1.E.rank = Fintype.card d)
     Function.Injective
       (fun Xg : (Fin (L + 1) → Matrix d d ℝ) × (Fin (L + 1) → d → ℝ) =>
         cobDirB p Xg.1 + ((0, translateAtDir p.1 Xg.2) : ParamsB A dIn dOut)) := by
-  sorry
+  rintro ⟨X, g⟩ ⟨X', g'⟩ h
+  -- the weights: `cobDir θ X = cobDir θ X'` (Lemma B.1)
+  have h1 : cobDir p.1 X + 0 = cobDir p.1 X' + 0 := by
+    have h0 := congrArg Prod.fst h
+    exact h0
+  rw [add_zero, add_zero] at h1
+  obtain rfl : X = X' := cobDir_injective p.1 hE hw h1
+  -- the embedding bias gives `g_0`, the write bias of block `ℓ` gives `g_{ℓ+1}`
+  have h2 : p.2.E ᵥ* X 0 + g 0 = p.2.E ᵥ* X 0 + g' 0 := by
+    have h0 := congrArg (fun q : ParamsB A dIn dOut => q.2.E) h
+    exact h0
+  have h3 : ∀ ℓ, p.2.write ℓ ᵥ* X ℓ.succ + g ℓ.succ = p.2.write ℓ ᵥ* X ℓ.succ + g' ℓ.succ :=
+    fun ℓ => by
+      have h0 := congrArg (fun q : ParamsB A dIn dOut => q.2.write ℓ) h
+      exact h0
+  have hg : g = g' := by
+    funext k
+    induction k using Fin.cases with
+    | zero => exact add_left_cancel h2
+    | succ ℓ => exact add_left_cancel (h3 ℓ)
+  rw [hg]
+
+/-- Helper: `(X, g) ↦ cobDirB p (fun _ => X) + (0, translateDir θ g)` is linear. -/
+private noncomputable def cobTransLin_bfl :
+    (Matrix d d ℝ × (Fin (L + 1) → d → ℝ)) →ₗ[ℝ] ParamsB A dIn dOut where
+  toFun Xg := cobDirB p (fun _ => Xg.1) + ((0, translateDir p.1 Xg.2) : ParamsB A dIn dOut)
+  map_add' Xg Yg := by
+    refine Prod.ext (Params.ext' ?_ ?_ ?_ ?_) (Biases.ext' ?_ ?_ ?_ ?_) <;> (try intro ℓ) <;>
+      simp only [cobDirB, cobDir, translateDir, Prod.fst_add, Prod.snd_add, Params.add_E,
+        Params.add_read, Params.add_write, Params.add_D, Biases.add_E, Biases.add_read,
+        Biases.add_write, Biases.add_D, Pi.add_apply, Matrix.mul_add, Matrix.add_mul,
+        Matrix.vecMul_add, Matrix.add_vecMul, Finset.sum_add_distrib, neg_add, add_zero,
+        zero_add] <;> abel
+  map_smul' c Xg := by
+    refine Prod.ext (Params.ext' ?_ ?_ ?_ ?_) (Biases.ext' ?_ ?_ ?_ ?_) <;> (try intro ℓ) <;>
+      simp only [cobDirB, cobDir, translateDir, Prod.fst_add, Prod.snd_add, Prod.smul_fst,
+        Prod.smul_snd, Params.smul_E, Params.smul_read, Params.smul_write, Params.smul_D,
+        Biases.add_E, Biases.add_read, Biases.add_write, Biases.add_D, Biases.smul_E,
+        Biases.smul_read, Biases.smul_write, Biases.smul_D, Pi.smul_apply, Matrix.mul_smul,
+        Matrix.smul_mul, Matrix.vecMul_smul, Matrix.smul_vecMul, ← Finset.smul_sum, smul_neg,
+        smul_add, smul_zero, add_zero, zero_add, RingHom.id_apply]
+
+/-- Helper: `(X, g) ↦ cobDirB p X + (0, translateAtDir θ g)` is linear. -/
+private noncomputable def cobTransAtLin_bfl :
+    ((Fin (L + 1) → Matrix d d ℝ) × (Fin (L + 1) → d → ℝ)) →ₗ[ℝ] ParamsB A dIn dOut where
+  toFun Xg := cobDirB p Xg.1 + ((0, translateAtDir p.1 Xg.2) : ParamsB A dIn dOut)
+  map_add' Xg Yg := by
+    refine Prod.ext (Params.ext' ?_ ?_ ?_ ?_) (Biases.ext' ?_ ?_ ?_ ?_) <;> (try intro ℓ) <;>
+      simp only [cobDirB, cobDir, translateAtDir, Prod.fst_add, Prod.snd_add, Params.add_E,
+        Params.add_read, Params.add_write, Params.add_D, Biases.add_E, Biases.add_read,
+        Biases.add_write, Biases.add_D, Pi.add_apply, Matrix.mul_add, Matrix.add_mul,
+        Matrix.vecMul_add, Matrix.add_vecMul, neg_add, add_zero, zero_add] <;> abel
+  map_smul' c Xg := by
+    refine Prod.ext (Params.ext' ?_ ?_ ?_ ?_) (Biases.ext' ?_ ?_ ?_ ?_) <;> (try intro ℓ) <;>
+      simp only [cobDirB, cobDir, translateAtDir, Prod.fst_add, Prod.snd_add, Prod.smul_fst,
+        Prod.smul_snd, Params.smul_E, Params.smul_read, Params.smul_write, Params.smul_D,
+        Biases.add_E, Biases.add_read, Biases.add_write, Biases.add_D, Biases.smul_E,
+        Biases.smul_read, Biases.smul_write, Biases.smul_D, Pi.smul_apply, Matrix.mul_smul,
+        Matrix.smul_mul, Matrix.vecMul_smul, Matrix.smul_vecMul, smul_neg, smul_add, smul_zero,
+        add_zero, zero_add, RingHom.id_apply]
 
 /-- **Lemma A.8 of the skips paper, the count with skips, as a bound:** for a residual network
 with biases and differentiable blocks, without normalization, if `E` has rank `d`, the functional
@@ -130,7 +569,23 @@ theorem funDimB_add_le_residual (hA : A.χ = id) (hf : ∀ ℓ, Differentiable �
     (hE : p.1.E.rank = Fintype.card d) :
     funDimB A 1 p + (Fintype.card d ^ 2 + (L + 1) * Fintype.card d)
       ≤ Module.finrank ℝ (ParamsB A dIn dOut) := by
-  sorry
+  have hdiff : ∀ x, DifferentiableAt ℝ (fun q : ParamsB A dIn dOut => evalB A 1 q.1 q.2 x) p :=
+    fun x => (differentiable_evalB hf (by rw [hA]; exact differentiable_id) x).differentiableAt
+  -- the directions of the change of basis and of the translations are flat
+  have hV : LinearMap.range (cobTransLin_bfl p) ≤ flatB A 1 p := by
+    rintro _ ⟨Xg, rfl⟩
+    exact add_mem (cobDirB_const_mem_flatB_residual p hA hf Xg.1)
+      (translateDir_mem_flatB p hA hf Xg.2)
+  have h := funDimB_add_finrank_le_of_le_flatB p hdiff _ hV
+  -- they span a space of dimension `d² + (L + 1) d`, since `(X, g) ↦` direction is injective
+  have hinj : Function.Injective (cobTransLin_bfl p) :=
+    cobDirB_const_add_translateDir_injective p hE
+  have hdim : Module.finrank ℝ (Matrix d d ℝ × (Fin (L + 1) → d → ℝ))
+      = Fintype.card d ^ 2 + (L + 1) * Fintype.card d := by
+    simp only [Module.finrank_prod, Module.finrank_matrix, Module.finrank_self,
+      Module.finrank_pi_fintype, Finset.sum_const,
+      Finset.card_univ, Fintype.card_fin, smul_eq_mul, mul_one, sq]
+  rwa [LinearMap.finrank_range_of_inj hinj, hdim] at h
 
 /-- **Lemma A.8 of the skips paper, the count without skips, as a bound:** for a skipless network
 with biases and differentiable blocks, without normalization, if `E` and every write have rank
@@ -139,7 +594,24 @@ theorem funDimB_add_le_skipless (hA : A.χ = id) (hf : ∀ ℓ, Differentiable �
     (hE : p.1.E.rank = Fintype.card d) (hw : ∀ ℓ, (p.1.write ℓ).rank = Fintype.card d) :
     funDimB A 0 p + (L + 1) * (Fintype.card d ^ 2 + Fintype.card d)
       ≤ Module.finrank ℝ (ParamsB A dIn dOut) := by
-  sorry
+  have hdiff : ∀ x, DifferentiableAt ℝ (fun q : ParamsB A dIn dOut => evalB A 0 q.1 q.2 x) p :=
+    fun x => (differentiable_evalB hf (by rw [hA]; exact differentiable_id) x).differentiableAt
+  -- the directions of the changes of basis and of the translations are flat
+  have hV : LinearMap.range (cobTransAtLin_bfl p) ≤ flatB A 0 p := by
+    rintro _ ⟨Xg, rfl⟩
+    exact add_mem (cobDirB_mem_flatB_skipless p hA hf Xg.1)
+      (translateAtDir_mem_flatB p hA hf Xg.2)
+  have h := funDimB_add_finrank_le_of_le_flatB p hdiff _ hV
+  -- they span a space of dimension `(L + 1)(d² + d)` (Lemma B.1 for the changes of basis)
+  have hinj : Function.Injective (cobTransAtLin_bfl p) :=
+    cobDirB_add_translateAtDir_injective p hE hw
+  have hdim : Module.finrank ℝ ((Fin (L + 1) → Matrix d d ℝ) × (Fin (L + 1) → d → ℝ))
+      = (L + 1) * (Fintype.card d ^ 2 + Fintype.card d) := by
+    simp only [Module.finrank_prod, Module.finrank_matrix, Module.finrank_self,
+      Module.finrank_pi_fintype, Finset.sum_const,
+      Finset.card_univ, Fintype.card_fin, smul_eq_mul, mul_one, sq]
+    ring
+  rwa [LinearMap.finrank_range_of_inj hinj, hdim] at h
 
 /-- **The number of parameters of a network with biases:** the number of weights plus
 `d + ∑_ℓ r_ℓ + L d + d_out` biases. -/
@@ -148,6 +620,11 @@ theorem finrank_paramsB (A : Arch T d L) :
       = Module.finrank ℝ (Params A dIn dOut)
         + (Fintype.card d + ∑ ℓ, Fintype.card (A.r ℓ) + L * Fintype.card d
           + Fintype.card dOut) := by
-  sorry
+  -- `P` with biases is `P` plus the dimension of the tuples `(b_E, b_read, b_write, b_D)`
+  rw [Module.finrank_prod, (Biases.linearEquivProd (A := A) (dOut := dOut)).finrank_eq]
+  simp only [Biases.Prod, Module.finrank_prod, Module.finrank_fintype_fun_eq_card,
+    Module.finrank_pi_fintype, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+    smul_eq_mul]
+  ring
 
 end Skips
