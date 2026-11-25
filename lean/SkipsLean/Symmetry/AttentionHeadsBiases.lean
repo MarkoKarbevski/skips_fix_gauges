@@ -123,6 +123,273 @@ noncomputable def headDirB (p : ParamsB (Arch.attention sees χ H dh) dIn dOut)
     ParamsB (Arch.attention sees χ H dh) dIn dOut :=
   headDirQKB p q.1 + headDirVOB p q.2.1 + keyShiftDir q.2.2.1 + valueShiftDir p q.2.2.2
 
+/-! ### Helpers: the curves `exp (τ Γ)` (copies of `Symmetry/AttentionHeads.lean`) -/
+
+/-- Helper (the private `expGL_ath` of `Symmetry/AttentionHeads.lean`): the change of basis
+`exp (τ X)`, an element of `GL n ℝ` with inverse `exp (-τ X)`. -/
+private noncomputable def expGL_ahb {n : Type*} [Fintype n] [DecidableEq n] (X : Matrix n n ℝ)
+    (τ : ℝ) : GL n ℝ where
+  val := NormedSpace.exp (τ • X)
+  inv := NormedSpace.exp (τ • (-X))
+  val_inv := by
+    rw [← Matrix.exp_add_of_commute _ _ (((Commute.refl X).neg_right.smul_left τ).smul_right τ),
+      smul_neg, add_neg_cancel, NormedSpace.exp_zero]
+  inv_val := by
+    rw [← Matrix.exp_add_of_commute _ _ (((Commute.refl X).neg_left.smul_left τ).smul_right τ),
+      smul_neg, neg_add_cancel, NormedSpace.exp_zero]
+
+/-- Helper: at `τ = 0` the change of basis `exp (τ X)` is the identity. -/
+private theorem expGL_zero_ahb {n : Type*} [Fintype n] [DecidableEq n] (X : Matrix n n ℝ) :
+    expGL_ahb X 0 = 1 :=
+  Units.ext (by simp [expGL_ahb])
+
+/-- Helper: the entry `(a, b)` of `exp (τ X)` has derivative `X a b` at `τ = 0` (computed with
+the operator norm). -/
+private theorem hasDerivAt_exp_entry_ahb {n : Type*} [Fintype n] [DecidableEq n]
+    (X : Matrix n n ℝ) (a b : n) :
+    HasDerivAt (fun τ : ℝ => NormedSpace.exp (τ • X) a b) (X a b) 0 := by
+  have h := open scoped Matrix.Norms.Operator in hasDerivAt_exp_smul_const (𝕂 := ℝ) X (0 : ℝ)
+  rw [zero_smul, NormedSpace.exp_zero, one_mul] at h
+  have h' : HasDerivAt (fun τ : ℝ => NormedSpace.exp (τ • X)) X 0 := h
+  -- entry by entry
+  exact hasDerivAt_pi.1 (hasDerivAt_pi.1 h' a) b
+
+/-- Helper: `τ ↦ ∑_{k'} c_{k'} exp(τ X)_{k' k}` has derivative `∑_{k'} c_{k'} X_{k' k}` at `0`. -/
+private theorem hasDerivAt_sum_mul_expGL_ahb {n : Type*} [Fintype n] [DecidableEq n]
+    (X : Matrix n n ℝ) (c : n → ℝ) (k : n) :
+    HasDerivAt (fun τ => ∑ k', c k' * (expGL_ahb X τ : Matrix n n ℝ) k' k)
+      (∑ k', c k' * X k' k) 0 :=
+  HasDerivAt.fun_sum fun k' _ => (hasDerivAt_exp_entry_ahb X k' k).const_mul (c k')
+
+/-- Helper: `τ ↦ ∑_{k'} c_{k'} (exp(τ X)⁻¹)_{k k'}` has derivative `-∑_{k'} c_{k'} X_{k k'}` at
+`0`, since `exp(τ X)⁻¹ = exp(-τ X)`. -/
+private theorem hasDerivAt_sum_mul_expGL_inv_ahb {n : Type*} [Fintype n] [DecidableEq n]
+    (X : Matrix n n ℝ) (c : n → ℝ) (k : n) :
+    HasDerivAt (fun τ => ∑ k', c k' * (((expGL_ahb X τ)⁻¹ : GL n ℝ) : Matrix n n ℝ) k k')
+      (-∑ k', c k' * X k k') 0 := by
+  have h := HasDerivAt.fun_sum (u := Finset.univ) fun k' _ =>
+    (hasDerivAt_exp_entry_ahb (-X) k k').const_mul (c k')
+  refine h.congr_deriv ?_
+  simp only [Matrix.neg_apply, mul_neg, Finset.sum_neg_distrib]
+
+/-- Helper: `τ ↦ ∑_{k'} (exp(τ X)⁻¹)_{k k'} c_{k'}` has derivative `-∑_{k'} X_{k k'} c_{k'}` at
+`0`. -/
+private theorem hasDerivAt_sum_expGL_inv_mul_ahb {n : Type*} [Fintype n] [DecidableEq n]
+    (X : Matrix n n ℝ) (c : n → ℝ) (k : n) :
+    HasDerivAt (fun τ => ∑ k', (((expGL_ahb X τ)⁻¹ : GL n ℝ) : Matrix n n ℝ) k k' * c k')
+      (-∑ k', X k k' * c k') 0 := by
+  have h := HasDerivAt.fun_sum (u := Finset.univ) fun k' _ =>
+    (hasDerivAt_exp_entry_ahb (-X) k k').mul_const (c k')
+  refine h.congr_deriv ?_
+  simp only [Matrix.neg_apply, neg_mul, Finset.sum_neg_distrib]
+
+/-- Helper: `∑_k (x G)_k (G⁻¹ y)_k = x · y` for `G ∈ GL n`. -/
+private theorem sum_mul_GL_ahb {n : Type*} [Fintype n] [DecidableEq n] (G : GL n ℝ)
+    (x y : n → ℝ) :
+    ∑ k, (∑ a, x a * (G : Matrix n n ℝ) a k) * (∑ b, ((G⁻¹ : GL n ℝ) : Matrix n n ℝ) k b * y b)
+      = ∑ a, x a * y a := by
+  have h : (x ᵥ* (G : Matrix n n ℝ)) ⬝ᵥ (((G⁻¹ : GL n ℝ) : Matrix n n ℝ) *ᵥ y) = x ⬝ᵥ y := by
+    rw [← Matrix.dotProduct_mulVec, Matrix.mulVec_mulVec, Units.mul_inv, Matrix.one_mulVec]
+  exact h
+
+/-! ### Helpers: the changes of basis between queries and keys, with biases -/
+
+/-- Helper: the biases moved by the changes of basis `K` between queries and keys:
+`b_{Q,i} K_i`, `b_{K,i} K_i^{-⊤}`; the other biases do not move. -/
+private noncomputable def biasesQK_ahb [∀ ℓ, DecidableEq (dh ℓ)]
+    (b : Biases (Arch.attention sees χ H dh) dOut) (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) :
+    Biases (Arch.attention sees χ H dh) dOut where
+  E := b.E
+  read ℓ (q : H ℓ × (dh ℓ ⊕ (dh ℓ ⊕ dh ℓ))) :=
+    match q.2 with
+    | Sum.inl k => ∑ k', b.read ℓ (q.1, Sum.inl k') * (K ℓ q.1 : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+    | Sum.inr (Sum.inl k) =>
+      ∑ k', b.read ℓ (q.1, Sum.inr (Sum.inl k'))
+        * (((K ℓ q.1)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k'
+    | Sum.inr (Sum.inr k) => b.read ℓ (q.1, Sum.inr (Sum.inr k))
+  write := b.write
+  D := b.D
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the curve `τ ↦ θ.headsQK (exp (τ Γ))` passes through `θ` at `τ = 0`. -/
+private theorem headsQK_expGL_zero_ahb [∀ ℓ, DecidableEq (dh ℓ)]
+    (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
+    θ.headsQK (fun ℓ i => expGL_ahb (Γ ℓ i) 0) = θ := by
+  simp only [expGL_zero_ahb]
+  apply Params.ext'
+  · rfl
+  · intro ℓ
+    ext a ⟨i, k | k | k⟩
+    · show ∑ k', θ.read ℓ a (i, Sum.inl k') * ((1 : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+        = θ.read ℓ a (i, Sum.inl k)
+      simp [Matrix.one_apply]
+    · show ∑ k', θ.read ℓ a (i, Sum.inr (Sum.inl k'))
+          * (((1 : GL (dh ℓ) ℝ)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k'
+        = θ.read ℓ a (i, Sum.inr (Sum.inl k))
+      simp [Matrix.one_apply]
+    · rfl
+  · intro ℓ
+    rfl
+  · rfl
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the curve `τ ↦ biasesQK b (exp (τ Γ))` passes through `b` at `τ = 0`. -/
+private theorem biasesQK_expGL_zero_ahb [∀ ℓ, DecidableEq (dh ℓ)]
+    (b : Biases (Arch.attention sees χ H dh) dOut) (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
+    biasesQK_ahb b (fun ℓ i => expGL_ahb (Γ ℓ i) 0) = b := by
+  simp only [expGL_zero_ahb]
+  apply Biases.ext'
+  · rfl
+  · intro ℓ
+    funext q
+    obtain ⟨i, k | k | k⟩ := q
+    · show ∑ k', b.read ℓ (i, Sum.inl k') * ((1 : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+        = b.read ℓ (i, Sum.inl k)
+      simp [Matrix.one_apply]
+    · show ∑ k', b.read ℓ (i, Sum.inr (Sum.inl k'))
+          * (((1 : GL (dh ℓ) ℝ)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k'
+        = b.read ℓ (i, Sum.inr (Sum.inl k))
+      simp [Matrix.one_apply]
+    · rfl
+  · intro ℓ
+    rfl
+  · rfl
+
+omit [DecidableEq d] in
+/-- Helper (copy of `Symmetry/AttentionHeads.lean`): the curve `τ ↦ θ.headsQK (exp (τ Γ))` has
+velocity `headDirQK θ Γ` at `τ = 0`, computed entry by entry through `Params.linearEquivProd`. -/
+private theorem hasDerivAt_headsQK_ahb [∀ ℓ, DecidableEq (dh ℓ)]
+    (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
+    HasDerivAt (fun τ : ℝ => θ.headsQK fun ℓ i => expGL_ahb (Γ ℓ i) τ) (headDirQK θ Γ) 0 := by
+  have hprod : HasDerivAt
+      (fun τ : ℝ => Params.linearEquivProd (θ.headsQK fun ℓ i => expGL_ahb (Γ ℓ i) τ))
+      (Params.linearEquivProd (headDirQK θ Γ)) 0 := by
+    refine HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ ?_))
+    · -- the embedding does not move
+      exact hasDerivAt_const (0 : ℝ) θ.E
+    · -- the queries are `W_Q exp(τ Γ)`, the keys `W_K exp(-τ Γ)ᵀ`, the values do not move
+      refine hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun a => hasDerivAt_pi.2 fun p => ?_
+      obtain ⟨i, k | k | k⟩ := p
+      · exact hasDerivAt_sum_mul_expGL_ahb (Γ ℓ i) (fun k' => θ.read ℓ a (i, Sum.inl k')) k
+      · exact hasDerivAt_sum_mul_expGL_inv_ahb (Γ ℓ i)
+          (fun k' => θ.read ℓ a (i, Sum.inr (Sum.inl k'))) k
+      · exact hasDerivAt_const (0 : ℝ) (θ.read ℓ a (i, Sum.inr (Sum.inr k)))
+    · -- the writes and the readout do not move
+      exact hasDerivAt_const (0 : ℝ) θ.write
+    · exact hasDerivAt_const (0 : ℝ) θ.D
+  -- back from the tuples of components to the parameters
+  exact (LinearMap.toContinuousLinearMap
+    (Params.linearEquivProd (A := Arch.attention sees χ H dh) (dIn := dIn)
+      (dOut := dOut)).symm.toLinearMap).hasFDerivAt.comp_hasDerivAt 0 hprod
+
+omit [DecidableEq d] [Fintype dIn] in
+/-- Helper: the curve `τ ↦ biasesQK b (exp (τ Γ))` has velocity the biases of `headDirQKB p Γ`
+at `τ = 0`, computed entry by entry through `Biases.linearEquivProd`. -/
+private theorem hasDerivAt_biasesQK_ahb [∀ ℓ, DecidableEq (dh ℓ)]
+    (p : ParamsB (Arch.attention sees χ H dh) dIn dOut)
+    (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
+    HasDerivAt (fun τ : ℝ => biasesQK_ahb p.2 fun ℓ i => expGL_ahb (Γ ℓ i) τ)
+      (headDirQKB p Γ).2 0 := by
+  have hprod : HasDerivAt
+      (fun τ : ℝ => Biases.linearEquivProd (biasesQK_ahb p.2 fun ℓ i => expGL_ahb (Γ ℓ i) τ))
+      (Biases.linearEquivProd (headDirQKB p Γ).2) 0 := by
+    refine HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ (HasDerivAt.prodMk ?_ ?_))
+    · exact hasDerivAt_const (0 : ℝ) p.2.E
+    · -- the query biases are `b_Q exp(τ Γ)`, the key biases `b_K exp(-τ Γ)ᵀ`
+      refine hasDerivAt_pi.2 fun ℓ => hasDerivAt_pi.2 fun q => ?_
+      obtain ⟨i, k | k | k⟩ := q
+      · exact hasDerivAt_sum_mul_expGL_ahb (Γ ℓ i) (fun k' => p.2.read ℓ (i, Sum.inl k')) k
+      · exact hasDerivAt_sum_mul_expGL_inv_ahb (Γ ℓ i)
+          (fun k' => p.2.read ℓ (i, Sum.inr (Sum.inl k'))) k
+      · exact hasDerivAt_const (0 : ℝ) (p.2.read ℓ (i, Sum.inr (Sum.inr k)))
+    · exact hasDerivAt_const (0 : ℝ) p.2.write
+    · exact hasDerivAt_const (0 : ℝ) p.2.D
+  exact (LinearMap.toContinuousLinearMap
+    (Biases.linearEquivProd (A := Arch.attention sees χ H dh)
+      (dOut := dOut)).symm.toLinearMap).hasFDerivAt.comp_hasDerivAt 0 hprod
+
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the map `f ℓ` of an attention block is the same on `M'` and `M` if the query columns
+of head `i` of `M'` are those of `M` times `G_i`, its key columns those of `M` times `G_i^{-⊤}`,
+and its value columns those of `M`: the scores `∑_k (q G)_k (k G^{-⊤})_k = q · k` are kept. -/
+private theorem f_QK_ahb [∀ ℓ, DecidableEq (dh ℓ)] (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ : Fin L)
+    (M M' : Matrix T (H ℓ × (dh ℓ ⊕ (dh ℓ ⊕ dh ℓ))) ℝ)
+    (hq : ∀ t i k, M' t (i, Sum.inl k)
+      = ∑ a, M t (i, Sum.inl a) * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) a k)
+    (hk : ∀ t i k, M' t (i, Sum.inr (Sum.inl k))
+      = ∑ a, M t (i, Sum.inr (Sum.inl a))
+        * (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k a)
+    (hv : ∀ t i k, M' t (i, Sum.inr (Sum.inr k)) = M t (i, Sum.inr (Sum.inr k))) :
+    (Arch.attention sees χ H dh).f ℓ M' = (Arch.attention sees χ H dh).f ℓ M := by
+  -- the scores of every head are kept
+  have hsc : ∀ i : H ℓ, (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M' t' (i, Sum.inl k) * M' s' (i, Sum.inr (Sum.inl k)) : Matrix T T ℝ)
+      = Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M t' (i, Sum.inl k) * M s' (i, Sum.inr (Sum.inl k)) := by
+    intro i
+    ext t' s'
+    simp only [Matrix.of_apply, hq, hk]
+    congr 1
+    rw [← sum_mul_GL_ahb (K ℓ i) (fun a => M t' (i, Sum.inl a))
+      (fun a => M s' (i, Sum.inr (Sum.inl a)))]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    congr 1
+    exact Finset.sum_congr rfl fun _ _ => mul_comm _ _
+  ext t p
+  show ∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M' t' (p.1, Sum.inl k) * M' s' (p.1, Sum.inr (Sum.inl k))) t s
+      * M' s (p.1, Sum.inr (Sum.inr p.2))
+    = ∑ s, attnWeights sees (Matrix.of fun t' s' => (Real.sqrt (Fintype.card (dh ℓ)))⁻¹
+        * ∑ k, M t' (p.1, Sum.inl k) * M s' (p.1, Sum.inr (Sum.inl k))) t s
+      * M s (p.1, Sum.inr (Sum.inr p.2))
+  rw [hsc p.1]
+  simp only [hv]
+
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the changes of basis between queries and keys, with the biases of the queries and
+keys moved along, keep the map `n ↦ f(n W_read + b_read) W_write + b_write` of every block. -/
+private theorem block_headsQKB_ahb [∀ ℓ, DecidableEq (dh ℓ)]
+    (θ : Params (Arch.attention sees χ H dh) dIn dOut)
+    (b : Biases (Arch.attention sees χ H dh) dOut) (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (ℓ : Fin L)
+    (n : Matrix T d ℝ) :
+    (Arch.attention sees χ H dh).f ℓ (n * (θ.headsQK K).read ℓ
+          + Matrix.of fun _ => (biasesQK_ahb b K).read ℓ) * (θ.headsQK K).write ℓ
+        + Matrix.of (fun _ => (biasesQK_ahb b K).write ℓ)
+      = (Arch.attention sees χ H dh).f ℓ (n * θ.read ℓ + Matrix.of fun _ => b.read ℓ)
+          * θ.write ℓ + Matrix.of fun _ => b.write ℓ := by
+  rw [f_QK_ahb K ℓ (n * θ.read ℓ + Matrix.of fun _ => b.read ℓ) _ ?_ ?_ ?_]
+  · rfl
+  · -- the query columns: `(n W_Q + b_Q) K = n (W_Q K) + b_Q K`
+    intro t i k
+    show ∑ a, n t a * (∑ k', θ.read ℓ a (i, Sum.inl k') * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k)
+        + ∑ k', b.read ℓ (i, Sum.inl k') * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k
+      = ∑ a', (∑ a, n t a * θ.read ℓ a (i, Sum.inl a') + b.read ℓ (i, Sum.inl a'))
+          * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) a' k
+    simp only [add_mul, Finset.sum_add_distrib, Finset.mul_sum, Finset.sum_mul]
+    rw [Finset.sum_comm]
+    congr 1
+    refine Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => ?_
+    ring
+  · -- the key columns: `(n W_K + b_K) K^{-⊤} = n (W_K K^{-⊤}) + b_K K^{-⊤}`
+    intro t i k
+    show ∑ a, n t a * (∑ k', θ.read ℓ a (i, Sum.inr (Sum.inl k'))
+          * (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k')
+        + ∑ k', b.read ℓ (i, Sum.inr (Sum.inl k'))
+          * (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k'
+      = ∑ a', (∑ a, n t a * θ.read ℓ a (i, Sum.inr (Sum.inl a'))
+          + b.read ℓ (i, Sum.inr (Sum.inl a')))
+          * (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k a'
+    simp only [add_mul, Finset.sum_add_distrib, Finset.mul_sum, Finset.sum_mul]
+    rw [Finset.sum_comm]
+    congr 1
+    refine Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => ?_
+    ring
+  · -- the value columns do not move
+    intro t i k
+    rfl
+
 /-- **The changes of basis between the queries and the keys of every head are symmetries inside
 the blocks of a network with biases,** for every mask and every `χ`: along
 `W_{Q,i} e^{τΓ_i}`, `W_{K,i} e^{−τΓ_i^⊤}`, `b_{Q,i} e^{τΓ_i}`, `b_{K,i} e^{−τΓ_i^⊤}` the queries
@@ -131,7 +398,26 @@ the blocks of a network with biases,** for every mask and every `χ`: along
 theorem insideBlocksB_headDirQKB (p : ParamsB (Arch.attention sees χ H dh) dIn dOut)
     (Γ : ∀ ℓ, H ℓ → Matrix (dh ℓ) (dh ℓ) ℝ) :
     InsideBlocksB (Arch.attention sees χ H dh) p (headDirQKB p Γ) := by
-  sorry
+  classical
+  -- the curve `τ ↦ (θ.headsQK (exp (τ Γ)), biasesQK b (exp (τ Γ)))` passes through `p`
+  have h0 : ((p.1.headsQK fun ℓ i => expGL_ahb (Γ ℓ i) 0,
+      biasesQK_ahb p.2 fun ℓ i => expGL_ahb (Γ ℓ i) 0) : ParamsB _ dIn dOut) = p :=
+    Prod.ext (headsQK_expGL_zero_ahb p.1 Γ) (biasesQK_expGL_zero_ahb p.2 Γ)
+  -- with velocity `headDirQKB p Γ`
+  have hd : HasDerivAt (fun τ : ℝ => ((p.1.headsQK fun ℓ i => expGL_ahb (Γ ℓ i) τ,
+      biasesQK_ahb p.2 fun ℓ i => expGL_ahb (Γ ℓ i) τ) : ParamsB _ dIn dOut))
+      (headDirQKB p Γ) 0 :=
+    (hasDerivAt_headsQK_ahb p.1 Γ).prodMk (hasDerivAt_biasesQK_ahb p Γ)
+  -- and it keeps the map of every block
+  have hb : ∀ τ : ℝ, ∀ ℓ (n : Matrix T d ℝ),
+      (Arch.attention sees χ H dh).f ℓ (n * (p.1.headsQK fun ℓ i => expGL_ahb (Γ ℓ i) τ).read ℓ
+          + Matrix.of fun _ => (biasesQK_ahb p.2 fun ℓ i => expGL_ahb (Γ ℓ i) τ).read ℓ)
+          * (p.1.headsQK fun ℓ i => expGL_ahb (Γ ℓ i) τ).write ℓ
+        + Matrix.of (fun _ => (biasesQK_ahb p.2 fun ℓ i => expGL_ahb (Γ ℓ i) τ).write ℓ)
+      = (Arch.attention sees χ H dh).f ℓ (n * p.1.read ℓ + Matrix.of fun _ => p.2.read ℓ)
+          * p.1.write ℓ + Matrix.of fun _ => p.2.write ℓ :=
+    fun τ ℓ n => block_headsQKB_ahb p.1 p.2 _ ℓ n
+  exact ⟨_, h0, hd, Filter.Eventually.of_forall fun τ => ⟨rfl, rfl, rfl, rfl, hb τ⟩⟩
 
 /-- **The changes of basis between the values and the outputs of every head are symmetries
 inside the blocks of a network with biases,** for every mask and every `χ`: along
