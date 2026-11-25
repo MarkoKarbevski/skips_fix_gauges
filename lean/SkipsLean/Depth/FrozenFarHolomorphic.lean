@@ -73,11 +73,13 @@ private noncomputable def netC (a : ∀ ℓ : Fin L, hid ℓ → ℂ → ℂ)
     (fun h => h * cD θ η s)
     (fun ℓ B h => B (qaC (a ℓ) (h * cR θ η s ℓ) * cW θ η s ℓ))
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 private theorem netC_last (a : ∀ ℓ : Fin L, hid ℓ → ℂ → ℂ)
     (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) (s : ℂ) (h : Matrix T d ℂ) :
     netC a θ η s (Fin.last L) h = h * cD θ η s := by
   simp only [netC, Fin.reverseInduction_last]
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 private theorem netC_castSucc (a : ∀ ℓ : Fin L, hid ℓ → ℂ → ℂ)
     (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) (s : ℂ) (ℓ : Fin L)
     (h : Matrix T d ℂ) :
@@ -101,20 +103,24 @@ private theorem map_add_smul_ofReal_ffh {m n : Type*} (A B : Matrix m n ℝ) (r 
   ext i j
   simp
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 private theorem cR_ofReal (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
     (r : ℝ) (ℓ : Fin L) :
     cR θ η (r : ℂ) ℓ = (θ.read ℓ + r • η.read ℓ).map (fun x : ℝ => (x : ℂ)) :=
   (map_add_smul_ofReal_ffh _ _ r).symm
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 private theorem cW_ofReal (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
     (r : ℝ) (ℓ : Fin L) :
     cW θ η (r : ℂ) ℓ = (θ.write ℓ + r • η.write ℓ).map (fun x : ℝ => (x : ℂ)) :=
   (map_add_smul_ofReal_ffh _ _ r).symm
 
+omit [Fintype T] [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 private theorem cD_ofReal (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut)
     (r : ℝ) : cD θ η (r : ℂ) = (θ.D + r • η.D).map (fun x : ℝ => (x : ℂ)) :=
   (map_add_smul_ofReal_ffh _ _ r).symm
 
+omit [Fintype T] [Fintype d] [DecidableEq d] in
 /-- Helper: the gated block at real pre-activations, cast. -/
 private theorem qaC_gated_ofReal {σc : ℂ → ℂ} (hσ : ∀ x : ℝ, σc (x : ℂ) = ((σ x : ℝ) : ℂ))
     (ℓ : Fin L) (M : Matrix T (hid ℓ ⊕ hid ℓ) ℝ) :
@@ -125,6 +131,7 @@ private theorem qaC_gated_ofReal {σc : ℂ → ℂ} (hσ : ∀ x : ℝ, σc (x 
   push_cast
   rfl
 
+omit [Fintype T] [Fintype d] [DecidableEq d] in
 /-- Helper: the frozen block at real pre-activations, cast. -/
 private theorem qaC_frozen_ofReal (A : ∀ ℓ, Finset (hid ℓ)) (ℓ : Fin L)
     (M : Matrix T (hid ℓ ⊕ hid ℓ) ℝ) :
@@ -222,6 +229,7 @@ private theorem analyticAt_line_ffh {E : Type*} [NormedAddCommGroup E] [NormedSp
     (hf : AnalyticAt ℂ f x) : AnalyticAt ℂ (fun y => A + f y • B) x :=
   analyticAt_const.fun_add (hf.fun_smul analyticAt_const)
 
+omit [DecidableEq d] [Fintype dIn] in
 /-- `(s, h) ↦ 𝓑_{>L}(h) = h D(s)` is holomorphic. -/
 private theorem analyticAt_netC_last (a : ∀ ℓ : Fin L, hid ℓ → ℂ → ℂ)
     (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) (x : ℂ × Matrix T d ℂ) :
@@ -231,6 +239,7 @@ private theorem analyticAt_netC_last (a : ∀ ℓ : Fin L, hid ℓ → ℂ → �
   rw [e]
   exact analyticAt_matMul_ffh analyticAt_snd (analyticAt_line_ffh _ _ analyticAt_fst)
 
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- The block `(s, h) ↦ (s, qaC (a ℓ) (h W_read(s)) W_write(s))` is holomorphic where the gate
 values are holomorphic at the gates. -/
 private theorem analyticAt_block_ffh (a : ∀ ℓ : Fin L, hid ℓ → ℂ → ℂ)
@@ -244,6 +253,7 @@ private theorem analyticAt_block_ffh (a : ∀ ℓ : Fin L, hid ℓ → ℂ → �
   have hq := analyticAt_qaC_ffh hP ha
   exact analyticAt_fst.prod (analyticAt_matMul_ffh hq (analyticAt_line_ffh _ _ analyticAt_fst))
 
+omit [DecidableEq d] [Fintype dIn] in
 /-- Holomorphy through block `ℓ`: `(s, h) ↦ 𝓑_{>ℓ-1}(h)` is holomorphic at `x` if the gate values
 are holomorphic at the gates of `x` and `(s, h) ↦ 𝓑_{>ℓ}(h)` is holomorphic at the output. -/
 private theorem analyticAt_netC_castSucc (a : ∀ ℓ : Fin L, hid ℓ → ℂ → ℂ)
@@ -270,6 +280,7 @@ private theorem analyticAt_aFC {ι : Type*} (s : Finset ι) (j : ι) (z : ℂ) :
   · have e : aFC s j = fun _ => 0 := funext fun y => by simp [aFC, h]
     rw [e]; exact analyticAt_const
 
+omit [DecidableEq d] [Fintype dIn] in
 /-- The complex frozen network is holomorphic in `(s, h)` everywhere (it is a polynomial). -/
 private theorem analyticAt_netC_frozen (A : ∀ ℓ, Finset (hid ℓ))
     (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) (k : Fin (L + 1))
@@ -289,6 +300,7 @@ private theorem qaC_aFC_smul {m ι : Type*} (s : Finset ι) (c : ℂ) (P : Matri
   simp only [qaC, aFC, Matrix.of_apply, Matrix.smul_apply, smul_eq_mul]
   split_ifs <;> ring
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **The complex frozen network is homogeneous:** `𝓑°_{>k}(c h) = c^{2^{L−k}} 𝓑°_{>k}(h)`. -/
 private theorem netC_frozen_smul (A : ∀ ℓ, Finset (hid ℓ))
     (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) (s : ℂ) (k : Fin (L + 1))
@@ -535,6 +547,7 @@ private def FarBoundC (σc : ℂ → ℂ) (p : ℕ) (C : Fin (L + 1) → Set (d 
             - netC (fun ℓ => aFC (A ℓ)) θ η s k ((t : ℂ) • (H.map (fun x : ℝ => (x : ℂ)) + u))‖
           ≤ Real.exp (-(κ * t ^ p))
 
+omit [DecidableEq d] [Fintype dIn] in
 /-- `k = L`: both networks are `h ↦ h D(s)`. -/
 private theorem farBoundC_last (σc : ℂ → ℂ) (C : Fin (L + 1) → Set (d → ℝ))
     (A : ∀ ℓ, Finset (hid ℓ)) (θ η : Params (Arch.gated (T := T) (d := d) σ id hid) dIn dOut) :

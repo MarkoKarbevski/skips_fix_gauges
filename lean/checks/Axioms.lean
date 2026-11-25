@@ -2264,3 +2264,6 @@ import SkipsLean
 #print axioms Skips.ae_funDim_reluSq_oneBlock_skipless_rmsNorm_zero_of_le
 #print axioms Skips.ae_exists_jacobianRank_reluSq_oneBlock_skipless_rmsNorm_zero_of_le
 #print axioms Skips.ae_funDim_reluSq_oneBlock_residual_rmsNorm_zero_eq_add_of_le
+#print axioms Skips.gateFarC_gelu
+#print axioms Skips.gateFarC_silu
+#print axioms Skips.exists_far_frozen_holomorphic
