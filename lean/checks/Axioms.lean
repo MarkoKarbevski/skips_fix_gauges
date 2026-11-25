@@ -2091,3 +2091,14 @@ import SkipsLean
 #print axioms Skips.ae_funDimB_reglu_oneBlock_residual
 #print axioms Skips.ae_exists_jacobianRankB_reglu_oneBlock_residual
 #print axioms Skips.ae_funDimB_reglu_oneBlock_residual_eq_add
+#print axioms Skips.evalB_smallWritesB_zero
+#print axioms Skips.hasDerivAt_evalB_smallWritesB
+#print axioms Skips.eventually_funDimB_smallWritesB_ge
+#print axioms Skips.smallWritesLimitB_eq_zero_mlp
+#print axioms Skips.eventually_funDimB_smallWritesB_mlp
+#print axioms Skips.ae_eventually_funDimB_smallWritesB_mlp
+#print axioms Skips.ae_funDimB_mlp_residual
+#print axioms Skips.ae_eventually_funDimB_smallWritesB_tanh
+#print axioms Skips.ae_funDimB_tanh_residual
+#print axioms Skips.ae_eventually_funDimB_smallWritesB_gelu
+#print axioms Skips.ae_funDimB_gelu_residual

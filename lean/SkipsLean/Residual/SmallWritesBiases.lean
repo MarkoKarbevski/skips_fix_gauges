@@ -164,6 +164,7 @@ private theorem hiddenB_smallWritesB_zero_swb (hA : A.χ = id) (x : Matrix T dIn
   | zero => exact hiddenB_zero A 1 _ _ x
   | succ k ih => rw [hiddenB_smallWritesB_succ_swb A p hA, ih, zero_smul, add_zero]
 
+omit [Fintype T] [Fintype dOut] in
 /-- At `τ = 0` the residual network with biases, without normalization, computes
 `x ↦ (xE + b_E) D + b_D` (proof of Lemma A.27: "`y = xED + b_E D + b_D + τ (…) + O(τ²)`"). -/
 theorem evalB_smallWritesB_zero (hA : A.χ = id) (x : Matrix T dIn ℝ) :
