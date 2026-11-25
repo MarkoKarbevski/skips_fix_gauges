@@ -2075,3 +2075,7 @@ import SkipsLean
 #print axioms Skips.ae_funDimB_reluSq_oneBlock_residual
 #print axioms Skips.ae_exists_jacobianRankB_reluSq_oneBlock_residual
 #print axioms Skips.ae_funDimB_reluSq_oneBlock_residual_eq_add
+#print axioms Skips.keeps_products_biases_iff
+#print axioms Skips.keeps_products_and_ED_biases_iff
+#print axioms Skips.finrank_span_keeps_products_biases
+#print axioms Skips.finrank_span_keeps_products_and_ED_biases

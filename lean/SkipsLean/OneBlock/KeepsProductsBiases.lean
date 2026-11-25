@@ -41,6 +41,7 @@ variable {T d dIn dOut : Type*} [Fintype T] [Fintype d] [DecidableEq d] [Fintype
   [Fintype dOut]
 variable {A : Arch T d 1}
 
+omit [Fintype T] in
 /-- **Lemma B.2 of the skips paper with biases, without the skip:** for `E`, `D`, `W_read`,
 `W_write` of rank `d`, a direction `η` of weights and biases keeps `C = E W_read`,
 `A = W_write D`, `β = b_E W_read + b_read` and `γ_0 = b_write D + b_D` fixed to first order if and
@@ -112,6 +113,7 @@ theorem keeps_products_biases_iff (p η : ParamsB A dIn dOut)
         ← Matrix.vecMul_vecMul]
       abel
 
+omit [Fintype T] in
 /-- **Lemma B.2 of the skips paper with biases, with the skip:** for `E`, `D`, `W_read`,
 `W_write` of rank `d`, a direction `η` of weights and biases keeps `C`, `A`, `M = E D`, `β` and
 `γ = b_E D + b_write D + b_D` fixed to first order if and only if it is the direction of one
@@ -274,6 +276,7 @@ theorem finrank_span_keeps_products_biases (p : ParamsB A dIn dOut)
     Module.finrank_pi_fintype, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
     smul_eq_mul, mul_one, sq]
 
+omit [Fintype T] in
 /-- **Lemma B.2 with biases, "`d_model²` with it, and `2 d_model` more with biases":** for `E`,
 `D`, `W_read`, `W_write` of rank `d`, the directions that keep `C`, `A`, `M`, `β` and `γ` fixed
 to first order span a space of dimension `d² + 2 d`. -/
