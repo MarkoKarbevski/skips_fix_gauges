@@ -105,14 +105,12 @@ noncomputable def Biases.centerLN (ε : ℝ) (b : Biases A dOut) (θ : Params A 
   write ℓ := b.write ℓ ᵥ* centering d
   D := b.D + β (Fin.last L) ᵥ* θ.D
 
-omit [Fintype m] [DecidableEq m] in
 /-- Helper: the hidden state `h_0` of the pre-LayerNorm network. -/
 private theorem hiddenLN_zero_lno (ε : ℝ) (S : Fin L → Matrix d d ℝ) (θ : Params A dIn dOut)
     (b : Biases A dOut) (γ β : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) :
     hiddenLN A ε S θ b γ β x 0 = x * θ.E + Matrix.of fun _ => b.E := by
   simp [hiddenLN]
 
-omit [Fintype m] [DecidableEq m] in
 /-- Helper: the hidden state `h_{ℓ+1}` of the pre-LayerNorm network. -/
 private theorem hiddenLN_succ_lno (ε : ℝ) (S : Fin L → Matrix d d ℝ) (θ : Params A dIn dOut)
     (b : Biases A dOut) (γ β : Fin (L + 1) → d → ℝ) (x : Matrix T dIn ℝ) (ℓ : Fin L) :
@@ -122,14 +120,12 @@ private theorem hiddenLN_succ_lno (ε : ℝ) (S : Fin L → Matrix d d ℝ) (θ 
         + Matrix.of fun _ => b.write ℓ) := by
   simp [hiddenLN]
 
-omit [Fintype d] [DecidableEq d] [Fintype m] [DecidableEq m] [Fintype dIn] in
 /-- Helper: a matrix whose rows are all `v`, times `M`, has all rows `v M`. -/
 private theorem of_const_mul_lno {n k : Type*} [Fintype n] (v : n → ℝ) (M : Matrix n k ℝ) :
     (Matrix.of fun (_ : T) => v) * M = Matrix.of fun _ => v ᵥ* M := by
   ext t j
   rfl
 
-omit [Fintype m] [DecidableEq m] [Fintype dIn] in
 /-- Helper, a read through LayerNorm: `LN(h) W + 1 c = N_ε(h Z) (diag(γ) W) + 1 (c + β W)`. -/
 private theorem layerNorm_mul_add_lno (ε : ℝ) (g β : d → ℝ) {r : Type*}
     (h : Matrix T d ℝ) (W : Matrix d r ℝ) (c : r → ℝ) :
@@ -142,7 +138,6 @@ private theorem layerNorm_mul_add_lno (ε : ℝ) (g β : d → ℝ) {r : Type*}
   ext t j
   exact add_comm _ _
 
-omit [Fintype m] [DecidableEq m] [Fintype dIn] in
 /-- Helper, one block of the centred network: if its hidden state is `h Z`, the next one is
 `h' Z` for the next hidden state `h'` of the pre-LayerNorm network. -/
 private theorem step_centerLN_lno (ε : ℝ) (Sℓ : Matrix d d ℝ)
@@ -159,7 +154,6 @@ private theorem step_centerLN_lno (ε : ℝ) (Sℓ : Matrix d d ℝ)
   rw [layerNorm_mul_add_lno, Matrix.add_mul, Matrix.add_mul, Matrix.mul_assoc h, hSℓ,
     ← Matrix.mul_assoc, Matrix.mul_assoc _ W, of_const_mul_lno]
 
-omit [Fintype m] [DecidableEq m] in
 /-- Helper: the hidden states of the centred network are `h_ℓ Z`. -/
 private theorem hiddenB_centerLN_lno (ε : ℝ) (S : Fin L → Matrix d d ℝ)
     (hS : ∀ ℓ, centering d * S ℓ = S ℓ * centering d) (θ : Params A dIn dOut)
