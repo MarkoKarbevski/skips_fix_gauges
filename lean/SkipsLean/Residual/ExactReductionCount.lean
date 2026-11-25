@@ -166,6 +166,14 @@ theorem finrank_span_reads_upperTriangular [LinearOrder d] (c : ∀ ℓ : Fin L,
     mul_one, Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]
   ring
 
+/-- The strictly upper entries of the chosen rows of the embedding and of every write. -/
+private def writesUpLin_erc [LinearOrder d] (ρE : d → dIn) (ρ : ∀ ℓ : Fin L, d → A.w ℓ) :
+    Params A dIn dOut →ₗ[ℝ]
+      ({p : d × d // p.2 < p.1} → ℝ) × (Fin L → {p : d × d // p.2 < p.1} → ℝ) where
+  toFun θ := (fun p => θ.E (ρE p.1.2) p.1.1, fun ℓ p => θ.write ℓ (ρ ℓ p.1.2) p.1.1)
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
 /-- **Proposition A.9 (i), "respectively `d_model (d_model − 1)/2`, parameters per hidden
 state", writes:** the parameters whose chosen rows of the embedding and of every write form lower
 triangular matrices have dimension `P − (L + 1) d(d − 1)/2`. -/
@@ -177,6 +185,30 @@ theorem finrank_span_writes_lowerTriangular [LinearOrder d] (ρE : d → dIn)
           ∧ ∀ ℓ, (((θ.write ℓ).submatrix (ρ ℓ) id)ᵀ).BlockTriangular id})
       + (L + 1) * (Fintype.card d * (Fintype.card d - 1) / 2)
       = Module.finrank ℝ (Params A dIn dOut) := by
-  sorry
+  -- any values on the strictly upper entries of the chosen rows, `0` elsewhere
+  have hφ : Function.Surjective (writesUpLin_erc (dOut := dOut) ρE ρ) := by
+    rintro ⟨f, g⟩
+    refine ⟨⟨Matrix.of fun r i =>
+        Function.extend ρE (fun j => if h : j < i then f ⟨(i, j), h⟩ else 0) 0 r,
+      fun _ => 0, fun ℓ => Matrix.of fun r i =>
+        Function.extend (ρ ℓ) (fun j => if h : j < i then g ℓ ⟨(i, j), h⟩ else 0) 0 r, 0⟩,
+      ?_⟩
+    refine Prod.ext (funext fun p => ?_) (funext fun ℓ => funext fun p => ?_)
+    · show Function.extend ρE (fun j => if h : j < p.1.1 then f ⟨(p.1.1, j), h⟩ else 0) 0
+        (ρE p.1.2) = _
+      rw [hρE.extend_apply, dite_eq_left p.2]
+    · show Function.extend (ρ ℓ) (fun j => if h : j < p.1.1 then g ℓ ⟨(p.1.1, j), h⟩ else 0) 0
+        (ρ ℓ p.1.2) = _
+      rw [(hρ ℓ).extend_apply, dite_eq_left p.2]
+  -- the set is the kernel: the transpose is upper triangular iff the strictly upper entries vanish
+  have hS := finrank_span_ker_erc _ hφ {θ : Params A dIn dOut |
+        ((θ.E.submatrix ρE id)ᵀ).BlockTriangular id
+          ∧ ∀ ℓ, (((θ.write ℓ).submatrix (ρ ℓ) id)ᵀ).BlockTriangular id} fun θ => by
+    simp only [Set.mem_ofPred_eq, Prod.ext_iff, funext_iff, Subtype.forall, Prod.forall]
+    rfl
+  rw [← hS, card_lower_erc.symm]
+  simp only [Module.finrank_prod, Module.finrank_pi_fintype, Module.finrank_self,
+    mul_one, Finset.sum_const, Finset.card_univ, Fintype.card_fin, smul_eq_mul]
+  ring
 
 end Skips
