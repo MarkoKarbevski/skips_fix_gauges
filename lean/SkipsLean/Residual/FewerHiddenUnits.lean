@@ -27,8 +27,8 @@ hidden units `hid' ℓ` with `d ≤ |hid' ℓ|`, and "fewer than `L d / 2` more 
 `2 ∑_ℓ |hid' ℓ| < 2 ∑_ℓ |hid ℓ| + L d`. In the statements for all widths at once the skipless
 network of widths `m : Fin L → ℕ` has the hidden units `Fin (m ℓ)`. Sard's theorem and the property
 of definable sets are hypotheses from the literature (`Literature/Sard.lean`,
-`Literature/OMinimal.lean`). Not stated: skipless blocks with fewer than `d` hidden units
-(Theorem A.28 (iii), outside the setting of the main text).
+`Literature/OMinimal.lean`). Skipless blocks with fewer than `d` hidden units (Theorem A.28 (iii),
+outside the setting of the main text): `Residual/FewerHiddenUnitsNarrow.lean`.
 -/
 
 namespace Skips

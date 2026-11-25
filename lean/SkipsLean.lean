@@ -350,3 +350,4 @@ import SkipsLean.Symmetry.LocallyFreeTransformerGeneric
 import SkipsLean.Dimension.UpperBoundTwoSidedGated
 import SkipsLean.Depth.InactiveGateTwoSided
 import SkipsLean.Depth.InactiveUnitEveryPoint
+import SkipsLean.Residual.FewerHiddenUnitsNarrow
