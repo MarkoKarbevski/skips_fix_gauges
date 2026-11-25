@@ -66,3 +66,13 @@ for kind, k in [('gated', 0), ('mlp', 1), ('mlp', 2), ('reglu', 1)]:
 R = np.array([[1., 0., 0., 1.], [0., 1., 1., 0.]])
 r, n, gap = rank_of('reglu', 1, 2, 1, 2, [2], reads=[R])
 print('reglu, read columns (e1, e2 | e2, e1): rank', r, 'of', n, 'INJECTIVE' if r == n else 'NOT INJECTIVE')
+# For every degree k (twenty-seventh audit): two units, both with gate column e1 and value column e2.
+# The kernel has X_0 = diag(1, -k), beta = (1, 1), alpha = (k, k).
+R2 = np.array([[1., 1., 0., 0.], [0., 0., 1., 1.]])
+for k in (1, 2, 3):
+    r, n, gap = rank_of('reglu', k, 2, 1, 2, [2], reads=[R2])
+    print('reglu, k =', k, ', read columns (e1, e1 | e2, e2): rank', r, 'of', n,
+          'INJECTIVE' if r == n else 'NOT INJECTIVE')
+    r, n, gap = rank_of('reglu', k, 2, 1, 2, [2], reads=[R])
+    print('reglu, k =', k, ', read columns (e1, e2 | e2, e1): rank', r, 'of', n,
+          'INJECTIVE' if r == n else 'NOT INJECTIVE')
