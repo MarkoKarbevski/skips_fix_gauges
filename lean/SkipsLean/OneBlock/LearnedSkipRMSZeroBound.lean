@@ -33,8 +33,11 @@ attention), at one parameter:
 
 The functional dimensions are those on the inputs at which no normalized row vanishes
 (`funDimSkipsOn`, `funDimOn`): `V_θ` is flat only where the block reads rows on the sphere. Not
-stated here: the upper triangular skip; ReLU, ReLU², ReGLU blocks and the equality for them; the
-statements at almost every parameter.
+stated here: the upper triangular skip (`OneBlock/LearnedSkipTriangularRMSZeroBound.lean`); ReLU,
+ReLU², ReGLU blocks (`OneBlock/LearnedSkipRMSZeroRescaleBound.lean`) and the equality for them
+(`OneBlock/LearnedSkipRMSZeroRescale.lean`, `OneBlock/LearnedSkipRMSZeroReGLU.lean` and their files
+at generic parameters); the statements at almost every parameter
+(`OneBlock/LearnedSkipRMSZeroBoundKinds.lean`).
 -/
 
 namespace Skips

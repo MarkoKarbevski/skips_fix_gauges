@@ -41,8 +41,8 @@ Stated here for MLP blocks and for gated blocks, with what the proof uses of the
 gate as hypotheses, and the facts that the seven kinds of block satisfy these hypotheses (the
 lemma for one kind is the general statement with these facts). Every block has at least one hidden
 unit (a block without hidden units writes `0`, and the hidden state after it carries no
-condition). Attention blocks are not defined in this library, so the lemma is not stated for
-them. A change of basis is `Params.cob θ G G`.
+condition). Attention blocks and transformers: `Symmetry/OnlyOrthogonalRows.lean`. A change of basis
+is `Params.cob θ G G`.
 -/
 
 namespace Skips
@@ -267,8 +267,8 @@ private theorem mul_eq_mul_of_inv_mul_eq {p q u w : ℝ} (hp : p ≠ 0) (hq : q 
 
 omit [DecidableEq d] in
 /-- Helper, fact (a) on rows: if `N_ε(a) M = N_ε(b)` and `N_ε(2a) M = N_ε(2b)` with `ε > 0`, then
-`a M = b`. Write `y = a M`: `y = λ b` with `λ = s(a)/s(b) = s(2a)/s(2b)`, where `s(v)² = ‖v‖²/d + ε`;
-if `b ≠ 0` the two factors agree, which forces `‖a‖ = ‖b‖` and `λ = 1`. -/
+`a M = b`. Write `y = a M`: `y = λ b` with `λ = s(a)/s(b) = s(2a)/s(2b)`, where `s(v)² = ‖v‖²/d +
+ε`; if `b ≠ 0` the two factors agree, which forces `‖a‖ = ‖b‖` and `λ = 1`. -/
 private theorem vecMul_eq_of_rmsRow_two (hε : 0 < ε) (M : Matrix d d ℝ) {a b : d → ℝ}
     (h1 : rmsRow ε a ᵥ* M = rmsRow ε b)
     (h2 : rmsRow ε ((2 : ℝ) • a) ᵥ* M = rmsRow ε ((2 : ℝ) • b)) : a ᵥ* M = b := by
@@ -315,7 +315,8 @@ private theorem vecMul_eq_of_rmsRow_two (hε : 0 < ε) (M : Matrix d d ℝ) {a b
     exact (mul_eq_zero.mp this).resolve_left hsb.ne'
   obtain ⟨i₀, hi₀⟩ := Function.ne_iff.mp hb
   -- the two factors agree: `s(a) s(2b) = s(2a) s(b)`
-  have hk : Real.sqrt (A + ε) * Real.sqrt (4 * B + ε) = Real.sqrt (4 * A + ε) * Real.sqrt (B + ε) := by
+  have hk : Real.sqrt (A + ε) * Real.sqrt (4 * B + ε)
+      = Real.sqrt (4 * A + ε) * Real.sqrt (B + ε) := by
     apply mul_right_cancel₀ hi₀
     linear_combination (-Real.sqrt (4 * B + ε)) * e1 i₀ + Real.sqrt (B + ε) * e2 i₀
   -- squaring: `(A + ε)(4B + ε) = (4A + ε)(B + ε)`, so `3 ε (A - B) = 0`
@@ -636,7 +637,8 @@ theorem reluSq_not_even_not_const :
     norm_num at this
 
 /-- The ReLU gate: `σ(z) = κ σ(κ z)` for all `z` only for `κ = 1`. -/
-theorem relu_gate_scale : (∃ z, relu z ≠ 0) ∧ ∀ κ : ℝ, (∀ z, relu z = κ * relu (κ * z)) → κ = 1 := by
+theorem relu_gate_scale :
+    (∃ z, relu z ≠ 0) ∧ ∀ κ : ℝ, (∀ z, relu z = κ * relu (κ * z)) → κ = 1 := by
   refine ⟨⟨1, by simp only [relu]; norm_num⟩, fun κ h => ?_⟩
   -- at `z = 1`: `1 = κ max(κ, 0)`
   have h1 := h 1
@@ -648,13 +650,15 @@ theorem relu_gate_scale : (∃ z, relu z ≠ 0) ∧ ∀ κ : ℝ, (∀ z, relu z
     nlinarith
 
 /-- The SiLU gate: `σ'(0) = 1/2` and SiLU is not odd, so `σ(z) = κ σ(κ z)` only for `κ = 1`. -/
-theorem silu_gate_scale : (∃ z, silu z ≠ 0) ∧ ∀ κ : ℝ, (∀ z, silu z = κ * silu (κ * z)) → κ = 1 := by
+theorem silu_gate_scale :
+    (∃ z, silu z ≠ 0) ∧ ∀ κ : ℝ, (∀ z, silu z = κ * silu (κ * z)) → κ = 1 := by
   have hs1 : silu 1 = 1 / (1 + Real.exp (-1)) := rfl
   refine ⟨⟨1, by rw [hs1]; positivity⟩, fun κ h => ?_⟩
   -- differentiate at `0`: `σ'(0) = κ² σ'(0)` with `σ'(0) = 1/2`
   have hfun : silu = fun z => κ * silu (κ * z) := funext h
   have h2 : HasDerivAt silu (κ * (siluDeriv (κ * 0) * (κ * 1))) 0 := by
-    have := ((hasDerivAt_silu (κ * 0)).comp (0 : ℝ) ((hasDerivAt_id (0 : ℝ)).const_mul κ)).const_mul κ
+    have := ((hasDerivAt_silu (κ * 0)).comp (0 : ℝ)
+      ((hasDerivAt_id (0 : ℝ)).const_mul κ)).const_mul κ
     rw [hfun]
     exact this
   have e := (hasDerivAt_silu 0).unique h2
@@ -682,14 +686,16 @@ theorem silu_gate_scale : (∃ z, silu z ≠ 0) ∧ ∀ κ : ℝ, (∀ z, silu z
   norm_num at this
 
 /-- The GELU gate: `σ'(0) = 1/2` and GELU is not odd, so `σ(z) = κ σ(κ z)` only for `κ = 1`. -/
-theorem gelu_gate_scale : (∃ z, gelu z ≠ 0) ∧ ∀ κ : ℝ, (∀ z, gelu z = κ * gelu (κ * z)) → κ = 1 := by
+theorem gelu_gate_scale :
+    (∃ z, gelu z ≠ 0) ∧ ∀ κ : ℝ, (∀ z, gelu z = κ * gelu (κ * z)) → κ = 1 := by
   have hg1 : gelu 1 = gaussCdf 1 := one_mul _
   refine ⟨⟨1, by rw [hg1]; exact (gaussCdf_pos 1).ne'⟩, fun κ h => ?_⟩
   -- differentiate at `0`: `σ'(0) = κ² σ'(0)` with `σ'(0) = Φ(0) > 0`
   have hfun : gelu = fun z => κ * gelu (κ * z) := funext h
   have h2 : HasDerivAt gelu
       (κ * ((gaussCdf (κ * 0) + κ * 0 * gaussPdf (κ * 0)) * (κ * 1))) 0 := by
-    have := ((hasDerivAt_gelu (κ * 0)).comp (0 : ℝ) ((hasDerivAt_id (0 : ℝ)).const_mul κ)).const_mul κ
+    have := ((hasDerivAt_gelu (κ * 0)).comp (0 : ℝ)
+      ((hasDerivAt_id (0 : ℝ)).const_mul κ)).const_mul κ
     rw [hfun]
     exact this
   have e := (hasDerivAt_gelu 0).unique h2

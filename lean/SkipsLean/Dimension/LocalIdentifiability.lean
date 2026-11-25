@@ -38,10 +38,13 @@ Stated here, for networks without skip connections whose blocks have no symmetri
 * Corollary 5.3 for tanh blocks without normalization and for tanh and GELU blocks under
   pre-RMSNorm with `ε > 0`: this holds at almost every parameter.
 
-Not stated here: the converse direction of Proposition 4.6 (it uses Sard's theorem), the blocks
-with symmetries inside (SwiGLU, GeGLU, attention), and networks with skip connections.
-`θ.cob G G` is the change of basis of Proposition 3.2 (`Symmetry/ChangeOfBasis.lean`): `E G_0`,
-`G_{ℓ−1}⁻¹ W_read^ℓ`, `W_write^ℓ G_ℓ`, `G_L⁻¹ D`.
+Not stated here: the converse direction of Proposition 4.6 (it uses Sard's theorem:
+`Dimension/IdentifiableConverse.lean`, `Dimension/IdentifiableConverseCob.lean`; the equivalence:
+`Dimension/IdentifiableIff.lean`), the blocks with symmetries inside (SwiGLU, GeGLU:
+`Dimension/LocalIdentifiabilityGated.lean`; attention:
+`Dimension/LocalIdentifiabilityAttention.lean`), and networks with skip connections
+(`Residual/LocalIdentifiability.lean`). `θ.cob G G` is the change of basis of Proposition 3.2
+(`Symmetry/ChangeOfBasis.lean`): `E G_0`, `G_{ℓ−1}⁻¹ W_read^ℓ`, `W_write^ℓ G_ℓ`, `G_L⁻¹ D`.
 -/
 
 namespace Skips

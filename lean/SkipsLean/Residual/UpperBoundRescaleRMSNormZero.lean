@@ -25,7 +25,9 @@ rescalings, `Dimension/UpperBoundResidualRMSNormZero.lean`.
 The functional dimension is Lean's `funDim`, over all inputs, with the derivative in the weights
 taken to be `0` where the output is not differentiable, and with Lean's `rmsNorm 0`, which maps a
 zero row to `0`. It is at least the paper's, which uses fewer inputs, so the bound holds for the
-paper's. Not stated here: the half "at least".
+paper's. Not stated here: the half "at least" (for one block, the case of the theorem:
+`OneBlock/ResidualRMSZeroRescale.lean`, `OneBlock/ResidualRMSZeroRescaleGeneric.lean`,
+`OneBlock/ResidualRMSZeroReGLU.lean`, `OneBlock/ResidualRMSZeroReGLUGeneric.lean`).
 -/
 
 namespace Skips

@@ -38,8 +38,12 @@ at almost every parameter for ReLU and ReLU² blocks of width at least `d`.
 The functional dimension is Lean's `funDim`, over all inputs, with the derivative in the weights
 taken to be `0` where the output is not differentiable, and with Lean's `rmsNorm 0`, which maps a
 zero row to `0`. It is at least the paper's, which uses fewer inputs, so the bound holds for the
-paper's. Not stated here: the bound for ReGLU blocks; the value for the residual network; the
-equality for ReLU and ReLU² blocks.
+paper's. Not stated here: the bound for ReGLU blocks
+(`OneBlock/SkiplessHomogeneousGatedRMSZero.lean`); the value for the residual network
+(`OneBlock/ResidualRMSZeroRescale.lean`, `OneBlock/ResidualRMSZeroRescaleGeneric.lean`; the half "at
+most" at any depth: `Residual/UpperBoundRescaleRMSNormZero.lean`); the equality for ReLU and ReLU²
+blocks (`OneBlock/SkiplessHomogeneousRMSZeroEq.lean`, `OneBlock/SkiplessReluWideRMSZero.lean`,
+`OneBlock/SkiplessReluSqWideRMSZero.lean`).
 -/
 
 namespace Skips

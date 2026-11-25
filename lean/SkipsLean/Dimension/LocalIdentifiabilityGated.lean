@@ -35,8 +35,9 @@ The blocks without symmetries inside are in `Dimension/LocalIdentifiability.lean
 networks in `Residual/LocalIdentifiability.lean` and `Residual/LocalIdentifiabilityGated.lean`.
 All use `exists_mem_orbit_of_eval_eq` (`Dimension/OrbitNetwork.lean`). `θ.rescale c` divides the
 value column of hidden unit `i` of block `ℓ` by `c ℓ i` and multiplies its write row by `c ℓ i`
-(`Dimension/RescaleAction.lean`). Not stated here: the converse direction of Proposition 4.6 and
-attention blocks.
+(`Dimension/RescaleAction.lean`). Not stated here: the converse direction of Proposition 4.6 (the
+equivalence: `Dimension/IdentifiableIff.lean`) and attention blocks
+(`Dimension/LocalIdentifiabilityAttention.lean`).
 -/
 
 namespace Skips

@@ -40,7 +40,7 @@ all inputs (`T × d_in` matrices), `s = ∑_ℓ d_hidden^ℓ`:
   which `funDim = P − d² − s` and which contains `θ_τ` for generic `θ` and all small `τ ≠ 0`; and
   the gain `≥ L d²` at almost every point of `U` when every block has at least `d` hidden units.
 
-ReGLU blocks are not stated here.
+ReGLU blocks: `Residual/DepthReGLU.lean`.
 -/
 
 namespace Skips

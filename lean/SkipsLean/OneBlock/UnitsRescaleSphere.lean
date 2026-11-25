@@ -27,7 +27,7 @@ a rescaling of the units shifted by `c₀`: `ψc_i = λ_i c_i`, `β_i = k (c₀ 
 `X_0` has trace zero, which gives `c₀ = 0`; here `X` is any symmetric matrix, and `c₀ I` is the
 scaling of the hidden state.) At least one unit is asked: with no unit both sides vanish for
 every `X`. Exact check of the dimension `q + 1` of the solutions:
-`units_rescale_sphere_check_2026-11-24.py`. Not stated: ReGLU units.
+`units_rescale_sphere_check_2026-11-24.py`. ReGLU units: `OneBlock/UnitsRescaleSphereReGLU.lean`.
 -/
 
 namespace Skips

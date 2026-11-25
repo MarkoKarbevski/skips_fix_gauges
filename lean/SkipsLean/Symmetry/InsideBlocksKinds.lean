@@ -7,7 +7,9 @@ import SkipsLean.Dimension.Rescaling
 
 Paper (skips paper), Section 4.1: the symmetries inside the blocks are "the rescaling of the value
 of a hidden unit of a gated block, and the changes of basis inside an attention head" (and the
-rescaling of a hidden unit of a ReLU or ReLU² block, not stated here). Each of them leaves "the
+rescaling of a hidden unit of a ReLU or ReLU² block: `insideBlocks_rescaleDirMlp`,
+`Dimension/UpperBoundTransformerRescale.lean`; with biases: `insideBlocksB_rescaleDirMlpB`,
+`Symmetry/BiasesRescaleCount.lean`). Each of them leaves "the
 map of that block unchanged".
 
 Here: the directions `headDirQK θ Γ`, `headDirVO θ Γ'` of the changes of basis inside the heads
