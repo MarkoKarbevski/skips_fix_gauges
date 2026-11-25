@@ -32,7 +32,7 @@ width at least `d`).
   reads; asks `E ≠ 0` and every write nonzero. Nothing is asked of `c` and `Q` beyond
   `G_ℓ = c_ℓ Q_ℓ`.
 
-Not stated: `ε = 0` together with rescalings inside blocks.
+`ε = 0` together with the symmetries inside blocks is in `Symmetry/LocallyFreeRMSZero.lean`.
 -/
 
 namespace Skips

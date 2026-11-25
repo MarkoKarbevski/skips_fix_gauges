@@ -340,3 +340,5 @@ import SkipsLean.Symmetry.LocallyFreeReadout
 import SkipsLean.Symmetry.LocallyFreeAttention
 import SkipsLean.Symmetry.LocallyFreeGeneric
 import SkipsLean.Symmetry.LocallyFreeReadoutGeneric
+import SkipsLean.Symmetry.LocallyFreeRMSZero
+import SkipsLean.Symmetry.LocallyFreeRMSZeroGeneric

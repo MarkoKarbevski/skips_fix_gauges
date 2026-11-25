@@ -41,7 +41,8 @@ generic parameters: `d_in ≥ d` and blocks of width at least `d`).
   the writes and `Q_ℓ⁻¹` the reads (`eval_cob_rmsNorm_zero`): `c_ℓ = 1` and `Q_ℓ = 1`.
 
 Lean asks nothing of the numbers `c` (the paper: positive rescalings): a read column that is
-fixed and not zero gives `c = 1`. Not stated: `ε = 0` together with rescalings inside blocks.
+fixed and not zero gives `c = 1`. `ε = 0` together with the symmetries inside blocks is in
+`Symmetry/LocallyFreeRMSZero.lean`.
 The form with the readout is in `Symmetry/LocallyFreeReadout.lean`, attention blocks in
 `Symmetry/LocallyFreeAttention.lean`.
 -/
