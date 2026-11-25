@@ -158,6 +158,7 @@ variable {sees : T → T → Prop} [DecidableRel sees] {χ : Matrix T d ℝ → 
 variable {H dh : Fin L → Type} [∀ ℓ, Fintype (H ℓ)] [∀ ℓ, Fintype (dh ℓ)]
   [∀ ℓ, DecidableEq (dh ℓ)]
 
+omit [DecidableEq d] in
 /-- **The symmetries inside attention heads with biases act freely block by block at almost every
 weight,** for heads of width `d_h ≤ d`. -/
 theorem ae_insideBlocksFreeAt_heads

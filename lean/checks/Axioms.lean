@@ -2307,3 +2307,16 @@ import SkipsLean
 #print axioms Skips.insideBlocksFreeAt_rescaleBoth
 #print axioms Skips.dimH_generated_residual_gated_both
 #print axioms Skips.dimH_generated_skipless_gated_both
+#print axioms Skips.isOpen_headsSet
+#print axioms Skips.headsSet_nonempty
+#print axioms Skips.finrank_headsSpace
+#print axioms Skips.insideBlocksAction_heads
+#print axioms Skips.insideBlocksFreeAt_heads
+#print axioms Skips.dimH_generated_residual_attention
+#print axioms Skips.dimH_generated_skipless_attention
+#print axioms Skips.generatedGroup_residual
+#print axioms Skips.generatedGroup_skipless
+#print axioms Skips.ae_insideBlocksFreeAt_rescaleMlp
+#print axioms Skips.ae_insideBlocksFreeAt_rescale
+#print axioms Skips.ae_insideBlocksFreeAt_rescaleBoth
+#print axioms Skips.ae_insideBlocksFreeAt_heads

@@ -171,12 +171,14 @@ theorem isOpen_headsSet : IsOpen (headsSet H dh) := by
       ((continuous_apply ℓ).comp (continuous_fst.comp continuous_snd))).matrix_det
       continuous_const
 
+omit [(ℓ : Fin L) → Fintype (H ℓ)] in
 /-- The set of the `σ` is not empty. -/
 theorem headsSet_nonempty : (headsSet H dh).Nonempty :=
   -- all matrices `1`, all rows `0`
   ⟨(fun _ _ => 1, fun _ _ => 1, fun _ _ => 0, fun _ _ => 0), fun _ _ =>
     ⟨by simp, by simp⟩⟩
 
+omit [(ℓ : Fin L) → DecidableEq (dh ℓ)] in
 /-- The space of the `σ` has dimension `2 ∑_ℓ H_ℓ d_{h,ℓ}² + 2 ∑_ℓ H_ℓ d_{h,ℓ}`. -/
 theorem finrank_headsSpace :
     Module.finrank ℝ (HeadsSpace H dh)
@@ -205,6 +207,7 @@ private noncomputable def actGL_bga (K N : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) (
   ((q.1.headsQK K).headsVO N,
     (((q.2.headsQK K).headsVO N).keyShift κ).valueShift ((q.1.headsQK K).headsVO N) ν)
 
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: `headsAct σ` is the map of `σ` with `glOfMatrix` of its matrices. -/
 private theorem headsAct_apply_bga (σ : HeadsSpace H dh)
     (q : Params (Arch.attention sees χ H dh) dIn dOut
@@ -223,72 +226,96 @@ variable (θ : Params (Arch.attention sees χ H dh) dIn dOut)
   (b : Biases (Arch.attention sees χ H dh) dOut) (K : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ)
   (κ : ∀ ℓ, H ℓ → dh ℓ → ℝ) (ℓ : Fin L) (a : d) (i : H ℓ) (k : dh ℓ)
 
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: an entry of `θ.headsQK K` (query column). -/
 private theorem pQKq_bga : (θ.headsQK K).read ℓ a (i, Sum.inl k)
     = ∑ k', θ.read ℓ a (i, Sum.inl k') * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: an entry of `θ.headsQK K` (key column). -/
 private theorem pQKk_bga : (θ.headsQK K).read ℓ a (i, Sum.inr (Sum.inl k))
     = ∑ k', θ.read ℓ a (i, Sum.inr (Sum.inl k'))
       * (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k' := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: an entry of `θ.headsQK K` (value column). -/
 private theorem pQKv_bga : (θ.headsQK K).read ℓ a (i, Sum.inr (Sum.inr k))
     = θ.read ℓ a (i, Sum.inr (Sum.inr k)) := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: the write of `θ.headsQK K`. -/
 private theorem pQKw_bga : (θ.headsQK K).write ℓ = θ.write ℓ := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: an entry of `θ.headsVO K` (query column). -/
 private theorem pVOq_bga : (θ.headsVO K).read ℓ a (i, Sum.inl k) = θ.read ℓ a (i, Sum.inl k) :=
   rfl
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: an entry of `θ.headsVO K` (key column). -/
 private theorem pVOk_bga : (θ.headsVO K).read ℓ a (i, Sum.inr (Sum.inl k))
     = θ.read ℓ a (i, Sum.inr (Sum.inl k)) := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: an entry of `θ.headsVO K` (value column). -/
 private theorem pVOv_bga : (θ.headsVO K).read ℓ a (i, Sum.inr (Sum.inr k))
     = ∑ k', θ.read ℓ a (i, Sum.inr (Sum.inr k')) * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: an entry of the write of `θ.headsVO K`. -/
 private theorem pVOw_bga (c : d) : (θ.headsVO K).write ℓ (i, k) c
     = ∑ k', (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k' * θ.write ℓ (i, k') c :=
   rfl
+omit [Fintype d] [DecidableEq d] [Fintype dOut] in
 /-- Helper: an entry of `b.headsQK K` (query). -/
 private theorem bQKq_bga : (b.headsQK K).read ℓ (i, Sum.inl k)
     = ∑ k', b.read ℓ (i, Sum.inl k') * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dOut] in
 /-- Helper: an entry of `b.headsQK K` (key). -/
 private theorem bQKk_bga : (b.headsQK K).read ℓ (i, Sum.inr (Sum.inl k))
     = ∑ k', b.read ℓ (i, Sum.inr (Sum.inl k'))
       * (((K ℓ i)⁻¹ : GL (dh ℓ) ℝ) : Matrix (dh ℓ) (dh ℓ) ℝ) k k' := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dOut] in
 /-- Helper: an entry of `b.headsQK K` (value). -/
 private theorem bQKv_bga : (b.headsQK K).read ℓ (i, Sum.inr (Sum.inr k))
     = b.read ℓ (i, Sum.inr (Sum.inr k)) := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dOut] in
 /-- Helper: the write bias of `b.headsQK K`. -/
 private theorem bQKw_bga : (b.headsQK K).write ℓ = b.write ℓ := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dOut] in
 /-- Helper: an entry of `b.headsVO K` (query). -/
 private theorem bVOq_bga : (b.headsVO K).read ℓ (i, Sum.inl k) = b.read ℓ (i, Sum.inl k) := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dOut] in
 /-- Helper: an entry of `b.headsVO K` (key). -/
 private theorem bVOk_bga : (b.headsVO K).read ℓ (i, Sum.inr (Sum.inl k))
     = b.read ℓ (i, Sum.inr (Sum.inl k)) := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dOut] in
 /-- Helper: an entry of `b.headsVO K` (value). -/
 private theorem bVOv_bga : (b.headsVO K).read ℓ (i, Sum.inr (Sum.inr k))
     = ∑ k', b.read ℓ (i, Sum.inr (Sum.inr k')) * (K ℓ i : Matrix (dh ℓ) (dh ℓ) ℝ) k' k := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dOut] in
 /-- Helper: the write bias of `b.headsVO K`. -/
 private theorem bVOw_bga : (b.headsVO K).write ℓ = b.write ℓ := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dOut] [(ℓ : Fin L) → DecidableEq (dh ℓ)] in
 /-- Helper: an entry of `b.keyShift κ` (query). -/
 private theorem kSq_bga : (b.keyShift κ).read ℓ (i, Sum.inl k) = b.read ℓ (i, Sum.inl k) := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dOut] [(ℓ : Fin L) → DecidableEq (dh ℓ)] in
 /-- Helper: an entry of `b.keyShift κ` (key). -/
 private theorem kSk_bga : (b.keyShift κ).read ℓ (i, Sum.inr (Sum.inl k))
     = b.read ℓ (i, Sum.inr (Sum.inl k)) + κ ℓ i k := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dOut] [(ℓ : Fin L) → DecidableEq (dh ℓ)] in
 /-- Helper: an entry of `b.keyShift κ` (value). -/
 private theorem kSv_bga : (b.keyShift κ).read ℓ (i, Sum.inr (Sum.inr k))
     = b.read ℓ (i, Sum.inr (Sum.inr k)) := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dOut] [(ℓ : Fin L) → DecidableEq (dh ℓ)] in
 /-- Helper: the write bias of `b.keyShift κ`. -/
 private theorem kSw_bga : (b.keyShift κ).write ℓ = b.write ℓ := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] [(ℓ : Fin L) → DecidableEq (dh ℓ)] in
 /-- Helper: an entry of `b.valueShift θ κ` (query). -/
 private theorem vSq_bga : (b.valueShift θ κ).read ℓ (i, Sum.inl k) = b.read ℓ (i, Sum.inl k) :=
   rfl
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] [(ℓ : Fin L) → DecidableEq (dh ℓ)] in
 /-- Helper: an entry of `b.valueShift θ κ` (key). -/
 private theorem vSk_bga : (b.valueShift θ κ).read ℓ (i, Sum.inr (Sum.inl k))
     = b.read ℓ (i, Sum.inr (Sum.inl k)) := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] [(ℓ : Fin L) → DecidableEq (dh ℓ)] in
 /-- Helper: an entry of `b.valueShift θ κ` (value). -/
 private theorem vSv_bga : (b.valueShift θ κ).read ℓ (i, Sum.inr (Sum.inr k))
     = b.read ℓ (i, Sum.inr (Sum.inr k)) + κ ℓ i k := rfl
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] [(ℓ : Fin L) → DecidableEq (dh ℓ)] in
 /-- Helper: an entry of the write bias of `b.valueShift θ κ`. -/
 private theorem vSw_bga (c : d) : (b.valueShift θ κ).write ℓ c
     = b.write ℓ c - ∑ i, ∑ k, κ ℓ i k * θ.write ℓ (i, k) c := rfl
@@ -373,6 +400,7 @@ private theorem sum_sum_mul_bga {ι κ' δ : Type*} [Fintype ι] [Fintype κ'] [
 
 /-! ### Helpers: the group law of the maps -/
 
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: with `K = K' = 1` and `κ = ν = 0` the map is the identity. -/
 private theorem actGL_one_bga
     (q : Params (Arch.attention sees χ H dh) dIn dOut
@@ -393,6 +421,7 @@ private theorem actGL_one_bga
   · funext c
     simp [actGL_bga, vSw_bga, kSw_bga, bVOw_bga, bQKw_bga]
 
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: two changes of basis inside the heads in a row, on the weights. -/
 private theorem actP_comp_bga (θ : Params (Arch.attention sees χ H dh) dIn dOut)
     (K₁ N₁ K₂ N₂ : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ) :
@@ -405,6 +434,7 @@ private theorem actP_comp_bga (θ : Params (Arch.attention sees χ H dh) dIn dOu
   · ext ⟨i, k⟩ c
     simp only [pVOw_bga, pQKw_bga, Units.val_mul, _root_.mul_inv_rev, Matrix.mul_apply, sumC_bga]
 
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: the map of `σ` after the map of `σ'` is the map of
 `(K' K, N' N, κ' K^{-⊤} + κ, ν' N + ν)`. -/
 private theorem actGL_comp_bga (K₁ N₁ K₂ N₂ : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ)
@@ -435,6 +465,7 @@ private theorem actGL_comp_bga (K₁ N₁ K₂ N₂ : ∀ ℓ, H ℓ → GL (dh 
 
 /-! ### Helpers: the maps commute with the changes of basis and the translations -/
 
+omit [Fintype dIn] [Fintype dOut] in
 /-- Helper: the changes of basis inside the heads commute with the changes of basis `G`: the
 heads act on the columns of the reads and the rows of the writes, `G` on the other side. -/
 private theorem cob_heads_bga (θ : Params (Arch.attention sees χ H dh) dIn dOut)
@@ -450,6 +481,7 @@ private theorem cob_heads_bga (θ : Params (Arch.attention sees χ H dh) dIn dOu
       mul_assoc]
     exact Finset.sum_comm
 
+omit [Fintype dIn] [Fintype dOut] in
 /-- Helper: the maps commute with the translations of a skipless network and the changes of
 basis, on the biases: `(b − g W) K = b K − g (W K)` column by column, and the value shift
 `ν (K'^{-1} W_O)` of the write bias commutes with `G`. -/
@@ -474,6 +506,7 @@ private theorem translateAllAt_heads_bga (θ : Params (Arch.attention sees χ H 
       Finset.sum_add_distrib, Finset.sum_sub_distrib, sum_sum_mul_bga]
     ring
 
+omit [Fintype dIn] [Fintype dOut] in
 /-- Helper: the same for the translations of a residual network. -/
 private theorem translateAll_heads_bga (θ : Params (Arch.attention sees χ H dh) dIn dOut)
     (b : Biases (Arch.attention sees χ H dh) dOut) (K N : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ)
@@ -514,6 +547,7 @@ private theorem rank_heads_le_bga {I n m : Type*} [Fintype I] [DecidableEq I] [F
   rw [h]
   exact Matrix.rank_mul_le_right _ _
 
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: the write after the changes of basis `K'` between values and outputs has the rank of
 the write: each is a block-diagonal matrix times the other. -/
 private theorem rank_write_bga (θ : Params (Arch.attention sees χ H dh) dIn dOut)
@@ -752,7 +786,7 @@ private theorem attnWeights_sum_bga (Z : Matrix T T ℝ) (t : T) (ht : ∃ s, se
   simp only [h1, ← Finset.sum_div]
   exact div_self hS.ne'
 
-omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] [(ℓ : Fin L) → DecidableEq (dh ℓ)] in
 /-- Helper: the map `f ℓ` is the same on `M'` and `M` if the keys of head `i` of `M'` are those
 of `M` shifted by `κ_i` and the queries and values are those of `M`: the score of `(t, s)` moves
 by `q_t · κ_i / √d_h`, the same for every `s`. -/
@@ -783,7 +817,7 @@ private theorem f_keyShift_bga (ℓ : Fin L) (M M' : Matrix T (H ℓ × (dh ℓ 
   rw [hsc p.1]
   simp only [hv]
 
-omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] [(ℓ : Fin L) → DecidableEq (dh ℓ)] in
 /-- Helper: if every token sees some token, `f ℓ M' = f ℓ M + 1 ν` when the values of head `i`
 of `M'` are those of `M` shifted by `ν_i` and the queries and keys are those of `M`: the weights
 are kept, and they sum to `1` on every row. -/
@@ -814,6 +848,7 @@ private theorem f_valueShift_bga (hsee : ∀ t, ∃ s, sees t s) (ℓ : Fin L)
   simp only [hv, mul_add, Finset.sum_add_distrib, ← Finset.sum_mul,
     attnWeights_sum_bga _ t (hsee t), one_mul]
 
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] [(ℓ : Fin L) → DecidableEq (dh ℓ)] in
 /-- Helper: the shifts `κ` of the key biases keep the map of every block. -/
 private theorem block_keyShift_bga (θ : Params (Arch.attention sees χ H dh) dIn dOut)
     (b : Biases (Arch.attention sees χ H dh) dOut) (κ : ∀ ℓ, H ℓ → dh ℓ → ℝ) (ℓ : Fin L)
@@ -835,6 +870,7 @@ private theorem block_keyShift_bga (θ : Params (Arch.attention sees χ H dh) dI
   · intro t i k
     rfl
 
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] [(ℓ : Fin L) → DecidableEq (dh ℓ)] in
 /-- Helper: the value biases moved by `ν` into the output bias keep the map of every block, if
 every token sees a token. -/
 private theorem block_valueShift_bga (hsee : ∀ t, ∃ s, sees t s)
@@ -865,6 +901,7 @@ private theorem block_valueShift_bga (hsee : ∀ t, ∃ s, sees t s)
       = (n * θ.read ℓ) t (i, Sum.inr (Sum.inr k)) + b.read ℓ (i, Sum.inr (Sum.inr k)) + ν ℓ i k
     rw [add_assoc]
 
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- Helper: every map `actGL_bga K N κ ν` keeps the map of every block, if every token sees a
 token: the four steps each keep it. -/
 private theorem block_act_bga (hsee : ∀ t, ∃ s, sees t s) (K N : ∀ ℓ, H ℓ → GL (dh ℓ) ℝ)
@@ -902,6 +939,7 @@ private theorem evalB_eq_of_blocks_bga {A : Arch T d L} (q₁ q₂ : Params A dI
   -- hence the outputs agree
   rw [evalB, evalB, hh, hD, hbD]
 
+omit [Fintype dOut] in
 /-- **The changes of basis inside the heads, the shifts of the key biases and the value biases
 moved into the output bias are a family of symmetries inside the blocks,** when every token sees
 a token. -/
@@ -969,6 +1007,7 @@ theorem insideBlocksAction_heads (hsee : ∀ t, ∃ s, sees t s) :
     exact rank_write_bga q.1 (fun ℓ i => glOfMatrix (σ.1 ℓ i))
       (fun ℓ i => glOfMatrix (σ.2.1 ℓ i)) ℓ
 
+omit [Fintype d] [DecidableEq d] [Fintype dIn] [Fintype dOut] in
 /-- **They act freely block by block at weights whose query matrix and value matrix have rank
 `d_h` in every head.** -/
 theorem insideBlocksFreeAt_heads
