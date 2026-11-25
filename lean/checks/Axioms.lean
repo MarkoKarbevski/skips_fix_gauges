@@ -1811,3 +1811,6 @@ import SkipsLean
 #print axioms Skips.ae_funDim_relu_oneBlock_skipless_rmsNorm_zero_of_le
 #print axioms Skips.ae_exists_jacobianRank_relu_oneBlock_skipless_rmsNorm_zero_of_le
 #print axioms Skips.ae_funDim_relu_oneBlock_residual_rmsNorm_zero_eq_add_of_le
+#print axioms Skips.keeps_products_and_ED_iff_mem_range_cobDir
+#print axioms Skips.finrank_span_keeps_products
+#print axioms Skips.finrank_span_keeps_products_and_ED
