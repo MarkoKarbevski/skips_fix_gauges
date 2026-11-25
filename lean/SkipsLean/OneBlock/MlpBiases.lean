@@ -739,7 +739,7 @@ theorem funDimB_mlp_oneBlock_residual (hσ : ∀ z, HasDerivAt σ (σ' z) z)
   have h3 := funDimB_add_finrank_flatB p hdiff
   omega
 
-omit [Nonempty T] [DecidableEq d] in
+omit [Nonempty T] [DecidableEq d] [Fintype T] in
 /-- **A property of the weights that holds at generic weights holds at generic weights and
 biases:** if `P θ` holds at almost every `θ` for every Haar measure on the weights, then
 `P p.1` holds at almost every `p = (θ, b)` for every Haar measure on the pairs. -/

@@ -2001,3 +2001,13 @@ import SkipsLean
 #print axioms Skips.goodForConesMlp_thetaDaggerMlp
 #print axioms Skips.frozenMlp_thetaDaggerMlp
 #print axioms Skips.linearIndependent_outer_read_thetaDaggerMlp
+#print axioms Skips.flatB_le_range_mlp_skipless
+#print axioms Skips.funDimB_mlp_oneBlock
+#print axioms Skips.flatB_le_range_mlp_residual
+#print axioms Skips.funDimB_mlp_oneBlock_residual
+#print axioms Skips.ae_paramsB_of_forall_ae
+#print axioms Skips.ae_funDimB_mlp_oneBlock
+#print axioms Skips.ae_funDimB_mlp_oneBlock_residual
+#print axioms Skips.ae_funDimB_mlp_oneBlock_residual_eq_add
+#print axioms Skips.ae_funDimB_tanh_oneBlock_residual_eq_add
+#print axioms Skips.ae_funDimB_gelu_oneBlock_residual_eq_add
