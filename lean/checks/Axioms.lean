@@ -2011,3 +2011,7 @@ import SkipsLean
 #print axioms Skips.ae_funDimB_mlp_oneBlock_residual_eq_add
 #print axioms Skips.ae_funDimB_tanh_oneBlock_residual_eq_add
 #print axioms Skips.ae_funDimB_gelu_oneBlock_residual_eq_add
+#print axioms Skips.ae_funDimB_tanh_oneBlock
+#print axioms Skips.ae_funDimB_tanh_oneBlock_residual
+#print axioms Skips.ae_funDimB_gelu_oneBlock
+#print axioms Skips.ae_funDimB_gelu_oneBlock_residual
