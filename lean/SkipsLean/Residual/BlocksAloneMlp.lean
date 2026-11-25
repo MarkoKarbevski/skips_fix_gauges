@@ -59,6 +59,36 @@ theorem eventually_funDimBlocks_smallWrites_mlp (hσ : ∀ z, HasDerivAt σ (σ'
       exact hτ)
   rwa [finrank_bot, add_zero] at h
 
+omit [Fintype T] [Nonempty T] in
+/-- Helper: if a network `θ` with `d_in = d_out = d` satisfies the conditions of Lemma A.27, so
+does the network with `E = D = I` and the blocks `(E W_read^ℓ, W_write^ℓ D)` of `θ`: `E = D = I`
+have rank `d`, the rows of `(W_write^ℓ D) I` and the columns of `I (E W_read^ℓ)` are those of
+`θ`. -/
+private theorem smallWritesGeneric_blocksOf_bam
+    (θ : Params (Arch.mlp (T := T) (d := d) σ id hid) d d) (hθ : SmallWritesGeneric θ) :
+    SmallWritesGeneric (BlockParams.toParams
+      (⟨0, fun ℓ => θ.E * θ.read ℓ, fun ℓ => θ.write ℓ * θ.D, 0⟩ :
+        BlockParams (Arch.mlp (T := T) (d := d) σ id hid))) where
+  rank_E := by
+    show (1 : Matrix d d ℝ).rank = _
+    exact Matrix.rank_one
+  rank_D := by
+    show (1 : Matrix d d ℝ).rank = _
+    exact Matrix.rank_one
+  row_ne_zero ℓ i := by
+    show (θ.write ℓ * θ.D * (1 : Matrix d d ℝ)) i ≠ 0
+    rw [Matrix.mul_one]
+    exact hθ.row_ne_zero ℓ i
+  col_ne_zero ℓ i := by
+    show ((1 : Matrix d d ℝ) * (θ.E * θ.read ℓ))ᵀ i ≠ 0
+    rw [Matrix.one_mul]
+    exact hθ.col_ne_zero ℓ i
+  col_not_collinear p q hpq r := by
+    show ((1 : Matrix d d ℝ) * (θ.E * θ.read p.1))ᵀ p.2
+      ≠ r • ((1 : Matrix d d ℝ) * (θ.E * θ.read q.1))ᵀ q.2
+    rw [Matrix.one_mul, Matrix.one_mul]
+    exact hθ.col_not_collinear p q hpq r
+
 /-- **Lemma A.27, fourth value, at generic parameters, for MLP blocks with `s = 0`** ("a network
 of GELU blocks without an embedding and a readout has functional dimension `P`"): without
 normalization, with `d ≥ 2` and `L` blocks of any widths, at almost every parameter of the blocks
@@ -70,7 +100,25 @@ theorem ae_funDimBlocks_mlp_residual (hσ : ∀ z, HasDerivAt σ (σ' z) z)
     (hd : 2 ≤ Fintype.card d) :
     ∀ᵐ β ∂μ, funDimBlocks (Arch.mlp σ id hid) 1 β
       = Module.finrank ℝ (BlockParams (Arch.mlp (T := T) (d := d) σ id hid)) := by
-  sorry
+  have hf : ∀ ℓ, AnalyticOnNhd ℝ ((Arch.mlp (T := T) (d := d) σ id hid).f ℓ) Set.univ :=
+    fun ℓ => analyticOnNhd_f_mlp hσa ℓ
+  -- one network `θ₀` with `d_in = d_out = d` and the conditions of Lemma A.27
+  obtain ⟨θ₀, hθ₀⟩ := (ae_smallWritesGeneric
+    (Measure.addHaar : Measure (Params (Arch.mlp (T := T) (d := d) σ id hid) d d))
+    hd le_rfl le_rfl).exists
+  -- the blocks `β₀ = (E W_read, W_write D)` and one small `τ ≠ 0`: `fd(β₀_τ) = P`
+  obtain ⟨τ, hτ⟩ := (eventually_funDimBlocks_smallWrites_mlp hσ hσa hU
+    (⟨0, fun ℓ => θ₀.E * θ₀.read ℓ, fun ℓ => θ₀.write ℓ * θ₀.D, 0⟩ :
+      BlockParams (Arch.mlp (T := T) (d := d) σ id hid))
+    (smallWritesGeneric_blocksOf_bam θ₀ hθ₀)).exists
+  -- `≥`: at almost every `β`, `fd(β) ≥ fd(β₀_τ)` (the outputs are analytic)
+  filter_upwards [ae_funDimBlocks_ge (Arch.mlp σ id hid) 1 hf analyticOnNhd_id μ
+    ((⟨0, fun ℓ => θ₀.E * θ₀.read ℓ, fun ℓ => θ₀.write ℓ * θ₀.D, 0⟩ :
+      BlockParams (Arch.mlp (T := T) (d := d) σ id hid)).smallWrites τ)] with β h1
+  -- `≤`: `fd(β) ≤ P`, on a batch that attains it
+  obtain ⟨m, Y, hY⟩ := exists_jacobianRankBlocks_eq_funDimBlocks (S := 1) β
+  have hup := jacobianRankBlocks_le_finrank (S := 1) Y β
+  omega
 
 /-- **Lemma A.27, fourth value, at generic parameters, for `tanh` blocks.** -/
 theorem ae_funDimBlocks_tanh_residual
