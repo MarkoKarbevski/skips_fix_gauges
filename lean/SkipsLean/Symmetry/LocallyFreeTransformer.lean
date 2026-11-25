@@ -238,6 +238,7 @@ private theorem reglu_step_lft (k : ℕ)
   rw [hc i, hc' i, one_pow, inv_one, one_mul, one_mul] at hr
   exact hr
 
+omit [Fintype dIn] [Fintype dOut] in
 /-- **Lemma A.18, third sentence, for the group: attention blocks with MLP blocks with the
 rescalings `c` of the hidden units (ReLU, ReLU²; any degree `k`).** If `E` and the write of every
 block have rank `d`, the query and the value matrix of every head have rank `d_h`, no read column
@@ -275,6 +276,7 @@ theorem cob_heads_rescaleMlp_eq_self_of_rank_E (k : ℕ)
   exact ⟨funext hG, funext fun ℓ => funext (key ℓ (hG ℓ.castSucc)).1.1,
     funext fun ℓ => funext (key ℓ (hG ℓ.castSucc)).1.2.1, fun ℓ => (key ℓ (hG ℓ.castSucc)).2.1⟩
 
+omit [Fintype dIn] [Fintype dOut] in
 /-- **Lemma A.18, third sentence, for the group: attention blocks with gated blocks with the
 rescalings `c` of the values.** If `E` and the write of every block have rank `d`, the query and
 the value matrix of every head have rank `d_h`, no value column of a hidden unit vanishes, and the
@@ -311,6 +313,7 @@ theorem cob_heads_rescale_eq_self_of_rank_E
   exact ⟨funext hG, funext fun ℓ => funext (key ℓ (hG ℓ.castSucc)).1.1,
     funext fun ℓ => funext (key ℓ (hG ℓ.castSucc)).1.2.1, fun ℓ => (key ℓ (hG ℓ.castSucc)).2.1⟩
 
+omit [Fintype dIn] [Fintype dOut] in
 /-- **Lemma A.18, third sentence, for the group: attention blocks with ReGLU blocks with the
 rescalings `c'` of the values and `c` of the gates.** If `E` and the write of every block have
 rank `d`, the query and the value matrix of every head have rank `d_h`, no gate column and no
@@ -371,6 +374,7 @@ private theorem eq_one_of_smul_eq_one_lft [Nonempty d] (Q : GL d ℝ)
   rw [hs1, one_smul] at h
   exact h
 
+omit [Fintype dIn] [Fintype dOut] in
 /-- **The same for `ε = 0`: attention blocks with MLP blocks with the rescalings `c` of the hidden
 units (ReLU, ReLU²; any degree `k`).** Let `G_ℓ = s_ℓ Q_ℓ` with `s_ℓ > 0` and `Q_ℓ` orthogonal
 (the writes are multiplied by `G_ℓ`, the reads by `Q_ℓ⁻¹`), `d ≥ 1`. Under the same conditions on
@@ -415,6 +419,7 @@ theorem cob_rmsNorm_zero_heads_rescaleMlp_eq_self_of_rank_E [Nonempty d] (k : �
     funext fun ℓ => funext (key ℓ (hG1 ℓ.castSucc)).1.2.1,
     fun ℓ => (key ℓ (hG1 ℓ.castSucc)).2.1⟩
 
+omit [Fintype dIn] [Fintype dOut] in
 /-- **The same for `ε = 0`: attention blocks with gated blocks with the rescalings `c` of the
 values.** Let `G_ℓ = s_ℓ Q_ℓ` with `s_ℓ > 0` and `Q_ℓ` orthogonal (the writes are multiplied by
 `G_ℓ`, the reads by `Q_ℓ⁻¹`), `d ≥ 1`. Under the same conditions on `θ`, if these changes of basis
@@ -459,6 +464,7 @@ theorem cob_rmsNorm_zero_heads_rescale_eq_self_of_rank_E [Nonempty d]
     funext fun ℓ => funext (key ℓ (hG1 ℓ.castSucc)).1.2.1,
     fun ℓ => (key ℓ (hG1 ℓ.castSucc)).2.1⟩
 
+omit [Fintype dIn] [Fintype dOut] in
 /-- **The same for `ε = 0`: attention blocks with ReGLU blocks with the rescalings `c'` of the
 values and `c` of the gates.** Let `G_ℓ = s_ℓ Q_ℓ` with `s_ℓ > 0` and `Q_ℓ` orthogonal (the writes
 are multiplied by `G_ℓ`, the reads by `Q_ℓ⁻¹`), `d ≥ 1`. Under the same conditions on `θ`, if
