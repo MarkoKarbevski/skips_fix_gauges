@@ -110,6 +110,21 @@ theorem ae_unitsGeneralPositionSq {σ : ℝ → ℝ}
   have hli := hG.2.1 {i} (by rw [Finset.card_singleton]; omega)
   exact hli.ne_zero ⟨i, Finset.mem_singleton_self i⟩ h0
 
+omit [Nonempty T] in
+/-- Helper: at almost every parameter `E` and `D` have rank `d` (`d_in, d_out ≥ d`, width at
+least `d`); a copy of `ae_rank_E_D_srw`. -/
+private theorem ae_rank_E_D_ssq {σ : ℝ → ℝ}
+    (μ : Measure (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm 0) hid) dIn dOut))
+    [μ.IsAddHaarMeasure] (hdIn : Fintype.card d ≤ Fintype.card dIn)
+    (hdOut : Fintype.card d ≤ Fintype.card dOut)
+    (hcard : Fintype.card d ≤ Fintype.card (hid 0)) :
+    ∀ᵐ θ ∂μ, θ.E.rank = Fintype.card d ∧ θ.D.rank = Fintype.card d := by
+  obtain ⟨ρD⟩ := Function.Embedding.nonempty_of_card_le hdOut
+  filter_upwards [ae_rank_E_write μ hdIn
+      (fun ℓ => by obtain rfl := Subsingleton.elim ℓ 0; exact hcard),
+    ae_isUnit_det_submatrix μ] with θ h1 h2
+  exact ⟨h1.1, rank_eq_card_of_isUnit_det θ.D ρD (h2.2.1 ρD)⟩
+
 /-- **Theorem B.1 (iv) of the skips paper, the skipless network, "with equality", for one ReLU²
 block of width at least `d`:** for `d_in, d_out ≥ d ≥ 2` and at least `d` hidden units, at almost
 every parameter `funDim = P − d² − (d(d−1)/2 + 1) − s`. -/
@@ -123,7 +138,13 @@ theorem ae_funDim_reluSq_oneBlock_skipless_rmsNorm_zero_of_le
           + Fintype.card (hid 0))
       = Module.finrank ℝ
           (Params (Arch.mlp (T := T) (d := d) reluSq (rmsNorm 0) hid) dIn dOut) := by
-  sorry
+  filter_upwards [ae_rank_E_D_ssq μ hdIn hdOut hcard,
+    ae_unitsGeneralPositionSq μ hd hcard] with θ hθ hG
+  obtain ⟨hR, hW, hc⟩ := rank_of_unitsGeneralPositionSq hd hG
+  exact funDim_mlp_oneBlock_rescale_skipless_rmsNorm_zero_of_unitsParallelAt
+    (fun z _ => hasDerivAt_reluSq z) reluSq_homogeneous θ hd hθ.1 hθ.2 hR hW hc
+    (reluSq_unitsParallelAt_of_unitsGeneralPositionSq θ.E hd hθ.1 hG)
+    (exists_open_reluSq_of_unitsGeneralPositionSq θ.E hθ.1 hG)
 
 /-- **The same in the paper's own sense:** at almost every parameter a finite batch of inputs at
 which no normalized row vanishes and no hidden unit sits at its kink, on which the Jacobian has
@@ -140,7 +161,13 @@ theorem ae_exists_jacobianRank_reluSq_oneBlock_skipless_rmsNorm_zero_of_le
             + Fintype.card (hid 0))
         = Module.finrank ℝ
             (Params (Arch.mlp (T := T) (d := d) reluSq (rmsNorm 0) hid) dIn dOut) := by
-  sorry
+  filter_upwards [ae_rank_E_D_ssq μ hdIn hdOut hcard,
+    ae_unitsGeneralPositionSq μ hd hcard] with θ hθ hG
+  obtain ⟨hR, hW, hc⟩ := rank_of_unitsGeneralPositionSq hd hG
+  exact exists_jacobianRank_mlp_oneBlock_rescale_skipless_rmsNorm_zero_of_unitsParallelAt
+    (fun z _ => hasDerivAt_reluSq z) reluSq_homogeneous θ hd hθ.1 hθ.2 hR hW hc
+    (reluSq_unitsParallelAt_of_unitsGeneralPositionSq θ.E hd hθ.1 hG)
+    (exists_open_reluSq_of_unitsGeneralPositionSq θ.E hθ.1 hG)
 
 /-- **Theorem B.1 (iv) of the skips paper, "by exactly `d_model²` for ReLU and ReLU² blocks", for
 one ReLU² block of width at least `d`:** at almost every parameter `funDim` of the residual
