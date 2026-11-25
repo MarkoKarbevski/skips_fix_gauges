@@ -31,7 +31,8 @@ of the dead unit.
 As in the twins, the network has the blocks `Fin (L + 1)` in the last four statements (at least
 two blocks when `L ≥ 1`), Lean's `funDim` is at least the paper's functional dimension, and the
 bound is at almost every point of the open set. Not stated: the bound at every point of the open
-set; ReGLU blocks with exactly `d` hidden units in the block of the dead unit.
+set. ReGLU blocks with exactly `d` hidden units in the block of the dead unit are in
+`Depth/InactiveGateTwoSided.lean`.
 -/
 
 namespace Skips
