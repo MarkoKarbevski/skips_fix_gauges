@@ -366,7 +366,20 @@ orthonormal basis of `V` has `d − 1` columns. -/
 theorem card_add_one_eq_of_orthonormal_centering [Nonempty d] (U : Matrix d m ℝ)
     (hU : Uᵀ * U = 1) (hUZ : U * Uᵀ = centering d) :
     Fintype.card m + 1 = Fintype.card d := by
-  sorry
+  have hn : (Fintype.card d : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr Fintype.card_ne_zero
+  -- `tr J = card d` for the all-ones matrix `J`
+  have hJ : Matrix.trace (Matrix.of fun _ _ => (1 : ℝ) : Matrix d d ℝ) = Fintype.card d := by
+    simp [Matrix.trace]
+  -- `card m = tr (U^⊤ U) = tr (U U^⊤) = tr Z = card d - 1`
+  have htr : (Fintype.card m : ℝ) = Fintype.card d - 1 := by
+    have h1 : Matrix.trace (Uᵀ * U) = Matrix.trace (U * Uᵀ) := Matrix.trace_mul_comm _ _
+    rw [hU, hUZ, Matrix.trace_one] at h1
+    rw [h1, centering, Matrix.trace_sub, Matrix.trace_one, Matrix.trace_smul, hJ, smul_eq_mul,
+      inv_mul_cancel₀ hn]
+  have hc : ((Fintype.card m + 1 : ℕ) : ℝ) = (Fintype.card d : ℝ) := by
+    push_cast
+    linarith
+  exact_mod_cast hc
 
 omit [Fintype m] [DecidableEq m] [Fintype dIn] in
 /-- **"In an orthonormal basis of `V`":** such a basis exists, as the columns of a matrix `U`
