@@ -21,7 +21,8 @@ columns of the read are asked in general position, which holds at generic parame
 
 As in the twins, the last two statements are for networks with the blocks `Fin (L + 1)`, Lean's
 `funDim` is at least the paper's functional dimension, and the bound is at almost every point of
-the open set. Not stated: the bound at every point of the open set.
+the open set. The bound at every point of the open set is in
+`Depth/InactiveUnitEveryPoint.lean`.
 -/
 
 namespace Skips
