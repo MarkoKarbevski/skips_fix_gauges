@@ -16,7 +16,7 @@ state has its own translation (Proposition A.1 (ii)). A skip ties only the linea
 
 Here, for the networks with biases of `Network/Biases.lean`, without normalization, the count for
 the changes of basis and the translations (the symmetries inside blocks, the `s` of the lemma,
-are not treated here):
+are in `Symmetry/InsideBlocksBiases.lean` and `Symmetry/BiasesRescaleCount.lean`):
 
 * `finrank_paramsB`: `P` with biases is the number of weights plus `d + ∑_ℓ r_ℓ + L d + d_out`.
 * `cobDirB`: the direction of the changes of basis at `(θ, b)`: `cobDir θ X` on the weights, and
