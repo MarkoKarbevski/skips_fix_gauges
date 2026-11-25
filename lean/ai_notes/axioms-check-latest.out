@@ -2351,3 +2351,62 @@
 'Skips.exists_isOpen_unitInactive_relu_forall' depends on axioms: [propext, Classical.choice, Quot.sound]
 'Skips.exists_isOpen_unitInactive_reluSq_forall' depends on axioms: [propext, Classical.choice, Quot.sound]
 'Skips.exists_isOpen_gateInactive_reglu_forall' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.inputRank_skipless_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.le_inputRank_residual_mlp_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_le_inputRank_residual_mlp_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_forall_eval_residual_ne_skipless_of_card_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_forall_all_widths_eval_residual_ne_skipless_gelu' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.hasFDerivAt_evalBlocks_batch' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.mem_ker_fderiv_evalBlocks_of_mem_flat' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.jacobianRankBlocks_add_finrank_le' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.funDimBlocks_add_finrank_eq_of_funDim_toParams' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.analyticOnNhd_evalBlocks_batch' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimBlocks_ge' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.eventually_funDimBlocks_smallWrites_mlp' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimBlocks_mlp_residual' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimBlocks_tanh_residual' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimBlocks_gelu_residual' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.jacobianRankBlocks_add_one_le_skipless' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.eventually_funDimBlocks_smallWrites_gated' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimBlocks_gated_residual' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimBlocks_swiglu_residual' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimBlocks_geglu_residual' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_forall_evalBlocks_residual_ne_skipless_mlp' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_forall_evalBlocks_residual_ne_skipless_gelu' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_comm_of_commute' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.cob_mulSingle_comm' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.eventually_funDimBlocks_smallWrites_attentionMlp' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimBlocks_attentionMlp_residual' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.eventually_funDimBlocks_smallWrites_attentionGated' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimBlocks_attentionGated_residual' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimBlocks_attention_tanh_residual' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimBlocks_attention_gelu_residual' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimBlocks_attention_swiglu_residual' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.ae_funDimBlocks_attention_geglu_residual' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.mem_posOrthant' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_mu_thetaDaggerGated_cols' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_mu_thetaDaggerGated_outer' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_mu_thetaDaggerMlp_outer' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.smallWritesLimit_eq_zero_of_forall_mem_isOpen_mlp_rescale' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.exists_eventually_jacobianRank_smallWrites_mlp_rescale_of_isOpen' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.exists_eventually_eventually_jacobianRank_smallWrites_mlp_rescale_of_isOpen' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.exists_isOpen_jacobianRank_smallWrites_relu_of_isOpen' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_isOpen_jacobianRank_smallWrites_reluSq_of_isOpen' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.smallWritesLimit_eq_zero_of_forall_mem_isOpen_reglu' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Skips.exists_eventually_jacobianRank_smallWrites_reglu_of_isOpen' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.exists_eventually_eventually_jacobianRank_smallWrites_reglu_of_isOpen' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+'Skips.exists_isOpen_jacobianRank_smallWrites_reglu_of_isOpen' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
