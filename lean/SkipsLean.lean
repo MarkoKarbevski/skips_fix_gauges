@@ -331,3 +331,4 @@ import SkipsLean.Dimension.UpperBoundReadout
 import SkipsLean.Residual.ExactReductionWrites
 import SkipsLean.OneBlock.GatedUnitsNoSymmetricPart
 import SkipsLean.OneBlock.LearnedSkipNarrowGated
+import SkipsLean.OneBlock.LearnedSkipTriangularNarrow
