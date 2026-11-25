@@ -2267,3 +2267,8 @@ import SkipsLean
 #print axioms Skips.gateFarC_gelu
 #print axioms Skips.gateFarC_silu
 #print axioms Skips.exists_far_frozen_holomorphic
+#print axioms Skips.ae_flatOn_le_relu_oneBlock_skipless_rmsNorm_zero_of_le
+#print axioms Skips.ae_flatOn_le_reluSq_oneBlock_skipless_rmsNorm_zero_of_le
+#print axioms Skips.ae_flatOn_le_relu_oneBlock_residual_rmsNorm_zero
+#print axioms Skips.ae_flatOn_le_reluSq_oneBlock_residual_rmsNorm_zero
+#print axioms Skips.ae_flatOn_le_reglu_oneBlock_residual_rmsNorm_zero

@@ -32,7 +32,8 @@ translations as a set, as `Symmetry/CobGroup.lean` does for Theorem 3.3 (ii) wit
   `d² + (L + 1) d`, and their difference `L d²`.
 
 The symmetries inside the blocks (the `s` of the lemma) are not part of these sets; the count
-with them is the statement on directions.
+with them is the statement on directions. That the maps of these pairs form a group, and that it
+meets the symmetries inside the blocks only in the identity: `Symmetry/BiasesAffineGroupLaw.lean`.
 -/
 
 namespace Skips
