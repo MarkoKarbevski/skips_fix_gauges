@@ -402,3 +402,5 @@ import SkipsLean.Depth.ScaledSuffixOrders
 import SkipsLean.Generic.HolomorphicExtension
 import SkipsLean.Depth.ScaledSuffixHolomorphic
 import SkipsLean.Dimension.RankCriterionLieGroup
+import SkipsLean.Residual.ExactReductionChoice
+import SkipsLean.Symmetry.MixedJunctionsFree
