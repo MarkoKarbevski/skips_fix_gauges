@@ -381,3 +381,8 @@ import SkipsLean.OneBlock.KeepsProductsBiases
 import SkipsLean.Residual.SmallWritesBiases
 import SkipsLean.Residual.DepthMlpBiases
 import SkipsLean.Residual.DepthGatedBiases
+import SkipsLean.Symmetry.AttentionHeadsBiases
+import SkipsLean.Dimension.UpperBoundAttentionBiases
+import SkipsLean.OneBlock.AttentionBiases
+import SkipsLean.OneBlock.AttentionBiasesStepOne
+import SkipsLean.OneBlock.AttentionBiasesDim
