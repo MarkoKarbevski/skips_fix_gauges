@@ -463,7 +463,9 @@ theorem dimH_affMat_affPreservingSkipless_prod (A : Arch T d L) (hA : A.χ = id)
       = (L + 1) * (Fintype.card d ^ 2 + Fintype.card d) + Module.finrank ℝ F := by
     rw [Module.finrank_prod, Module.finrank_prod, Module.finrank_pi_fintype,
       Module.finrank_pi_fintype]
-    simp [Module.finrank_matrix, sq]
+    simp only [Module.finrank_matrix, Module.finrank_self, mul_one, Finset.sum_const,
+      Finset.card_univ, Fintype.card_fin, smul_eq_mul, Module.finrank_fintype_fun_eq_card, sq,
+      Nat.add_right_cancel_iff]
     ring
   rw [Real.dimH_of_mem_nhds ((hopen.prod hS).mem_nhds (Set.mk_mem_prod h1 hσ₀))]
   exact congrArg Nat.cast hfin
@@ -512,7 +514,9 @@ theorem dimH_affMat_affPreservingResidual_prod [Nonempty T] [Nonempty dOut] (A :
   have hfin : Module.finrank ℝ ((Matrix d d ℝ × (Fin (L + 1) → d → ℝ)) × F)
       = Fintype.card d ^ 2 + (L + 1) * Fintype.card d + Module.finrank ℝ F := by
     rw [Module.finrank_prod, Module.finrank_prod, Module.finrank_pi_fintype]
-    simp [Module.finrank_matrix, sq]
+    simp only [Module.finrank_matrix, Module.finrank_self, mul_one,
+      Module.finrank_fintype_fun_eq_card, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+      smul_eq_mul, sq]
   rw [hset, ← Set.image_id Sg, ← Set.prodMap_image_prod, (hiso.prodMap isometry_id).dimH_image,
     Real.dimH_of_mem_nhds ((hopen.prod hS).mem_nhds (Set.mk_mem_prod h1 hσ₀))]
   exact congrArg Nat.cast hfin
