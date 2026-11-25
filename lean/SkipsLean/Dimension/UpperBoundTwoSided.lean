@@ -82,6 +82,7 @@ private theorem mul_right_cancel_of_rank_ubts {m n k : Type*} [Fintype m] [Finty
     simpa [Matrix.mul_apply, Matrix.vecMul, dotProduct] using this
   exact congrFun (hinj hrow) j
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] in
 /-- **Lemma A.18 from both ends, the changes of basis, in infinitesimal form** (any kind of
 block). If `E` and `D` have rank `d`, every write of a block before block `m` has rank `d` and
 every read of a block after block `m` has rank `d`, the direction `cobDir θ X` determines `X`. -/
@@ -117,6 +118,7 @@ theorem cobDir_injective_of_rank_E_D {A : Arch T d L} (θ : Params A dIn dOut) (
       exact mul_right_cancel_of_rank_ubts (θ.read ℓ)
         (hr ℓ (Fin.castSucc_lt_castSucc_iff.1 hl)) (neg_injective h1)
 
+omit [Fintype T] [DecidableEq d] [Fintype dIn] in
 /-- **Lemma A.18 from both ends, ReLU and ReLU² blocks, in infinitesimal form.** For `k ≠ 0`: if
 `E` and `D` have rank `d`, every write of a block before block `m` and every read of a block
 after block `m` has rank `d`, no read column of a block up to `m` and no write row of a block

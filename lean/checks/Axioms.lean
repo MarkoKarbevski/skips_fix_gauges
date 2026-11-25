@@ -1891,3 +1891,10 @@ import SkipsLean
 #print axioms Skips.rmsRow_vecMul_smul_orthogonal
 #print axioms Skips.sqrt_dotProduct_rmsRow_vecMul_smul_orthogonal_sub
 #print axioms Skips.abs_rmsNorm_deviation_sub_isBigO
+#print axioms Skips.cobDir_injective_of_rank_E_D
+#print axioms Skips.cobDir_add_rescaleDirMlp_injective_of_rank_E_D
+#print axioms Skips.funDim_add_le_of_eventually_unitInactive_of_rank_E_D
+#print axioms Skips.exists_isOpen_unitInactive_relu_of_le
+#print axioms Skips.exists_isOpen_unitInactive_reluSq_of_le
+#print axioms Skips.not_ae_funDim_add_eq_relu_skipless_of_le
+#print axioms Skips.not_ae_funDim_add_eq_reluSq_skipless_of_le
