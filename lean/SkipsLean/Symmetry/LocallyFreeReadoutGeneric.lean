@@ -57,6 +57,7 @@ theorem ae_rank_D_read {A : Arch T d L} (μ : Measure (Params A dIn dOut)) [μ.I
   obtain ⟨c'⟩ := Function.Embedding.nonempty_of_card_le (hr ℓ)
   exact rank_eq_of_isUnit_det_submatrix_cols_lrg (θ.read ℓ) c' (hθ.1 ℓ c')
 
+omit [Fintype T] [DecidableEq d] in
 /-- At generic parameters no row of a write vanishes (`d ≥ 1`; any kind of block). -/
 theorem ae_write_row_ne_zero [Nonempty d] {A : Arch T d L} (μ : Measure (Params A dIn dOut))
     [μ.IsAddHaarMeasure] : ∀ᵐ θ ∂μ, ∀ ℓ i, (fun a => θ.write ℓ i a) ≠ 0 := by
