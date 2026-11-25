@@ -151,6 +151,98 @@ theorem noSymmetricPart_mlp_rmsNorm_of_units (hε : 0 < ε) (hσ : ∀ z, HasDer
   -- `X / d = 0`, so `X = 0`
   exact (smul_eq_zero.1 hX).resolve_left (inv_ne_zero hc)
 
+/-! ### Helpers: almost every `(θ, A)` (copies of the private helpers of
+`OneBlock/LearnedSkipRescale.lean`) -/
+
+omit [DecidableEq d] in
+/-- Helper: the skips `Fin 1 → Matrix d d ℝ` carry the Borel σ-algebra of their norm topology (a
+copy of the private `borelSpace_skips_lsr` of `OneBlock/LearnedSkipRescale.lean`). -/
+private theorem borelSpace_skips_lnm : BorelSpace (Fin 1 → Matrix d d ℝ) :=
+  inferInstanceAs (BorelSpace (Fin 1 → d → d → ℝ))
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper: a condition on the weights that holds at almost every `θ` holds at almost every
+`(θ, v)` (a copy of the private `ae_fst_lsr` of `OneBlock/LearnedSkipRescale.lean`). -/
+private theorem ae_fst_lnm {A : Arch T d 1} {V : Type*} [NormedAddCommGroup V]
+    [NormedSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] (hB : BorelSpace V)
+    (μ : Measure (Params A dIn dOut × V)) (hμ : μ.IsAddHaarMeasure) {Q : Params A dIn dOut → Prop}
+    (h : ∀ᵐ θ ∂(Measure.addHaar : Measure (Params A dIn dOut)), Q θ) :
+    ∀ᵐ p ∂μ, Q p.1 := by
+  rw [ae_iff] at h
+  obtain ⟨N, hsub, hN, hN0⟩ := exists_measurable_superset_of_null h
+  have hc : ∀ᵐ θ ∂(Measure.addHaar : Measure (Params A dIn dOut)), θ ∈ Nᶜ :=
+    measure_eq_zero_iff_ae_notMem.1 hN0
+  have h1 := (ae_comp_linearMap_mem_iff (LinearMap.fst ℝ (Params A dIn dOut) V) μ
+    Measure.addHaar (LinearMap.fst_surjective) hN.compl).2 hc
+  refine h1.mono fun p hp => ?_
+  by_contra hq
+  exact hp (hsub hq)
+
+/-- Helper: if a square matrix that depends linearly on a point of `E` is the identity at one
+point, it is invertible at almost every point (a copy of the private `ae_isUnit_det_lsr` of
+`OneBlock/LearnedSkipRescale.lean`). -/
+private theorem ae_isUnit_det_lnm {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [FiniteDimensional ℝ E] [MeasurableSpace E] (hB : BorelSpace E) (μ : Measure E)
+    (hμ : μ.IsAddHaarMeasure) (Φ : E →ₗ[ℝ] Matrix d d ℝ) (x₀ : E) (h₀ : Φ x₀ = 1) :
+    ∀ᵐ x ∂μ, IsUnit (Φ x).det := by
+  have hentry : ∀ i j, AnalyticOnNhd ℝ (fun x => Φ x i j) Set.univ := fun i j =>
+    (LinearMap.toContinuousLinearMap ((Matrix.entryLinearMap ℝ ℝ i j) ∘ₗ Φ)).analyticOnNhd _
+  have hφ : AnalyticOnNhd ℝ (fun x => (Φ x).det) Set.univ := by
+    simp only [Matrix.det_apply']
+    exact Finset.analyticOnNhd_fun_sum _ fun σ _ => analyticOnNhd_const.mul
+      (Finset.analyticOnNhd_fun_prod _ fun i _ => hentry (σ i) i)
+  have hnull := measure_zeroSet_of_analytic μ hφ ⟨x₀, by rw [h₀, Matrix.det_one]; exact one_ne_zero⟩
+  rw [ae_iff]
+  simpa only [isUnit_iff_ne_zero, not_not] using hnull
+
+/-- Helper: at almost every `(θ, A)` the conditions `OneBlockGenericRMS θ` hold and the skip
+`A = R 0` is invertible, for `d_in, d_out ≥ d ≥ 2` (a copy of the private `ae_generic_lsr` of
+`OneBlock/LearnedSkipRescale.lean`). -/
+private theorem ae_generic_lnm
+    (μ : Measure (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut
+      × (Fin 1 → Matrix d d ℝ)))
+    [hμ : μ.IsAddHaarMeasure] (hd : 2 ≤ Fintype.card d) (hdIn : Fintype.card d ≤ Fintype.card dIn)
+    (hdOut : Fintype.card d ≤ Fintype.card dOut) :
+    ∀ᵐ p ∂μ, OneBlockGenericRMS p.1 ∧ IsUnit (p.2 0).det := by
+  have hBs : BorelSpace (Fin 1 → Matrix d d ℝ) := borelSpace_skips_lnm
+  have hBp : BorelSpace (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut
+      × (Fin 1 → Matrix d d ℝ)) := Prod.borelSpace
+  have h1 := ae_fst_lnm hBs μ hμ (ae_oneBlockGenericRMS Measure.addHaar hd hdIn hdOut)
+  have h2 := ae_isUnit_det_lnm hBp μ hμ
+    ((LinearMap.proj (R := ℝ) (φ := fun _ : Fin 1 => Matrix d d ℝ) 0)
+      ∘ₗ (LinearMap.snd ℝ (Params (Arch.mlp (T := T) (d := d) σ (rmsNorm ε) hid) dIn dOut)
+        (Fin 1 → Matrix d d ℝ))) (0, fun _ => 1) rfl
+  filter_upwards [h1, h2] with p hp1 hp2
+  exact ⟨hp1, hp2⟩
+
+/-- Helper: `d (d + 1)/2 + d (d − 1)/2 = d²` (both products are even; a copy of the private
+`half_add_half_lsr` of `OneBlock/LearnedSkipRescale.lean`). -/
+private theorem half_add_half_lnm (n : ℕ) : n * (n + 1) / 2 + n * (n - 1) / 2 = n ^ 2 := by
+  have h1 := Nat.two_mul_div_two_of_even (Nat.even_mul_succ_self n)
+  have h2 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self n)
+  have h3 : n * (n + 1) + n * (n - 1) = 2 * n ^ 2 := by
+    cases n with
+    | zero => rfl
+    | succ m => rw [Nat.add_sub_cancel]; ring
+  generalize n * (n + 1) = y at h1 h3 ⊢
+  generalize n * (n - 1) = x at h2 h3 ⊢
+  generalize n ^ 2 = q at h3 ⊢
+  omega
+
+omit [Fintype T] [Nonempty T] [DecidableEq d] in
+/-- Helper (the value from the difference): `fd = fd₁ + d (d + 1)/2` and
+`fd₁ + d (d − 1)/2 = P` give `fd + d (d − 1) = P + d²`. -/
+private theorem value_of_eq_residual_add_lnm {fd fd₁ P : ℕ}
+    (h1 : fd = fd₁ + Fintype.card d * (Fintype.card d + 1) / 2)
+    (h2 : fd₁ + Fintype.card d * (Fintype.card d - 1) / 2 = P) :
+    fd + Fintype.card d * (Fintype.card d - 1) = P + Fintype.card d ^ 2 := by
+  have h3 := half_add_half_lnm (Fintype.card d)
+  have h4 := Nat.two_mul_div_two_of_even (Nat.even_mul_pred_self (Fintype.card d))
+  generalize Fintype.card d * (Fintype.card d + 1) = y at h1 h3
+  generalize Fintype.card d * (Fintype.card d - 1) = x at h2 h3 h4 ⊢
+  generalize Fintype.card d ^ 2 = q at h3 ⊢
+  omega
+
 /-- **Theorem B.1 (iii) of the skips paper, "exceeds that of the residual network of part (ii) by
 exactly `d_model (d_model + 1)/2`", for one tanh block of any width with a full learned skip,
 `ε > 0`:** for `d_in, d_out ≥ d ≥ 2` and at least one hidden unit, at almost every weights and
@@ -164,7 +256,15 @@ theorem ae_funDimLearned_tanh_rmsNorm_eq_residual_add_of_nonempty (hε : 0 < ε)
     ∀ᵐ p ∂μ, funDimLearned (Arch.mlp Real.tanh (rmsNorm ε) hid) p
       = funDim (Arch.mlp Real.tanh (rmsNorm ε) hid) 1 p.1
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the block is analytic, hence `C¹`
+  have hf : ContDiff ℝ 1 ((Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm ε) hid).f 0) :=
+    (analyticOnNhd_f_mlp analyticOnNhd_tanh 0).contDiff
+  -- the conditions of the proof and an invertible skip hold at almost every `(θ, A)`; Step 4 from
+  -- `tanh_unitsNoSymmetricPart`, Steps 1 to 3 and 5 from `LearnedSkipGain`
+  filter_upwards [ae_generic_lnm μ hd hdIn hdOut] with p hp
+  exact funDimLearned_eq_funDim_residual_add_of_noSymmetricPart hε rfl hf p.1 p.2 hp.1.rank_E
+    hp.1.rank_D hp.2 (noSymmetricPart_mlp_rmsNorm_of_units hε hasDerivAt_tanh
+      (tanh_unitsNoSymmetricPart d d (hid 0)) p.1 hp.1)
 
 /-- **Theorem B.1 (iii), "and it satisfies the equality condition", for one tanh block of any
 width with a full learned skip, `ε > 0`:** for `d_in, d_out ≥ d ≥ 2` and at least one hidden
@@ -178,7 +278,12 @@ theorem ae_funDimLearned_tanh_rmsNorm_of_nonempty (hε : 0 < ε) [Nonempty (hid 
         + Fintype.card d * (Fintype.card d - 1)
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) Real.tanh (rmsNorm ε) hid) dIn dOut)
         + Fintype.card d ^ 2 := by
-  sorry
+  -- the difference to the residual network, and its value `P − d (d − 1)/2` at almost every `θ`
+  have hres := ae_fst_lnm borelSpace_skips_lnm μ ‹_›
+    (ae_funDim_tanh_oneBlock_residual_rmsNorm hε Measure.addHaar hd hdIn hdOut)
+  filter_upwards [ae_funDimLearned_tanh_rmsNorm_eq_residual_add_of_nonempty hε μ hd hdIn hdOut,
+    hres] with p h1 h2
+  exact value_of_eq_residual_add_lnm h1 h2
 
 /-- **The same difference for one GELU block of any width with a full learned skip, `ε > 0`.** -/
 theorem ae_funDimLearned_gelu_rmsNorm_eq_residual_add_of_nonempty (hε : 0 < ε) [Nonempty (hid 0)]
@@ -189,7 +294,15 @@ theorem ae_funDimLearned_gelu_rmsNorm_eq_residual_add_of_nonempty (hε : 0 < ε)
     ∀ᵐ p ∂μ, funDimLearned (Arch.mlp gelu (rmsNorm ε) hid) p
       = funDim (Arch.mlp gelu (rmsNorm ε) hid) 1 p.1
         + Fintype.card d * (Fintype.card d + 1) / 2 := by
-  sorry
+  -- the block is analytic, hence `C¹`
+  have hf : ContDiff ℝ 1 ((Arch.mlp (T := T) (d := d) gelu (rmsNorm ε) hid).f 0) :=
+    (analyticOnNhd_f_mlp analyticOnNhd_gelu 0).contDiff
+  -- the conditions of the proof and an invertible skip hold at almost every `(θ, A)`; Step 4 from
+  -- `gelu_unitsNoSymmetricPart`, Steps 1 to 3 and 5 from `LearnedSkipGain`
+  filter_upwards [ae_generic_lnm μ hd hdIn hdOut] with p hp
+  exact funDimLearned_eq_funDim_residual_add_of_noSymmetricPart hε rfl hf p.1 p.2 hp.1.rank_E
+    hp.1.rank_D hp.2 (noSymmetricPart_mlp_rmsNorm_of_units (σ' := geluDeriv) hε hasDerivAt_gelu
+      (gelu_unitsNoSymmetricPart d d (hid 0)) p.1 hp.1)
 
 /-- **The same value for one GELU block of any width with a full learned skip, `ε > 0`.** -/
 theorem ae_funDimLearned_gelu_rmsNorm_of_nonempty (hε : 0 < ε) [Nonempty (hid 0)]
@@ -201,6 +314,11 @@ theorem ae_funDimLearned_gelu_rmsNorm_of_nonempty (hε : 0 < ε) [Nonempty (hid 
         + Fintype.card d * (Fintype.card d - 1)
       = Module.finrank ℝ (Params (Arch.mlp (T := T) (d := d) gelu (rmsNorm ε) hid) dIn dOut)
         + Fintype.card d ^ 2 := by
-  sorry
+  -- the difference to the residual network, and its value `P − d (d − 1)/2` at almost every `θ`
+  have hres := ae_fst_lnm borelSpace_skips_lnm μ ‹_›
+    (ae_funDim_gelu_oneBlock_residual_rmsNorm hε Measure.addHaar hd hdIn hdOut)
+  filter_upwards [ae_funDimLearned_gelu_rmsNorm_eq_residual_add_of_nonempty hε μ hd hdIn hdOut,
+    hres] with p h1 h2
+  exact value_of_eq_residual_add_lnm h1 h2
 
 end Skips
