@@ -338,3 +338,5 @@ import SkipsLean.Dimension.UpperBoundReadoutInside
 import SkipsLean.Symmetry.LocallyFreeEmbedding
 import SkipsLean.Symmetry.LocallyFreeReadout
 import SkipsLean.Symmetry.LocallyFreeAttention
+import SkipsLean.Symmetry.LocallyFreeGeneric
+import SkipsLean.Symmetry.LocallyFreeReadoutGeneric
