@@ -485,6 +485,7 @@ private theorem goodForConesMlp_thetaMlp_tdg [Nonempty d] (ιE : d ↪ dIn) (ιD
     rw [frozenMlp_thetaMlp_tdg, fderiv_id]
     exact fun v w h => h
 
+omit [Fintype T] in
 /-- **Lemma D.13 of the dimension paper for SwiGLU blocks, with `θ†` written out:** for `d ≥ 1`
 there are numbers `μ > 0` such that `θ†` is good for the cones `C_0 = ⋯ = C_L = ℝ^{1×d}_{>0}` with
 the active sets `A_ℓ` = the image of `c ℓ` (the paper's `{1, …, d_model}`), the frozen blocks are
@@ -506,6 +507,7 @@ theorem exists_mu_thetaDaggerGated_cols [Nonempty d] (ιE : d ↪ dIn) (ιD : d 
   · exact congrFun (frozenGated_thetaGated_tdg ιE ιD c μ ℓ) n
   · exact linearIndependent_gateCol_tdg (c ℓ) (μ ℓ) (hμ1 ℓ)
 
+omit [Fintype T] in
 /-- **Lemma D.13 of the dimension paper for GeGLU blocks, with `θ†` written out:** for `d ≥ 2`
 there are numbers `μ > 0` such that `θ†` is good for the positive orthants with the active sets
 `A_ℓ` = the image of `c ℓ`, the frozen blocks are `g°_ℓ(n) = (n𝟙) n`, and the matrices
@@ -529,6 +531,7 @@ theorem exists_mu_thetaDaggerGated_outer (hd : 2 ≤ Fintype.card d) (ιE : d �
   · exact congrFun (frozenGated_thetaGated_tdg ιE ιD c μ ℓ) n
   · exact linearIndependent_outer_gateCol_tdg (c ℓ) (μ ℓ) (hμ2 ℓ)
 
+omit [Fintype T] in
 /-- **Lemma D.13 of the dimension paper for GELU blocks, with `θ†` written out:** for `d ≥ 2`
 there are numbers `μ > 0` such that `θ†` is good for the positive orthants with the active sets
 `A_ℓ` = the image of `c ℓ`, the frozen blocks are `g°_ℓ(n) = n`, and the matrices `c_j c_j^⊤` of

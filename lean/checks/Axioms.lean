@@ -1952,3 +1952,7 @@ import SkipsLean
 #print axioms Skips.ae_funDimBlocks_attention_gelu_residual
 #print axioms Skips.ae_funDimBlocks_attention_swiglu_residual
 #print axioms Skips.ae_funDimBlocks_attention_geglu_residual
+#print axioms Skips.mem_posOrthant
+#print axioms Skips.exists_mu_thetaDaggerGated_cols
+#print axioms Skips.exists_mu_thetaDaggerGated_outer
+#print axioms Skips.exists_mu_thetaDaggerMlp_outer
