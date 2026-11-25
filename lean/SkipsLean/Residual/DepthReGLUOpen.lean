@@ -198,6 +198,7 @@ private theorem smallWritesLimit_smul_apply_dgo
   rw [relu_homogeneous c _ hc, reluDeriv_mul_dgo hc, pow_one]
   ring
 
+omit [Nonempty T] [DecidableEq d] [Fintype dOut] in
 /-- **Proof of Lemma A.30, "a direction that is flat on a neighborhood of `0` is flat at every
 input at which no pre-activation vanishes", for ReGLU blocks:** let `Ω` be an open set of inputs
 that contains `0`. If `(J_0 η)(x) = 0` at every input of `Ω` at which no limit pre-activation of

@@ -250,6 +250,7 @@ private theorem smallWritesLimit_smul_apply_dro {k : ℕ}
   have hd := deriv_mul_homogeneous_dro hσ hhom hc hz
   linear_combination ((x * (θ.E * η.read ℓ)) t i * (θ.write ℓ * θ.D) i o) * hd
 
+omit [Nonempty T] [DecidableEq d] [Fintype dOut] in
 /-- **Proof of Lemma A.30, "a direction that is flat on a neighborhood of `0` is flat at every
 input at which no pre-activation vanishes", for MLP blocks with an activation that is positively
 homogeneous of degree `k`:** let `Ω` be an open set of inputs that contains `0`. If
