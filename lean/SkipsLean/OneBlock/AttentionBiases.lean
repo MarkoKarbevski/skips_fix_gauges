@@ -182,6 +182,147 @@ theorem hasDerivAt_attnConst (S : Fin 1 → Matrix d d ℝ)
   have h := ((h1.fun_add h2).fun_add h3).fun_add (hasDerivAt_vline_abi p.2.D η.2.D)
   exact h.congr_deriv (by simp only [zero_smul, add_zero, Matrix.zero_mul, zero_add, dAttnConst])
 
+/-! ### Helpers: the reduction with biases -/
+
+/-- Helper: adding to the scores a function of the row index alone does not change the
+weights. -/
+private theorem attnWeights_add_row_abi (Z : Matrix T T ℝ) (r : T → ℝ) :
+    attnWeights sees (Z + Matrix.of fun t _ => r t) = attnWeights sees Z := by
+  ext t s
+  simp only [attnWeights, Matrix.of_apply, Matrix.add_apply]
+  split_ifs with h
+  · have e : (∑ s', if sees t s' then Real.exp (Z t s' + r t) else 0)
+        = (∑ s', if sees t s' then Real.exp (Z t s') else 0) * Real.exp (r t) := by
+      rw [Finset.sum_mul]
+      refine Finset.sum_congr rfl fun s' _ => ?_
+      split_ifs
+      · rw [Real.exp_add]
+      · rw [zero_mul]
+    rw [e, Real.exp_add, mul_div_mul_right _ _ (Real.exp_pos _).ne']
+  · rfl
+
+/-- Helper (copy of `attnWeights_den_pos_ba`): the denominator of row `t` of the weights is
+positive when token `t` sees some token. -/
+private theorem attnWeights_den_pos_abi (Z : Matrix T T ℝ) (t : T) (ht : ∃ s, sees t s) :
+    0 < ∑ s', if sees t s' then Real.exp (Z t s') else 0 := by
+  obtain ⟨s, hs⟩ := ht
+  refine Finset.sum_pos' (fun s' _ => ?_) ⟨s, Finset.mem_univ _, ?_⟩
+  · split_ifs
+    · exact (Real.exp_pos _).le
+    · exact le_rfl
+  · simp only [hs, ite_true]
+    exact Real.exp_pos _
+
+/-- Helper (copy of `attnWeights_sum_ba`): row `t` of the weights sums to `1` when token `t` sees
+some token. -/
+private theorem attnWeights_sum_abi (Z : Matrix T T ℝ) (t : T) (ht : ∃ s, sees t s) :
+    ∑ s, attnWeights sees Z t s = 1 := by
+  have hS := attnWeights_den_pos_abi Z t ht
+  have h1 : ∀ s, attnWeights sees Z t s = (if sees t s then Real.exp (Z t s) else 0)
+      / ∑ s', if sees t s' then Real.exp (Z t s') else 0 := by
+    intro s
+    simp only [attnWeights, Matrix.of_apply]
+    split_ifs
+    · rfl
+    · rw [zero_div]
+  simp only [h1, ← Finset.sum_div]
+  exact div_self hS.ne'
+
+omit [DecidableEq d] [Fintype dIn] [Fintype dOut] in
+/-- Helper: the block of `Arch.attention` on `h W_read + b_read`, times the write: head `i` has
+the queries `h W_{Q,i} + b_{Q,i}`, the keys `h W_{K,i} + b_{K,i}` and the values
+`h W_{V,i} + b_{V,i}`. -/
+private theorem f_attention_bias_abi
+    (θ : Params (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut)
+    (b : Biases (Arch.attention (T := T) (d := d) sees χ H dh) dOut) (h : Matrix T d ℝ) :
+    (Arch.attention sees χ H dh).f 0 (h * θ.read 0 + Matrix.of fun _ => b.read 0) * θ.write 0
+      = ∑ i, attnWeights sees ((Real.sqrt (Fintype.card (dh 0)))⁻¹ •
+          ((h * attnQ θ i + Matrix.of fun _ => attnBQ b i)
+            * (h * attnK θ i + Matrix.of fun _ => attnBK b i)ᵀ))
+        * (h * attnV θ i + Matrix.of fun _ => attnBV b i) * attnO θ i := by
+  ext t a
+  simp only [Matrix.sum_apply]
+  rw [Matrix.mul_apply, Fintype.sum_prod_type]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [Matrix.mul_apply]
+  rfl
+
+/-- Helper: `(a P) · (b N) = a (P Nᵀ) bᵀ`. -/
+private theorem dot_vecMul_abi {m n : Type*} [Fintype m] [Fintype n] (a b : m → ℝ)
+    (P N : Matrix m n ℝ) : (a ᵥ* P) ⬝ᵥ (b ᵥ* N) = a ⬝ᵥ ((P * Nᵀ) *ᵥ b) := by
+  rw [← Matrix.mulVec_mulVec, Matrix.mulVec_transpose, Matrix.dotProduct_mulVec]
+
+/-- Helper: an entry of `c A Bᵀ`. -/
+private theorem smul_mul_transpose_apply_abi {m n : Type*} [Fintype n] (c : ℝ)
+    (A B : Matrix m n ℝ) (t s : m) : (c • (A * Bᵀ)) t s = c * (A t ⬝ᵥ B s) := rfl
+
+omit [DecidableEq d] [Fintype dOut] in
+/-- Helper: the scores of head `i` with biases at `h_0 = x E + b_E` are
+`x B_i xᵀ + 1 (x β_iᵀ)ᵀ` plus a function of the row index alone. -/
+private theorem scores_abi (p : ParamsB (Arch.attention (T := T) (d := d) sees χ H dh) dIn dOut)
+    (x : Matrix T dIn ℝ) (i : H 0) :
+    (Real.sqrt (Fintype.card (dh 0)))⁻¹ •
+        (((x * p.1.E + Matrix.of fun _ => p.2.E) * attnQ p.1 i
+            + Matrix.of fun _ => attnBQ p.2 i)
+          * ((x * p.1.E + Matrix.of fun _ => p.2.E) * attnK p.1 i
+            + Matrix.of fun _ => attnBK p.2 i)ᵀ)
+      = x * attnScore p.1 i * xᵀ + (Matrix.of fun _ s => (x *ᵥ attnScoreBias p i) s)
+        + Matrix.of fun t _ => (Real.sqrt (Fintype.card (dh 0)))⁻¹ *
+          ((x t ᵥ* (p.1.E * attnQ p.1 i) + (p.2.E ᵥ* attnQ p.1 i + attnBQ p.2 i))
+            ⬝ᵥ (p.2.E ᵥ* attnK p.1 i + attnBK p.2 i)) := by
+  -- the rows `q_t = x_t E W_Q + (b_E W_Q + b_Q)` and `k_s = x_s E W_K + (b_E W_K + b_K)`
+  have hq : ∀ t, ((x * p.1.E + Matrix.of fun _ => p.2.E) * attnQ p.1 i
+      + Matrix.of fun _ => attnBQ p.2 i : Matrix T (dh 0) ℝ) t
+      = x t ᵥ* (p.1.E * attnQ p.1 i) + (p.2.E ᵥ* attnQ p.1 i + attnBQ p.2 i) := by
+    intro t
+    show (x t ᵥ* p.1.E + p.2.E) ᵥ* attnQ p.1 i + attnBQ p.2 i = _
+    rw [Matrix.add_vecMul, Matrix.vecMul_vecMul, add_assoc]
+  have hk : ∀ s, ((x * p.1.E + Matrix.of fun _ => p.2.E) * attnK p.1 i
+      + Matrix.of fun _ => attnBK p.2 i : Matrix T (dh 0) ℝ) s
+      = x s ᵥ* (p.1.E * attnK p.1 i) + (p.2.E ᵥ* attnK p.1 i + attnBK p.2 i) := by
+    intro s
+    show (x s ᵥ* p.1.E + p.2.E) ᵥ* attnK p.1 i + attnBK p.2 i = _
+    rw [Matrix.add_vecMul, Matrix.vecMul_vecMul, add_assoc]
+  -- `x_t B_i x_sᵀ = (x_t E W_Q) · (x_s E W_K) / √d_h`
+  have hB : ∀ t s, (x * attnScore p.1 i * xᵀ) t s = (Real.sqrt (Fintype.card (dh 0)))⁻¹
+      * ((x t ᵥ* (p.1.E * attnQ p.1 i)) ⬝ᵥ (x s ᵥ* (p.1.E * attnK p.1 i))) := by
+    intro t s
+    rw [Matrix.mul_mul_apply, Matrix.transpose_transpose, attnScore, Matrix.smul_mulVec,
+      dotProduct_smul, smul_eq_mul, dot_vecMul_abi, Matrix.transpose_mul, ← Matrix.mul_assoc]
+  -- `x_s β_iᵀ = (b_E W_Q + b_Q) · (x_s E W_K) / √d_h`
+  have hβ : ∀ s, (x *ᵥ attnScoreBias p i) s = (Real.sqrt (Fintype.card (dh 0)))⁻¹
+      * ((p.2.E ᵥ* attnQ p.1 i + attnBQ p.2 i) ⬝ᵥ (x s ᵥ* (p.1.E * attnK p.1 i))) := by
+    intro s
+    show x s ⬝ᵥ attnScoreBias p i = _
+    rw [attnScoreBias, dotProduct_smul, smul_eq_mul, ← Matrix.transpose_mul,
+      Matrix.vecMul_transpose, Matrix.dotProduct_mulVec, dotProduct_comm]
+  ext t s
+  rw [smul_mul_transpose_apply_abi, hq, hk, Matrix.add_apply, Matrix.add_apply, Matrix.of_apply,
+    Matrix.of_apply, hB, hβ]
+  simp only [add_dotProduct, dotProduct_add]
+  ring
+
+/-- Helper: a probability vector `a` against rows `Y_s = X_s P + w` gives `(a X) P + w`. -/
+private theorem vecMul_rows_abi {m n k : Type*} [Fintype m] [Fintype n] (a : m → ℝ)
+    (ha : ∑ s, a s = 1) (X : Matrix m n ℝ) (Y : Matrix m k ℝ) (P : Matrix n k ℝ) (w : k → ℝ)
+    (hY : ∀ s, Y s = X s ᵥ* P + w) : a ᵥ* Y = (a ᵥ* X) ᵥ* P + w := by
+  rw [Matrix.vecMul_eq_sum, Matrix.vecMul_eq_sum a X]
+  simp only [hY, smul_add, Finset.sum_add_distrib, ← Finset.sum_smul, ha, one_smul,
+    Matrix.sum_vecMul, Matrix.smul_vecMul]
+
+/-- Helper: row `t` of `A + B`. -/
+private theorem row_add_abi {m n : Type*} (A B : Matrix m n ℝ) (t : m) :
+    (A + B) t = A t + B t := rfl
+
+/-- Helper: row `t` of the matrix whose rows are all `v`. -/
+private theorem row_of_abi {m n : Type*} (v : n → ℝ) (t : m) :
+    (Matrix.of fun _ : m => v) t = v := rfl
+
+/-- Helper: row `t` of a sum of matrices. -/
+private theorem row_sum_abi {ι m n : Type*} [Fintype ι] (F : ι → Matrix m n ℝ) (t : m) :
+    (∑ i, F i) t = ∑ i, F i t :=
+  Finset.sum_apply t _ _
+
 /-- **The reduction with biases:** without normalization, at a token `t` that sees at least one
 token, the network of one attention block with biases and the stream matrix `S 0` gives the row
 `x_t E S_0 D + ∑_i ∑_s a_ts^{(i)} x_s C_i + γ`, where the weights `a_ts^{(i)}` are those of the
@@ -195,7 +336,35 @@ theorem evalB_attention_oneBlock_row (S : Fin 1 → Matrix d d ℝ)
           + ∑ i, attnWeights sees (x * attnScore p.1 i * xᵀ
               + Matrix.of fun _ s => (x *ᵥ attnScoreBias p i) s) * x * attnValue p.1 i) t
         + attnConst S p := by
-  sorry
+  have h1 : (Fin.last 1 : Fin 2) = (0 : Fin 1).succ := rfl
+  have hχ : (Arch.attention (T := T) (d := d) sees id H dh).χ = id := rfl
+  -- `h_1 = h_0 S_0 + f(h_0 W_read + b_read) W_write + b_write` with `h_0 = x E + b_E`
+  rw [evalB, h1, hiddenB_succ, Fin.castSucc_zero, hiddenB_zero, hχ, id_eq, id_eq,
+    f_attention_bias_abi]
+  -- the scores: the key biases drop out
+  simp only [scores_abi, attnWeights_add_row_abi]
+  -- row `t` of head `i`: `(∑_s a_ts x_s) C_i + (b_E W_V + b_V) W_O`, as the weights sum to `1`
+  have hi : ∀ i, (attnWeights sees (x * attnScore p.1 i * xᵀ
+        + Matrix.of fun _ s => (x *ᵥ attnScoreBias p i) s)
+      * ((x * p.1.E + Matrix.of fun _ => p.2.E) * attnV p.1 i
+        + Matrix.of fun _ => attnBV p.2 i) * attnO p.1 i : Matrix T d ℝ) t
+      = (attnWeights sees (x * attnScore p.1 i * xᵀ
+          + Matrix.of fun _ s => (x *ᵥ attnScoreBias p i) s) t ᵥ* x)
+          ᵥ* (p.1.E * attnV p.1 i * attnO p.1 i)
+        + (p.2.E ᵥ* attnV p.1 i + attnBV p.2 i) ᵥ* attnO p.1 i := by
+    intro i
+    rw [Matrix.mul_apply_eq_vecMul, Matrix.mul_apply_eq_vecMul,
+      vecMul_rows_abi _ (attnWeights_sum_abi _ t ht) x _ (p.1.E * attnV p.1 i) _ fun s => by
+        show (x s ᵥ* p.1.E + p.2.E) ᵥ* attnV p.1 i + attnBV p.2 i = _
+        rw [Matrix.add_vecMul, Matrix.vecMul_vecMul, add_assoc],
+      Matrix.add_vecMul, Matrix.vecMul_vecMul]
+  rw [row_add_abi, Matrix.mul_apply_eq_vecMul, row_add_abi, row_add_abi, row_sum_abi,
+    Finset.sum_congr rfl fun i _ => hi i]
+  simp only [row_add_abi, row_of_abi, row_sum_abi, Matrix.mul_apply_eq_vecMul]
+  -- collect the terms
+  simp only [attnValue, attnConst, Matrix.add_vecMul, Matrix.sum_vecMul, Matrix.vecMul_vecMul,
+    Finset.sum_add_distrib, Matrix.mul_assoc]
+  abel
 
 /-- **Equation (16) with biases:** let token `t₂` see itself and another token `t₁`, and let `k`
 be the number of tokens other than `t₂` that `t₂` sees. At the input with the row `u` at `t₂`
