@@ -7,7 +7,7 @@
 | 2 | Introduction | para | functional dimension | ReLU squared | Which parameters of a neural network does the function that it compute |
 | 3 | Introduction | para | block, d_model, the model dimension | block | We study the networks whose layers have the form of the layers of a tr |
 | 4 | Introduction | para |  |  | For one hidden layer without activation, \citet{albertini1993uniquenes |
-| 5 | Introduction | para |  |  | To our knowledge, \citet{graef2024tricks} is the first to remove param |
+| 5 | Introduction | para |  |  | With invertible matrices, to our knowledge, \citet{graef2024tricks} is |
 | 6 | Introduction | para |  |  | Deep networks that compose such blocks directly, without skip connecti |
 | 7 | Results | para |  |  | \subsection{Results}\label{sec:results} |
 | 8 | Results | para | L, the number of blocks | L, the number of blocks, change of basis | \para{An exact reduction.} At each of the $L+1$ hidden states of a net |
