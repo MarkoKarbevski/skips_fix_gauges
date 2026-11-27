@@ -1,16 +1,16 @@
 # Skip connections: three papers, with code and data
 
-This repository holds three companion papers on what a skip connection changes, the code that reproduces their numbers, and the data that the code saves.
+This repository holds three companion papers on what a skip connection changes, the code that reproduces their numbers, the data that the code saves, and a formalization of the papers in Lean 4.
 
 | Paper | Authors | Main result | Folder |
 |---|---|---|---|
-| **Can an MLP Absorb Its Skip Connection Exactly?**<br>Nominated for an oral in the extended abstract track at NeurReps. | Antonij Mijoski, Marko Karbevski | Almost every ReLU or GELU block absorbs its skip with exactly `d_model` more hidden units; squared-ReLU, gated, tanh and attention blocks never do. | `paper docs/new_paper_absorb_skip/` |
+| **Can an MLP Absorb Its Skip Connection Exactly?**<br>Accepted at the NeurReps workshop at NeurIPS 2026 (extended abstract track), nominated for an oral. [arXiv:2604.23705](https://arxiv.org/abs/2604.23705) | Antonij Mijoski, Marko Karbevski | Almost every ReLU or GELU block absorbs its skip with exactly `d_model` more hidden units; squared-ReLU, gated, tanh and attention blocks never do. | `paper docs/new_paper_absorb_skip/` |
 | **On the Functional Dimension of a Family of Analytic Neural Networks** | Marko Karbevski | Without skips, `d_model²` parameters per layer can be removed without changing the function, or about `d_model² / 2` under pre-RMSNorm, for layers of any kind, attention included. For tanh, SwiGLU and GeGLU layers and GELU layers under pre-RMSNorm at any depth, and for one attention block, this and the symmetries inside the layers are the only redundancy. | `paper docs/new_paper_functional_dimension/` |
 | **Skip Connections Unlock at Least d_model² Parameters per Layer** | Marko Karbevski, Antonij Mijoski | A residual network of attention, tanh, GELU, SwiGLU or GeGLU layers keeps one change of basis where a skipless one has one per hidden state, so skips unlock at least `d_model²` functional dimensions per layer, or about `d_model² / 2` under pre-RMSNorm. | `paper docs/new_paper_skips_gain/` |
 
 Each folder holds the PDF, its LaTeX source and `refs.bib`; the third also holds `figs/`.
 
-**Can an MLP Absorb Its Skip Connection Exactly?** A block absorbs its skip if the block with its skip computes the same function as a skipless block of the same kind that is at least as wide. For blocks without biases, the answer depends on the activation. Almost every ReLU or GELU block at least as wide as the model dimension `d_model` absorbs its skip with exactly `d_model` more hidden units. Squared-ReLU, gated (ReGLU, SwiGLU, GeGLU), tanh and attention blocks never do, however wide. Without normalization, no residual squared-ReLU, gated or tanh network equals a skipless one, and under RMSNorm almost no residual network does. Yet without normalization every skipless network is a limit of residual ones. The paper is theory; its one numerical check is Section 14 of the notebook.
+**Can an MLP Absorb Its Skip Connection Exactly?** A block absorbs its skip if the block with its skip computes the same function as a skipless block of the same kind that is at least as wide. For blocks without biases, the answer depends on the activation. Almost every ReLU or GELU block at least as wide as the model dimension `d_model` absorbs its skip with exactly `d_model` more hidden units. Squared-ReLU, gated (ReGLU, SwiGLU, GeGLU), tanh and attention blocks never do, however wide. Without normalization, no residual squared-ReLU, gated or tanh network equals a skipless one, and under RMSNorm almost no residual network does. Yet without normalization every skipless network is a limit of residual ones. The paper is theory; its one numerical check is Section 14 of the notebook. The arXiv version is earlier and shorter, with the title *Can an MLP Absorb Its Own Skip Connection Exactly?*; the version in this repository is the current one.
 
 **On the Functional Dimension of a Family of Analytic Neural Networks.** The functional dimension of a network is the number of independent directions in which its parameters change the function that it computes. The paper studies deep networks in which every layer has input weights, a fixed nonlinear map and output weights, as the layers of a transformer have. Between two such layers, the output weights of the first can be multiplied by an invertible matrix and the input weights of the second by its inverse. With this symmetry, `d_model²` parameters per layer are removed without changing the function, or about `d_model² / 2` under pre-RMSNorm. For tanh, SwiGLU and GeGLU layers, and for GELU layers under pre-RMSNorm, the paper proves that nothing more can be removed, at any depth. The folder `functional_dimension/` holds the two scripts that compute its numbers.
 
@@ -29,7 +29,7 @@ The folder `paper docs/archive/` holds the texts from which the three papers wer
     paper docs/archive/                           the earlier versions, with the bibliography and figures of the longer note
     skip-connections-gauge-fixes-.pdf             the longer note
     functional_dimension/   the two scripts of the second paper
-    lean/                   a Lean 4 formalization of statements of the second and third papers, in progress, with its own README
+    lean/                   the Lean 4 formalization of the three papers, with its own README
     experiments.ipynb   the notebook, with its outputs
     data/               saved results of the notebook's two long experiments
     trained/            small networks trained on four datasets, and the ranks of their Jacobians
@@ -49,6 +49,19 @@ The letters are A for the first paper, E for the second and F for the third; B, 
 The check is `check_flow.py`. It splits the main text into reading units and looks for the terms and symbols listed in the glossary of the paper (`glossary_A.py` to `glossary_F.py`). A term that readers know may be accepted, with a reason, in `flow_allow_A.txt` to `flow_allow_F.txt`. The check also writes the flow graph of each paper next to it (`*_flow.md`): what each unit defines and what it uses first.
 
 Two more tools sit in the same folder. `make_chunks.py` writes one file per reading unit, for a review that reads the text strictly in order. `pre-commit` is a Git hook that runs the check on a staged paper; install it with `cp "paper docs/tools/pre-commit" .git/hooks/pre-commit`.
+
+## Lean formalization
+
+The folder `lean/` formalizes the three papers in Lean 4 with Mathlib. The papers have 99 numbered theorems, propositions, lemmas and corollaries, and 96 of them are stated and proved there, the main theorems included. The other three are Lemmas A.21, A.23 and A.24 of the third paper, on definable sets: no o-minimal structure is defined in Lean, and the one consequence of these lemmas that the theorems use is taken as a hypothesis.
+
+Three results from the literature are hypotheses of the theorems that use them and are not proved in Lean: Sard's theorem, invariance of domain, and that the closure of a definable set of measure zero has measure zero.
+
+    cd lean
+    lake exe cache get    # downloads the compiled Mathlib
+    lake build            # must finish with no `sorry` warning
+    lake env lean checks/Axioms.lean
+
+This needs [elan](https://github.com/leanprover/elan). The last command prints the axioms behind 2288 declarations of the library; every line must show only `propext`, `Classical.choice` and `Quot.sound`. `lean/STATEMENTS.md` puts each statement of the papers beside its Lean statement, lists where the two differ, and names the theorems that take the three hypotheses. `lean/README.md` describes the library folder by folder.
 
 ## Scripts of the second paper
 
@@ -143,10 +156,12 @@ The folder `large_runs/` computes the rank of the exact Jacobian for larger netw
 
 ## Citation
 
-    @unpublished{mijoski2026worth,
-      title  = {Can an {MLP} Absorb Its Skip Connection Exactly?},
-      author = {Mijoski, Antonij and Karbevski, Marko},
-      year   = {2026}
+    @inproceedings{mijoski2026worth,
+      title     = {Can an {MLP} Absorb Its Skip Connection Exactly?},
+      author    = {Mijoski, Antonij and Karbevski, Marko},
+      booktitle = {NeurIPS Workshop on Symmetry and Geometry in Neural Representations (NeurReps), Extended Abstract Track},
+      year      = {2026},
+      note      = {arXiv:2604.23705}
     }
 
     @unpublished{karbevski2026dimension,
@@ -161,7 +176,7 @@ The folder `large_runs/` computes the rank of the exact Jacobian for larger netw
       year   = {2026}
     }
 
-Add the arXiv identifiers once the preprints are posted.
+Add the arXiv identifiers of the second and third papers once the preprints are posted.
 
 ## License
 

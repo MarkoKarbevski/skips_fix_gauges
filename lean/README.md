@@ -1,37 +1,60 @@
 # Lean 4 formalization
 
-A formalization, in Lean 4 with Mathlib, of statements of two of the papers of this repository:
-"On the Functional Dimension of a Family of Analytic Neural Networks" and "Skip Connections Unlock
-at Least d_model² Parameters per Layer". It is work in progress.
+A formalization, in Lean 4 with Mathlib, of the three papers of this repository: "Can an MLP Absorb
+Its Skip Connection Exactly?" (the absorb paper), "On the Functional Dimension of a Family of
+Analytic Neural Networks" (the dimension paper) and "Skip Connections Unlock at Least d_model²
+Parameters per Layer" (the skips paper).
 
-- [`STATEMENTS.md`](STATEMENTS.md) puts each statement of the papers beside its Lean statement,
-  with its status, and lists where the Lean statement differs from the paper's on purpose.
-- `SkipsLean/` holds the code. Tokens are rows and weights multiply on the right, as in the papers.
-  One definition of a network serves both papers: the hidden states are
-  `h_ℓ = h_{ℓ-1} S_ℓ + f_ℓ(χ(h_{ℓ-1}) W_read^ℓ) W_write^ℓ`, with `S = 0` without skip connections,
-  `S = 1` with identity skips, and a general `S` for learned skips.
+## Status
 
-| File | Content |
-|---|---|
-| `Basic/RMSNorm.lean` | RMSNorm on rows; it commutes with orthogonal matrices |
-| `Basic/RMSNormConverse.lean` | only orthogonal matrices (for `ε = 0`, their positive multiples) pass through RMSNorm |
-| `Basic/LayerNorm.lean` | the computations that reduce LayerNorm to RMSNorm |
-| `Network/Defs.lean` | blocks, networks, hidden states, the function of a network |
-| `Symmetry/ChangeOfBasis.lean` | changes of basis at the hidden states preserve the function |
-| `Symmetry/Normalized.lean` | the same under pre-RMSNorm |
-| `Symmetry/Reduction.lean` | the exact reduction: a `d × d` submatrix per hidden state becomes the identity, or upper triangular under pre-RMSNorm |
-| `Residual/LearnedSkips.lean` | invertible learned skips reduce to identity skips; the one change of basis of a residual network |
-| `Network/Blocks.lean` | MLP networks with a given activation |
-| `Dimension/Space.lean` | the parameters as a finite-dimensional normed vector space |
-| `Dimension/Functional.lean` | functional dimension, redundancy, flat directions; `fd(θ) = P − dim K(θ)` |
-| `Dimension/UpperBound.lean` | the upper bound from the changes of basis: `fd ≤ P − (L+1)d²` without skip connections, `fd ≤ P − d²` with identity skips |
-| `Dimension/UpperBoundRMSNorm.lean` | the same under pre-RMSNorm: `P − (L+1)d(d−1)/2` and `P − d(d−1)/2` |
-| `Generic/AnalyticZeroSet.lean` | a real-analytic function that is not identically zero vanishes on a set of measure zero |
-| `Generic/Params.lean` | statements at generic parameters: invertible submatrices, full ranks, the upper bounds for almost all parameters |
-| `OneBlock/Factorization.lean` | the directions that keep `E W_read` and `W_write D` are those of two changes of basis |
-| `OneBlock/UnitsTanh.lean` | a flat direction of tanh hidden units vanishes |
-| `OneBlock/UnitsSwiGLU.lean` | a flat direction of SwiGLU hidden units only rescales their values |
-| `OneBlock/Tanh.lean` | one tanh block: the functional dimension is `P − 2d²` at generic parameters |
+The three papers have 99 numbered theorems, propositions, lemmas and corollaries: 30 in the absorb
+paper, 34 in the dimension paper and 35 in the skips paper. Of these, 96 are stated and proved here,
+the main theorems included. The other three are Lemmas A.21, A.23 and A.24 of the skips paper, on
+definable sets: no o-minimal structure is defined in Lean, and the one consequence of these lemmas
+that the theorems use is taken as a hypothesis.
+
+Three results from the literature are taken as hypotheses and are not proved here:
+
+| Result | File | Used for |
+|---|---|---|
+| Sard's theorem | `Literature/Sard.lean` | skips paper: Lemma A.26, Theorem A.28 (ii) to (iv) and Theorem 4.11; absorb paper: Proposition 4.7 |
+| The closure of a definable set of measure zero has measure zero | `Literature/OMinimal.lean` | skips paper: "not a pointwise limit" in Theorem A.28 (iv) and Theorem 4.11 |
+| Invariance of domain | `Literature/InvarianceOfDomain.lean` | skips paper: Proposition A.32; absorb paper: Proposition 4.6 |
+
+Each is a named proposition, and the theorems that use it take it as a hypothesis. None is declared
+as an axiom, so the axiom check below stays at the three standard axioms.
+
+A statement counts as proved when `lake build` passes with no `sorry` in its file and the axiom
+check shows the three standard axioms for it. The Lean statements were compared with the papers,
+statement by statement, by readers who did not write them. A proof of a Lean statement that differs
+from the paper's says nothing about the paper, so [`STATEMENTS.md`](STATEMENTS.md) puts each
+statement of the papers beside its Lean statement and lists where the two differ on purpose.
+
+## Layout
+
+- [`STATEMENTS.md`](STATEMENTS.md): the index. Each statement of the papers beside its Lean
+  statement, with its file; the definitions; the three results assumed from the literature.
+- `SkipsLean/`: the library, 425 files. Tokens are rows and weights multiply on the right, as in
+  the papers. One definition of a network serves the three papers: the hidden states are
+  `h_ℓ = h_{ℓ-1} M_ℓ + f_ℓ(χ(h_{ℓ-1}) W_read^ℓ) W_write^ℓ`, with `M = 0` without skip connections,
+  `M = 1` with identity skips, and a general `M` for learned skips.
+- `checks/Axioms.lean`: prints the axioms behind 2288 declarations of the library.
+- `ai_notes/`: technical notes of the formalization, with their own README: the status of every
+  numbered statement, the reports of the readers, and numeric checks of statements.
+
+| Folder of `SkipsLean/` | Files | Content |
+|---|---|---|
+| `Basic/` | 5 | RMSNorm and LayerNorm on rows: RMSNorm commutes with orthogonal matrices and with no other invertible matrix (for `ε = 0`, with their positive multiples); the computations that reduce LayerNorm to RMSNorm |
+| `Network/` | 10 | blocks, networks, hidden states and the function of a network; MLP, gated and attention blocks; networks of attention blocks and MLP blocks; biases; pre-LayerNorm networks; the blocks are real-analytic |
+| `Activations/` | 13 | GELU, SiLU, ReLU and its square: analyticity, and GELU and SiLU far from zero through the Mills ratio, at real and complex arguments |
+| `Generic/` | 12 | tools for statements at almost all parameters: zero sets of analytic functions, holomorphic extension, level sets, the dimensions of the groups of changes of basis |
+| `Symmetry/` | 46 | changes of basis at the hidden states and the exact reduction; under pre-RMSNorm only orthogonal changes of basis pass; the symmetries inside the blocks, also with biases; permutations and sign flips; the groups that these generate, and where they act locally freely |
+| `Dimension/` | 52 | the parameters as a vector space; functional dimension; the upper bounds from the symmetries; the equality condition and local identifiability; rank criteria |
+| `OneBlock/` | 97 | the one-block theorems: tanh, GELU, ReLU, ReLU², gated and attention blocks, without skip connections, with identity skips and with full or upper triangular learned skips, without normalization and under pre-RMSNorm |
+| `Depth/` | 72 | networks without skip connections at any depth (Theorem 5.2 of the dimension paper): tanh, GELU and gated blocks; inactive hidden units, where the count fails |
+| `Residual/` | 82 | learned skips reduce to identity skips; the one change of basis of a residual network; residual networks at any depth, with small writes; the gain of the skip connections; residual and skipless networks compute different functions; folding and dead units of ReLU blocks |
+| `Absorb/` | 32 | the absorb paper: blocks that absorb their skip connection and blocks that never do, networks, RMSNorm, attention, limits, biases |
+| `Literature/` | 3 | the three results assumed from the literature |
 
 ## Building
 
@@ -43,6 +66,6 @@ lake build            # must finish with no `sorry` warning
 lake env lean checks/Axioms.lean
 ```
 
-The last command prints the axioms behind every theorem. Each line must show only `propext`,
-`Classical.choice` and `Quot.sound`; a `sorryAx` would mean an open proof. Lean and Mathlib are
-pinned to `v4.36.0` (`lean-toolchain`, `lakefile.toml`).
+The last command prints the axioms behind 2288 declarations. Each line must show only `propext`,
+`Classical.choice` and `Quot.sound`; a `sorryAx` would mean a proof that is not finished. Lean and
+Mathlib are pinned to `v4.36.0` (`lean-toolchain`, `lakefile.toml`).
