@@ -12,7 +12,7 @@ Conventions, as in the paper: tokens are rows, weights multiply on the right (`x
 
 Checked against the papers by readers who did not write the statements (three comparisons, 24
 November 2026): every row of this file for the statements that were in the library at commit
-`46d0223`. Result: no Lean statement was found false, vacuous or changed in meaning by a
+`1e1c5ed`. Result: no Lean statement was found false, vacuous or changed in meaning by a
 definition; the differences were of coverage and of form, and the rows and notes below say them.
 A fourth reader (24 November 2026) compared the statements written after that commit for ReLU,
 ReLU² and ReGLU blocks, the statements marked with a prime, `Absorb/FirstBlock.lean`,
@@ -64,7 +64,7 @@ used as hypotheses only, for the parameters and for the outputs of the skipless 
 statement at generic parameters is `∀ᵐ θ ∂μ` for an additive Haar measure; the statements for
 Theorem 4.11 have no hypothesis that the paper does not have, except at least one token. Two eighth
 readers (24 November 2026) compared the 26 files of the case `ε = 0` written after that, at commit
-`f1ffa79`: the real side and the theorem (`Dimension/UpperBoundRMSNormZero.lean`,
+`244ec8a`: the real side and the theorem (`Dimension/UpperBoundRMSNormZero.lean`,
 `Depth/SuffixZero.lean`, `Depth/SuffixZeroDeriv.lean`, `Depth/SuffixZeroClaim.lean`,
 `Depth/SuffixZeroBatch.lean`, `Depth/StepZeroValues.lean`, `Depth/SuffixRows.lean`,
 `Depth/RowsAux.lean`, `Depth/FlatAtWriteRows.lean`, `Generic/AnalyticZeroSetOn.lean`,
@@ -164,7 +164,7 @@ asked also of blocks without heads, which excludes no network of the paper); the
 are the paper's or stronger; `InsideBlocks` is wider than the paper's list of symmetries, and every
 such direction is flat. Reports: `claude/lean-statement-audit-fifteenth-a-2026-11-24.md`,
 `…-fifteenth-b-…`. A sixteenth reader (24 November, one
-reader, at `d6af251` and `de917fe`) compared twelve files: `Generic/Cayley.lean`,
+reader, at `a8aa4e1` and `4e16789`) compared twelve files: `Generic/Cayley.lean`,
 `Dimension/IdentifiableConverseCob.lean`, `Dimension/IdentifiableIff.lean`,
 `Residual/IdentifiableIff.lean`, `Symmetry/OnlyOrthogonalRows.lean`, `Generic/GroupDimension.lean`,
 `Symmetry/CobGroup.lean`, `Dimension/IdentifiableIffTransformer.lean`, `OneBlock/LearnedSkip.lean`,
@@ -391,17 +391,17 @@ literature, and the two sentences of S Propositions A.1 (iii) and A.9 (i) are st
 (`ai_notes/lean-statement-audit-thirtyfourth-b-2026-11-25.md`).
 A thirty-fifth reader (part B, 25 November) compared `Symmetry/BiasesAffineGroup.lean` (7
 theorems), `Activations/GateFarC.lean` and `Depth/FrozenFarHolomorphic.lean` (3 statements, read
-with `sorry` at `6ca72ca`): nothing false, vacuous or drifted; the second sentence of S Lemma A.8
+with `sorry` at `adb7960`): nothing false, vacuous or drifted; the second sentence of S Lemma A.8
 is still stated in part (the group with the symmetries inside the blocks, and the group structure,
 are not stated; the group structure since then: `Symmetry/BiasesAffineGroupLaw.lean`); every
 sentence of D Lemma D.11 is stated
 (`ai_notes/lean-statement-audit-thirtyfifth-b-2026-11-25.md`).
 A thirty-fifth reader (part A, 25 November) compared `OneBlock/QuadraticResultant.lean`,
 `OneBlock/UnitsParallelAtSq.lean`, `OneBlock/UnitsGeneralPositionSq.lean` and
-`OneBlock/SkiplessReluSqWideRMSZero.lean` at `6ca72ca` and at `7de96aa` (14 theorems and 2
-definitions): one statement was false at `6ca72ca` in a degenerate case
-(`ae_exists_isUnit_det_reluSqDeriv` for `d = 0` with one hidden unit), repaired in `7de96aa`;
-nothing false, vacuous or drifted at `7de96aa`
+`OneBlock/SkiplessReluSqWideRMSZero.lean` at `adb7960` and at `35ababf` (14 theorems and 2
+definitions): one statement was false at `adb7960` in a degenerate case
+(`ae_exists_isUnit_det_reluSqDeriv` for `d = 0` with one hidden unit), repaired in `35ababf`;
+nothing false, vacuous or drifted at `35ababf`
 (`ai_notes/lean-statement-audit-thirtyfifth-a-2026-11-25.md`).
 A thirty-sixth reader (25 November) compared `OneBlock/RedundancySymmetriesRMSZero.lean` (5
 theorems) and `Symmetry/BiasesAffineGroupLaw.lean` (12 theorems, read before and after their
@@ -411,7 +411,7 @@ together with the symmetries inside the blocks, as a group with its dimension, i
 (`ai_notes/lean-statement-audit-thirtysixth-2026-11-25.md`).
 A thirty-seventh reader (25 November) compared `Symmetry/BiasesGeneratedGroup.lean`,
 `Symmetry/BiasesGeneratedGroupRescale.lean` and `Symmetry/BiasesGeneratedGroupAttention.lean`
-(structures, definitions and 30 statements, read from `7c849e3` to `c7b1eaa`; the attention file
+(structures, definitions and 30 statements, read from `7c849e3` to `02912c1`; the attention file
 with `sorry`): nothing false, vacuous or drifted; the maps of the three rescaling kinds and of the
 attention kind are the paper's, entry by entry, and were computed to preserve the function, to
 compose and invert within their families and to commute with the pairs `(G, g)`; the second
@@ -422,14 +422,14 @@ joined the three pieces at almost every weight (since then:
 `Symmetry/BiasesGeneratedGroupGeneric.lean`)
 (`ai_notes/lean-statement-audit-thirtyseventh-2026-11-25.md`).
 A thirty-eighth reader (25 November) compared `Symmetry/BiasesGeneratedGroupGeneric.lean`
-(6 theorems, read at `a43c156` and `27ea59e`): nothing false, vacuous or drifted; the second
+(6 theorems, read at `1437f76` and `d866c02`): nothing false, vacuous or drifted; the second
 sentence of S Lemma A.8 is stated for networks of one kind of block and is still in part for
 networks with attention blocks and MLP or gated blocks together
 (`ai_notes/lean-statement-audit-thirtyeighth-2026-11-25.md`).
 A thirty-ninth reader (25 November) compared `Symmetry/BiasesGeneratedGroupSum.lean`,
 `Symmetry/BiasesGeneratedGroupSumFree.lean`, `Symmetry/BiasesGeneratedGroupLocalRescale.lean`,
 `Symmetry/BiasesGeneratedGroupLocalAttention.lean` and
-`Symmetry/BiasesGeneratedGroupTransformer.lean` (read at `4e091c3` and `a84e14a`; no statement
+`Symmetry/BiasesGeneratedGroupTransformer.lean` (read at `7fe3cb0` and `3f5e61c`; no statement
 changed in between): nothing false, vacuous or drifted; the orbit of a generic point of a ReLU
 transformer has the dimension of `generatedGroupResidual_attentionMlp` (60) and of its skipless
 twin (87); the second sentence of S Lemma A.8 is now stated for transformers and, with the
