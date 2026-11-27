@@ -8,7 +8,7 @@ definitions were judged, not the proofs. Nothing in the repository was changed: 
 `lake build`. Scratch files and their outputs are in `/home/claude/audit3/`.
 
 Sources.
-- Lean library `/home/claude/lw/lean/SkipsLean/` at commit 46d0223 (clean working tree; the compiled
+- Lean library `/home/claude/lw/lean/SkipsLean/` at commit 1e1c5ed (clean working tree; the compiled
   files of the seven files in scope are newer than their sources, so the checks ran against the
   current statements). File names below are relative to `SkipsLean/`.
 - "D": `paper docs/new_paper_functional_dimension/new_paper_functional_dimension.tex` and `.pdf`.
@@ -998,7 +998,7 @@ Skips paper.
 
 ### (4b) Rows and notes of `STATEMENTS.md` that are inaccurate or incomplete
 
-Line numbers are those of `/home/claude/lw/lean/STATEMENTS.md` at commit 46d0223.
+Line numbers are those of `/home/claude/lw/lean/STATEMENTS.md` at commit 1e1c5ed.
 
 1. Line 278, row "A Proposition 5.1 (i) … no normalization, locally Lipschitz blocks": the Lean
    hypothesis is `∀ ℓ, LocallyLipschitz (A.f ℓ)`, on the fixed maps `f_ℓ`, not on the blocks. Line 279,
@@ -1114,7 +1114,7 @@ Proposition 5.1; the note that Lemma D.7 fails with no tokens; the note on `d �
   Lean form; Definition 3.1 on two blocks; Proposition 3.3 (ii) with the factorization inside; the
   class of homogeneous blocks on ReLU²; the wording of Theorem 3.3 (iii).
 - The library was not rebuilt. The checks ran against the compiled files, which are newer than the
-  sources of the seven files in scope; the working tree is clean at commit 46d0223.
+  sources of the seven files in scope; the working tree is clean at commit 1e1c5ed.
 
 **What was not checked by machine.**
 - The comparison itself: it is a reading of the papers against the elaborated statements.

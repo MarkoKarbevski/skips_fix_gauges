@@ -9,26 +9,26 @@ files are in `/home/claude/audit15a/`.
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
-- Commit that I audited: `2fc98cc7f0ea3ad4dae9a2a86e6f8334a6d4cefa` (16:04:49 UTC), the head of
+- Commit that I audited: `d2982b1eba01011b5ee9a42ff292476748c36df6` (16:04:49 UTC), the head of
   `/home/claude/lw` when I began.
-- Files with `sorry` at that commit (`git grep -lw sorry 2fc98cc -- lean/SkipsLean`): two, both
+- Files with `sorry` at that commit (`git grep -lw sorry d2982b1 -- lean/SkipsLean`): two, both
   outside the brief: `Dimension/IdentifiableConverse.lean` (2) and `Generic/LevelSetImages.lean`
   (1). The thirteen files of the brief have no `sorry`, and no line with `axiom`, `admit`,
   `native_decide` or `unsafe`.
-- The branch moved three times while I worked, to `b1e7014` (16:09:57), `cbee1f1` (16:18:54) and
-  `591d9e4` (16:28:08 UTC). At `591d9e4` the files with `sorry` are
+- The branch moved three times while I worked, to `c20679d` (16:09:57), `1567c50` (16:18:54) and
+  `6ed45ed` (16:28:08 UTC). At `6ed45ed` the files with `sorry` are
   `Dimension/IdentifiableIff.lean`, `Residual/IdentifiableIff.lean`, `Generic/GroupDimension.lean`,
   `Symmetry/CobGroup.lean` and `Symmetry/OnlyOrthogonalRows.lean`, all outside the brief. The
   thirteen files are the same at the four commits (`git diff --stat`, no line). Their thirteen
   index rows are word for word the same; they stand at lines 753 to 760, 766, 767, 772 to 774 of
-  `STATEMENTS.md` at `2fc98cc` and at lines 756 to 763, 769, 770, 782 to 784 at `591d9e4` (by a
-  script). Line numbers below are those of `2fc98cc`; each correction quotes the words to change.
+  `STATEMENTS.md` at `d2982b1` and at lines 756 to 763, 769, 770, 782 to 784 at `6ed45ed` (by a
+  script). Line numbers below are those of `d2982b1`; each correction quotes the words to change.
 - The thirteen files have 127 public names (8 definitions, 119 theorems) and 157 private helpers.
   All 127 names are covered by their index rows (62 of them by a pattern such as "each also with
   `_rmsNorm`"; I counted each pattern: 8, 2, 2, 8, 10, 3, 16, 30, 4, 6, 6, 28, 4). All 119
   theorems stand in `checks/Axioms.lean`.
 - Did a statement change after it was first committed? No. For each of the 127 public names the
-  text from the docstring to `:=` is the same at the first commit of its file and at `b1e7014`
+  text from the docstring to `:=` is the same at the first commit of its file and at `c20679d`
   (by a script, `pub2.py cmp`, output `cmp_statements.out`). The file headers are the same too,
   except one added `import` line in `Generic/Sum.lean`.
 
@@ -45,7 +45,7 @@ How I checked.
   the paper passages that the brief names.
 - "By hand": a short argument of my own, written in the note.
 - "By compiling": with `lean` 4.36.0, run from `/home/claude/lw/lean` with `LEAN_PATH` set to a
-  copy of the compiled library of `/home/claude/lp/lean` (copied at 16:12 UTC, when `lp` was at `b1e7014`; `diff -rq` of the two
+  copy of the compiled library of `/home/claude/lp/lean` (copied at 16:12 UTC, when `lp` was at `c20679d`; `diff -rq` of the two
   source trees shows only files that `lp` has in addition), without `lake build`. I compiled
   copies of the thirteen files from the sources of `lw` (`compile13.out`: no error; one warning,
   see note 8 of the list for the authors) and five scratch files of my own, `Chk1.lean` to
@@ -622,7 +622,7 @@ weight:
 
 ## Corrections for `STATEMENTS.md`
 
-Line numbers at `2fc98cc`. At `591d9e4` the same sentences stand three lines lower from line 644
+Line numbers at `d2982b1`. At `6ed45ed` the same sentences stand three lines lower from line 644
 to line 767 and ten lines lower from line 772 on; the list of line 154 has not moved. The
 two sentences of corrections 1 and 2 and the thirteen rows are unchanged there.
 
@@ -635,7 +635,7 @@ two sentences of corrections 1 and 2 and the thirteen rows are unchanged there.
    `Residual/DifferentClassesTransformer.lean`". The file has no `sorry` and its 28 theorems
    depend on the standard axioms only. In the same paragraph "Lemma A.27, Theorem 4.7 and
    Corollary 4.9 for networks that mix attention and MLP blocks" is listed as not stated; the
-   commit messages from `540f071` to `2fc98cc` say that they are proved for transformers. Those
+   commit messages from `931dbd2` to `d2982b1` say that they are proved for transformers. Those
    files are outside this brief; I did not read them.
 3. Line 757, row of `Symmetry/InsideBlocksKinds.lean`: "Not stated: the rescalings of the hidden
    units of ReLU and ReLU² blocks and of the gates of ReGLU blocks" → "The rescalings of the
@@ -698,5 +698,5 @@ Nothing is missing from the thirteen rows: all 127 public names are covered and 
 - **The absorb paper.** The header of `Network/Sum.lean` quotes its Theorem 4.3; I checked only
   that the quoted words stand in the current `.tex` (line 360), not the statement.
 - I compiled against a copy of the build of `/home/claude/lp/lean` taken at 16:12 UTC, not against
-  a fresh build of `2fc98cc`; the copies of the thirteen files that I compiled are the sources of
+  a fresh build of `d2982b1`; the copies of the thirteen files that I compiled are the sources of
   `lw`.

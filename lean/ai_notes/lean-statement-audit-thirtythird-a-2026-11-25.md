@@ -2,7 +2,7 @@ STATUS: complete
 
 # Thirty-third audit, part A, of Lean statements against the papers: one attention block with biases (S Theorem B.1 (i)); the symmetries inside attention blocks with biases; the count of S Lemma A.8 as a dimension (25 November 2026)
 
-Commit read at the start: `5ef12b8` of `/home/claude/lp` (branch `lean-plus`). Papers: `<scratchpad>/skips.txt`.
+Commit read at the start: `0e1bc98` of `/home/claude/lp` (branch `lean-plus`). Papers: `<scratchpad>/skips.txt`.
 Files with `sorry` among the six: none. The checks are written in the order in which they were done (1, 5, 2, 6, 3, 4, 7, 8).
 Scripts: `/home/claude/audit33a/` (`attn_bias_rank.py`, `extra.py`, `extra2.py`, `reduction.py`, `count_hrw.py`, `Ax33a.lean`).
 
@@ -352,7 +352,7 @@ Verdict of check 7: no drift.
 (8 + 2 + 5 + 2 + 13 + 3); the definitions (`headDirQKB`, `headDirVOB`, `keyShiftDir`, `valueShiftDir`, `headDirB`,
 `attnBQ`, `attnBK`, `attnBV`, `attnScoreBias`, `attnConst`, `dAttnScoreBias`, `dAttnConst`) are not, as for other
 definitions. **Axioms** (compiled in a copy after the full build had ended, `pgrep -f "lake build"` empty, against the
-build of `5ef12b8`, whose `.olean` files of the six modules are newer than their sources): all 33 depend on
+build of `0e1bc98`, whose `.olean` files of the six modules are newer than their sources): all 33 depend on
 `[propext, Classical.choice, Quot.sound]` only.
 
 **The rows** (`STATEMENTS.md` lines 1033 to 1037 and 1049, by reading against checks 1 to 6):
@@ -365,7 +365,7 @@ build of `5ef12b8`, whose `.olean` files of the six modules are newer than their
   the statement holds at every bias, and that `OneBlockGenericAttention` holds one condition (`exists_v`) that Step 1
   does not use.
 * Line 1037 (`OneBlock/AttentionBiasesDim.lean`): "The two values at one parameter are with a proving agent; the other
-  eleven statements are proved from them by the coordinator" is out of date: at `5ef12b8` the two values are proved (no
+  eleven statements are proved from them by the coordinator" is out of date: at `0e1bc98` the two values are proved (no
   `sorry`, standard axioms) and the row says "proved". The rest is true. The docstring's and the check's "higher by
   `H d_h = 2`" (part (d)) is right for its example; the general excess is `min(H d_h, d)` (check 1).
 * Line 1049 (`Symmetry/BiasesSymmetryCount.lean`): the statements are described rightly, but "The dimension of a group is
@@ -464,4 +464,4 @@ Nothing is FALSE, vacuous or drifted.
 * Proofs were not audited, only statements; compiled was only the copy with `#print axioms` and the instance at a
   concrete Haar measure.
 
-Commit read at the start and at the end: `5ef12b8` of `/home/claude/lp` (branch `lean-plus`); the six files did not change.
+Commit read at the start and at the end: `0e1bc98` of `/home/claude/lp` (branch `lean-plus`); the six files did not change.

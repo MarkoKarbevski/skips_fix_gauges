@@ -11,22 +11,22 @@ The audit is of statements and definitions, not of proofs.
 
 ## Commits read, and `sorry`
 
-- Start: `fd606c5` (`lean: ai_notes: status by statement, the check of Step 4 for gated units`). There,
+- Start: `baf38e7` (`lean: ai_notes: status by statement, the check of Step 4 for gated units`). There,
   `OneBlock/GatedUnitsNoSymmetricPart.lean` had 2 `sorry` and `OneBlock/LearnedSkipNarrowGated.lean` had 5;
   the other five files had none.
-- The branch moved during the audit to `da5e50f` (`… SwiGLU and GeGLU with a full learned skip, and the
+- The branch moved during the audit to `b52cd65` (`… SwiGLU and GeGLU with a full learned skip, and the
   upper triangular skip …: proved, registered`). Between the two commits the seven files of the subject
   changed only in the two gated files, and there only by proofs: the removed lines are the seven `sorry`
-  (checked with `git diff fd606c5 da5e50f`, the removed lines listed), the added lines are private helpers
-  and proofs. The public statements and definitions are the same at both commits. At `da5e50f` none of the
+  (checked with `git diff baf38e7 b52cd65`, the removed lines listed), the added lines are private helpers
+  and proofs. The public statements and definitions are the same at both commits. At `b52cd65` none of the
   seven files has a `sorry`.
-- At the end of the audit the branch was at `e678a9a` (`lean: Dimension/RescaleActionHomogeneous.lean:
-  registered …`). Between `da5e50f` and `e678a9a` none of the seven files changed in a statement; the only
+- At the end of the audit the branch was at `95e12a2` (`lean: Dimension/RescaleActionHomogeneous.lean:
+  registered …`). Between `b52cd65` and `95e12a2` none of the seven files changed in a statement; the only
   change in them is the last paragraph of the header of `Dimension/UpperBoundReadout.lean` (it now points
   to the new files for the symmetries inside blocks and for the group), and its index row was edited in the
-  same way. Check 7 reads the index and `checks/Axioms.lean` at `e678a9a`.
+  same way. Check 7 reads the index and `checks/Axioms.lean` at `95e12a2`.
 - All compiling was done on copies in the audit folder, against the build of the working copy (which holds
-  the state of `da5e50f` for the seven files), with nothing written to the repository.
+  the state of `b52cd65` for the seven files), with nothing written to the repository.
 
 ## Method, in one paragraph
 
@@ -170,7 +170,7 @@ radius `√n`, at 60 digits, the kernel of the linear system in `(X, ψ)` (unkno
   largest) and the first zero one (below `10⁻⁶¹`) is clear.
 - The same on the ball of radius `1/2` (4 cases): the same kernels.
 
-No counterexample. The four theorems are proved in Lean at `da5e50f` (`#print axioms`: `propext`,
+No counterexample. The four theorems are proved in Lean at `b52cd65` (`#print axioms`: `propext`,
 `Classical.choice`, `Quot.sound` only).
 
 Verdict for the two definitions and the four theorems: **SAME** as Step 4 for these units (under the paper's
@@ -408,7 +408,7 @@ theorem cobDir_injective_of_rank_D (θ : Params A dIn dOut) (hD : θ.D.rank = Fi
   rescalings in play each read gives its `X_ℓ` directly).
 - **Not stated in this file**: the symmetries inside blocks (rescalings; for ReGLU the paper notes that a
   row of the write fixes only the product of the two scales); the statement on the group; attention. At
-  `fd606c5` and `da5e50f` the header of the file said so; at `e678a9a` it points to files written after this
+  `baf38e7` and `b52cd65` the header of the file said so; at `95e12a2` it points to files written after this
   audit began (`Dimension/UpperBoundReadoutInside.lean`, `Symmetry/LocallyFreeEmbedding.lean`,
   `Symmetry/LocallyFreeReadout.lean`), which this audit did not read.
   For a residual network (one `X` at all hidden states) the injectivity of `X ↦ cobDir θ (fun _ => X)`
@@ -418,14 +418,14 @@ Verdict: **SAME** for the piece it states; **PART** of the lemma.
 
 ### Check 7. The index rows and the registrations
 
-By reading, at `e678a9a` (line numbers of `STATEMENTS.md` there), with counts by `grep`.
+By reading, at `95e12a2` (line numbers of `STATEMENTS.md` there), with counts by `grep`.
 
 - **Every public theorem is in a row and in `checks/Axioms.lean`.** The seven files have 2 public
   definitions and 23 public theorems (listed in Part 2). Each of the 23 names occurs once in the index and
   once as `#print axioms Skips.<name>` in `checks/Axioms.lean`; the two definitions are in their rows. The
   seven modules are imported by `SkipsLean.lean`. In the audit's own compile, `#print axioms` gives
   `propext`, `Classical.choice`, `Quot.sound` for all 23, and `sorryAx` for none. The status "proved" of the
-  seven rows is true at `da5e50f` and `e678a9a` (at `fd606c5` the two gated files were in work).
+  seven rows is true at `b52cd65` and `95e12a2` (at `baf38e7` the two gated files were in work).
 - **Line 422, `Dimension/UpperBoundReadout.lean`:** true of the statement.
 - **Line 524, `OneBlock/KeepsProducts.lean`:** true of the three statements.
 - **Line 734, `Residual/ExactReductionWrites.lean`:** true of the five statements. One clause is shorter
@@ -507,7 +507,7 @@ Notes.
 ## What the authors of the papers should know
 
 Nothing in the seven files is false, vacuous, drifted or misdescribed. All 23 public theorems are proved at
-`da5e50f` with the three standard axioms.
+`b52cd65` with the three standard axioms.
 
 Places where the paper's statement or proof needs a condition or a step that it does not write, or writes a
 condition that is not needed:
@@ -544,7 +544,7 @@ condition that is not needed:
    Jacobian of rank 45, and 30 inputs gave the true 47. A count "more rows than parameters" is not enough
    for a block that sees its input through few numbers.
 
-## Corrections for `STATEMENTS.md` (line numbers at `e678a9a`)
+## Corrections for `STATEMENTS.md` (line numbers at `95e12a2`)
 
 1. Line 977 (`OneBlock/UnitsNoSymmetricPart.lean`): replace "Not stated: SwiGLU and GeGLU units; the
    networks" by a pointer: SwiGLU and GeGLU units are the row of `OneBlock/GatedUnitsNoSymmetricPart.lean`;
@@ -578,7 +578,7 @@ No correction for line 422 (`Dimension/UpperBoundReadout.lean`).
   (`Dimension/UpperBoundReadoutInside.lean`, `Symmetry/LocallyFreeEmbedding.lean`,
   `Symmetry/LocallyFreeReadout.lean`, `Symmetry/LocallyFreeAttention.lean`,
   `Dimension/RescaleActionHomogeneous.lean`, `Basic/EigenvectorsGeneralPosition.lean`): not in the subject.
-- Whether the build that the copies were compiled against is byte for byte the build of `da5e50f`: the
+- Whether the build that the copies were compiled against is byte for byte the build of `b52cd65`: the
   compiled files of the seven modules are newer than the last change of their sources, and the statements
   used in the checks elaborate against them; a full rebuild was not run (not allowed here).
 - The clauses of Lemma B.2 with biases, networks of mixed blocks in Proposition A.9, and the group form of

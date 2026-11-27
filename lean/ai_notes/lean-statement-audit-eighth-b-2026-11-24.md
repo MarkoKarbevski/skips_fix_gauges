@@ -13,18 +13,18 @@ the dimension paper up to Lemma D.18 and the parameter `θ*`, in ten Lean files.
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
-- Commit when I began: `3131776d4d62167354ef508efbc7a3bb83df8221` (24 November, 10:14:51 UTC).
+- Commit when I began: `7747aebfdfd54af4b5214bd234e1a550ffbf7313` (24 November, 10:14:51 UTC).
 - While I worked the branch moved twice.
-  - To `04c187737eb6a396000129f649f927332402c956` (10:20:47 UTC): three files changed,
+  - To `eae5335f7b46bf01ba2da58760ef7dc20b9d4a12` (10:20:47 UTC): three files changed,
     `Depth/DomainZero.lean`, `Depth/DomainZeroConnected.lean`, `Depth/TanhZero.lean` (proofs
-    written). None of the ten files of this audit changed (`git diff --quiet 3131776 04c1877` on
+    written). None of the ten files of this audit changed (`git diff --quiet 7747aeb eae5335` on
     each), and `STATEMENTS.md` did not change.
-  - To `f1ffa79f7163f2c1149598547fe5a1346c747ec4` (10:27:19 UTC), the commit when I finished: `Depth/HiddenZero.lean`,
+  - To `244ec8ac4dfe9219f2d1849c90274485eae53f3f` (10:27:19 UTC), the commit when I finished: `Depth/HiddenZero.lean`,
     `Depth/TanhPathBlock.lean`, `Depth/RegularZeroTanh.lean` (proofs written), `checks/Axioms.lean`
     and six status cells of `STATEMENTS.md` (lines 178 to 183, "in work" to "proved"). Of the ten files, eight did not
-    change. In the other two the only removed lines are the two `sorry` (`git diff 04c1877
-    f1ffa79`, lines beginning with `-`): **no statement, definition or docstring of the ten files
-    changed between `3131776` and `f1ffa79`**, except that a line `omit [DecidableEq d] in` now
+    change. In the other two the only removed lines are the two `sorry` (`git diff eae5335
+    244ec8a`, lines beginning with `-`): **no statement, definition or docstring of the ten files
+    changed between `7747aeb` and `244ec8a`**, except that a line `omit [DecidableEq d] in` now
     stands before `exists_regularZero_tanh_path`, so that it no longer takes the instance
     `[DecidableEq d]` (same meaning).
   Line numbers of `STATEMENTS.md` below are the same at the three commits.
@@ -33,13 +33,13 @@ Files of `SkipsLean/` that contain `sorry` (by `grep`):
 
 | Commit | Files with `sorry` |
 |---|---|
-| `3131776` | `Depth/RegularZeroTanh.lean` (1), `Depth/TanhPathBlock.lean` (1), `Depth/TanhZero.lean` (3), `Depth/HiddenZero.lean` (6), `Depth/DomainZero.lean` (3), `Depth/DomainZeroConnected.lean` (2) |
-| `04c1877` | `Depth/RegularZeroTanh.lean` (1), `Depth/TanhPathBlock.lean` (1), `Depth/HiddenZero.lean` (6) |
-| `f1ffa79` | none |
+| `7747aeb` | `Depth/RegularZeroTanh.lean` (1), `Depth/TanhPathBlock.lean` (1), `Depth/TanhZero.lean` (3), `Depth/HiddenZero.lean` (6), `Depth/DomainZero.lean` (3), `Depth/DomainZeroConnected.lean` (2) |
+| `eae5335` | `Depth/RegularZeroTanh.lean` (1), `Depth/TanhPathBlock.lean` (1), `Depth/HiddenZero.lean` (6) |
+| `244ec8a` | none |
 
-Of the ten files of this audit, two had `sorry` at `3131776` and `04c1877`, each in one proof:
+Of the ten files of this audit, two had `sorry` at `7747aeb` and `eae5335`, each in one proof:
 `exists_tanhPathBlock` (`Depth/TanhPathBlock.lean`) and `exists_regularZero_tanh_path`
-(`Depth/RegularZeroTanh.lean`). The other eight had none. At `f1ffa79` no file has `sorry`.
+(`Depth/RegularZeroTanh.lean`). The other eight had none. At `244ec8a` no file has `sorry`.
 
 `grep -rn "^axiom" SkipsLean` finds nothing, at the three commits. The word "axiom" occurs in two
 comments (`Literature/OMinimal.lean`, `Literature/Sard.lean`), which say that those results are
@@ -52,9 +52,9 @@ hypotheses and not axioms.
 - "By compiling": scratch files of my own in `/home/claude/audit8b/` (`Chk1.lean`, `Chk2.lean`,
   `Chk3.lean`), compiled with `lean` 4.36.0. The compiled library of `/home/claude/lw` has none of
   the ten files, so I used the compiled library of `/home/claude/lp/lean` (branch `lean-plus`)
-  through `LEAN_PATH`, without `lake`. At my first compile `lp` was at `04c1877` with no changed
+  through `LEAN_PATH`, without `lake`. At my first compile `lp` was at `eae5335` with no changed
   tracked file, and the ten source files were the same in `lp` and `lw` (`diff`); the compiled
-  files were newer than their sources. At the end `lp` and `lw` were both at `f1ffa79`, `lp` with
+  files were newer than their sources. At the end `lp` and `lw` were both at `244ec8a`, `lp` with
   no changed tracked file, the same sources, and compiled files newer than the sources; I compiled
   the three scratch files once more against it. Where the two runs differ I say so. I wrote
   nothing under `lw`, `lp` or the repository.
@@ -64,7 +64,7 @@ hypotheses and not axioms.
 
 ## Short answer
 
-**Nothing false, vacuous or drifted was found.** At the last commit, `f1ffa79`, every statement of
+**Nothing false, vacuous or drifted was found.** At the last commit, `244ec8a`, every statement of
 the ten files is proved (no `sorry`; by compiling, each depends on `propext`, `Classical.choice`,
 `Quot.sound` only).
 
@@ -115,10 +115,10 @@ paper does not say that (S3) is generic, and it is not: (S3) asks for large read
 the connected open set `O_{X*}` (Lemma D.20). So one parameter is all the proof needs. (By reading.)
 
 In Lean the same: the only use of `exists_regularZero_tanh_path` is in
-`exists_jacobianRank_tanh_rmsNorm_zero` (`Depth/TanhZero.lean`, read at `04c1877`), which is again
+`exists_jacobianRank_tanh_rmsNorm_zero` (`Depth/TanhZero.lean`, read at `eae5335`), which is again
 an existence statement (a parameter and a batch); the "almost every" is only in the final theorem
 `ae_funDim_tanh_skipless_rmsNorm_zero` (part A of this audit). `exists_tanhPathBlock` is used
-only inside the proof of `exists_regularZero_tanh_path` (at `04c1877` that proof was `sorry` and
+only inside the proof of `exists_regularZero_tanh_path` (at `eae5335` that proof was `sorry` and
 the statement was used nowhere).
 
 No measure in the ten files: `grep` for `∀ᵐ`, `ae_`, `IsAddHaarMeasure`, `volume`, `Measure` in
@@ -191,28 +191,28 @@ Does every use supply the cone? **Yes.**
 
 - `claimZero_of_tanh_path` (`Depth/TanhZero.lean`) takes, for every block `k`, (S1), (S2) and
   `∃ κ : ℝ, 0 < κ ∧ HolomorphicOnCone Complex.tanh θ k.succ κ ∧ CondS3 θ k κ`, and its proof at
-  `04c1877` is the induction `claimZero_last` then
+  `eae5335` is the induction `claimZero_last` then
   `claimZero_castSucc_tanh hθ hd k (hblocks k).1 (hblocks k).2.1 hκ hhol hS3 ih` (by reading; by
-  compiling: it depends on `propext`, `Classical.choice`, `Quot.sound` only). At `3131776` this
+  compiling: it depends on `propext`, `Classical.choice`, `Quot.sound` only). At `7747aeb` this
   proof was `sorry`; the statement is the same.
 - `exists_regularZero_tanh_path` has exactly this conjunction in its conclusion (text above), and
   `exists_jacobianRank_tanh_rmsNorm_zero` passes it on unchanged (`obtain ⟨θ, hθ, hblocks⟩ :=
   exists_regularZero_tanh_path …`, then `claimZero_of_tanh_path hθ hd hblocks 0`; by reading at
-  `04c1877`).
+  `eae5335`).
 - The cones themselves come from Lemma D.14, which is proved: `holomorphicOnCone_last`,
   `exists_holomorphicOnCone_castSucc`, `HolomorphicOnCone.congr`
   (`Depth/ComplexSuffixStep.lean`; by compiling: the three standard axioms only).
 - The final theorem `ae_funDim_tanh_skipless_rmsNorm_zero` has no cone and no condition (S·) or
   (R·) among its hypotheses (by reading).
 
-What was still open at `3131776` and `04c1877` was the proof of `exists_regularZero_tanh_path`
-(and of `exists_tanhPathBlock` under it), not a hypothesis. At `f1ffa79` both are proved.
+What was still open at `7747aeb` and `eae5335` was the proof of `exists_regularZero_tanh_path`
+(and of `exists_tanhPathBlock` under it), not a hypothesis. At `244ec8a` both are proved.
 
-Proof status (by compiling, `Chk1.lean` and `Chk3.lean`). Against the library at `04c1877`:
+Proof status (by compiling, `Chk1.lean` and `Chk3.lean`). Against the library at `eae5335`:
 `claimZero_castSucc_tanh` and `tanh_path_step` depend on `propext`, `Classical.choice`,
 `Quot.sound` only, and so do the other 31 public statements of the eight files without `sorry`;
 `exists_tanhPathBlock` and `exists_regularZero_tanh_path` depend on `sorryAx`. Against the library
-at `f1ffa79`: all 35 public statements of the ten files depend on the three standard axioms only,
+at `244ec8a`: all 35 public statements of the ten files depend on the three standard axioms only,
 and so do `claimZero_of_tanh_path`, `exists_jacobianRank_tanh_rmsNorm_zero` and
 `ae_funDim_tanh_skipless_rmsNorm_zero`.
 
@@ -348,14 +348,14 @@ statement depends on `propext`, `Classical.choice`, `Quot.sound` only.
 | (S3) | `CondS3` | `StepZeroTanh` | SAME | Check 3. |
 | Lemma D.18 | `claimZero_castSucc_tanh` | `StepZeroTanh` | SAME | Check 2: the cone is an explicit hypothesis; `d ≥ 2`; at least one token. Proved. |
 | "Parameters that satisfy all conditions", the conditions on one `tanh` block | `TanhPathBlock` (definition) | `TanhPathBlock` | SAME | Check 3; one row; (R1) for the write only. |
-| "Parameters that satisfy all conditions", one block | `exists_tanhPathBlock` | `TanhPathBlock` | PART | Existence of one pair for every `κ > 0`; the paper shows a nonempty open set minus a set of measure zero. `sorry` at `3131776` and `04c1877`, proved at `f1ffa79`. |
-| "So there are parameters `θ*` that are regular and whose blocks all satisfy (S1) to (S3) for tanh" | `exists_regularZero_tanh_path` | `RegularZeroTanh` | SAME | With the cone of every block made explicit, and the paper's Setup (`d_in, d_out ≥ d ≥ 2`, at least `d` hidden units, at least one token). `sorry` at `3131776` and `04c1877`, proved at `f1ffa79`. |
+| "Parameters that satisfy all conditions", one block | `exists_tanhPathBlock` | `TanhPathBlock` | PART | Existence of one pair for every `κ > 0`; the paper shows a nonempty open set minus a set of measure zero. `sorry` at `7747aeb` and `eae5335`, proved at `244ec8a`. |
+| "So there are parameters `θ*` that are regular and whose blocks all satisfy (S1) to (S3) for tanh" | `exists_regularZero_tanh_path` | `RegularZeroTanh` | SAME | With the cone of every block made explicit, and the paper's Setup (`d_in, d_out ≥ d ≥ 2`, at least `d` hidden units, at least one token). `sorry` at `7747aeb` and `eae5335`, proved at `244ec8a`. |
 
 ### (a) Are the statements true as written?
 
 **The 33 public statements of the eight files that never had `sorry`** are proved: they compile
-(in the `lp` library at `04c1877` and at `f1ffa79`, same sources) and depend on the three standard
-axioms only. The two existence statements are proved at `f1ffa79`. I also
+(in the `lp` library at `eae5335` and at `244ec8a`, same sources) and depend on the three standard
+axioms only. The two existence statements are proved at `244ec8a`. I also
 looked for degenerate cases in which a statement would be true for an empty reason, by reading:
 
 - *No tokens.* `HolomorphicOnCone` holds for every `κ` (every map into matrices without rows is
@@ -407,7 +407,7 @@ hidden units, random data).
   `|ζ_j| < (ρ/4)/(2 − 1/4) = ρ/7 < ρ/3`. So these rows are in the image of the polydisc, and the
   third part of the conclusion follows from `𝒯_0 = 0`.
 
-**`exists_tanhPathBlock`** (`sorry` at `3131776` and `04c1877`; proved at `f1ffa79`). Before the
+**`exists_tanhPathBlock`** (`sorry` at `7747aeb` and `eae5335`; proved at `244ec8a`). Before the
 proof arrived I judged it true by hand, as follows; I did not read the Lean proof. Take
 `V = Wᵀ` (the header of the file names this family), `W = λW°` with `W°` of rank `d`, any two
 columns linearly independent, columns linearly independent over `ℚ`, and a unit row `ξ₀` with every
@@ -422,7 +422,7 @@ is real-analytic on `ℝ^d` and positive near `0` (there `f(n) ≈ ‖n‖²`), 
 `‖n‖² = d` for `λW°` is the sphere of radius `λ√d` for `W°`; so (R3) holds for arbitrarily large
 `λ`. The computation above agrees for one example.
 
-**`exists_regularZero_tanh_path`** (`sorry` at `3131776` and `04c1877`; proved at `f1ffa79`). By
+**`exists_regularZero_tanh_path`** (`sorry` at `7747aeb` and `eae5335`; proved at `244ec8a`). By
 hand it follows from `exists_tanhPathBlock`: `E` and `D` of rank `d` exist (`d_in, d_out ≥ d`); the blocks are
 chosen from the last to the first, each for the cone that Lemma D.14 gives for the blocks after it
 (`holomorphicOnCone_last`, `exists_holomorphicOnCone_castSucc`, `HolomorphicOnCone.congr`); the
@@ -478,7 +478,7 @@ Yes. By compiling and by reading.
   compile that step.
 - The conclusion of `exists_regularZero_tanh_path` is, after `RegularZero`, word for word the
   hypothesis `hblocks` of `claimZero_of_tanh_path`; `exists_jacobianRank_tanh_rmsNorm_zero` passes
-  it on (read at `04c1877`).
+  it on (read at `eae5335`).
 
 ### (d) `HolomorphicOnCone` and `rmsRowC`
 
@@ -535,8 +535,8 @@ weight:
    (`exists_regularZero_tanh_path`) supplies one cone per block together with (S3) for that cone,
    and the final theorem has no such hypothesis.
 2. **Two proofs of this part were `sorry` when I began** (`exists_tanhPathBlock`,
-   `exists_regularZero_tanh_path`) **and are proved at `f1ffa79`,** with their statements
-   unchanged. At `f1ffa79` all 35 public statements of the ten files, and the three statements of
+   `exists_regularZero_tanh_path`) **and are proved at `244ec8a`,** with their statements
+   unchanged. At `244ec8a` all 35 public statements of the ten files, and the three statements of
    `Depth/TanhZero.lean`, depend on the three standard axioms only (by compiling).
 3. **The paper's (S3) does not say that the rows `w̃` are complex.** The proof of Lemma D.18 uses
    (S3) at complex rows `w̃(ζ)`, and Lean's `CondS3` quantifies over complex rows. A reader who
@@ -555,23 +555,23 @@ weight:
 7. **One docstring is inexact:** `exists_holomorphicOnCone` says "(R1) and (R2) are used"; only
    (R2) is.
 
-### The commit `f1ffa79`, which arrived while I worked
+### The commit `244ec8a`, which arrived while I worked
 
 What I checked of it:
 
-- By `git diff 04c1877 f1ffa79` on `Depth/TanhPathBlock.lean` and `Depth/RegularZeroTanh.lean`: the
+- By `git diff eae5335 244ec8a` on `Depth/TanhPathBlock.lean` and `Depth/RegularZeroTanh.lean`: the
   only removed lines are the two `sorry`; the statements, the definition `TanhPathBlock` and the
   docstrings are unchanged. Added: private helpers, the two proofs, and `omit … in` lines; the one
   before `exists_regularZero_tanh_path` drops the instance `[DecidableEq d]` from its statement (by
   compiling: the elaborated statement is otherwise the one quoted in Check 1).
 - `grep` finds no `sorry` and no `axiom` declaration in `SkipsLean/`.
-- By compiling against the `lp` library at `f1ffa79` (`Chk1.lean`, `Chk2.lean`, `Chk3.lean`):
+- By compiling against the `lp` library at `244ec8a` (`Chk1.lean`, `Chk2.lean`, `Chk3.lean`):
   the results stated above; `Chk2.lean` compiles as before.
 - I did not read the two new proofs.
 
 ---------------------------------------------------------------------------------------------------
 
-## Corrections for `STATEMENTS.md` (lines at `f1ffa79`; the same line numbers at `3131776`)
+## Corrections for `STATEMENTS.md` (lines at `244ec8a`; the same line numbers at `7747aeb`)
 
 None corrects a wrong claim about what is proved. All are precisions.
 
@@ -595,8 +595,8 @@ None corrects a wrong claim about what is proved. All are precisions.
    also "at least one token".
 6. **Line 163**: "contain the real rows `≠ 0`" holds for `κ > 0`; "`C_κ`" is defined for every
    real `κ` (empty for `κ = 0`). Optional.
-7. **Lines 178, 182 and 183** (status): "in work" at `3131776` and `04c1877`, "proved" at
-   `f1ffa79`. Both were right at their commit: at `f1ffa79` the five statements of these rows
+7. **Lines 178, 182 and 183** (status): "in work" at `7747aeb` and `eae5335`, "proved" at
+   `244ec8a`. Both were right at their commit: at `244ec8a` the five statements of these rows
    depend on the three standard axioms only (by compiling). Nothing to correct.
 
 ---------------------------------------------------------------------------------------------------
@@ -604,11 +604,11 @@ None corrects a wrong claim about what is proved. All are precisions.
 ## What I could not check
 
 - I did not build the library. "Proved" rests on the compiled library of `/home/claude/lp`, built
-  by its owner, whose source files were the same as those of `lw` (at `04c1877` and at `f1ffa79`);
+  by its owner, whose source files were the same as those of `lw` (at `eae5335` and at `244ec8a`);
   I checked that each compiled file was newer than its source, not that it was compiled from
   exactly that source.
 - The proofs of `exists_tanhPathBlock` and `exists_regularZero_tanh_path`, which arrived at
-  `f1ffa79`: I did not read them. That they are proved rests on the compiler.
+  `244ec8a`: I did not read them. That they are proved rests on the compiler.
 - (S2), linear independence over `ℚ`, cannot be tested in floating point; I checked only that
   such columns exist (by hand: `ℝ` has infinite dimension over `ℚ`).
 - The step from the one-row (R3) of `TanhPathBlock` to (R3) of `RegularZero` (rows `T`): by hand

@@ -9,27 +9,27 @@ Proposition 4.7 with the definition of a full network, the attention block with 
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
-- Commit when I began: `e5836b3fcc8fe8e3fe09d69e39d06722fb42786a` (13:23:23 UTC).
-- Commit when I ended: `829f2b158efbafc6b3760b39ca9ece6c42ee9bbd` (13:34:25 UTC). The branch moved
-  three times while I read (`9cf33d3`, `67dc08f`, `829f2b1`).
+- Commit when I began: `823fbad05eaf99d2720669145a0d686d442cc555` (13:23:23 UTC).
+- Commit when I ended: `09b11ac14ea2802ce2218905ca6bd9be6f7cb6be` (13:34:25 UTC). The branch moved
+  three times while I read (`c35938d`, `b885e6d`, `09b11ac`).
 - Between the first and the last: six of the seven files of the brief did not change, and neither
-  did the files that define what they use (`git diff --quiet e5836b3 67dc08f` on `Network/Attention`,
+  did the files that define what they use (`git diff --quiet 823fbad b885e6d` on `Network/Attention`,
   `Absorb/InjectiveBlocks`, `Absorb/FullNetworks`, `Absorb/PatternMaps`,
   `Dimension/RankCriterionOn`, `Residual/FoldingDim`, `Network/Defs`, `Network/Blocks`,
   `Dimension/Functional`, `Residual/Folding`, `Literature/Sard`, `Literature/InvarianceOfDomain`,
   `Residual/DepthRescale`, `Residual/SmallWrites`, `Absorb/Block`, `Absorb/FirstBlock`; the commit
-  `829f2b1` adds two new files and touches no other Lean file). In `Absorb/AttentionBlock.lean`
-  the seven `sorry` were replaced by proofs (at `67dc08f`) and private helpers were added; the
+  `09b11ac` adds two new files and touches no other Lean file). In `Absorb/AttentionBlock.lean`
+  the seven `sorry` were replaced by proofs (at `b885e6d`) and private helpers were added; the
   seven public statements, their docstrings and the file header are the same (the only lines that
   the diff removes are the seven `sorry`).
-- Files with `sorry`: at `e5836b3`, one: `Absorb/AttentionBlock.lean` (7). At `829f2b1`, four, all
+- Files with `sorry`: at `823fbad`, one: `Absorb/AttentionBlock.lean` (7). At `09b11ac`, four, all
   new and outside the brief: `Absorb/AttentionZero.lean` (1), `Absorb/AttentionNetworks.lean` (6),
   `Symmetry/AttentionHeads.lean` (5) and `Dimension/UpperBoundAttention.lean` (8). None of the
-  seven files of the brief has a `sorry` at `829f2b1`. I did not compare the four new files with
+  seven files of the brief has a `sorry` at `09b11ac`. I did not compare the four new files with
   the papers.
 
 Papers, as text: the absorb paper ("A", `absorb.txt`), the skips paper ("S", `skips.txt`), the
-dimension paper ("D", `dim.txt`). Line numbers of `STATEMENTS.md` are those of `829f2b1`.
+dimension paper ("D", `dim.txt`). Line numbers of `STATEMENTS.md` are those of `09b11ac`.
 
 How I checked.
 
@@ -45,7 +45,7 @@ How I checked.
   without `lake`. The compiled library of `lw` has none of the seven files, so I read the compiled
   library of `/home/claude/lp/lean` in place (its sources under `SkipsLean/` were the same as
   those of `lw`, by `diff -rq`, at 13:29 except the proofs in progress in `AttentionBlock.lean`,
-  and with no difference when both stood at `67dc08f`; the seven files and their definitions are
+  and with no difference when both stood at `b885e6d`; the seven files and their definitions are
   the same in both at the end). I did not run `lake build` and wrote nothing under `lw`, `lp`
   or the repository. Seven compilations of 3 to 4 seconds each.
 - "By a computation": `/home/claude/audit11/attention_check.py` (numpy, double precision), output
@@ -245,7 +245,7 @@ tokens (`Chk2.lean`, last example).
 
 ### Verdict table
 
-"Proved" below: the file has no `sorry` at `67dc08f`, and `#print axioms` on the compiled library
+"Proved" below: the file has no `sorry` at `b885e6d`, and `#print axioms` on the compiled library
 of `lp` shows `propext`, `Classical.choice`, `Quot.sound` only (`Chk.out` for the first six files;
 `Chk4.out` for `AttentionBlock.lean`, compiled at 13:32 after its proofs were merged; in my first
 compilation, a few minutes earlier, the same seven names still showed `sorryAx`).
@@ -493,7 +493,7 @@ Nothing false, vacuous or drifted. In order of weight:
     build on `Network/Attention.lean`, so note 1 of Part 2 (a token that sees no token) matters
     for whoever compares them: their statements are "for any mask".
 
-## Corrections for `STATEMENTS.md` (lines of `829f2b1`)
+## Corrections for `STATEMENTS.md` (lines of `09b11ac`)
 
 1. Lines 176–182 ("The theorems that take them as hypotheses are the rows of …"): add
    `Dimension/RankCriterionOn.lean` and `Absorb/FullNetworks.lean` (A Proposition 4.7; Sard's
@@ -531,7 +531,7 @@ Nothing false, vacuous or drifted. In order of weight:
 
 - I did not run `lake build`. That the seven files compile with no `sorry` and the three standard
   axioms I saw through the compiled library of `/home/claude/lp/lean`, whose sources were the
-  same as those of `lw` when both stood at `67dc08f`. The first six files were compiled there by
+  same as those of `lw` when both stood at `b885e6d`. The first six files were compiled there by
   13:23:22 (dates of the compiled files); `AttentionBlock.lean` was rebuilt there at 13:32:11. I did not build
   anything from the sources myself.
 - The proofs. I read the statements and definitions, and of the proofs only what fixes the

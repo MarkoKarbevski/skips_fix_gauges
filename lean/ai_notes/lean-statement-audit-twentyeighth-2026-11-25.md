@@ -4,19 +4,19 @@ STATUS: complete
 
 Subject: S Lemma A.18 for `ε = 0` with the symmetries inside blocks, from both ends, and for attention with MLP blocks; S Lemma A.2 (ii); S Proposition A.35 for blocks of width at least `d`; the "Not stated" notes of the index. Seven files of `lean/SkipsLean/`, 36 public theorems. S is the skips paper, D the dimension paper (`<scratchpad>/skips.txt`, `<scratchpad>/dim.txt`).
 
-(An earlier run of this audit was cut off after two minutes; it had copied the seven files at `74745b8`. This report is written anew.)
+(An earlier run of this audit was cut off after two minutes; it had copied the seven files at `d6becbc`. This report is written anew.)
 
 **Result.** Nothing false, nothing vacuous, nothing drifted in the seven files. All 15 statements "at generic parameters" are for almost every parameter and every Haar measure. The actions for `ε = 0` are the paper's; each hypothesis that the Lean statements add is used, with exact counterexamples when it is dropped (two could be weaker). One finding concerns the paper: on the open set of its proof, the bound of S Proposition A.35 fails when block 2 is the last block, has exactly `d_model` units and `d_out < d_model` (exact rank 4 against the bound 3 for `d_model = 2`); the Lean statements ask `d_out ≥ d`, which is the Scope of the paper, and are proved. Seven corrections for the index, among them 19 "Not stated" notes that are out of date.
 
 
 ## Commits read; `sorry`
 
-- Commits of `/home/claude/lp` (branch `lean-plus`): `310dcb9` when the reading began (the seven files were copied to `/home/claude/audit28/src2/` at that commit); `04c1631` when the axioms were printed; `467efde` for the index (check 7 and Part 3); `5a3c9cf` at the end.
-- Against the copies of the earlier run (`74745b8`): four files are unchanged; `Dimension/UpperBoundTwoSided.lean` and `Depth/InactiveUnitTwoSided.lean` got their proofs.
-- Between `310dcb9` and `5a3c9cf`, in the seven files: `Symmetry/LocallyFreeTransformer.lean` got its proofs (`d685027`; its six statements are unchanged, compared by a script; eight private helpers were added); the header of `Depth/InactiveUnitTwoSided.lean` changed in one sentence, twice (pointers to new files). No statement changed.
-- New files with statements, written while this audit ran and **not read here**: `Dimension/UpperBoundTwoSidedGated.lean`, `Depth/InactiveGateTwoSided.lean` (proved at `467efde`), `Depth/InactiveUnitEveryPoint.lean` (5 `sorry` at `5a3c9cf`).
-- Files with `sorry` among the seven: at `310dcb9`, `Symmetry/LocallyFreeTransformer.lean` (6, all of its theorems); from `d685027` on, none.
-- Compiled by the reader at `04c1631` (`Ax28.lean`, against the existing build): each of the 36 public theorems of the seven files depends on `propext`, `Classical.choice`, `Quot.sound` only; no `sorryAx`.
+- Commits of `/home/claude/lp` (branch `lean-plus`): `127aaac` when the reading began (the seven files were copied to `/home/claude/audit28/src2/` at that commit); `76034e7` when the axioms were printed; `d67195b` for the index (check 7 and Part 3); `6f31671` at the end.
+- Against the copies of the earlier run (`d6becbc`): four files are unchanged; `Dimension/UpperBoundTwoSided.lean` and `Depth/InactiveUnitTwoSided.lean` got their proofs.
+- Between `127aaac` and `6f31671`, in the seven files: `Symmetry/LocallyFreeTransformer.lean` got its proofs (`348c10a`; its six statements are unchanged, compared by a script; eight private helpers were added); the header of `Depth/InactiveUnitTwoSided.lean` changed in one sentence, twice (pointers to new files). No statement changed.
+- New files with statements, written while this audit ran and **not read here**: `Dimension/UpperBoundTwoSidedGated.lean`, `Depth/InactiveGateTwoSided.lean` (proved at `d67195b`), `Depth/InactiveUnitEveryPoint.lean` (5 `sorry` at `6f31671`).
+- Files with `sorry` among the seven: at `127aaac`, `Symmetry/LocallyFreeTransformer.lean` (6, all of its theorems); from `348c10a` on, none.
+- Compiled by the reader at `76034e7` (`Ax28.lean`, against the existing build): each of the 36 public theorems of the seven files depends on `propext`, `Classical.choice`, `Quot.sound` only; no `sorryAx`.
 
 How each check was done is said in the check: *reading*, *compiled* (a file in `/home/claude/audit28/`, with `lake env lean` against the existing build, nothing written there), or *computed* (Python, `python3 -I`).
 
@@ -45,7 +45,7 @@ with `(μ : Measure (Params …)) [μ.IsAddHaarMeasure]`: the bound at almost ev
 - the six of `LocallyFreeTransformerGeneric.lean` for a transformer in the paper's sense: block 0 an attention block (two heads of width 2, no hidden unit), block 1 an MLP block (no head, three hidden units), `d = 3`, with ReLU, gated and ReGLU units, without normalization and with `rmsNorm 0`. The hypotheses `d_h ≤ d` and `H d_h + d_hidden ≥ d` hold with an empty part (`0 ≤ 3`; `4 + 0 ≥ 3`, `0 + 3 ≥ 3`);
 - two of `InactiveUnitTwoSided.lean`: two ReLU blocks of width exactly `d = 2`, `d_in = d_out = 2` (`P = 24`): a nonempty open set on which unit `j` of the second block is inactive and `funDim + 19 ≤ 24` at almost every point of it; and the `not_ae_` statement for ReLU².
 
-All instances depend on `propext`, `Classical.choice`, `Quot.sound` only (at `310dcb9` those of the second group also showed `sorryAx`, through the six statements at one parameter, which were then in work; recompiled after their proofs were merged).
+All instances depend on `propext`, `Classical.choice`, `Quot.sound` only (at `127aaac` those of the second group also showed `sorryAx`, through the six statements at one parameter, which were then in work; recompiled after their proofs were merged).
 
 ### 2. `ε = 0` with the symmetries inside blocks (`Symmetry/LocallyFreeRMSZero.lean`): the action is the paper's; every hypothesis that is asked is used somewhere, with exact counterexamples; two of them could be weaker
 
@@ -283,14 +283,14 @@ Verdict: SAME as S Proposition A.35 for ReLU and ReLU² blocks under the Scope, 
 
 ### 7. The index rows: true of the statements, with four corrections; all 36 theorems registered
 
-*Reading and a script* (the index and `checks/Axioms.lean` as committed at `467efde`, the latest commit when this check was made; copies in `/home/claude/audit28/`). Each of the 36 public names of the seven files stands in exactly one row, the row of its file, with the status "proved"; each has its line `#print axioms Skips.<name>` in `checks/Axioms.lean`. *Compiled* (`Ax28.lean`): the 36 have the three standard axioms.
+*Reading and a script* (the index and `checks/Axioms.lean` as committed at `d67195b`, the latest commit when this check was made; copies in `/home/claude/audit28/`). Each of the 36 public names of the seven files stands in exactly one row, the row of its file, with the status "proved"; each has its line `#print axioms Skips.<name>` in `checks/Axioms.lean`. *Compiled* (`Ax28.lean`): the 36 have the three standard axioms.
 
 Row by row:
 
 - `Basic/RMSNormDeviation.lean`: true of the three statements (the exact relation for every real `c`; the deviation with norms as square roots of dot products; the expansion from above for `r² > 0`, `c > 0`; "from below the two sides differ at first order": recomputed in check 4; the two `N` read as `N_ε`).
 - `Symmetry/LocallyFreeRMSZero.lean`: true (the group, the action `θ.cob G Q`, the hypotheses of both forms, "the read columns are not asked in general position", "`s_ℓ > 0` is not asked" for ReLU and ReLU² with the readout).
 - `Symmetry/LocallyFreeRMSZeroGeneric.lean`: true (the widths and `d_in ≥ 1` for the readout forms).
-- `Symmetry/LocallyFreeTransformer.lean`: true; the status is "proved" since `71186be`.
+- `Symmetry/LocallyFreeTransformer.lean`: true; the status is "proved" since `8c3879f`.
 - `Symmetry/LocallyFreeTransformerGeneric.lean`: the sentence "they rest on the statements at one parameter, in work" is out of date (correction 1).
 - `Dimension/UpperBoundTwoSided.lean`: true of the two statements; "used by the proofs of S Proposition A.33 (ii) and A.35" says more than check 5 found for A.33 (ii) (correction 2).
 - `Depth/InactiveUnitTwoSided.lean`: true; "the nonempty open set `negReadSet` and the bound at almost every point of it" describes the proof, the statement says that an open set exists (correction 3).
@@ -328,7 +328,7 @@ Notes.
 
 ## Part 3: the "Not stated" notes of the index
 
-*Reading and searching* (the index as committed at `467efde`; a script lists every occurrence of "Not stated": 49, of which 45 stand in rows and 4 in the running text). For each note the index was searched for a row that states the thing (by the words of the note and by the names of the files in `SkipsLean/`), and for each file named below it was checked that it exists at `467efde` and has no `sorry`. The Lean statements of those other files were not read: a note is called out of date when a row of the index says that the thing is stated.
+*Reading and searching* (the index as committed at `d67195b`; a script lists every occurrence of "Not stated": 49, of which 45 stand in rows and 4 in the running text). For each note the index was searched for a row that states the thing (by the words of the note and by the names of the files in `SkipsLean/`), and for each file named below it was checked that it exists at `d67195b` and has no `sorry`. The Lean statements of those other files were not read: a note is called out of date when a row of the index says that the thing is stated.
 
 **Result:** 19 notes are out of date, 21 are still true, 9 are of the form "Not stated here" and name the files that have the thing (all nine files exist).
 
@@ -356,15 +356,15 @@ Notes.
 | `OneBlock/SkiplessHomogeneousRMSZeroEq.lean` | "Not stated: blocks wider than `d` (the theorem says "of width at least `d_model`")" | `OneBlock/SkiplessReluWideRMSZero.lean` | "Not stated here: ReLU blocks wider than `d` (`OneBlock/SkiplessReluWideRMSZero.lean`). Not stated: ReLU² blocks wider than `d` (the theorem says "of width at least `d_model`")" |
 | `Absorb/RMSNormGeneric.lean` | "Not stated: attention blocks" | `Absorb/RMSNormAttention.lean` | "Attention blocks and transformers: the row of `Absorb/RMSNormAttention.lean`" |
 
-Two notes moved while this part was written: "Not stated: the bound at every point of the open set" in the rows of `Depth/InactiveUnitTwoSided.lean` and `Depth/InactiveGateTwoSided.lean` was true at `467efde`; at `5895f44` the index has a pointer in their place to a new file `Depth/InactiveUnitEveryPoint.lean` (statements, in work; not read here).
+Two notes moved while this part was written: "Not stated: the bound at every point of the open set" in the rows of `Depth/InactiveUnitTwoSided.lean` and `Depth/InactiveGateTwoSided.lean` was true at `d67195b`; at `a312fd2` the index has a pointer in their place to a new file `Depth/InactiveUnitEveryPoint.lean` (statements, in work; not read here).
 
-### Still true at `467efde` (21)
+### Still true at `d67195b` (21)
 
 No row was found that states the thing: `Symmetry/LocallyFreeTransformer.lean` (the form with the readout for networks with attention blocks; the paper has none); `Depth/InactiveUnitTwoSided.lean` and `Depth/InactiveGateTwoSided.lean` (the bound at every point; see above); `Residual/DepthRescale.lean` and `Residual/DepthReGLU.lean` (inputs in an open set that contains `0`); `OneBlock/KeepsProducts.lean` (the clauses with biases); `Depth/ScaledSuffix.lean` (Lemma D.10: the derivatives of all orders, the holomorphic extension with uniform bounds; the row of `Depth/ComplexSuffix.lean` is Lemma D.14, the case `ε = 0`); the text note on Example 4.2 of D; `Residual/ExactReductionWrites.lean` (mixed blocks; the count of the removed parameters); `Residual/FewerHiddenUnits.lean` and the text note on S Theorem A.28 (i) and (iii) (skipless blocks with fewer than `d` hidden units); the text note on S Theorem 4.6 (i) with biases; `Absorb/InjectiveBlocks.lean` (Remark A.12 and two sentences); `Absorb/FullNetworks.lean`; `OneBlock/AttentionDim.lean` (biases, position embedding, grouped-query attention, open sets of inputs, the equality condition as a definition); `OneBlock/UnitsParallelAt.lean` (ReLU² units in general position); `OneBlock/SkiplessReluWideRMSZero.lean` (ReLU² blocks wider than `d`); `Absorb/BiasesConstructions.lean`, `Absorb/GatedBiasesLower.lean`, `Absorb/RotaryBiases.lean` and the text note of the absorb paper (the remarks of Appendix C, `n ≥ rank M` for a singular `M`, Remarks 5.2, 5.3, A.8, A.12).
 
 ### "Not stated here", with the file that has the thing (9): fine
 
-The rows of `OneBlock/LearnedSkipRMSZeroBound.lean`, `OneBlock/LearnedSkipRMSZeroBoundKinds.lean`, `OneBlock/LearnedSkipRMSZeroRescaleBound.lean`, `OneBlock/LearnedSkipTriangularRMSZeroBound.lean`, `OneBlock/UnitsRescaleSphere.lean`, `OneBlock/LearnedSkipRMSZeroRescale.lean`, `OneBlock/LearnedSkipRMSZeroRescaleGeneric.lean`, `OneBlock/LearnedSkipRMSZeroReGLU.lean`, `OneBlock/LearnedSkipRMSZeroReGLUGeneric.lean`. Every file they name exists at `467efde`.
+The rows of `OneBlock/LearnedSkipRMSZeroBound.lean`, `OneBlock/LearnedSkipRMSZeroBoundKinds.lean`, `OneBlock/LearnedSkipRMSZeroRescaleBound.lean`, `OneBlock/LearnedSkipTriangularRMSZeroBound.lean`, `OneBlock/UnitsRescaleSphere.lean`, `OneBlock/LearnedSkipRMSZeroRescale.lean`, `OneBlock/LearnedSkipRMSZeroRescaleGeneric.lean`, `OneBlock/LearnedSkipRMSZeroReGLU.lean`, `OneBlock/LearnedSkipRMSZeroReGLUGeneric.lean`. Every file they name exists at `d67195b`.
 
 ## What the authors of the papers should know
 
@@ -389,7 +389,7 @@ Nothing false, vacuous or drifted was found in the seven files. One point concer
 
 ## What could not be checked
 
-- The proofs were not read. What is known of them: they compile in the existing build, and the 36 theorems have the three standard axioms (`Ax28.lean`, compiled at `04c1631`). `lake build` was not run.
+- The proofs were not read. What is known of them: they compile in the existing build, and the 36 theorems have the three standard axioms (`Ax28.lean`, compiled at `76034e7`). `lake build` was not run.
 - Files written after this audit began (`Dimension/UpperBoundTwoSidedGated.lean`, `Depth/InactiveGateTwoSided.lean`, `Depth/InactiveUnitEveryPoint.lean`) were not read, so Proposition A.35 for ReGLU blocks with exactly `d` units and the bound at every point of the open set are not judged here. The counterexample of check 6 is for ReLU and ReLU² blocks.
 - Check 2: the statements "no fixing map other than the identity" are on finite grids (10 orthogonal matrices with rational entries, 8 scales, 4 positive rescalings); they support, and do not prove, that a hypothesis could be weaker. That "no read column zero" is not needed for `k ≥ 1` with the readout, and that general position is not needed for `ε > 0`, are the reader's reasoning, not compiled.
 - Check 3: that the action on a network of the sum preserves its function was read from `f_sum_mul` and the invariance of each part; it was not compiled as one statement.
@@ -398,4 +398,4 @@ Nothing false, vacuous or drifted was found in the seven files. One point concer
 - Part 3: the notes were judged by the rows of the index and the existence of the files, not by reading the Lean statements of those files.
 - Every computation took under one minute.
 
-Scratch work: `/home/claude/audit28/` (`Chk28.lean`, `Chk28b.lean`, `Chk28c.lean`, `Ax28.lean` with their `.out`; `c2_zero.py`, `c4_dev.py`, `c5_twosided.py`, `c6_dead.py`, `c6_more.py` with their `.out`; `src2/`: the seven files at `310dcb9`; `src3/`: `LocallyFreeTransformer.lean` with its proofs; `STATEMENTS_467efde.md`, `Axioms_467efde.lean`, `notstated.txt`).
+Scratch work: `/home/claude/audit28/` (`Chk28.lean`, `Chk28b.lean`, `Chk28c.lean`, `Ax28.lean` with their `.out`; `c2_zero.py`, `c4_dev.py`, `c5_twosided.py`, `c6_dead.py`, `c6_more.py` with their `.out`; `src2/`: the seven files at `127aaac`; `src3/`: `LocallyFreeTransformer.lean` with its proofs; `STATEMENTS_d67195b.md`, `Axioms_d67195b.lean`, `notstated.txt`).

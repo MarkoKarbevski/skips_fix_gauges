@@ -134,7 +134,7 @@ Found by the agent that mapped Appendix D; I checked the statement of the lemma,
    (K3) "no a_j vanishes" for GELU and gated blocks on rays, (S1) "any two rows of V are linearly
    independent" for tanh on the path.
 5. **Repair, made in the paper on 24 November 2026**
-   (commit 8082c69): (P1) now includes "no row of V vanishes", and the proof says "By (P1), a_j ≠ 0"
+   (commit 1d12671): (P1) now includes "no row of V vanishes", and the proof says "By (P1), a_j ≠ 0"
    where it uses it. The condition fails on a set of measure zero, so the paragraph "Parameters that
    satisfy all conditions" and Theorem 5.2 (ii) for ε = 0 stand as they are.
 

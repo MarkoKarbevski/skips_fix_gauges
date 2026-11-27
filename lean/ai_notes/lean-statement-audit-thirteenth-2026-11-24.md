@@ -9,16 +9,16 @@ proofs. I changed no repository file, ran no `lake build`, made no commit and no
 Library: `/home/claude/lw/lean` (branch `lean-wip`). The branch moved several times while I
 read (14 commits).
 
-- Commit when I began: `6acdc8c936296ec86d27802929ba0b614d9ec14f` (14:29:10 UTC).
-- Commit when I ended: `2d84c1601ec0f0f2b06483e7a3e19f7c3f229892` (14:44:39 UTC).
+- Commit when I began: `52621cea3ed4184052e347b5bf045606abe7c0f6` (14:29:10 UTC).
+- Commit when I ended: `6d428f9fe1061d36e18bfdcbbdf98c41dccbc239` (14:44:39 UTC).
 - Files with `sorry` (lines that are `sorry`, counted by a script over `SkipsLean/`):
-  - at `6acdc8c`: `Residual/DepthAttention.lean` (2), `Dimension/ExpOrbitAttention.lean` (2),
+  - at `52621ce`: `Residual/DepthAttention.lean` (2), `Dimension/ExpOrbitAttention.lean` (2),
     `Dimension/LocalIdentifiabilityAttention.lean` (4);
-  - at `8e476d5` (14:37:15): `Dimension/ExpOrbitAttention.lean` (2), and two new files outside the
+  - at `e803fb4` (14:37:15): `Dimension/ExpOrbitAttention.lean` (2), and two new files outside the
     brief, `Residual/DepthAttentionRMS.lean` (2), `Residual/DepthAttentionRMSDim.lean` (4);
-  - at `2d84c16`: none of the eight files of the brief; only
+  - at `6d428f9`: none of the eight files of the brief; only
     `Residual/LocalIdentifiabilityAttentionRMS.lean` (3), a new file outside the brief.
-- What changed in the eight files between `6acdc8c` and `2d84c16` (by a script,
+- What changed in the eight files between `52621ce` and `6d428f9` (by a script,
   `/home/claude/audit13/cmp_statements.py`, which compares the file headers and, for each of the 25
   public names, the text from the docstring to `:= by`; and by `git diff`): the eight `sorry` were
   replaced by proofs, private helpers were added, and **one public statement changed in form**:
@@ -32,12 +32,12 @@ the two of `Dimension/ExpOrbitAttention.lean`, the four of
 hand" about them I worked out before I saw their proofs.
 
 Papers, as text: the absorb paper ("A", `absorb.txt`), the skips paper ("S", `skips.txt`), the
-dimension paper ("D", `dim.txt`). Line numbers of `STATEMENTS.md` are those of `2d84c16`; each
+dimension paper ("D", `dim.txt`). Line numbers of `STATEMENTS.md` are those of `6d428f9`; each
 correction quotes the words to change.
 
 How I checked.
 
-- "By reading": I read the eight Lean files in full at `6acdc8c`, the definitions they use
+- "By reading": I read the eight Lean files in full at `52621ce`, the definitions they use
   (`Arch.attention`, `attnWeights`, `Params`, `hidden`, `eval`, `Params.smallWrites`,
   `smallWritesLimit`, `Params.cob`, `cobDir`, `cobExp`, `expGL`, `Params.headsQK`,
   `Params.headsVO`, `headDirQK`, `headDirVO`, `exists_mem_orbit_of_eval_eq`), the gated twins of the
@@ -46,9 +46,9 @@ How I checked.
 - "By compiling": scratch files of my own in `/home/claude/audit13/` (`Chk1.lean` to `Chk4.lean`,
   outputs `Chk*.out`), compiled with `lean` 4.36.0 through `LEAN_PATH`, without `lake`, against a
   copy of the compiled library of `/home/claude/lp/lean` taken at 14:35:04 UTC (`lp` then at
-  `d140227`, whose sources of the eight files are those of `6acdc8c` except that the two `sorry` of
+  `93e7e3d`, whose sources of the eight files are those of `52621ce` except that the two `sorry` of
   `Residual/DepthAttention.lean` are proofs). Later I compiled copies of
-  `Dimension/ExpOrbitAttention.lean` and `Dimension/LocalIdentifiabilityAttention.lean` of `1dd4d6c`
+  `Dimension/ExpOrbitAttention.lean` and `Dimension/LocalIdentifiabilityAttention.lean` of `5de8df6`
   into my copy of the library (11 and 8 seconds, no error, no warning). About ten other compilations
   of 3 to 16 seconds each. I wrote nothing under `lw`, `lp` or the repository.
 - "By a computation": Python scripts in `/home/claude/audit13/` (`short_check.py`,
@@ -59,7 +59,7 @@ How I checked.
 statements named in the brief is `∀ᵐ θ ∂μ` for every additive Haar measure. All new statements use
 the library's `funDim`. No main-text statement has a hypothesis that the paper's Scope does not
 imply. The coordinator's claim about absorb Theorem 4.2 (iii) is right: for `T ≤ L` the paper's words
-are also met by a residual network whose function is zero. At `2d84c16` all 25 public names of the
+are also met by a residual network whose function is zero. At `6d428f9` all 25 public names of the
 eight files are proved; `#print axioms` shows `propext`, `Classical.choice`, `Quot.sound` only for
 each of the 20 theorems among them (`Chk1.out`, `Chk3b.out`). Five sentences of the index are out
 of date, and the rows of the dimension and skips papers on attention stand under the heading
@@ -248,8 +248,8 @@ instance.
 
 ### Verdict table
 
-Status at `2d84c16`: all rows proved, three standard axioms. The rows marked † were `sorry` at
-`6acdc8c`, when I compared them.
+Status at `6d428f9`: all rows proved, three standard axioms. The rows marked † were `sorry` at
+`52621ce`, when I compared them.
 
 | Paper statement or proof piece | Lean | Verdict | Difference | How checked |
 |---|---|---|---|---|
@@ -461,7 +461,7 @@ Nothing false, vacuous or drifted. In order of weight:
    exists.
 3. **One statement changed in form after it was written:** `cobExpHeads_zero` lost two instance
    arguments that it did not use (`omit [Fintype dIn] [Fintype dOut] in`, added with the proof).
-   Nothing else changed in a statement, a docstring or a header between `6acdc8c` and `2d84c16`.
+   Nothing else changed in a statement, a docstring or a header between `52621ce` and `6d428f9`.
 4. **Lean's (iii) has one choice of heads:** two heads of dimension one in every block of both
    networks. The paper's statement is an existence statement, so this is enough; the paper's proof
    allows any two or more heads of any dimension.
@@ -485,7 +485,7 @@ Nothing false, vacuous or drifted. In order of weight:
     `Residual/DepthAttentionRMSDim.lean`, `Residual/LocalIdentifiabilityAttentionRMS.lean`. No
     reader has compared them.
 
-## Corrections for `STATEMENTS.md` (lines of `2d84c16`)
+## Corrections for `STATEMENTS.md` (lines of `6d428f9`)
 
 1. Lines 132–138, "Not yet compared by such a reader (written after the twelfth audit began)":
    take out `Absorb/ShortSequencesPoly.lean`, `Absorb/ShortSequences.lean`,

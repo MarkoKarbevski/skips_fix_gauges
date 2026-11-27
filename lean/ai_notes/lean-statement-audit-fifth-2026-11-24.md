@@ -9,14 +9,14 @@ after the fourth audit began (`Absorb/RMSNormRays.lean`, `Absorb/RMSNormGeneric.
 `Depth/GeluGatedExplicit.lean`, `Depth/GeluGatedTheorem.lean`) and the rows and notes of
 `STATEMENTS.md` that describe them.
 
-Library: `/home/claude/lp/lean`, branch `lean-plus`. I began at commit `cf6ed62` and finished at
-`d80fd1c`. Between the two, the proofs of `Absorb/RMSNormKinds.lean` (24) and of `Depth/Cones.lean`
+Library: `/home/claude/lp/lean`, branch `lean-plus`. I began at commit `f883895` and finished at
+`19f888c`. Between the two, the proofs of `Absorb/RMSNormKinds.lean` (24) and of `Depth/Cones.lean`
 (6) were written, two files outside the scope were added (`Activations/FarFromZero.lean`,
 `Activations/MillsAtInfinity.lean`) and rows of `STATEMENTS.md` were changed. No statement and no
 definition of the scope changed: checked with `git diff` (in `RMSNormKinds.lean` the removed
 lines are the 24 `sorry`; in `Cones.lean` the six `sorry` and the last line of three statements,
 written again with the same content) and by the elaborated forms of a compiled copy of each of
-the two files. Line numbers of `STATEMENTS.md` are those of the file at `d80fd1c`
+the two files. Line numbers of `STATEMENTS.md` are those of the file at `19f888c`
 (403 lines).
 Papers: the PDFs and `.tex` files in `/home/claude/lp/paper docs/`. "A" is the absorb paper, "D" the
 dimension paper. Numbers of statements and equations are those of the PDFs (`pdftotext -layout`);
@@ -34,7 +34,7 @@ of the paper's proof, and attention blocks are not stated. The definitions `Good
 with one clause made explicit (the cones are not empty), and the paper's `θ†` is good in the Lean
 sense for the positive orthant (machine-checked by me for `d = 2`, three hidden units, one block;
 the existence statements of Lemma D.13 were proved in the library while I read). The five
-statements of Lemma D.12 are the paper's lemma; at `d80fd1c` they are the only statements of the
+statements of Lemma D.12 are the paper's lemma; at `19f888c` they are the only statements of the
 scope with `sorry`, and ten statements rest on them.
 
 ---------------------------------------------------------------------------------------------------
@@ -55,8 +55,8 @@ scope with `sorry`, and ten statements rest on them.
 | D Lemma D.5 (tex 965), gated blocks | `claimGated_last`, `claimGated_last_rmsNorm` | (n): **LEAN STRONGER**; (+): **SAME** | In the case (n) the hypothesis "`D` has rank `d`" is not needed. At least one token. |
 | D Proposition D.4 (tex 953), gated blocks | `flat_le_cobDir_add_rescaleDir_of_claimGated`, `funDim_of_claimGated`, and the two with `_rmsNorm` | **SAME**, slightly **STRONGER** | Any real-analytic gate. "Are the directions" is one inclusion here, the other is in older statements; "rank (13) on some finite batch" is `funDim = P − (L+1) dim G − s` (both checked by machine to give the paper's form). |
 | D Appendix D.5, "Cones and good parameters" (tex 1127-1135) | `IsOpenConvexCone`, `frozenGated`, `frozenMlp`, `GoodForConesGated`, `GoodForConesMlp`, with the hypotheses `hQ` | **SAME** | Added clause: the cones are not empty (the paper uses it). (K1) with the active sets as data is equivalent to the paper's (K1) (machine-checked). (K3)'s independence over `ℚ` is a separate hypothesis. |
-| D Appendix D.5, "A good `θ` is regular" (tex 1137-1142) | `regular_of_goodForConesGated_swiglu`, `…_geglu`, `regular_of_goodForConesMlp_gelu` | **SAME** | Three statements, one per kind. Proved in the source at `d80fd1c` (they had `sorry` when I began). |
-| D Lemma D.13 (tex 1300-1315) | `exists_goodForConesGated_cols`, `exists_goodForConesGated_outer`, `exists_goodForConesMlp_outer` | **LEAN WEAKER** | Existence of cones, active sets and a good parameter with (K3). The explicit `θ†`, the positive orthant, `A_ℓ = {1, …, d}` and `g°_ℓ(n) = n`, `(n𝟙) n` are not stated (they are private in the proof). Enough for the use in D.7. Proved in the source at `d80fd1c`. |
+| D Appendix D.5, "A good `θ` is regular" (tex 1137-1142) | `regular_of_goodForConesGated_swiglu`, `…_geglu`, `regular_of_goodForConesMlp_gelu` | **SAME** | Three statements, one per kind. Proved in the source at `19f888c` (they had `sorry` when I began). |
+| D Lemma D.13 (tex 1300-1315) | `exists_goodForConesGated_cols`, `exists_goodForConesGated_outer`, `exists_goodForConesMlp_outer` | **LEAN WEAKER** | Existence of cones, active sets and a good parameter with (K3). The explicit `θ†`, the positive orthant, `A_ℓ = {1, …, d}` and `g°_ℓ(n) = n`, `(n𝟙) n` are not stated (they are private in the proof). Enough for the use in D.7. Proved in the source at `19f888c`. |
 | **D Lemma D.12** (tex 1190) | `claimGated_castSucc_swiglu`, `…_swiglu_rmsNorm`, `…_geglu`, `…_geglu_rmsNorm`, `claimRMS_castSucc_gelu` | **SAME** (not proved) | Five statements for the five settings; hidden states with rows `T` (equivalent to one token, by hand); `sorry`. |
 | D Appendix D.7, "`(D_0)` holds at `θ†`" (tex 1576) | the five `exists_regular_claim…` | **LEAN WEAKER** in form | "There is a regular parameter (with no vanishing value column) at which `(D_0)` holds", not "at `θ†`". They rest on Lemma D.12 (`sorry`). |
 | **D Theorem 5.2 (ii) for `ε > 0`, and (iii)** (tex 330) | `ae_funDim_gelu_skipless_rmsNorm`, `ae_funDim_swiglu_skipless`, `…_swiglu_skipless_rmsNorm`, `ae_funDim_geglu_skipless`, `…_geglu_skipless_rmsNorm` | **SAME** for these clauses; **PART** of Theorem 5.2 | Hypotheses and counts are the paper's. Not stated: (i) and (ii) for `ε = 0`, and "so the network satisfies the equality condition". They rest on Lemma D.12 (`sorry`). |
@@ -647,7 +647,7 @@ Here `hdIn : card d ≤ card dIn`, `hdOut : card d ≤ card dOut`, `hhid : ∀ �
   for index types `hid ℓ`, `dIn`, `dOut` of any finite size at least `d`.
 
 **Verdict.** "Good is regular": **SAME**. Lemma D.13: **LEAN WEAKER** (existence). The six had
-`sorry` when I began; in the source at `d80fd1c` all six are proved, with the same statements
+`sorry` when I began; in the source at `19f888c` all six are proved, with the same statements
 (a copy of the file compiles with the three standard axioms, `ConesCopy.lean`). I did not judge
 the proofs; I note only that the proof of the existence statements defines, privately, the
 positive orthant and parameters of the form of `θ†` for every `d`, so Lean has now checked for
@@ -818,7 +818,7 @@ Dimension paper:
 
 ### (4b) Rows or notes of `STATEMENTS.md` that are inaccurate or incomplete
 
-Line numbers are those of the file at commit `d80fd1c` (403 lines). Every Lean name in the rows of
+Line numbers are those of the file at commit `19f888c` (403 lines). Every Lean name in the rows of
 the scope exists and elaborates, and the numbers in them are those of the Lean statements.
 
 1. **Line 400, the list "Not stated yet" of the absorb paper: "Theorems 3.4, 4.2, 4.3; …".**
@@ -826,7 +826,7 @@ the scope exists and elaborates, and the numbers in them are those of the Lean s
    attention blocks in the residual network.
 2. **Lines 264-265, "Theorem 5.2 (ii) for `ε > 0` and (iii) are stated and in work (what is left is
    Lemma D.12, `Depth/StepGated.lean`, and Lemma D.13, `Depth/Cones.lean`)".** Out of date at
-   `d80fd1c`: Lemma D.13 and "a good `θ` is regular" are proved (lines 171-172 say so). What is left
+   `19f888c`: Lemma D.13 and "a good `θ` is regular" are proved (lines 171-172 say so). What is left
    is Lemma D.12.
 3. Line 166, "D Section 2 ("analytic blocks")": Section 2 of the paper does not contain these
    words. The sentence is in Section 1.1 ("These four kinds of block are real-analytic", tex 133).
@@ -864,7 +864,7 @@ the scope exists and elaborates, and the numbers in them are those of the Lean s
     - "Theorem 4.3 is stated under the conditions that its proof uses" (dimension paper, lines
       221-228): accurate.
 11. Lines 13-26 (who compared what): after this audit the ten files of the scope have been
-    compared. The two files added to that list at `d80fd1c` (`Activations/FarFromZero.lean`,
+    compared. The two files added to that list at `19f888c` (`Activations/FarFromZero.lean`,
     `Activations/MillsAtInfinity.lean`) have not.
 
 ---------------------------------------------------------------------------------------------------
@@ -953,12 +953,12 @@ the scope exists and elaborates, and the numbers in them are those of the Lean s
 Checked by machine (scratch files in `/home/claude/audit5/`, each compiled alone, no error):
 - `Axioms.lean`: `#print axioms` on the 81 names, run twice. No axiom other than `propext`,
   `Classical.choice`, `Quot.sound` and `sorryAx` appears in either run.
-  - First run, on the compiled library that I was given (sources of commit `cf6ed62`): 36 names
+  - First run, on the compiled library that I was given (sources of commit `f883895`): 36 names
     with the three standard axioms only; **45 names with `sorryAx`**: the 24 of
     `Absorb/RMSNormKinds.lean`, 6 of `Depth/Cones.lean` (the three `regular_of_goodForCones…`, the
     three `exists_goodForCones…`), the 5 of `Depth/StepGated.lean`, the 5 of
     `Depth/GeluGatedExplicit.lean`, the 5 of `Depth/GeluGatedTheorem.lean`.
-  - Last run, on the library as its authors had rebuilt it at commit `d80fd1c`: 66 names with the
+  - Last run, on the library as its authors had rebuilt it at commit `19f888c`: 66 names with the
     three standard axioms only; **15 names with `sorryAx`**: `claimGated_castSucc_swiglu`,
     `claimGated_castSucc_swiglu_rmsNorm`, `claimGated_castSucc_geglu`,
     `claimGated_castSucc_geglu_rmsNorm`, `claimRMS_castSucc_gelu` (the five of Lemma D.12, which
@@ -967,11 +967,11 @@ Checked by machine (scratch files in `/home/claude/audit5/`, each compiled alone
     `…_geglu_rmsNorm`, `ae_funDim_gelu_skipless_rmsNorm`, `ae_funDim_swiglu_skipless`,
     `…_swiglu_skipless_rmsNorm`, `ae_funDim_geglu_skipless`, `…_geglu_skipless_rmsNorm`.
 - `KindsCopy.lean`, `ConesCopy.lean`: copies of the sources of `Absorb/RMSNormKinds.lean` (at
-  `46445c6`) and `Depth/Cones.lean` (at `d80fd1c`), each compiled as a file of its own: the 24
+  `f46877b`) and `Depth/Cones.lean` (at `19f888c`), each compiled as a file of its own: the 24
   and the 6 names depend on the three standard axioms only, and the elaborated statements and
   structures of `Cones.lean` are those that I compared. I did not rebuild the library (no
   `lake build`). All scratch files were compiled again, one at a time, against the library as
-  rebuilt at `d80fd1c`: no error.
+  rebuilt at `19f888c`: no error.
 - `Check.lean`: the elaborated forms quoted in this report.
 - `T43.lean`: `TurnGeneric` as the negation of the paper's condition; `TurnGeneric` fails for
   `L = 0` and for `d = 1`; `SomeBlockNonzero` fails without tokens; the conclusion for `ε = 0` as

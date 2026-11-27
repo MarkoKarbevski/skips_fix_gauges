@@ -20,12 +20,12 @@ Library: `/home/claude/lw/lean` (branch `lean-wip`). The branch moved once while
 
 | When | Commit of `/home/claude/lw` | Files under `SkipsLean/` that contain the word `sorry` (`grep -w`, number of lines) |
 |---|---|---|
-| start | `91bc064f050350fde6622209e3fa665c3f2dce30` (11:50:04 UTC) | `Dimension/ExpOrbitGated.lean` (2), `Dimension/LocalIdentifiabilityGated.lean` (6), `Residual/LocalIdentifiability.lean` (6), `Residual/LocalIdentifiabilityGated.lean` (6) |
-| end | `18543e53c0416c7a64ea64fb4ec6f73085c8fab2` (11:53:29 UTC) | `Dimension/ExpOrbitGated.lean` (2) |
+| start | `d0d39c411506d3d866e3143452683dfbf70f5b3b` (11:50:04 UTC) | `Dimension/ExpOrbitGated.lean` (2), `Dimension/LocalIdentifiabilityGated.lean` (6), `Residual/LocalIdentifiability.lean` (6), `Residual/LocalIdentifiabilityGated.lean` (6) |
+| end | `639933f4377485e7b12eacbb0ebe306b8357f080` (11:53:29 UTC) | `Dimension/ExpOrbitGated.lean` (2) |
 
 None of these files belongs to this audit. The six files of this audit, and
 `Depth/StepZeroGeluPath.lean`, which uses them, contain no `sorry` at either commit, and
-`git diff --quiet 91bc064 18543e5` finds no change in any of them, nor in
+`git diff --quiet d0d39c4 639933f` finds no change in any of them, nor in
 `Activations/Gaussian.lean`, `Activations/FarFromZero.lean`, `Activations/MillsAtInfinity.lean`.
 Between the two commits `STATEMENTS.md` changed in one line (228), so the line numbers below hold at
 both. `grep -rn "^axiom" SkipsLean` finds nothing.
@@ -38,11 +38,11 @@ both. `grep -rn "^axiom" SkipsLean` finds nothing.
   the paper (Appendix D.5 from "GELU and the Mills ratio" to Lemma D.9; Appendix D.6 in full).
 - "By compiling": with `lean` 4.36.0, without `lake`, in `/home/claude/audit9a/`. The compiled
   library of `/home/claude/lw` has none of the six files, so I used the compiled library of
-  `/home/claude/lp/lean` (branch `lean-plus`, at `18543e5`, no changed tracked file under
+  `/home/claude/lp/lean` (branch `lean-plus`, at `639933f`, no changed tracked file under
   `SkipsLean/`; the six sources and the three they import are the same files as in `lw`, by `cmp`)
   through `LEAN_PATH`. Two ways:
   1. `Chk1.lean` against the `lp` library as it is;
-  2. I compiled **copies of the six source files** (taken with `git archive 18543e5`) into
+  2. I compiled **copies of the six source files** (taken with `git archive 639933f`) into
      `/home/claude/audit9a/build/`, in the order of their imports, with only their imports
      (`FarFromZero`, `MillsAtInfinity`, `Imports`, Mathlib) taken from `lp`; all six compile
      without error (7 to 12 seconds each); then `Chk2.lean` and `Chk3.lean` against these copies.
@@ -494,7 +494,7 @@ Nothing false, vacuous or drifted. In order of weight:
    that they do not use; the header of `Activations/MillsAtInfinityC.lean` does not say that the
    exponent `l` is a natural number.
 
-## Corrections for `STATEMENTS.md` (lines at `18543e5`; the same line numbers at `91bc064`)
+## Corrections for `STATEMENTS.md` (lines at `639933f`; the same line numbers at `d0d39c4`)
 
 None corrects a wrong claim about what is proved.
 
@@ -550,6 +550,6 @@ None corrects a wrong claim about what is proved.
 - `scratch/Chk2.lean`: the same without `StepZeroGeluPath`, against my compiled copies.
 - `scratch/Chk3.lean`: the two uniqueness statements (an entire function with the values of `gelu`,
   of `millsRatio`, on the real line is `geluC`, `millsRatioC`).
-- `snap/`: the six sources and `STATEMENTS.md` at `18543e5` (`git archive`). `build/`: my compiled
+- `snap/`: the six sources and `STATEMENTS.md` at `639933f` (`git archive`). `build/`: my compiled
   copies of the six files, and links to the compiled files of `lp` for everything else.
 - `py/check_mills.py`: the computations.

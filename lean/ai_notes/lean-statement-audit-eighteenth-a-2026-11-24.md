@@ -9,18 +9,18 @@ in `/home/claude/audit18a/`.
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`). The branch moved nine times while I read.
 
-- **Commit at the start: `f0edc930586d188d20f9a08fda91bd13d60b7cef` (18:54:48 UTC).**
-- Then `2827fc3` (18:56:49), `b09fbc3` (18:59:33), `561a967` (19:04:49), `e22b23c` (19:05:00),
-  `883be8e`, `4277481`, `32c4dc4` (19:05:09) and **`20eacc66a0c537615fde8151e877bd5b3a33ff68`
+- **Commit at the start: `bd0ca40ffd26c79d5d23ad03d04376c537ccb0c0` (18:54:48 UTC).**
+- Then `85e666a` (18:56:49), `9a9f782` (18:59:33), `bb3fa25` (19:04:49), `ccb2f1a` (19:05:00),
+  `2f34a22`, `f2a82da`, `eafb679` (19:05:09) and **`f73cf406714d0cfa1c39e346ee8e60bc1fabcc12`
   (19:09:07), the head when I made the last checks and took the line numbers of the index.** One
-  more commit came while I wrote, `5951ed9` (19:11:49): the nine files are unchanged there too,
+  more commit came while I wrote, `f097a0e` (19:11:49): the nine files are unchanged there too,
   and the four rows of the index are at lines 828, 829, 832 and 833.
 - **The four files of the brief and the five files of definitions did not change at all** between
-  `f0edc93` and `20eacc6`, nor at `5951ed9` (`git diff` of the nine files is empty). Of what I
+  `bd0ca40` and `f73cf40`, nor at `f097a0e` (`git diff` of the nine files is empty). Of what I
   read, only `STATEMENTS.md` and `checks/Axioms.lean` changed, in rows and lines of other files.
-- **Files with `sorry`.** At `f0edc93`: `Absorb/RotaryBiases.lean`, `Absorb/ReluSqBiasesCount.lean`,
-  `Absorb/ReluSqBiasesLower.lean`. At `20eacc6`: `Absorb/ReluSqBiasesCount.lean`,
-  `OneBlock/ResidualRMSZeroSteps.lean` (at `5951ed9` also `OneBlock/ResidualRMSZeroGain.lean`).
+- **Files with `sorry`.** At `bd0ca40`: `Absorb/RotaryBiases.lean`, `Absorb/ReluSqBiasesCount.lean`,
+  `Absorb/ReluSqBiasesLower.lean`. At `f73cf40`: `Absorb/ReluSqBiasesCount.lean`,
+  `OneBlock/ResidualRMSZeroSteps.lean` (at `f097a0e` also `OneBlock/ResidualRMSZeroGain.lean`).
   None of the four files of the brief, and none of the files they use, at any of these commits.
 - The four files have 25 public names: 1 definition and 24 theorems (4; 1 + 12; 3; 5, as the brief
   says).
@@ -30,8 +30,8 @@ Library: `/home/claude/lw/lean` (branch `lean-wip`). The branch moved nine times
   19:04 UTC, after a rebuild by its owner, and newer than the sources).
 
 Papers, as text: the skips paper ("S", `skips.txt`) and the absorb paper ("A", `absorb.txt`). Line
-numbers of `STATEMENTS.md` are those of `20eacc6`; the rows of the four files are lines 827, 828,
-830 and 831 there (825 to 828 at `f0edc93`). I quote the text of every place that I name.
+numbers of `STATEMENTS.md` are those of `f73cf40`; the rows of the four files are lines 827, 828,
+830 and 831 there (825 to 828 at `bd0ca40`). I quote the text of every place that I name.
 
 How I checked.
 
@@ -476,7 +476,7 @@ Paper: S Theorem B.1 (iii); S Appendix B, "Notation and flat directions".
 
 ### The index rows of the four files, and `checks/Axioms.lean`
 
-By a script (`index_names18.py`, `index_names18.out`), at `20eacc6`: every one of the 25 public
+By a script (`index_names18.py`, `index_names18.out`), at `f73cf40`: every one of the 25 public
 names is in the row of its file (lines 827, 828, 830, 831), 18 written out and 7 by the
 abbreviation "the same two with `reluSq`, and the same five with `reglu`"; all 24 theorems stand
 in `checks/Axioms.lean`; all four rows say "proved", which is right. Nothing in the rows is wrong.
@@ -526,12 +526,12 @@ order of weight:
     `P + d(d+1)/2 − d(d−1)/2 − s`; Lean has no definition of the symmetries of a network with a
     learned skip.
 
-## Corrections for `STATEMENTS.md` (line numbers of `20eacc6`)
+## Corrections for `STATEMENTS.md` (line numbers of `f73cf40`)
 
 1. Lines 193 to 201, "Not yet compared by such a reader […] `OneBlock/LearnedSkipTriangularSmooth.lean`,
    `OneBlock/LearnedSkipTriangularRescale.lean`, `Absorb/RidgeFunctions.lean`,
    `Absorb/AttentionHeadsIdentifiable.lean`, …": take these four out after this audit (compared at
-   `f0edc93`; unchanged at `20eacc6`).
+   `bd0ca40`; unchanged at `f73cf40`).
 2. Line 828 (`OneBlock/LearnedSkipTriangularRescale.lean`), "and `d(d+1)/2` more than the residual
    network at almost every `θ'`": add "(the residual side is Lean's `funDim`; at almost every `θ'`
    it is the largest rank over the batches of inputs off the kinks, by

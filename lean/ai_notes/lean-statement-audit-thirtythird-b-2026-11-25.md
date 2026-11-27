@@ -2,11 +2,11 @@ STATUS: complete
 
 # Thirty-third audit, part B, of Lean statements against the skips paper: networks of mixed blocks (Proposition A.1, Theorem A.5 (i), (ii), Proposition A.9), learned skips and biases (25 November 2026)
 
-Commit read at the start: `5ef12b8` of `/home/claude/lp` (branch `lean-plus`).
+Commit read at the start: `0e1bc98` of `/home/claude/lp` (branch `lean-plus`).
 
 Paper: `<scratchpad>/skips.txt`. Brief: `audit33b_brief_2026-11-25.md`, with the rules and form of `audit21a_brief_2026-11-24.md`.
 
-Files with `sorry` at `5ef12b8`: `Residual/GaugeFixLearned.lean` (all 7 statements), `Residual/GaugeFixBiases.lean` (all 13 statements); as the brief says, a proving agent is at work on them, and only their statements are judged here.
+Files with `sorry` at `0e1bc98`: `Residual/GaugeFixLearned.lean` (all 7 statements), `Residual/GaugeFixBiases.lean` (all 13 statements); as the brief says, a proving agent is at work on them, and only their statements are judged here.
 
 ## Part 1: checks
 
@@ -148,7 +148,7 @@ theorem finrank_span_reads_eq_zero (c : ∀ ℓ : Fin L, d → A.r ℓ) (cD : d 
 
 ### 5. The statements for learned skips (`Residual/GaugeFixLearned.lean`, statements with `sorry`) — by reading, and by a computation
 
-Lean (statements at `5ef12b8`):
+Lean (statements at `0e1bc98`):
 
 ```lean
 noncomputable def learnedToResidual (p : Params A dIn dOut × (Fin L → Matrix d d ℝ)) :
@@ -184,7 +184,7 @@ Verdict for check 5: SAME for all seven statements.
 
 ### 6. The statements with biases (`Residual/GaugeFixBiases.lean`, statements with `sorry`) — by reading, and by a computation
 
-Lean (definitions and two of the thirteen statements, at `5ef12b8`):
+Lean (definitions and two of the thirteen statements, at `0e1bc98`):
 
 ```lean
 def Biases.mulSkipProd (b : Biases A dOut) (Λ : Fin (L + 1) → Matrix d d ℝ) : Biases A dOut where
@@ -313,7 +313,7 @@ Nothing false, vacuous or drifted was found. Places where the paper's text leave
 2. **Proposition A.9 (i), "Done at every hidden state".** The Lean statements for mixed blocks make all choices in reads or all in writes; the paper's proof ("one submatrix per hidden state") allows a free choice per hidden state. The paper is right (the changes at different hidden states touch different matrices), but if the free choice is meant, the formal statements do not yet cover it.
 3. **Proposition A.1 (iii), "a network of mixed blocks one more copy of `GL(d_model)` per block".** The formalization states the group action and its commutation laws, not that the copies act independently; the paper does not argue the independence either (at a parameter with invertible `U_ℓ`, `U_ℓ K_ℓ = U_ℓ` forces `K_ℓ = I`, which would be the one-line argument).
 4. **Theorem A.5 (ii), the functional dimension.** The paper's argument is the chain rule, which needs differentiable outputs; the Lean statements hold for any blocks in the convention that the derivative is `0` where the outputs are not differentiable. No change is needed; the paper may say "for any blocks" if it wants the stronger form.
-5. **Theorem A.5 (ii) for learned skips and with biases** is "The same holds …" in one sentence; Lean states thirteen and seven separate statements, all of which our computation supports. The statements are still without proofs at `5ef12b8`.
+5. **Theorem A.5 (ii) for learned skips and with biases** is "The same holds …" in one sentence; Lean states thirteen and seven separate statements, all of which our computation supports. The statements are still without proofs at `0e1bc98`.
 
 ## Corrections for `STATEMENTS.md`
 
@@ -321,12 +321,12 @@ Nothing false, vacuous or drifted was found. Places where the paper's text leave
 2. Row of `Residual/ExactReductionMixed.lean`: delete "(in work)" after `Symmetry/MixedJunctions.lean` (it is proved); add "with the chosen submatrices all in reads (the reads of the blocks and `D`) or all in writes (`E` and the writes of the blocks); a choice per hidden state between a read and a write is not stated".
 3. Row of `Residual/ExactReductionCount.lean`: replace "one submatrix per hidden state" by "one submatrix per hidden state, all `L + 1` in reads (the reads of the blocks and `D`) or all in writes (`E` and the writes of the blocks)".
 4. Row of `Residual/GaugeFixBiases.lean`: "`T_{G,K}` with `b ↦ b.cob G` preserves the function" is `evalMixedB_cobMixed` for mixed blocks; for learned skips with biases it is `evalB_cob` (`Symmetry/BiasesSymmetries.lean`): name it.
-5. The list "Not yet compared": move `Network/Mixed.lean`, `Symmetry/MixedJunctions.lean`, `Residual/GaugeFixMixed.lean`, `Residual/GaugeFixLearned.lean`, `Residual/ExactReductionMixed.lean`, `Residual/ExactReductionCount.lean` and `Residual/GaugeFixBiases.lean` to the compared files, with this report (`lean-statement-audit-thirtythird-b-2026-11-25.md`): nothing false, vacuous or drifted; the statements of `GaugeFixLearned.lean` and `GaugeFixBiases.lean` compared at `5ef12b8`, before their proofs.
+5. The list "Not yet compared": move `Network/Mixed.lean`, `Symmetry/MixedJunctions.lean`, `Residual/GaugeFixMixed.lean`, `Residual/GaugeFixLearned.lean`, `Residual/ExactReductionMixed.lean`, `Residual/ExactReductionCount.lean` and `Residual/GaugeFixBiases.lean` to the compared files, with this report (`lean-statement-audit-thirtythird-b-2026-11-25.md`): nothing false, vacuous or drifted; the statements of `GaugeFixLearned.lean` and `GaugeFixBiases.lean` compared at `0e1bc98`, before their proofs.
 
 ## What I could not check
 
-- The proofs of `Residual/GaugeFixLearned.lean` and `Residual/GaugeFixBiases.lean`: at `5ef12b8` all twenty statements are `sorry` (by design); if the proving agent changes a statement, the verdicts above apply to the statements as quoted here, not to the new ones.
+- The proofs of `Residual/GaugeFixLearned.lean` and `Residual/GaugeFixBiases.lean`: at `0e1bc98` all twenty statements are `sorry` (by design); if the proving agent changes a statement, the verdicts above apply to the statements as quoted here, not to the new ones.
 - The numeric checks are for tanh blocks without normalization, `L ≤ 2`, `d ≤ 3`; the statements are for any blocks. Non-differentiable blocks (the "any blocks" clause of the functional dimensions) were checked by reading the argument, not by computation.
 - `STATEMENTS.md` was read only in the rows of the seven files and the list "Not yet compared".
 
-Commit read at the end: `5ef12b8` (unchanged).
+Commit read at the end: `0e1bc98` (unchanged).

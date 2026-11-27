@@ -12,8 +12,8 @@ The statements and the definitions were read, not the proofs. Each check says ho
 
 The branch `lean-plus` of `/home/claude/lp` moved during the audit.
 
-- At the start: `4b8ee51` (03:14 UTC). The seven subject files were read at this commit. None contains `sorry` (by `grep`), and each has a build output newer than its source.
-- At the end: `ce80d1a` (03:36 UTC). Between `4b8ee51` and `ce80d1a` the seven files changed in comment lines only: 7 lines added and 4 removed in the headers of `Symmetry/BiasesSymmetries.lean`, `Symmetry/BiasesFlat.lean` and `OneBlock/MlpBiases.lean`, which now point to files written after this audit began. No statement and no definition changed (by `git diff`). The index rows were read at `ce80d1a`.
+- At the start: `1bbd6a6` (03:14 UTC). The seven subject files were read at this commit. None contains `sorry` (by `grep`), and each has a build output newer than its source.
+- At the end: `534437b` (03:36 UTC). Between `1bbd6a6` and `534437b` the seven files changed in comment lines only: 7 lines added and 4 removed in the headers of `Symmetry/BiasesSymmetries.lean`, `Symmetry/BiasesFlat.lean` and `OneBlock/MlpBiases.lean`, which now point to files written after this audit began. No statement and no definition changed (by `git diff`). The index rows were read at `534437b`.
 - The commits in between add other files on networks with biases (the symmetries inside blocks in the count, SwiGLU, GeGLU, ReLU, ReLU² and ReGLU blocks, statements without differentiability), marked "in work" in the index. They are not the subject and were not read. Where this report says "not stated", it means: not stated in the seven files.
 
 ## Part 1: checks
@@ -344,7 +344,7 @@ Outside the hypotheses (two batches each, tanh and GELU give the same numbers):
 
 So `d_in ≥ d` and `d_out ≥ d` are needed for both values, and `d_hidden ≥ d` for the skipless value (a rank below the formula on two batches is not a proof that the functional dimension is below it, but here the rank cannot be larger: for `(3,4,3,1)` the skipless function `γ_0 + σ(xc + β) a` has `4 + 1 + 3 + 3 = 11` free numbers). For `d = 1`, which the theorem and the Lean statements exclude, the values with biases hold in the four cases computed: with biases two units of a one-dimensional network differ by their biases.
 
-**What is not stated.** With biases, Theorem B.1 (i) is stated for one tanh block and one GELU block (and for every activation with `UnitsRigid`). Not stated with biases: ReLU, ReLU², ReGLU, SwiGLU and GeGLU blocks (the values `P − 2d² − 2d − s` and `P − d² − 2d − s` with `s > 0`; the rescalings of check 7 are there as symmetries, their directions and Lemma B.3 with biases for these activations are not); attention blocks ("`2 d_model + 2 H d_h` lower for attention"; the frame gives the biases, check 1); the third value of Lemma A.27 ("MLP blocks with biases, no normalization", any depth). The header of the file said this at `4b8ee51` ("Not stated here: ReLU, ReLU², ReGLU, SwiGLU, GeGLU blocks and attention blocks with biases"); at `ce80d1a` it points to files written after this audit began for the other MLP blocks (in work, not read) and says "Not stated: attention blocks with biases".
+**What is not stated.** With biases, Theorem B.1 (i) is stated for one tanh block and one GELU block (and for every activation with `UnitsRigid`). Not stated with biases: ReLU, ReLU², ReGLU, SwiGLU and GeGLU blocks (the values `P − 2d² − 2d − s` and `P − d² − 2d − s` with `s > 0`; the rescalings of check 7 are there as symmetries, their directions and Lemma B.3 with biases for these activations are not); attention blocks ("`2 d_model + 2 H d_h` lower for attention"; the frame gives the biases, check 1); the third value of Lemma A.27 ("MLP blocks with biases, no normalization", any depth). The header of the file said this at `1bbd6a6` ("Not stated here: ReLU, ReLU², ReGLU, SwiGLU, GeGLU blocks and attention blocks with biases"); at `534437b` it points to files written after this audit began for the other MLP blocks (in work, not read) and says "Not stated: attention blocks with biases".
 
 Verdict of check 6: **SAME** for one tanh block and one GELU block (the two values, the gain `d²`, the equality condition in both forms, the hypotheses); **PART** of Theorem B.1 (i) with biases (two of the seven kinds of MLP block and no attention).
 
@@ -479,7 +479,7 @@ Verdict of check 8: each of the seven statements is the paper's clause (**SAME**
 
 **Registrations, by `grep`** in `checks/Axioms.lean`: each of the 46 theorems is registered exactly once (`#print axioms Skips.<name>`). The two `@[simp]` lemmas `hiddenB_zero`, `hiddenB_succ` are not registered; their twins `hidden_zero`, `hidden_succ` are not either, so this follows the convention of the file. Each of the 48 names is in a row of `STATEMENTS.md`.
 
-**The rows, by reading** (`STATEMENTS.md` at `ce80d1a`; the statements of the seven files did not change after `4b8ee51`, see "Commits"). Every row names the right file, lists the public theorems of its file, and has the status "proved", which is true.
+**The rows, by reading** (`STATEMENTS.md` at `534437b`; the statements of the seven files did not change after `1bbd6a6`, see "Commits"). Every row names the right file, lists the public theorems of its file, and has the status "proved", which is true.
 
 | row of | true of the statements? |
 |---|---|

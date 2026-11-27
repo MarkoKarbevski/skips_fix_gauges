@@ -53,7 +53,7 @@ So the hypotheses of the Lean statements are sufficient, not necessary: a zero r
 
 Verdict check 3: SAME for the cases it covers (true; the hypotheses are what the proof by injectivity at a point needs); PART against the paper's sentence for skipless networks with a block narrower than `d_model`, and for `d_in < d_model`, where no injectivity statement applies.
 
-Note: while I read, the coordinator merged the proofs of `Symmetry/BiasesGeneratedGroup.lean` (commits `cf23cb7`, `be6d802`, merge `c7b1eaa`). I compared the statement headers of the three files at `7c849e3` and `c7b1eaa`: unchanged (only `omit` lines added in the rescaling file). At `c7b1eaa` the general file and the rescaling file have no `sorry`; the attention file has 7.
+Note: while I read, the coordinator merged the proofs of `Symmetry/BiasesGeneratedGroup.lean` (commits `66e9711`, `e3328b9`, merge `02912c1`). I compared the statement headers of the three files at `7c849e3` and `02912c1`: unchanged (only `omit` lines added in the rescaling file). At `02912c1` the general file and the rescaling file have no `sorry`; the attention file has 7.
 
 ### Check 4. "has dimension …" (by reading)
 
@@ -91,7 +91,7 @@ Computation (`d = 3`, `T = 4`, `L = 2`, `H = 2`, `d_h = 2`, causal mask, biases,
 - orbit map `(G, g, σ) ↦ affAct (G, g) (headsAct σ q)` at a generic `q`: rank 66 = 9 + 9 + 48 with skips and 84 = 27 + 9 + 48 without (smallest singular values 0.23 and 0.20, next 0): `s = 2·2·(2·2² + 2·2) = 48`, as `finrank_headsSpace` says.
 - Dimensions `dimH_generated_residual_attention` / `…_skipless_…`: the general `_prod` theorems with `finrank_headsSpace`; values right.
 
-Verdict check 6: SAME (statements; 7 proofs still `sorry` at `c7b1eaa`).
+Verdict check 6: SAME (statements; 7 proofs still `sorry` at `02912c1`).
 
 ### Check 7. Is the second sentence of Lemma A.8 now stated? (by reading)
 
@@ -102,7 +102,7 @@ Per kind, a group (closure = products, `mem_closure_…`), its maps preserve the
 - ReLU, ReLU² (`rescaleMlpAct`, `k = 1, 2`): stated and proved.
 - SwiGLU, GeGLU (`rescaleAct`, any gate): stated and proved (with the positive rescalings, see check 5).
 - ReGLU (`rescaleBothAct`, `k = 1`): stated and proved.
-- attention with biases (`headsAct`): stated; proofs `sorry` (7) at `c7b1eaa`.
+- attention with biases (`headsAct`): stated; proofs `sorry` (7) at `02912c1`.
 - networks of attention and MLP blocks (`Arch.attentionMlp`, `Arch.attentionGated` of `Network/Transformer.lean`): NOT stated. No family of symmetries inside the blocks is defined on `Arch.attentionMlp`/`Arch.attentionGated` with biases; the general theorems of `Symmetry/BiasesGeneratedGroup.lean` apply to any `A`, so what is missing is the family and its two structures.
 
 What else is not stated:
@@ -119,9 +119,9 @@ Degenerate cases: `d` empty: `GL` trivial, ranks `0 = card d`, all statements ho
 
 Verdict check 8: nothing false or drifted; the extra hypotheses are the ones listed.
 
-### Check 9. The index rows (by reading `STATEMENTS.md` at `c7b1eaa`)
+### Check 9. The index rows (by reading `STATEMENTS.md` at `02912c1`)
 
-- Row `Symmetry/BiasesGeneratedGroup.lean` (status "proved"): every clause is true of the statements; status right at `c7b1eaa` (no `sorry`, the 8 theorems are in `checks/Axioms.lean`). Suggest adding that the injectivity is at one `q` (so `d_in ≥ d`, and without skips block widths ≥ `d`).
+- Row `Symmetry/BiasesGeneratedGroup.lean` (status "proved"): every clause is true of the statements; status right at `02912c1` (no `sorry`, the 8 theorems are in `checks/Axioms.lean`). Suggest adding that the injectivity is at one `q` (so `d_in ≥ d`, and without skips block widths ≥ `d`).
 - Row `Symmetry/BiasesGeneratedGroupRescale.lean` (status "proved"): true. "For tanh and GELU blocks `s = 0`" names no theorem; point to `Symmetry/BiasesAffineGroupLaw.lean` and `dimH_affMat_affPreserving…` of `Symmetry/BiasesAffineGroup.lean`. Add "(the positive rescalings: for gated values the identity component of the group of nonzero rescalings, of the same dimension)".
 - Row `Symmetry/BiasesGeneratedGroupAttention.lean` (status "in work"): true; status right (7 `sorry`; its theorems are not yet in `checks/Axioms.lean`).
 - The header lines 413 to 414 ("Not yet compared"): move the three files to "compared by the thirty-seventh reader", with the summary of this report.
@@ -159,13 +159,13 @@ Nothing false, vacuous or drifted. Points:
 - Lines 413 to 414: the three files are compared (thirty-seventh audit): nothing false, vacuous or drifted; the second sentence of S Lemma A.8 is stated for every kind of block except networks of attention and MLP (or gated) blocks; the attention kind is stated, its proofs in work.
 - Row of `Symmetry/BiasesGeneratedGroup.lean`: add "the injectivity is at one `q`: `E` of rank `d` (so `d_in ≥ d`), and without skips writes of rank `d` (blocks at least `d` wide)".
 - Row of `Symmetry/BiasesGeneratedGroupRescale.lean`: "For tanh and GELU blocks `s = 0`" → "For tanh and GELU blocks `s = 0`, and the group is that of `Symmetry/BiasesAffineGroupLaw.lean` with the dimensions of `Symmetry/BiasesAffineGroup.lean`"; add "(positive rescalings; for the values of gated blocks the identity component of the nonzero rescalings, of the same dimension)".
-- Row of `Symmetry/BiasesGeneratedGroupAttention.lean`: true as written; status "in work" right at `c7b1eaa`.
+- Row of `Symmetry/BiasesGeneratedGroupAttention.lean`: true as written; status "in work" right at `02912c1`.
 
 ## What I could not check
 
-- The proofs of the attention file (7 `sorry` at `c7b1eaa`), and I did not compile a copy (the statements were read; the general file's and the rescaling file's theorems are in `checks/Axioms.lean`, I did not run it).
+- The proofs of the attention file (7 `sorry` at `02912c1`), and I did not compile a copy (the statements were read; the general file's and the rescaling file's theorems are in `checks/Axioms.lean`, I did not run it).
 - The map-level injectivity without rank hypotheses (point (b) of check 7) I argued only in outline (varying `q` detects each `G_ℓ` through the read or the write bias); not proved or computed in general.
 - The numerical checks use one small network per kind (`d = 3`, `L = 2`) and one generic parameter each.
 
-Commits read: `7c849e3` at the start, `c7b1eaa` at the end (statements unchanged between them).
+Commits read: `7c849e3` at the start, `02912c1` at the end (statements unchanged between them).
 

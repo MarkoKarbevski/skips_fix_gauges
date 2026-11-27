@@ -8,11 +8,11 @@ Subject: S Lemma A.18 and D Lemma B.1 for the group and with the readout; S Theo
 
 ## Commits read; `sorry`
 
-- Commits of `/home/claude/lp` (branch `lean-plus`): `048a13a` (with uncommitted changes in three files) when the reading began, `8b86096` when the nine files were copied to `/home/claude/audit27/src/`, `37c1a8a` at the end.
-- Between `048a13a` and `8b86096` the nine files changed only by: `sorry` replaced by proofs, private helpers added, lines `omit [...] in` added before theorems (they remove unused instance arguments). Checked with `git diff`. No statement changed. After `8b86096` only two header comments changed (`LocallyFreeEmbedding.lean`, `LocallyFreeReadout.lean`: "Not stated: `ε = 0` together with rescalings" became a pointer to a new file).
-- Files with `sorry` at `048a13a`: `Dimension/UpperBoundReadoutInside.lean` (4), `Basic/EigenvectorsGeneralPosition.lean` (1), `Symmetry/LocallyFreeReadoutGeneric.lean` (8). At `8b86096` and later: none of the nine.
+- Commits of `/home/claude/lp` (branch `lean-plus`): `a5cdbad` (with uncommitted changes in three files) when the reading began, `09894be` when the nine files were copied to `/home/claude/audit27/src/`, `f5a48bc` at the end.
+- Between `a5cdbad` and `09894be` the nine files changed only by: `sorry` replaced by proofs, private helpers added, lines `omit [...] in` added before theorems (they remove unused instance arguments). Checked with `git diff`. No statement changed. After `09894be` only two header comments changed (`LocallyFreeEmbedding.lean`, `LocallyFreeReadout.lean`: "Not stated: `ε = 0` together with rescalings" became a pointer to a new file).
+- Files with `sorry` at `a5cdbad`: `Dimension/UpperBoundReadoutInside.lean` (4), `Basic/EigenvectorsGeneralPosition.lean` (1), `Symmetry/LocallyFreeReadoutGeneric.lean` (8). At `09894be` and later: none of the nine.
 - Compiled by the reader (`Ax27.lean`, against the existing build, nothing written there): each of the 40 theorems depends on `propext`, `Classical.choice`, `Quot.sound` only; no `sorryAx`.
-- Written after this audit began and **not read here**: `Symmetry/LocallyFreeRMSZero.lean` (7 `sorry` at `37c1a8a`), `Symmetry/LocallyFreeRMSZeroGeneric.lean`, `Basic/RMSNormDeviation.lean`.
+- Written after this audit began and **not read here**: `Symmetry/LocallyFreeRMSZero.lean` (7 `sorry` at `f5a48bc`), `Symmetry/LocallyFreeRMSZeroGeneric.lean`, `Basic/RMSNormDeviation.lean`.
 
 How each check was done is said in the check: *reading*, *compiled* (a copy in `/home/claude/audit27/`, with `lake env lean`), or *computed* (Python, `python3 -I`; every run took under one minute).
 
@@ -197,7 +197,7 @@ A rank on a batch is a lower bound; the stated value is also an upper bound (the
 
 ### 9. The index rows: true of the statements, with five corrections
 
-*Reading and a script.* Each of the 42 public names of the nine files is in the row of its file, and each of the 40 theorems has its line in `checks/Axioms.lean` (lines 1837 to 1876 at `8b86096`); the two definitions need none. The sentences of the rows agree with the statements, except for the points listed under "Corrections for `STATEMENTS.md`".
+*Reading and a script.* Each of the 42 public names of the nine files is in the row of its file, and each of the 40 theorems has its line in `checks/Axioms.lean` (lines 1837 to 1876 at `09894be`); the two definitions need none. The sentences of the rows agree with the statements, except for the points listed under "Corrections for `STATEMENTS.md`".
 
 ## Part 2: the statements, file by file
 
@@ -259,4 +259,4 @@ Places where the paper's proof uses a condition or a step that it does not write
 - The ranks of checks 6 and 8 are at finitely many parameters (36 + 12 random draws, exact; 12 parameters at 80 digits). The counterexamples of check 4 are exact.
 - Whether the hypotheses that are needed at one parameter (positive `c` for ReGLU, `c_ℓ > 0` and orthogonal `Q_ℓ` with the embedding for `ε = 0`) are also needed in the `ae_` statements was not examined: the counterexamples found are at special parameters (`E = 0`, zero reads).
 
-Scratch work: `/home/claude/audit27/` (`Chk27.lean`, `Chk27b.lean`, `Ax27.lean` with their `.out`; `c4_group.py`, `c6_rank.py`, `c8_tri.py` with their `.out`; `src/`: the nine files at `8b86096`).
+Scratch work: `/home/claude/audit27/` (`Chk27.lean`, `Chk27b.lean`, `Ax27.lean` with their `.out`; `c4_group.py`, `c6_rank.py`, `c8_tri.py` with their `.out`; `src/`: the nine files at `09894be`).

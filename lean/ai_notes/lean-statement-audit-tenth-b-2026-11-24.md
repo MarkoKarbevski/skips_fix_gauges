@@ -13,14 +13,14 @@ The branch `lean-wip` of `/home/claude/lw` moved while I read. Three commits mat
 
 | Commit of `/home/claude/lw` | Time (UTC) | Files of `SkipsLean/` with `sorry` (`git grep`, whole library) |
 |---|---|---|
-| `8dc41d9` (first read) | 12:51 | `OneBlock/ResidualRMSReGLU.lean` (7), `Residual/SmallParameterOn.lean` (1), `Residual/SmallWritesOn.lean` (2), `Residual/DepthRescale.lean` (8) |
-| **`0cdb976` (the commit of this report)** | 12:57 | `Residual/SmallWritesOn.lean` (2), `Residual/DepthRescale.lean` (8), `Residual/DepthReGLU.lean` (7, a new file) |
-| `a2e3143` (head when I finished) | 13:03 | `Residual/DepthReGLU.lean` (7), `Absorb/InjectiveBlocks.lean` (6, not my subject) |
+| `4eb217a` (first read) | 12:51 | `OneBlock/ResidualRMSReGLU.lean` (7), `Residual/SmallParameterOn.lean` (1), `Residual/SmallWritesOn.lean` (2), `Residual/DepthRescale.lean` (8) |
+| **`92a4512` (the commit of this report)** | 12:57 | `Residual/SmallWritesOn.lean` (2), `Residual/DepthRescale.lean` (8), `Residual/DepthReGLU.lean` (7, a new file) |
+| `d4c1e26` (head when I finished) | 13:03 | `Residual/DepthReGLU.lean` (7), `Absorb/InjectiveBlocks.lean` (6, not my subject) |
 
-All statements below are quoted from `0cdb976` (a copy made with `git archive`, in
-`/home/claude/audit10b/snap/`). Between `8dc41d9` and `0cdb976` no statement of my files changed
+All statements below are quoted from `92a4512` (a copy made with `git archive`, in
+`/home/claude/audit10b/snap/`). Between `4eb217a` and `92a4512` no statement of my files changed
 (by a script that compares every public statement up to `:= by`; only proofs were added). Between
-`0cdb976` and `a2e3143` the public statements of `SmallWritesOn.lean` and `DepthRescale.lean` have
+`92a4512` and `d4c1e26` the public statements of `SmallWritesOn.lean` and `DepthRescale.lean` have
 the same text; one of them, `eventually_jacobianRank_ge_of_contDiffOn`, lost the unused instance
 `[DecidableEq d]` (`omit … in`), which makes it slightly more general.
 
@@ -30,7 +30,7 @@ It is part of the same lemma, so I compared it too.
 How I checked. "By reading": I read the Lean source and the paper. "By compiling": one scratch file,
 `/home/claude/audit10b/Chk.lean` (output `Chk.out`), compiled with `lean` 4.36.0 against a copy of
 the compiled library of `/home/claude/lp/lean` taken at 13:02 (`/home/claude/audit10b/lib/`); the
-sources of `lp` at that time (`3148a12`) had the same public statements as `0cdb976` in all seven
+sources of `lp` at that time (`41ce476`) had the same public statements as `92a4512` in all seven
 files that have a compiled form (by the script). I did not run `lake`, and I wrote nothing under
 `lw`, `lp` or the repository. "By a computation": Python scripts in `/home/claude/audit10b/py/`.
 "By hand": a derivation that I wrote out while reading.
@@ -55,9 +55,9 @@ lemma.**
    Lemma A.30 is chosen before `τ`; Lemma A.3 holds without the hypothesis on the hidden states and
    for any matrix `S`.
 4. By compiling: all 36 public theorems of the seven files other than `DepthReGLU.lean` depend on
-   `propext`, `Classical.choice`, `Quot.sound` only, in the library of `lp` at `3148a12`. This
+   `propext`, `Classical.choice`, `Quot.sound` only, in the library of `lp` at `41ce476`. This
    includes the ten statements of `SmallWritesOn.lean` and `DepthRescale.lean` that are `sorry` at
-   `0cdb976`. `DepthReGLU.lean` is not compiled anywhere that I found; I judged its seven
+   `92a4512`. `DepthReGLU.lean` is not compiled anywhere that I found; I judged its seven
    statements true by hand.
 
 ---------------------------------------------------------------------------------------------------
@@ -259,8 +259,8 @@ constants, not a proof.
 
 ### Verdict table
 
-"Proved": no `sorry` at `0cdb976`, and by compiling the three standard axioms only. "Proved at
-`3148a12`": `sorry` at `0cdb976`; the same statement is proved in `lp` at `3148a12` (by compiling).
+"Proved": no `sorry` at `92a4512`, and by compiling the three standard axioms only. "Proved at
+`41ce476`": `sorry` at `92a4512`; the same statement is proved in `lp` at `41ce476` (by compiling).
 
 | Paper piece | Lean | Verdict | Status |
 |---|---|---|---|
@@ -274,12 +274,12 @@ constants, not a proof.
 | the gain, ReLU and ReLU² | `ae_funDim_skipless_add_le_{relu,reluSq}_oneBlock_residual_rmsNorm` | SAME | proved |
 | the same for ReGLU | the nine names of `OneBlock/ResidualRMSReGLU.lean` | SAME | proved |
 | "which is the equality condition" | none | PART: the value is stated, the words are not | |
-| Lemma A.30, proof, "tends to `J_0`, and by lower semicontinuity" | `eventually_finrank_le_of_small_parameter_of_contDiffOn`; `eventually_jacobianRank_smallWrites_ge_of_contDiffOn` | SAME, for abstract open sets `V ℓ` | proved; proved at `3148a12` |
-| Lemma A.30, proof, "Near such parameters the signs on the batch do not change" | `eventually_jacobianRank_ge_of_contDiffOn` | SAME | proved at `3148a12` |
-| Lemma A.30, proof, the kernel of `J_0` | `smallWritesLimit_eq_zero_mlp_rescale`; `smallWritesLimit_eq_zero_reglu` | SAME for all inputs: the kernel lies in a space of dimension `d² + s`. The step "flat on a neighborhood of `0` is flat at every input at which no pre-activation vanishes" is not stated | proved at `3148a12`; `sorry` |
-| Lemma A.30, first sentence | `exists_eventually_jacobianRank_smallWrites_mlp_rescale`, `ae_exists_eventually_jacobianRank_smallWrites_{relu,reluSq}`; `…_reglu` | LEAN STRONGER: one batch for all small `τ`; Lean writes `d ≥ 2`, which the paper's lemma needs | proved at `3148a12`; `sorry` |
-| Lemma A.30, second sentence, the functional dimension on an open set | `eventually_funDim_smallWrites_…`, `eventually_eventually_funDim_smallWrites_…`, `exists_isOpen_funDim_smallWrites_…`, clauses 1 to 3 | PART: the value of `funDim`; no batch off the kinks at the points of `U` | proved at `3148a12`; `sorry` (ReGLU) |
-| Lemma A.30, the gain | `exists_isOpen_funDim_smallWrites_…`, clause 4 | PART, for the same reason: the gain of `funDim` | proved at `3148a12`; `sorry` (ReGLU) |
+| Lemma A.30, proof, "tends to `J_0`, and by lower semicontinuity" | `eventually_finrank_le_of_small_parameter_of_contDiffOn`; `eventually_jacobianRank_smallWrites_ge_of_contDiffOn` | SAME, for abstract open sets `V ℓ` | proved; proved at `41ce476` |
+| Lemma A.30, proof, "Near such parameters the signs on the batch do not change" | `eventually_jacobianRank_ge_of_contDiffOn` | SAME | proved at `41ce476` |
+| Lemma A.30, proof, the kernel of `J_0` | `smallWritesLimit_eq_zero_mlp_rescale`; `smallWritesLimit_eq_zero_reglu` | SAME for all inputs: the kernel lies in a space of dimension `d² + s`. The step "flat on a neighborhood of `0` is flat at every input at which no pre-activation vanishes" is not stated | proved at `41ce476`; `sorry` |
+| Lemma A.30, first sentence | `exists_eventually_jacobianRank_smallWrites_mlp_rescale`, `ae_exists_eventually_jacobianRank_smallWrites_{relu,reluSq}`; `…_reglu` | LEAN STRONGER: one batch for all small `τ`; Lean writes `d ≥ 2`, which the paper's lemma needs | proved at `41ce476`; `sorry` |
+| Lemma A.30, second sentence, the functional dimension on an open set | `eventually_funDim_smallWrites_…`, `eventually_eventually_funDim_smallWrites_…`, `exists_isOpen_funDim_smallWrites_…`, clauses 1 to 3 | PART: the value of `funDim`; no batch off the kinks at the points of `U` | proved at `41ce476`; `sorry` (ReGLU) |
+| Lemma A.30, the gain | `exists_isOpen_funDim_smallWrites_…`, clause 4 | PART, for the same reason: the gain of `funDim` | proved at `41ce476`; `sorry` (ReGLU) |
 | Lemma A.30, "or over an open set that contains `0`" | none | not stated; the index says so | |
 
 ### Notes
@@ -469,22 +469,22 @@ For the paper.
 True and in order.
 
 9. Theorem B.1 (ii) for ReLU, ReLU² and ReGLU: the pair of statements, the gain, the conditions
-   and the directions are the paper's, with no extra hypothesis. Proved at `0cdb976`.
+   and the directions are the paper's, with no extra hypothesis. Proved at `92a4512`.
 10. Lemma A.3: proved; the formula of (ii) is right for every `S`.
 11. Lemma A.30, first sentence: Lean is the statement of the paper's proof, one batch for all small
-    `τ`. `SmallWritesOn.lean` and `DepthRescale.lean` are `sorry` at `0cdb976` and proved at
-    `3148a12` with the same statements. `DepthReGLU.lean` is `sorry`; its seven statements are
+    `τ`. `SmallWritesOn.lean` and `DepthRescale.lean` are `sorry` at `92a4512` and proved at
+    `41ce476` with the same statements. `DepthReGLU.lean` is `sorry`; its seven statements are
     true by hand, by the argument of `DepthRescale.lean` with `relu_gated_units_flat` and the two
     rescalings.
 
-## Corrections for `STATEMENTS.md` (lines at `0cdb976`; the same lines at `a2e3143`)
+## Corrections for `STATEMENTS.md` (lines at `92a4512`; the same lines at `d4c1e26`)
 
 - Lines 83 to 91 ("Not yet compared by such a reader …"): take out
   `Symmetry/HomogeneousRMSNorm.lean`, `OneBlock/ResidualRMSStepsOn.lean`,
   `OneBlock/ResidualRMSRescale.lean`, `OneBlock/ResidualRMSReGLU.lean`,
   `Residual/SmallParameterOn.lean`, `Residual/SmallWritesOn.lean`, `Residual/DepthRescale.lean`,
   `Residual/DepthReGLU.lean`, and say that a tenth reader (part B, 24 November) compared them at
-  `0cdb976`: nothing false or vacuous; on the open set of Lemma A.30 only `funDim` is stated.
+  `92a4512`: nothing false or vacuous; on the open set of Lemma A.30 only `funDim` is stated.
 - Line 283 (Lemma A.30, ReLU and ReLU²) and line 284 (ReGLU):
   - "an open set `U` with `funDim = P − d² − s` on it": add "(the library's `funDim`; a batch off
     the kinks with this rank is stated at `θ_τ` only, so on `U` this is the paper's value as an
@@ -505,14 +505,14 @@ True and in order.
   one `Λ` per token; `c > 0`, which the paper leaves unsaid".
 - Lines 279 and 280 (Theorem B.1 (ii)): correct as they are. They could add "not stated: 'which is
   the equality condition'".
-- Lines 278, 281, 282: correct as they are. Status of 282 and 283 at `0cdb976`: "in work", right
-  for that commit; at `a2e3143` the index says "proved" for both, which agrees with what I compiled.
+- Lines 278, 281, 282: correct as they are. Status of 282 and 283 at `92a4512`: "in work", right
+  for that commit; at `d4c1e26` the index says "proved" for both, which agrees with what I compiled.
 
 ## What I could not check
 
 - I did not build the library. The compiled library of `lw` lacks the eight files. The one scratch
   file was compiled against a copy of the library that the owners of `lp` built; I compared the
-  sources of `lp` with `0cdb976` by a script on the text of the statements, and read the elaborated
+  sources of `lp` with `92a4512` by a script on the text of the statements, and read the elaborated
   statements of 22 names in `Chk.out`, which agree with the sources that I quote.
 - `Residual/DepthReGLU.lean` has no compiled form that I found. Read only; its statements are
   judged true by hand, not by a proof.

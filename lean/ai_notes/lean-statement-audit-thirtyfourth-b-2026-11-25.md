@@ -2,7 +2,7 @@ STATUS: complete
 
 # Thirty-fourth audit, part B, of Lean statements against the skips paper: Lemma A.26 with the Lie group; Proposition A.9 (i), a read or a write at each hidden state; Proposition A.1 (iii), the copies act independently (25 November 2026)
 
-Commit read at the start: `f1d8ec0` of `/home/claude/lp` (branch `lean-plus`); at the end: `f1d8ec0` (unchanged).
+Commit read at the start: `c4a245c` of `/home/claude/lp` (branch `lean-plus`); at the end: `c4a245c` (unchanged).
 
 Paper: `<scratchpad>/skips.txt` (Lemma A.26 and its proof; Theorem A.28 and its proof; Proposition A.1 and its proof; Proposition A.9 and its proof). Brief: `audit34b_brief_2026-11-25.md`, with the rules and form of `audit21a_brief_2026-11-24.md`. Earlier report read first: `ai_notes/lean-statement-audit-thirtythird-b-2026-11-25.md` (its checks 2 and 4).
 

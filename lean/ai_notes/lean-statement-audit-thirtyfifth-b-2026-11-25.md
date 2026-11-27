@@ -2,7 +2,7 @@ STATUS: complete
 
 # Thirty-fifth audit, part B, of Lean statements against the papers (25 November 2026)
 
-Commit of `/home/claude/lp` (branch `lean-plus`) read at the start: `6ca72ca`.
+Commit of `/home/claude/lp` (branch `lean-plus`) read at the start: `adb7960`.
 
 Files with `sorry` at that commit: `SkipsLean/Activations/GateFarC.lean` (2), `SkipsLean/Depth/FrozenFarHolomorphic.lean` (1). `SkipsLean/Symmetry/BiasesAffineGroup.lean` has none.
 
@@ -107,7 +107,7 @@ Verdict on the second sentence: **PART** (as the thirty-third report, part A, ch
 
 ### Check 4. Equation (31), `GateFarC` (by reading and by a computation)
 
-Lean (`SkipsLean/Activations/GateFarC.lean`, read at `6ca72ca`; both theorems `sorry`):
+Lean (`SkipsLean/Activations/GateFarC.lean`, read at `adb7960`; both theorems `sorry`):
 
 ```lean
 def GateFarC (σ : ℝ → ℝ) (p : ℕ) : Prop :=
@@ -131,7 +131,7 @@ So both instances are true with the paper's constants (`κ = 3/8`, `R = 2` for G
 
 ### Check 5. Lemma D.11 with the holomorphic extension (by reading and by a computation)
 
-Lean (`SkipsLean/Depth/FrozenFarHolomorphic.lean`, read at `6ca72ca`; `sorry`):
+Lean (`SkipsLean/Depth/FrozenFarHolomorphic.lean`, read at `adb7960`; `sorry`):
 
 ```lean
 theorem exists_far_frozen_holomorphic (hg : GateFar σ σ' p) (hgC : GateFarC σ p)
@@ -177,7 +177,7 @@ Computed (`/home/claude/audit35b/check5_frozen_complex.py` and `check5b_frozen_c
 
 At `k = 0` the bound sets in late (for SwiGLU the differences are still above `1` at `t = 12`: the error of the first block is multiplied by the polynomial growth of the second), but `−log(difference)/t^p` increases with `t` in every row, so `κ = 0.2` works from `t₀ = 24` (SwiGLU) and from `t₀ = 7` (GeGLU) on these samples. Consistent with the statement; no counterexample.
 
-Verdict: **SAME** (with the gate as a hypothesis; for GELU and SiLU through `gateFar_…` and `gateFarC_…`). Statement true by the paper's proof and the computation; the proof is `sorry` at `6ca72ca`.
+Verdict: **SAME** (with the gate as a hypothesis; for GELU and SiLU through `gateFar_…` and `gateFarC_…`). Statement true by the paper's proof and the computation; the proof is `sorry` at `adb7960`.
 
 ### Check 6. What the paper uses of the complex `u` (by reading)
 
@@ -201,7 +201,7 @@ With both files every sentence of Lemma D.11 is stated: the holomorphic extensio
 
 ### Check 8. The index rows, the registrations and the axioms (by reading; the axioms by compiling a copy)
 
-`/home/claude/lp/lean/STATEMENTS.md` at `6ca72ca`:
+`/home/claude/lp/lean/STATEMENTS.md` at `adb7960`:
 * Row "S Lemma A.8, the group of the changes of basis and translations as a set" (`Symmetry/BiasesAffineGroup.lean`, proved): every sentence is true of the statements (the two translations together; the two sets; any blocks; "no hypothesis on the blocks: networks with zero writes and free write biases decide it; `T` and `d_out` not empty"; the two Hausdorff dimensions and the difference; "The symmetries inside the blocks (the `s`) are not part of these sets"). The row does not say that Lean does not state that the pairs form a group (the word "group" of its quoted sentence); see the corrections.
 * Row "S Lemma A.8, the count, as the dimension of the space of the directions" (`Symmetry/BiasesSymmetryCount.lean`): its pointer "The group of the changes of basis and translations as a set, with its dimension: `Symmetry/BiasesAffineGroup.lean`" is true. (The earlier sentence "This is the dimension of the group where it acts locally freely at `(θ, b)`, which the hypotheses ensure" was compared by the thirty-third reader and is not part of this audit.)
 * Row "D Lemma D.11 …, for real hidden states" (`Depth/FrozenFar.lean`): its pointer "The paper's holomorphic extension to complex `u` is stated in `Depth/FrozenFarHolomorphic.lean`; the bound for the derivative in the hidden state, which the paper gets from it by Cauchy's estimate in the proof of Lemma D.12, is a clause of the statement" is true (checks 5, 6).
@@ -247,7 +247,7 @@ Nothing false, vacuous or drifted in the three files.
 
 ## Corrections for `STATEMENTS.md`
 
-1. Lines 394–395 ("Not yet compared, written after the thirty-fourth audit began: … `Symmetry/BiasesAffineGroup.lean` … `Activations/GateFarC.lean` and `Depth/FrozenFarHolomorphic.lean`"): remove these two entries and add a sentence such as: "A thirty-fifth reader (part B, 25 November) compared `Symmetry/BiasesAffineGroup.lean` (7 theorems), `Activations/GateFarC.lean` and `Depth/FrozenFarHolomorphic.lean` (3 statements, read with `sorry` at `6ca72ca`): nothing false, vacuous or drifted; the second sentence of S Lemma A.8 is still stated in part (the group with the symmetries inside the blocks, and the group structure, are not stated); every sentence of D Lemma D.11 is stated (`ai_notes/lean-statement-audit-thirtyfifth-b-2026-11-25.md`)."
+1. Lines 394–395 ("Not yet compared, written after the thirty-fourth audit began: … `Symmetry/BiasesAffineGroup.lean` … `Activations/GateFarC.lean` and `Depth/FrozenFarHolomorphic.lean`"): remove these two entries and add a sentence such as: "A thirty-fifth reader (part B, 25 November) compared `Symmetry/BiasesAffineGroup.lean` (7 theorems), `Activations/GateFarC.lean` and `Depth/FrozenFarHolomorphic.lean` (3 statements, read with `sorry` at `adb7960`): nothing false, vacuous or drifted; the second sentence of S Lemma A.8 is still stated in part (the group with the symmetries inside the blocks, and the group structure, are not stated); every sentence of D Lemma D.11 is stated (`ai_notes/lean-statement-audit-thirtyfifth-b-2026-11-25.md`)."
 2. Row "S Lemma A.8, the group of the changes of basis and translations as a set": add at the end of the middle column "That the pairs form a group (under `(G, g)(G', g') = (G G', g + g' G⁻¹)`, the composition of the maps) is not stated."
 3. Row "D Lemma D.11, with the holomorphic extension" (optional): "a network of gated blocks without normalization" could say "a skipless network of gated blocks without normalization", as `suffix … 0` is.
 
@@ -255,9 +255,9 @@ No other correction: the rows of `Symmetry/BiasesSymmetryCount.lean` and `Depth/
 
 ## What I could not check
 
-* The proofs of `gateFarC_gelu`, `gateFarC_silu` and `exists_far_frozen_holomorphic` (`sorry` at `6ca72ca`): judged true by the paper's proof and by computation only.
+* The proofs of `gateFarC_gelu`, `gateFarC_silu` and `exists_far_frozen_holomorphic` (`sorry` at `adb7960`): judged true by the paper's proof and by computation only.
 * Equation (31) was computed on a grid (`Re z` from 2 to 12 in steps of `1/4`, 41 points of each vertical segment); beyond 12 by the asymptotics (`3/8` for GELU, `1 − log|z|/Re z → 1` for SiLU).
 * Lemma D.11 for complex `u` was computed at one good parameter, one token, one row `h°`, one direction `η`, `ϱ = 0.05`, and 36 or 64 points of the torus plus 3 others; the derivative in the weights by numerical differentiation at 60 digits, not exactly.
 * That `GateFar` is not needed in `exists_far_frozen_holomorphic` is by reading only.
 
-Commit of `/home/claude/lp` read at the end: `6ca72ca` (the branch did not move while I worked; the three files and `STATEMENTS.md` unchanged).
+Commit of `/home/claude/lp` read at the end: `adb7960` (the branch did not move while I worked; the three files and `STATEMENTS.md` unchanged).

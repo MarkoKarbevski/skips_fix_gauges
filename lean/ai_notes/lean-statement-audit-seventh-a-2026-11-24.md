@@ -6,14 +6,14 @@ Reader: an independent reader who did not write the statements. Brief:
 `/home/claude/proj_up/audit7a_brief_2026-11-24.md`.
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`). Commit at the start:
-`a969c4e29c25d6fc13b7b86cdae1dced0b4164ff`. Commit at the end:
-`6c30ab8` (the branch moved four times while I read: `ab2d797`, `ee8874f`, `3f274a5`, `6c30ab8`).
-Between the two (`git diff a969c4e 6c30ab8 --stat`): `STATEMENTS.md`, `SkipsLean.lean`,
+`ddcb801d32fde91a85543880c29e1f74fc1a8465`. Commit at the end:
+`9a60dfb` (the branch moved four times while I read: `d78c065`, `ee517f2`, `b409757`, `9a60dfb`).
+Between the two (`git diff ddcb801 9a60dfb --stat`): `STATEMENTS.md`, `SkipsLean.lean`,
 `checks/Axioms.lean`, `Residual/FewerHiddenUnits.lean` and two new files,
 `Dimension/UpperBoundRMSNormZero.lean` and `Depth/SuffixZero.lean`. None of the 15 files of this
 part changed, and none of the 81 modules that they import. Their rows in `STATEMENTS.md` did not
 change either; they moved down by three lines. Line numbers of `STATEMENTS.md` below are those of
-the file at `ee8874f`, which is the same file at `6c30ab8`.
+the file at `ee517f2`, which is the same file at `9a60dfb`.
 
 Paper: the skips paper as text (`skips.txt`; "S"). Statement and equation numbers are those of that
 text.
@@ -135,7 +135,7 @@ conclusion is the a.e. statement (by reading the proofs, `Residual/DepthMlp.lean
 **Verdict: yes.** Every value of this part is stated with `funDim`, and no statement of the 15
 files puts another quantity in its place.
 
-- `Dimension/Functional.lean` did not change since the sixth audit (`git diff 31752fa ab2d797` is
+- `Dimension/Functional.lean` did not change since the sixth audit (`git diff 0d967ff d78c065` is
   empty for it, and it did not change after; so are `Network/*`, `Basic/*`, `Generic/*`, `Dimension/Space.lean`). There
   (by reading):
   ```
@@ -230,9 +230,9 @@ they are not the conclusion of those statements (a value of `funDim`, or the for
 direction).
 
 **Axioms and `sorry`.**
-- `grep -rn "^axiom" SkipsLean` at `6c30ab8`: no line.
+- `grep -rn "^axiom" SkipsLean` at `9a60dfb`: no line.
 - `grep -w` for `sorry`, `admit`, `native_decide`, `unsafe`, `opaque` in the 15 files: no line. In
-  the whole library at `6c30ab8` the only `sorry` are four in the new file `Depth/SuffixZero.lean`,
+  the whole library at `9a60dfb` the only `sorry` are four in the new file `Depth/SuffixZero.lean`,
   which is not in this part, is imported by none of the 15 files, and is marked "in work" in the
   index.
 - By compiling (`Ax.lean`: `Lean.collectAxioms` on every constant of the 15 modules, public,
@@ -479,12 +479,12 @@ False, vacuous, drifted: nothing found. Misdescribed, in order of weight:
    first sentence) hold for blocks of any width, also narrower than `d_model`. This is what
    Theorem B.1 (ii) and Lemma A.27 say; the main text's scope has `d_hidden ≥ d_model`. Only the
    gains need the width.
-8. **The branch moved during the audit** (`a969c4e` to `6c30ab8`, four pushes); the 15 files,
-   their imports and their index rows did not change. At `6c30ab8` the library has four `sorry`,
+8. **The branch moved during the audit** (`ddcb801` to `9a60dfb`, four pushes); the 15 files,
+   their imports and their index rows did not change. At `9a60dfb` the library has four `sorry`,
    all in the new `Depth/SuffixZero.lean` (marked "in work"); the sentence "the library has no
-   sorry" of the commit message of `641435d` was true at that commit, not after.
+   sorry" of the commit message of `0ba3139` was true at that commit, not after.
 
-## Corrections for `STATEMENTS.md` (lines at `ee8874f`; the file is the same at `6c30ab8`)
+## Corrections for `STATEMENTS.md` (lines at `ee517f2`; the file is the same at `9a60dfb`)
 
 1. **Lines 43-55** (the list "Not yet compared by such a reader"). Take out the 15 files of this
    part and add, before that sentence: "A seventh reader (24 November 2026, part A) compared
@@ -548,7 +548,7 @@ that the seven kinds of block satisfy these hypotheses".
   `rescaleDir`, `UnitsRigid`, `GatedUnitsRescale`, `Params.cob`, `rmsNorm`, `silu`, `gelu`, the
   upper bounds of Theorem 4.2, Theorem 5.2 of the dimension paper, `ae_funDim_ge`) I read, but I
   did not compare them with the papers again; earlier audits did, and their files are unchanged
-  since `31752fa` (by `git diff`).
+  since `0d967ff` (by `git diff`).
 - The paper is the text of the PDF. Displayed formulas are broken across lines there; the ones
   that I compared (Lemma A.4, the formulas for `J_0`, Steps 1 to 5 of Theorem B.1 (ii),
   Lemma A.27) were legible. Lemma A.2 (ii) is garbled in the text and is not in this part.

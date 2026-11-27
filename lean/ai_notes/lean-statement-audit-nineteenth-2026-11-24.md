@@ -9,27 +9,27 @@ repository file, ran no `lake build`, made no commit and no push. My files are i
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
-- **Commit read: `65a02a6ec273536e98b1cac8defdf278a6e908ba` (24 November 2026, 19:40:18 UTC),**
+- **Commit read: `2a08e21e4371ea14a30c912a30a9f40f5f6ccd80` (24 November 2026, 19:40:18 UTC),**
   the head when I started (about 19:42 UTC) and when I made the compiled checks and the
-  computations (until 19:57 UTC). The branch then moved three times: `b2eecce` (19:58:32),
-  `d703b9d` (20:00:03) and **`27b81a1860cf9e581d292809b1a6b803cf5f4e9a` (20:00:20), the head when
-  I finished.** Between `65a02a6` and `27b81a1` the four files of the brief, `checks/Axioms.lean`
+  computations (until 19:57 UTC). The branch then moved three times: `e420f53` (19:58:32),
+  `e133770` (20:00:03) and **`87a22485f8a1f83d067d4fb02882fa3871627605` (20:00:20), the head when
+  I finished.** Between `2a08e21` and `87a2248` the four files of the brief, `checks/Axioms.lean`
   and every file of definitions that I read are unchanged (`git diff` is empty for them); what
   changed is `STATEMENTS.md` (two places, see below), `SkipsLean.lean` (one import), one new file
   `OneBlock/SkiplessHomogeneousRMSZero.lean` and three files of `ai_notes/`.
-- **Files with `sorry`.** At `65a02a6`: none (no file under `SkipsLean/` contains the word). At
-  `27b81a1`: `OneBlock/SkiplessHomogeneousRMSZero.lean` (four), which is not a file of this
+- **Files with `sorry`.** At `2a08e21`: none (no file under `SkipsLean/` contains the word). At
+  `87a2248`: `OneBlock/SkiplessHomogeneousRMSZero.lean` (four), which is not a file of this
   audit and which none of the four files uses.
 - The four files have 50 public names: 4 definitions and 46 theorems (1 + 1; 3 + 3; 0 + 10;
   0 + 32, as the brief says).
 - All 46 theorems depend on `propext`, `Classical.choice`, `Quot.sound` only (by compiling
   `Sig.lean`, output `Sig.out`, against the build of `/home/claude/lp/lean`, which was at commit
-  `65a02a6` when I compiled; its four source files are the same as those of `/home/claude/lw`, by `cmp`, and its
+  `2a08e21` when I compiled; its four source files are the same as those of `/home/claude/lw`, by `cmp`, and its
   compiled files are newer than the sources).
 
 Papers, as text: the skips paper ("S", `<scratchpad>/skips.txt`) and the dimension paper ("D",
-`<scratchpad>/dim.txt`). Line numbers of `STATEMENTS.md` are those of `65a02a6`: the rows of the
-four files are lines 825, 839, 840 and 841 there. At `27b81a1` the same four rows, with the same
+`<scratchpad>/dim.txt`). Line numbers of `STATEMENTS.md` are those of `2a08e21`: the rows of the
+four files are lines 825, 839, 840 and 841 there. At `87a2248` the same four rows, with the same
 text, are lines 826, 840, 841 and 842, and the sentence of lines 207 to 211 is lines 207 to 212,
 with the addition that the four files "are with the reader of the nineteenth audit".
 
@@ -536,13 +536,13 @@ kind of block it is in `Symmetry/FiniteSymmetries.lean`, not audited here).
 ### The index and the axiom file
 
 - Every public name of the four files is in a row of `STATEMENTS.md` (lines 825, 839, 840, 841
-  at `65a02a6`).
+  at `2a08e21`).
   Six names of line 841 are written short (`…_tanh_…`, `…_gelu_…`, `…_gated_…`, `…_swiglu_…`,
   `…_geglu_…`, `…_attention_…`), as elsewhere in the index; in full they are
   `ae_funDimOn_skipless_add_le_tanh_oneBlock_residual_rmsNorm_zero` and so on.
 - Every one of the 46 theorems has a `#print axioms` line in `checks/Axioms.lean` (by a search of
   the file for each name).
-- The four files are imported by `SkipsLean.lean` (lines 279 to 282 at `65a02a6`).
+- The four files are imported by `SkipsLean.lean` (lines 279 to 282 at `2a08e21`).
 - I found nothing wrong in the four rows. Two phrases to tighten and two additions are under
   "Corrections".
 
@@ -592,9 +592,9 @@ Nothing false, vacuous, drifted or misdescribed was found. In order of weight:
    one token or with a mask that lets every token see one token only) the gain was larger. These
    are computed ranks on batches, not proofs.
 
-## Corrections for `STATEMENTS.md` (line numbers of `65a02a6`; at `27b81a1` each row is one line lower)
+## Corrections for `STATEMENTS.md` (line numbers of `2a08e21`; at `87a2248` each row is one line lower)
 
-1. **Lines 207 to 211** (207 to 212 at `27b81a1`: "Not yet compared by such a reader (written
+1. **Lines 207 to 211** (207 to 212 at `87a2248`: "Not yet compared by such a reader (written
    after the eighteenth audit began): `OneBlock/ResidualRMSZeroSteps.lean`, … its statements were
    read by the coordinator only), which are with the reader of the nineteenth audit …"): the four
    files have now been compared (this report): nothing false, vacuous or drifted;

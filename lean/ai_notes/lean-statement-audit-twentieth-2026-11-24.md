@@ -9,32 +9,32 @@ repository file, ran no `lake build`, made no commit and no push. My files are i
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
-- **Commit read: `d12a43b19e0241a3a74424c016acf5c32b67a2c3` (24 November 2026, 20:14:54 UTC),**
+- **Commit read: `8044edfb91ee7cbfd35c3bc0e942ab307ea55e68` (24 November 2026, 20:14:54 UTC),**
   the head when I started (20:15 UTC). The branch moved while I worked. At
-  `490f0169d550dbb8a8b6c7ae96eac86b305356d9` (20:23:36) one of the four files,
-  `OneBlock/SkiplessHomogeneousRMSZero.lean`, has other proofs (commit `cd811de`: the flat
+  `fd94b6ff3a1227cc0bae4ca9576fb19bebefa367` (20:23:36) one of the four files,
+  `OneBlock/SkiplessHomogeneousRMSZero.lean`, has other proofs (commit `00ddd95`: the flat
   direction at `h_0` is now proved from `eval_cobAt_rmsNorm_zero_of_rowHomogeneous`, and the
   private copy of Lemma A.3 (i) is gone); its header, its `variable` lines and its five public
   statements are unchanged, and the other three files are identical (by `git diff`, and by
   compiling the signatures against both builds: the two outputs are the same file). At
-  **`a23c3884c621fe0361f0d3a14876e9e3f3c05ec8` (20:53:42), the head when I finished,** the four
-  files and every file of definitions that I read are as at `490f016` (`git diff` is empty for
+  **`17021f62b78d53501134e58ccb0834ba451d3913` (20:53:42), the head when I finished,** the four
+  files and every file of definitions that I read are as at `fd94b6f` (`git diff` is empty for
   them); the four index rows have the same text and are lines 860, 861, 862 and 864.
-- **Files with `sorry`:** none at `d12a43b` and none at `490f016` (no file under `SkipsLean/`
-  contains the word). At `a23c388` three files, all written after I started, none of this audit
+- **Files with `sorry`:** none at `8044edf` and none at `fd94b6f` (no file under `SkipsLean/`
+  contains the word). At `17021f6` three files, all written after I started, none of this audit
   and none imported by the four files: `Dimension/UpperBoundHomogeneousRMSNormZero.lean`,
   `OneBlock/ResidualRMSZeroRescale.lean`, `OneBlock/ResidualRMSZeroRescaleGeneric.lean`.
 - The four files have 17 public theorems (5 + 3 + 7 + 2) and no public definition. All 17 depend
   on `propext`, `Classical.choice`, `Quot.sound` only (by compiling `Sig.lean`, output `Sig.out`,
-  against the build of `/home/claude/lp/lean`, at `d12a43b`, at `490f016` and at `a23c388`; its
+  against the build of `/home/claude/lp/lean`, at `8044edf`, at `fd94b6f` and at `17021f6`; its
   `SkipsLean/` was the same as that of `/home/claude/lw` each time, by `diff -rq`, and the
   compiled files of the four modules were newer than their sources; the three outputs are the
   same file).
 
 Papers, as text: the skips paper ("S", `<scratchpad>/skips.txt`); the dimension paper
 (`<scratchpad>/dim.txt`) is not cited by the four files. Line numbers of `STATEMENTS.md` are
-those of `d12a43b`: the rows of the four files are lines 851 to 854 there (860, 861, 862 and 864
-at `a23c388`).
+those of `8044edf`: the rows of the four files are lines 851 to 854 there (860, 861, 862 and 864
+at `17021f6`).
 
 **Short answer. Nothing false, nothing vacuous and nothing drifted was found.** The 17 statements
 are the paper's, or the paper's with fewer hypotheses, with two exceptions of form that the files
@@ -62,7 +62,7 @@ How I checked.
   from `/home/claude/lp/lean` (nothing written there): `Sig.lean` (the full signatures of the 17
   theorems, with every instance argument, and their axioms), `Chk.lean` (checks 1, 2 and 5),
   `Chk2.lean` (checks 2 and 7). All compile without error and without `sorry` (`*.out`; the
-  last time against the build at `a23c388`); every theorem of mine that I name below has the
+  last time against the build at `17021f6`); every theorem of mine that I name below has the
   three standard axioms.
 - "By a computation": my own scripts (I did not run the coordinator's script; I read its output).
   `z20core.py`, `z20run.py`, `z20sum.py`: networks of ReLU, ReLU² and ReGLU blocks under
@@ -377,7 +377,7 @@ entries by compiling, `Chk.lean`.)
   its output by `c_t^k`", the paper's "positively homogeneous of degree `k`" token by token.
 - **Lost.** (a) The finite form (the output is unchanged for every `G ∈ GL(d)`, also far from
   `I`): it is `eval_cobAt_rmsNorm_zero_of_rowHomogeneous` of `Symmetry/HomogeneousRMSNorm.lean`,
-  at any depth, and since `cd811de` the proof of the direction statement uses it. (b) Depth
+  at any depth, and since `00ddd95` the proof of the direction statement uses it. (b) Depth
   `L > 1` and `ℓ < L`: the direction statement is for one block only. (c) The scaling at `h_L`:
   its direction is `scaleDir_mem_flat_skipless_rmsNorm_zero` (`Dimension/UpperBoundRMSNormZero.lean`,
   for arbitrary `f_ℓ`). (d) The case "`G` orthogonal" and part (ii) are not for this file. The
@@ -545,7 +545,7 @@ at depth `L` it is a statement of the paper (Theorem 4.2).** (By reading; the na
   names of the four rows (2 + 5 + 3 + 7), and the 17 lines 1576 to 1592 of `checks/Axioms.lean`.
   The four files are imported by `SkipsLean.lean` (lines 58 and 284 to 286).
 - Lines 215 to 220 of the index ("Not yet compared by such a reader …") name the four files; at
-  `a23c388` they add "these four are with the reader of the twentieth audit since 20:14 UTC".
+  `17021f6` they add "these four are with the reader of the twentieth audit since 20:14 UTC".
 
 ---------------------------------------------------------------------------------------------------
 
@@ -651,7 +651,7 @@ Nothing false, vacuous, drifted or misdescribed was found. In order of weight:
 6. **The value of part (v) for the residual network** is in Lean as an equality at one `θ` under
    the conditions of the proof. That these conditions hold at almost every `θ` for a tanh block
    I compiled from the library's statements (`ae_funDimOn_residual_tanh_eq20`); the library
-   (at `d12a43b`) does not state the equality at generic parameters.
+   (at `8044edf`) does not state the equality at generic parameters.
 7. **For the numerical checks of the paper (Appendix E).** A random batch can miss thin regions
    of a ReLU-type network when `E` is badly conditioned: at one random parameter with
    `det E = −0.008` (`d = 2`, width 3, skipless) 400 random inputs gave rank 7, and inputs spread
@@ -660,7 +660,7 @@ Nothing false, vacuous, drifted or misdescribed was found. In order of weight:
 8. The general Lean statements also cover activations and gates that are positively homogeneous
    of degree `0` (a step function) and the activation `0`. This is harmless for upper bounds.
 
-## Corrections for `STATEMENTS.md` (line numbers of `d12a43b`; at `a23c388` the rows are lines 860, 861, 862 and 864)
+## Corrections for `STATEMENTS.md` (line numbers of `8044edf`; at `17021f6` the rows are lines 860, 861, 862 and 864)
 
 Nothing in the four rows is false. Five places where the index can be plainer:
 
@@ -679,7 +679,7 @@ Nothing in the four rows is false. Five places where the index can be plainer:
    `Residual/UpperBoundRescaleRMSNormZero.lean`. Not stated: its half "at least"; the equality for
    ReLU and ReLU² blocks; "the skip raises the functional dimension by at least `d_model²`"." (As
    the row stands, a reader can take "not stated" for the whole library, also for the half that
-   is stated.) If the files written after `d12a43b` state some of these, the sentence should
+   is stated.) If the files written after `8044edf` state some of these, the sentence should
    point to them instead.
 4. **Row 852.** "(also stated for any one block that is positively homogeneous row by row,
    `RowHomogeneous`: S Lemma A.3 (i) as a statement on directions)" → add "for one block, for the
@@ -702,7 +702,7 @@ file of the library.
 ## What I could not check
 
 - **The proofs.** I read statements. That the 17 statements are proved rests on the compiler and
-  on the axiom check (`Sig.out`), at `d12a43b`, `490f016` and `a23c388`.
+  on the axiom check (`Sig.out`), at `8044edf`, `fd94b6f` and `17021f6`.
 - **"For generic parameters" by computation.** The computations are at one or two random
   parameters per case, 261 cases. They cannot see a set of measure zero, and a rank on a batch is
   a lower bound. The equalities that I report are equalities of a rank on two batches with a
@@ -725,7 +725,7 @@ file of the library.
 
 ## Files of this audit (in `/home/claude/audit20/`)
 
-`Sig.lean`, `Sig.out` (at `a23c388`), `Sig_d12a43b.out` (signatures and axioms of the 17
+`Sig.lean`, `Sig.out` (at `17021f6`), `Sig_8044edf.out` (signatures and axioms of the 17
 theorems); `Chk.lean`, `Chk.out`, `Chk2.lean`, `Chk2.out` (compiled checks); `pub_*.txt` (the
 public names); `z20core.py`, `z20run.py`, `z20sum.py`, `z20cond.py`, `z20fd.py`, `z20first.py`
 (computations) with the outputs `z20_skipless.out`, `z20_residual.out`, `z20_wider.out`,

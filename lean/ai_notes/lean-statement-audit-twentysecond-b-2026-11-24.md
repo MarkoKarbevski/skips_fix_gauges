@@ -9,32 +9,32 @@ I audited statements and definitions, not proofs. I changed no repository file, 
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
-- **Commit read: `c82bc4091dc15be64d67c2578b4f835408a8c931` (24 November 2026, 21:46:07 UTC),**
+- **Commit read: `38eefee4b07e0e7cd685a6553c175b738b8c62a1` (24 November 2026, 21:46:07 UTC),**
   the head when I started (21:47 UTC). The branch moved while I worked. At
-  **`00c5f4fda95e027f284e184061b4a81f1759a480` (22:14:34 UTC), the head when I finished,** five of
-  the six files are as at `c82bc40` (`git diff` is empty for them). The sixth,
-  `OneBlock/LearnedSkipRMSZeroBound.lean`, got its open proof at `1be82df` (22:00:08 UTC): its
-  header, its definition and its two public statements are the same text at `c82bc40` and at
-  `00c5f4f` (compared by a script); 35 private helpers were added.
-- **Files with `sorry`.** At `c82bc40`: `OneBlock/LearnedSkipRMSZeroBound.lean` (one `sorry`, the
+  **`2b9d829009374fa5f76306b2ab8c8d285c65cfac` (22:14:34 UTC), the head when I finished,** five of
+  the six files are as at `38eefee` (`git diff` is empty for them). The sixth,
+  `OneBlock/LearnedSkipRMSZeroBound.lean`, got its open proof at `c63b4e1` (22:00:08 UTC): its
+  header, its definition and its two public statements are the same text at `38eefee` and at
+  `2b9d829` (compared by a script); 35 private helpers were added.
+- **Files with `sorry`.** At `38eefee`: `OneBlock/LearnedSkipRMSZeroBound.lean` (one `sorry`, the
   proof of `funDimSkipsOn_add_le_learned_rmsNorm_zero`; the second theorem of the file,
   `funDimSkipsOn_learned_le_funDimOn_residual_add_rmsNorm_zero`, was proved from the first, so
   both rested on `sorry` at that commit), and `OneBlock/SkiplessHomogeneousRMSZeroEq.lean` (not a
-  file of this audit). At `00c5f4f`: no file under `SkipsLean/` contains the word.
+  file of this audit). At `2b9d829`: no file under `SkipsLean/` contains the word.
 - The six files have 50 public theorems (4 + 33 + 2 + 3 + 6 + 2) and 2 public definitions
   (`skipProdFwd`, `learnedZeroDomain`). All 52 depend on `propext`, `Classical.choice`,
   `Quot.sound` only (by compiling `Sig.lean`, output `Sig.out`, against the build of
-  `/home/claude/lp/lean` at `00c5f4f`, whose `SkipsLean/` was that of `/home/claude/lw` by
-  `diff -rq`, with compiled files newer than the sources; for the two theorems of `LearnedSkipRMSZeroBound.lean` this is the state at `1be82df`
+  `/home/claude/lp/lean` at `2b9d829`, whose `SkipsLean/` was that of `/home/claude/lw` by
+  `diff -rq`, with compiled files newer than the sources; for the two theorems of `LearnedSkipRMSZeroBound.lean` this is the state at `c63b4e1`
   and after).
 - Written after I started and **not read by me:** `OneBlock/LearnedSkipRMSZeroBoundKinds.lean`,
   `OneBlock/LearnedSkipRMSZeroRescaleBound.lean`, `OneBlock/LearnedSkipTriangularRMSZeroBound.lean`
-  (index rows 910 to 912 at `00c5f4f`).
+  (index rows 910 to 912 at `2b9d829`).
 
 Papers, as text: the skips paper ("S", `<scratchpad>/skips.txt`) and, for one sentence, the
 dimension paper ("D", `<scratchpad>/dim.txt`). Line numbers of `STATEMENTS.md` are those of
-`00c5f4f`: the rows of the six files are lines 839, 840, 841, 842, 843 and 909 (835 to 839 and 905
-at `c82bc40`, with the same text; the status of the last row was "in work" and is "proved").
+`2b9d829`: the rows of the six files are lines 839, 840, 841, 842, 843 and 909 (835 to 839 and 905
+at `38eefee`, with the same text; the status of the last row was "in work" and is "proved").
 
 **Short answer. Nothing false, nothing vacuous and nothing drifted was found.** The 28 generated
 statements differ from their twins in the five listed ways and in nothing else. The counts are the
@@ -73,8 +73,8 @@ How I checked.
 - "By compiling": scratch files in `/home/claude/audit22b/`, compiled with `lake env lean <file>`
   from `/home/claude/lp/lean` (nothing written there): `Sig.lean` (signatures with every instance
   argument, and axioms), `Chk.lean` (check 1: fifteen statements at `Measure.addHaar`), `Chk2.lean`
-  (checks 2, 5, 6), `LSBchk.lean` (a copy of `OneBlock/LearnedSkipRMSZeroBound.lean` at `1f86593`,
-  the same file as at `00c5f4f`, with one check added). All compile without error and without
+  (checks 2, 5, 6), `LSBchk.lean` (a copy of `OneBlock/LearnedSkipRMSZeroBound.lean` at `0ea49ee`,
+  the same file as at `2b9d829`, with one check added). All compile without error and without
   `sorry`; every theorem of mine that I name below has the three standard axioms.
 - "By a computation": my own scripts. `z22core.py`: networks of attention, MLP and gated blocks
   (one kind per block, or heads and hidden units side by side) under pre-RMSNorm with `ε = 0`,
@@ -550,7 +550,7 @@ difference of the two ranks is `2` and `5`, that is `d(d+1)/2 − 1`, in all 48 
 bound, and equal to it.** (By reading and by hand; one identity by compiling, `LSBchk.lean`; the
 ranks by computation.)
 
-- The Lean text (the same at `c82bc40`, where the first proof was `sorry`, and at `00c5f4f`):
+- The Lean text (the same at `38eefee`, where the first proof was `sorry`, and at `2b9d829`):
 
   ```
   def learnedZeroDomain (A : Arch T d 1) (θ : Params A dIn dOut) (R : Fin 1 → Matrix d d ℝ) :
@@ -659,8 +659,8 @@ rows of their files and in `checks/Axioms.lean`.** (By reading; the names by a s
 
 - The names. For each file, the public names of the source are exactly the names of the third
   cell of its row: 4, 33, 2, 3, 7 (with the definition `skipProdFwd`) and 3 (with the definition
-  `learnedZeroDomain`). All 50 theorems are in `checks/Axioms.lean` at `00c5f4f` (the two of
-  `LearnedSkipRMSZeroBound.lean` since its proof; at `c82bc40`, with the file "in work", they
+  `learnedZeroDomain`). All 50 theorems are in `checks/Axioms.lean` at `2b9d829` (the two of
+  `LearnedSkipRMSZeroBound.lean` since its proof; at `38eefee`, with the file "in work", they
   were not). The two definitions are not there; neither are the older definitions that I looked
   for (`skipProd`, `cobDir`, `scaleDir`, `residualZeroDomain`, `blockFlatSphere`).
 - The sixteen helpers (`sup_le_span_ibl`, `write_eq_zero_of_read_ibl`, `finrank_sup_ibl`;
@@ -806,8 +806,8 @@ Not stated (the header and the index say so): the converse of A.12 (ii).
 | name | paper sentence | verdict |
 |---|---|---|
 | `learnedZeroDomain` | "With `ε = 0`, it also excludes the inputs at which a state that is normalized vanishes" | SAME, for one block with the learned skip `R 0` |
-| `funDimSkipsOn_add_le_learned_rmsNorm_zero` | proof of B.1 (iii), "The case `ε = 0`": "For the learned skip, `η^rot` and `K_B` are flat, which gives at least `d_model (d_model − 1) + 2` […] dimensions besides `K_B`" | SAME for a full skip, at one `(θ, A)`, with "generic" replaced by "`E` of rank `d ≥ 1`, `A` invertible"; an analytic block. `sorry` at `c82bc40`, proved at `1be82df` |
-| `funDimSkipsOn_learned_le_funDimOn_residual_add_rmsNorm_zero` | B.1 (iii): "For `ε = 0` it exceeds that of the residual network with `ε = 0` by at most `d_model (d_model + 1)/2 − 1`" | PART: a full skip and an analytic block (not the upper triangular skip, not ReLU, ReLU², ReGLU, not the equality for them); at one `(θ, A)` and the same `θ`, under the conditions of the value for the residual network and `A` invertible. Proved from the first at `c82bc40` |
+| `funDimSkipsOn_add_le_learned_rmsNorm_zero` | proof of B.1 (iii), "The case `ε = 0`": "For the learned skip, `η^rot` and `K_B` are flat, which gives at least `d_model (d_model − 1) + 2` […] dimensions besides `K_B`" | SAME for a full skip, at one `(θ, A)`, with "generic" replaced by "`E` of rank `d ≥ 1`, `A` invertible"; an analytic block. `sorry` at `38eefee`, proved at `c63b4e1` |
+| `funDimSkipsOn_learned_le_funDimOn_residual_add_rmsNorm_zero` | B.1 (iii): "For `ε = 0` it exceeds that of the residual network with `ε = 0` by at most `d_model (d_model + 1)/2 − 1`" | PART: a full skip and an analytic block (not the upper triangular skip, not ReLU, ReLU², ReGLU, not the equality for them); at one `(θ, A)` and the same `θ`, under the conditions of the value for the residual network and `A` invertible. Proved from the first at `38eefee` |
 
 ---------------------------------------------------------------------------------------------------
 
@@ -860,7 +860,7 @@ Nothing false, vacuous, drifted or misdescribed was found. In order of weight:
 
 ## Corrections for `STATEMENTS.md`
 
-Line numbers at `00c5f4f`.
+Line numbers at `2b9d829`.
 
 1. **Row 819** (`Dimension/UpperBoundAttention.lean`): "and the bound with `CO(d)` and `s` for
    attention blocks is not stated" is no longer true. Write: "the bound with `CO(d)` and `s` is in
@@ -892,7 +892,7 @@ Line numbers at `00c5f4f`.
    in the private helpers of the file).
 8. **Lines 238 to 253** ("Not yet compared by such a reader …"): the six files of this audit can
    be taken off the list, with this report as the source; `OneBlock/LearnedSkipRMSZeroBound.lean`
-   was read with one proof open at `c82bc40` and proved at `1be82df` with the same statements.
+   was read with one proof open at `38eefee` and proved at `c63b4e1` with the same statements.
 
 ## What I could not check
 

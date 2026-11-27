@@ -18,11 +18,11 @@ text) and the skips paper as text (`skips.txt`). I read the text files, not the 
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
-- The copy I read: commit `91bc064f050350fde6622209e3fa665c3f2dce30` (24 November, 11:50:04 UTC),
+- The copy I read: commit `d0d39c411506d3d866e3143452683dfbf70f5b3b` (24 November, 11:50:04 UTC),
   taken with `git archive` into `/home/claude/audit9b/snap`.
-- While I worked the branch moved twice: to `18543e53c0416c7a64ea64fb4ec6f73085c8fab2` (11:53:29
-  UTC), and to `35c1a5dbe97eff9e1d84b54601df23c808403761` (12:04:48 UTC), the commit when I
-  finished. None of the fourteen files changed (`git diff --quiet 91bc064 35c1a5d` on each).
+- While I worked the branch moved twice: to `639933f4377485e7b12eacbb0ebe306b8357f080` (11:53:29
+  UTC), and to `75e27a6dc73e607d68de0bc2b2faa6c307362281` (12:04:48 UTC), the commit when I
+  finished. None of the fourteen files changed (`git diff --quiet d0d39c4 75e27a6` on each).
   `STATEMENTS.md` changed outside the rows of this part (the paragraph on the readers from line
   89 on, rows on local identifiability and on Proposition E.1, two notes); the rows of the
   fourteen files have the same text and moved down by 12 lines. Below I give both line numbers
@@ -32,9 +32,9 @@ Files under `SkipsLean/` that contain `sorry` (`grep -w`):
 
 | Commit | Files with `sorry` |
 |---|---|
-| `91bc064` | `Dimension/ExpOrbitGated.lean` (2), `Dimension/LocalIdentifiabilityGated.lean` (6), `Residual/LocalIdentifiability.lean` (6), `Residual/LocalIdentifiabilityGated.lean` (6) |
-| `18543e5` | `Dimension/ExpOrbitGated.lean` (2) |
-| `35c1a5d` | `Depth/InactiveGate.lean` (2), `Depth/InactiveGateOpen.lean` (1), `Depth/InactiveGateReGLU.lean` (2), `Depth/InactiveUnit.lean` (2), `Depth/InactiveUnitRelu.lean` (7), new files on Proposition E.1 |
+| `d0d39c4` | `Dimension/ExpOrbitGated.lean` (2), `Dimension/LocalIdentifiabilityGated.lean` (6), `Residual/LocalIdentifiability.lean` (6), `Residual/LocalIdentifiabilityGated.lean` (6) |
+| `639933f` | `Dimension/ExpOrbitGated.lean` (2) |
+| `75e27a6` | `Depth/InactiveGate.lean` (2), `Depth/InactiveGateOpen.lean` (1), `Depth/InactiveGateReGLU.lean` (2), `Depth/InactiveUnit.lean` (2), `Depth/InactiveUnitRelu.lean` (7), new files on Proposition E.1 |
 
 None of them is one of the fourteen files, and none is imported by them (the fourteen compile
 without `sorryAx`, below).
@@ -54,9 +54,9 @@ and not axioms. No `opaque`, `unsafe`, `implemented_by`, `native_decide` or `ext
 - "By compiling": scratch files of my own in `/home/claude/audit9b/scratch/` (`Chk1.lean`,
   `Ax9.lean`, `Fit9.lean`), compiled with `lean` 4.36.0. The compiled library of `/home/claude/lw`
   has none of the fourteen files, so I used the compiled library of `/home/claude/lp/lean` (branch
-  `lean-plus`, at `18543e5` when I compiled, between 11:54 and 12:00 UTC) through `LEAN_PATH`,
+  `lean-plus`, at `639933f` when I compiled, between 11:54 and 12:00 UTC) through `LEAN_PATH`,
   without `lake build`. The fourteen source files are the same in `lp`, in `lw` and in the
-  snapshot (`cmp`, again at the end, when both were at `35c1a5d`), and each compiled file of `lp`
+  snapshot (`cmp`, again at the end, when both were at `75e27a6`), and each compiled file of `lp`
   is newer than its source. I wrote nothing under `lw`, `lp` or the repository.
 - "By a computation": Python scripts in `/home/claude/audit9b/py/` (`rank_check_gelu.py`, float64
   with automatic differentiation; `rank_mp.py`, 120 digits). They support a claim; they prove
@@ -178,8 +178,8 @@ noncomputable def funDim (θ : Params A dIn dOut) : ℕ :=
   sSup {r : ℕ | ∃ (n : ℕ) (X : Fin n → Matrix T dIn ℝ), r = jacobianRank A S X θ}
 ```
 
-This file, `Network/Defs.lean` and `Basic/RMSNorm.lean` did not change since the commit `f1ffa79`
-of the eighth audit (`git diff --quiet f1ffa79 91bc064` on each). At `ε = 0` the network is total, `rmsRow 0 0 = 0`; the note "Pre-RMSNorm with `ε = 0`"
+This file, `Network/Defs.lean` and `Basic/RMSNorm.lean` did not change since the commit `244ec8a`
+of the eighth audit (`git diff --quiet 244ec8a d0d39c4` on each). At `ε = 0` the network is total, `rmsRow 0 0 = 0`; the note "Pre-RMSNorm with `ε = 0`"
 of `STATEMENTS.md` (lines 408 to 420 / 425 to 437) says so, and says that Lean's `funDim` is at least the
 paper's value at every `θ` (eighth audit, part A, by reading; I did not repeat the argument). The
 header of `Depth/GeluZero.lean` says "`fd` is `funDim` of Lean's total network".
@@ -594,7 +594,7 @@ Step 2 and Step 4; and in Step 4 the identity `𝓛°(z − δ, 1 − δ'; n) = 
 `δ, δ'` supported on the earlier units, with no bound on their size, since the direction of the
 derivative is `0`.
 
-## Corrections for `STATEMENTS.md` (lines "at `91bc064` / at `35c1a5d`")
+## Corrections for `STATEMENTS.md` (lines "at `d0d39c4` / at `75e27a6`")
 
 The rows of the fourteen files (lines 180, 206, 213 to 224 / 192, 218, 225 to 236) say what the
 statements say, and the status "proved" is right. Stale or inexact:
@@ -668,7 +668,7 @@ statements say, and the status "proved" is right. Stale or inexact:
 
 ## Files of this audit (`/home/claude/audit9b/`)
 
-`snap/` (the sources at `91bc064`); `scratch/Chk1.lean`, `Chk1.out` (elaborated statements,
+`snap/` (the sources at `d0d39c4`); `scratch/Chk1.lean`, `Chk1.out` (elaborated statements,
 definitions, axioms of ten names); `scratch/Ax9.lean`, `Ax9.out`, `names.txt` (axioms of the 35
 public names); `scratch/Fit9.lean`, `Fit9.out` (the structure against (P1), (P2); Lemma D.19 from
 one block; the two final statements together; (P2) with one coordinate); `tools/pub.py` (public

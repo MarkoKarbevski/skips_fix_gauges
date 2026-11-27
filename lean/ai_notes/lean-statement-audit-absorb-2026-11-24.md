@@ -18,7 +18,7 @@ Compared:
 
 **The tree changed during the audit.** At 03:05 UTC `Absorb/FewerUnits.lean` held five statements
 with `sorry` (compiled 02:49; `STATEMENTS.md` said "in work"). At 03:23 UTC the file was replaced in
-the audited worktree by a version with proofs (commits `5979922`, `65b6f83`, `19c32aa`, `fd99513`
+the audited worktree by a version with proofs (commits `83094b7`, `a55c5f3`, `fea0bc7`, `deb5c8a`
 of branch `lean-wip`), and `STATEMENTS.md` was changed to "proved"; the library was recompiled by
 another process at 03:25 UTC. Entry 3.4 describes both versions. The four other files
 of `Absorb/` did not change (`Block.lean` 02:02, `NoWidth.lean` 02:16, `Networks.lean` 02:30,
@@ -378,7 +378,7 @@ What changed during the audit:
   `sorryAx` in `#print axioms`), and the two pointwise statements had the further hypothesis
   `2 ≤ Fintype.card d`.
 - 03:23 UTC: the file has proofs and no `sorry`; the two pointwise statements no longer assume
-  `2 ≤ Fintype.card d` (commit `fd99513`); the three `∀ᵐ` statements
+  `2 ≤ Fintype.card d` (commit `deb5c8a`); the three `∀ᵐ` statements
   are word for word as before; a public helper `exists_ne_zero_forall_dotProduct_eq_zero` (l.38-40)
   was added. After the recompilation of 03:25 UTC, `#print axioms` gives
   `[propext, Classical.choice, Quot.sound]` for all six (`Check5.out`).

@@ -7,8 +7,8 @@ Reader: an independent reader who did not write the statements. Brief:
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`). The branch moved while I read.
 
-- Commit at the start: `91bc064f050350fde6622209e3fa665c3f2dce30` (11:50:04 UTC).
-- Commit at the end: `18543e53c0416c7a64ea64fb4ec6f73085c8fab2` (11:53:29 UTC).
+- Commit at the start: `d0d39c411506d3d866e3143452683dfbf70f5b3b` (11:50:04 UTC).
+- Commit at the end: `639933f4377485e7b12eacbb0ebe306b8357f080` (11:53:29 UTC).
 - Files with `sorry` at the start (whole library, `git grep`): `Dimension/ExpOrbitGated.lean` (2),
   `Dimension/LocalIdentifiabilityGated.lean` (6), `Residual/LocalIdentifiability.lean` (6),
   `Residual/LocalIdentifiabilityGated.lean` (6).
@@ -16,8 +16,8 @@ Library: `/home/claude/lw/lean` (branch `lean-wip`). The branch moved while I re
   `hasStrictFDerivAt_cobExpRescale`). No other file of the library has one.
 - Between the two commits the proofs of the three other files were written. No statement, no
   docstring and no file header of the nine files changed: a script compared every public
-  declaration (statement and docstring) and every header of the nine files at `91bc064` and at
-  `18543e5` (`/home/claude/audit9c/tools/stmts.py`): all the same.
+  declaration (statement and docstring) and every header of the nine files at `d0d39c4` and at
+  `639933f` (`/home/claude/audit9c/tools/stmts.py`): all the same.
 
 Papers: the dimension paper ("D", `dim.txt`) and the skips paper ("S", `skips.txt`); numbers from
 these texts.
@@ -25,7 +25,7 @@ these texts.
 How I checked. "By reading": I read the Lean source and the paper. "By compiling": I compiled
 scratch files of my own in `/home/claude/audit9c/` (`Chk.lean`, `Zero.lean`, `One.lean`) with
 `lean` 4.36.0 against the compiled library of `/home/claude/lp/lean` (branch `lean-plus`, at
-`18543e5`; its sources under `SkipsLean/` were the same as those of `lw` by `diff -rq` when I
+`639933f`; its sources under `SkipsLean/` were the same as those of `lw` by `diff -rq` when I
 compiled; later it had two more files, `Depth/InactiveGate.lean` and `Depth/InactiveUnit.lean`,
 which are not in this audit). I used `LEAN_PATH`, without `lake`; three short compiles of a few
 seconds each. I wrote nothing under `lw`, `lp` or the repository. "By a computation": a Python
@@ -37,7 +37,7 @@ of the paper and one more, at least one token. Local identifiability as Lean wri
 paper's definition together with "close to the identity", and is a little stronger than the
 definition alone. The general statements are one direction of Proposition 4.6 (D) and
 Proposition 4.5 (S), at one parameter, and in that direction they say more than the paper. At
-`18543e5`, 24 of the 38 names are proved with the three standard axioms; the other 14 (all for
+`639933f`, 24 of the 38 names are proved with the three standard axioms; the other 14 (all for
 gated blocks) depend on `sorryAx` only through the two statements of `Dimension/ExpOrbitGated.lean`,
 which I judged true (one by compiling a proof of my own copy, the other by hand and by a
 computation). Three notes and one section of `STATEMENTS.md` are out of date; see the corrections.
@@ -83,7 +83,7 @@ kind, "each with at least `d_model` hidden units").
 | `hhid : ∀ ℓ, card d ≤ card (hid ℓ)` | "each with at least `d_model` hidden units" |
 | `hε : 0 < ε` (the four with `rmsNorm ε`) | "under pre-RMSNorm with `ε > 0`" |
 
-| Case of Corollary 5.3 | Lean name | File | At `18543e5` |
+| Case of Corollary 5.3 | Lean name | File | At `639933f` |
 |---|---|---|---|
 | (i) tanh, no normalization | `ae_exists_cob_of_eval_eq_tanh_skipless` | `Dimension/LocalIdentifiability.lean` | proved |
 | (i) tanh, `ε > 0` | `ae_exists_cob_of_eval_eq_tanh_skipless_rmsNorm` | same | proved |
@@ -113,7 +113,7 @@ RMSNorm there has `ε > 0`).
 | `hε : 0 < ε` (the four with `rmsNorm ε`) | RMSNorm of Section 2 |
 | no hypothesis on the number of hidden units | the scope has `d_hidden ≥ d_model` |
 
-| Case of Corollary 4.9 | Lean name | File | At `18543e5` |
+| Case of Corollary 4.9 | Lean name | File | At `639933f` |
 |---|---|---|---|
 | tanh, no normalization | `ae_exists_cob_of_eval_eq_tanh_residual` | `Residual/LocalIdentifiability.lean` | proved |
 | GELU, no normalization | `ae_exists_cob_of_eval_eq_gelu_residual` | same | proved |
@@ -253,7 +253,7 @@ The eight general statements and their hypotheses (by compiling, `Chk.lean`):
 ## Part 2: the statements, file by file
 
 "Proved": no `sorry`, and `#print axioms` shows `propext`, `Classical.choice`, `Quot.sound` only
-(by compiling, `Chk.lean`, at `18543e5`).
+(by compiling, `Chk.lean`, at `639933f`).
 
 | Paper statement or proof piece | Lean names (file) | Verdict | The difference |
 |---|---|---|---|
@@ -305,7 +305,7 @@ same image as some `Φ m`, and is `Φ m`. The hypotheses against the paper's pro
 The hypotheses can hold together (they hold in the proved corollaries), so the statement is not
 vacuous.
 
-**Note 2. The two statements of `Dimension/ExpOrbitGated.lean` (`sorry` at `18543e5`).**
+**Note 2. The two statements of `Dimension/ExpOrbitGated.lean` (`sorry` at `639933f`).**
 
 - `cobExpRescale_zero : cobExpRescale θ 0 = θ`. True. By compiling: my own copy of the statement
   is proved in `/home/claude/audit9c/Zero.lean` (`audit_cobExpRescale_zero`, eleven lines, three
@@ -331,7 +331,7 @@ vacuous.
   the statement and does not prove it. No machine proof of this statement yet.
 
 The twelve statements for gated blocks (`Dimension/LocalIdentifiabilityGated.lean`,
-`Residual/LocalIdentifiabilityGated.lean`) have no `sorry` of their own at `18543e5` and depend on
+`Residual/LocalIdentifiabilityGated.lean`) have no `sorry` of their own at `639933f` and depend on
 `sorryAx` only through these two (by compiling: `#print axioms`; and no other `sorry` is in the
 library).
 
@@ -402,7 +402,7 @@ Nothing false, vacuous or drifted. In order of weight:
    `d` and `fd(θ) = P − (L+1)d²` (the equality that Conjecture 1 of D asserts at generic
    parameters), local identifiability at `θ` follows from `exists_cob_of_eval_eq_skipless`.
 
-## Corrections for `STATEMENTS.md` (lines at `18543e5`)
+## Corrections for `STATEMENTS.md` (lines at `639933f`)
 
 1. Lines 83-96, "Not yet compared by such a reader …": remove from the list
    `Generic/LevelSetOrbit.lean`, `Dimension/LocalIdentifiability.lean`,
@@ -438,7 +438,7 @@ Nothing false, vacuous or drifted. In order of weight:
    other rows of the index do.
 7. Lines 231 and 233: add "blocks of any widths (no hypothesis on the number of hidden units), as
    in the Lean statements of Theorem 4.7; the paper's scope has `d_hidden ≥ d_model`".
-8. Lines 232 and 233, status "in work": more exactly, "proofs written at `18543e5`; they rest on
+8. Lines 232 and 233, status "in work": more exactly, "proofs written at `639933f`; they rest on
    the two `sorry` of `Dimension/ExpOrbitGated.lean`".
 9. Lines 226, 231, 232, 233 (or one note): the general statements hold at every `θ` with the
    named conditions and for every real-analytic `f_ℓ` or gate; they have no hypothesis on `d`,
@@ -475,4 +475,4 @@ Nothing false, vacuous or drifted. In order of weight:
 - **The PDFs**: I read the text files `dim.txt` and `skips.txt`, not the PDFs.
 
 Scratch files: `/home/claude/audit9c/` (`Chk.lean`, `Chk.out`, `Zero.lean`, `One.lean`,
-`tools/stmts.py`, `tools/deriv_check.py`, `snap_91bc064/`).
+`tools/stmts.py`, `tools/deriv_check.py`, `snap_d0d39c4/`).

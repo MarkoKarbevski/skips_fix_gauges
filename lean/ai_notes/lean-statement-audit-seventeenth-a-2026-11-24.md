@@ -9,31 +9,31 @@ in `/home/claude/audit17a/`.
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`). The branch moved eight times while I read.
 
-- **Commit at the start: `8a637fe8b9921280e1945ad477d0c9e33c4aa464` (17:57:16 UTC).** I read every
+- **Commit at the start: `b5b670464aefe1c65dfab9e22ce78ee8a00e6884` (17:57:16 UTC).** I read every
   statement of the seven files at this commit.
-- Then `470c454` (17:59:36), `588a9d0535c87f1cd75374c5e8ab043fea94954f` (18:02:14; the proofs of
-  `OneBlock/LearnedSkipGain.lean` were merged here), `da0be3b` (18:08:05), `137746a` (18:17:57),
-  `17f6d9a` (18:19:11), `7ef6b40` (18:21:24), `175a7d6` (18:22:45; only `STATEMENTS.md` changed
-  there) and **`e17b4d3` (18:23:15), the head at the end (18:25 UTC).**
+- Then `2db67eb` (17:59:36), `b76621f6a7fdda7225b7dbf77ce22fb5e74fd551` (18:02:14; the proofs of
+  `OneBlock/LearnedSkipGain.lean` were merged here), `98773a1` (18:08:05), `fbb9e5f` (18:17:57),
+  `bec80f6` (18:19:11), `c111450` (18:21:24), `dd48561` (18:22:45; only `STATEMENTS.md` changed
+  there) and **`97bdb01` (18:23:15), the head at the end (18:25 UTC).**
 - **No statement, no docstring and no `omit` line of the 44 public names changed** between
-  `8a637fe` and `e17b4d3` (by a script of mine, `cmp_stmts.py`: statement text, docstring and
+  `b5b6704` and `97bdb01` (by a script of mine, `cmp_stmts.py`: statement text, docstring and
   `omit` lines of every public name, old file against new). Only proofs were added, in
   `OneBlock/LearnedSkipGain.lean`.
-- **Files with `sorry`.** At `8a637fe`: of the seven, `OneBlock/LearnedSkipGain.lean` (2; so the
-  21 statements of the three files that rest on it were not yet proved). At `588a9d0` and at
-  `e17b4d3`: none of the seven. At `e17b4d3` three files of the library have `sorry`, all new and
+- **Files with `sorry`.** At `b5b6704`: of the seven, `OneBlock/LearnedSkipGain.lean` (2; so the
+  21 statements of the three files that rest on it were not yet proved). At `b76621f` and at
+  `97bdb01`: none of the seven. At `97bdb01` three files of the library have `sorry`, all new and
   not in my brief: `Absorb/AttentionHeadsIdentifiable.lean`, `Absorb/BiasesConstructions.lean`,
   `Absorb/BiasesAttention.lean`.
 - The seven files have 44 public names: 5 definitions and 39 theorems (3 + 11, 1 + 4, 1, 1 + 2,
   10, 7, 4, as the brief says).
-- At `588a9d0` all 39 theorems depend on `propext`, `Classical.choice`, `Quot.sound` only (by
+- At `b76621f` all 39 theorems depend on `propext`, `Classical.choice`, `Quot.sound` only (by
   compiling, `Ax.lean`, `Ax.out`, against the build of `/home/claude/lp/lean`; `/home/claude/lw`
   has no compiled copy of these files; the seven sources of `lp` and `lw` were the same, by
   `cmp`, and the compiled file of `LearnedSkipGain` was newer than its source).
 
 Papers, as text: the skips paper ("S", `skips.txt`). Line numbers of `STATEMENTS.md` are those of
-`175a7d6` and `e17b4d3` (the same). The index moved while I read: the rows of the seven files are lines 812 to 818 there,
-809 to 815 at `7ef6b40`, 808 to 814 at `da0be3b`, 805 to 811 at `588a9d0`. I quote the text of
+`dd48561` and `97bdb01` (the same). The index moved while I read: the rows of the seven files are lines 812 to 818 there,
+809 to 815 at `c111450`, 808 to 814 at `98773a1`, 805 to 811 at `b76621f`. I quote the text of
 every place that I name, so that it can be found.
 
 How I checked.
@@ -64,7 +64,7 @@ ranks at weights that the hypotheses allow, most of them not generic, and at spe
 I believe both by hand. What the authors should correct is in the index: four rows still say
 that the learned skip is not stated for ReLU, ReLU², ReGLU and attention blocks (below,
 "Corrections"; a fifth place, the paragraph "Not stated yet from the main text", was corrected
-at `175a7d6` while I wrote).
+at `dd48561` while I wrote).
 
 ---------------------------------------------------------------------------------------------------
 
@@ -247,7 +247,7 @@ facts by compiling.)
 
 **Verdict: not refuted, in any of their consequences; I believe both by hand. For attention the
 hypotheses (`E`, `D` of rank `d`, a token that sees a token, `S ≠ 0`) are enough.** Both are
-proved at `588a9d0` (three standard axioms).
+proved at `b76621f` (three standard axioms).
 
 - The Lean text of the first:
 
@@ -408,13 +408,13 @@ the two statements by a computation and by hand.)
 | full skip, `ε > 0`, ReLU, ReLU², ReGLU | yes, any width from one hidden unit on; in the paper's sense (the batch statements) |
 | full skip, `ε > 0`, attention | yes: `H ≥ 1`, `1 ≤ d_h ≤ d`, two tokens; this is the theorem's "`H` heads of width `d_h ≤ d_model` […] on sequences of at least two tokens" |
 | upper triangular skip, `ε > 0`, tanh, GELU, SwiGLU, GeGLU | width at least `d` only |
-| upper triangular skip, ReLU, ReLU², ReGLU, attention | not in the seven files. Stated since `da0be3b` in `OneBlock/LearnedSkipTriangularSmooth.lean` (attention) and `OneBlock/LearnedSkipTriangularRescale.lean` (ReLU, ReLU², ReGLU); neither has `sorry` at `e17b4d3`, and the index marks both proved. Not in my brief, not compared by me or, as far as the index says, by any reader |
+| upper triangular skip, ReLU, ReLU², ReGLU, attention | not in the seven files. Stated since `98773a1` in `OneBlock/LearnedSkipTriangularSmooth.lean` (attention) and `OneBlock/LearnedSkipTriangularRescale.lean` (ReLU, ReLU², ReGLU); neither has `sorry` at `97bdb01`, and the index marks both proved. Not in my brief, not compared by me or, as far as the index says, by any reader |
 | tanh, GELU, SwiGLU, GeGLU blocks narrower than `d` (full or triangular) | no. The general statement of `LearnedSkipGain.lean` would give them, but `NoSymmetricPart` (Step 4) is proved for ReLU, ReLU², ReGLU and attention only; for these four kinds the paper's Step 4 is the argument on rays `n = t n̂`, which has no Lean statement |
 | "and it satisfies the equality condition" | in content: the value statements say `fd = (P + d²) − d(d−1) − s`, parameters minus the dimension of the symmetries. Lean has no definition of the equality condition for the network with a learned skip |
 | "For `ε = 0` it exceeds that of the residual network with `ε = 0` by at most `d(d+1)/2 − 1`, with equality for ReLU, ReLU² and ReGLU blocks" | no. `funDimLearned_add_le_rmsNorm'` holds for `ε = 0` with the rotations only (two less than the paper's bound). My computation at `ε = 0` gives the paper's values (ReLU 17, ReLU² 29, two below Lean's bound; `ls17_epsle0.out`) |
 
 - **Theorem 4.6 (ii), last sentence, of the main text: covered in full for the eight kinds under
-  the Scope, and proved at `588a9d0`.** In the main text a learned skip is "a trainable
+  the Scope, and proved at `b76621f`.** In the main text a learned skip is "a trainable
   `d_model × d_model` matrix" (Setup), the full skip. The eight statements are
   `ae_funDimLearned_{tanh,gelu,swiglu,geglu}_rmsNorm_eq_residual_add`
   (`LearnedSkipKinds.lean`) and `ae_funDimLearned_{relu,reluSq,reglu,attention}_rmsNorm_eq_residual_add`.
@@ -427,7 +427,7 @@ the two statements by a computation and by hand.)
 - **Is the index honest? The rows of the seven files are (812 to 818). Four other rows are out of
   date** and still say that the learned skip is not stated for ReLU, ReLU², ReGLU and attention
   blocks: 642, 769, 811, and the last sentence of 812 (Corrections 2 to 5). The paragraph "Not
-  stated yet from the main text of the skips paper" said it too until `7ef6b40`; at `175a7d6` it
+  stated yet from the main text of the skips paper" said it too until `c111450`; at `dd48561` it
   is corrected (line 674).
 
 ---------------------------------------------------------------------------------------------------
@@ -435,7 +435,7 @@ the two statements by a computation and by hand.)
 ## Part 2: the statements, file by file
 
 Verdicts: SAME, LEAN STRONGER, LEAN WEAKER, DIFFERENT, PART, FALSE. All 39 theorems are proved at
-`588a9d0` (no `sorry`, three standard axioms, `Ax.out`). None is FALSE.
+`b76621f` (no `sorry`, three standard axioms, `Ax.out`). None is FALSE.
 
 ### `OneBlock/LearnedSkipTriangular.lean` (3 definitions, 11 theorems)
 
@@ -526,10 +526,10 @@ Paper: S Appendix B, "Notation and flat directions".
 
 ### The index rows of the seven files, and `checks/Axioms.lean`
 
-By a script (`index_names.py`, `index_names.out`), at `e17b4d3`: every one of the 44 public names
+By a script (`index_names.py`, `index_names.out`), at `97bdb01`: every one of the 44 public names
 is in the row of its file (rows 812 to 818), 35 written out and 9 by a stated abbreviation ("the
 same two with `gelu`, `swiglu`, `geglu`", "the same three with `reluSq`"); all 39 theorems stand
-in `checks/Axioms.lean`; all seven rows say "proved", which is right since `588a9d0`. At `8a637fe`
+in `checks/Axioms.lean`; all seven rows say "proved", which is right since `b76621f`. At `b5b6704`
 the four rows of `LearnedSkipGain`, `…Rescale`, `…ReGLU`, `…Attention` said "in work" and their
 23 theorems were not yet in `checks/Axioms.lean`, rightly. Nothing is missing in the rows. What
 is out of date or thin: the corrections below.
@@ -541,11 +541,11 @@ is out of date or thin: the corrections below.
 Nothing false, vacuous, drifted or misdescribed in the 44 names. In order of weight:
 
 1. **The index still says in four rows that the learned skip is not stated for ReLU, ReLU²,
-   ReGLU and attention blocks.** It is stated and, since `588a9d0`, proved (Corrections 2 to 5).
+   ReGLU and attention blocks.** It is stated and, since `b76621f`, proved (Corrections 2 to 5).
 2. **Theorem 4.6 (ii), last sentence, is now covered for all eight kinds under the Scope.**
    Theorem B.1 (iii) is not: tanh, GELU, SwiGLU, GeGLU blocks narrower than `d` (no Step 4 for
    these kinds in Lean), `ε = 0`; the triangular skip for the four other kinds is in two new
-   files (stated at `da0be3b`, without `sorry` at `e17b4d3`), which no reader has compared.
+   files (stated at `98773a1`, without `sorry` at `97bdb01`), which no reader has compared.
 3. **`NoSymmetricPart` is exactly the right condition.** Where it fails there is a flat direction
    with a symmetric part and the gain is smaller. It fails for a block that is zero (compiled),
    and there the gain is `0` (computed: 7, 15, 13 with and without the learned skip).
@@ -569,11 +569,11 @@ Nothing false, vacuous, drifted or misdescribed in the 44 names. In order of wei
    `(P + d²) − d(d−1) − s` (or `P + d(d+1)/2 − d(d−1)/2 − s`). Lean has no definition of the
    symmetries of the network with a learned skip.
 
-## Corrections for `STATEMENTS.md` (line numbers of `175a7d6`)
+## Corrections for `STATEMENTS.md` (line numbers of `dd48561`)
 
 1. The paragraph "Not stated yet from the main text of the skips paper" (line 674) said until
-   `7ef6b40` "the sentence of Theorem 4.6 (ii) on a learned skip for ReLU, ReLU², ReGLU and
-   attention blocks". **Already corrected at `175a7d6`:** "The sentence of Theorem 4.6 (ii) on a
+   `c111450` "the sentence of Theorem 4.6 (ii) on a learned skip for ReLU, ReLU², ReGLU and
+   attention blocks". **Already corrected at `dd48561`:** "The sentence of Theorem 4.6 (ii) on a
    learned skip is proved for the eight kinds of block". Nothing more to do.
 2. Line 642 (`OneBlock/ResidualRMSGain.lean`): "Not stated: its sentence on a learned skip (B.1
    (iii))". Out of date; point to rows 811 and 816 to 818.
@@ -586,8 +586,8 @@ Nothing false, vacuous, drifted or misdescribed in the 44 names. In order of wei
    `OneBlock/LearnedSkipRescale.lean`, `…ReGLU.lean`, `…Attention.lean`, by the paper's route".
    Keep "blocks narrower than `d`" and "`ε = 0`" for these four kinds.
 5. Line 812 (`OneBlock/LearnedSkipTriangular.lean`): "Not stated: ReLU, ReLU², ReGLU and
-   attention blocks". Since `da0be3b` they are stated in rows 819 (attention) and 820 (ReLU,
-   ReLU², ReGLU), both "proved" at `e17b4d3`; say so. Add:
+   attention blocks". Since `98773a1` they are stated in rows 819 (attention) and 820 (ReLU,
+   ReLU², ReGLU), both "proved" at `97bdb01`; say so. Add:
    "`funDimLearnedTri_eq_funDimLearned` is for every `θ` (no rank is asked) and any
    differentiable block, and needs the invertible skip (at the skip `0` the two families differ
    by `d(d−1)/2`); `funDimLearned_cob` is for any number of blocks; width at least `d` is the
@@ -602,7 +602,7 @@ Nothing false, vacuous, drifted or misdescribed in the 44 names. In order of wei
    `0`)".
 9. Lines 186 to 191, "Not yet compared by such a reader […] (these seven are with the reader of
    the seventeenth audit, part A)": after this audit take out the seven files of this brief
-   (compared at `8a637fe` and `588a9d0`; unchanged at `e17b4d3`).
+   (compared at `b5b6704` and `b76621f`; unchanged at `97bdb01`).
 10. Outside the index, the header of `OneBlock/LearnedSkipTriangular.lean`, line 36 ("Not stated
     here: ReLU, ReLU², ReGLU and attention blocks; …"): add where they are stated now. The
     headers of `OneBlock/LearnedSkipRescale.lean`, `…ReGLU.lean`, `…Attention.lean` end with "Not
@@ -611,12 +611,12 @@ Nothing false, vacuous, drifted or misdescribed in the 44 names. In order of wei
 ## What I could not check
 
 - **The proofs.** I read none as a proof. "Proved" means no `sorry` in the file and the three
-  standard axioms in the build of `/home/claude/lp/lean` at `588a9d0`.
+  standard axioms in the build of `/home/claude/lp/lean` at `b76621f`.
 - **The build.** I did not build the library. I compiled my files against the build of
   `/home/claude/lp/lean` (its owner's), read-only; `/home/claude/lw` has no compiled copy of
   these files.
 - **`OneBlock/LearnedSkipTriangularSmooth.lean` and `OneBlock/LearnedSkipTriangularRescale.lean`**
-  (new at `da0be3b`, the triangular skip for attention, ReLU, ReLU², ReGLU), and the rows 819,
+  (new at `98773a1`, the triangular skip for attention, ReLU, ReLU², ReGLU), and the rows 819,
   820 of the index: not in my brief, not compared.
 - **The older statements for Theorem 4.6 (i) and the first sentence of (ii)** (rows 386, 387, 632
   to 642, 763, 769): I read the rows of the index, not the Lean statements again.

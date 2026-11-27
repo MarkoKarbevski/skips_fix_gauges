@@ -9,23 +9,23 @@ in `/home/claude/audit17b/`.
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
-- **Commit at the start: `8a637fe8b9921280e1945ad477d0c9e33c4aa464` (17:57:16 UTC).**
-- **Commits read later: `470c4544b4ebefb97f3d6a928c548c6cef008316` (17:59:36), `588a9d0` (18:02:14),
-  and at the end `da0be3b2dd85ebb35370df59e925ba5dcdc4bf37` (18:08:05 UTC),** still the head at
+- **Commit at the start: `b5b670464aefe1c65dfab9e22ce78ee8a00e6884` (17:57:16 UTC).**
+- **Commits read later: `2db67ebcc187f72b252860fb7b7580f75b142f52` (17:59:36), `b76621f` (18:02:14),
+  and at the end `98773a1b095f658236f0463ce27da8f7ee9e3c04` (18:08:05 UTC),** still the head at
   18:12 UTC. Twelve commits were added after the first; the last of them is this head.
 - **Did a statement change while I read? No.** By a script of mine (`commits_cmp.py`: statement
-  text, docstring, `omit` lines and file header of every public name, `8a637fe` against
-  `da0be3b`), for the eight files of the brief and the three earlier files
+  text, docstring, `omit` lines and file header of every public name, `b5b6704` against
+  `98773a1`), for the eight files of the brief and the three earlier files
   (`Dimension/IdentifiableIff.lean`, `Residual/IdentifiableIff.lean`,
   `Dimension/IdentifiableIffTransformer.lean`): no statement, no docstring, no `omit` line and no
   header changed. Only proofs were added, in the three files `…Finite.lean`.
 - **Files with `sorry`.**
-  - At `8a637fe`: `Dimension/IdentifiableIffFinite.lean` (8), `Residual/IdentifiableIffFinite.lean`
+  - At `b5b6704`: `Dimension/IdentifiableIffFinite.lean` (8), `Residual/IdentifiableIffFinite.lean`
     (14), `Dimension/IdentifiableIffTransformerFinite.lean` (6); the five other files of the brief
     had none. One further file of the library, `OneBlock/LearnedSkipGain.lean` (2), is not in my
     brief.
-  - At `470c454` and after: none of the eight files.
-  - At `da0be3b`, in the library and outside my brief: `Absorb/AttentionHeadsIdentifiable.lean`,
+  - At `2db67eb` and after: none of the eight files.
+  - At `98773a1`, in the library and outside my brief: `Absorb/AttentionHeadsIdentifiable.lean`,
     `Absorb/RidgeFunctions.lean`, `OneBlock/LearnedSkipTriangularRescale.lean`,
     `OneBlock/LearnedSkipTriangularSmooth.lean`.
 - The eight files have 68 public names: 4 definitions and 64 theorems (4, 8, 12, 4, 4 + 8, 8, 14,
@@ -34,7 +34,7 @@ Library: `/home/claude/lw/lean` (branch `lean-wip`).
   `Ax.out`).
 
 Papers, as text: the skips paper ("S", `skips.txt`) and the dimension paper ("D", `dim.txt`). Line
-numbers of `STATEMENTS.md` are those of `da0be3b`.
+numbers of `STATEMENTS.md` are those of `98773a1`.
 
 How I checked.
 
@@ -47,7 +47,7 @@ How I checked.
   `ae_shapes.py`, `sig_cmp.py`, `commits_cmp.py`, with their outputs).
 - "By compiling": scratch files of mine, compiled with `lake env lean` from `/home/claude/lp/lean`
   (read only; `/home/claude/lw/lean` has no compiled file of `Symmetry/FiniteSymmetries.lean`).
-  The sources of `lp` and `lw` were the same (`diff -rq`, at `588a9d0` and at `da0be3b`), and the
+  The sources of `lp` and `lw` were the same (`diff -rq`, at `b76621f` and at `98773a1`), and the
   compiled files of the eight modules (17:50 to 17:59 UTC) were newer than their sources. Files:
   `Ax.lean` (axioms, instances), `Sig.lean` (the full signatures), `Normal.lean`, `Normal2.lean`
   (the normal form), `SumSym.lean` (networks with two kinds of block), `NonVac.lean` (the left
@@ -429,7 +429,7 @@ theorem ae_finrank_le_funDim_add_of_ae_locally_cob_family (A : Arch T d L)
 ## Part 2: the statements, file by file
 
 Verdicts: SAME, LEAN STRONGER, LEAN WEAKER, DIFFERENT, PART, FALSE. All 64 theorems are proved at
-`da0be3b` (no `sorry`, three standard axioms). **None is FALSE.**
+`98773a1` (no `sorry`, three standard axioms). **None is FALSE.**
 
 ### `Dimension/IdentifiableConverseFamily.lean` (4 theorems)
 
@@ -573,7 +573,7 @@ Nothing is false and nothing is vacuous. In order of weight:
 9. The branch moved while I read (twelve commits); the three files `…Finite.lean` went from `sorry`
    to proved; no statement, docstring, `omit` line or header of the eleven files changed.
 
-## Corrections for `STATEMENTS.md` (line numbers of `da0be3b`)
+## Corrections for `STATEMENTS.md` (line numbers of `98773a1`)
 
 1. Lines 790, 791, 795 (the rows of `Dimension/IdentifiableIff.lean`, `Residual/IdentifiableIff.lean`,
    `Dimension/IdentifiableIffTransformer.lean`). Replace "the form with these further images is not
@@ -581,7 +581,7 @@ Nothing is false and nothing is vacuous. In order of weight:
    `…Family.lean` and `…Finite.lean`".
 2. Lines 178 to 179. Replace "D Proposition 4.6 and S Proposition 4.5 are "in part" until the form
    with these images is stated and proved" by: "the form with these images is stated and proved
-   (`…Family.lean`, `Symmetry/FiniteSymmetries.lean`, and since `470c454` `…Finite.lean`), and a
+   (`…Family.lean`, `Symmetry/FiniteSymmetries.lean`, and since `2db67eb` `…Finite.lean`), and a
    seventeenth reader (part B) compared it: nothing false, vacuous or drifted".
 3. Lines 592 to 600 ("Not stated yet from the main text" of the dimension paper). Take out "the
    converse direction of Proposition 4.6 […] with the permutations and the sign flips among the
@@ -594,7 +594,7 @@ Nothing is false and nothing is vacuous. In order of weight:
    add "the equivalence: the rows of `Residual/IdentifiableIffFinite.lean` and
    `Dimension/IdentifiableIffTransformerFinite.lean`".
 5. Lines 180 to 188 ("Not yet compared by such a reader"). Take out the eight files of this brief
-   (compared at `8a637fe` and `da0be3b`).
+   (compared at `b5b6704` and `98773a1`).
 6. Lines 801 to 803 (the rows of the three files `…Finite.lean`). Add: "that a composition of the
    symmetries in any order has this form is not a Lean statement (the identities were compiled by
    the seventeenth reader, part B)"; "the last sentence of the proposition is not in these
@@ -619,7 +619,7 @@ Nothing is false and nothing is vacuous. In order of weight:
 
 ## What I could not check
 
-- **The proofs.** I read none as a proof. "Proved" means no `sorry` in the file at `da0be3b` and the
+- **The proofs.** I read none as a proof. "Proved" means no `sorry` in the file at `98773a1` and the
   three standard axioms in the build of `/home/claude/lp/lean`.
 - **The build.** I did not build the library and did not recompile the eight files. I compiled my
   scratch files against the compiled files of `/home/claude/lp/lean`, which were newer than their

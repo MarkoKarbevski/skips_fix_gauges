@@ -9,22 +9,22 @@ repository file, ran no `lake build`, made no commit and no push. My files are i
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
-- **Commit read: `8084e308484f1c412eb3057f031e43ac14acdbdd` (24 November 2026, 21:01:25 UTC),** the
-  head when I started. The branch moved while I worked; I looked at it again at `f21e8ed`
-  (21:15:05), `f223d48` (21:21:39), `1c859c6` (21:32:38), `340a1a4` (21:36:41) and
-  **`72700dd3182ac9e58d58d2c394f04c213f9c99ea` (21:42:14), the head when I finished.** Four of the
+- **Commit read: `2e808575a2f4376d363d39b7be2d858e7c85ecb0` (24 November 2026, 21:01:25 UTC),** the
+  head when I started. The branch moved while I worked; I looked at it again at `e2a5579`
+  (21:15:05), `2fd2905` (21:21:39), `8ca8c01` (21:32:38), `ce3981d` (21:36:41) and
+  **`03bbd831246505a6841fb61b82ed8c6479d3444e` (21:42:14), the head when I finished.** Four of the
   five files are byte for byte the same at all six commits (`git diff` is empty), and so is every
   file of definitions that I read. The fifth,
-  `Dimension/UpperBoundHomogeneousRMSNormZero.lean`, had nine statements with `sorry` at `8084e30`;
-  since commit `0ac8d09` (in `f21e8ed`) it has proofs. Its header, its `variable` lines and the
+  `Dimension/UpperBoundHomogeneousRMSNormZero.lean`, had nine statements with `sorry` at `2e80857`;
+  since commit `d979c7d` (in `e2a5579`) it has proofs. Its header, its `variable` lines and the
   text of its nine statements are the same before and after (compared by a script,
-  `UBH_8084e30.lean` against the file at the head), and it has not changed since `0ac8d09`.
-- **Files with `sorry`** (`git grep -w sorry` on `lean/SkipsLean` at each commit): at `8084e30`
+  `UBH_2e80857.lean` against the file at the head), and it has not changed since `d979c7d`.
+- **Files with `sorry`** (`git grep -w sorry` on `lean/SkipsLean` at each commit): at `2e80857`
   one file, `Dimension/UpperBoundHomogeneousRMSNormZero.lean` (of this audit; proved since
-  `0ac8d09`). At `f21e8ed` two files (`OneBlock/ResidualRMSZeroReGLU.lean`,
-  `Symmetry/InsideBlocksRMSNormZero.lean`); at `f223d48` none; at `1c859c6` three
+  `d979c7d`). At `e2a5579` two files (`OneBlock/ResidualRMSZeroReGLU.lean`,
+  `Symmetry/InsideBlocksRMSNormZero.lean`); at `2fd2905` none; at `8ca8c01` three
   (`OneBlock/SkiplessHomogeneousRMSZeroEq.lean`, `OneBlock/SkiplessRMSZeroReadout.lean`,
-  `OneBlock/UnitsParallel.lean`); at `72700dd` three
+  `OneBlock/UnitsParallel.lean`); at `03bbd83` three
   (`OneBlock/SkiplessHomogeneousRMSZeroEq.lean`, `OneBlock/UnitsParallel.lean`,
   `Residual/LearnedSkipsConformal.lean`). All of these were written after I started; none is of
   this audit and none is imported by the five files.
@@ -32,13 +32,13 @@ Library: `/home/claude/lw/lean` (branch `lean-wip`).
   (`TurnsActiveRows`). All 23 depend on `propext`, `Classical.choice`, `Quot.sound` only (by
   compiling `Sig.lean` and `UBHchk.lean` against the build of `/home/claude/lp/lean`, whose
   `SkipsLean/` was the same as that of `/home/claude/lw` each time, by `diff -rq`; the last time at
-  `72700dd`).
+  `03bbd83`).
 
 Papers, as text: the skips paper ("S", `<scratchpad>/skips.txt`). The five files do not cite the
 dimension paper, and I compared nothing with it. Line numbers of `STATEMENTS.md` are those of
-`1c859c6`, where I read the rows: the rows of the five files are lines 876, 882, 883, 884 and 891
-there. They have the same text (by checksum) at `f223d48` (lines 874, 880, 881, 882, 886) and at
-`72700dd` (lines 883, 889, 890, 891, 898).
+`8ca8c01`, where I read the rows: the rows of the five files are lines 876, 882, 883, 884 and 891
+there. They have the same text (by checksum) at `2fd2905` (lines 874, 880, 881, 882, 886) and at
+`03bbd83` (lines 883, 889, 890, 891, 898).
 
 **Short answer. No Lean statement is false, none is vacuous, none has drifted.** The 23
 statements are the paper's, with the conditions of the proofs written out, and with one condition
@@ -79,7 +79,7 @@ How I checked.
   argument, and axioms, of the 14 theorems of the first four files), `UBHchk.lean` (axioms of the
   nine theorems of the fifth file and checks 1 and 8), `Chk.lean` (checks 1, 2, 3, 5 and 7),
   `Chk2.lean` (check 5). All compile without error and without `sorry` (`*.out`, the last time at
-  `72700dd`); every theorem of mine that I name below has the three standard axioms.
+  `03bbd83`); every theorem of mine that I name below has the three standard axioms.
 - "By a computation": my own scripts. `z21core.py`: networks of ReLU, ReLU² and ReGLU blocks
   under pre-RMSNorm with `ε = 0`, any depth, with or without skips; the derivative in the weights
   is exact (forward mode), over mpmath numbers with 60 digits or over Python fractions; checked
@@ -624,7 +624,7 @@ Every one of the 23 public theorems is in a row and in `checks/Axioms.lean`; the
   unit"; "for `d ≥ 2`"; "with `d_in, d_out ≥ d ≥ 2`"; "No width is asked").
 - Row 891 (`Residual/OneChangeOfBasisRMSZero.lean`): each clause is true (check 7).
 - Row 876 (`Dimension/UpperBoundHomogeneousRMSNormZero.lean`): the clauses on the statements are
-  true, and the status is "proved" since `0ac8d09`. "The paper's sentence needs `d ≥ 2`,
+  true, and the status is "proved" since `d979c7d`. "The paper's sentence needs `d ≥ 2`,
   `d_in ≥ d` and width at least `d`, which Theorem A.12 does not state": `d ≥ 2` is needed
   (check 8); for `d_in ≥ d` and the width I found no case in which the sentence fails without
   them; and the three are in the paper's Scope (Section 2), which the row does not say. The same
@@ -633,8 +633,8 @@ Every one of the 23 public theorems is in a row and in `checks/Axioms.lean`; the
   five rows (1, 4, 8, 2, 9), no row lists a name that is not in its file, and the 23 theorems are
   in `checks/Axioms.lean` (lines 1613 to 1635). The five files are imported by
   `SkipsLean.lean`.
-- The paragraph of the index "Not yet compared by such a reader …" (from line 222 at `1c859c6`,
-  from line 229 at `72700dd`) names the five files; at `72700dd` as "with the reader of the
+- The paragraph of the index "Not yet compared by such a reader …" (from line 222 at `8ca8c01`,
+  from line 229 at `03bbd83`) names the five files; at `03bbd83` as "with the reader of the
   twenty-first audit, part A, since 21:03 UTC".
 
 ---------------------------------------------------------------------------------------------------
@@ -746,7 +746,7 @@ Nothing in the Lean statements is false, vacuous or drifted. In order of weight:
    batches of `6P` and `10P` inputs at the same parameter gave different ranks in 5 of 30 cases. A
    rank that falls short at one batch can be of this kind.
 
-## Corrections for `STATEMENTS.md` (line numbers of `1c859c6`)
+## Corrections for `STATEMENTS.md` (line numbers of `8ca8c01`)
 
 Nothing in the five rows is false about a Lean statement. Six places:
 
@@ -776,7 +776,7 @@ Nothing in the five rows is false about a Lean statement. Six places:
 5. **Row 882** (`OneBlock/ResidualRMSZeroStepsOn.lean`). Add: "against the analytic twin: the
    conclusion at the rows `N_0(x E)` of these inputs, not at every row of the sphere".
 6. **The paragraph "Not yet compared by such a reader …"** (from line 222; from line 229 at
-   `72700dd`): the five files
+   `03bbd83`): the five files
    (`OneBlock/ResidualRMSZeroStepsOn.lean`, `OneBlock/ResidualRMSZeroRescale.lean`,
    `OneBlock/ResidualRMSZeroRescaleGeneric.lean`, `Residual/OneChangeOfBasisRMSZero.lean`,
    `Dimension/UpperBoundHomogeneousRMSNormZero.lean`; 1 definition, 23 theorems) were compared by
@@ -815,7 +815,7 @@ Nothing in the five rows is false about a Lean statement. Six places:
 
 `Sig.lean`, `Sig.out` (signatures and axioms of the 14 theorems of the first four files);
 `UBHchk.lean`, `UBHchk.out` (axioms of the nine theorems of the fifth file; checks 1 and 8);
-`UBH_8084e30.lean` (the fifth file as it was when I started); `Chk.lean`, `Chk.out`, `Chk2.lean`,
+`UBH_2e80857.lean` (the fifth file as it was when I started); `Chk.lean`, `Chk.out`, `Chk2.lean`,
 `Chk2.out` (compiled checks 1, 2, 3, 5, 7); `z21core.py` (the networks, the exact derivative, the
 ranks); `z21fd.py`, `z21fd.out` (the derivative against central differences); `z21res.py`,
 `z21res_relu.out`, `z21res_relusq.out` (check 4); `z21turn.py`, `z21turn.out`, `z21turn2.py`,

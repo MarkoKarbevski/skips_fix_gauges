@@ -12,14 +12,14 @@ audit, whose checks are not repeated here.
 
 ## Commits and files
 
-- Branch of `/home/claude/lp`. I started at commit `a2ce8d2` (23:26 UTC). Within the first minute
-  the branch moved to `fef9fa8`, which brought the proofs of the three theorems of
-  `OneBlock/LearnedSkipRMSZeroReGLU.lean`; I read the five files at `fef9fa8` (a copy is in
-  `/home/claude/audit24a/snap1/`). The branch moved again while I worked (`92f5d99`, `2730484` at
-  23:46, `c5a5b9a` at 23:52); the five files are byte for byte the same at `c5a5b9a`.
-- `sorry`: at `a2ce8d2`, three in `OneBlock/LearnedSkipRMSZeroReGLU.lean`. At `fef9fa8` and after,
+- Branch of `/home/claude/lp`. I started at commit `1b0733f` (23:26 UTC). Within the first minute
+  the branch moved to `cbb77d0`, which brought the proofs of the three theorems of
+  `OneBlock/LearnedSkipRMSZeroReGLU.lean`; I read the five files at `cbb77d0` (a copy is in
+  `/home/claude/audit24a/snap1/`). The branch moved again while I worked (`e968374`, `5adbab6` at
+  23:46, `d51c1e9` at 23:52); the five files are byte for byte the same at `d51c1e9`.
+- `sorry`: at `1b0733f`, three in `OneBlock/LearnedSkipRMSZeroReGLU.lean`. At `cbb77d0` and after,
   none in the five files. The definition and the three statements of that file are the same text
-  at `a2ce8d2` and at `fef9fa8` (compared by a script).
+  at `1b0733f` and at `cbb77d0` (compared by a script).
 - The 22 public theorems of the five files depend on `propext`, `Classical.choice`, `Quot.sound`
   only (compiled, `Chk1.lean`, against the build in `/home/claude/lp/lean`, whose object files of
   the five files are from 23:03 to 23:27, after their sources).
@@ -524,7 +524,7 @@ parameter by hand.)
 **Verdict: every sentence of the five rows is true of the statements. Every public theorem of the
 five files is in its row and in `checks/Axioms.lean` (all five files are proved now). The
 "Not stated" sentences of four rows are true of the file and no longer of the library.** (By reading; the
-names by a script; at `2730484`, rows at lines 943 to 947 of `STATEMENTS.md`; at `c5a5b9a` the
+names by a script; at `5adbab6`, rows at lines 943 to 947 of `STATEMENTS.md`; at `d51c1e9` the
 same five rows, unchanged, are at lines 946 to 950, and the names are in its `checks/Axioms.lean`.)
 
 - The names: for each file the public names of the source are exactly those of the third cell of
@@ -630,7 +630,7 @@ the paper:
 
 ## Corrections for `STATEMENTS.md`
 
-No row has an error. Lines are those of `2730484`; at `c5a5b9a` (23:52) add 3 to a row number
+No row has an error. Lines are those of `5adbab6`; at `d51c1e9` (23:52) add 3 to a row number
 (rows 946 to 950, the row of the upper triangular skip at 952), and the list "Not yet compared"
 is at lines 268 to 273, where a line already says that these five files are with this audit.
 

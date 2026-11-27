@@ -7,9 +7,9 @@ Reader: an independent reader who did not write the statements. Brief:
 proofs. I changed no repository file, ran no `lake build`, made no commit and no push.
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`). The branch moved while I read. Commit at the
-start: `2a488da1da773d33fb1a817b15c4c3eb34bc84cc` (24 November, 14:00:45 UTC). Commit at the end:
-`479f2f23aea2ff02943c52676d0f91316ca04dbe` (14:10:39 UTC). Between the two
-(`git diff 2a488da 479f2f2 --stat`): the proofs of `OneBlock/AttentionGeneric.lean` and
+start: `c0ec3b28c30fbbf699da3f1bde0a8f895573e7a4` (24 November, 14:00:45 UTC). Commit at the end:
+`120070938022706f49ed7109ff418d0d39da12f3` (14:10:39 UTC). Between the two
+(`git diff c0ec3b2 1200709 --stat`): the proofs of `OneBlock/AttentionGeneric.lean` and
 `OneBlock/AttentionStepOne.lean`; two new files with statements for Theorem 4.2 (iii),
 `Absorb/ShortSequencesPoly.lean` and `Absorb/ShortSequences.lean` (in work; not in the brief, and I
 did not compare them with the paper); `STATEMENTS.md`, `SkipsLean.lean`, `checks/Axioms.lean`. The
@@ -17,11 +17,11 @@ two files of this audit, `Network/Attention.lean`, `Network/Defs.lean` and `Basi
 not change (empty `git diff`). In `STATEMENTS.md` the row of `Absorb/AttentionZero.lean` is
 unchanged, and the row of `Absorb/AttentionNetworks.lean` changed in its last sentence only ("Not
 stated: (iii) (short sequences)" became "Part (iii) (short sequences) is in
-`Absorb/ShortSequences.lean`"). Line numbers of `STATEMENTS.md` below are those of `479f2f2`.
+`Absorb/ShortSequences.lean`"). Line numbers of `STATEMENTS.md` below are those of `1200709`.
 
-Files with `sorry` (by `grep` over `SkipsLean/`). At `2a488da`: `OneBlock/Attention.lean` (5, lines
+Files with `sorry` (by `grep` over `SkipsLean/`). At `c0ec3b2`: `OneBlock/Attention.lean` (5, lines
 104, 109, 120, 134, 172), `OneBlock/AttentionGeneric.lean` (1, line 38),
-`OneBlock/AttentionStepOne.lean` (1, line 60). At `479f2f2`: `OneBlock/Attention.lean` (the same
+`OneBlock/AttentionStepOne.lean` (1, line 60). At `1200709`: `OneBlock/Attention.lean` (the same
 5), `Absorb/ShortSequencesPoly.lean` (3, lines 50, 58, 66), `Absorb/ShortSequences.lean` (2, lines
 49, 70). The two files of this audit have none, and import none of these files.
 
@@ -41,7 +41,7 @@ and their compiled files in `lp` are newer than the sources. "By a computation":
 **Short answer. Nothing false, vacuous or drifted was found.** The eight public names say what the
 paper says, or slightly more. Generic is "almost every parameter" with one null set for all
 skipless networks. Two places of the index are out of date (below). The public statements and both
-file headers are word for word those of the statement commit `9cf33d3` (13:28:30 UTC), compared by
+file headers are word for word those of the statement commit `c35938d` (13:28:30 UTC), compared by
 a script: the proving did not change them.
 
 Conventions used below (from the sixth and the eleventh report, and reread here in
@@ -176,7 +176,7 @@ over all of `ℝ^{T × d_in}`, and "some `X` with different outputs" is "not the
 | Theorem 4.2 (ii), causal mask, without normalization | `ae_forall_ne_residual_skipless_attention_causal` | SAME | One null set for all skipless networks. No hypothesis `E D ≠ 0`; `d`, `d_in`, `d_out` nonempty instead of the Scope's `≥ 2`; `L = 0` allowed. |
 | Theorem 4.2 (ii), causal mask, pre-RMSNorm, `ε > 0` | `ae_forall_ne_residual_skipless_attention_causal_rmsNorm` | LEAN STRONGER | As above, and the one null set serves every `ε' > 0` of the skipless network. |
 | Theorem 4.2 (ii), no mask | no statement of its own | PART | Given by (i) for every `θ` with `E D ≠ 0`, as in the paper's proof. No `∀ᵐ` form. |
-| Theorem 4.2 (iii) (short sequences) | not in the two files (the header says so) | — | Not compared. At `479f2f2` it is stated, in work, in `Absorb/ShortSequences.lean`, which is outside this audit. By reading the index row only: its conditions (`n ≤ L`, or `n = L + 1` and `L ≤ L'`) are exactly the negation of `hn` of (i). |
+| Theorem 4.2 (iii) (short sequences) | not in the two files (the header says so) | — | Not compared. At `1200709` it is stated, in work, in `Absorb/ShortSequences.lean`, which is outside this audit. By reading the index row only: its conditions (`n ≤ L`, or `n = L + 1` and `L ≤ L'`) are exactly the negation of `hn` of (i). |
 | Last sentence of the proof: (i) and (ii) "also hold with rotary embeddings" | not stated | — | The index does not say so (see the corrections). |
 | The text after the theorem (lines 394–403) | — | consistent | "no number of heads helps" (any `H'`); "Neither does depth, once a sequence has at least two more tokens than the residual network has blocks" (`L + 2 ≤ n`, any `L'`); "Under pre-RMSNorm, equality in the cases of (iii) fails for almost all weights, by (ii)" (`ae_…_causal_rmsNorm` has no condition on `n` beyond `2 ≤ n`). The text restates no condition that Lean lacks. Table 1 and the introduction (lines 76–78, 125–142) agree too. |
 
@@ -252,7 +252,7 @@ I did not find a case that `hn` admits and the paper does not, other than `L = 0
 
 ### The index rows of the two files
 
-By reading `STATEMENTS.md` at `479f2f2`.
+By reading `STATEMENTS.md` at `1200709`.
 
 - Line 667 (`Absorb/AttentionZero.lean`): right. It says "any mask", "a map `χ` with `χ(0) = 0` and
   the derivative `ξ I` at `0`", "the stream matrices `s I`", "the derivative at `τ = 0` of the
@@ -283,7 +283,7 @@ Nothing false, vacuous, drifted or misdescribed in the two files. In the order o
    `U a = λ a`, not the paper's Jacobian in every direction. The index row and the docstring say
    "on the inputs `a b`"; the word "Jacobians" in the row title is the paper's.
 5. The last sentence of the paper's proof (rotary embeddings) is not stated in Lean.
-6. The public statements have not changed since they were first committed (`9cf33d3`).
+6. The public statements have not changed since they were first committed (`c35938d`).
 
 ## Corrections for `STATEMENTS.md`
 
@@ -296,7 +296,7 @@ Nothing false, vacuous, drifted or misdescribed in the two files. In the order o
    skipless networks; the conditions on the number of tokens are the paper's with `L′ = L' + 1`;
    Lean also covers `L = 0` and `ε' ≠ ε`; the paper's (ii) without a mask is (i)."
 2. Line 728: take "4.2" out of "Theorems 3.4, 4.2;" (parts (i), (ii) are proved; part (iii) is
-   stated, in work, since `479f2f2`), and add "the last sentence of the proof of Theorem 4.2
+   stated, in work, since `1200709`), and add "the last sentence of the proof of Theorem 4.2
    (rotary embeddings)". On the same lines, "Theorems 3.4", "Propositions 4.6, 4.7" and "Theorem
    A.13" also look out of date: rows 661, 664 and 666 carry these names as stated. I read only the
    headings of those rows, not their content.
@@ -321,6 +321,6 @@ Nothing false, vacuous, drifted or misdescribed in the two files. In the order o
   not in the brief and I did not compare them. I checked the paper's `T = 2` example of (iii)
   numerically only to see that `hn` excludes it. The sentence on rotary embeddings is not stated
   in Lean, so there is nothing to compare.
-- When I compiled (about 14:05 UTC, library at `2a488da`) the working copy `/home/claude/lp` differed from `lw` in one
+- When I compiled (about 14:05 UTC, library at `c0ec3b2`) the working copy `/home/claude/lp` differed from `lw` in one
   file, `OneBlock/AttentionGeneric.lean` (work in progress there); it is not a file of this audit.
 - The other rows of the index, and the content of rows 661–666.

@@ -9,31 +9,31 @@ in `/home/claude/audit16/`.
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
-- **Commit at the start: `d6af25199fe7d5ccb8bdadd42679b8e361d996b7` (16:45:33 UTC).** I read every
+- **Commit at the start: `a8aa4e1312ea2efcb1df4c1ffa2182a129c6ca0b` (16:45:33 UTC).** I read every
   statement at this commit.
-- **Commit at the end: `de917fe5e6b2304db94240302de49b6780c203ae` (17:01:04 UTC),** still the head
-  at 17:15 UTC. Thirteen commits lie in between (among them `d491de3`, `09fa85e`, `3f4b772`,
-  `b680b13`, `502681d`). In the twelve files only proofs were added.
+- **Commit at the end: `4e167890ba1bc584652d41b96ae909bbda3dc5fa` (17:01:04 UTC),** still the head
+  at 17:15 UTC. Thirteen commits lie in between (among them `7df0b9b`, `a8a247d`, `c55748b`,
+  `4579a24`, `111499b`). In the twelve files only proofs were added.
   Compared by a script of mine (`stmts.py`, `omits.py`: statement text, docstring, and the `omit`
   lines of every public name, old file against new): **no statement and no docstring changed, with
   one exception of form:** the three theorems of `OneBlock/LearnedSkip.lean`
   (`funDimSkips_add_finrank_flatSkips`, `ae_funDimSkips_ge`, `funDimSkips_comp_le`) got the line
   `omit [DecidableEq d] in`, so they lost one unused instance argument. Their meaning is the same.
-- **Files with `sorry`.** At `d6af251`: `Dimension/IdentifiableIffTransformer.lean` (8),
+- **Files with `sorry`.** At `a8aa4e1`: `Dimension/IdentifiableIffTransformer.lean` (8),
   `OneBlock/LearnedSkip.lean` (3), `OneBlock/LearnedSkipZero.lean` (1),
   `OneBlock/LearnedSkipBound.lean` (1), `OneBlock/LearnedSkipKinds.lean` (8); the seven other
-  files of the brief had none. At `de917fe`: none of the twelve files. One file of the library has
-  `sorry` there, `OneBlock/LearnedSkipTriangular.lean`, which appeared at `3f4b772` (16:56:39). It
+  files of the brief had none. At `4e16789`: none of the twelve files. One file of the library has
+  `sorry` there, `OneBlock/LearnedSkipTriangular.lean`, which appeared at `c55748b` (16:56:39). It
   is not in my brief and I did not compare it.
 - The twelve files have 78 public names: 7 definitions and 71 theorems (4, 4, 8, 12, 8, 7, 4,
   2 + 11, 5 + 3, 1, 1, 8, as the brief says).
-- At `de917fe` all 78 depend on `propext`, `Classical.choice`, `Quot.sound` only (by compiling,
+- At `4e16789` all 78 depend on `propext`, `Classical.choice`, `Quot.sound` only (by compiling,
   `Ax.lean`, `Ax.out`). At 16:57 UTC, with an earlier build, the two general steps
   (`funDim_add_finrank_le_funDimSkips_zero`, `funDimLearned_add_le_rmsNorm`) and the eight named
   forms still had `sorryAx`.
 
 Papers, as text: the skips paper ("S", `skips.txt`) and the dimension paper ("D", `dim.txt`). Line
-numbers of `STATEMENTS.md` are those of `de917fe`.
+numbers of `STATEMENTS.md` are those of `4e16789`.
 
 How I checked.
 
@@ -46,7 +46,7 @@ How I checked.
 - "By compiling": scratch files of mine in `/home/claude/audit16/`, compiled with `lean` 4.36.0
   through `LEAN_PATH` (the paths that `lake env` gives from `/home/claude/lw/lean`, with the
   library's own build replaced by a copy of `/home/claude/lp/lean/.lake/build`, taken at 17:04 UTC
-  when `lp` was at `de917fe`; the sources of `lp` and `lw` were the same then, by `diff -rq`, and
+  when `lp` was at `4e16789`; the sources of `lp` and `lw` were the same then, by `diff -rq`, and
   every compiled file was newer than its source). `Ax.lean` (axioms), `Chk.lean` and `Chk2.lean`
   (checks of Part 1), `Cex.lean` (the masks). All compile without error (`*.out`).
 - "By a computation": my own script `learned_skip_refute.py` (mpmath, 50 digits, exact
@@ -351,7 +351,7 @@ Fintype.card (hid ℓ)` on the left for SwiGLU and GeGLU, and `funDimLearned …
 Fintype.card d * (Fintype.card d + 1) / 2`. **The same numbers.** For the upper triangular skip
 the paper's count is `P + d(d+1)/2 − d(d−1)/2 − s`, the same value `P + d − s`.
 
-**(b) The two general steps: I could not refute them, and I believe both by hand.** At `de917fe`
+**(b) The two general steps: I could not refute them, and I believe both by hand.** At `4e16789`
 both are proved.
 
 - `funDim_add_finrank_le_funDimSkips_zero`: `[Nonempty T] … (hε : 0 < ε) (hA : A.χ = rmsNorm ε) (hf
@@ -398,7 +398,7 @@ both are proved.
 
 | Clause of Theorem B.1 (iii) | Covered by the eight? |
 |---|---|
-| "a learned skip `A`, full or upper triangular" | the full skip only. The upper triangular skip is stated since `3f4b772` in `OneBlock/LearnedSkipTriangular.lean` (`sorry` there; not in my brief, not compared) |
+| "a learned skip `A`, full or upper triangular" | the full skip only. The upper triangular skip is stated since `c55748b` in `OneBlock/LearnedSkipTriangular.lean` (`sorry` there; not in my brief, not compared) |
 | the kinds of block of the theorem (tanh, GELU, ReLU, ReLU², ReGLU, SwiGLU, GeGLU, attention) | four of eight: tanh, GELU, SwiGLU, GeGLU. Not ReLU, ReLU², ReGLU, attention. The same four of the eight kinds of Theorem 4.6 (ii) |
 | no hypothesis on the width | width at least `d` only (`hhid`). The main text has this in its Scope; the appendix statement does not |
 | "For generic parameters and `ε > 0`, its functional dimension exceeds that of the residual network of part (ii) by exactly `d(d+1)/2`" | yes, the four `…_eq_residual_add` |
@@ -420,7 +420,7 @@ stated.
 ## Part 2: the statements, file by file
 
 Verdicts: SAME, LEAN STRONGER, LEAN WEAKER, DIFFERENT, PART, FALSE. "Proved" means: no `sorry` at
-`de917fe`, and the three standard axioms only (`Ax.out`). All 71 theorems are proved in this
+`4e16789`, and the three standard axioms only (`Ax.out`). All 71 theorems are proved in this
 sense. None is FALSE.
 
 ### `Generic/Cayley.lean` (4 theorems)
@@ -628,7 +628,7 @@ What is not covered: Check 6 (c).
 By a script (`index_names.py`): every one of the 78 public names is in the row of its file,
 written out or by a stated abbreviation ("each also with `_rmsNorm`", "`…_cob_const`", "the same
 with `gelu`, `swiglu`, `geglu`"); all 71 theorems stand in `checks/Axioms.lean`; all twelve rows
-say "proved", which is right at `de917fe`. Nothing is missing. What is wrong or thin: the
+say "proved", which is right at `4e16789`. Nothing is missing. What is wrong or thin: the
 corrections below.
 
 ---------------------------------------------------------------------------------------------------
@@ -658,7 +658,7 @@ Nothing false and nothing vacuous. In order of weight:
    which Theorem A.5 (iii) has). These are strengthenings.
 5. **Three statements changed in form while I read:** `omit [DecidableEq d] in` was added to the
    three theorems of `OneBlock/LearnedSkip.lean` when they were proved. Nothing else changed in a
-   statement or docstring of the twelve files between `d6af251` and `de917fe`.
+   statement or docstring of the twelve files between `a8aa4e1` and `4e16789`.
 6. **"Dimension" is the Hausdorff dimension of a set of families of matrices.** That is the right
    number for these sets. A reader who wants "a Lie group of dimension `k`" from Lean alone gets
    "a subgroup" and "a set of Hausdorff dimension `k`", and the description of the set from other
@@ -666,10 +666,10 @@ Nothing false and nothing vacuous. In order of weight:
 7. **Theorem B.1 (iii) is covered for four kinds of block, the full skip, width at least `d` and
    `ε > 0`.** The computation shows the paper's value also for narrower blocks, which the Lean
    route through the skip `0` cannot reach (Check 6 (c)).
-8. `OneBlock/LearnedSkipTriangular.lean` appeared at `3f4b772` and has `sorry` at `de917fe`. No
+8. `OneBlock/LearnedSkipTriangular.lean` appeared at `c55748b` and has `sorry` at `4e16789`. No
    reader has compared it.
 
-## Corrections for `STATEMENTS.md` (line numbers of `de917fe`)
+## Corrections for `STATEMENTS.md` (line numbers of `4e16789`)
 
 1. Lines 766, 767 and 771 (the rows of the three `iff` files). After "the image of `θ` under a
    symmetry" add: "the continuous symmetries only; the permutations of hidden units or heads and
@@ -684,8 +684,8 @@ Nothing false and nothing vacuous. In order of weight:
 3. Lines 766, 767, 771. Add that the statements for gated units ask `d ≥ 1` (`[Nonempty d]`), and
    that none asks `d_out ≥ d`, `d ≥ 2` or a token.
 4. Lines 651 to 656, "Not stated yet from the main text of the skips paper: […] the sentence of
-   Theorem 4.6 (ii) on a learned skip, for every kind of block". Out of date since `d6af251`: the
-   sentence is stated, and at `de917fe` proved, for tanh, GELU, SwiGLU and GeGLU blocks
+   Theorem 4.6 (ii) on a learned skip, for every kind of block". Out of date since `a8aa4e1`: the
+   sentence is stated, and at `4e16789` proved, for tanh, GELU, SwiGLU and GeGLU blocks
    (`OneBlock/LearnedSkipKinds.lean`). Write: "the sentence of Theorem 4.6 (ii) on a learned skip
    for ReLU, ReLU², ReGLU and attention blocks".
 5. Line 770 (`Symmetry/CobGroup.lean`). Add: "the two residual statements ask at least one token
@@ -701,7 +701,7 @@ Nothing false and nothing vacuous. In order of weight:
 8. Line 772 (`OneBlock/LearnedSkip.lean`). Nothing wrong. If the row is to show signatures: the
    three theorems no longer take `[DecidableEq d]`.
 9. Lines 166 to 172, "Not yet compared by such a reader": after this audit take out the twelve
-   files of this brief (compared at `d6af251` and `de917fe`). `OneBlock/LearnedSkipTriangular.lean`
+   files of this brief (compared at `a8aa4e1` and `4e16789`). `OneBlock/LearnedSkipTriangular.lean`
    stays.
 10. Outside the index, the headers of `Dimension/IdentifiableIff.lean` and
     `Residual/IdentifiableIff.lean`: "The symmetries are those of the papers" should read "the
@@ -709,10 +709,10 @@ Nothing false and nothing vacuous. In order of weight:
 
 ## What I could not check
 
-- **The proofs.** I read none as a proof. "Proved" means no `sorry` in the file at `de917fe` and
+- **The proofs.** I read none as a proof. "Proved" means no `sorry` in the file at `4e16789` and
   the three standard axioms in the copied build.
 - **The build.** I did not build the library. I used a copy of the build of `/home/claude/lp/lean`
-  (its owner's), taken when its sources were those of `lw` at `de917fe`. I did not recompile the
+  (its owner's), taken when its sources were those of `lw` at `4e16789`. I did not recompile the
   twelve files myself.
 - **`OneBlock/LearnedSkipTriangular.lean`** and the new row of the index for it (line 776): not
   compared.

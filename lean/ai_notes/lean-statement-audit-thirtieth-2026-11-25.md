@@ -12,10 +12,10 @@ The statements and the definitions were read, not the proofs. Each check says ho
 
 The branch `lean-plus` of `/home/claude/lp` moved during the audit.
 
-- At the start: `888bf30`. All ten subject files were read at this commit. Three had `sorry` then: `Residual/DepthRescaleOpen.lean` (5 statements), `Residual/DepthReGLUOpen.lean` (4), `Depth/ThetaDagger.lean` (3).
-- During the work the branch went to `82fa4e6` and then `077b2fb` (02:46 UTC). These commits added the proofs of the three files. The three files at `888bf30` were compared with `077b2fb`: no statement and no definition changed; the only lines removed are the lines `sorry`. The proving commits put `omit … in` lines before some theorems, which drop instance arguments that the statement does not use (for example `smallWritesLimit_eq_zero_of_forall_mem_isOpen_mlp_rescale` no longer asks `[Nonempty T]`, `[DecidableEq d]`, `[Fintype dOut]`). This makes the statements slightly more general and changes nothing else.
-- At `077b2fb` none of the ten files contains `sorry` (by `grep`), and all have a build output newer than the source. The compiled checks were run against this build.
-- At the end: `75da6c3` (03:00 UTC). Between `077b2fb` and `75da6c3` none of the ten files changed, and no index row of the ten files changed; the index rows were read at `28811b8`. The commits in between add other files (networks with biases), which were not read.
+- At the start: `135b098`. All ten subject files were read at this commit. Three had `sorry` then: `Residual/DepthRescaleOpen.lean` (5 statements), `Residual/DepthReGLUOpen.lean` (4), `Depth/ThetaDagger.lean` (3).
+- During the work the branch went to `5a23c38` and then `6d55f29` (02:46 UTC). These commits added the proofs of the three files. The three files at `135b098` were compared with `6d55f29`: no statement and no definition changed; the only lines removed are the lines `sorry`. The proving commits put `omit … in` lines before some theorems, which drop instance arguments that the statement does not use (for example `smallWritesLimit_eq_zero_of_forall_mem_isOpen_mlp_rescale` no longer asks `[Nonempty T]`, `[DecidableEq d]`, `[Fintype dOut]`). This makes the statements slightly more general and changes nothing else.
+- At `6d55f29` none of the ten files contains `sorry` (by `grep`), and all have a build output newer than the source. The compiled checks were run against this build.
+- At the end: `33b475e` (03:00 UTC). Between `6d55f29` and `33b475e` none of the ten files changed, and no index row of the ten files changed; the index rows were read at `5a82a4e`. The commits in between add other files (networks with biases), which were not read.
 
 ## Part 1: checks
 
@@ -25,7 +25,7 @@ The branch `lean-plus` of `/home/claude/lp` moved during the audit.
 
 `Fintype`: the index types of the weights are `d`, `hid ℓ`, `H ℓ`, `dh ℓ` and, in the files on Lemma A.30, `dIn`, `dOut`; each has `[Fintype …]` in the `variable` lines. The embedding and the readout of `BlockParams A` are indexed by `PEmpty`, which has a `Fintype` instance.
 
-**By compiling a copy** (`/home/claude/audit30/Check1.lean`, compiled with `lake env lean` against the build of `077b2fb`, no error): each named statement was applied to the concrete measure `Measure.addHaar` and concrete index types: one token, `d = Fin 2`, three blocks with 3, 1 and 0 hidden units (`ae_funDimBlocks_tanh_residual`, `…_gelu_…`, `…_swiglu_…`, `…_geglu_…`, `ae_funDimBlocks_ge`, `ae_forall_evalBlocks_residual_ne_skipless_gelu` with `L + 2 = 3` and Sard's theorem as a hypothesis); two tokens with the causal mask, blocks with 0, 1 and 2 heads of width 1 beside the hidden units (`ae_funDimBlocks_attention_tanh_residual`, `…_gelu_…`, `…_swiglu_…`, `…_geglu_…`); and the clause "`U` contains `θ_τ` for generic `θ`" of `exists_isOpen_jacobianRank_smallWrites_relu_of_isOpen` with `Ω` the unit ball. All compile.
+**By compiling a copy** (`/home/claude/audit30/Check1.lean`, compiled with `lake env lean` against the build of `6d55f29`, no error): each named statement was applied to the concrete measure `Measure.addHaar` and concrete index types: one token, `d = Fin 2`, three blocks with 3, 1 and 0 hidden units (`ae_funDimBlocks_tanh_residual`, `…_gelu_…`, `…_swiglu_…`, `…_geglu_…`, `ae_funDimBlocks_ge`, `ae_forall_evalBlocks_residual_ne_skipless_gelu` with `L + 2 = 3` and Sard's theorem as a hypothesis); two tokens with the causal mask, blocks with 0, 1 and 2 heads of width 1 beside the hidden units (`ae_funDimBlocks_attention_tanh_residual`, `…_gelu_…`, `…_swiglu_…`, `…_geglu_…`); and the clause "`U` contains `θ_τ` for generic `θ`" of `exists_isOpen_jacobianRank_smallWrites_relu_of_isOpen` with `Ω` the unit ball. All compile.
 
 Verdict: generic is "almost every parameter, for every additive Haar measure" in every statement with `∀ᵐ`. No drift.
 
@@ -266,11 +266,11 @@ Every clause of Lemma D.13 is there: the cones, `A_ℓ`, the two formulas for `g
 
 ### Check 7. The index rows, the registrations, the axioms
 
-**Axioms, by compiling a copy** (`/home/claude/audit30/Axioms30.lean`, against the build of `077b2fb`): `#print axioms` of the 40 public theorems and the 4 public definitions of the ten files. All 44 depend on `propext`, `Classical.choice`, `Quot.sound` and on nothing else; no `sorryAx`.
+**Axioms, by compiling a copy** (`/home/claude/audit30/Axioms30.lean`, against the build of `6d55f29`): `#print axioms` of the 40 public theorems and the 4 public definitions of the ten files. All 44 depend on `propext`, `Classical.choice`, `Quot.sound` and on nothing else; no `sorryAx`.
 
-**Registrations, by `grep`** in `checks/Axioms.lean` at `077b2fb`: each of the 40 public theorems of the ten files is registered exactly once. The four definitions `blockDir`, `posOrthant`, `thetaDaggerGated`, `thetaDaggerMlp` are not registered; other definitions of the library (for example `funDimBlocks`, `noKinkAll`, `frozenGated`) are not registered either, so this follows the convention of the file. Each of the 44 names is in a row of `STATEMENTS.md`.
+**Registrations, by `grep`** in `checks/Axioms.lean` at `6d55f29`: each of the 40 public theorems of the ten files is registered exactly once. The four definitions `blockDir`, `posOrthant`, `thetaDaggerGated`, `thetaDaggerMlp` are not registered; other definitions of the library (for example `funDimBlocks`, `noKinkAll`, `frozenGated`) are not registered either, so this follows the convention of the file. Each of the 44 names is in a row of `STATEMENTS.md`.
 
-**The rows, by reading** (`STATEMENTS.md` at `28811b8`; the ten files did not change after `077b2fb`). Every row names the right file, lists all public names of its file, and has the status "proved", which is true at `077b2fb`. Sentence by sentence:
+**The rows, by reading** (`STATEMENTS.md` at `5a82a4e`; the ten files did not change after `6d55f29`). Every row names the right file, lists all public names of its file, and has the status "proved", which is true at `6d55f29`. Sentence by sentence:
 
 | row of | true of the statements? |
 |---|---|

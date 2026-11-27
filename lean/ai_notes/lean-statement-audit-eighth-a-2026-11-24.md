@@ -16,27 +16,27 @@ Library: `/home/claude/lw/lean` (branch `lean-wip`). The branch moved while I re
 
 | When | Commit of `/home/claude/lw` | Files of this part with `sorry` (`grep -w sorry`) |
 |---|---|---|
-| start | `3131776` (10:14:51 UTC) | `Depth/HiddenZero.lean` (6), `Depth/DomainZero.lean` (3), `Depth/DomainZeroConnected.lean` (2), `Depth/TanhZero.lean` (3); and, outside the list of the brief but in the chain, `Depth/RegularZeroTanh.lean` (1), `Depth/TanhPathBlock.lean` (1) |
-| the copy I read | `60f04ae` (10:18:43) | `Depth/HiddenZero.lean` (6), `Depth/TanhZero.lean` (3), `Depth/RegularZeroTanh.lean` (1), `Depth/TanhPathBlock.lean` (1) |
-| end | `f1ffa79f7163f2c1149598547fe5a1346c747ec4` (10:27:19) | none: no file under `SkipsLean/` contains `sorry` |
+| start | `7747aeb` (10:14:51 UTC) | `Depth/HiddenZero.lean` (6), `Depth/DomainZero.lean` (3), `Depth/DomainZeroConnected.lean` (2), `Depth/TanhZero.lean` (3); and, outside the list of the brief but in the chain, `Depth/RegularZeroTanh.lean` (1), `Depth/TanhPathBlock.lean` (1) |
+| the copy I read | `0dd64fe` (10:18:43) | `Depth/HiddenZero.lean` (6), `Depth/TanhZero.lean` (3), `Depth/RegularZeroTanh.lean` (1), `Depth/TanhPathBlock.lean` (1) |
+| end | `244ec8ac4dfe9219f2d1849c90274485eae53f3f` (10:27:19) | none: no file under `SkipsLean/` contains `sorry` |
 
 What changed between the copy I read and the end (by a script, `stmts.py`, that compares the text
 of every public declaration with its docstring, 902 declarations; and by `git diff`, removed
 lines): the only removed lines are 11 lines `sorry`. Seven public statements got one new line
 `omit [… instance …] in` before them (six in `Depth/HiddenZero.lean`, and
 `exists_regularZero_tanh_path`): an instance that the statement did not use is no longer an
-argument. No hypothesis, conclusion, definition or docstring changed. Between `3131776` and
-`60f04ae` the only removed lines are 5 lines `sorry`. So what I say below holds for `f1ffa79`.
+argument. No hypothesis, conclusion, definition or docstring changed. Between `7747aeb` and
+`0dd64fe` the only removed lines are 5 lines `sorry`. So what I say below holds for `244ec8a`.
 
 ## How I checked
 
 - "By reading": I read the Lean source (a copy made with `git archive` in
-  `/home/claude/audit8a/snap`, commit `60f04ae`; a second copy `snap2`, commit `f1ffa79`) and the
+  `/home/claude/audit8a/snap`, commit `0dd64fe`; a second copy `snap2`, commit `244ec8a`) and the
   paper.
 - "By compiling": scratch files of my own in `/home/claude/audit8a/scratch/`, compiled with `lean`
   (4.36.0). The compiled library of `/home/claude/lw` lacks most files, so I read the compiled
   library of `/home/claude/lp/lean` (branch `lean-plus`) through `LEAN_PATH`, without `lake`. At
-  the last run `lp` was at `f1ffa79` and its sources under `SkipsLean/` were the same as `snap2`
+  the last run `lp` was at `244ec8a` and its sources under `SkipsLean/` were the same as `snap2`
   (`diff -rq`). I did not run `lake build`. I wrote nothing under `lw`, `lp` or the repository.
 - "By a computation": a Python script in `/home/claude/audit8a/py/`.
 
@@ -56,7 +56,7 @@ sent me there.
    defined, is in the public statements of the proof but not in one statement (see "What the
    authors should know", 1).
 3. The final statement has the paper's hypotheses and one more, at least one token. Its value is
-   the paper's (13) in the case (0). No `axiom`. At `f1ffa79` it depends on `propext`,
+   the paper's (13) in the case (0). No `axiom`. At `244ec8a` it depends on `propext`,
    `Classical.choice`, `Quot.sound` only.
 
 ---------------------------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ sent me there.
 **Verdict: yes.** By reading, and by compiling (`Sig8.lean`: a program took the type of each of
 the 53 public names of the 16 files of the brief, and of 5 names of the chain, apart).
 
-`Depth/TanhZero.lean`, at `f1ffa79`:
+`Depth/TanhZero.lean`, at `244ec8a`:
 
 ```
 theorem ae_funDim_tanh_skipless_rmsNorm_zero [Nonempty T]
@@ -176,7 +176,7 @@ with `xE ≠ 0` in the case (0)", and Lean:
   paper's "finite batch of such inputs". By (R2) these inputs are of the kind (a).
 
 By compiling (`Fit8b.lean`, theorem `fit4`, from the public statements, three standard axioms at
-`f1ffa79`): under the hypotheses of the theorem there are `n` and a batch `X` with no zero row in
+`244ec8a`): under the hypotheses of the theorem there are `n` and a batch `X` with no zero row in
 any input such that, for almost every `θ`, `θ ∈ hiddenNonzero Real.tanh hid X (Fin.last L)` and
 `jacobianRank … X θ + (L + 1) * (d (d − 1) / 2 + 1) = P`. This is the paper's statement in the
 paper's own sense: a batch at which the network is defined, with the rank (13).
@@ -222,13 +222,13 @@ the division of natural numbers is exact, and `finrank ℝ (Params (Arch.mlp …
 `d_in d + 2 d ∑ d_hidden + d d_out` (`finrank_params_mlp`, `Dimension/ParameterCount.lean`), the
 paper's `P`. The same.
 
-Axioms (at `f1ffa79`): `grep -rn "^axiom" SkipsLean` gives no line, and no file has `sorry`. By
-compiling (`Ax8.lean`, against the library of `lp` at `f1ffa79`): each of the 53 public names of
+Axioms (at `244ec8a`): `grep -rn "^axiom" SkipsLean` gives no line, and no file has `sorry`. By
+compiling (`Ax8.lean`, against the library of `lp` at `244ec8a`): each of the 53 public names of
 the 16 files, and `exists_regularZero_tanh_path`, `exists_tanhPathBlock`,
 `claimZero_castSucc_tanh`, `tanh_path_step`, `exists_holomorphicOnCone_of_ne_zero`,
 `HolomorphicOnCone.congr`, `eq_zero_of_fderiv_suffixC_one_sub_sq`, `blockLHSC_pathMatrix_eq_zero`,
 `path_separation`, depends on `propext`, `Classical.choice`, `Quot.sound` and nothing else. (An
-earlier run, when the library of `lp` was between `60f04ae` and `f1ffa79`, showed `sorryAx` in 13
+earlier run, when the library of `lp` was between `0dd64fe` and `244ec8a`, showed `sorryAx` in 13
 of the 53: the six of `Depth/HiddenZero.lean`, the five that rest on them in
 `Depth/DomainZero.lean` and `Depth/DomainZeroConnected.lean`, and
 `exists_jacobianRank_tanh_rmsNorm_zero`, `ae_funDim_tanh_skipless_rmsNorm_zero`.)
@@ -276,7 +276,7 @@ For MLP blocks and at least one token the two say the same.
 
 ### (a) Are the pieces true as written?
 
-At `f1ffa79` all 53 are proved with the three standard axioms (by compiling, `Ax8.lean`), so they
+At `244ec8a` all 53 are proved with the three standard axioms (by compiling, `Ax8.lean`), so they
 are true as written. Before that I had judged the statements that were still `sorry` by hand; I
 found no counterexample. The degenerate cases, by reading:
 
@@ -333,7 +333,7 @@ hidden units of the block (at least two) and `d ≥ 2`" (`Depth/DomainZeroConnec
 
 **Yes, by compiling** (`Fit8.lean`, three theorems of my own with the statements of
 `Depth/TanhZero.lean` word for word, proved from the other statements; three standard axioms at
-`f1ffa79`):
+`244ec8a`):
 
 - `claimZero_of_tanh_path` from `claimZero_last` (with `hθ.rank_D`) and `claimZero_castSucc_tanh`,
   by induction from `L` down. The hypothesis `hblocks` has the form of the conclusion of
@@ -413,10 +413,10 @@ Nothing false, nothing vacuous, nothing drifted, nothing misdescribed. In order 
    a file of the other part.
 7. The three places of (b) where a docstring could say more.
 
-## Corrections for `STATEMENTS.md` (lines at `f1ffa79`)
+## Corrections for `STATEMENTS.md` (lines at `244ec8a`)
 
 The rows of the 16 files (lines 158 to 161, 165 to 167, 170, 173 to 176, 179 to 181, 183) say
-what the statements say; the status "proved" is right at `f1ffa79`. Stale or incomplete:
+what the statements say; the status "proved" is right at `244ec8a`. Stale or incomplete:
 
 1. **Line 238:** "D eq. (14), for `ε > 0` (the case `ε = 0` is not stated)". It is stated:
    `fderiv_rmsNorm_zero_mul` (`Depth/StepZeroValues.lean`, the row at line 165). Replace the
@@ -456,7 +456,7 @@ what the statements say; the status "proved" is right at `f1ffa79`. Stale or inc
 ## What I could not check
 
 - The proofs. I compared statements and definitions. That the 53 statements are proved I took
-  from `#print axioms` against the compiled library of `/home/claude/lp/lean` at `f1ffa79`, which
+  from `#print axioms` against the compiled library of `/home/claude/lp/lean` at `244ec8a`, which
   its owner built; I did not build the library myself.
 - Whether the Lean `funDim` can exceed the paper's functional dimension at some parameter for
   `ε = 0` (Check 2): searched by hand, not decided.
@@ -475,7 +475,7 @@ what the statements say; the status "proved" is right at `f1ffa79`. Stale or inc
 
 ## Files of this audit (`/home/claude/audit8a/`)
 
-`snap/`, `snap2/` (the sources at `60f04ae` and `f1ffa79`); `scratch/Fit8.lean` (the three
+`snap/`, `snap2/` (the sources at `0dd64fe` and `244ec8a`); `scratch/Fit8.lean` (the three
 statements of `Depth/TanhZero.lean` from the pieces), `scratch/Fit8b.lean` (`fit4`: the batch at
 almost every parameter; `r2_iff`), `scratch/Ax8.lean` and `Ax8_final.out` (axioms of 62 names),
 `scratch/Sig8.lean` and `Sig8.out` (the form of each statement); `stmts.py` (statement texts of

@@ -23,7 +23,7 @@ earlier audits were relied on for `Arch`, `Params`, `eval`, `funDim`, `flat`, `c
 `rescaleDir`, "generic", `OneBlockGeneric`, `OneBlockGenericGated`, `subProd`.
 
 The library changed while I read. `OneBlock/ReGLU.lean` had 13 statements with `sorry` when I
-read it; commit `7f5fe75` then filled in the 13 proofs and changed no statement (its diff removes
+read it; commit `7b016f3` then filled in the 13 proofs and changed no statement (its diff removes
 13 lines, all `sorry`). The first run of `#print axioms` showed `sorryAx` for these 13 names; after
 the library was rebuilt by its authors (05:26 UTC) the second run shows the three standard axioms
 for all 94 names of the scope, and `#check @` gives the same 94 statements as before, character
@@ -664,7 +664,7 @@ Comparison.
   the write rows by `α a`, `rescaleDirGate 1 θ β` moves the gate columns by `β c` and the write rows
   by `−β a`. With `β = λ` the sum is the direction of the lemma. Same.
 - Status: the 13 proofs of this file were `sorry` when I read it and were filled in during the
-  audit (commit `7f5fe75`, no statement changed); the rebuilt library gives the three standard
+  audit (commit `7b016f3`, no statement changed); the rebuilt library gives the three standard
   axioms for all of them. Before that I had checked the values numerically and independently of the
   authors' script (`reglu_rank_check4.py`: automatic differentiation in float64, inputs in every
   sector of the gate lines, `d = d_in = d_out = 2`, `d_hidden ∈ {2,3,4}`, three seeds, with and

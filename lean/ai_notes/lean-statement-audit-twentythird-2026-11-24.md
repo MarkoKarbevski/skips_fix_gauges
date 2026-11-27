@@ -10,15 +10,15 @@ proofs.
 
 ## Commits and files
 
-- Branch `lean-plus` of `/home/claude/lp`. I started at commit `f4a1ef2` (22:43 UTC). The branch
-  moved while I worked; I looked again at `2542854` (23:06) and at `320c6cc` (23:15).
+- Branch `lean-plus` of `/home/claude/lp`. I started at commit `91889ae` (22:43 UTC). The branch
+  moved while I worked; I looked again at `271ea92` (23:06) and at `e7e10a7` (23:15).
 - `OneBlock/LearnedSkipRMSZeroBoundKinds.lean`, `OneBlock/LearnedSkipRMSZeroRescaleBound.lean`,
-  `OneBlock/LearnedSkipTriangularRMSZeroBound.lean`: read at `f4a1ef2`; the three files are
-  byte for byte the same at `320c6cc`. No `sorry`.
+  `OneBlock/LearnedSkipTriangularRMSZeroBound.lean`: read at `91889ae`; the three files are
+  byte for byte the same at `e7e10a7`. No `sorry`.
 - `OneBlock/UnitsRescaleSphere.lean` and `OneBlock/LearnedSkipRMSZeroSteps.lean`: read at
-  `f4a1ef2`, where their three theorems were `sorry` (two in the first file, one in the second).
-  Their proofs came in at `168722e` and `92b0a1b`. At `2542854` and at `320c6cc` the header, the
-  definition and the three statements are the same text as at `f4a1ef2` (compared by a script),
+  `91889ae`, where their three theorems were `sorry` (two in the first file, one in the second).
+  Their proofs came in at `f372b50` and `b83007c`. At `271ea92` and at `e7e10a7` the header, the
+  definition and the three statements are the same text as at `91889ae` (compared by a script),
   and the files have no `sorry`.
 - The 26 public theorems of the five files depend on `propext`, `Classical.choice`, `Quot.sound`
   only (compiled, `Chk3.lean`, against the build in `/home/claude/lp/lean`, whose object files of
@@ -585,14 +585,14 @@ computation, `z23steps.py`, `z23hyp.py`.)
 
 **Verdict: every sentence of the five rows is true of the statements. Every public theorem of the
 five files is in its row and in `checks/Axioms.lean`. Some "Not stated" sentences are true of the
-file and no longer of the library.** (By reading; the names by a script; at `320c6cc`.)
+file and no longer of the library.** (By reading; the names by a script; at `e7e10a7`.)
 
 - The names. For each file the public names of the source are exactly the names of the third
   cell of its row: 8, 4, 11, 3 (with the definition `UnitsRescaleSphere`) and 1. All 26 theorems
   are in `checks/Axioms.lean` (the three of the last two files since their proofs); the
   definition is not, as no definition is.
-- The rows are at lines 924 to 926, 928 and 929 of `STATEMENTS.md` at `320c6cc` (914 to 918 at
-  `f4a1ef2`). Their text is unchanged between the two commits but for the status of the last
+- The rows are at lines 924 to 926, 928 and 929 of `STATEMENTS.md` at `e7e10a7` (914 to 918 at
+  `91889ae`). Their text is unchanged between the two commits but for the status of the last
   two, "in work" then, "proved" now; both are right for their commit.
 - Row of `OneBlock/LearnedSkipRMSZeroBoundKinds.lean`: every clause is true (checks 1, 2).
   "blocks of any width with at least one hidden unit": yes; for attention one head of positive
@@ -716,7 +716,7 @@ the paper:
 ## Corrections for `STATEMENTS.md`
 
 None of these is an error in a row; they are sentences that later work has overtaken, and small
-gains in precision. Lines are those of `320c6cc`.
+gains in precision. Lines are those of `e7e10a7`.
 
 1. **Lines 251 to 258** ("Not yet compared by such a reader …"): the five files of this audit can
    move to the compared ones, with this report.
@@ -763,7 +763,7 @@ gains in precision. Lines are those of `320c6cc`.
   counterexample.
 - `UnitsRescaleSphere` was computed for up to five coordinates and seven units, with integer
   weights between `−5` and `5`.
-- The files written after `f4a1ef2` (`OneBlock/LearnedSkipRMSZeroRescale.lean`,
+- The files written after `91889ae` (`OneBlock/LearnedSkipRMSZeroRescale.lean`,
   `…RescaleGeneric.lean`, `OneBlock/UnitsRescaleSphereReGLU.lean`,
   `OneBlock/LearnedSkipRMSZeroReGLU*.lean`, `OneBlock/LearnedSkipTriangularRMSZeroRank.lean`,
   `OneBlock/LearnedSkipTriangularRMSZeroRescale.lean`, `OneBlock/TurnsActiveRowsSkipLinear.lean`,

@@ -11,35 +11,35 @@ push. My files are in `/home/claude/audit15b/`.
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
-- **Commit that I read: `679de0975904173c441a8a53f706bf799488a3a1` (16:13:41 UTC).** I began at
-  16:06 UTC at `2fc98cc` (16:04:49 UTC, the commit of the brief) and ended at 16:31 UTC.
-- The branch moved several times while I worked: `2fc98cc` → `679de09` (16:13:41) → `cbee1f1`
-  (16:18:54) → `e33be5b` (16:24:24) → `591d9e4` (16:28:08, the last that I saw). Of the eleven
+- **Commit that I read: `e5176683c4afb55d578141564c3854098902d942` (16:13:41 UTC).** I began at
+  16:06 UTC at `d2982b1` (16:04:49 UTC, the commit of the brief) and ended at 16:31 UTC.
+- The branch moved several times while I worked: `d2982b1` → `e517668` (16:13:41) → `1567c50`
+  (16:18:54) → `3badd85` (16:24:24) → `6ed45ed` (16:28:08, the last that I saw). Of the eleven
   files of the brief, **nine are the same at all these commits** (`git diff --stat`: no line).
   The two others, `Generic/LevelSetImages.lean` and `Dimension/IdentifiableConverse.lean`,
-  changed once, between `2fc98cc` and `679de09`, and are the same from `679de09` to `591d9e4`.
+  changed once, between `d2982b1` and `e517668`, and are the same from `e517668` to `6ed45ed`.
   `Network/Sum.lean` and `Network/Transformer.lean` did not change either.
-- **What changed in the two files** (`git diff 2fc98cc 679de09`): the three `sorry` are gone (the
+- **What changed in the two files** (`git diff d2982b1 e517668`): the three `sorry` are gone (the
   three statements are proved), and the hypothesis `(hΩ : ∀ i, IsOpen (Ω i))` was removed from all
   three statements; the docstrings say "subsets" where they said "open subsets"; two statements
   got `omit [DecidableEq d] in`. Nothing else in a statement changed. I first read the statements
-  with `hΩ` and then compared the statements as they stand at `679de09` (Check 5).
-- **Files with `sorry`.** At `2fc98cc`: `Generic/LevelSetImages.lean` (1) and
-  `Dimension/IdentifiableConverse.lean` (2), and no other file. At `679de09`: none of the eleven
+  with `hΩ` and then compared the statements as they stand at `e517668` (Check 5).
+- **Files with `sorry`.** At `d2982b1`: `Generic/LevelSetImages.lean` (1) and
+  `Dimension/IdentifiableConverse.lean` (2), and no other file. At `e517668`: none of the eleven
   files; two files outside the brief, `Generic/Cayley.lean` (4) and
-  `Dimension/IdentifiableConverseCob.lean` (4). At `591d9e4`: `Dimension/IdentifiableIff.lean`,
+  `Dimension/IdentifiableConverseCob.lean` (4). At `6ed45ed`: `Dimension/IdentifiableIff.lean`,
   `Generic/GroupDimension.lean`, `Residual/IdentifiableIff.lean`, `Symmetry/CobGroup.lean`,
   `Symmetry/OnlyOrthogonalRows.lean`, all outside the brief (`git grep -l -w sorry`). I did not
   read these files.
 - The eleven files have 79 public names (6 definitions, 73 theorems) and 168 private helpers. No
   line with `axiom`, `opaque`, `admit`, `native_decide` or `unsafe` in them (by `grep`).
 - All 73 theorems depend on `propext`, `Classical.choice`, `Quot.sound` only (by compiling,
-  `Chk1.out`, at `679de09`). All 73 stand in `checks/Axioms.lean`, and all 79 names stand in their
+  `Chk1.out`, at `e517668`). All 73 stand in `checks/Axioms.lean`, and all 79 names stand in their
   index rows, written out or by a stated abbreviation ("each of the eight also with `_rmsNorm`").
 
 Papers, as text: the skips paper ("S", `skips.txt`), the dimension paper ("D", `dim.txt`), the
-absorb paper ("A", `absorb.txt`). Line numbers of `STATEMENTS.md` are those of `591d9e4`; the
-rows of the eleven files have the same text at `679de09`, `e33be5b` and `591d9e4` (by `diff`), and
+absorb paper ("A", `absorb.txt`). Line numbers of `STATEMENTS.md` are those of `6ed45ed`; the
+rows of the eleven files have the same text at `e517668`, `3badd85` and `6ed45ed` (by `diff`), and
 only their line numbers move as rows are added above them. Each correction quotes the words to
 change.
 
@@ -57,8 +57,8 @@ How I checked.
 - "By hand": a short argument of my own, written in the note.
 - "By compiling": in `/home/claude/audit15b/`, with `lean` 4.36.0 through `LEAN_PATH`, without
   `lake`, against a copy of the compiled library of `/home/claude/lp/lean` taken at 16:09 UTC
-  (`lp` then at `2fc98cc`, its sources equal to those of `lw` by `diff -rq`). Into my copy I
-  compiled the two changed files from the sources of `679de09` (6 and 4 seconds, no error, no
+  (`lp` then at `d2982b1`, its sources equal to those of `lw` by `diff -rq`). Into my copy I
+  compiled the two changed files from the sources of `e517668` (6 and 4 seconds, no error, no
   warning, no `sorry`). Then five scratch files of my own: `Chk1.lean` (axioms), `Chk2.lean`
   (general checks), `Chk3.lean` (concrete networks), `Chk4.lean` and `Chk5.lean` (the converse).
   All compile without error (`Chk*.out`).
@@ -74,7 +74,7 @@ same notion for the network with `E = D = I` and only the reads and writes as pa
 hypothesis excludes a block without heads or a block without hidden units, and the value has the
 paper's `s` then (compiled on a network of one attention block and one tanh block: `fd = 24`
 without normalization and `27` under pre-RMSNorm; the computation gives the same ranks). The
-three statements on the converse are true as they stand, are proved at `679de09`, and removing
+three statements on the converse are true as they stand, are proved at `e517668`, and removing
 the openness of `Ω i` makes nothing false or empty. Three small things about how the transformer
 is modelled are worth knowing (list at the end), and two sentences of the index are out of date.
 
@@ -255,10 +255,10 @@ computation.)
 
 ### Check 5. The converse of Proposition 4.6 / 4.5
 
-I compared the statements as they stand at `679de09`, without `hΩ`.
+I compared the statements as they stand at `e517668`, without `hΩ`.
 
 **(a) Is `finrank_ker_le_of_level_set_subset_iUnion_image` true as stated? Yes.** (By compiling:
-it is proved at `679de09`, no `sorry`, standard axioms. By hand: I found no way to refute it, and
+it is proved at `e517668`, no `sorry`, standard axioms. By hand: I found no way to refute it, and
 give the reason.)
 
 The Lean text: `{F : P → Y} (hF : ContDiff ℝ 1 F) (θ₀ : P) {J : Type*} (g : J → P → Y') (hg : ∀ j,
@@ -361,11 +361,11 @@ transform covers the orthogonal matrices near the identity.
 **(d) Sard's theorem. A strengthening, and no gap is hidden.** (By reading; the axioms by
 compiling.) The paper: "By Sard's theorem this image contains no open subset of a manifold of
 larger dimension". The Lean statements have no hypothesis that stands for a theorem of the
-literature, and at `679de09` they are proved from Mathlib alone, with the Hausdorff dimension in
+literature, and at `e517668` they are proved from Mathlib alone, with the Hausdorff dimension in
 place of Sard's theorem and the inverse function theorem in place of the constant rank theorem
 (`Chk1.out`, `Chk4.out`: `propext`, `Classical.choice`, `Quot.sound`). They are stronger than the
 paper's step in three ways: maps of class `C¹`, countably many of them, on arbitrary subsets. At
-the commit of the brief (`2fc98cc`) the three statements were `sorry`; that was the only gap, and
+the commit of the brief (`d2982b1`) the three statements were `sorry`; that was the only gap, and
 the index said so.
 
 ---------------------------------------------------------------------------------------------------
@@ -569,7 +569,7 @@ Note 6.
   `Absorb/RMSNormKinds.lean` states the theorem for the seven kinds of MLP block, which I did not
   read).
 
-### `Generic/LevelSetImages.lean` (1 theorem) and `Dimension/IdentifiableConverse.lean` (2 theorems): stated with `sorry` at `2fc98cc`, proved at `679de09`
+### `Generic/LevelSetImages.lean` (1 theorem) and `Dimension/IdentifiableConverse.lean` (2 theorems): stated with `sorry` at `d2982b1`, proved at `e517668`
 
 | Statement | Paper | Verdict |
 |---|---|---|
@@ -584,7 +584,7 @@ Note 6.
 Nothing false, nothing vacuous, nothing drifted. In order of weight:
 
 1. **The branch moved under the brief.** The two files on the converse were `sorry` at the commit
-   of the brief and are proved at `679de09`, with one hypothesis fewer (`hΩ`). The statements
+   of the brief and are proved at `e517668`, with one hypothesis fewer (`hΩ`). The statements
    without `hΩ` are true, and `ContDiffOn` on a discrete or countable `Ω i` makes nothing false or
    empty (Check 5).
 2. **Lemma A.27 for transformers is two statements, not one.** The four depth files state the
@@ -608,7 +608,7 @@ Nothing false, nothing vacuous, nothing drifted. In order of weight:
    by side, empty blocks, heads that vary from block to block, `H d_h ≠ d`). The values hold
    there in the cases that I computed (F, G, B, and the last blocks-alone case).
 
-## Corrections for `STATEMENTS.md` (line numbers of `591d9e4`)
+## Corrections for `STATEMENTS.md` (line numbers of `6ed45ed`)
 
 1. Line 772, row of `Generic/LevelSetImages.lean`: "The proof may use the Hausdorff dimension from
    Mathlib; no hypothesis from the literature". The statement is proved, and the file header now
@@ -617,8 +617,8 @@ Nothing false, nothing vacuous, nothing drifted. In order of weight:
    literature; the sets `Ω i` need not be open."
 2. Line 773, row of `Dimension/IdentifiableConverse.lean`: "The forms for the kinds of network of
    the papers (changes of basis, orthogonal ones, rescalings, head changes) are not yet stated."
-   Since `679de09` this is out of date: the row of `Dimension/IdentifiableConverseCob.lean` states
-   forms for the changes of basis, and since `cbee1f1` the rows of `Dimension/IdentifiableIff.lean`
+   Since `e517668` this is out of date: the row of `Dimension/IdentifiableConverseCob.lean` states
+   forms for the changes of basis, and since `1567c50` the rows of `Dimension/IdentifiableIff.lean`
    and `Residual/IdentifiableIff.lean` state the equivalence (I read these rows' titles only, not
    the files). Replace the sentence by a pointer to those rows.
 3. From line 154, the list "Not yet compared by such a reader": after this audit, take out the
@@ -626,7 +626,7 @@ Nothing false, nothing vacuous, nothing drifted. In order of weight:
    `Residual/BlocksAloneAttention.lean`, the four `Residual/DepthTransformer….lean`,
    `Residual/LocalIdentifiabilityTransformer.lean`, `Residual/ExactGainTransformer.lean`,
    `Generic/LevelSetImages.lean`, `Dimension/IdentifiableConverse.lean`), the last two as compared
-   at `679de09`.
+   at `e517668`.
 4. Lines 764 to 767, the four rows of the depth files: they say "`fd(θ_τ) = …` for all small
    `τ ≠ 0`; the conditions at almost every parameter". This is correct. A reader may take it for
    one statement "for almost every `θ`"; consider adding "(two statements; together: for almost
@@ -635,7 +635,7 @@ Nothing false, nothing vacuous, nothing drifted. In order of weight:
    sums need a hidden unit, so that a sum without hidden units is covered by the attention row
    only.
 6. Nothing is missing: all 79 public names are in the rows (some by the stated abbreviations), the
-   statuses "proved" are right at `679de09` for all eleven files, and at `2fc98cc` the two files of
+   statuses "proved" are right at `e517668` for all eleven files, and at `d2982b1` the two files of
    the converse were rightly "in work".
 
 ## What I could not check

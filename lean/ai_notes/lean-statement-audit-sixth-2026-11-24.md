@@ -5,8 +5,8 @@ STATUS: complete
 Reader: an independent reader who did not write the statements. Brief:
 `/home/claude/proj_up/audit6_brief_2026-11-24.md`.
 
-Library: `/home/claude/lw/lean` (branch `lean-wip`). Commit at the start: `1e79243`. Commit at the
-end: `31752fa`. Between the two (`git -C /home/claude/lw diff 1e79243 HEAD --stat -- lean`):
+Library: `/home/claude/lw/lean` (branch `lean-wip`). Commit at the start: `6480ce9`. Commit at the
+end: `0d967ff`. Between the two (`git -C /home/claude/lw diff 6480ce9 HEAD --stat -- lean`):
 
 - `Depth/RayInduction.lean` and `Depth/FrozenFar.lean`: the proofs were written. The three public
   statements (`ray_induction`, `ray_induction_matrix`, `exists_far_frozen_bounds`), their
@@ -17,14 +17,14 @@ end: `31752fa`. Between the two (`git -C /home/claude/lw diff 1e79243 HEAD --sta
 - `STATEMENTS.md` (rows of these files), `SkipsLean.lean`, `checks/Axioms.lean`.
 
 No statement and no definition that I judged changed. Line numbers of `STATEMENTS.md` below are
-those of the file at `31752fa`.
+those of the file at `0d967ff`.
 
 Paper: the dimension paper as text (`dim.txt`; "D"). Equation numbers are those of that text.
 
 How I checked. "By reading": I read the Lean source and the paper. "By compiling": I compiled a
 scratch file of my own in `/home/claude/audit6/` with `lean` (4.36.0). The compiled library of
 `/home/claude/lw` lacks 35 of the 87 files, so I read the compiled library of `/home/claude/lp/lean`
-(branch `lean-plus`, the same commit `31752fa`; its tracked sources under `SkipsLean/` are the same, by `diff -rq`; its
+(branch `lean-plus`, the same commit `0d967ff`; its tracked sources under `SkipsLean/` are the same, by `diff -rq`; its
 owner built it at that commit), through
 `LEAN_PATH`, without `lake`. I wrote nothing under `lw`, `lp` or the repository. "By a
 computation": a Python script in `/home/claude/audit6/`.
@@ -33,7 +33,7 @@ Short answer. **Nothing false, vacuous or drifted was found.** "Generic" is `∀
 Lebesgue measure in every one of the 110 public statements that state a generic claim. `funDim` is
 the maximum of Definition 4.1. The five statements of Theorem 5.2 (ii) for `ε > 0` and (iii) carry
 the paper's hypotheses and one more, at least one token; the change to a real variable did not
-touch them. At `31752fa`, two of the five are proved with the three standard axioms (SwiGLU and
+touch them. At `0d967ff`, two of the five are proved with the three standard axioms (SwiGLU and
 GeGLU without normalization); the three under pre-RMSNorm rest on seven statements that are still
 `sorry` (`Depth/RayGatedPlus.lean`, `Depth/RayMlpPlus.lean`), which I judged true by hand and whose
 forms I checked by compiling.
@@ -224,7 +224,7 @@ What `funDim` is, exactly.
 change from complex to real variables in the proofs changed nothing in the five final statements
 and in the five statements of Lemma D.12.
 
-How I know that nothing changed. `git diff d80fd1c HEAD` (`d80fd1c` is the commit at which the fifth
+How I know that nothing changed. `git diff 19f888c HEAD` (`19f888c` is the commit at which the fifth
 audit ended): `Depth/GeluGatedTheorem.lean` is unchanged; in `Depth/StepGated.lean` the five
 statements are unchanged and only `sorry` was replaced by proofs, with new imports and a new
 header; in `Depth/GeluGatedExplicit.lean` three lines of the header changed; `Depth/Cones.lean`,
@@ -314,12 +314,12 @@ definition constant of the library, public, private and generated; 2524 constant
   private helpers of that file; `ae_funDim_gelu_skipless_rmsNorm`,
   `ae_funDim_swiglu_skipless_rmsNorm`, `ae_funDim_geglu_skipless_rmsNorm`.
 - Outside the chain: the 13 of `Symmetry/OnlyOrthogonal.lean`.
-- Proved with the three standard axioms at `31752fa`: `ae_funDim_swiglu_skipless`,
+- Proved with the three standard axioms at `0d967ff`: `ae_funDim_swiglu_skipless`,
   `ae_funDim_geglu_skipless` (Theorem 5.2 (iii) without normalization),
   `claimGated_castSucc_swiglu`, `claimGated_castSucc_geglu`, `exists_regular_claimGated_swiglu`,
   `exists_regular_claimGated_geglu`, `exists_far_frozen_bounds`, `ray_induction`,
   `ray_induction_matrix`, and every statement of the other files of Part 2. At the start commit
-  `1e79243` the last three were `sorry` and the whole case (n) rested on them.
+  `6480ce9` the last three were `sorry` and the whole case (n) rested on them.
 
 ---------------------------------------------------------------------------------------------------
 
@@ -343,11 +343,11 @@ rows of these files give exists (by a script).
 | D "The identity for one GELU or gated block", (26) to (30), gated block | `blockLHSGated`, `blockLHSGated_add_right`, `blockLHSGated_neg`, `suffixFlat_castSucc_iff_gated`, `suffixFlat_castSucc_iff_gated_rmsNorm` (`Depth/BlockIdentityGated.lean`) | **SAME** (proved) | Rows `T`; `𝓛` takes `n W_read` and `ż` as arguments in the place of `n`; (29) in additive form. (28) in the case (n) for any differentiable gate, in the case (+) for a real-analytic gate. |
 | D proof of Lemma D.12, "A generic ray", (i): "These `ξ` are dense" | `dense_setOf_linearIndependent_abs_dotProduct`, `dense_setOf_linearIndependent_sq_dotProduct` (`Depth/RayDense.lean`) | **LEAN STRONGER** than this part (proved) | For the hidden units of all tokens at once, and dense among all matrices `Ξ`. Only (i); the density of (ii) and (iii) is inside the proofs of `RayGatedN.lean`. |
 | D "The frozen network" | `Arch.frozen`, `Params.toFrozen`, `writeLHS`, `blockLHSGated_eq_writeLHS`, `frozen_block_apply`, `analyticOnNhd_f_frozen`, `regular_frozen_of_goodForConesGated`, `suffix_frozen_smul`, `fderiv_suffix_frozen_smul`, `fderiv_params_suffix_frozen_smul`, `writeLHS_frozen_smul` (`Depth/Frozen.lean`) | **SAME**, with additions (proved) | `𝓑°_{>k}` is the `suffix` of an architecture of its own (`χ = id`, block `ℓ`: `z_i w_i` on `A ℓ`, `0` elsewhere). "Lemmas D.2 and D.3 hold for it" is "a good `θ` is regular for it". Added: the frozen network is homogeneous of the degree `2^{L−k}`. "Polynomial" is stated as "real-analytic". |
-| D Lemma D.11 | `exists_far_frozen_bounds` (`Depth/FrozenFar.lean`) | **DIFFERENT** (proved at `31752fa`) | Real `U` with `‖U‖ ≤ ϱ` (all entries); no holomorphic extension. One clause more, the bound for the derivative in the hidden state, which the paper gets later by Cauchy's estimate. Rows `T`; any gate with `GateFar`; `t₀` any real number. |
+| D Lemma D.11 | `exists_far_frozen_bounds` (`Depth/FrozenFar.lean`) | **DIFFERENT** (proved at `0d967ff`) | Real `U` with `‖U‖ ≤ ϱ` (all entries); no holomorphic extension. One clause more, the bound for the derivative in the hidden state, which the paper gets later by Cauchy's estimate. Rows `T`; any gate with `GateFar`; `t₀` any real number. |
 | D Appendix D.3, "Conversely, every `Z = Z_k ∈ 𝔤` and `η` of the form (17), or (19) …, satisfy (16)" | `suffixFlat_cobDir_add_rescaleDir` (`Depth/SuffixFlatConverse.lean`) | **PART** (proved) | Gated blocks, case (n) only, any differentiable gate. The case (+) and the form (17) are not stated; the proof of Lemma D.12 uses the converse in the case (n) only. |
 | D Lemma D.10 | `suffixPost`, `suffix_eq_suffixPost`, `scaledSuffix`, `suffix_pow_smul_eq_scaledSuffix`, `scaledSuffix_neg`, `analyticAt_scaledSuffix`, `fderiv_suffix_pow_smul`, `fderiv_params_suffix_pow_smul` (`Depth/ScaledSuffix.lean`) | **DIFFERENT**: the core of the proof, not the lemma's statement (proved) | `(θ, s, h) ↦ 𝓑^♯(N_{ε s^{2m}}(h))` is real-analytic at every `(θ, s, H)` with no zero row of `H`, also at `s = 0`; it is `𝓑_{>k}(t^m h)` at `s = 1/t`, `t > 0`; it is even in `s`. Not stated: derivatives of all orders, "meromorphic at infinity", the holomorphic extension with bounds uniform in `t`. The header says so. |
-| D proof of Lemma D.12, "The expansion" and "The induction", (34) to (36), facts (a) to (c) | `ray_induction`, `ray_induction_matrix` (`Depth/RayInduction.lean`) | **PART** of the proof; true (proved at `31752fa`) | Without the network. Fact (a) is "`G₀`, `G_j` real-analytic at `(0,0)`", fact (b) the hypothesis `hid`, fact (c) inside the proof; "one small factor" is the hypothesis `hstep`. Values in a complete space. |
-| D proof of Lemma D.12 from (28) to (38), case (n) | `frozen_flat_at_generic_ray`, `frozen_flat_of_suffixFlat`, `frozen_flat_of_suffixFlat_swiglu`, `frozen_flat_of_suffixFlat_geglu` (`Depth/RayGatedN.lean`) | **PART** of the proof; true (proved at `31752fa`) | Rows `T`; any gate with `GateFar` in the first two. In the last three the first part of (38) is `Z W_g + η_g = 0` (Step 1 of the paper for this case). "One small factor" is proved without Lemma D.9 and without the parity (30) (note 1). |
+| D proof of Lemma D.12, "The expansion" and "The induction", (34) to (36), facts (a) to (c) | `ray_induction`, `ray_induction_matrix` (`Depth/RayInduction.lean`) | **PART** of the proof; true (proved at `0d967ff`) | Without the network. Fact (a) is "`G₀`, `G_j` real-analytic at `(0,0)`", fact (b) the hypothesis `hid`, fact (c) inside the proof; "one small factor" is the hypothesis `hstep`. Values in a complete space. |
+| D proof of Lemma D.12 from (28) to (38), case (n) | `frozen_flat_at_generic_ray`, `frozen_flat_of_suffixFlat`, `frozen_flat_of_suffixFlat_swiglu`, `frozen_flat_of_suffixFlat_geglu` (`Depth/RayGatedN.lean`) | **PART** of the proof; true (proved at `0d967ff`) | Rows `T`; any gate with `GateFar` in the first two. In the last three the first part of (38) is `Z W_g + η_g = 0` (Step 1 of the paper for this case). "One small factor" is proved without Lemma D.9 and without the parity (30) (note 1). |
 | D proof of Lemma D.12, steps 1 to 3, case (n) | `claimGated_castSucc_of_frozen` (`Depth/StepsGatedN.lean`) | **PART** of the proof; true (proved) | Any real-analytic gate. Hypotheses: (16) for `k`, (38) with the frozen network, `(D_{k+1})`, good and regular `θ`. |
 | D proof of Lemma D.12 from (28) to (38), case (+), gated blocks | `flat_at_generic_ray_gated_rmsNorm`, `flat_of_suffixFlat_gated_rmsNorm`, `flat_of_suffixFlat_swiglu_rmsNorm`, `flat_of_suffixFlat_geglu_rmsNorm` (`Depth/RayGatedPlus.lean`) | **PART** of the proof; **not proved** (`sorry`); I found no counterexample and judged them true by hand (note 2) | Any gate with `GateFar` and with `hone` in the first two; (iii) with the network itself; `ż(n) = (nZ − ⟨nZ, n⟩ n/d) W_read + n η_read`. |
 | D proof of Lemma D.12 from (28) to (38), case (+), GELU blocks | `flat_at_generic_ray_mlp_rmsNorm`, `flat_of_suffixFlat_mlp_rmsNorm`, `flat_of_suffixFlat_gelu_rmsNorm` (`Depth/RayMlpPlus.lean`) | **PART** of the proof; **not proved** (`sorry`); judged true by hand for GELU; the first two say more than the paper (note 3) | Stated for an MLP block with any activation that has `GateFar` and `hone`. No (ii). |
@@ -463,7 +463,7 @@ Nothing false, vacuous or drifted was found. In order of weight:
 6. `Symmetry/OnlyOrthogonal.lean` appeared while I read. It is not in my brief; no reader has
    compared it.
 
-## Corrections for `STATEMENTS.md` (lines at `31752fa`)
+## Corrections for `STATEMENTS.md` (lines at `0d967ff`)
 
 1. Lines 28-34, "Not yet compared by such a reader …": the sixteen files named there and the
    header and proofs of `Depth/StepGated.lean` are now compared (sixth reader, 24 November 2026:
@@ -521,7 +521,7 @@ One correction outside the index: the header of `Depth/StepGated.lean` (see (b),
 - **`millsRatio` against the paper's formula with `erf`**: by reading (a line of algebra), not by
   machine.
 - **`lake build`**: not run, as the brief asks. What I compiled, I compiled against the library of
-  `/home/claude/lp/lean`, which its owner built at `31752fa`.
+  `/home/claude/lp/lean`, which its owner built at `0d967ff`.
 - **That the claim for rows `T` is the claim for one token**: not a Lean statement, as the index
   says; I did not prove it.
 

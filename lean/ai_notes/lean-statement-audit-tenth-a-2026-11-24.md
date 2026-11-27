@@ -5,13 +5,13 @@ STATUS: complete
 Reader: an independent reader who did not write the statements. Brief:
 `/home/claude/proj_up/audit10a_brief_2026-11-24.md`. Subject: dead units and folding.
 
-Library: `/home/claude/lw/lean` (branch `lean-wip`). Commit at the start: `8dc41d9`. Commit at the
-end: `a2e3143`. Between the two, the nine files of the brief and the files that define what they
+Library: `/home/claude/lw/lean` (branch `lean-wip`). Commit at the start: `4eb217a`. Commit at the
+end: `d4c1e26`. Between the two, the nine files of the brief and the files that define what they
 use (`Network/Defs.lean`, `Network/Blocks.lean`, `Dimension/Functional.lean`, `Dimension/Space.lean`,
 `Generic/Params.lean`, `Generic/Gated.lean`, `Dimension/RescalingMlp.lean`,
 `Dimension/RescalingGate.lean`, `Residual/UpperBoundSymmetries.lean`, `Activations/ReLU.lean`) did
-not change (`git diff --quiet 8dc41d9 HEAD` on each). Line numbers of `STATEMENTS.md` below are
-those of `a2e3143`.
+not change (`git diff --quiet 4eb217a HEAD` on each). Line numbers of `STATEMENTS.md` below are
+those of `d4c1e26`.
 
 Papers: the dimension paper ("D", `dim.txt`) and the skips paper ("S", `skips.txt`), as text.
 
@@ -220,7 +220,7 @@ def InvarianceOfDomain (n : Type*) [Fintype n] : Prop :=
   nine files, in `exists_homeomorph_blockMapRes_of_not_folds` (A.32 (i)),
   `exists_isOpen_active_of_not_folds` and `not_unitInactiveRes_of_not_folds` (A.32 (ii)) and one
   private helper, all in `Residual/Folding.lean`. `Residual/FoldingOpen.lean` and
-  `Residual/DeadUnits.lean` do not use it. At `a2e3143` a new file outside the brief,
+  `Residual/DeadUnits.lean` do not use it. At `d4c1e26` a new file outside the brief,
   `Absorb/InjectiveBlocks.lean` (5 `sorry`), takes it as a hypothesis too (by `grep`; I did not
   compare that file).
 - **The count of lost dimensions** (by reading the proofs' dimension counts and the paper's proof).
@@ -419,7 +419,7 @@ Nothing false or vacuous. In order of weight:
    only the block of the inactive unit needs more than `d_model` units; `d_model = 1` is allowed;
    nothing is asked of `d_out`.
 
-## Corrections for `STATEMENTS.md` (lines of `a2e3143`)
+## Corrections for `STATEMENTS.md` (lines of `d4c1e26`)
 
 1. Lines 83–91, "Not yet compared by such a reader": take out the nine files
    `Depth/InactiveUnit.lean`, `Depth/InactiveUnitRelu.lean`, `Depth/InactiveGate.lean`,

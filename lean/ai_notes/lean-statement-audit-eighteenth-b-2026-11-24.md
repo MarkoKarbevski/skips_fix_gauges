@@ -9,33 +9,33 @@ in `/home/claude/audit18b/r18/`.
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
-- **Commit at the start: `f0edc930586d188d20f9a08fda91bd13d60b7cef` (18:54:48 UTC).**
-- **Commits read later:** `2827fc3` (18:56:49), `32c4dc4` (19:05:09), `5951ed9` (19:11:49),
-  `f74eb3d` (19:14:00), and at the end **`13cdb4e6b24cc9e22195e78a42bacfa342265981` (19:15:09
-  UTC)**. At 19:21 UTC the head was `0128bb1` (19:18:27); between the two the ten files and
+- **Commit at the start: `bd0ca40ffd26c79d5d23ad03d04376c537ccb0c0` (18:54:48 UTC).**
+- **Commits read later:** `85e666a` (18:56:49), `eafb679` (19:05:09), `f097a0e` (19:11:49),
+  `7377562` (19:14:00), and at the end **`10ffbbb239e8fa82e1d6fe323dcd57af9949d3fd` (19:15:09
+  UTC)**. At 19:21 UTC the head was `f0d3d9b` (19:18:27); between the two the ten files and
   `checks/Axioms.lean` did not change, and the index got one more row at line 837, so from there
   on its line numbers are one higher than those below (the ten rows: 840 to 849; the last note:
   906 to 908).
 - **Files with `sorry`.**
-  - At `f0edc93`: `Absorb/ReluSqBiasesCount.lean` (3), `Absorb/ReluSqBiasesLower.lean` (5),
+  - At `bd0ca40`: `Absorb/ReluSqBiasesCount.lean` (3), `Absorb/ReluSqBiasesLower.lean` (5),
     `Absorb/RotaryBiases.lean` (4). The seven other files had none.
-  - At `32c4dc4`: `Absorb/ReluSqBiasesCount.lean` (3). `ReluSqBiasesLower.lean` had no `sorry`, and
+  - At `eafb679`: `Absorb/ReluSqBiasesCount.lean` (3). `ReluSqBiasesLower.lean` had no `sorry`, and
     three of its five theorems rested on the three of `ReluSqBiasesCount.lean`.
-  - At `f74eb3d` and `13cdb4e`: none of the ten files.
+  - At `7377562` and `10ffbbb`: none of the ten files.
 - **Did a statement change while I read? No.** By a script of mine (`commits_cmp.py`: statement
-  text, docstring, `omit` lines and file header of every public name, `f0edc93` against `13cdb4e`):
+  text, docstring, `omit` lines and file header of every public name, `bd0ca40` against `10ffbbb`):
   no statement, no docstring and no `omit` line of a public name changed. Two `import` lines were
   added (`ReluSqBiasesLower.lean`, `RotaryBiases.lean`), and `omit [...] in` lines on private
   helpers. The elaborated signatures of all 71 public names, printed at the start and at the end,
   are the same file byte for byte (`Sig.out`, `Sig3.out`).
 - The ten files have **71 public names: 12 definitions and 59 theorems** (3 + 15, 0 + 3, 0 + 9,
   4 + 4, 0 + 1, 0 + 13, 1 + 2, 2 + 3, 0 + 5, 2 + 4, as the brief says).
-- **At `13cdb4e` all 59 theorems depend on `propext`, `Classical.choice`, `Quot.sound` only** (by
+- **At `10ffbbb` all 59 theorems depend on `propext`, `Classical.choice`, `Quot.sound` only** (by
   compiling, `Ax.lean`, `Ax3.out`). At the start 47 did and 12 had `sorryAx`.
 
 Paper: the absorb paper as text (`absorb.txt`; "A"), Appendix C (lines 1671 to 1979), equation (2)
 (line 175), Section 3.3 (lines 310 to 345), the Scope (line 211). Line numbers of `STATEMENTS.md`
-are those of `13cdb4e`.
+are those of `10ffbbb`.
 
 How I checked.
 
@@ -58,7 +58,7 @@ How I checked.
 
 **Short answer. Nothing false, nothing vacuous and no drift was found.** Every clause of Theorems
 C.1 and C.2, Lemma C.8 and Proposition C.6 has a Lean statement that says what the paper says or
-more, and at `13cdb4e` all are proved. What differs is coverage and form:
+more, and at `10ffbbb` all are proved. What differs is coverage and form:
 
 1. Three sentences of the proofs are stated in a weaker form than the paper's: "gives `n ≥ 2`"
    (ReLU², `M ≠ 0`) and "gives `n ≥ rank M ≥ 1`" (gated, `M ≠ 0`) are stated as "not the same
@@ -382,7 +382,7 @@ theorem ae_not_reglu_absorbB_same_width (hp : 2 ≤ Fintype.card p) (M : Matrix 
 "Conclusion" uses; the generic condition is the paper's for the pairs with `|U| < 2d`, and it is
 true; the statements are true for one input.** I judged the eight statements of
 `ReluSqBiasesCount.lean` and `ReluSqBiasesLower.lean` by hand and by computations while they were
-`sorry`; they were proved at `f74eb3d`.
+`sorry`; they were proved at `7377562`.
 
 **(a)** (By reading; by a computation.)
 
@@ -473,7 +473,7 @@ theorem ae_linearIndependent_sqTarget (M : Matrix d d ℝ) (hM : IsUnit M.det) (
   independent; `|U| ≤ 2d − 1 ≤ d(d+1)/2`. By a computation of mine (random blocks, every pair
   `(S, U)`: `d = 1`, `m = 1, 4`; `d = 2`, `m = 3, 6`; `d = 3`, `m = 7`; `d = 4`, `m = 7`; 5093 pairs):
   the smallest ratio of the singular values is `2.1 × 10⁻⁴`, so all are independent. The coordinator's
-  script does the same for other sizes. Proved in Lean at `32c4dc4`.
+  script does the same for other sizes. Proved in Lean at `eafb679`.
 
 **(e)** (By hand; the instance by compiling.) `ae_not_reluSq_absorbB_of_card_lt` and
 `ae_reluSq_absorbB_add_card` ask `[Nonempty d]`; `ae_not_reluSq_absorbB_same_width` asks no size.
@@ -506,7 +506,7 @@ index say so.
 **Verdict: `rotaryPow` is the power of the paper's `R`; the block has the paper's score; the
 statement is the proposition, for every mask in which every token sees itself.** (By reading; the
 identities by compiling, `Rot.lean`; the proposition by a computation while it was `sorry`; proved
-at `32c4dc4`.)
+at `eafb679`.)
 
 ```
 noncomputable def rotaryPow {pl : Type*} [DecidableEq pl] (ϑ : pl → ℝ) (k : ℤ) :
@@ -562,7 +562,7 @@ theorem exists_attentionBlockRotaryB_add_linear {n : ℕ} … (sees : Fin n → 
 
 (By reading the ten files and the index.)
 
-**Covered in full** (a Lean statement that says the paper's clause or more, proved at `13cdb4e`):
+**Covered in full** (a Lean statement that says the paper's clause or more, proved at `10ffbbb`):
 
 | Paper | Lean |
 |---|---|
@@ -602,7 +602,7 @@ out of date and say that stated things are not stated (corrections 1, 6, 7 below
 ## Part 2: the statements, file by file
 
 Verdicts: SAME, LEAN STRONGER, LEAN WEAKER, DIFFERENT, PART, FALSE. All 59 theorems are proved at
-`13cdb4e` (no `sorry`, three standard axioms). **None is FALSE.**
+`10ffbbb` (no `sorry`, three standard axioms). **None is FALSE.**
 
 ### `Absorb/BiasesConstructions.lean` (3 definitions, 15 theorems)
 
@@ -724,8 +724,8 @@ claims with `min(|F₁|, |F₂|)` in the place of `|N|`.
 - Every public name is in its row (lines 839 to 848), by its name or by an abbreviation whose
   meaning is clear (`…_swiglu`, `…_geglu`, `…_gelu`, `…_relu_of_rank`, `…_gelu_of_rank`,
   `…_swiglu_absorbB`, `…_geglu_absorbB`). (By a script.)
-- At `13cdb4e` all ten rows say "proved", rightly, and all 59 theorems are in
-  `checks/Axioms.lean`. (By a script.) At `5951ed9` the rows of the two ReLU² files said "in work"
+- At `10ffbbb` all ten rows say "proved", rightly, and all 59 theorems are in
+  `checks/Axioms.lean`. (By a script.) At `f097a0e` the rows of the two ReLU² files said "in work"
   and their eight theorems were not in `checks/Axioms.lean`, rightly.
 - The rows are right in content. What is out of date: corrections 1, 6, 7.
 
@@ -771,7 +771,7 @@ Nothing is false, nothing is vacuous, nothing has drifted. In order of weight:
 11. The branch moved while I read (the files went from 12 `sorry` to none); no statement, docstring
     or `omit` line of a public name changed.
 
-## Corrections for `STATEMENTS.md` (line numbers of `13cdb4e`)
+## Corrections for `STATEMENTS.md` (line numbers of `10ffbbb`)
 
 1. Line 839 (the row of `Absorb/BiasesConstructions.lean`). Replace "Not stated: Theorem C.1
    (iii), the lower bounds of Theorem C.2, Lemma C.8, the construction with `d(d+3)/2` units of
@@ -797,7 +797,7 @@ Nothing is false, nothing is vacuous, nothing has drifted. In order of weight:
    and `R^t (R^s)^⊤ = R^{t−s}` (compiled by the eighteenth reader, part B). Not stated: Remark C.7;
    the sentence on residual networks after the proposition".
 6. Lines 199 to 206 ("Not yet compared by such a reader"). Take out the ten files of this brief
-   (compared at `f0edc93` and `13cdb4e`). A sentence for the paragraph: "An eighteenth reader
+   (compared at `bd0ca40` and `10ffbbb`). A sentence for the paragraph: "An eighteenth reader
    (part B, 24 November) compared the ten files on blocks with biases (12 definitions, 59
    theorems) with Appendix C of the absorb paper: nothing false, vacuous or drifted; generic is
    almost every tuple for every Haar measure, with every index type finite; the statements for
@@ -815,7 +815,7 @@ Nothing is false, nothing is vacuous, nothing has drifted. In order of weight:
 
 ## What I could not check
 
-- **The proofs.** I read none as a proof. "Proved" means no `sorry` in the file at `13cdb4e` and the
+- **The proofs.** I read none as a proof. "Proved" means no `sorry` in the file at `10ffbbb` and the
   three standard axioms in the build of `/home/claude/lp/lean`.
 - **The build.** I did not build the library. I compiled my scratch files against the compiled
   files of `/home/claude/lp/lean`, which were newer than their sources each time; `lp` and `lw`

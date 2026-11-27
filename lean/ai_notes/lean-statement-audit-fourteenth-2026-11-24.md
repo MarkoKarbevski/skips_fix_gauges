@@ -8,31 +8,31 @@ proofs. I changed no repository file, ran no `lake build`, made no commit and no
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
-- Commit that I audited: `37696c82632519b9ae6eff5c60e33b3010c17f80` (14:51:09 UTC). I began at
+- Commit that I audited: `377430e723c196a45e3cdc1beab83f58f76fd2bd` (14:51:09 UTC). I began at
   14:52 UTC and ended at 15:15 UTC.
 - Files with `sorry` at that commit: **none** (`grep -rn -w sorry SkipsLean`: no line). No line
   with `axiom`, `opaque`, `admit`, `native_decide` or `unsafe` in the four files either.
-- The branch moved once while I worked, to `ef32764` (15:08:54 UTC). That commit adds six new
+- The branch moved once while I worked, to `fd99e23` (15:08:54 UTC). That commit adds six new
   files, all with `sorry` and all outside the brief, with new rows in the index:
   `Network/Sum.lean` (7 `sorry`), `Absorb/RMSNormAttention.lean` (12),
   `Residual/SkiplessEndsAttention.lean` (4), `Residual/DifferentClassesAttention.lean` (6),
   `Residual/BlocksAlone.lean` (6), `Residual/BlocksAloneAttention.lean` (3). It changes
   `STATEMENTS.md` (13 lines) and `SkipsLean.lean` and nothing else: the four files of the brief
-  and every file that they import are the same at both commits (`git diff 37696c8 ef32764
+  and every file that they import are the same at both commits (`git diff 377430e fd99e23
   --stat`). I did not read the six new files.
 - The four files of the brief have 14 public names (3 definitions, 11 theorems) and 49 private
   helpers. All 14 names stand in their index rows, and the 11 theorems stand in
   `checks/Axioms.lean`.
 - Did a statement change after it was first committed? No. For each of the 14 public names and
   the four file headers, the text from the docstring to `:=` is the same at the first commit of its
-  file (`ea83916` for the two `DepthAttentionRMS…` files, with 2 and 4 `sorry`; `87c9ebc` for
-  `LocalIdentifiabilityAttentionRMS.lean`, with 3 `sorry`; `37696c8` for
+  file (`69432c7` for the two `DepthAttentionRMS…` files, with 2 and 4 `sorry`; `da6c6de` for
+  `LocalIdentifiabilityAttentionRMS.lean`, with 3 `sorry`; `377430e` for
   `ExactGainAttention.lean`) and at the audited commit. The only lines removed since are the nine
   `sorry` (by a script, `cmp_statements.py`, and by `git diff`).
 
 Papers, as text: the skips paper ("S", `skips.txt`), the dimension paper ("D", `dim.txt`). Line
-numbers of `STATEMENTS.md` are those of `37696c8`; each correction quotes the words to change. At
-`ef32764` the lines 148 to 724 lie three lines lower, and the sentences that I quote are the same
+numbers of `STATEMENTS.md` are those of `377430e`; each correction quotes the words to change. At
+`fd99e23` the lines 148 to 724 lie three lines lower, and the sentences that I quote are the same
 there, except the one of correction 1.
 
 How I checked.
@@ -48,7 +48,7 @@ How I checked.
 - "By hand": a short argument of my own, written in the note.
 - "By compiling": in `/home/claude/audit14/`, with `lean` 4.36.0 through `LEAN_PATH`, without
   `lake`, against a copy of the compiled library of `/home/claude/lp/lean` taken at 14:52:54 UTC
-  (`lp` at the same commit `37696c8`; `diff -rq` of the two source trees `SkipsLean/` shows no
+  (`lp` at the same commit `377430e`; `diff -rq` of the two source trees `SkipsLean/` shows no
   difference). I compiled copies of the four files of the brief from the sources of `lw` into my
   copy of the library (8, 4, 7 and 3 seconds; no error, no warning; `compile4.out`), and then four
   scratch files of my own, `Chk1.lean` to `Chk4.lean` (outputs `Chk*.out`, all without error).
@@ -331,8 +331,8 @@ parameters".
 
 ### Verdict table
 
-All rows are proved at `37696c8` (compiled by me from the sources; three standard axioms), and
-the four files are the same at `ef32764`.
+All rows are proved at `377430e` (compiled by me from the sources; three standard axioms), and
+the four files are the same at `fd99e23`.
 
 | Paper statement or proof piece | Lean | Verdict | Difference | How checked |
 |---|---|---|---|---|
@@ -629,17 +629,17 @@ Nothing false, vacuous or drifted. In order of weight:
    tried; the paper has `d_model ≥ 2` and `d_out ≥ d_model`, and the proof uses both.
 9. **No statement changed after it was first committed** (the nine `sorry` were replaced by
    proofs; statements, docstrings and headers are the same).
-10. Six files appeared while I worked (`ef32764`), all with `sorry` and outside the brief:
+10. Six files appeared while I worked (`fd99e23`), all with `sorry` and outside the brief:
     `Network/Sum.lean`, `Absorb/RMSNormAttention.lean`, `Residual/SkiplessEndsAttention.lean`,
     `Residual/DifferentClassesAttention.lean`, `Residual/BlocksAlone.lean`,
     `Residual/BlocksAloneAttention.lean`. No reader has compared them.
 
-## Corrections for `STATEMENTS.md` (lines of `37696c8`)
+## Corrections for `STATEMENTS.md` (lines of `377430e`)
 
-1. Lines 145–147 (at `ef32764`: lines 145–150), "Not yet compared by such a reader (written after
+1. Lines 145–147 (at `fd99e23`: lines 145–150), "Not yet compared by such a reader (written after
    the thirteenth audit began): `Residual/DepthAttentionRMS.lean`,
    `Residual/DepthAttentionRMSDim.lean`, `Residual/LocalIdentifiabilityAttentionRMS.lean` and
-   `Residual/ExactGainAttention.lean`" (at `ef32764` followed by "; and (written after the
+   `Residual/ExactGainAttention.lean`" (at `fd99e23` followed by "; and (written after the
    fourteenth audit began) `Network/Sum.lean`, …"): take the four files out of the list, keep the
    six new ones, and add a sentence: a fourteenth reader (24 November) compared these four files with Lemma
    A.27 (second value), Theorems 4.6 (ii), 4.7, B.1 (ii), Proposition 4.5 and Corollary 4.9 of the
@@ -737,7 +737,7 @@ Nothing false, vacuous or drifted. In order of weight:
   compare.
 - The other rows of the index, beyond the sentences that name the four files or attention
   blocks.
-- The six files that appeared at `ef32764` while I worked, and their index rows. By their index
+- The six files that appeared at `fd99e23` while I worked, and their index rows. By their index
   rows they state, with `sorry`, among other things Corollary 4.10 (ii) and Theorem 4.11 (i) of
   the skips paper for attention blocks and networks with two kinds of block; the paragraph "Not
   stated yet from the main text of the skips paper" (corrections 2 and 3) will need these too. No

@@ -2,7 +2,7 @@ STATUS: complete
 
 # Thirty-third audit, part C: pre-LayerNorm networks (D Proposition A.3, S Proposition A.15), the functional dimension of a family, the chain-rule step with a section
 
-Commit read at the start: `5ef12b8` of `/home/claude/lp` (branch `lean-plus`).
+Commit read at the start: `0e1bc98` of `/home/claude/lp` (branch `lean-plus`).
 Files with `sorry` at that commit, among the subject: `SkipsLean/Residual/LayerNormRedundancy.lean` (two statements, `exists_hasFDerivAt_reduceLNParams_surjective` and `funDimOf_evalLNParams_eq_funDimB_reduceLN`; expected).
 
 **Result.** Nothing false, vacuous or drifted. The pre-LayerNorm network, the centred and the reduced parameters are the papers' (with the readout and an embedding bias written out), parts (i) and (ii) hold for any `ε` and for stream matrices that commute with `Z` (the hypothesis is needed in general; the proving agent's example checked), and the named forms are S's skipless and residual cases and D's skipless case. `funDimOf` is Definition 4.1. The chain-rule step with a section is true, with one superfluous hypothesis (`hsurj`: a copy without it compiles). The two open statements of part (iii) are true (an affine section; six functional dimensions computed equal), and the additive form is exactly the paper's equality of differences of redundancies. The index rows are true, with two omissions.
@@ -73,7 +73,7 @@ Is each hypothesis needed?
 
 ### Check 5. Part (iii) (`Residual/LayerNormRedundancy.lean`), by reading and by a computation
 
-The file at `5ef12b8` has two `sorry` (`exists_hasFDerivAt_reduceLNParams_surjective`, `funDimOf_evalLNParams_eq_funDimB_reduceLN`); the three others are proved from them (`#print axioms Skips.funDimOf_evalLNParams_residual_add_skipless` lists `sorryAx`).
+The file at `0e1bc98` has two `sorry` (`exists_hasFDerivAt_reduceLNParams_surjective`, `funDimOf_evalLNParams_eq_funDimB_reduceLN`); the three others are proved from them (`#print axioms Skips.funDimOf_evalLNParams_residual_add_skipless` lists `sorryAx`).
 
 `ParamsLN A dIn dOut = ParamsB A dIn dOut × ((Fin (L + 1) → d → ℝ) × (Fin (L + 1) → d → ℝ))`: the weights `E`, `W_read,ℓ`, `W_write,ℓ`, `D`, the biases `b_E`, `b_read,ℓ`, `b_write,ℓ`, `b_D`, and the gains `γ_0, …, γ_L` and LayerNorm biases `β_0, …, β_L`: every parameter of the pre-LayerNorm network is counted. `reduceLNParams ε U q = (θ.reduceLN ε U γ, b.reduceLN ε U θ β)`: S's "the map from the parameters of the LayerNorm network to those of the reduced network", with the list of Check 3. SAME.
 
@@ -117,7 +117,7 @@ Nothing drifted.
 
 ### Check 8. The index rows, registrations, axioms
 
-Registrations in `/home/claude/lp/lean/checks/Axioms.lean`: `RankSubmersion.lean` 1 of 1 (line 2113), `FunDimFamily.lean` 4 of 4 (2114 to 2117), `Network/LayerNorm.lean` 9 of 9 (2183 to 2191); `LayerNormRedundancy.lean` none (in work, as its row says). Axioms (copy `/home/claude/audit33c/Audit33c.lean`, compiled with `lake env lean` against the build of `5ef12b8` after checking that no `lake build` ran): all fourteen proved theorems depend on `propext`, `Classical.choice`, `Quot.sound` only; `funDimOf_evalLNParams_residual_add_skipless` depends on `sorryAx` through the two open statements.
+Registrations in `/home/claude/lp/lean/checks/Axioms.lean`: `RankSubmersion.lean` 1 of 1 (line 2113), `FunDimFamily.lean` 4 of 4 (2114 to 2117), `Network/LayerNorm.lean` 9 of 9 (2183 to 2191); `LayerNormRedundancy.lean` none (in work, as its row says). Axioms (copy `/home/claude/audit33c/Audit33c.lean`, compiled with `lake env lean` against the build of `0e1bc98` after checking that no `lake build` ran): all fourteen proved theorems depend on `propext`, `Classical.choice`, `Quot.sound` only; `funDimOf_evalLNParams_residual_add_skipless` depends on `sorryAx` through the two open statements.
 
 Rows of `/home/claude/lp/lean/STATEMENTS.md`:
 - Line 1045 (`RankSubmersion.lean`): true. It could say that the onto hypothesis is not used by the conclusion (the section alone gives the equality).
@@ -176,4 +176,4 @@ Nothing false, vacuous or drifted. Places where the papers leave a condition or 
 - The counterexamples of Check 4 (dropping the section; dropping `hΦ`) are by reading, not compiled.
 - Numeric functional dimensions are lower bounds from finite batches (two batches per case, more rows than parameters, the same ranks); they were not certified in exact arithmetic.
 
-Commit read at the end: `5ef12b8` (the four files unchanged in the working tree).
+Commit read at the end: `0e1bc98` (the four files unchanged in the working tree).

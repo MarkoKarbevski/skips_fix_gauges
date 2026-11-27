@@ -9,42 +9,42 @@ and the one-block theorem for an attention block, with and without its skip.
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
-- Commit when I began: `2a488da1da773d33fb1a817b15c4c3eb34bc84cc` (14:00:45 UTC).
-- Commit when I ended: `169686c83d023daa1425dd59dd2babae1e3bb368` (14:17:37 UTC). The branch moved
+- Commit when I began: `c0ec3b28c30fbbf699da3f1bde0a8f895573e7a4` (14:00:45 UTC).
+- Commit when I ended: `06172b2a4ecd4cef35bdf8344faa10f2c1accf0a` (14:17:37 UTC). The branch moved
   several times while I read. Of the seven files of the brief, three changed, and in each the
   `sorry` were replaced by proofs and private helpers were added: `OneBlock/AttentionStepOne.lean`
-  (at `5a109cf`), `OneBlock/AttentionGeneric.lean` (at `b4c342d`) and `OneBlock/Attention.lean` (at
-  `ef746c1`). The public statements, their docstrings and the file headers are the same: in
-  these three files `git diff 2a488da 169686c` removes only the seven lines `sorry`. One change
+  (at `ac82d8c`), `OneBlock/AttentionGeneric.lean` (at `835e639`) and `OneBlock/Attention.lean` (at
+  `762ce20`). The public statements, their docstrings and the file headers are the same: in
+  these three files `git diff c0ec3b2 06172b2` removes only the seven lines `sorry`. One change
   of form: before each of the five theorems of `OneBlock/Attention.lean` a line `omit … in` was
   added, which drops instance arguments that the statement does not use (`[DecidableEq d]` in
   all five, `[Fintype dOut]` in three). The new statements ask less and say the same. The other
   four files and `Network/Attention.lean` did not change. Two new files appeared that are not in
   the brief (`Absorb/ShortSequences.lean`, `Absorb/ShortSequencesPoly.lean`); I did not read them.
-- Files with `sorry`: at `2a488da`, three: `OneBlock/Attention.lean` (5: `hasDerivAt_attnScore`,
+- Files with `sorry`: at `c0ec3b2`, three: `OneBlock/Attention.lean` (5: `hasDerivAt_attnScore`,
   `hasDerivAt_attnValue`, `eval_attention_oneBlock`, `eval_attention_two_tokens`,
   `flat_attention_oneBlock_keeps`), `OneBlock/AttentionStepOne.lean` (1) and
   `OneBlock/AttentionGeneric.lean` (1); `OneBlock/AttentionDim.lean` had none of its own and
-  rested on the seven. At `169686c`: none of the seven files of the brief; in the whole library
+  rested on the seven. At `06172b2`: none of the seven files of the brief; in the whole library
   only `Absorb/ShortSequences.lean`, outside the brief.
 
 So I compared the statements while seven of them were unproved, and they were proved while I
 wrote. What I say below "by hand" about these seven I worked out before their proofs were in
 the library.
 
-After I ended, the branch moved once more (`5414c73`, 14:20:25 UTC): four new files outside the
+After I ended, the branch moved once more (`20d5853`, 14:20:25 UTC): four new files outside the
 brief (`OneBlock/AttentionFamily.lean`, `Residual/DepthAttention.lean`,
 `Residual/DepthAttentionGeneric.lean`, `Residual/DepthAttentionDim.lean`) and their index rows.
-The seven files of the brief are the same at `5414c73` as at `169686c`. I did not read the new
+The seven files of the brief are the same at `20d5853` as at `06172b2`. I did not read the new
 files.
 
 Papers, as text: the dimension paper ("D", `dim.txt`) and the skips paper ("S", `skips.txt`).
-Line numbers of `STATEMENTS.md` are those of `169686c`; at `5414c73` every line named below from
+Line numbers of `STATEMENTS.md` are those of `06172b2`; at `20d5853` every line named below from
 line 444 on is two lines further down. Each correction quotes the words to change.
 
 How I checked.
 
-- "By reading": I read the seven Lean files and `Network/Attention.lean` in full at `2a488da`,
+- "By reading": I read the seven Lean files and `Network/Attention.lean` in full at `c0ec3b2`,
   the definitions they use (`Arch`, `Params`, `hidden`, `eval`, `funDim`, `jacobianRank`, `flat`,
   `cobDir`, `rmsRow`, `rmsNorm`, `antisymmetric`), and the paper passages: D Section 2, Section 4,
   Appendix B (to the proof of Proposition 4.6), Theorem C.1 with "Notation and flat directions",
@@ -55,8 +55,8 @@ How I checked.
 - "By compiling": scratch files of my own in `/home/claude/audit12b/` (`Chk1.lean` to `Chk5.lean`,
   outputs `Chk*.out`), compiled with `lean` 4.36.0 through `LEAN_PATH`, without `lake`, against
   copies of the compiled library of `/home/claude/lp/lean` (its sources under `SkipsLean/` were
-  the same as those of `lw` by `diff -rq` each time I copied: at 14:03 with both at `2a488da`, at
-  14:11 with both at `479f2f2`, at 14:18 with both at `169686c`). At the first two times that
+  the same as those of `lw` by `diff -rq` each time I copied: at 14:03 with both at `c0ec3b2`, at
+  14:11 with both at `1200709`, at 14:18 with both at `06172b2`). At the first two times that
   library had no compiled `OneBlock/AttentionDim.lean`, so I compiled a copy of that file into my
   folder (no error, no warning; twice, 7 seconds each). Six other compilations of about 3 seconds
   each. I did not run `lake build` and wrote nothing under `lw`, `lp` or the repository.
@@ -65,7 +65,7 @@ How I checked.
   `attn_check*.out`.
 
 Short answer. **Nothing false, vacuous or drifted was found in a statement or a definition.** At
-commit `169686c` all seven files are proved: the thirty public theorems show the three standard
+commit `06172b2` all seven files are proved: the thirty public theorems show the three standard
 axioms (`Chk5.out`). Every "generic" is `∀ᵐ θ ∂μ` for every additive Haar measure. The statements
 use the library's `funDim` with all inputs `Matrix T dIn ℝ`. The final statements carry the
 hypotheses of D Theorem C.1 and S Theorem B.1 (i) and nothing more; in the mask they ask less
@@ -260,9 +260,9 @@ both proofs side by side; the formulas by hand and by the computation.)
 
 ### Verdict table
 
-Status. All the theorems of the table are proved at `169686c`: no `sorry` in the seven files, and
+Status. All the theorems of the table are proved at `06172b2`: no `sorry` in the seven files, and
 `#print axioms` shows `propext`, `Classical.choice`, `Quot.sound` only for each of the thirty
-public theorems (`Chk5.out`, against the library compiled at that commit). At `2a488da`, when I
+public theorems (`Chk5.out`, against the library compiled at that commit). At `c0ec3b2`, when I
 compared them, the rows marked † were unproved (`sorryAx` in `Chk1.out`) or rested on unproved
 statements; I judged those by hand first.
 
@@ -430,7 +430,7 @@ condition as a definition (the index says it is written as the equality); "the t
 for inputs in any open set"; the two extensions.
 
 **8. Degenerate cases.** (By hand, before the proofs were in the library; the last line by
-compiling.) I looked for a counterexample in the statements that were unproved at `2a488da` and
+compiling.) I looked for a counterexample in the statements that were unproved at `c0ec3b2` and
 in those that rested on them.
 
 - No head (`H 0` empty). `eval_attention_oneBlock`, `eval_attention_two_tokens`: both sides are
@@ -487,7 +487,7 @@ Nothing false, vacuous or drifted. In order of weight:
 5. **A change of form after the statements were written.** The five theorems of
    `OneBlock/Attention.lean` lost instance arguments that they did not use (`[DecidableEq d]`,
    and `[Fintype dOut]` in three), through `omit … in` lines added with the proofs. Nothing else
-   in a statement, a docstring or a header changed between `2a488da` and `169686c`.
+   in a statement, a docstring or a header changed between `c0ec3b2` and `06172b2`.
 6. **A token that sees no token** gets the weights `0` (eleventh audit). The statements of this
    audit hold "for any mask" in this sense; the one-block theorem asks one token that sees itself
    and another, and nothing of the others.
@@ -510,7 +510,7 @@ Nothing false, vacuous or drifted. In order of weight:
     weights and the input; a statement that the directions of Step 1 are exactly `K(θ)` (the two
     inclusions are separate statements).
 
-## Corrections for `STATEMENTS.md` (lines of `169686c`)
+## Corrections for `STATEMENTS.md` (lines of `06172b2`)
 
 1. Lines 122–126, "Not yet compared by such a reader": take out
    `Symmetry/AttentionHeads.lean`, `Dimension/UpperBoundAttention.lean`,

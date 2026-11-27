@@ -8,21 +8,21 @@ ran no `lake build`, made no commit and no push.
 ## Commit, and how each check was made
 
 **Commit of `/home/claude/lw` (branch `lean-wip`).** The worktree moved several times while I
-read: `a969c4e` when I began, then `641435d`, `ab2d797`, and
-`6c30ab83b74ad3ee6228bfb9a9b8c2a881607e92` when I finished (clean). The verdicts below are for
-`6c30ab8`. Of the 13 files of this audit, 12 have the same text at all these commits.
-`Residual/FewerHiddenUnits.lean` had four `sorry` at `a969c4e` and has none from `641435d` on; its
+read: `ddcb801` when I began, then `0ba3139`, `d78c065`, and
+`9a60dfb18c75144afc793bb8fafd6837e89b7e06` when I finished (clean). The verdicts below are for
+`9a60dfb`. Of the 13 files of this audit, 12 have the same text at all these commits.
+`Residual/FewerHiddenUnits.lean` had four `sorry` at `ddcb801` and has none from `0ba3139` on; its
 four statements did not change (the diff adds a private helper and replaces each `sorry` by a
-proof). I read its statements at `a969c4e` and its proofs in the diff. The commits after `641435d`
+proof). I read its statements at `ddcb801` and its proofs in the diff. The commits after `0ba3139`
 add two files outside this audit (`Dimension/UpperBoundRMSNormZero.lean`, `Depth/SuffixZero.lean`)
 and rows of the dimension paper to the index. Line numbers of `STATEMENTS.md` are those of
-`6c30ab8`; since rows are still being added above them, I also name each row by its first words.
-One more commit, `a11f6e7`, arrived as I closed this report: it adds `Depth/PathSeparation.lean`
+`9a60dfb`; since rows are still being added above them, I also name each row by its first words.
+One more commit, `a9866a2`, arrived as I closed this report: it adds `Depth/PathSeparation.lean`
 and one row of the dimension paper, so the rows of the skips paper are one line lower there; the 13
 files are byte-identical to my copies at that commit too.
 
-**Files with `sorry`** (by a search). At `a969c4e`: only `Residual/FewerHiddenUnits.lean` (4). At
-`6c30ab8`: none in the 13 files nor in the 60 modules that they import; 4 in
+**Files with `sorry`** (by a search). At `ddcb801`: only `Residual/FewerHiddenUnits.lean` (4). At
+`9a60dfb`: none in the 13 files nor in the 60 modules that they import; 4 in
 `Depth/SuffixZero.lean`, a file added after I began and not part of this audit.
 
 **The three kinds of check.**
@@ -41,12 +41,12 @@ files are byte-identical to my copies at that commit too.
 - *By compiling a copy*: `/home/claude/lw` has no compiled file for any of the 13 files (its
   compiled library is from 03:44). I therefore compiled against the compiled library of
   `/home/claude/lp/lean` (branch `lean-plus`), which the brief did not name. Two checks make this
-  sound: `diff -rq` of `SkipsLean/` between the two worktrees showed no difference at `641435d`, and
+  sound: `diff -rq` of `SkipsLean/` between the two worktrees showed no difference at `0ba3139`, and
   for the 60 modules of the import closure of the 13 files the Lake text hash of the source in
   `/home/claude/lw` is the one recorded in the build trace of `/home/claude/lp`
-  (`/home/claude/audit7b/closure_hash.py`: 60 modules, 0 problems; run at `ab2d797` and again at
-  `6c30ab8`). Compiled with `lake env lean` from `/home/claude/lp/lean`: (a) a copy of each of the 13 files
-  (`/home/claude/audit7b/copies/`, byte-identical to the sources at `6c30ab8`): all 13 exit 0, no
+  (`/home/claude/audit7b/closure_hash.py`: 60 modules, 0 problems; run at `d78c065` and again at
+  `9a60dfb`). Compiled with `lake env lean` from `/home/claude/lp/lean`: (a) a copy of each of the 13 files
+  (`/home/claude/audit7b/copies/`, byte-identical to the sources at `9a60dfb`): all 13 exit 0, no
   error, no warning, no `sorry` (`run_copies.out`); (b) `/home/claude/audit7b/Ax7b.lean`:
   `#print` of the two literature definitions, five small examples, `#check` of 27 statements,
   `#print axioms` of 58 theorems (`Ax7b.out`).
@@ -87,9 +87,9 @@ def ClosureNullOfNull {Y : Type*} [NormedAddCommGroup Y] [NormedSpace ℝ Y] (S 
   ∀ (r : ℕ) (π : Y →L[ℝ] (Fin r → ℝ)), volume (π '' S) = 0 → volume (closure (π '' S)) = 0
 ```
 
-- `grep -rn "^axiom" SkipsLean`: no line (by a search, at `a969c4e` and at `6c30ab8`). A search for
+- `grep -rn "^axiom" SkipsLean`: no line (by a search, at `ddcb801` and at `9a60dfb`). A search for
   `sorry`, `admit`, `native_decide`, a line beginning with `axiom` or `unsafe`, in the 13 files and
-  the 60 modules of their import closure at `6c30ab8`: no line.
+  the 60 modules of their import closure at `9a60dfb`: no line.
 - `/home/claude/proj_up/axioms_2026-11-24_z.out` (by reading): 682 names, every one with
   `[propext, Classical.choice, Quot.sound]` or fewer, no `sorryAx`. It was made before the last four
   files were proved, so it lacks 12 names. The newer `axioms_2026-11-24_aa.out` has 694 names, 693
@@ -718,7 +718,7 @@ theorem ae_not_isPointwiseLimit_skipless_gelu_widths (hSard …) (hOmin : ∀ (m
   under `UnitsRigid` on the units of the residual network. For tanh this is more than the paper
   states (Theorem A.28 (iii) is for GELU blocks); it is true by the same count.
 
-Proofs (by reading the diff `a969c4e..641435d`, and by compiling the copy): the helper
+Proofs (by reading the diff `ddcb801..0ba3139`, and by compiling the copy): the helper
 `exists_rank_gap_mlp_fh` takes `r₀ = P' − (L + 1) d²` from `jacobianRank_add_le_skipless_all` and
 one `θ₀` from `ae_funDim_mlp_residual`, and compares them with `finrank_params_mlp`; the statements
 for all widths use `ae_all_iff` (countably many `m`) and
@@ -765,13 +765,13 @@ wording, the more important first.
    "the argument in dimensions"; the Lie group statement of Lemma A.26.
 8. **The one hypothesis that the paper does not write** is at least one token (`[Nonempty T]`). In
    (i) Lean also writes `L ≥ 1`, which Theorem A.28 (ii) has and Theorem 4.11 leaves unsaid.
-9. **The pushed branch moved during this audit** (`a969c4e` → `641435d` → `ab2d797` → `6c30ab8`).
-   At `a969c4e` the four statements of `Residual/FewerHiddenUnits.lean` were `sorry`; from `641435d`
+9. **The pushed branch moved during this audit** (`ddcb801` → `0ba3139` → `d78c065` → `9a60dfb`).
+   At `ddcb801` the four statements of `Residual/FewerHiddenUnits.lean` were `sorry`; from `0ba3139`
    on they are proved and the index says "proved". `axioms_2026-11-24_z.out` predates that
-   (682 names); `axioms_2026-11-24_aa.out` has 694 names and no `sorryAx`. At `6c30ab8`
+   (682 names); `axioms_2026-11-24_aa.out` has 694 names and no `sorryAx`. At `9a60dfb`
    `checks/Axioms.lean` has 6 names more, for a file outside this audit; I saw no output for it.
 
-## Corrections for `STATEMENTS.md` (lines at `6c30ab8`)
+## Corrections for `STATEMENTS.md` (lines at `9a60dfb`)
 
 1. **Lines 42-55** ("Not yet compared by such a reader …"). Remove from the list
    `Literature/Sard.lean`, `Literature/OMinimal.lean`, `Dimension/SubmersionNull.lean`,
@@ -814,7 +814,7 @@ wording, the more important first.
 7. **Line 390** (the row "S Theorem 4.11 (ii), and Theorem A.28 (iii), (iv) …"): add "at least one token; the residual blocks may have any
    widths; no hypothesis `L ≥ 1` is needed (for `L = 0` no widths satisfy the inequality); the
    pointwise-limit statement is for the union over all these widths". The rest of the row is
-   right, and "proved" is right from `641435d` on.
+   right, and "proved" is right from `0ba3139` on.
 8. **Line 383** (the row "S proof of Theorem A.28 (ii), "the changes of basis at `h_0` and
    `h_L` …"", `SkiplessEnds`): after "for gated blocks with the term `s`" add "(the bound at
    every parameter for `d ≥ 1`)". Optional.

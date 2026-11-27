@@ -7,8 +7,8 @@ Subject: `Dimension/FunctionalBiasesKinks.lean`, `Symmetry/BiasesFlatKinks.lean`
 `OneBlock/KeepsProductsBiases.lean`, `Residual/SmallWritesBiases.lean`,
 `Residual/DepthMlpBiases.lean`, `Residual/DepthGatedBiases.lean` (46 theorems, 6 definitions).
 
-Commit of `/home/claude/lp` read at the start: `d7be457` (branch `lean-plus`; the stub of an
-earlier, stopped reader named `8a98e27`; the branch had moved). None of the eight files has `sorry`
+Commit of `/home/claude/lp` read at the start: `49f38c2` (branch `lean-plus`; the stub of an
+earlier, stopped reader named `aa7237b`; the branch had moved). None of the eight files has `sorry`
 (`grep -c sorry`: 0 for each).
 
 Rules: those of the twenty-first audit, part A. Scratch work in `/home/claude/audit32a_2/`.
@@ -168,8 +168,8 @@ output bias (`b_V ↦ b_V − τ δ`, `b_write ↦ b_write + τ δ W_O`; each ro
 `E`, `D`, `b_E`, `b_D` and the block map, and their velocities are `InsideBlocksB` directions; the second
 changes the write bias, which is why the kept map has to include `b_write`. (For a mask relation under
 which a token sees no token, a row of weights is `0` and the second curve is not a symmetry; the masks
-of the paper, none and causal, have every token see itself.) At `d7be457` no statement with biases for
-attention blocks used `InsideBlocksB`; at `fab4917` (the commit at the end of this audit) the new file
+of the paper, none and causal, have every token see itself.) At `49f38c2` no statement with biases for
+attention blocks used `InsideBlocksB`; at `6fab629` (the commit at the end of this audit) the new file
 `Symmetry/AttentionHeadsBiases.lean` states the key shifts and the head directions as `InsideBlocksB`
 directions (`keyShiftDir`, `headDirQKB`, `headDirVOB`; not read in this audit, which confirms only
 that the definition admits them).
@@ -594,7 +594,7 @@ normalization", with the lemma's MLP blocks "all tanh, all GELU, all SwiGLU or a
 widths, at any depth. Lean: `Arch.mlp σ id hid` with one `σ` for all blocks (tanh, GELU) and
 `Arch.gated σ id hid` (SiLU: SwiGLU; GELU: GeGLU), widths `hid ℓ` arbitrary, any `L`. All four kinds,
 named. Attention blocks are not in the third value's row ("MLP blocks with biases"); the files on attention
-blocks with biases added at `fab4917` (one block, and the count of Lemma A.8) are not part of this
+blocks with biases added at `6fab629` (one block, and the count of Lemma A.8) are not part of this
 audit. So the third value of the lemma is stated in full.
 
 Verdict of check 6: **SAME** throughout (`smallWritesB`; `smallWritesLimitB` term by term, and the limit
@@ -605,7 +605,7 @@ LEAN STRONGER (the paper checks the count in Table 6 only).
 
 ### Check 7 (second half): the index rows (by reading, against checks 1 to 6)
 
-Rows of `/home/claude/lp/lean/STATEMENTS.md` (unchanged between `d7be457` and `fab4917` for the eight
+Rows of `/home/claude/lp/lean/STATEMENTS.md` (unchanged between `49f38c2` and `6fab629` for the eight
 files, except the status paragraph):
 
 - **"The functional dimension with biases, without a hypothesis of differentiability"**
@@ -728,7 +728,7 @@ proof needs a word:
 - The ranks for ReLU-type blocks are lower bounds from batches: values below the bounds at some
   parameters were not resolved into "the functional dimension is lower there" and "the batch missed a
   region"; no rank exceeded a bound.
-- The files on attention blocks with biases added at `fab4917` were not read.
+- The files on attention blocks with biases added at `6fab629` were not read.
 
-Commit of `/home/claude/lp` at the end: `fab4917` (branch `lean-plus`); the eight files of this audit
-are the same at `d7be457` and `fab4917` (`git diff`), and so are their index rows.
+Commit of `/home/claude/lp` at the end: `6fab629` (branch `lean-plus`); the eight files of this audit
+are the same at `49f38c2` and `6fab629` (`git diff`), and so are their index rows.

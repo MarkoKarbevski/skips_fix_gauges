@@ -2,7 +2,7 @@ STATUS: complete
 
 # Thirty-fourth audit, part A: D Lemma D.10 (derivatives of all orders, meromorphic at infinity, the holomorphic extension) and the extension of a real-analytic map
 
-Read: `/home/claude/lp/lean` (branch `lean-plus`), commit `f1d8ec0` at the start. Paper: `<scratchpad>/dim.txt`, the definition of "meromorphic at infinity" (lines 1975 to 1977), Lemma D.10 and its proof (lines 2019 to 2046), the proof of Lemma D.12 (lines 2201 to 2360).
+Read: `/home/claude/lp/lean` (branch `lean-plus`), commit `c4a245c` at the start. Paper: `<scratchpad>/dim.txt`, the definition of "meromorphic at infinity" (lines 1975 to 1977), Lemma D.10 and its proof (lines 2019 to 2046), the proof of Lemma D.12 (lines 2201 to 2360).
 
 Files read: `SkipsLean/Depth/ScaledSuffixOrders.lean` (9 theorems), `SkipsLean/Generic/HolomorphicExtension.lean` (2), `SkipsLean/Depth/ScaledSuffixHolomorphic.lean` (2), and for the definitions `SkipsLean/Depth/ScaledSuffix.lean` (`suffixPost`, `scaledSuffix`). No `sorry` in the three files (searched).
 
@@ -229,4 +229,4 @@ Nothing false, vacuous, drifted or misdescribed was found in the 13 statements. 
 - The numerical maxima of check 5 are over samples of the distinguished boundary of the polydisc, a lower bound of the true maxima; they agree with the statement and do not prove it.
 - Whether Mathlib has the complexification of a real-analytic map under another name: I searched `Analysis/Analytic` and `Analysis/Complex` of the pinned Mathlib for `complexif` and `ofReal` and found nothing; not an exhaustive search.
 
-Commit read at the end: `f1d8ec0` (unchanged).
+Commit read at the end: `c4a245c` (unchanged).

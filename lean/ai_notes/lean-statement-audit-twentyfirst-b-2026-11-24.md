@@ -9,27 +9,27 @@ in `/home/claude/audit21b/`.
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`). The branch moved nine times while I read.
 
-- **Commit at the start: `8084e308484f1c412eb3057f031e43ac14acdbdd` (21:01:25 UTC).** I read every
+- **Commit at the start: `2e808575a2f4376d363d39b7be2d858e7c85ecb0` (21:01:25 UTC).** I read every
   statement of the four files at this commit.
-- Then `0ac8d09` (21:05:07), `3c25980668de6d78ee7aba340308343b7460958b` (21:05:23), `4f40bcb`
-  (21:07:32), `f154a51` (21:11:29), `8ce3a42` (21:11:42),
-  `f21e8ed6c3a43a001c4ead9ce8b8c2b6ddd89b17` (21:15:05), `1da5f51` (21:18:46), `7a913fb`
-  (21:20:34) and **`f223d48c9248ef01d62304660d88096ad2850c89` (21:21:39), the head at the end
+- Then `d979c7d` (21:05:07), `f86bc4ffd8aac948c95c9fb35cacd7df8c4d2ad5` (21:05:23), `e111eb6`
+  (21:07:32), `4017d96` (21:11:29), `057f531` (21:11:42),
+  `e2a5579cdec07cdd18ef6747fbe7734ad339f69b` (21:15:05), `63b762a` (21:18:46), `b482231`
+  (21:20:34) and **`2fd29057a54aa196ca830a34e4324ef7c69416c4` (21:21:39), the head at the end
   (21:31 UTC).** My scratch files were compiled a last time at this commit, at 21:30 UTC.
-- **Did a file that I read change? No.** `git diff --stat 8084e30 f223d48` is empty for the four
+- **Did a file that I read change? No.** `git diff --stat 2e80857 2fd2905` is empty for the four
   files of the brief, the three files of the equivalences, the seven files of the statements at
   one parameter, `Network/`, `Symmetry/ChangeOfBasis.lean`, `Symmetry/AttentionHeads.lean`,
   `Dimension/RescaleAction.lean`, `Dimension/Functional.lean`, `Dimension/Space.lean` and
   `Generic/Params.lean`. In `Symmetry/InsideBlocksSum.lean`, of which I read the definitions
   `Params.sumFst` and `Params.sumSnd`, five helpers lost the word `private`; the definitions did
-  not change. The four index rows are the same text at `8084e30` (lines 867 to 870) and at
-  `f223d48` (lines 876 to 879). Line numbers of `STATEMENTS.md` below are those of `f223d48`; the
+  not change. The four index rows are the same text at `2e80857` (lines 867 to 870) and at
+  `2fd2905` (lines 876 to 879). Line numbers of `STATEMENTS.md` below are those of `2fd2905`; the
   index was edited at almost every commit, so each correction also quotes the words to look for.
-- **Files with `sorry`** (`git grep -cw sorry`, in `lean/SkipsLean`). At `8084e30`:
-  `Dimension/UpperBoundHomogeneousRMSNormZero.lean` (9). At `3c25980`: none. At `4f40bcb`:
+- **Files with `sorry`** (`git grep -cw sorry`, in `lean/SkipsLean`). At `2e80857`:
+  `Dimension/UpperBoundHomogeneousRMSNormZero.lean` (9). At `f86bc4f`: none. At `e111eb6`:
   `OneBlock/ResidualRMSZeroReGLU.lean` (3), `OneBlock/ResidualRMSZeroReGLUGeneric.lean` (2). At
-  `f154a51` and `8ce3a42`: `OneBlock/ResidualRMSZeroReGLU.lean` (3). At `f21e8ed`: that file (3)
-  and `Symmetry/InsideBlocksRMSNormZero.lean` (1). At `1da5f51`, `7a913fb` and `f223d48`: none.
+  `4017d96` and `057f531`: `OneBlock/ResidualRMSZeroReGLU.lean` (3). At `e2a5579`: that file (3)
+  and `Symmetry/InsideBlocksRMSNormZero.lean` (1). At `63b762a`, `b482231` and `2fd2905`: none.
   None of these files is in my brief. The four files of the brief have no `sorry` at any of these
   commits, and none of the 20 theorems rests on a `sorry` (no `sorryAx` among their axioms).
 - The four files have 20 public theorems (2, 4, 10, 4, as the brief says) and 16 private helpers.
@@ -461,7 +461,7 @@ Nothing is false, nothing is vacuous, nothing has drifted. In order of weight:
 10. The branch moved nine times while I read; no file that I read changed in a statement or a
     definition.
 
-## Corrections for `STATEMENTS.md` (line numbers of `f223d48`)
+## Corrections for `STATEMENTS.md` (line numbers of `2fd2905`)
 
 1. Line 876 (the row of `Dimension/LocalIdentifiabilityUnderEquality.lean`). Replace "Not stated in
    this form: blocks with symmetries inside (SwiGLU, GeGLU, attention), residual networks; their

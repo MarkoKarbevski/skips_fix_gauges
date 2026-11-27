@@ -26,11 +26,11 @@ paper the coverage is PART: ReLU² blocks wider than `d` are not stated.
 
 Library: `/home/claude/lp/lean` (branch `lean-plus`).
 
-- **Commit read: `fd606c5fc53471ee888abde32f20d358b47e6476` (25 November 2026, 00:19:01 UTC),** the
+- **Commit read: `baf38e79e89000cab24e31a860db335adf1d7988` (25 November 2026, 00:19:01 UTC),** the
   head when I started. The four files of this audit were last changed before it
-  (`OneBlock/UnitsParallelAt.lean` at `b296f1f`, 00:00:30; `OneBlock/SkiplessHomogeneousRMSZeroEqAt.lean`
-  at `494434a`, 23:44:49; `OneBlock/UnitsGeneralPosition.lean` at `8c9167c`, 23:58:35;
-  `OneBlock/SkiplessReluWideRMSZero.lean` at `2769caf`, 23:52:24).
+  (`OneBlock/UnitsParallelAt.lean` at `4db4e7f`, 00:00:30; `OneBlock/SkiplessHomogeneousRMSZeroEqAt.lean`
+  at `aab47f8`, 23:44:49; `OneBlock/UnitsGeneralPosition.lean` at `610b439`, 23:58:35;
+  `OneBlock/SkiplessReluWideRMSZero.lean` at `526b1d4`, 23:52:24).
 - **`sorry`:** none of the four files has a `sorry` at this commit. In `lean/SkipsLean` two files
   have one (`git grep -lw sorry`): `OneBlock/GatedUnitsNoSymmetricPart.lean` and
   `OneBlock/LearnedSkipNarrowGated.lean`, not of this audit.
@@ -39,11 +39,11 @@ Library: `/home/claude/lp/lean` (branch `lean-plus`).
   `Quot.sound` only (`#print axioms` in `Chk25.lean`, compiled with `lake env lean` against the build
   of `/home/claude/lp/lean`, whose object files of the four modules are newer than the last change of
   the sources; first run, compiled again in this run with the same output).
-- The head of the branch moved while I worked: **`e678a9a2502fcc4ab62b5f13f3368edbc463979c`
+- The head of the branch moved while I worked: **`95e12a2f10fd37410763c2dafdb803a8957ce544`
   (00:42:01 UTC) when I finished.** The four files, `OneBlock/UnitsParallel.lean` and
   `Dimension/Functional.lean` are the same at both commits (`git diff` is empty), and so is the
-  text of the four index rows (lines 949 to 952 of `STATEMENTS.md` at `fd606c5`, lines 962 to 965
-  at `e678a9a`, by checksum). Line numbers of `STATEMENTS.md` below are those of `e678a9a`.
+  text of the four index rows (lines 949 to 952 of `STATEMENTS.md` at `baf38e7`, lines 962 to 965
+  at `95e12a2`, by checksum). Line numbers of `STATEMENTS.md` below are those of `95e12a2`.
 
 Paper, as text: the skips paper ("S", `<scratchpad>/skips.txt`): Theorem B.1 at lines 2319 to 2343,
 part (iv) at lines 2338 to 2343; the proof of part (iv) at lines 2891 to 2959.
@@ -514,7 +514,7 @@ Nothing false, vacuous, drifted or misdescribed was found. In the order of weigh
 
 ## Corrections for `STATEMENTS.md`
 
-1. Lines 278 to 284 (at `e678a9a`): take `OneBlock/UnitsParallelAt.lean`,
+1. Lines 278 to 284 (at `95e12a2`): take `OneBlock/UnitsParallelAt.lean`,
    `OneBlock/SkiplessHomogeneousRMSZeroEqAt.lean`, `OneBlock/UnitsGeneralPosition.lean` and
    `OneBlock/SkiplessReluWideRMSZero.lean` out of the list "Not yet compared by such a reader" and
    add the result of this audit (12 public theorems and 2 definitions: none false, vacuous or

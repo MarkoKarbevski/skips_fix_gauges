@@ -8,10 +8,10 @@ Subject: S Lemma A.18 from both ends for gated blocks; S Proposition A.35 for Re
 
 ## Commits read; `sorry`
 
-- Commits of `/home/claude/lp` (branch `lean-plus`): `203fb9b` when the reading began (the four files were copied to `/home/claude/audit29/src/` at that commit); `2d7158d` when the axioms were printed again; `3359405` for the index (check 6); `d296e3c` at the end.
-- Between `203fb9b` and `d296e3c`, in the four files: `Residual/FewerHiddenUnitsNarrow.lean` got its proofs (`1ed8b03`, `1330bf0`, `0baca2a`); the only lines removed from it are the four `sorry`, so no statement changed. The other three files did not change. The four index rows did not change, except "in work" to "proved" for the fourth.
-- Files with `sorry`: at `203fb9b`, `Residual/FewerHiddenUnitsNarrow.lean` (4: `inputRank_skipless_le`, `le_inputRank_residual_mlp_zero`, `ae_le_inputRank_residual_mlp_zero`, `ae_forall_eval_residual_ne_skipless_of_card_lt`; the fifth theorem is proved from them); from `0baca2a` on, none of the four.
-- Compiled by the reader at `2d7158d` (`Chk29.lean`, against the existing build): each of the 15 public theorems of the four files depends on `propext`, `Classical.choice`, `Quot.sound` only; no `sorryAx`.
+- Commits of `/home/claude/lp` (branch `lean-plus`): `d3ae7f4` when the reading began (the four files were copied to `/home/claude/audit29/src/` at that commit); `e368be0` when the axioms were printed again; `9c4a914` for the index (check 6); `6b21d26` at the end.
+- Between `d3ae7f4` and `6b21d26`, in the four files: `Residual/FewerHiddenUnitsNarrow.lean` got its proofs (`2501bac`, `a48c339`, `5d2c2a6`); the only lines removed from it are the four `sorry`, so no statement changed. The other three files did not change. The four index rows did not change, except "in work" to "proved" for the fourth.
+- Files with `sorry`: at `d3ae7f4`, `Residual/FewerHiddenUnitsNarrow.lean` (4: `inputRank_skipless_le`, `le_inputRank_residual_mlp_zero`, `ae_le_inputRank_residual_mlp_zero`, `ae_forall_eval_residual_ne_skipless_of_card_lt`; the fifth theorem is proved from them); from `5d2c2a6` on, none of the four.
+- Compiled by the reader at `e368be0` (`Chk29.lean`, against the existing build): each of the 15 public theorems of the four files depends on `propext`, `Classical.choice`, `Quot.sound` only; no `sorryAx`.
 
 How each check was done is said in the check: *reading*, *compiled* (a file in `/home/claude/audit29/`, with `lake env lean` against the existing build, nothing written there), *computed* (Python, `python3 -I`, scripts in `/home/claude/audit29/`), or *argued* (an argument of the reader, written out, checked by nobody else).
 
@@ -43,13 +43,13 @@ Each is for every measure `μ` with `[μ.IsAddHaarMeasure]` on the space of all 
 
 Statements at one parameter: the two of `UpperBoundTwoSidedGated.lean`, `funDim_add_le_of_eventually_gateInactive_of_rank_E_D` and `le_inputRank_residual_mlp_zero`. Each names its conditions (ranks, nonzero columns and rows, general position, invertible factors), and for the last two the next statement of the file gives the same conclusion at almost every parameter. The form of Lemma A.18 from both ends has no statement "at almost every parameter" of its own; its six conditions are obtained at almost every parameter inside the proof of `exists_isOpen_gateInactive_reglu_bound_of_le` (`ae_rank_E_write`, `ae_rank_D_read`, `ae_value_ne_zero`, `ae_gate_ne_zero`, `ae_write_row_ne_zero`, `ae_read_cols_generalPosition`, for `d_in, d_out ≥ d` and at least `d` hidden units in every block). The paper has no sentence "at generic parameters" for this form, so nothing is missing against it.
 
-*Compiled* (`Chk29.lean`, 8 seconds; at `203fb9b` and again at `2d7158d`): instances at `Measure.addHaar` with numbers.
+*Compiled* (`Chk29.lean`, 8 seconds; at `d3ae7f4` and again at `e368be0`): instances at `Measure.addHaar` with numbers.
 
 - `g1`, `g2`: two ReGLU blocks of width exactly `d = 2`, `d_in = d_out = 2`, one token (`P = 32`): a nonempty open set on which the gate of unit `j` of the second block is closed and `funDim + 24 ≤ 32` at almost every point of it; and not `funDim + 20 = 32` at almost every parameter.
 - `e1`, `e2`, `e3`: the three "On it" statements for the same sizes (ReLU and ReLU²: `P = 24`, the bound `rank + 19 ≤ 24`, resp. `funDim + 19 ≤ 24`; ReGLU: `rank + 24 ≤ 32`).
 - `n1`, `n2`, `n3`: two GELU blocks of width 3, `d = d_in = 3`, `d_out = 4`, two tokens: the rank of the Jacobian in the input at `0` is at least `2·3` at almost every parameter; the residual network equals no skipless network with a write of fewer than 3 rows; and the theorem for all widths with `2 (m_0 + m_1) < 18`, given Sard's theorem. `n2'`: from `n2`, the residual network equals no skipless network of two GELU blocks of the widths 7 and 2 (here `2·9 < 18` is false: the narrow case does not use the count).
 
-All nine depend on `propext`, `Classical.choice`, `Quot.sound` only (recompiled at `2d7158d`; at `203fb9b` `n1`, `n2`, `n2'`, `n3` also showed `sorryAx`, through the four statements then in work).
+All nine depend on `propext`, `Classical.choice`, `Quot.sound` only (recompiled at `e368be0`; at `d3ae7f4` `n1`, `n2`, `n2'`, `n3` also showed `sorryAx`, through the four statements then in work).
 
 ### 2. From both ends, gated blocks (`Dimension/UpperBoundTwoSidedGated.lean`): true; each hypothesis is needed at some parameter; after block `m` the hypotheses ask `2 s > d`, not `s ≥ d`
 
@@ -350,9 +350,9 @@ Verdict: `inputRank_skipless_le` SAME as the paper's sentence (LEAN STRONGER: ev
 
 ### 6. The index rows: true of the statements, with five corrections; all 15 theorems registered, standard axioms only
 
-*Reading and a script* (the index and `checks/Axioms.lean` at `3359405`, copies in `/home/claude/audit29/`; at `d296e3c` the four rows and the 15 lines are the same). Each of the 15 public theorems of the four files stands in the row of its file, and each has its line `#print axioms Skips.<name>` in `checks/Axioms.lean` (the ten of the first three files since `203fb9b`, the five of `FewerHiddenUnitsNarrow.lean` since `0baca2a`); the definition `inputRank` is named in its row. *Compiled* (`Chk29.lean`, at `2d7158d`, against the build of that commit): each of the 15 depends on `propext`, `Classical.choice`, `Quot.sound` only, and so do the reader's ten instances. (At `203fb9b` the five of the last file showed `sorryAx`; the four `sorry` were replaced by proofs at `1ed8b03` and `1330bf0`, and no statement changed: the only lines removed from the file between `203fb9b` and `3359405` are the four `sorry`.)
+*Reading and a script* (the index and `checks/Axioms.lean` at `9c4a914`, copies in `/home/claude/audit29/`; at `6b21d26` the four rows and the 15 lines are the same). Each of the 15 public theorems of the four files stands in the row of its file, and each has its line `#print axioms Skips.<name>` in `checks/Axioms.lean` (the ten of the first three files since `d3ae7f4`, the five of `FewerHiddenUnitsNarrow.lean` since `5d2c2a6`); the definition `inputRank` is named in its row. *Compiled* (`Chk29.lean`, at `e368be0`, against the build of that commit): each of the 15 depends on `propext`, `Classical.choice`, `Quot.sound` only, and so do the reader's ten instances. (At `d3ae7f4` the five of the last file showed `sorryAx`; the four `sorry` were replaced by proofs at `2501bac` and `a48c339`, and no statement changed: the only lines removed from the file between `d3ae7f4` and `9c4a914` are the four `sorry`.)
 
-Row by row (the three rows of the first three files did not change between `203fb9b` and `3359405`; the fourth changed from "in work" to "proved"):
+Row by row (the three rows of the first three files did not change between `d3ae7f4` and `9c4a914`; the fourth changed from "in work" to "proved"):
 
 - `Dimension/UpperBoundTwoSidedGated.lean`: true of the two statements ("no rescaled read column of a block up to `m`": the value columns in the first, the gate and value columns in the second). It could say what check 2 found (correction 1).
 - `Depth/InactiveGateTwoSided.lean`: true. "a nonempty open set on which the gate … is closed at every input, and the bound at almost every point of it": the statement says that such a set exists; the row of the twin for ReLU now says so, this one not yet (correction 2).
@@ -408,7 +408,7 @@ Nothing in the four files is false, vacuous or misdescribed. On the papers:
 
 ## What could not be checked
 
-- The proofs were not read (the brief asks for the statements). The reader did not build the library; single files were compiled against the existing build, at `203fb9b` and at `2d7158d`.
+- The proofs were not read (the brief asks for the statements). The reader did not build the library; single files were compiled against the existing build, at `d3ae7f4` and at `e368be0`.
 - Check 4 (c), that the bound holds for Lean's `funDim` at every point of the open set for ReLU and ReGLU, is an argument of the reader; it was not computed and not formalized. The examples of check 4 (a) for `hVo`, `hA` and `hU`, and the two constructions with general differentiable blocks in check 5, are arguments too (the staircase example for `hX` has its difference quotients computed; the GELU examples of check 5 are computed).
 - The ranks of check 3 are for one token, `d = 2, 3`, two and three blocks, at 12 to 40 random parameters per size. A rank on a batch is a lower bound for the functional dimension: the values above the bound refute the bound; the values at or below it agree with the Lean proofs and prove nothing. In the three sizes with three blocks the largest rank stayed below the bound (10 against 12; 8 against 10 and 29 against 32 with `d_out = 1`), and it was not found out whether the bound is attained there.
 - Whether `d_in ≥ d` is needed in the statements for ReGLU (the two cases computed with `d_in < d` are below the bound), and whether Theorem A.28 (iii) holds for `d = 1`.

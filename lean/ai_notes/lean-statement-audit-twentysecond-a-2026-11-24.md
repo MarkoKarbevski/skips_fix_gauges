@@ -9,35 +9,35 @@ commit and no push. My files are in `/home/claude/audit22a/`.
 
 Library: `/home/claude/lw/lean` (branch `lean-wip`).
 
-- **Commit read: `c82bc4091dc15be64d67c2578b4f835408a8c931` (24 November 2026, 21:46:07 UTC),** the
-  head when I started. The branch moved while I worked; I looked at it again at `24fd846`
-  (21:54:14), at `1417c05` (22:06:24) and at **`00c5f4fda95e027f284e184061b4a81f1759a480`
+- **Commit read: `38eefee4b07e0e7cd685a6553c175b738b8c62a1` (24 November 2026, 21:46:07 UTC),** the
+  head when I started. The branch moved while I worked; I looked at it again at `6c173fa`
+  (21:54:14), at `b7d3bf3` (22:06:24) and at **`2b9d829009374fa5f76306b2ab8c8d285c65cfac`
   (22:14:34), the head when I finished.** Five of the six files are byte for byte the same at the
   four commits (`git diff` is empty), and so is every file of definitions that I read. The sixth,
-  `OneBlock/SkiplessHomogeneousRMSZeroEq.lean`, had five proofs replaced by `sorry` at `c82bc40`
-  and at `24fd846`; since commit `44ecb39` (22:03:41) it has proofs, and it has not changed since
-  `1417c05`. Its header, its `variable` lines and the text of its eleven statements are the same
-  before and after (compared by a script, `Eq_c82bc40.lean` against `Eq_head.lean`).
-- **Statements that were `sorry` at `c82bc40`** (all in `OneBlock/SkiplessHomogeneousRMSZeroEq.lean`):
+  `OneBlock/SkiplessHomogeneousRMSZeroEq.lean`, had five proofs replaced by `sorry` at `38eefee`
+  and at `6c173fa`; since commit `91a490a` (22:03:41) it has proofs, and it has not changed since
+  `b7d3bf3`. Its header, its `variable` lines and the text of its eleven statements are the same
+  before and after (compared by a script, `Eq_38eefee.lean` against `Eq_head.lean`).
+- **Statements that were `sorry` at `38eefee`** (all in `OneBlock/SkiplessHomogeneousRMSZeroEq.lean`):
   `eval_skipless_rmsNorm_zero_of_rowHomogeneous`, `flatOn_le_mlp_rescale_skipless_rmsNorm_zero`,
   `funDim_mlp_oneBlock_rescale_skipless_rmsNorm_zero`,
   `exists_jacobianRank_mlp_oneBlock_rescale_skipless_rmsNorm_zero`,
   `ae_rank_E_D_read_write_of_card_eq`. The other six statements of the file were proved from these
-  five. Files with `sorry` in `lean/SkipsLean` (`git grep -w sorry`): at `c82bc40` two
-  (`OneBlock/LearnedSkipRMSZeroBound.lean`, not of this audit, and the file above); at `1417c05`
-  and at `00c5f4f` none.
+  five. Files with `sorry` in `lean/SkipsLean` (`git grep -w sorry`): at `38eefee` two
+  (`OneBlock/LearnedSkipRMSZeroBound.lean`, not of this audit, and the file above); at `b7d3bf3`
+  and at `2b9d829` none.
 - The six files have 24 public theorems (3 + 4 + 3 + 1 + 2 + 11) and two public definitions
   (`TurnsActiveRowsGated`, `UnitsParallel`). All 24 depend on `propext`, `Classical.choice`,
   `Quot.sound` only: by compiling `Sig22.lean` (13 theorems of the five files) and `ChkEq22.lean`
-  (11 theorems of the sixth, at `1417c05` and at `00c5f4f`) against the build of
+  (11 theorems of the sixth, at `b7d3bf3` and at `2b9d829`) against the build of
   `/home/claude/lp/lean`, whose copies of the six files and of the definitions were equal to
   those of `/home/claude/lw` each time (`cmp`).
 
 Paper, as text: the skips paper ("S", `<scratchpad>/skips.txt`). I compared nothing with the
-dimension paper. Line numbers of `STATEMENTS.md` are those of `00c5f4f`: the rows of the six files
-are lines 903 to 908 there (lines 901 to 906 at `1417c05`, 897 to 902 at `c82bc40`; the first
+dimension paper. Line numbers of `STATEMENTS.md` are those of `2b9d829`: the rows of the six files
+are lines 903 to 908 there (lines 901 to 906 at `b7d3bf3`, 897 to 902 at `38eefee`; the first
 five have the same text at the commits, by checksum; the sixth differs only in its last cell,
-"in work" at `c82bc40`, then "proved").
+"in work" at `38eefee`, then "proved").
 
 **Short answer. No Lean statement is false, none is vacuous, none has drifted.** The 24 statements
 are the paper's, with the conditions of the proofs written out. Three things differ from the
@@ -83,7 +83,7 @@ How I checked.
   from `/home/claude/lp/lean` (nothing written there): `Sig22.lean` (signatures and axioms),
   `Chk22.lean` (checks 1, 2, 3, 5), `ChkHw22.lean` (check 2), `ChkEq22.lean` (checks 1 and 6),
   `ChkDom22.lean` (check 6). All compile without error and without `sorry` (`*.out`, the last time
-  at `00c5f4f`); every theorem of mine that I name below has the three standard axioms. The four
+  at `2b9d829`); every theorem of mine that I name below has the three standard axioms. The four
   general lemmas on `funDimOn` are those of the twenty-first reader, compiled again.
 - "By a computation": my own scripts. `z22core.py`: one block under pre-RMSNorm with `ε = 0`, with
   or without the skip, ReLU, ReLU² or ReGLU; the Jacobian in the weights in closed form, over
@@ -574,7 +574,7 @@ is not needed.** (By reading, by hand, by compiling, by a computation.)
 
 ### Check 7. The index rows
 
-**Verdict: each sentence of the six rows (lines 903 to 908 at `00c5f4f`) is true of the
+**Verdict: each sentence of the six rows (lines 903 to 908 at `2b9d829`) is true of the
 statements, with one sentence to reword (row 907, "False for one unit"). Every public theorem of
 the six files is in its row and in `checks/Axioms.lean`.** (By reading; by a script.)
 
@@ -586,14 +586,14 @@ the six files is in its row and in `checks/Axioms.lean`.** (By reading; by a scr
 - Row 906 (`SkiplessRMSZeroReadout.lean`): true.
 - Row 907 (`UnitsParallel.lean`): true except "False for one unit": `UnitsParallel` as defined
   holds for one unit, because "at least two units" is a clause of the definition; see check 5.
-- Row 908 (`SkiplessHomogeneousRMSZeroEq.lean`): true; "in work" at `c82bc40`, "proved" at
-  `1417c05` and after, which is right at each commit. "at an input with no zero row of `x E`": the
+- Row 908 (`SkiplessHomogeneousRMSZeroEq.lean`): true; "in work" at `38eefee`, "proved" at
+  `b7d3bf3` and after, which is right at each commit. "at an input with no zero row of `x E`": the
   statement has this hypothesis; it is not needed (check 6).
 - Names: the 24 public theorems and the two definitions are named in their rows. In
-  `checks/Axioms.lean`: at `c82bc40` the 13 theorems of the five proved files; at `1417c05` and at
-  `00c5f4f` all 24.
+  `checks/Axioms.lean`: at `38eefee` the 13 theorems of the five proved files; at `b7d3bf3` and at
+  `2b9d829` all 24.
 - The paragraph of the index that lists the files "Not yet compared by such a reader" (lines 238
-  to 254 at `00c5f4f`) names the six files; with this report they have been compared.
+  to 254 at `2b9d829`) names the six files; with this report they have been compared.
 
 ---------------------------------------------------------------------------------------------------
 
@@ -703,7 +703,7 @@ For information:
 
 ---------------------------------------------------------------------------------------------------
 
-## Corrections for `STATEMENTS.md` (line numbers of `00c5f4f`) and for one file header
+## Corrections for `STATEMENTS.md` (line numbers of `2b9d829`) and for one file header
 
 1. **Row 907 (`OneBlock/UnitsParallel.lean`), "False for one unit."** Write: "As defined it holds
    for fewer than two units (the clause `2 ≤ Fintype.card q` is in the definition); without the
@@ -722,7 +722,7 @@ For information:
 4. **Row 907, the numeric check.** Add: "exact rational check by the twenty-second reader: 48
    systems with independent `c`, `a` and two to five units, the solutions have dimension
    `q + 1`."
-5. **The paragraph "Not yet compared by such a reader"** (lines 238 to 254 at `00c5f4f`): take
+5. **The paragraph "Not yet compared by such a reader"** (lines 238 to 254 at `2b9d829`): take
    out `OneBlock/ResidualRMSZeroReGLU.lean`, `OneBlock/ResidualRMSZeroReGLUGeneric.lean`,
    `OneBlock/ResidualRMSZeroGainHomogeneous.lean`, `OneBlock/SkiplessRMSZeroReadout.lean`,
    `OneBlock/UnitsParallel.lean`, `OneBlock/SkiplessHomogeneousRMSZeroEq.lean`, and name this

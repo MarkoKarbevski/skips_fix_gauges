@@ -12,15 +12,15 @@ repeated here.
 
 ## Commits and files
 
-- Branch `lean-plus` of `/home/claude/lp`. I started at commit `fef9fa8` (23:26 UTC). The branch
-  moved while I worked; I looked again at `008086a` (23:27) and at `9ec5f8f` (23:38).
+- Branch `lean-plus` of `/home/claude/lp`. I started at commit `cbb77d0` (23:26 UTC). The branch
+  moved while I worked; I looked again at `1773275` (23:27) and at `5fe3cb3` (23:38).
 - `OneBlock/LearnedSkipTriangularRMSZeroRank.lean`, `OneBlock/TurnsActiveRowsSkipLinear.lean`,
   `OneBlock/LearnedSkipTriangularRMSZeroRescale.lean`, `Residual/LearnedSkipsConverse.lean`: read
-  at `fef9fa8`; byte for byte the same at `9ec5f8f`. No `sorry`.
-- `Residual/LearnedSkipsPolar.lean`: read at `fef9fa8`, where its six theorems were `sorry`. Their
-  proofs came in at `1e91e2f` and `bb2c054`. At `008086a` and at `9ec5f8f` the header and the six
-  statements are the same text as at `fef9fa8` (compared by a script), and the file has no `sorry`.
-- So at `9ec5f8f` no file of the five has a `sorry`. The 28 public theorems (2, 6, 12, 2, 6)
+  at `cbb77d0`; byte for byte the same at `5fe3cb3`. No `sorry`.
+- `Residual/LearnedSkipsPolar.lean`: read at `cbb77d0`, where its six theorems were `sorry`. Their
+  proofs came in at `8ca01b3` and `b1a8491`. At `1773275` and at `5fe3cb3` the header and the six
+  statements are the same text as at `cbb77d0` (compared by a script), and the file has no `sorry`.
+- So at `5fe3cb3` no file of the five has a `sorry`. The 28 public theorems (2, 6, 12, 2, 6)
   depend on `propext`, `Classical.choice`, `Quot.sound` only (compiled, `ChkAx.lean`, against the
   build in `/home/claude/lp/lean`, whose object files of the five are from 23:03 to 23:27, after
   their proofs).
@@ -565,7 +565,7 @@ computation, `z24polar.py`.)
 
 **Verdict: every sentence of the five rows is true of the statements. Every public theorem of
 the five files is in its row and in `checks/Axioms.lean`.** (By reading; the names by a script;
-at `9ec5f8f`.)
+at `5fe3cb3`.)
 
 - For each file the public names of the source are exactly the names of the third cell of its
   row: 6 (line 863, `Residual/LearnedSkipsPolar.lean`), 2 (line 864,
@@ -573,7 +573,7 @@ at `9ec5f8f`.)
   `OneBlock/LearnedSkipTriangularRMSZeroRank.lean`), 6 (line 944,
   `OneBlock/TurnsActiveRowsSkipLinear.lean`), 12 (line 945,
   `OneBlock/LearnedSkipTriangularRMSZeroRescale.lean`). All five rows say "proved", which is
-  right at `9ec5f8f`. All 28 theorems have a `#print axioms` line in `checks/Axioms.lean`.
+  right at `5fe3cb3`. All 28 theorems have a `#print axioms` line in `checks/Axioms.lean`.
 - Line 863: every clause is true (check 6). "(`Matrix.PosDef`)": see check 6 for what Mathlib's
   definition is.
 - Line 864: every clause is true (check 5).
@@ -655,7 +655,7 @@ the paper:
 
 ## Corrections for `STATEMENTS.md`
 
-None of these is an error in a row. Lines are those of `9ec5f8f`.
+None of these is an error in a row. Lines are those of `5fe3cb3`.
 
 1. **Lines 260 to 271** ("Not yet compared by such a reader …"): the five files of this audit
    (`Residual/LearnedSkipsConverse.lean`, `OneBlock/LearnedSkipTriangularRMSZeroRank.lean`,
