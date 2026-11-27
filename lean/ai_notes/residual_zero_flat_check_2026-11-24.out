@@ -1,6 +1,0 @@
-d=2 m=3 T=1 residual: P=20 rank=18 expected = 18; last kept sv ratio 0.000122, next 9.48e-32
-d=2 m=3 T=1 skipless: P=20 rank=16 expected <= 16; last kept sv ratio 1.01e-6, next 3.75e-32
-d=3 m=4 T=1 residual: P=42 rank=38 expected = 38; last kept sv ratio 6.35e-5, next 5.72e-32
-d=3 m=4 T=1 skipless: P=42 rank=34 expected <= 34; last kept sv ratio 1.28e-5, next 5.05e-32
-d=2 m=3 T=2 residual: P=20 rank=18 expected = 18; last kept sv ratio 0.000258, next 1.0e-31
-d=2 m=3 T=2 skipless: P=20 rank=16 expected <= 16; last kept sv ratio 1.22e-6, next 4.17e-32

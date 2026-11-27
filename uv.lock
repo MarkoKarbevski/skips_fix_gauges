@@ -219,15 +219,6 @@ wheels = [
 ]
 
 [[package]]
-name = "cloudpickle"
-version = "3.1.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/27/fb/576f067976d320f5f0114a8d9fa1215425441bb35627b1993e5afd8111e5/cloudpickle-3.1.2.tar.gz", hash = "sha256:7fda9eb655c9c230dab534f1983763de5835249750e85fbcef43aaa30a9a2414", size = 22330, upload-time = "2025-11-03T09:25:26.604Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/39/799be3f2f0f38cc727ee3b4f1445fe6d5e4133064ec2e4115069418a5bb6/cloudpickle-3.1.2-py3-none-any.whl", hash = "sha256:9acb47f6afd73f60dc1df93bb801b472f05ff42fa6c84167d25cb206be1fbf4a", size = 22228, upload-time = "2025-11-03T09:25:25.534Z" },
-]
-
-[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -502,18 +493,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/df/bf/f7da0350254c0ed7c72f3e33cef02e048281fec7ecec5f032d4aac52226b/jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d", size = 245115, upload-time = "2025-03-05T20:05:02.478Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67", size = 134899, upload-time = "2025-03-05T20:05:00.369Z" },
-]
-
-[[package]]
-name = "joblib"
-version = "1.6.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "cloudpickle" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d5/1d/537ab090f302b838943a1b56497dd53059b9a9b46a074936470173a2e207/joblib-1.6.0.tar.gz", hash = "sha256:2ccc96785b12046c08fd6d55839c12857831b54a3c1673ffadd2f04bfc4eda03", size = 327903, upload-time = "2026-08-31T09:39:04.122Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/18/53/84099323c2ec4be98d935f63c033ac4151ee83836ca1050ede3b3aadf155/joblib-1.6.0-py3-none-any.whl", hash = "sha256:3dbbf9f6e4b592a2357b854608e980fe6390d131d7a82f011a377ef2ebef7aba", size = 306115, upload-time = "2026-08-31T09:39:02.298Z" },
 ]
 
 [[package]]
@@ -859,15 +838,6 @@ wheels = [
 ]
 
 [[package]]
-name = "narwhals"
-version = "2.28.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/67/43/e11d75a7fb635c6f63dd6e176cb3e050ec2fee35f2f2267b332a6ad351ec/narwhals-2.28.0.tar.gz", hash = "sha256:2d9860c80d6610820826e94c6e42ce4b1d92d89cdd479586e652a8d211dab345", size = 754977, upload-time = "2026-10-27T12:19:33.777Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/cf/82/8ef9c7e0f50493307a49c09cfa7f00c5a778b6d1921f7b2dabe1d3a5809e/narwhals-2.28.0-py3-none-any.whl", hash = "sha256:1f69d6385ec30e2fa6e1fdeb37c562ecabd0f713f6f3e3b58a668c5c9df9567f", size = 490591, upload-time = "2026-10-27T12:19:31.649Z" },
-]
-
-[[package]]
 name = "nbclient"
 version = "0.11.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1152,25 +1122,6 @@ wheels = [
 ]
 
 [[package]]
-name = "python-flint"
-version = "0.9.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/03/d3/32226210a7703b0cfbe0f5b2c56e38b7b7177d4c69663247d8813352595c/python_flint-0.9.0.tar.gz", hash = "sha256:686b2907eedaf0c0842caefab29a5775d2e633fd5815b81e13b81ca2c6ad0a36", size = 486670, upload-time = "2026-07-03T23:29:23.737Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/82/20/42ec7f09155485314f97071e53e576bbf00c03cdfd52b37b8dced83a2baa/python_flint-0.9.0-cp310-abi3-macosx_10_9_x86_64.whl", hash = "sha256:be6f010e4c2dbe8994250e2ca218ff1e301ee143c03e712bab812ff9e6b4fc46", size = 8870927, upload-time = "2026-07-03T23:28:23.197Z" },
-    { url = "https://files.pythonhosted.org/packages/41/c3/2323ed921fa08ad2a0935775dddba8502d30bfdc3034920abfdac2138236/python_flint-0.9.0-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:025fd4e77f2cbbf40f63b9cd7571aad3803deb57aecd72e7c397480fe84921a0", size = 7882651, upload-time = "2026-07-03T23:28:25.477Z" },
-    { url = "https://files.pythonhosted.org/packages/db/3f/5f57004f9f43ac6508f874cc97123f11b27b6811b5bb0d320c43f600f0cb/python_flint-0.9.0-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:376b88cacd30612479e839ffdba887599d3f9c8c0e214852bf80bb2b194e4d76", size = 10125938, upload-time = "2026-07-03T23:28:27.426Z" },
-    { url = "https://files.pythonhosted.org/packages/ee/43/fe3689c62e6e5bd2f511165b3baaa4edfce1db2f2c26d0108a0f753b2c49/python_flint-0.9.0-cp310-abi3-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:0e681705564a22367def0e026185af43783fd466839493baf7bc21c9e506bf15", size = 10137028, upload-time = "2026-07-03T23:28:29.717Z" },
-    { url = "https://files.pythonhosted.org/packages/63/dd/4b49e36612e924707090c569cf5c3daa9ba3c3e3050897715e3136d055af/python_flint-0.9.0-cp310-abi3-win_amd64.whl", hash = "sha256:8f1059536b7393e48b1444894c3b54ce1b961e4aa4a356e19217b26690f20db0", size = 9593474, upload-time = "2026-07-03T23:28:31.729Z" },
-    { url = "https://files.pythonhosted.org/packages/a3/0e/bf3ad3be80edf54cb98005e3dd19d9b0a8d3618f841f12b703c819b94282/python_flint-0.9.0-cp310-abi3-win_arm64.whl", hash = "sha256:4d78476bce46d28e3655ac5521c2af29a1928ac320aa7e6ace88ebe46fb136e2", size = 7874815, upload-time = "2026-07-03T23:28:33.696Z" },
-    { url = "https://files.pythonhosted.org/packages/05/eb/1b9529f194a5cc89461c2c9dfb667087f586b7cf6af3f8283fc2544474bf/python_flint-0.9.0-pp311-pypy311_pp73-macosx_10_15_x86_64.whl", hash = "sha256:5dc53894183513060acae21b561c635d85f8047b36fcfc466c7ab4d8bc55a604", size = 8838844, upload-time = "2026-07-03T23:29:13.219Z" },
-    { url = "https://files.pythonhosted.org/packages/c1/66/2e0dc7974a3c44d9ff2a1e3b1c4632a905602c4ed6dd18e4aed68d3be9db/python_flint-0.9.0-pp311-pypy311_pp73-macosx_11_0_arm64.whl", hash = "sha256:aeb6910237dec55a640844c070c69953baed66b95dff1415ad8ef5fad5964ad5", size = 7791782, upload-time = "2026-07-03T23:29:15.696Z" },
-    { url = "https://files.pythonhosted.org/packages/14/15/67c02c259e175f6bbb0f803caf0a69048c2ca08b62aa20884ac16e2c4eec/python_flint-0.9.0-pp311-pypy311_pp73-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:cf7e2547cf9666905442402277f1b574806c06a1139f7bd00f370ddd1b0b5ede", size = 9969816, upload-time = "2026-07-03T23:29:17.754Z" },
-    { url = "https://files.pythonhosted.org/packages/71/94/5068c03cb72cbff2e3ed96c5b65c54b8632d975daf71b57afe957bcf85c6/python_flint-0.9.0-pp311-pypy311_pp73-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:5b94f126e2ad8bbe783c9532677f190e0fd69bfa77018f47a0ddc2db6168c2cf", size = 9994765, upload-time = "2026-07-03T23:29:19.707Z" },
-    { url = "https://files.pythonhosted.org/packages/5a/bd/2ab583796580cc7f348f2cbaf023f848b6342380c57bb8a6638ec5fd8f2c/python_flint-0.9.0-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:08022f399c747b75e863060775b74b435c0e62063e62edbd2b471ed24c3fcc78", size = 9463165, upload-time = "2026-07-03T23:29:21.778Z" },
-]
-
-[[package]]
 name = "python-json-logger"
 version = "4.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1342,27 +1293,6 @@ wheels = [
 ]
 
 [[package]]
-name = "scikit-learn"
-version = "1.9.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "joblib" },
-    { name = "narwhals" },
-    { name = "numpy" },
-    { name = "scipy" },
-    { name = "threadpoolctl" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d2/eb/eaf5e07fcc0da7149b0e084f24e54edd7441b9a89ce7e034032ae97fe3a0/scikit_learn-1.9.1.tar.gz", hash = "sha256:629cada3e33e2b9bf376cdc7614a47a4140b8aedc1d836579e359736fbd82977", size = 7786908, upload-time = "2026-09-10T18:34:04.679Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/79/67/1904bf57ab9ea77b5ba3899178bcb35ff8d814fc38ef6d1283bcddeaf04a/scikit_learn-1.9.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:326c188f92084bf58664229f4578eeab6176313b37cd5dfc85abd92b94130c58", size = 8823771, upload-time = "2026-09-10T18:32:29.891Z" },
-    { url = "https://files.pythonhosted.org/packages/23/31/dc50d8780ac647bed9417f10a8b15ae3cf990ad7edb4f4b468f35030f8c5/scikit_learn-1.9.1-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:b48b2b5b41d9c5fbafef5f37b042f61110df3318ad2a45baf57287ea5b9ba5a2", size = 8290892, upload-time = "2026-09-10T18:32:32.441Z" },
-    { url = "https://files.pythonhosted.org/packages/a1/aa/a7a61517eaaa8acbf6061d255a625034e4afa277caff47e829574cc21d1c/scikit_learn-1.9.1-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:4298fcc01b3d8fa9768d36894e99cce0747b3b2dd73bfd80779e393769d0afab", size = 9026402, upload-time = "2026-09-10T18:32:34.482Z" },
-    { url = "https://files.pythonhosted.org/packages/69/46/f8b95a7a16fd13b458401d5e85a63d88ecb3679f3649812d5fdbea4c8357/scikit_learn-1.9.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:52a0703bbc07ad27f560fa63fa68e4c54dd735bfbbf65b4dd3c225dc7547b6df", size = 9315422, upload-time = "2026-09-10T18:32:36.581Z" },
-    { url = "https://files.pythonhosted.org/packages/29/8a/8d1e888fe3d0dd4e2a1f3356dad703eed569aaf673e222b6f647005ad30f/scikit_learn-1.9.1-cp311-cp311-win_amd64.whl", hash = "sha256:220fa18152852a5ce29c49e1eaba9d44ec44631cd2e5cf65f5a40eafa5ab3412", size = 8329877, upload-time = "2026-09-10T18:32:38.729Z" },
-    { url = "https://files.pythonhosted.org/packages/97/44/8f43f8de3e025c505efbd88b9264008f39490fbaf15a5ca8dbd8dae0cb74/scikit_learn-1.9.1-cp311-cp311-win_arm64.whl", hash = "sha256:8218cb8938d3031e0d23842838425490c229ecf3e99f666776e09d12ed902352", size = 7954229, upload-time = "2026-09-10T18:32:40.661Z" },
-]
-
-[[package]]
 name = "scipy"
 version = "1.17.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1420,8 +1350,6 @@ dependencies = [
     { name = "matplotlib" },
     { name = "nbconvert" },
     { name = "numpy" },
-    { name = "python-flint" },
-    { name = "scikit-learn" },
     { name = "scipy" },
     { name = "torch", version = "2.14.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
     { name = "torch", version = "2.14.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
@@ -1434,8 +1362,6 @@ requires-dist = [
     { name = "matplotlib", specifier = "==3.10.9" },
     { name = "nbconvert" },
     { name = "numpy", specifier = "==2.4.4" },
-    { name = "python-flint", specifier = "==0.9.0" },
-    { name = "scikit-learn", specifier = "==1.9.1" },
     { name = "scipy", specifier = "==1.17.1" },
     { name = "torch", marker = "sys_platform != 'darwin'", specifier = "==2.14.0", index = "https://download.pytorch.org/whl/cpu" },
     { name = "torch", marker = "sys_platform == 'darwin'", specifier = "==2.14.0" },
@@ -1491,15 +1417,6 @@ wheels = [
 ]
 
 [[package]]
-name = "threadpoolctl"
-version = "3.8.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/56/97/b4748951a683e369513691c8eea33d100298d556308dcb0ab66b132a67f0/threadpoolctl-3.8.0.tar.gz", hash = "sha256:01080674ad7ac6182429c918a79de92da789bb448acc02fc0b620b1abd6b6137", size = 39424, upload-time = "2026-11-05T11:08:51.112Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/54/1b/831f2de4840a25db1dd7b1afea433ccafe6bb10aca07e13264f2079462d0/threadpoolctl-3.8.0-py3-none-any.whl", hash = "sha256:f1b49c82704d50f13ffae019c727b0fa4f6791a58f48f06a09c45face1be66da", size = 32091, upload-time = "2026-11-05T11:08:49.773Z" },
-]
-
-[[package]]
 name = "tinycss2"
 version = "1.5.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1519,13 +1436,13 @@ resolution-markers = [
     "sys_platform == 'darwin'",
 ]
 dependencies = [
-    { name = "filelock" },
-    { name = "fsspec" },
-    { name = "jinja2" },
-    { name = "networkx" },
-    { name = "setuptools" },
-    { name = "sympy" },
-    { name = "typing-extensions" },
+    { name = "filelock", marker = "sys_platform == 'darwin'" },
+    { name = "fsspec", marker = "sys_platform == 'darwin'" },
+    { name = "jinja2", marker = "sys_platform == 'darwin'" },
+    { name = "networkx", marker = "sys_platform == 'darwin'" },
+    { name = "setuptools", marker = "sys_platform == 'darwin'" },
+    { name = "sympy", marker = "sys_platform == 'darwin'" },
+    { name = "typing-extensions", marker = "sys_platform == 'darwin'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e6/2c/0c9757a1ea1fff8ccc4faff1d1c87e98a69542b5d4b606e50f7518f72e58/torch-2.14.0-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:ae530ddd3f3b94248b77f1fd3313c4f3405bd0d17283d505b81574816767133a", size = 127277244, upload-time = "2026-09-02T13:42:57.855Z" },
@@ -1539,13 +1456,13 @@ resolution-markers = [
     "sys_platform != 'darwin'",
 ]
 dependencies = [
-    { name = "filelock" },
-    { name = "fsspec" },
-    { name = "jinja2" },
-    { name = "networkx" },
-    { name = "setuptools" },
-    { name = "sympy" },
-    { name = "typing-extensions" },
+    { name = "filelock", marker = "sys_platform != 'darwin'" },
+    { name = "fsspec", marker = "sys_platform != 'darwin'" },
+    { name = "jinja2", marker = "sys_platform != 'darwin'" },
+    { name = "networkx", marker = "sys_platform != 'darwin'" },
+    { name = "setuptools", marker = "sys_platform != 'darwin'" },
+    { name = "sympy", marker = "sys_platform != 'darwin'" },
+    { name = "typing-extensions", marker = "sys_platform != 'darwin'" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp311-cp311-linux_s390x.whl", hash = "sha256:3fa39713d13f23563ad11636bfff76b677ab4addbc240c54e6b7e47622e8973d", upload-time = "2026-09-02T18:31:08Z" },

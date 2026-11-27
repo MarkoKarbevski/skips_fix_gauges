@@ -1,4 +1,0 @@
-inputs 4000 ; sectors met: 12 [((1, 2, 3, 4), 388), ((1, 2, 4), 94), ((1, 2, 4, 5), 716), ((1, 2, 5), 38), ((1, 2, 5, 6), 474), ((1, 3, 4), 253), ((2, 5, 6), 254), ((3, 4), 484), ((3, 4, 6), 43), ((3, 5, 6), 103), ((3, 6), 701), ((5, 6), 452)]
-(1) B(u) parallel to u on the sectors {1,3,4} and {2,5,6}: True
-(2) the derivative of h_1 along psi is parallel to h_1 at every input: True
-(3) the derivative of the block along psi is not zero at some input: True

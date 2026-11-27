@@ -1,8 +1,0 @@
-relu d=2 widths=[1, 2] tau=0.05: P=20 rank=13 claim=13 sv[claim-1]/sv[0]=3.6e-03 sv[claim]/sv[0]=1.3e-16
-relu d=3 widths=[2, 4] tau=0.05: P=54 rank=39 claim=39 sv[claim-1]/sv[0]=7.8e-04 sv[claim]/sv[0]=4.8e-17
-relu d=3 widths=[4, 3, 5] tau=0.02: P=90 rank=69 claim=69 sv[claim-1]/sv[0]=8.9e-05 sv[claim]/sv[0]=4.7e-17
-relu d=4 widths=[5, 6] tau=0.05: P=120 rank=93 claim=93 sv[claim-1]/sv[0]=5.9e-04 sv[claim]/sv[0]=7.5e-17
-relusq d=2 widths=[1, 2] tau=0.05: P=20 rank=13 claim=13 sv[claim-1]/sv[0]=1.5e-03 sv[claim]/sv[0]=6.5e-17
-relusq d=3 widths=[2, 4] tau=0.05: P=54 rank=39 claim=39 sv[claim-1]/sv[0]=6.1e-04 sv[claim]/sv[0]=2.2e-17
-relusq d=3 widths=[4, 3, 5] tau=0.02: P=90 rank=69 claim=69 sv[claim-1]/sv[0]=1.1e-05 sv[claim]/sv[0]=1.7e-17
-relusq d=4 widths=[5, 6] tau=0.05: P=120 rank=93 claim=93 sv[claim-1]/sv[0]=1.1e-04 sv[claim]/sv[0]=3.1e-17
