@@ -512,15 +512,25 @@ If a continuous family of maps of the parameters preserves the function, then th
 We recall \cref{prop:localid}. Inspired by the classical equivalence, for statistical models, of local identifiability and a nonsingular information matrix \citep{rothenberg1971identification}, it states the equality condition as local identifiability up to the symmetries. With a symmetry the Jacobian is singular, as two square matrices show.
 
 \begin{example*}[Two square matrices]
-The linear network $x \mapsto xM_1M_2$, with two invertible $\dm\times\dm$ matrices, computes the linear map $x \mapsto xM$ with
+Consider, as in \cref{ex:three} but with two factors, the linear model
 \[
-M \;=\; M_1M_2 .
+\mathcal{M} \colon \R^{\dm\times\dm} \times \R^{\dm\times\dm} \times \R^{1\times\dm} \to \R^{1\times\dm}, \qquad \mathcal{M}(M_1, M_2, x) \;=\; xM_1M_2 .
 \]
-The model $x \mapsto xM$ has $\dm^2$ parameters, the entries of $M$, and its function determines them. The network has $2\dm^2$ parameters, and its function determines only their product: for every invertible $\dm\times\dm$ matrix $G$,
+It has $2\dm^2$ parameters, but clearly only $\dm^2$ of them matter: the output depends on $M_1$ and $M_2$ only through their product
+\[
+M \;=\; M_1M_2 ,
+\]
+so the model computes the same functions as the linear model $x \mapsto xM$, whose $\dm^2$ parameters are determined by its function. Many pairs have the same product: for every invertible $\dm\times\dm$ matrix $G$,
 \[
 (M_1G)\,(G^{-1}M_2) \;=\; M_1M_2 ,
 \]
-and every pair of matrices with the product $M$ has this form. So $(M_1, M_2)$ is identifiable only up to this change of basis. The Jacobian shows the same. With $G = I + \tau Z$, the change of basis moves $(M_1, M_2)$ in the direction $(M_1Z,\ -ZM_2)$, which does not change the function, so it lies in the kernel of the Jacobian on every batch. These directions, one for every $\dm\times\dm$ matrix $Z$, are the whole kernel. So the Jacobian is singular, and the functional dimension is $2\dm^2 - \dm^2 = \dm^2$, the number of parameters of $x \mapsto xM$.
+and with $G = M_1^{-1}$ the first factor becomes the identity, which no longer requires storage or computation. \Cref{def:fd} makes this intuition precise. The change of basis with $G = I + \tau Z$ moves $(M_1, M_2)$ in the direction $(M_1Z,\ -ZM_2)$ and leaves the function unchanged, so this direction lies in the kernel of the Jacobian on every batch. When $M_1$ is invertible, as at generic parameters, these directions, one for each $\dm\times\dm$ matrix $Z$, make up the whole kernel on the batch of the $\dm$ unit rows. So the functional dimension is $2\dm^2 - \dm^2 = \dm^2$.
+
+A functional dimension below the number of stored entries does not always mean that entries can be removed. Take one orthogonal matrix instead:
+\[
+\mathcal{M}' \colon \Ort(\dm) \times \R^{1\times\dm} \to \R^{1\times\dm}, \qquad \mathcal{M}'(M_1, x) \;=\; xM_1 .
+\]
+Its function determines $M_1$, so this model has no symmetry at all, and its functional dimension, with the Jacobian taken along $\Ort(\dm)$, is $\dm(\dm-1)/2$, the dimension of $\Ort(\dm)$. Yet no entry of an orthogonal matrix is fixed, so storing $M_1$ without any computation at read time takes $\dm^2$ entries.
 \end{example*}
 
 \propLocalId*
