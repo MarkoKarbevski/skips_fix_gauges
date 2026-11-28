@@ -358,7 +358,15 @@ When the residual network satisfies it, each skip unlocks $\dim\G$ parameters, $
 A network is \emph{identifiable up to its symmetries} at $\theta$ if every $\theta'$ with $F_{\theta'} = F_\theta$ is the image of $\theta$ under a symmetry: a change of basis that preserves the function, a symmetry inside a block, or a composition of these. It is \emph{locally identifiable} at $\theta$ if this holds for every $\theta'$ in some neighborhood of $\theta$.
 \end{definition}
 
-The notion follows \citet{vlacic2020affine}, \citet{stock2021embedding} and \citet{bonapellissier2022local}, with the equivalence given here by the symmetries of \cref{thm:unlock}. The equality condition can be stated as local identifiability.
+The notion follows \citet{vlacic2020affine}, \citet{stock2021embedding} and \citet{bonapellissier2022local}, with the equivalence given here by the symmetries of \cref{thm:unlock}. Inspired by the classical equivalence, for statistical models, of local identifiability and a nonsingular information matrix \citep{rothenberg1971identification}, we state the equality condition as local identifiability up to the symmetries. With a symmetry the Jacobian is singular, as two square matrices show.
+
+\begin{example*}[Two square matrices]
+The linear network $x \mapsto xM_1M_2$, with two invertible $\dm\times\dm$ matrices, has $2\dm^2$ parameters. A direction $(\eta_1, \eta_2)$ of $(M_1, M_2)$ lies in the kernel of the Jacobian on every batch if and only if $\eta_1M_2 + M_1\eta_2 = 0$, that is,
+\[
+(\eta_1, \eta_2) \;=\; (M_1Z,\ -ZM_2) \qquad\text{for a } \dm\times\dm \text{ matrix } Z .
+\]
+These are the directions of the changes of basis $(M_1, M_2) \mapsto (M_1G,\ G^{-1}M_2)$ with $G = I + \tau Z$. So the Jacobian is singular, the functional dimension is $2\dm^2 - \dm^2 = \dm^2$, and $(M_1, M_2)$ is locally identifiable only up to the change of basis.
+\end{example*}
 
 \begin{restatable}[The equality condition and local identifiability]{proposition}{propLocalId}\label{prop:localid}
 Let the blocks be analytic, with or without pre-RMSNorm, within the scope of \cref{sec:setup}. A skipless or a residual network satisfies the equality condition if and only if, at generic parameters, it is locally identifiable up to its symmetries. Every symmetry that is needed is then close to the identity.

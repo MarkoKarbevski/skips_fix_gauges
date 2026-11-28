@@ -58,33 +58,34 @@
 | 53 | Functional dimension and its upper bound | para |  |  | When the residual network satisfies it, each skip unlocks $\dim\G$ par |
 | 54 | Functional dimension and its upper bound | statement | identifiable up to its symmetries | identifiable up to its symmetries | \begin{definition}[Identifiability up to symmetries]\label{def:ident}  |
 | 55 | Functional dimension and its upper bound | para |  |  | The notion follows \citet{vlacic2020affine}, \citet{stock2021embedding |
-| 56 | Functional dimension and its upper bound | statement |  |  | \begin{restatable}[The equality condition and local identifiability]{p |
-| 57 | Functional dimension and its upper bound | para |  |  | For skipless networks this is Proposition~\KDlocalid{} of \citet{karbe |
-| 58 | Functional dimension and its upper bound | para |  |  | \para{The gain in a transformer.} Under the equality condition, a resi |
-| 59 | When the bounds are attained | para |  |  | \subsection{When the bounds are attained}\label{sec:onelayer} |
-| 60 | When the bounds are attained | para |  |  | The equality condition is a hypothesis, and it can fail (\cref{sec:mea |
-| 61 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for one block]{theorem}{thmOneBlock}\label |
-| 62 | When the bounds are attained | para |  |  | For a $\tanh$, a ReLU and an attention block without a skip, the equal |
-| 63 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for residual networks at any depth]{theore |
-| 64 | When the bounds are attained | para |  |  | \begin{corollary}[Exact gain]\label{cor:exactgain} Let all blocks be $ |
-| 65 | When the bounds are attained | para |  |  | In these cases the skipless network has the functional dimension $P -  |
-| 66 | When the bounds are attained | para |  |  | \begin{corollary}[Residual networks are locally identifiable]\label{co |
-| 67 | When the bounds are attained | para |  |  | This is \cref{thm:resdepth} together with \cref{prop:localid}. Whether |
-| 68 | When the bounds are attained | para |  |  | \begin{corollary}[Attention-only transformers: Conjecture~2.4 of \cite |
-| 69 | When the bounds are attained | para |  |  | The corollary answers the conjecture of \citet{henry2026generic}, that |
-| 70 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
-| 71 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
-| 72 | Residual and skipless networks compute different functions | para | pointwise limit | pointwise limit | The gain in functional dimension says something about the functions th |
-| 73 | Residual and skipless networks compute different functions | para |  |  | \citet{mijoski2026worth} show that, without normalization, every skipl |
-| 74 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
-| 75 | Residual and skipless networks compute different functions | para |  |  | The reason is the gap between the two bounds of \cref{thm:unlock}: on  |
-| 76 | Numerical ranks, and where the gain is a lower bound | para |  |  | \subsection{Numerical ranks, and where the gain is a lower bound}\labe |
-| 77 | Numerical ranks, and where the gain is a lower bound | para |  |  | For skipless networks, the equality condition is proved in the cases o |
-| 78 | Numerical ranks, and where the gain is a lower bound | para |  |  | The rank of the Jacobian on a large batch of inputs (\cref{app:checks} |
-| 79 | Numerical ranks, and where the gain is a lower bound | para |  |  | In two cases the measured rank stays below the upper bound. In skiples |
-| 80 | Numerical ranks, and where the gain is a lower bound | para |  |  | For ReLU$^2$ and ReGLU blocks we expect the equality condition to hold |
-| 81 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
-| 82 | Conclusion | para |  |  | Skip connections change how a network uses its parameters. Without ski |
-| 83 | Conclusion | para |  |  | \para{Open questions.} For skipless networks of GELU blocks without no |
-| 84 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
-| 85 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 56 | Functional dimension and its upper bound | para |  |  | \begin{example*}[Two square matrices] The linear network $x \mapsto xM |
+| 57 | Functional dimension and its upper bound | statement |  |  | \begin{restatable}[The equality condition and local identifiability]{p |
+| 58 | Functional dimension and its upper bound | para |  |  | For skipless networks this is Proposition~\KDlocalid{} of \citet{karbe |
+| 59 | Functional dimension and its upper bound | para |  |  | \para{The gain in a transformer.} Under the equality condition, a resi |
+| 60 | When the bounds are attained | para |  |  | \subsection{When the bounds are attained}\label{sec:onelayer} |
+| 61 | When the bounds are attained | para |  |  | The equality condition is a hypothesis, and it can fail (\cref{sec:mea |
+| 62 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for one block]{theorem}{thmOneBlock}\label |
+| 63 | When the bounds are attained | para |  |  | For a $\tanh$, a ReLU and an attention block without a skip, the equal |
+| 64 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for residual networks at any depth]{theore |
+| 65 | When the bounds are attained | para |  |  | \begin{corollary}[Exact gain]\label{cor:exactgain} Let all blocks be $ |
+| 66 | When the bounds are attained | para |  |  | In these cases the skipless network has the functional dimension $P -  |
+| 67 | When the bounds are attained | para |  |  | \begin{corollary}[Residual networks are locally identifiable]\label{co |
+| 68 | When the bounds are attained | para |  |  | This is \cref{thm:resdepth} together with \cref{prop:localid}. Whether |
+| 69 | When the bounds are attained | para |  |  | \begin{corollary}[Attention-only transformers: Conjecture~2.4 of \cite |
+| 70 | When the bounds are attained | para |  |  | The corollary answers the conjecture of \citet{henry2026generic}, that |
+| 71 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
+| 72 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
+| 73 | Residual and skipless networks compute different functions | para | pointwise limit | pointwise limit | The gain in functional dimension says something about the functions th |
+| 74 | Residual and skipless networks compute different functions | para |  |  | \citet{mijoski2026worth} show that, without normalization, every skipl |
+| 75 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
+| 76 | Residual and skipless networks compute different functions | para |  |  | The reason is the gap between the two bounds of \cref{thm:unlock}: on  |
+| 77 | Numerical ranks, and where the gain is a lower bound | para |  |  | \subsection{Numerical ranks, and where the gain is a lower bound}\labe |
+| 78 | Numerical ranks, and where the gain is a lower bound | para |  |  | For skipless networks, the equality condition is proved in the cases o |
+| 79 | Numerical ranks, and where the gain is a lower bound | para |  |  | The rank of the Jacobian on a large batch of inputs (\cref{app:checks} |
+| 80 | Numerical ranks, and where the gain is a lower bound | para |  |  | In two cases the measured rank stays below the upper bound. In skiples |
+| 81 | Numerical ranks, and where the gain is a lower bound | para |  |  | For ReLU$^2$ and ReGLU blocks we expect the equality condition to hold |
+| 82 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
+| 83 | Conclusion | para |  |  | Skip connections change how a network uses its parameters. Without ski |
+| 84 | Conclusion | para |  |  | \para{Open questions.} For skipless networks of GELU blocks without no |
+| 85 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
+| 86 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
