@@ -36,54 +36,55 @@
 | 31 | Telescoping (generic) learned skips to identity skips | para |  |  | The sweep of \cref{sec:motivation} gives part (i) of the following the |
 | 32 | Telescoping (generic) learned skips to identity skips | statement |  |  | \begin{restatable}[Learned skips reduce to identity skips]{theorem}{th |
 | 33 | Telescoping (generic) learned skips to identity skips | para |  |  | So the networks with invertible learned skips have $L\dm^2$ more param |
-| 34 | Identity skips: one change of basis for the whole network | para |  |  | \subsection{Identity skips: one change of basis for the whole network} |
-| 35 | Identity skips: one change of basis for the whole network | para |  |  | \Cref{sec:learned} turned invertible learned skips into identity skips |
-| 36 | Identity skips: one change of basis for the whole network | para |  |  | With a change of basis $G_{\ell-1}$ at $h_{\ell-1}$ and $G_\ell$ at $h |
-| 37 | Identity skips: one change of basis for the whole network | statement |  |  | \begin{restatable}[One change of basis for the whole network]{theorem} |
-| 38 | Identity skips: one change of basis for the whole network | para |  |  | So the $L$ skips remove $L\dim\G$ dimensions from this group, and \cre |
-| 39 | LayerNorm and trained models | para |  |  | \subsection{LayerNorm and trained models}\label{sec:norm} |
-| 40 | LayerNorm and trained models | para |  |  | The counts of this section carry over to LayerNorm, and the reductions |
-| 41 | LayerNorm and trained models | para |  |  | \para{LayerNorm.} LayerNorm is RMSNorm after a projection that removes |
-| 42 | LayerNorm and trained models | para |  |  | \para{Trained models.}\label{sec:trained} In the skipless ViT-B \citep |
-| 43 | Functional dimension with and without skips | para |  |  | \section{Functional dimension with and without skips}\label{sec:gain}  |
-| 44 | Functional dimension and its upper bound | para |  |  | \subsection{Functional dimension and its upper bound}\label{sec:fd}\la |
-| 45 | Functional dimension and its upper bound | para |  |  | We define the functional dimension and the redundancy. We then bound t |
-| 46 | Functional dimension and its upper bound | statement | redundancy |  | \begin{definition}[Functional dimension {\citep{grigsby2022functional} |
-| 47 | Functional dimension and its upper bound | para |  |  | A continuous symmetry adds to the redundancy: if a continuous family o |
-| 48 | Functional dimension and its upper bound | para | symmetries inside blocks, symmetries inside the blocks | symmetries inside blocks, symmetries inside the blocks | Two kinds of symmetry bound the functional dimension. The first are th |
-| 49 | Functional dimension and its upper bound | statement |  |  | \begin{restatable}[Upper bounds]{theorem}{thmUnlock}\label{thm:unlock} |
-| 50 | Functional dimension and its upper bound | para |  |  | The bound without skips is Theorem~\KDbound{} of \citet{karbevski2026d |
-| 51 | Functional dimension and its upper bound | statement | equality condition | equality condition | \begin{definition}[Equality condition]\label{def:equality} A network s |
-| 52 | Functional dimension and its upper bound | para |  |  | When the residual network satisfies it, each skip unlocks $\dim\G$ par |
-| 53 | Functional dimension and its upper bound | statement | identifiable up to its symmetries | identifiable up to its symmetries | \begin{definition}[Identifiability up to symmetries]\label{def:ident}  |
-| 54 | Functional dimension and its upper bound | para |  |  | The notion follows \citet{vlacic2020affine}, \citet{stock2021embedding |
-| 55 | Functional dimension and its upper bound | statement |  |  | \begin{restatable}[The equality condition and local identifiability]{p |
-| 56 | Functional dimension and its upper bound | para |  |  | For skipless networks this is Proposition~\KDlocalid{} of \citet{karbe |
-| 57 | Functional dimension and its upper bound | para |  |  | \para{The gain in a transformer.} Under the equality condition, a resi |
-| 58 | When the bounds are attained | para |  |  | \subsection{When the bounds are attained}\label{sec:onelayer} |
-| 59 | When the bounds are attained | para |  |  | The equality condition is a hypothesis, and it can fail (\cref{sec:mea |
-| 60 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for one block]{theorem}{thmOneBlock}\label |
-| 61 | When the bounds are attained | para |  |  | For a $\tanh$, a ReLU and an attention block without a skip, the equal |
-| 62 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for residual networks at any depth]{theore |
-| 63 | When the bounds are attained | para |  |  | \begin{corollary}[Exact gain]\label{cor:exactgain} Let all blocks be $ |
-| 64 | When the bounds are attained | para |  |  | In these cases the skipless network has the functional dimension $P -  |
-| 65 | When the bounds are attained | para |  |  | \begin{corollary}[Residual networks are locally identifiable]\label{co |
-| 66 | When the bounds are attained | para |  |  | This is \cref{thm:resdepth} together with \cref{prop:localid}. Whether |
-| 67 | When the bounds are attained | para |  |  | \begin{corollary}[Attention-only transformers: Conjecture~2.4 of \cite |
-| 68 | When the bounds are attained | para |  |  | The corollary answers the conjecture of \citet{henry2026generic}, that |
-| 69 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
-| 70 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
-| 71 | Residual and skipless networks compute different functions | para | pointwise limit | pointwise limit | The gain in functional dimension says something about the functions th |
-| 72 | Residual and skipless networks compute different functions | para |  |  | \citet{mijoski2026worth} show that, without normalization, every skipl |
-| 73 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
-| 74 | Residual and skipless networks compute different functions | para |  |  | The reason is the gap between the two bounds of \cref{thm:unlock}: on  |
-| 75 | Numerical ranks, and where the gain is a lower bound | para |  |  | \subsection{Numerical ranks, and where the gain is a lower bound}\labe |
-| 76 | Numerical ranks, and where the gain is a lower bound | para |  |  | For skipless networks, the equality condition is proved in the cases o |
-| 77 | Numerical ranks, and where the gain is a lower bound | para |  |  | The rank of the Jacobian on a large batch of inputs (\cref{app:checks} |
-| 78 | Numerical ranks, and where the gain is a lower bound | para |  |  | In two cases the measured rank stays below the upper bound. In skiples |
-| 79 | Numerical ranks, and where the gain is a lower bound | para |  |  | For ReLU$^2$ and ReGLU blocks we expect the equality condition to hold |
-| 80 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
-| 81 | Conclusion | para |  |  | Skip connections change how a network uses its parameters. Without ski |
-| 82 | Conclusion | para |  |  | \para{Open questions.} For skipless networks of GELU blocks without no |
-| 83 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
-| 84 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
+| 34 | Telescoping (generic) learned skips to identity skips | para |  |  | \citet{he2016xidentity} compare identity shortcuts with scaled, gated  |
+| 35 | Identity skips: one change of basis for the whole network | para |  |  | \subsection{Identity skips: one change of basis for the whole network} |
+| 36 | Identity skips: one change of basis for the whole network | para |  |  | \Cref{sec:learned} turned invertible learned skips into identity skips |
+| 37 | Identity skips: one change of basis for the whole network | para |  |  | With a change of basis $G_{\ell-1}$ at $h_{\ell-1}$ and $G_\ell$ at $h |
+| 38 | Identity skips: one change of basis for the whole network | statement |  |  | \begin{restatable}[One change of basis for the whole network]{theorem} |
+| 39 | Identity skips: one change of basis for the whole network | para |  |  | So the $L$ skips remove $L\dim\G$ dimensions from this group, and \cre |
+| 40 | LayerNorm and trained models | para |  |  | \subsection{LayerNorm and trained models}\label{sec:norm} |
+| 41 | LayerNorm and trained models | para |  |  | The counts of this section carry over to LayerNorm, and the reductions |
+| 42 | LayerNorm and trained models | para |  |  | \para{LayerNorm.} LayerNorm is RMSNorm after a projection that removes |
+| 43 | LayerNorm and trained models | para |  |  | \para{Trained models.}\label{sec:trained} In the skipless ViT-B \citep |
+| 44 | Functional dimension with and without skips | para |  |  | \section{Functional dimension with and without skips}\label{sec:gain}  |
+| 45 | Functional dimension and its upper bound | para |  |  | \subsection{Functional dimension and its upper bound}\label{sec:fd}\la |
+| 46 | Functional dimension and its upper bound | para |  |  | We define the functional dimension and the redundancy. We then bound t |
+| 47 | Functional dimension and its upper bound | statement | redundancy |  | \begin{definition}[Functional dimension {\citep{grigsby2022functional} |
+| 48 | Functional dimension and its upper bound | para |  |  | A continuous symmetry adds to the redundancy: if a continuous family o |
+| 49 | Functional dimension and its upper bound | para | symmetries inside blocks, symmetries inside the blocks | symmetries inside blocks, symmetries inside the blocks | Two kinds of symmetry bound the functional dimension. The first are th |
+| 50 | Functional dimension and its upper bound | statement |  |  | \begin{restatable}[Upper bounds]{theorem}{thmUnlock}\label{thm:unlock} |
+| 51 | Functional dimension and its upper bound | para |  |  | The bound without skips is Theorem~\KDbound{} of \citet{karbevski2026d |
+| 52 | Functional dimension and its upper bound | statement | equality condition | equality condition | \begin{definition}[Equality condition]\label{def:equality} A network s |
+| 53 | Functional dimension and its upper bound | para |  |  | When the residual network satisfies it, each skip unlocks $\dim\G$ par |
+| 54 | Functional dimension and its upper bound | statement | identifiable up to its symmetries | identifiable up to its symmetries | \begin{definition}[Identifiability up to symmetries]\label{def:ident}  |
+| 55 | Functional dimension and its upper bound | para |  |  | The notion follows \citet{vlacic2020affine}, \citet{stock2021embedding |
+| 56 | Functional dimension and its upper bound | statement |  |  | \begin{restatable}[The equality condition and local identifiability]{p |
+| 57 | Functional dimension and its upper bound | para |  |  | For skipless networks this is Proposition~\KDlocalid{} of \citet{karbe |
+| 58 | Functional dimension and its upper bound | para |  |  | \para{The gain in a transformer.} Under the equality condition, a resi |
+| 59 | When the bounds are attained | para |  |  | \subsection{When the bounds are attained}\label{sec:onelayer} |
+| 60 | When the bounds are attained | para |  |  | The equality condition is a hypothesis, and it can fail (\cref{sec:mea |
+| 61 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for one block]{theorem}{thmOneBlock}\label |
+| 62 | When the bounds are attained | para |  |  | For a $\tanh$, a ReLU and an attention block without a skip, the equal |
+| 63 | When the bounds are attained | statement |  |  | \begin{restatable}[Equality for residual networks at any depth]{theore |
+| 64 | When the bounds are attained | para |  |  | \begin{corollary}[Exact gain]\label{cor:exactgain} Let all blocks be $ |
+| 65 | When the bounds are attained | para |  |  | In these cases the skipless network has the functional dimension $P -  |
+| 66 | When the bounds are attained | para |  |  | \begin{corollary}[Residual networks are locally identifiable]\label{co |
+| 67 | When the bounds are attained | para |  |  | This is \cref{thm:resdepth} together with \cref{prop:localid}. Whether |
+| 68 | When the bounds are attained | para |  |  | \begin{corollary}[Attention-only transformers: Conjecture~2.4 of \cite |
+| 69 | When the bounds are attained | para |  |  | The corollary answers the conjecture of \citet{henry2026generic}, that |
+| 70 | When the bounds are attained | para |  |  | \para{Proof sketches.} With one block, the parameters enter the functi |
+| 71 | Residual and skipless networks compute different functions | para |  |  | \subsection{Residual and skipless networks compute different functions |
+| 72 | Residual and skipless networks compute different functions | para | pointwise limit | pointwise limit | The gain in functional dimension says something about the functions th |
+| 73 | Residual and skipless networks compute different functions | para |  |  | \citet{mijoski2026worth} show that, without normalization, every skipl |
+| 74 | Residual and skipless networks compute different functions | statement |  |  | \begin{restatable}[Different function classes]{theorem}{thmClasses}\la |
+| 75 | Residual and skipless networks compute different functions | para |  |  | The reason is the gap between the two bounds of \cref{thm:unlock}: on  |
+| 76 | Numerical ranks, and where the gain is a lower bound | para |  |  | \subsection{Numerical ranks, and where the gain is a lower bound}\labe |
+| 77 | Numerical ranks, and where the gain is a lower bound | para |  |  | For skipless networks, the equality condition is proved in the cases o |
+| 78 | Numerical ranks, and where the gain is a lower bound | para |  |  | The rank of the Jacobian on a large batch of inputs (\cref{app:checks} |
+| 79 | Numerical ranks, and where the gain is a lower bound | para |  |  | In two cases the measured rank stays below the upper bound. In skiples |
+| 80 | Numerical ranks, and where the gain is a lower bound | para |  |  | For ReLU$^2$ and ReGLU blocks we expect the equality condition to hold |
+| 81 | Conclusion | para |  |  | \section{Conclusion}\label{sec:outlook}\label{sec:conclusion} |
+| 82 | Conclusion | para |  |  | Skip connections change how a network uses its parameters. Without ski |
+| 83 | Conclusion | para |  |  | \para{Open questions.} For skipless networks of GELU blocks without no |
+| 84 | Code availability | para |  |  | \section*{Code availability} \addcontentsline{toc}{section}{Code avail |
+| 85 | Code availability | para |  |  | \bibliographystyle{plainnat} \bibliography{refs} |
