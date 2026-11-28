@@ -512,11 +512,15 @@ If a continuous family of maps of the parameters preserves the function, then th
 We recall \cref{prop:localid}. Inspired by the classical equivalence, for statistical models, of local identifiability and a nonsingular information matrix \citep{rothenberg1971identification}, it states the equality condition as local identifiability up to the symmetries. With a symmetry the Jacobian is singular, as two square matrices show.
 
 \begin{example*}[Two square matrices]
-The linear network $x \mapsto xM_1M_2$, with two invertible $\dm\times\dm$ matrices, has $2\dm^2$ parameters. A direction $(\eta_1, \eta_2)$ of $(M_1, M_2)$ lies in the kernel of the Jacobian on every batch if and only if $\eta_1M_2 + M_1\eta_2 = 0$, that is,
+The linear network $x \mapsto xM_1M_2$, with two invertible $\dm\times\dm$ matrices, computes the linear map $x \mapsto xM$ with
 \[
-(\eta_1, \eta_2) \;=\; (M_1Z,\ -ZM_2) \qquad\text{for a } \dm\times\dm \text{ matrix } Z .
+M \;=\; M_1M_2 .
 \]
-These are the directions of the changes of basis $(M_1, M_2) \mapsto (M_1G,\ G^{-1}M_2)$ with $G = I + \tau Z$. So the Jacobian is singular, the functional dimension is $2\dm^2 - \dm^2 = \dm^2$, and $(M_1, M_2)$ is locally identifiable only up to the change of basis.
+The model $x \mapsto xM$ has $\dm^2$ parameters, the entries of $M$, and its function determines them. The network has $2\dm^2$ parameters, and its function determines only their product: for every invertible $\dm\times\dm$ matrix $G$,
+\[
+(M_1G)\,(G^{-1}M_2) \;=\; M_1M_2 ,
+\]
+and every pair of matrices with the product $M$ has this form. So $(M_1, M_2)$ is identifiable only up to this change of basis. The Jacobian shows the same. With $G = I + \tau Z$, the change of basis moves $(M_1, M_2)$ in the direction $(M_1Z,\ -ZM_2)$, which does not change the function, so it lies in the kernel of the Jacobian on every batch. These directions, one for every $\dm\times\dm$ matrix $Z$, are the whole kernel. So the Jacobian is singular, and the functional dimension is $2\dm^2 - \dm^2 = \dm^2$, the number of parameters of $x \mapsto xM$.
 \end{example*}
 
 \propLocalId*
